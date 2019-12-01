@@ -7,7 +7,7 @@ import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.utils import intersection_and_union as i_and_u
-from modules import SAModule, GlobalSAModule, MLP
+from modules import SAModule, GlobalSAModule, MLP, PointKernel
 
 category = 'Airplane'
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'ShapeNet')
@@ -41,7 +41,7 @@ class FPModule(torch.nn.Module):
         x = self.nn(x)
         return x, pos_skip, batch_skip
 
-
+"""
 class Net(torch.nn.Module):
     def __init__(self, num_classes):
         super(Net, self).__init__()
@@ -73,9 +73,17 @@ class Net(torch.nn.Module):
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin3(x)
         return F.log_softmax(x, dim=-1)
+"""
+class Net(torch.nn.Module):
+    def __init__(self, num_classes):
+        super(Net, self).__init__()
+        self.sa1_module = PointKernel(3, 32, 7)
+
+    def forward(self, data):
+        pass
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'cpu'#torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = Net(train_dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
