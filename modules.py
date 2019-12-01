@@ -53,6 +53,41 @@ class PointKernel(nn.Module):
         self.kernel.data = torch.from_numpy(kernel)
 
 
+class KPConv(nn.Module):
+
+    def __init__(self, num_kernels, num_points, in_features, out_features, bias=True, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
+        super(KPConv, self).__init__()
+        self.num_kernels = num_kernels
+        self.num_points = num_points
+        self.in_features = in_features
+        self.out_features = out_features
+        self.bias = bias
+        self.kernel_dim = kernel_dim
+        self.radius = radius
+        self.fixed = fixed
+        self.ratio = ratio
+        self.verbose = verbose
+
+        self.kernels = nn.ModuleList() 
+        for _ in range(self.num_kernels):
+            self.kernels.append(PointKernel(self.in_features, self.out_features, self.num_points, bias=self.bias, kernel_dim=self.kernel_dim, \
+            radius=self.radius, fixed=self.fixed, ratio=self.ratio, verbose=self.verbose))
+
+    def forward(self, x, pos, batch):
+        row, col = radius(pos, pos, self.r, batch, batch[idx],
+                          max_num_neighbors=64)
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv(x, (pos, pos[idx]), edge_index)
+        pos, batch = pos[idx], batch[idx]
+        return x, pos, batch
+
+    
+
+
+
+
+
+
 class SAModule(torch.nn.Module):
     def __init__(self, ratio, r, nn):
         super(SAModule, self).__init__()

@@ -7,7 +7,7 @@ import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.utils import intersection_and_union as i_and_u
-from modules import SAModule, GlobalSAModule, MLP, PointKernel
+from modules import SAModule, GlobalSAModule, MLP, PointKernel, KPConv
 
 category = 'Airplane'
 path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'ShapeNet')
@@ -77,7 +77,7 @@ class Net(torch.nn.Module):
 class Net(torch.nn.Module):
     def __init__(self, num_classes):
         super(Net, self).__init__()
-        self.sa1_module = PointKernel(3, 32, 7)
+        self.kp_conv_1 = KPConv(8, 21, 3, 16, radius=0.2)
 
     def forward(self, data):
         pass
