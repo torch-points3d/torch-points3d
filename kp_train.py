@@ -1,6 +1,7 @@
 from os import path as osp
 
 import torch
+torch.backends.cudnn.enabled = False
 import torch.nn.functional as F
 from torch_geometric.datasets import ShapeNet
 import torch_geometric.transforms as T
@@ -22,9 +23,9 @@ train_dataset = ShapeNet(path, category, train=True, transform=transform,
                          pre_transform=pre_transform)
 test_dataset = ShapeNet(path, category, train=False,
                         pre_transform=pre_transform)
-train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True,
+train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True,
                           num_workers=6)
-test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False,
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False,
                          num_workers=6)
 
 
@@ -77,7 +78,7 @@ class Net(torch.nn.Module):
 class Net(torch.nn.Module):
     def __init__(self, num_classes):
         super(Net, self).__init__()
-        self.kp_conv_1 = KPConv(8, 21, 3, 16, radius=0.2)
+        self.kp_conv_1 = KPConv(8, 21, 3, 16, global_nn=MLP([3, 16, 32]), radius=0.2)
 
     def forward(self, data):
         print(data.pos.shape, data.batch)

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -14,13 +15,14 @@ from kernel_utils import kernel_point_optimization_debug
 
 class PointKernel(nn.Module):
 
-    def __init__(self, in_features, out_features, num_points, bias=True, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
+    def __init__(self, in_features, out_features, num_points, bias=True, matmul=False, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
         super(PointKernel, self).__init__()
         # PointKernel parameters
         self.in_features = in_features
         self.out_features = out_features
         self.bias = bias
         self.num_points = num_points
+        self.matmul = matmul
         self.kernel_dim = kernel_dim
         self.radius = radius
         self.fixed = fixed
@@ -31,7 +33,11 @@ class PointKernel(nn.Module):
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
         
         # Associated weights
-        self.kernel_weight = Parameter(torch.Tensor(num_points, out_features, in_features))
+        if matmul:
+            self.kernel_weight = Parameter(torch.Tensor(num_points, out_features, in_features))
+        else:
+            self.kernel_weight = Parameter(torch.Tensor(num_points, in_features))
+
         if bias:
             self.kernel_bias = Parameter(torch.Tensor(out_features))
         else:
@@ -52,7 +58,7 @@ class PointKernel(nn.Module):
 
 class PointsKernel(MessagePassing):
 
-    def __init__(self, num_kernels, num_points, in_features, out_features, KP_influence='linear', aggregation_mode='closest', KP_extent=0.2, \
+    def __init__(self, num_kernels, num_points, in_features, out_features, KP_influence='linear', aggregation_mode='closest', matmul=False, KP_extent=0.2, \
         bias=True, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0, aggr='mean', **kwargs):
         super(PointsKernel, self).__init__(aggr=aggr, **kwargs)
         self.num_kernels = num_kernels
@@ -61,6 +67,7 @@ class PointsKernel(MessagePassing):
         self.out_features = out_features
         self.KP_influence = KP_influence
         self.aggregation_mode = aggregation_mode
+        self.matmul = matmul
         self.KP_extent = KP_extent
         self.bias = bias
         self.kernel_dim = kernel_dim
@@ -71,7 +78,7 @@ class PointsKernel(MessagePassing):
 
         self.kernels = nn.ModuleList() 
         for _ in range(self.num_kernels):
-            self.kernels.append(PointKernel(self.in_features, self.out_features, self.num_points, bias=self.bias, kernel_dim=self.kernel_dim, \
+            self.kernels.append(PointKernel(self.in_features, self.out_features, self.num_points, bias=self.bias, matmul=self.matmul, kernel_dim=self.kernel_dim, \
             radius=self.radius, fixed=self.fixed, ratio=self.ratio, verbose=self.verbose))
 
     def forward(self, x, pos, edge_index, batch):
@@ -124,39 +131,23 @@ class PointsKernel(MessagePassing):
         K_weights = self.get_point_kernels_weight()
         K_weights = torch.index_select(K_weights, 0, closest_kernels_idx)
 
-        # Apply distance weights [n_points, n_kpoints, in_fdim]
+        # Apply distance weights [n_points, in_fdim]
         weighted_neighborhood_features = all_weights * neighborhood_features
 
-        # Apply network weights [n_kpoints, n_points, out_fdim]
-        print(K_weights.shape, weighted_neighborhood_features.shape)
-        out = torch.einsum('nab,nb->na', K_weights, weighted_neighborhood_features)
-        print(out.shape)
+        # Apply network weights [n_points, out_fdim, in_fdim]
+        
+        if not self.matmul:
+            out = K_weights * weighted_neighborhood_features
+        else:
+            out = torch.matmul(weighted_neighborhood_features.unsqueeze(1), \
+                K_weights.permute((0, 2, 1))).squeeze(1)
         return out
-
-    """
-        features = tf.concat([features, tf.zeros_like(features[:1, :])], axis=0)
-
-        # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
-        neighborhood_features = tf.gather(features, neighbors_indices, axis=0)
-
-        # Apply distance weights [n_points, n_kpoints, in_fdim]
-        weighted_features = tf.matmul(all_weights, neighborhood_features)
-
-        # Apply network weights [n_kpoints, n_points, out_fdim]
-        weighted_features = tf.transpose(weighted_features, [1, 0, 2])
-        kernel_outputs = tf.matmul(weighted_features, K_values)
-
-        # Convolution sum to get [n_points, out_fdim]
-        output_features = tf.reduce_sum(kernel_outputs, axis=0)
-
-        return output_features
-    """
 
     def update(self, aggr_out):
         return aggr_out
 
 class KPConv(nn.Module):
-    def __init__(self, num_kernels, num_points, in_features, out_features, bias=True, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
+    def __init__(self, num_kernels, num_points, in_features, out_features, bias=True, global_nn=None, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
         super(KPConv, self).__init__()       
         self.num_kernels = num_kernels
         self.num_points = num_points
@@ -164,6 +155,7 @@ class KPConv(nn.Module):
         self.out_features = out_features
         self.bias = bias
         self.kernel_dim = kernel_dim
+        self.global_nn = global_nn
         self.radius = radius
         self.fixed = fixed
         self.ratio = ratio
@@ -177,7 +169,10 @@ class KPConv(nn.Module):
                           max_num_neighbors=self.num_points)        
         edge_index = torch.stack([col, row], dim=0)
 
-        self.points_kernel(x, pos, edge_index, batch)        
+        x = self.points_kernel(x, pos, edge_index, batch)        
+        x = self.global_nn(x)
+        print(x.shape)
+
 
 class SAModule(torch.nn.Module):
     def __init__(self, ratio, r, nn):
