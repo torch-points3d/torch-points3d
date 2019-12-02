@@ -84,15 +84,14 @@ class PointKernel(MessagePassing):
     def message_pos(self, pos_i, pos_j):
         return self.message_forward(pos_i=pos_i, pos_j=pos_j)
 
-    def message_x_and_pos(self, x_i, x_j, pos_i, pos_j):
-        return self.message_forward(x_i=x_i, x_j=x_j, pos_i=pos_i, pos_j=pos_j)
+    def message_x_and_pos(self, x_j, pos_i, pos_j):
+        return self.message_forward(x_j=x_j, pos_i=pos_i, pos_j=pos_j)
 
     def message_forward(self, **kwargs):
         if self.x_is_none:
-            x_i = pos_i = kwargs.get("pos_i")
+            pos_i = kwargs.get("pos_i")
             x_j = pos_j = kwargs.get("pos_j")
         else:
-            x_i = kwargs.get("x_i")
             x_j = kwargs.get("x_j")
             pos_i = kwargs.get("pos_i")
             pos_j = kwargs.get("pos_j")
