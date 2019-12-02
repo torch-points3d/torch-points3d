@@ -1,3 +1,6 @@
+import inspect
+import sys
+
 import numpy as np
 import torch
 from torch import nn
@@ -10,108 +13,104 @@ import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
 from torch.nn.parameter import Parameter
-
 from kernel_utils import kernel_point_optimization_debug
 
-class PointKernel(nn.Module):
+special_args = [
+    'edge_index', 'edge_index_i', 'edge_index_j', 'size', 'size_i', 'size_j'
+]
+is_python2 = sys.version_info[0] < 3
+getargspec = inspect.getargspec if is_python2 else inspect.getfullargspec
+class PointKernel(MessagePassing):
 
-    def __init__(self, in_features, out_features, num_points, bias=True, matmul=False, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
+    def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='linear'):
         super(PointKernel, self).__init__()
         # PointKernel parameters
         self.in_features = in_features
         self.out_features = out_features
-        self.bias = bias
         self.num_points = num_points
-        self.matmul = matmul
-        self.kernel_dim = kernel_dim
         self.radius = radius
+        self.kernel_dim = kernel_dim
         self.fixed = fixed
         self.ratio = ratio
-        self.verbose = verbose
+        self.KP_influence = KP_influence
+        
+        # Radius of the initial positions of the kernel points
+        self.KP_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
         
         # Associated weights
-        if matmul:
-            self.kernel_weight = Parameter(torch.Tensor(num_points, out_features, in_features))
-        else:
-            self.kernel_weight = Parameter(torch.Tensor(num_points, in_features))
+        self.kernel_weight = Parameter(torch.Tensor(num_points, in_features, out_features))
 
-        if bias:
-            self.kernel_bias = Parameter(torch.Tensor(out_features))
-        else:
-            self.register_parameter('kernel_bias', None)
         self.reset_parameters()
 
     def reset_parameters(self):
         init.kaiming_uniform_(self.kernel_weight, a=math.sqrt(5))
-        if self.bias is not None:
-            fan_in, _ = init._calculate_fan_in_and_fan_out(self.kernel_weight)
-            bound = 1 / math.sqrt(fan_in)
-            init.uniform_(self.kernel_bias, -bound, bound)
 
         # Init the kernel using attrative + repulsion forces
         kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1, \
-            dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=self.verbose)
+            dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
         self.kernel.data = torch.from_numpy(kernel)
+    
+    def get_message_argument(self):
+        self.__message_args__ = getargspec(self.message)[0][1:]
+        self.__special_args__ = [(i, arg)
+                                 for i, arg in enumerate(self.__message_args__)
+                                 if arg in special_args]
+        self.__message_args__ = [
+            arg for arg in self.__message_args__ if arg not in special_args
+        ]   
 
-class PointsKernel(MessagePassing):
+    def define_message(self, x):
+        if not hasattr(self, "messsage_is_defined"):
+            self.x_is_none = x is None
+            if self.x_is_none:
+                self.message = self.message_pos
+                self.get_message_argument()
+                self.messsage_is_defined = True
+            else:
+                self.message = self.message_x_and_pos
+                self.get_message_argument()
+                self.messsage_is_defined = True      
 
-    def __init__(self, num_kernels, num_points, in_features, out_features, KP_influence='linear', aggregation_mode='closest', matmul=False, KP_extent=0.2, \
-        bias=True, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0, aggr='mean', **kwargs):
-        super(PointsKernel, self).__init__(aggr=aggr, **kwargs)
-        self.num_kernels = num_kernels
-        self.num_points = num_points
-        self.in_features = in_features
-        self.out_features = out_features
-        self.KP_influence = KP_influence
-        self.aggregation_mode = aggregation_mode
-        self.matmul = matmul
-        self.KP_extent = KP_extent
-        self.bias = bias
-        self.kernel_dim = kernel_dim
-        self.radius = radius
-        self.fixed = fixed
-        self.ratio = ratio
-        self.verbose = verbose
-
-        self.kernels = nn.ModuleList() 
-        for _ in range(self.num_kernels):
-            self.kernels.append(PointKernel(self.in_features, self.out_features, self.num_points, bias=self.bias, matmul=self.matmul, kernel_dim=self.kernel_dim, \
-            radius=self.radius, fixed=self.fixed, ratio=self.ratio, verbose=self.verbose))
-
-    def forward(self, x, pos, edge_index, batch):
-        self.x_is_none = x is None
-        if not self.x_is_none:
-            return self.propagate(edge_index, x=torch.cat([x, pos]))
-        else:
-            return self.propagate(edge_index, x=pos.float())
-
-    def get_point_kernels(self):
-        return torch.cat([pk.kernel for pk in self.kernels])
-
-    def get_point_kernels_weight(self):
-        return torch.cat([pk.kernel_weight for pk in self.kernels])
-
-    def message(self, x_i, x_j):
+    def forward(self, x, pos, edge_index):
+        self.define_message(x)
         if self.x_is_none:
-            neighborhood_features = x_j
+            return self.propagate(edge_index, pos=pos)
         else:
-            neighborhood_features = x_j[:, :-self.kernel_dim]
-            x_i, x_j = x_i[:, -self.kernel_dim:], x_j[:, -self.kernel_dim:]
+            return self.propagate(edge_index, x=x, pos=pos[0])
 
-        # Center every neighborhood
-        neighbors = x_j -  x_i
+    def message_pos(self, pos_i, pos_j):
+        return self.message_forward(pos_i=pos_i, pos_j=pos_j)
+
+    def message_x_and_pos(self, x_i, x_j, pos_i, pos_j):
+        return self.message_forward(x_i=x_i, x_j=x_j, pos_i=pos_i, pos_j=pos_j)
+
+    def message_forward(self, **kwargs):
+        if self.x_is_none:
+            x_i = pos_i = kwargs.get("pos_i")
+            x_j = pos_j = kwargs.get("pos_j")
+        else:
+            x_i = kwargs.get("x_i")
+            x_j = kwargs.get("x_j")
+            pos_i = kwargs.get("pos_i")
+            pos_j = kwargs.get("pos_j")
+
+        #  # Center every neighborhood [n_points, n_neighbors, dim]
+        neighbors = (pos_i -  pos_j).view((-1, self.num_points, 3))
+
+        # Number of support points
+        n_points = neighbors.shape[0]
         
         #Get points kernels
-        K_points = self.get_point_kernels()
+        K_points = self.kernel
 
-        # Get all difference matrices [n_neighbors, n_kpoints, dim]
-        neighbors = neighbors.unsqueeze(1)
+        # Get all difference matrices [[n_points, n_neighbors, n_kpoints, dim]
+        neighbors = neighbors.unsqueeze(2)
 
-        differences = neighbors - K_points.float().view((-1, 3)).unsqueeze(0)
-        sq_distances = F.normalize(differences, p=2, dim=-1).sum(-1)
+        differences = neighbors - K_points.float().view((-1, 3)).unsqueeze(0).unsqueeze(0)
+        sq_distances = (differences**2).sum(-1)
 
         # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
         if self.KP_influence == 'constant':
@@ -120,59 +119,53 @@ class PointsKernel(MessagePassing):
 
         elif self.KP_influence == 'linear':
             # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1 - torch.sqrt(sq_distances) / self.KP_extent
-            all_weights[all_weights < 0] = 0
+            all_weights = 1. - (torch.sqrt(sq_distances) / self.KP_extent)
+            all_weights[all_weights < 0] = 0.0
         else:
             raise ValueError('Unknown influence function type (config.KP_influence)')
         
-        closest_kernels_idx = torch.argmin(sq_distances, dim=-1)
-        all_weights =  torch.gather(all_weights, -1, closest_kernels_idx.unsqueeze(-1))
+        neighbors_1nn = torch.argmin(sq_distances, dim=-1)
+        one_hot = torch.zeros_like(all_weights)
+        one_hot.scatter_(2, neighbors_1nn.unsqueeze(-1), 1)
+        all_weights *= one_hot
         
-        K_weights = self.get_point_kernels_weight()
-        K_weights = torch.index_select(K_weights, 0, closest_kernels_idx)
+        K_weights = self.kernel_weight
+        K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)).view((n_points, -1, self.in_features, self.out_features))
 
-        # Apply distance weights [n_points, in_fdim]
-        weighted_neighborhood_features = all_weights * neighborhood_features
+        # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
+        features = x_j.view((-1, self.num_points, self.in_features))
 
-        # Apply network weights [n_points, out_fdim, in_fdim]
-        
-        if not self.matmul:
-            out = K_weights * weighted_neighborhood_features
-        else:
-            out = torch.matmul(weighted_neighborhood_features.unsqueeze(1), \
-                K_weights.permute((0, 2, 1))).squeeze(1)
+        # Apply distance weights [n_points, n_kpoints, in_fdim]
+        weighted_features = torch.matmul(all_weights, features)
+
+        # Apply network weights [n_kpoints, n_points, out_fdim]
+        out = torch.matmul(weighted_features.unsqueeze(-2), \
+            K_weights)
+        out = out.view(-1, self.out_features)
         return out
 
     def update(self, aggr_out):
         return aggr_out
 
 class KPConv(nn.Module):
-    def __init__(self, num_kernels, num_points, in_features, out_features, bias=True, global_nn=None, kernel_dim=3, radius=1., fixed='center', ratio=1.0, verbose=0):
+    def __init__(self, ratio, radius, in_features, out_features, num_points=16):
         super(KPConv, self).__init__()       
-        self.num_kernels = num_kernels
-        self.num_points = num_points
+        self.ratio = ratio
+        self.radius = radius
         self.in_features = in_features
         self.out_features = out_features
-        self.bias = bias
-        self.kernel_dim = kernel_dim
-        self.global_nn = global_nn
-        self.radius = radius
-        self.fixed = fixed
-        self.ratio = ratio
-        self.verbose = verbose
+        self.num_points = num_points
 
-        self.points_kernel = PointsKernel(self.num_kernels, self.num_points, self.in_features, self.out_features, bias=self.bias, kernel_dim=self.kernel_dim, \
-            radius=self.radius, fixed=self.fixed, ratio=self.ratio, verbose=self.verbose)
+        self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
     def forward(self, x, pos, batch):
-        row, col = radius(pos, pos, self.radius, batch, batch,
-                          max_num_neighbors=self.num_points)        
+        idx = fps(pos, batch, ratio=self.ratio)
+        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
+                          max_num_neighbors=self.num_points)
         edge_index = torch.stack([col, row], dim=0)
-
-        x = self.points_kernel(x, pos, edge_index, batch)        
-        x = self.global_nn(x)
-        print(x.shape)
-
+        x = self.conv(x, (pos, pos[idx]), edge_index)
+        pos, batch = pos[idx], batch[idx]
+        return x, pos, batch
 
 class SAModule(torch.nn.Module):
     def __init__(self, ratio, r, nn):

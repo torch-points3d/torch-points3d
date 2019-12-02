@@ -78,18 +78,28 @@ class Net(torch.nn.Module):
 class Net(torch.nn.Module):
     def __init__(self, num_classes):
         super(Net, self).__init__()
-        self.kp_conv_1 = KPConv(8, 21, 3, 16, global_nn=MLP([3, 16, 32]), radius=0.2)
+        self.sa1_module = KPConv(0.3, 0.2, 3, 32)
+        self.sa2_module = KPConv(0.5, 0.4, 32, 64)
+
+        self.fp2_module = FPModule(3, MLP([64 + 32, 32]))
+        self.fp1_module = FPModule(3, MLP([32, 32, 32]))
+
+        self.mlp_cls = MLP([32, 16, num_classes])
 
     def forward(self, data):
-        print(data.pos.shape, data.batch)
-        self.kp_conv_1(data.x, data.pos, data.batch)
-        pass
+        sa0_out = (data.x, data.pos, data.batch)
+        sa1_out = self.sa1_module(*sa0_out)
+        sa2_out = self.sa2_module(*sa1_out)
+
+        fp2_out = self.fp2_module(*sa2_out, *sa1_out)
+        x, _, _ = self.fp1_module(*fp2_out, *sa0_out)
+        x = self.mlp_cls(x)
+        return F.log_softmax(x, dim=-1)
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = 'cpu'#torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = Net(train_dataset.num_classes).to(device)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
 
 def train():
     model.train()
