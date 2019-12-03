@@ -10,7 +10,7 @@ from torch_geometric.utils import intersection_and_union as i_and_u
 from modules import SAModule, GlobalSAModule, MLP
 
 category = 'Airplane'
-path = osp.join(osp.dirname(osp.realpath(__file__)), '..', 'data', 'ShapeNet')
+path = osp.join(osp.dirname(osp.realpath(__file__)), 'data', 'ShapeNet')
 transform = T.Compose([
     T.RandomTranslate(0.01),
     T.RandomRotate(15, axis=0),
