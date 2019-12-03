@@ -2,6 +2,7 @@ from os import path as osp
 
 import torch
 torch.backends.cudnn.enabled = False
+import numpy as np
 import torch.nn.functional as F
 from torch_geometric.datasets import ShapeNet
 import torch_geometric.transforms as T
@@ -23,9 +24,10 @@ train_dataset = ShapeNet(path, category, train=True, transform=transform,
                          pre_transform=pre_transform)
 test_dataset = ShapeNet(path, category, train=False,
                         pre_transform=pre_transform)
-train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True,
+train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True,
                           num_workers=6)
-test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False,
+
+test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False,
                          num_workers=6)
 
 
@@ -78,8 +80,8 @@ class Net(torch.nn.Module):
 class Net(torch.nn.Module):
     def __init__(self, num_classes):
         super(Net, self).__init__()
-        self.sa1_module = KPConv(0.3, 0.2, 3, 32)
-        self.sa2_module = KPConv(0.5, 0.4, 32, 64)
+        self.kp1_module = KPConv(0.3, 0.2, 3, 32)
+        self.kp2_module = KPConv(0.5, 0.4, 32, 64)
 
         self.fp2_module = FPModule(3, MLP([64 + 32, 32]))
         self.fp1_module = FPModule(3, MLP([32, 32, 32]))
@@ -87,14 +89,17 @@ class Net(torch.nn.Module):
         self.mlp_cls = MLP([32, 16, num_classes])
 
     def forward(self, data):
-        sa0_out = (data.x, data.pos, data.batch)
-        sa1_out = self.sa1_module(*sa0_out)
-        sa2_out = self.sa2_module(*sa1_out)
+        #Normalize in [-.5, .5]
+        max_, min_ = np.max(data.pos.numpy()), np.min(data.pos.numpy())
+        data.pos = (data.pos - (max_ + min_) / 2.) / np.linalg.norm(max_ - min_)
+        
+        input = (data.x, data.pos, data.batch)
+        kp1_out = self.kp1_module(*input)
+        kp2_out = self.kp2_module(*kp1_out)
 
-        fp2_out = self.fp2_module(*sa2_out, *sa1_out)
-        x, _, _ = self.fp1_module(*fp2_out, *sa0_out)
+        fp2_out = self.fp2_module(*kp2_out, *kp1_out)
+        x, _, _ = self.fp1_module(*fp2_out, *input)
         x = self.mlp_cls(x)
-        print(x)
         return F.log_softmax(x, dim=-1)
 
 

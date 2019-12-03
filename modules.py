@@ -7,7 +7,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch.nn import init
 import math
-from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
+from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN
 from torch_geometric.datasets import ModelNet
 import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
@@ -135,6 +135,7 @@ class PointKernel(MessagePassing):
         features = x_j.view((-1, self.num_points, self.in_features))
 
         # Apply distance weights [n_points, n_kpoints, in_fdim]
+        print(all_weights.shape, features.shape)
         weighted_features = torch.matmul(all_weights, features)
 
         # Apply network weights [n_kpoints, n_points, out_fdim]
@@ -198,6 +199,6 @@ class GlobalSAModule(torch.nn.Module):
 
 def MLP(channels, batch_norm=True):
     return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), ReLU(), BN(channels[i]))
+        Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2))
         for i in range(1, len(channels))
     ])
