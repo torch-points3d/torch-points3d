@@ -90,7 +90,7 @@ class Net(torch.nn.Module):
 
     def forward(self, data):
         #Normalize in [-.5, .5]
-        max_, min_ = np.max(data.pos.numpy()), np.min(data.pos.numpy())
+        max_, min_ = np.max(data.pos.cpu().numpy()), np.min(data.pos.cpu().numpy())
         data.pos = (data.pos - (max_ + min_) / 2.) / np.linalg.norm(max_ - min_)
         
         input = (data.x, data.pos, data.batch)
@@ -100,6 +100,7 @@ class Net(torch.nn.Module):
         fp2_out = self.fp2_module(*kp2_out, *kp1_out)
         x, _, _ = self.fp1_module(*fp2_out, *input)
         x = self.mlp_cls(x)
+        print(x)
         return F.log_softmax(x, dim=-1)
 
 

@@ -135,12 +135,10 @@ class PointKernel(MessagePassing):
         features = x_j.view((-1, self.num_points, self.in_features))
 
         # Apply distance weights [n_points, n_kpoints, in_fdim]
-        print(all_weights.shape, features.shape)
-        weighted_features = torch.matmul(all_weights, features)
+        weighted_features = torch.einsum("nab, nac -> nac", all_weights, features)
 
         # Apply network weights [n_kpoints, n_points, out_fdim]
-        out = torch.matmul(weighted_features.unsqueeze(-2), \
-            K_weights)
+        out = torch.einsum("nac, nacd -> nad", weighted_features, K_weights)
         out = out.view(-1, self.out_features)
         return out
 
