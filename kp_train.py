@@ -100,7 +100,6 @@ class Net(torch.nn.Module):
         fp2_out = self.fp2_module(*kp2_out, *kp1_out)
         x, _, _ = self.fp1_module(*fp2_out, *input)
         x = self.mlp_cls(x)
-        print(x)
         return F.log_softmax(x, dim=-1)
 
 
@@ -118,6 +117,7 @@ def train():
         out = model(data)
         loss = F.nll_loss(out, data.y)
         loss.backward()
+        #import pdb; pdb.set_trace()
         optimizer.step()
         total_loss += loss.item()
         correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
