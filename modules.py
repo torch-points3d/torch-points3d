@@ -50,9 +50,9 @@ class PointKernel(MessagePassing):
         init.kaiming_uniform_(self.kernel_weight, a=math.sqrt(5))
 
         # Init the kernel using attrative + repulsion forces
-        kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points + 1, num_kernels=1, \
+        kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1, \
             dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
-        self.kernel.data = torch.from_numpy(kernel[:, 1:])
+        self.kernel.data = torch.from_numpy(kernel)
     
     def get_message_argument(self):
         self.__message_args__ = getargspec(self.message)[0][1:]
@@ -120,7 +120,7 @@ class PointKernel(MessagePassing):
 
         elif self.KP_influence == 'linear':
             # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1. - (torch.sqrt(sq_distances) / self.KP_extent)
+            all_weights = 1. - (sq_distances / (self.KP_extent ** 2))
             all_weights[all_weights < 0] = 0.0
         else:
             raise ValueError('Unknown influence function type (config.KP_influence)')
