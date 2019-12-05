@@ -14,6 +14,7 @@ torch-geometric = "^1.3"
 matplotlib = "^3.1"
 
 [tool.poetry.dev-dependencies]
+pylint = "^2.4"
 
 [build-system]
 requires = ["poetry>=0.12"]

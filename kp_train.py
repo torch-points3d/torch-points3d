@@ -11,6 +11,9 @@ from torch_geometric.nn import knn_interpolate
 from torch_geometric.utils import intersection_and_union as i_and_u
 from modules import SAModule, GlobalSAModule, MLP, PointKernel, KPConv
 
+
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 category = 'Airplane'
 path = osp.join(osp.dirname(osp.realpath(__file__)), 'data', 'ShapeNet')
 transform = T.Compose([
@@ -103,8 +106,7 @@ class Net(torch.nn.Module):
         return F.log_softmax(x, dim=-1)
 
 
-device = 'cpu'#torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = Net(train_dataset.num_classes).to(device)
+model = Net(train_dataset.num_classes).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 def train():
@@ -112,7 +114,7 @@ def train():
 
     total_loss = correct_nodes = total_nodes = 0
     for i, data in enumerate(train_loader):
-        data = data.to(device)
+        data = data.to(DEVICE)
         optimizer.zero_grad()
         out = model(data)
         loss = F.nll_loss(out, data.y)
@@ -136,16 +138,16 @@ def test(loader):
     correct_nodes = total_nodes = 0
     intersections, unions, categories = [], [], []
     for data in loader:
-        data = data.to(device)
+        data = data.to(DEVICE)
         with torch.no_grad():
             out = model(data)
         pred = out.max(dim=1)[1]
         correct_nodes += pred.eq(data.y).sum().item()
         total_nodes += data.num_nodes
         i, u = i_and_u(pred, data.y, test_dataset.num_classes, data.batch)
-        intersections.append(i.to(torch.device('cpu')))
-        unions.append(u.to(torch.device('cpu')))
-        categories.append(data.category.to(torch.device('cpu')))
+        intersections.append(i.to(DEVICE))
+        unions.append(u.to(DEVICE))
+        categories.append(data.category.to(DEVICE))
 
     category = torch.cat(categories, dim=0)
     intersection = torch.cat(intersections, dim=0)
