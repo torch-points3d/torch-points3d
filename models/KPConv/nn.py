@@ -23,15 +23,17 @@ class FPModule(torch.nn.Module):
         return x, pos_skip, batch_skip
 
 class PartSegmentation(torch.nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self,opt, num_classes):
         super(PartSegmentation, self).__init__()
-        self.kp1_module = KPConv(0.3, 0.2, 3, 32)
-        self.kp2_module = KPConv(0.5, 0.4, 32, 64)
+        radius = opt.radius
+        features = opt.feature_sizes
+        self.kp1_module = KPConv(0.3, radius, 3, features[0])
+        self.kp2_module = KPConv(0.5, 2* radius,  features[0],  features[1])
 
-        self.fp2_module = FPModule(3, MLP([64 + 32, 32]))
-        self.fp1_module = FPModule(3, MLP([32, 32, 32]))
+        self.fp2_module = FPModule(3, MLP([features[0]+ features[1],features[0]]))
+        self.fp1_module = FPModule(3, MLP([features[0], features[0], features[0]]))
 
-        self.mlp_cls = MLP([32, 16, num_classes])
+        self.mlp_cls = MLP([features[0], 16, num_classes])
 
     def forward(self, data):
         #Normalize in [-.5, .5]

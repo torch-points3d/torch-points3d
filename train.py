@@ -73,7 +73,7 @@ def test(model, loader, num_classes):
 @hydra.main(config_path='config.yaml')
 def main(cfg):
     dataset = find_dataset_using_name(cfg.data.name)(cfg.data)
-    model = PartSegmentation(dataset.num_classes).to(DEVICE)
+    model = PartSegmentation(cfg.model.KP_Conv, dataset.num_classes).to(DEVICE)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
