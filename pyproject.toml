@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "kp_conv"
+name = "deeppointcloud_benchmark"
 version = "0.1.0"
 description = ""
 authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
