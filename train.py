@@ -9,8 +9,7 @@ import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.utils import intersection_and_union as i_and_u
-from modules import SAModule, GlobalSAModule, MLP, PointKernel, KPConv
-
+from models.KPConv.nn import PartSegmentation
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -34,79 +33,7 @@ test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False,
                          num_workers=6)
 
 
-class FPModule(torch.nn.Module):
-    def __init__(self, k, nn):
-        super(FPModule, self).__init__()
-        self.k = k
-        self.nn = nn
-
-    def forward(self, x, pos, batch, x_skip, pos_skip, batch_skip):
-        x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
-        if x_skip is not None:
-            x = torch.cat([x, x_skip], dim=1)
-        x = self.nn(x)
-        return x, pos_skip, batch_skip
-
-"""
-class Net(torch.nn.Module):
-    def __init__(self, num_classes):
-        super(Net, self).__init__()
-        self.sa1_module = SAModule(0.2, 0.2, MLP([3, 64, 64, 128]))
-        self.sa2_module = SAModule(0.25, 0.4, MLP([128 + 3, 128, 128, 256]))
-        self.sa3_module = GlobalSAModule(MLP([256 + 3, 256, 512, 1024]))
-
-        self.fp3_module = FPModule(1, MLP([1024 + 256, 256, 256]))
-        self.fp2_module = FPModule(3, MLP([256 + 128, 256, 128]))
-        self.fp1_module = FPModule(3, MLP([128, 128, 128, 128]))
-
-        self.lin1 = torch.nn.Linear(128, 128)
-        self.lin2 = torch.nn.Linear(128, 128)
-        self.lin3 = torch.nn.Linear(128, num_classes)
-
-    def forward(self, data):
-        sa0_out = (data.x, data.pos, data.batch)
-        sa1_out = self.sa1_module(*sa0_out)
-        sa2_out = self.sa2_module(*sa1_out)
-        sa3_out = self.sa3_module(*sa2_out)
-
-        fp3_out = self.fp3_module(*sa3_out, *sa2_out)
-        fp2_out = self.fp2_module(*fp3_out, *sa1_out)
-        x, _, _ = self.fp1_module(*fp2_out, *sa0_out)
-
-        x = F.relu(self.lin1(x))
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.lin2(x)
-        x = F.dropout(x, p=0.5, training=self.training)
-        x = self.lin3(x)
-        return F.log_softmax(x, dim=-1)
-"""
-class Net(torch.nn.Module):
-    def __init__(self, num_classes):
-        super(Net, self).__init__()
-        self.kp1_module = KPConv(0.3, 0.2, 3, 32)
-        self.kp2_module = KPConv(0.5, 0.4, 32, 64)
-
-        self.fp2_module = FPModule(3, MLP([64 + 32, 32]))
-        self.fp1_module = FPModule(3, MLP([32, 32, 32]))
-
-        self.mlp_cls = MLP([32, 16, num_classes])
-
-    def forward(self, data):
-        #Normalize in [-.5, .5]
-        max_, min_ = np.max(data.pos.cpu().numpy()), np.min(data.pos.cpu().numpy())
-        data.pos = (data.pos - (max_ + min_) / 2.) / np.linalg.norm(max_ - min_)
-        
-        input = (data.x, data.pos, data.batch)
-        kp1_out = self.kp1_module(*input)
-        kp2_out = self.kp2_module(*kp1_out)
-
-        fp2_out = self.fp2_module(*kp2_out, *kp1_out)
-        x, _, _ = self.fp1_module(*fp2_out, *input)
-        x = self.mlp_cls(x)
-        return F.log_softmax(x, dim=-1)
-
-
-model = Net(train_dataset.num_classes).to(DEVICE)
+model = PartSegmentation(train_dataset.num_classes).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 def train():
