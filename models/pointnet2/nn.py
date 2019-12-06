@@ -11,9 +11,12 @@ class SegmentationModel(UnetBasedModel):
         self.up_conv_cls = FPModule
         self._name = 'POINTNET++_MODEL'
         super(SegmentationModel, self).__init__(opt, num_classes)
-        self.mlp_cls = MLP(opt.mlp_cls + [num_classes])
+        self.mlp_cls = MLP(opt.mlp_cls + [num_classes], p_dropout=0.1)
         
     def forward(self, data):
+        """Standard forward"""
         input = (data.x, data.pos, data.batch)
-        output = self.model(input)
-        return F.log_softmax(self.mlp_cls(output[0]), dim=-1)
+        data_out = self.model(input)
+        data = (*data_out, *input)
+        x, _, _ = self.upconv(data)
+        return F.log_softmax(self.mlp_cls(x), dim=-1)

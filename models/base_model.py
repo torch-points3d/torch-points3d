@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch_geometric
 from torch_geometric.nn import global_max_pool, global_mean_pool, fps, radius, knn_interpolate
-from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN
+from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
 from omegaconf.listconfig import ListConfig
 from collections import defaultdict
 from torch_geometric.nn import MessagePassing
@@ -69,11 +69,9 @@ class UnetBasedModel(nn.Module):
         unet_args = self.fetch_arguments(opt.convs, count_convs)
         self.model = UnetSkipConnectionBlock(**unet_args, output_nc=num_classes, input_nc=None, submodule=unet_block, \
                     outermost=True, norm_layer=None, name=self._name)  # add the outermost layer
-        print(self.model)
+        
+        self.upconv = nn.Sequential(*[self.up_conv_cls(up_k=3, up_conv_nn=opt.convs.final_up_conv_nn)])
 
-    def forward(self, input):
-        """Standard forward"""
-        return self.model(input)
 
 class UnetSkipConnectionBlock(nn.Module):
     """Defines the Unet submodule with skip connection.
@@ -107,6 +105,7 @@ class UnetSkipConnectionBlock(nn.Module):
         if innermost:
             assert outermost == False
             model = [GlobalBaseModule(nn=kwargs.get('nn', None), aggr=kwargs.get('aggr', "max"))]
+            self.model = nn.Sequential(*model)
         else:
             downconv_cls = self.get_from_kwargs(kwargs, 'down_conv_cls')
             upconv_cls = self.get_from_kwargs(kwargs, 'up_conv_cls')
@@ -114,23 +113,28 @@ class UnetSkipConnectionBlock(nn.Module):
             downconv = downconv_cls(**kwargs)
             upconv = upconv_cls(**kwargs)
 
+            
             down = [downconv]
             up = [upconv]
-            model = down + [submodule]
+            submodule = [submodule]
+            
+            self.down = nn.Sequential(*down)
             self.up = nn.Sequential(*up)
-        self.model = nn.Sequential(*model)
+            self.submodule = nn.Sequential(*submodule)
 
     def forward(self, data):
         if hasattr(self, "up"):
-            data_out = self.model(data)
-            data = (*data_out, *data)
+            data_out = self.down(data)
+            data_out2 = self.submodule(data_out)
+            data = (*data_out2, *data_out)
             return self.up(data)
         else:
             return self.model(data)
 
 
-def MLP(channels, batch_norm=True):
+def MLP(channels, p_dropout=0):
     return Seq(*[
+        Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2), Dropout(p_dropout)) if p_dropout > 0 else \
         Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2))
         for i in range(1, len(channels))
     ])
@@ -142,6 +146,7 @@ class FPModule(torch.nn.Module):
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
+        #print()
         #print([x.shape if x is not None else None for x in data])
         x, pos, batch, x_skip, pos_skip, batch_skip = data
         x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
@@ -178,10 +183,14 @@ class GlobalBaseModule(torch.nn.Module):
 
     def forward(self, data):
         x, pos, batch = data
+        #print("GLOBAL", x.shape, pos.shape, batch.shape)
         x = self.nn(torch.cat([x, pos], dim=1))
+        #print("GLOBAL", x.shape)
         x = self.pool(x, batch)
+        #print("GLOBAL")
         pos = pos.new_zeros((x.size(0), 3))
         batch = torch.arange(x.size(0), device=batch.device)
+        #print("GLOBAL", x.shape, pos.shape, batch.shape)
         data = (x, pos, batch)
         return data
 
