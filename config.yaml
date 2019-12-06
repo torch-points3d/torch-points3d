@@ -43,7 +43,7 @@ models:
                 aggr: max
                 nn: [259, 256, 512, 1024]
             skip: True
-            mlp_cls: [128, 64, 64, 32]
+            mlp_cls: [128, 128, 128, 128]
 
              
                 
