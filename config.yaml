@@ -2,10 +2,44 @@ data:
     name: shapenet
     dataroot: /Volumes/Workspace/KP_Conv/data
     shapenet:
-        category: 'Airplane'
+        category: Airplane
 
-model:
-    name: KP_Conv
-    KP_Conv:
-        radius: 0.3
-        feature_sizes: [32, 64]
+training:
+    shuffle: True
+    num_workers: 2
+    batch_size: 2
+    cuda: 0
+
+tested_model:
+    name: KPConv
+    task: SEGMENTATION
+
+models:
+    SEGMENTATION:
+        KPConv:
+            name: KPConv
+            convs:
+                conv_0: 
+                    ratio: 0.2
+                    radius: 0.1
+                    feature_sizes: [3, 16]
+                conv_1: 
+                    ratio: 0.25
+                    radius: 0.2
+                    feature_sizes: [16, 32]
+            global:
+                aggr: max
+            fpms:
+                fpm_0: 
+                    dim_in: 32
+                    mlp_in: 
+                    mlp_out: 
+                fpm_1: 
+                    dim_in: 32
+                    mlp_in: 
+                    mlp_out: 
+            mlp_cls:
+                fcs: []
+                
+                
+            

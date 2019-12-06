@@ -7,11 +7,9 @@ import torch.nn.functional as F
 from datasets.utils import find_dataset_using_name
 import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
-from models.KPConv.nn import PartSegmentation
+from models.utils import find_model_using_name
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-def train(model, train_loader,optimizer):
+def train(model, train_loader,optimizer, DEVICE):
     model.train()
 
     total_loss = correct_nodes = total_nodes = 0
@@ -34,7 +32,7 @@ def train(model, train_loader,optimizer):
             total_loss = correct_nodes = total_nodes = 0
 
 
-def test(model, loader, num_classes):
+def test(model, loader, num_classes, DEVICE):
     model.eval()
 
     correct_nodes = total_nodes = 0
@@ -68,19 +66,37 @@ def test(model, loader, num_classes):
 
     return correct_nodes / total_nodes, torch.tensor(ious).mean().item()
 
+def run(cfg, model, dataset, optimizer, DEVICE):
+    train_loader = dataset.train_dataloader()
+    test_loader = dataset.test_dataloader()
+    for epoch in range(1, 31):
+        train(model, train_loader, optimizer, DEVICE)
+        acc, iou = test(model, test_loader, dataset.num_classes)
+        print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
 
 
 @hydra.main(config_path='config.yaml')
 def main(cfg):
-    dataset = find_dataset_using_name(cfg.data.name)(cfg.data)
-    model = PartSegmentation(cfg.model.KP_Conv, dataset.num_classes).to(DEVICE)
+    # GET ARGUMENTS
+    DEVICE = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda) \
+        else 'cpu')
+
+    #Get task and model_name
+    tested_task = cfg.tested_model.task
+    tested_model_name = cfg.tested_model.name
+
+    # Find and create associated dataset
+    dataset = find_dataset_using_name(cfg.data.name)(cfg.data, cfg.training)
+    
+    # Find and create associated model
+    model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
+    model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
+
+    # Create optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    train_loader = dataset.train_dataloader()
-    test_loader = dataset.test_dataloader()
-    for epoch in range(1, 31):
-        train(model, train_loader,optimizer)
-        acc, iou = test(model, test_loader, dataset.num_classes)
-        print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
+
+    # Run training / evaluation
+    run(cfg, model, dataset, optimizer, DEVICE)
 
 if __name__ == "__main__":
     main()
