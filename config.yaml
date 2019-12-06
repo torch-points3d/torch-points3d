@@ -1,0 +1,11 @@
+data:
+    name: shapenet
+    dataroot: /Volumes/Workspace/KP_Conv/data
+    shapenet:
+        category: 'Airplane'
+
+model:
+    name: KP_Conv
+    KP_Conv:
+        radius: 0.3
+        feature_sizes: [32, 64]
