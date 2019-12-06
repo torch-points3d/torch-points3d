@@ -4,39 +4,14 @@ import torch
 torch.backends.cudnn.enabled = False
 import numpy as np
 import torch.nn.functional as F
-from torch_geometric.datasets import ShapeNet
-import torch_geometric.transforms as T
-from torch_geometric.data import DataLoader
-from torch_geometric.nn import knn_interpolate
+from datasets.utils import find_dataset_using_name
+import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
 from models.KPConv.nn import PartSegmentation
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-category = 'Airplane'
-path = osp.join(osp.dirname(osp.realpath(__file__)), 'data', 'ShapeNet')
-transform = T.Compose([
-    T.RandomTranslate(0.01),
-    T.RandomRotate(15, axis=0),
-    T.RandomRotate(15, axis=1),
-    T.RandomRotate(15, axis=2)
-])
-pre_transform = T.NormalizeScale()
-train_dataset = ShapeNet(path, category, train=True, transform=transform,
-                         pre_transform=pre_transform)
-test_dataset = ShapeNet(path, category, train=False,
-                        pre_transform=pre_transform)
-train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True,
-                          num_workers=6)
-
-test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False,
-                         num_workers=6)
-
-
-model = PartSegmentation(train_dataset.num_classes).to(DEVICE)
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-
-def train():
+def train(model, train_loader,optimizer):
     model.train()
 
     total_loss = correct_nodes = total_nodes = 0
@@ -59,7 +34,7 @@ def train():
             total_loss = correct_nodes = total_nodes = 0
 
 
-def test(loader):
+def test(model, loader, num_classes):
     model.eval()
 
     correct_nodes = total_nodes = 0
@@ -71,7 +46,7 @@ def test(loader):
         pred = out.max(dim=1)[1]
         correct_nodes += pred.eq(data.y).sum().item()
         total_nodes += data.num_nodes
-        i, u = i_and_u(pred, data.y, test_dataset.num_classes, data.batch)
+        i, u = i_and_u(pred, data.y, num_classes, data.batch)
         intersections.append(i.to(DEVICE))
         unions.append(u.to(DEVICE))
         categories.append(data.category.to(DEVICE))
@@ -93,7 +68,19 @@ def test(loader):
 
     return correct_nodes / total_nodes, torch.tensor(ious).mean().item()
 
-for epoch in range(1, 31):
-    train()
-    acc, iou = test(test_loader)
-    print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
+
+
+@hydra.main(config_path='config.yaml')
+def main(cfg):
+    dataset = find_dataset_using_name(cfg.data.name)(cfg.data)
+    model = PartSegmentation(dataset.num_classes).to(DEVICE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    train_loader = dataset.train_dataloader()
+    test_loader = dataset.test_dataloader()
+    for epoch in range(1, 31):
+        train(model, train_loader,optimizer)
+        acc, iou = test(model, test_loader, dataset.num_classes)
+        print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
+
+if __name__ == "__main__":
+    main()

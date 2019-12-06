@@ -1,0 +1,5 @@
+data:
+    name: shapenet
+    dataroot: /Volumes/Workspace/KP_Conv/data
+    shapenet:
+        category: 'Airplane'
