@@ -2,3 +2,4 @@ data
 *.pyc
 __pycache__
 .vscode
+*outputs*
