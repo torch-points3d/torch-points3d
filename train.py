@@ -71,7 +71,7 @@ def run(cfg, model, dataset, optimizer, DEVICE):
     test_loader = dataset.test_dataloader()
     for epoch in range(1, 31):
         train(model, train_loader, optimizer, DEVICE)
-        acc, iou = test(model, test_loader, dataset.num_classes)
+        acc, iou = test(model, test_loader, dataset.num_classes, DEVICE)
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
 
 
