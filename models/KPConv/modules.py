@@ -152,10 +152,10 @@ class PointKernel(MessagePassing):
         return "PointKernel({}, {}, {}, {}, {})".format(self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence)
 
 class KPConv(BaseConvolution):
-    def __init__(self, ratio=None, radius=None, feature_sizes=None, num_points=16):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(KPConv, self).__init__(ratio, radius)      
 
-        in_features, out_features = feature_sizes
+        in_features, out_features = down_conv_nn
 
         # KPCONV arguments
         self.in_features = in_features

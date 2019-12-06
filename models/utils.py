@@ -12,7 +12,6 @@ def find_model_using_name(model_name, task, option, num_classes):
     datasetlib = importlib.import_module(dataset_filename)
 
     for name, cls in datasetlib.__dict__.items():
-        print(name.lower() == cls_name.lower())
         if name.lower() == cls_name.lower():
             model = cls
 
