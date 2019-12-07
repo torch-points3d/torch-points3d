@@ -132,10 +132,9 @@ class UnetSkipConnectionBlock(nn.Module):
             return self.model(data)
 
 
-def MLP(channels, p_dropout=0):
+def MLP(channels, batch_norm=True):
     return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2), Dropout(p_dropout)) if p_dropout > 0 else \
-        Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2))
+        Seq(Lin(channels[i - 1], channels[i]), ReLU(), BN(channels[i]))
         for i in range(1, len(channels))
     ])
 

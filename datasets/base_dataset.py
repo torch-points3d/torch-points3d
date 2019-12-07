@@ -12,10 +12,10 @@ class BaseDataset():
 
     def create_dataloaders(self, train_dataset,  test_dataset, validation=None):
         self._num_classes = train_dataset.num_classes
-        self._train_loader = DataLoader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
+        self._train_loader = DataLoader(train_dataset, batch_size=4, shuffle=self.training_opt.shuffle,
                                 num_workers=self.training_opt.num_workers)
 
-        self._test_loader = DataLoader(test_dataset, batch_size=self.training_opt.batch_size, shuffle=False,
+        self._test_loader = DataLoader(test_dataset, batch_size=4, shuffle=False,
                                 num_workers=self.training_opt.num_workers)
     @abstractmethod
     def test_dataloader(self):

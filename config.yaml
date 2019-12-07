@@ -7,7 +7,7 @@ data:
 training:
     shuffle: True
     num_workers: 2
-    batch_size: 2
+    batch_size: 4
     cuda: 1
 
 tested_model:

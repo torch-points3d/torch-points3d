@@ -167,6 +167,6 @@ class KPConv(BaseConvolution):
 
 def MLP(channels, batch_norm=True):
     return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2))
+        Seq(Lin(channels[i - 1], channels[i]), LeakyReLU(0.2), BN(channels[i]))
         for i in range(1, len(channels))
     ])
