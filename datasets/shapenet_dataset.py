@@ -10,14 +10,8 @@ class ShapeNetDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
         self._category = dataset_opt.shapenet.category
-        transform = T.Compose([
-            T.RandomTranslate(0.01),
-            T.RandomRotate(15, axis=0),
-            T.RandomRotate(15, axis=1),
-            T.RandomRotate(15, axis=2)
-        ])
         pre_transform = T.NormalizeScale()
-        train_dataset = ShapeNet(self._data_path, self._category, train=True, transform=transform,
+        train_dataset = ShapeNet(self._data_path, self._category, train=True,
                                 pre_transform=pre_transform)
         test_dataset = ShapeNet( self._data_path, self._category, train=False,
                                 pre_transform=pre_transform)
@@ -28,7 +22,7 @@ class ShapeNetDataset(BaseDataset):
         return self._test_loader
 
     def train_dataloader(self):
-        return self._test_loader
+        return self._train_loader
 
     @property
     def num_classes(self):

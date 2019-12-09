@@ -73,7 +73,7 @@ def test(model, loader, num_classes, device):
 def run(cfg, model, dataset, optimizer, device):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
-    for epoch in range(1, 2):
+    for epoch in range(1, 31):
         train(model, train_loader, optimizer, device)
         acc, iou = test(model, test_loader, dataset.num_classes, device)
         wandb.log({"Test Accuracy": acc, "Test IoU": iou})
@@ -98,7 +98,9 @@ def main(cfg):
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
     wandb.watch(model)
     model = model.to(device)
-    print(model)
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())    
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print("Model size = %i" % params)
     # Create optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 

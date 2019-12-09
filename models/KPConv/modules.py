@@ -162,7 +162,11 @@ class KPConv(BaseConvolution):
         self.out_features = out_features
         self.num_points = num_points
 
-        self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+        self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+
+    @property
+    def conv(self):
+        return self._conv
 
 
 def MLP(channels, batch_norm=True):

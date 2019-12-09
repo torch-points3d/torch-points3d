@@ -161,8 +161,8 @@ class BaseConvolution(torch.nn.Module):
         self.radius = radius
         self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
 
-    @abstractmethod
     @property
+    @abstractmethod
     def conv(self):
         pass
 
