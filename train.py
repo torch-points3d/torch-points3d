@@ -82,11 +82,11 @@ def main(cfg):
         else 'cpu')
 
     #Get task and model_name
-    tested_task = cfg.tested_model.task
-    tested_model_name = cfg.tested_model.name
+    tested_task = cfg.experiment.task
+    tested_model_name = cfg.experiment.name
 
     # Find and create associated dataset
-    dataset = find_dataset_using_name(cfg.data.name)(cfg.data, cfg.training)
+    dataset = find_dataset_using_name(cfg.experiment.dataset)(cfg.data, cfg.training)
     
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)

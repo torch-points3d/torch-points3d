@@ -1,6 +1,5 @@
 data:
-    name: shapenet
-    dataroot: /Volumes/Workspace/KP_Conv/data
+    dataroot: /Volumes/Workspace/deeppointcloud-benchmark/data
     shapenet:
         category: Airplane
 
@@ -10,9 +9,10 @@ training:
     batch_size: 4
     cuda: 1
 
-tested_model:
+experiment:
     name: pointnet2
     task: SEGMENTATION
+    dataset: shapenet
 
 models:
     SEGMENTATION:
