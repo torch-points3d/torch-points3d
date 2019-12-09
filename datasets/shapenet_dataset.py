@@ -6,10 +6,10 @@ import torch_geometric.transforms as T
 
 
 class ShapeNetDataset(BaseDataset):
-    def  __init__(self, opt):
-        super().__init__(opt)
-        self._data_path = os.path.join(opt.dataroot, 'ShapeNet')
-        self._category = opt.shapenet.category
+    def  __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+        self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
+        self._category = dataset_opt.shapenet.category
         transform = T.Compose([
             T.RandomTranslate(0.01),
             T.RandomRotate(15, axis=0),
@@ -21,13 +21,8 @@ class ShapeNetDataset(BaseDataset):
                                 pre_transform=pre_transform)
         test_dataset = ShapeNet( self._data_path, self._category, train=False,
                                 pre_transform=pre_transform)
-        self._num_classes = train_dataset.num_classes
-        self._train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True,
-                                num_workers=6)
 
-        self._test_loader = DataLoader(test_dataset, batch_size=2, shuffle=False,
-                                num_workers=6)
-
+        self.create_dataloaders(train_dataset, test_dataset, validation=None)
     
     def test_dataloader(self):
         return self._test_loader

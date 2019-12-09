@@ -15,6 +15,7 @@ from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessageP
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from torch_geometric.utils import remove_self_loops
+from models.base_model import BaseConvolution, FPModule, MLP
 
 special_args = [
     'edge_index', 'edge_index_i', 'edge_index_j', 'size', 'size_i', 'size_j'
@@ -143,80 +144,29 @@ class PointKernel(MessagePassing):
         #import pdb; pdb.set_trace()
         return out
 
-        """
-        #  # Center every neighborhood [n_points, n_neighbors, dim]
-        neighbors = (pos_i -  pos_j).view((-1, self.num_points, 3))
-
-        # Number of support points
-        n_points = neighbors.shape[0]
-        
-        #Get points kernels
-        K_points = self.kernel
-
-        # Get all difference matrices [[n_points, n_neighbors, n_kpoints, dim]
-        neighbors = neighbors.unsqueeze(2)
-
-        differences = neighbors - K_points.float().view((-1, 3)).unsqueeze(0).unsqueeze(0)
-        sq_distances = (differences**2).sum(-1)
-
-        # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
-        if self.KP_influence == 'constant':
-            # Every point get an influence of 1.
-            all_weights = torch.ones_like(sq_distances)
-
-        elif self.KP_influence == 'linear':
-            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1. - (torch.sqrt(sq_distances) / self.KP_extent)
-            all_weights[all_weights < 0] = 0.0
-        else:
-            raise ValueError('Unknown influence function type (config.KP_influence)')
-        
-        neighbors_1nn = torch.argmin(sq_distances, dim=-1)
-        one_hot = torch.zeros_like(all_weights)
-        one_hot.scatter_(2, neighbors_1nn.unsqueeze(-1), 1)
-        all_weights *= one_hot
-        
-        K_weights = self.kernel_weight
-        K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)).view((n_points, -1, self.in_features, self.out_features))
-
-        # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
-        features = x_j.view((-1, self.num_points, self.in_features))
-
-        # Apply distance weights [n_points, n_kpoints, in_fdim]
-        weighted_features = torch.einsum("nab, nac -> nac", all_weights, features)
-
-        # Apply network weights [n_kpoints, n_points, out_fdim]
-        out = torch.einsum("nac, nacd -> nad", weighted_features, K_weights)
-        out = out.view(-1, self.out_features)
-        return out
-        """
-
     def update(self, aggr_out):
         return aggr_out
 
-class KPConv(nn.Module):
-    def __init__(self, ratio, radius, in_features, out_features, num_points=16):
-        super(KPConv, self).__init__()       
-        self.ratio = ratio
-        self.radius = radius
+    def __repr__(self):
+                # PointKernel parameters
+        return "PointKernel({}, {}, {}, {}, {})".format(self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence)
+
+class KPConv(BaseConvolution):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
+        super(KPConv, self).__init__(ratio, radius)      
+
+        in_features, out_features = down_conv_nn
+
+        # KPCONV arguments
         self.in_features = in_features
         self.out_features = out_features
         self.num_points = num_points
 
         self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
-    def forward(self, x, pos, batch):
-        idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
-                          max_num_neighbors=64)
-        edge_index = torch.stack([col, row], dim=0)
-        x = self.conv(x, (pos, pos[idx]), edge_index)
-        pos, batch = pos[idx], batch[idx]
-        return x, pos, batch
-
 
 def MLP(channels, batch_norm=True):
     return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), BN(channels[i]), LeakyReLU(0.2))
+        Seq(Lin(channels[i - 1], channels[i]), LeakyReLU(0.2), BN(channels[i]))
         for i in range(1, len(channels))
     ])
