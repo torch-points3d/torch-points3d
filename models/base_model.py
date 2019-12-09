@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from abc import abstractmethod
 import torch_geometric
 from torch_geometric.nn import global_max_pool, global_mean_pool, fps, radius, knn_interpolate
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
@@ -158,8 +159,12 @@ class BaseConvolution(torch.nn.Module):
         super(BaseConvolution, self).__init__()
         self.ratio = ratio
         self.radius = radius
-        self.conv = None # This one should be implemented
         self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
+
+    @abstractmethod
+    @property
+    def conv(self):
+        pass
 
     def forward(self, data):
         x, pos, batch = data
