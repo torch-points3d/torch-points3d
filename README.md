@@ -8,6 +8,11 @@ poetry install
 ```
 This will install all required dependencies in a new virtual environment.
 
+## Benchmark pointnet++ on Segmentation task for shapenet
+```
+poetry run python train.py tested_model.name=pointnet2
+```
+
 ## Contributers
 - [Thomas Chaton](https://github.com/tchaton)
 - [Nicolas Chaulet](https://github.com/nicolas-chaulet)
