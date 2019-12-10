@@ -12,7 +12,7 @@ class SegmentationModel(UnetBasedModel):
         self._name = 'POINTNET++_MODEL'
         super(SegmentationModel, self).__init__(opt, num_classes)
         #self.mlp_cls = MLP(opt.mlp_cls + [num_classes], p_dropout=0.1)
-        self.lin1 = torch.nn.Linear(128, 128)
+        self.lin1 = torch.nn.Linear(opt.convs.final_up_conv_nn[-1], 128)
         self.lin2 = torch.nn.Linear(128, 128)
         self.lin3 = torch.nn.Linear(128, num_classes)
 
@@ -29,4 +29,3 @@ class SegmentationModel(UnetBasedModel):
         x = F.dropout(x, p=0.5, training=self.training)
         x = self.lin3(x)
         return F.log_softmax(x, dim=-1)        
-        #return F.log_softmax(self.mlp_cls(x), dim=-1)

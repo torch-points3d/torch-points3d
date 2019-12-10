@@ -28,7 +28,7 @@ class ShapeNetDataset(BaseDataset):
         return self._test_loader
 
     def train_dataloader(self):
-        return self._test_loader
+        return self._train_loader
 
     @property
     def num_classes(self):

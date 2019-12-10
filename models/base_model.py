@@ -145,8 +145,6 @@ class FPModule(torch.nn.Module):
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
-        #print()
-        #print([x.shape if x is not None else None for x in data])
         x, pos, batch, x_skip, pos_skip, batch_skip = data
         x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
         if x_skip is not None:
@@ -182,14 +180,10 @@ class GlobalBaseModule(torch.nn.Module):
 
     def forward(self, data):
         x, pos, batch = data
-        #print("GLOBAL", x.shape, pos.shape, batch.shape)
         x = self.nn(torch.cat([x, pos], dim=1))
-        #print("GLOBAL", x.shape)
         x = self.pool(x, batch)
-        #print("GLOBAL")
         pos = pos.new_zeros((x.size(0), 3))
         batch = torch.arange(x.size(0), device=batch.device)
-        #print("GLOBAL", x.shape, pos.shape, batch.shape)
         data = (x, pos, batch)
         return data
 
@@ -252,6 +246,7 @@ class PointConv(MessagePassing):
         if torch.is_tensor(pos):  # Add self-loops for symmetric adjacencies.
             edge_index, _ = remove_self_loops(edge_index)
             edge_index, _ = add_self_loops(edge_index, num_nodes=pos.size(0))
+        print("POS", pos[0].shape, pos[1].shape)
 
         return self.propagate(edge_index, x=x, pos=pos)
 
