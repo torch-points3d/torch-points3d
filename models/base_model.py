@@ -185,13 +185,9 @@ class GlobalBaseModule(torch.nn.Module):
 
     def forward(self, data):
         x, pos, batch = data
-        #print("GLOBAL", x.shape, pos.shape, batch.shape)
         x = self.nn(torch.cat([x, pos], dim=1))
-        #print("GLOBAL", x.shape)
         x = self.pool(x, batch)
-        #print("GLOBAL")
         pos = pos.new_zeros((x.size(0), 3))
         batch = torch.arange(x.size(0), device=batch.device)
-        #print("GLOBAL", x.shape, pos.shape, batch.shape)
         data = (x, pos, batch)
         return data

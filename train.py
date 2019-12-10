@@ -8,6 +8,7 @@ from datasets.utils import find_dataset_using_name
 import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
 from models.utils import find_model_using_name
+import tqdm
 import wandb
 wandb.init(project="dpc-benchmark")
 
@@ -16,7 +17,7 @@ def train(model, train_loader,optimizer, device):
     model.train()
 
     total_loss = correct_nodes = total_nodes = 0
-    for i, data in enumerate(train_loader):
+    for i, data in enumerate(tqdm.tqdm(train_loader)):
         data = data.to(device)
         optimizer.zero_grad()
         out = model(data)
@@ -27,12 +28,6 @@ def train(model, train_loader,optimizer, device):
         total_loss += loss.item()
         correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
         total_nodes += data.num_nodes
-
-        if (i + 1) % 10 == 0:
-            print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
-                i + 1, len(train_loader), total_loss / 10,
-                correct_nodes / total_nodes))
-            total_loss = correct_nodes = total_nodes = 0
     
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
 
@@ -41,7 +36,7 @@ def test(model, loader, num_classes, device):
 
     correct_nodes = total_nodes = 0
     intersections, unions, categories = [], [], []
-    for data in loader:
+    for data in tqdm.tqdm(loader):
         data = data.to(device)
         with torch.no_grad():
             out = model(data)
