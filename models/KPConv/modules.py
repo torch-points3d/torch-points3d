@@ -15,7 +15,7 @@ from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessageP
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from torch_geometric.utils import remove_self_loops
-from models.base_model import BaseConvolution, FPModule, MLP
+from models.base_model import *
 
 special_args = [
     'edge_index', 'edge_index_i', 'edge_index_j', 'size', 'size_i', 'size_j'
@@ -54,53 +54,18 @@ class PointKernel(MessagePassing):
         kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1, \
             dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
         self.kernel.data = torch.from_numpy(kernel)
-    
-    def get_message_argument(self):
-        self.__message_args__ = getargspec(self.message)[0][1:]
-        self.__special_args__ = [(i, arg)
-                                 for i, arg in enumerate(self.__message_args__)
-                                 if arg in special_args]
-        self.__message_args__ = [
-            arg for arg in self.__message_args__ if arg not in special_args
-        ]   
-
-    def define_message(self, x):
-        if not hasattr(self, "messsage_is_defined"):
-            self.x_is_none = x is None
-            if self.x_is_none:
-                self.message = self.message_pos
-                self.get_message_argument()
-                self.messsage_is_defined = True
-            else:
-                self.message = self.message_x_and_pos
-                self.get_message_argument()
-                self.messsage_is_defined = True      
-
+ 
     def forward(self, x, pos, edge_index):
         edge_index, _ = remove_self_loops(edge_index)
-        self.define_message(x)
-        if self.x_is_none:
-            return self.propagate(edge_index, pos=pos)
-        else:
-            return self.propagate(edge_index, x=x, pos=pos[0])
+        return self.propagate(edge_index, x=x, pos=pos)
 
-    def message_pos(self, pos_i, pos_j):
-        return self.message_forward(pos_i=pos_i, pos_j=pos_j)
+    def message(self, x_j, pos_i, pos_j):
 
-    def message_x_and_pos(self, x_j, pos_i, pos_j):
-        return self.message_forward(x_j=x_j, pos_i=pos_i, pos_j=pos_j)
-
-    def message_forward(self, **kwargs):
-        if self.x_is_none:
-            pos_i = kwargs.get("pos_i")
-            x_j = pos_j = kwargs.get("pos_j")
-        else:
-            x_j = kwargs.get("x_j")
-            pos_i = kwargs.get("pos_i")
-            pos_j = kwargs.get("pos_j")
+        if x_j is None:
+            x_j = pos_j
 
         #Center every neighborhood [SUM n_neighbors(n_points), dim]
-        neighbors = (pos_j -  pos_i)
+        neighbors = (pos_j - pos_i)
 
         # Number of points
         n_points = neighbors.shape[0]
@@ -144,7 +109,7 @@ class PointKernel(MessagePassing):
         #import pdb; pdb.set_trace()
         return out
 
-    def update(self, aggr_out):
+    def update(self, aggr_out, pos):
         return aggr_out
 
     def __repr__(self):
@@ -154,7 +119,7 @@ class PointKernel(MessagePassing):
 class KPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(KPConv, self).__init__(ratio, radius)      
-
+        
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments
@@ -168,6 +133,31 @@ class KPConv(BaseConvolution):
     def conv(self):
         return self._conv
 
+
+class SimpleUpsampleKPConv(BaseConvolution):
+    def __init__(self, ratio=None, radius=None, up_conv_nn=None, num_points=16, *args, **kwargs):
+        super(SimpleUpsampleKPConv, self).__init__(ratio, radius)      
+
+        in_features, out_features = up_conv_nn
+
+        # KPCONV arguments
+        self.in_features = in_features
+        self.out_features = out_features
+        self.num_points = num_points
+
+        self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+
+    def forward(self, data):
+        x, pos, batch, x_skip, pos_skip, batch_skip = data
+        row, col = radius(pos_skip, pos, self.radius, batch_skip, batch,
+                        max_num_neighbors=self.max_num_neighbors)
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv(x, (pos_skip, pos), edge_index)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+        x = self.nn(x)
+        data = (x, pos_skip, batch_skip)
+        return data
 
 def MLP(channels, batch_norm=True):
     return Seq(*[

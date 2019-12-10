@@ -18,5 +18,7 @@ def find_model_using_name(model_name, task, option, num_classes):
     if model is None:
         raise NotImplementedError("In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase." % (
             model_name, task))
-
-    return model(option, num_classes)
+    
+    module_filename = '.'.join(["models", model_name, "modules"])
+    modules = importlib.import_module(module_filename)
+    return model(option, num_classes, modules)

@@ -2,7 +2,7 @@
 import torch 
 from torch.nn import ReLU
 from torch_geometric.nn import MessagePassing
-from models.base_model import BaseConvolution
+from models.base_model import *
 
 class Convolution(MessagePassing):
     r"""The Relation Shape Convolution layer from "Relation-Shape Convolutional Neural Network for Point Cloud Analysis" 
