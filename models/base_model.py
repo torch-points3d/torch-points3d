@@ -52,7 +52,7 @@ class UnetBasedModel(nn.Module):
         args_up['up_conv_cls'] = self.up_conv_cls
         return args_up, args_down
 
-    def __init__(self, opt, num_classes, modules):
+    def __init__(self, opt, num_classes, modules_lib):
         """Construct a Unet generator
         Parameters:
             input_nc (int)  -- the number of channels in input images
@@ -68,8 +68,8 @@ class UnetBasedModel(nn.Module):
         
         num_convs = len(opt.down_conv.down_conv_nn)
         
-        self.down_conv_cls = getattr(modules, opt.down_conv.module_name, None)
-        self.up_conv_cls = getattr(modules, opt.up_conv.module_name, None)
+        self.down_conv_cls = getattr(modules_lib, opt.down_conv.module_name, None)
+        self.up_conv_cls = getattr(modules_lib, opt.up_conv.module_name, None)
 
         # construct unet structure
         contains_global = hasattr(opt, "innermost")
@@ -77,7 +77,7 @@ class UnetBasedModel(nn.Module):
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
             args_up = self.fetch_arguments_from_list(opt.up_conv, 0)
             args_up['up_conv_cls'] = self.up_conv_cls
-            unet_block = UnetSkipConnectionBlock(args_up=args_up, **opt['innermost'], input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
+            unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib, input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
         else:
             unet_block = []
 
@@ -106,7 +106,7 @@ class UnetSkipConnectionBlock(nn.Module):
         kwargs.pop(name)
         return module
 
-    def __init__(self, args_up=None, args_down=None, submodule=None, outermost=False, innermost=False, use_dropout=False, name=None, *args, **kwargs):
+    def __init__(self, args_up=None, args_down=None, args_innermost=None, modules_lib=None, submodule=None, outermost=False, innermost=False, use_dropout=False, name=None, *args, **kwargs):
         """Construct a Unet submodule with skip connections.
         Parameters:
             outer_nc (int) -- the number of filters in the outer conv layer
@@ -125,7 +125,9 @@ class UnetSkipConnectionBlock(nn.Module):
 
         if innermost:
             assert outermost == False
-            inner_module = [GlobalBaseModule(nn=kwargs.get('nn', None), aggr=kwargs.get('aggr', "max"))]
+            module_name = self.get_from_kwargs(args_innermost, 'module_name')
+            inner_module_cls = getattr(modules_lib, module_name)
+            inner_module = [inner_module_cls(**args_innermost)]
             self.inner = nn.Sequential(*inner_module)
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
             up = [upconv_cls(**args_up)]
