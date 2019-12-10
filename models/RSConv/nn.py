@@ -1,16 +1,31 @@
 
 import torch.nn.functional as F
 from models.base_model import UnetBasedModel, FPModule
-from .modules import RSConv
+from models.base_model import *
 
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, opt, num_classes):
-        self.down_conv_cls = RSConv
-        self.up_conv_cls = FPModule
-        self._name = "RS_CONV_MODEL"
-        super(SegmentationModel, self).__init__(opt, num_classes)
+    def __init__(self, *args, **kwargs):
+        super(SegmentationModel, self).__init__(*args, **kwargs)
+
+        # self.down_conv_cls = RSConv
+        # self.up_conv_cls = FPModule
+        # self._name = "RS_CONV_MODEL"
     
+        nn = args[0].mlp_cls.nn
+        self.dropout = args[0].mlp_cls.get('dropout')
+        self.lin1 = torch.nn.Linear(nn[0], nn[1])
+        self.lin2 = torch.nn.Linear(nn[2], nn[3])
+        self.lin3 = torch.nn.Linear(nn[3], args[1])
+
+
     def forward(self, data):
-        inp = (data.x, data.pos, data.batch)
-        output = self.model(inp)
-        return F.log_softmax(output, dim=-1)
+        """Standard forward"""
+        print(data)
+        input = (data.x, data.pos, data.batch)
+        x, _, _  = self.model(input)
+        x = F.relu(self.lin1(x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lin2(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lin3(x)
+        return F.log_softmax(x, dim=-1)   

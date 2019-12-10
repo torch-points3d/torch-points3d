@@ -16,19 +16,23 @@ class Convolution(MessagePassing):
     """
 
     def __init__(self, local_nn, activation=ReLU(), global_nn = None, aggr = "max", **kwargs):
-        super(RSConv, self).__init__(aggr=aggr, **kwargs)
+        super(Convolution, self).__init__(aggr=aggr)
 
-        self.local_nn = local_nn
+        self.local_nn = MLP(local_nn)
         self.activation = activation
-        self.global_nn = global_nn
+        self.global_nn = MLP(global_nn) if global_nn is not None else None
 
     def forward(self, x, pos, edge_index):
+        import pdb; pdb.set_trace()
+        if x is None:
+            x = pos
+        print(x)
         return self.propagate(edge_index, x=x, pos=pos)
 
     def message(self, pos_i, pos_j, x_j):
 
         vij = pos_i - pos_j
-        dij = torch.norm(vij).unsqueeze(1)
+        dij = torch.norm(vij, dim=1).unsqueeze(1)
 
         hij = torch.cat([
             dij, 
