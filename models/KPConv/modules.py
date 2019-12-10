@@ -15,7 +15,7 @@ from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessageP
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from torch_geometric.utils import remove_self_loops
-from models.base_model import BaseConvolution, FPModule, MLP
+from models.base_model import *
 
 special_args = [
     'edge_index', 'edge_index_i', 'edge_index_j', 'size', 'size_i', 'size_j'
@@ -119,7 +119,7 @@ class PointKernel(MessagePassing):
 class KPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(KPConv, self).__init__(ratio, radius)      
-
+        
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments
@@ -129,6 +129,31 @@ class KPConv(BaseConvolution):
 
         self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
+
+class SimpleUpsampleKPConv(BaseConvolution):
+    def __init__(self, ratio=None, radius=None, up_conv_nn=None, num_points=16, *args, **kwargs):
+        super(SimpleUpsampleKPConv, self).__init__(ratio, radius)      
+
+        in_features, out_features = up_conv_nn
+
+        # KPCONV arguments
+        self.in_features = in_features
+        self.out_features = out_features
+        self.num_points = num_points
+
+        self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+
+    def forward(self, data):
+        x, pos, batch, x_skip, pos_skip, batch_skip = data
+        row, col = radius(pos_skip, pos, self.radius, batch_skip, batch,
+                        max_num_neighbors=self.max_num_neighbors)
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv(x, (pos_skip, pos), edge_index)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+        x = self.nn(x)
+        data = (x, pos_skip, batch_skip)
+        return data
 
 def MLP(channels, batch_norm=True):
     return Seq(*[

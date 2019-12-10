@@ -1,4 +1,4 @@
-from models.base_model import BaseConvolution, PointConv, MLP
+from models.base_model import *
 
 class SAModule(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, *args, **kwargs):
