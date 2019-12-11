@@ -1,5 +1,5 @@
 from torch_geometric.nn import PointConv
-from models.base_model import *
+from models.base_modules import *
 
 
 class SAModule(BaseConvolution):

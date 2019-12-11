@@ -8,8 +8,9 @@ from models.KPConv import modules
 
 from models.base_model import BaseModel
 
+
 class SegmentationModel(BaseModel, UnetBasedModel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, option, num_classes, modules):
         """Initialize this model class.
         Parameters:
             opt -- training/test options
@@ -17,17 +18,16 @@ class SegmentationModel(BaseModel, UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, *args, **kwargs)  # call the initialization method of UnetBasedModel
-        BaseModel.__init__(self, *args, **kwargs) # call the initialization method of BaseModel
-        
-        nn = args[0].mlp_cls.nn
-        self.dropout = args[0].mlp_cls.get('dropout')
+        UnetBasedModel.__init__(self, option, num_classes, modules)  # call the initialization method of UnetBasedModel
+        BaseModel.__init__(self, option)  # call the initialization method of BaseModel
+
+        nn = option.mlp_cls.nn
+        self.dropout = option.mlp_cls.get('dropout')
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
-        self.lin3 = torch.nn.Linear(nn[4], args[1])
-        
-        self.loss_names = ['loss_seg']
+        self.lin3 = torch.nn.Linear(nn[4], num_classes)
 
+        self.loss_names = ['loss_seg']
         self.optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
         self.optimizers = [self.optimizer]
 
@@ -41,13 +41,13 @@ class SegmentationModel(BaseModel, UnetBasedModel):
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        x, _, _  = self.model(self.input)
+        x, _, _ = self.model(self.input)
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
-        self.output = F.log_softmax(x, dim=-1)  
+        self.output = F.log_softmax(x, dim=-1)
         print(self.output.shape)
 
     def backward(self):
@@ -62,4 +62,4 @@ class SegmentationModel(BaseModel, UnetBasedModel):
         self.forward()               # first call forward to calculate intermediate results
         self.optimizer.zero_grad()   # clear network G's existing gradients
         self.backward()              # calculate gradients for network G
-        self.optimizer.step()        # update gradients for network 
+        self.optimizer.step()        # update gradients for network
