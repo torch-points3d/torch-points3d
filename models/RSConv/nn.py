@@ -20,8 +20,6 @@ class SegmentationModel(UnetBasedModel):
 
     def forward(self, data):
         """Standard forward"""
-        print(data)
-        data.x = data.pos
         input = (data.x, data.pos, data.batch)
         x, _, _  = self.model(input)
         x = F.relu(self.lin1(x))

@@ -51,7 +51,7 @@ models:
             innermost:
                 module_name: GlobalBaseModule
                 aggr: max
-                nn: [195, 128] #[3 + 64 + 128]
+                nn: [131, 128] #[3  + 128]
             up_conv:
                 module_name: FPModule
                 ratios: [1, 0.25, 0.2]
