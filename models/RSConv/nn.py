@@ -6,17 +6,12 @@ from models.base_model import *
 class SegmentationModel(UnetBasedModel):
     def __init__(self, *args, **kwargs):
         super(SegmentationModel, self).__init__(*args, **kwargs)
-
-        # self.down_conv_cls = RSConv
-        # self.up_conv_cls = FPModule
-        # self._name = "RS_CONV_MODEL"
     
         nn = args[0].mlp_cls.nn
         self.dropout = args[0].mlp_cls.get('dropout')
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[3], args[1])
-
 
     def forward(self, data):
         """Standard forward"""
