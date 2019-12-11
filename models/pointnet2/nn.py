@@ -4,8 +4,9 @@ import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 from models.base_model import MLP, FPModule, UnetBasedModel
 from torch_geometric.nn import knn_interpolate
-from torch_geometric.nn import PointConv, fps, radius, global_max_pool
+from torch_geometric.nn import radius, global_max_pool
 from .modules import SAModule
+
 
 class SegmentationModel(UnetBasedModel):
     def __init__(self, *args, **kwargs):
@@ -20,10 +21,10 @@ class SegmentationModel(UnetBasedModel):
     def forward(self, data):
         """Standard forward"""
         input = (data.x, data.pos, data.batch)
-        x, _, _  = self.model(input)
+        x, _, _ = self.model(input)
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
-        return F.log_softmax(x, dim=-1)      
+        return F.log_softmax(x, dim=-1)
