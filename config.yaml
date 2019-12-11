@@ -1,6 +1,6 @@
 data:
     name: shapenet
-    dataroot: /home/tristan/deeppointcloud-benchmarks/data
+    dataroot: data
     shapenet:
         category: Airplane
 
@@ -11,7 +11,7 @@ training:
     cuda: 0
 
 experiment:
-    name: RSConv
+    name: KPConv
     task: SEGMENTATION
     dataset: shapenet
 

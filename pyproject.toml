@@ -18,6 +18,7 @@ tqdm = "^4.40"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
+autopep8 = "^1.4"
 
 [build-system]
 requires = ["poetry>=0.12"]

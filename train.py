@@ -13,7 +13,7 @@ import wandb
 wandb.init(project="dpc-benchmark")
 
 
-def train(model, train_loader,optimizer, device):
+def train(model, train_loader, optimizer, device):
     model.train()
 
     total_loss = correct_nodes = total_nodes = 0
@@ -29,15 +29,15 @@ def train(model, train_loader,optimizer, device):
         correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
         total_nodes += data.num_nodes
 
-        #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
+        # uncomment to print loss and accurancy every 10 batches - to check if model is training correctly
         # if opts.verbose and (i + 1) % 10 == 0:
         #     print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
         #     i + 1, len(train_loader), total_loss / 10,
         #     correct_nodes / total_nodes))
         #     total_loss = correct_nodes = total_nodes = 0
 
-    
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
+
 
 def test(model, loader, num_classes, device):
     model.eval()
@@ -73,6 +73,7 @@ def test(model, loader, num_classes, device):
 
     return correct_nodes / total_nodes, torch.tensor(ious).mean().item()
 
+
 def run(cfg, model, dataset, optimizer, device):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
@@ -85,23 +86,25 @@ def run(cfg, model, dataset, optimizer, device):
 
 @hydra.main(config_path='config.yaml')
 def main(cfg):
-    # GET ARGUMENTS
-    device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda) \
-        else 'cpu')
+    cfg.data.dataroot = hydra.utils.to_absolute_path(cfg.data.dataroot)
 
-    #Get task and model_name
+    # GET ARGUMENTS
+    device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
+                          else 'cpu')
+
+    # Get task and model_name
     tested_task = cfg.experiment.task
     tested_model_name = cfg.experiment.name
 
     # Find and create associated dataset
     dataset = find_dataset_using_name(cfg.experiment.dataset)(cfg.data, cfg.training)
-    
+
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
     wandb.watch(model)
     model = model.to(device)
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())    
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print("Model size = %i" % params)
     # Create optimizer
@@ -109,6 +112,7 @@ def main(cfg):
 
     # Run training / evaluation
     run(cfg, model, dataset, optimizer, device)
+
 
 if __name__ == "__main__":
     main()
