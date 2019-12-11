@@ -1,9 +1,4 @@
-from models.base_model import BaseConvolution, MLP
-from torch_geometric.nn import MessagePassing
-from torch_geometric.nn.inits import reset
-from torch_geometric.utils import remove_self_loops, add_self_loops
-import torch
-from torch_geometric.nn import PointConv
+from models.base_model import *
 
 class SAModule(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, *args, **kwargs):
