@@ -16,7 +16,7 @@ class SegmentationModel(UnetBasedModel):
         self.dropout = args[0].mlp_cls.get('dropout')
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
-        self.lin3 = torch.nn.Linear(nn[3], args[1])
+        self.lin3 = torch.nn.Linear(nn[4], args[1])
 
     def forward(self, data):
         """Standard forward"""

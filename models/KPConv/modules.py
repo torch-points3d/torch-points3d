@@ -14,8 +14,7 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
-from torch_geometric.utils import remove_self_loops
-from models.base_model import *
+from models.base_modules import *
 
 
 class PointKernel(MessagePassing):

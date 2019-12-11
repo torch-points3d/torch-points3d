@@ -83,7 +83,7 @@ models:
                 aggr: max
                 nn: [67, 128]
             mlp_cls: 
-                nn: [64, 64, 64, 64]
+                nn: [64, 64, 64, 64, 64]
                 dropout: 0.5
 
         pointnet2:
@@ -105,5 +105,5 @@ models:
                 aggr: max
                 nn: [259, 256, 512, 1024]
             mlp_cls: 
-                nn: [128, 128, 128, 128]
+                nn: [128, 128, 128, 128, 128]
                 dropout: 0.5

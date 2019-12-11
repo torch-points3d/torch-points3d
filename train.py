@@ -8,24 +8,21 @@ from datasets.utils import find_dataset_using_name
 import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
 from models.utils import find_model_using_name
-import tqdm
+from tqdm import tqdm as tq
 import wandb
-wandb.init(project="dpc-benchmark")
+# wandb.init(project="dpc-benchmark")
 
 
-def train(model, train_loader, optimizer, device):
-    model.train()
+def train(model, train_loader, device):
+ model.train()
 
-    total_loss = correct_nodes = total_nodes = 0
-    for i, data in enumerate(tqdm.tqdm(train_loader)):
+  total_loss = correct_nodes = total_nodes = 0
+   for i, data in tq(enumerate(train_loader)):
+
         data = data.to(device)
-        optimizer.zero_grad()
-        out = model(data)
-        loss = F.nll_loss(out, data.y)
-        loss.backward()
-        #import pdb; pdb.set_trace()
-        optimizer.step()
-        total_loss += loss.item()
+        model.set_input(data)
+        model.optimize_parameters()
+        total_loss += model.get_current_losses()
         correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
         total_nodes += data.num_nodes
 
@@ -44,7 +41,7 @@ def test(model, loader, num_classes, device):
 
     correct_nodes = total_nodes = 0
     intersections, unions, categories = [], [], []
-    for data in tqdm.tqdm(loader):
+    for data in tq(loader):
         data = data.to(device)
         with torch.no_grad():
             out = model(data)
@@ -74,11 +71,11 @@ def test(model, loader, num_classes, device):
     return correct_nodes / total_nodes, torch.tensor(ious).mean().item()
 
 
-def run(cfg, model, dataset, optimizer, device):
+def run(cfg, model, dataset, device):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
     for epoch in range(1, 31):
-        train(model, train_loader, optimizer, device)
+        train(model, train_loader, device)
         acc, iou = test(model, test_loader, dataset.num_classes, device)
         wandb.log({"Test Accuracy": acc, "Test IoU": iou})
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
@@ -102,16 +99,14 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
-    wandb.watch(model)
+    # wandb.watch(model)
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print("Model size = %i" % params)
-    # Create optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Run training / evaluation
-    run(cfg, model, dataset, optimizer, device)
+    run(cfg, model, dataset, device)
 
 
 if __name__ == "__main__":
