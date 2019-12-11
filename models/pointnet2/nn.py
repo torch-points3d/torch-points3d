@@ -1,8 +1,10 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.nn import functional as FPModule
+from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 from models.base_model import MLP, FPModule, UnetBasedModel
+from torch_geometric.nn import knn_interpolate
+from torch_geometric.nn import PointConv, fps, radius, global_max_pool
 from .modules import SAModule
 
 class SegmentationModel(UnetBasedModel):
@@ -14,7 +16,6 @@ class SegmentationModel(UnetBasedModel):
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[3], args[1])
-
 
     def forward(self, data):
         """Standard forward"""

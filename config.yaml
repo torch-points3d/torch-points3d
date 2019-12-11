@@ -1,6 +1,6 @@
 data:
     name: shapenet
-    dataroot: /Volumes/Workspace/KP_Conv/data
+    dataroot: /home/nicolas/deeppointcloud-benchmarks/data
     shapenet:
         category: Airplane
 
@@ -10,9 +10,10 @@ training:
     batch_size: 4
     cuda: 0
 
-tested_model:
-    name: pointnet2
+experiment:
+    name: pointunet
     task: SEGMENTATION
+    dataset: shapenet
 
 models:
     SEGMENTATION:
@@ -67,7 +68,7 @@ models:
             down_conv:
                 module_name: SAModule
                 ratios: [0.2, 0.25]
-                radius: [0.1, 0.2]
+                radius: [0.2, 0.4]
                 down_conv_nn: [[3, 64, 64, 128], [131, 128, 128, 256]]
             up_conv:
                 module_name: FPModule
@@ -83,7 +84,3 @@ models:
             mlp_cls: 
                 nn: [128, 128, 128, 128]
                 dropout: 0.5
-
-             
-                
-            

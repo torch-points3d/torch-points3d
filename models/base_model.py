@@ -1,29 +1,18 @@
 import torch
 from torch import nn
+from abc import abstractmethod
 import torch_geometric
 from torch_geometric.nn import global_max_pool, global_mean_pool, fps, radius, knn_interpolate
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
 from omegaconf.listconfig import ListConfig
 from collections import defaultdict
 from torch_geometric.nn import MessagePassing
-from torch_geometric.utils import remove_self_loops, add_self_loops
 from torch_geometric.nn.inits import reset
 
-__special__names__ = ['radius']
+SPECIAL_NAMES = ['radius']
 
-def _addindent(s_, numSpaces):
-    s = s_.split('\n')
-    # don't do anything for single-line stuff
-    if len(s) == 1:
-        return s_
-    first = s.pop(0)
-    s = [(numSpaces * ' ') + line for line in s]
-    s = '\n'.join(s)
-    s = first + '\n' + s
-    return s
 class UnetBasedModel(nn.Module):
     """Create a Unet-based generator"""
-
     def fetch_arguments_from_list(self, opt, index):
         args = {}
         for o, v in opt.items():
@@ -165,6 +154,15 @@ def MLP(channels, batch_norm=True):
     ])
 
 class FPModule(torch.nn.Module):
+    """ Upsampling module from PointNet++
+    
+    Arguments:
+        k [int] -- number of nearest neighboors used for the interpolation
+        up_conv_nn [List[int]] -- list of feature sizes for the uplconv mlp
+    
+    Returns:
+        [type] -- [description]
+    """
     def __init__(self, up_k, up_conv_nn, *args, **kwargs):
         super(FPModule, self).__init__()
         self.k = up_k
@@ -185,8 +183,12 @@ class BaseConvolution(torch.nn.Module):
         super(BaseConvolution, self).__init__()
         self.ratio = ratio
         self.radius = radius
-        self.conv = None # This one should be implemented
         self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
+
+    @property
+    @abstractmethod
+    def conv(self):
+        pass
 
     def forward(self, data):
         x, pos, batch = data
