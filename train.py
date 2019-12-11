@@ -14,10 +14,10 @@ import wandb
 
 
 def train(model, train_loader, device):
- model.train()
+    model.train()
 
-  total_loss = correct_nodes = total_nodes = 0
-   for i, data in tq(enumerate(train_loader)):
+    total_loss = correct_nodes = total_nodes = 0
+    for i, data in tq(enumerate(train_loader)):
 
         data = data.to(device)
         model.set_input(data)
@@ -99,14 +99,16 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
-    # wandb.watch(model)
-    model = model.to(device)
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-    print("Model size = %i" % params)
 
-    # Run training / evaluation
-    run(cfg, model, dataset, device)
+
+# wandb.watch(model)
+model = model.to(device)
+model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+params = sum([np.prod(p.size()) for p in model_parameters])
+print("Model size = %i" % params)
+
+# Run training / evaluation
+run(cfg, model, dataset, device)
 
 
 if __name__ == "__main__":
