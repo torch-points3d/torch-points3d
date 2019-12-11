@@ -28,6 +28,14 @@ def train(model, train_loader,optimizer, device):
         total_loss += loss.item()
         correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
         total_nodes += data.num_nodes
+
+        #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
+        # if opts.verbose and (i + 1) % 10 == 0:
+        #     print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
+        #     i + 1, len(train_loader), total_loss / 10,
+        #     correct_nodes / total_nodes))
+        #     total_loss = correct_nodes = total_nodes = 0
+
     
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
 

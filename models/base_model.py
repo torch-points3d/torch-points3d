@@ -18,7 +18,7 @@ class UnetBasedModel(nn.Module):
         for o, v in opt.items():
             name = str(o)
             if (isinstance(getattr(opt, o), ListConfig) and len(getattr(opt, o)) > 0):
-                if name[-1] == 's' and name not in __special__names__: 
+                if name[-1] == 's' and name not in SPECIAL_NAMES: 
                     name = name[:-1]
                 v_index = v[index]
                 if isinstance(v_index, ListConfig):
