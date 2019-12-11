@@ -13,7 +13,6 @@ SPECIAL_NAMES = ['radius']
 
 class UnetBasedModel(nn.Module):
     """Create a Unet-based generator"""
-
     def fetch_arguments_from_list(self, opt, index):
         args = {}
         for o, v in opt.items():

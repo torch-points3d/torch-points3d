@@ -56,7 +56,6 @@ class PointKernel(MessagePassing):
         self.kernel.data = torch.from_numpy(kernel)
  
     def forward(self, x, pos, edge_index):
-        edge_index, _ = remove_self_loops(edge_index)
         return self.propagate(edge_index, x=x, pos=pos)
 
     def message(self, x_j, pos_i, pos_j):
@@ -135,7 +134,7 @@ class KPConv(BaseConvolution):
 
 
 class SimpleUpsampleKPConv(BaseConvolution):
-    def __init__(self, ratio=None, radius=None, up_conv_nn=None, num_points=16, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
         super(SimpleUpsampleKPConv, self).__init__(ratio, radius)      
 
         in_features, out_features = up_conv_nn
@@ -147,12 +146,14 @@ class SimpleUpsampleKPConv(BaseConvolution):
 
         self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
+        self.nn = MLP(mlp_nn)
+
     def forward(self, data):
         x, pos, batch, x_skip, pos_skip, batch_skip = data
-        row, col = radius(pos_skip, pos, self.radius, batch_skip, batch,
+        row, col = radius(pos, pos_skip, self.radius, batch, batch_skip,
                         max_num_neighbors=self.max_num_neighbors)
         edge_index = torch.stack([col, row], dim=0)
-        x = self.conv(x, (pos_skip, pos), edge_index)
+        x = self.conv(x, (pos, pos_skip), edge_index)
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
         x = self.nn(x)
