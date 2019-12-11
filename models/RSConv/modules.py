@@ -23,11 +23,11 @@ class Convolution(MessagePassing):
         self.global_nn = MLP(global_nn) if global_nn is not None else None
 
     def forward(self, x, pos, edge_index):
-        import pdb; pdb.set_trace()
-        if x is None:
-            x = pos
-        print(x)
-        return self.propagate(edge_index, x=x, pos=pos)
+        print(x.shape, x)
+        print(pos[0].shape, pos[0])
+        print(pos[1].shape ,pos[1])
+        # import pdb; pdb.set_trace()
+        return self.propagate(edge_index, x=x, pos=pos[0])
 
     def message(self, pos_i, pos_j, x_j):
 

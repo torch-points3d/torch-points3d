@@ -138,7 +138,6 @@ class UnetSkipConnectionBlock(nn.Module):
             self.submodule = nn.Sequential(*submodule)
 
     def forward(self, data):
-        import pdb; pdb.set_trace()
         if self.innermost:
             data_out = self.inner(data)
             data = (*data_out, *data)
