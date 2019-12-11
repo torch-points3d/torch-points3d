@@ -14,8 +14,7 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
-from torch_geometric.utils import remove_self_loops
-from models.base_model import *
+from models.base_modules import *
 
 special_args = [
     'edge_index', 'edge_index_i', 'edge_index_j', 'size', 'size_i', 'size_j'
@@ -159,9 +158,3 @@ class SimpleUpsampleKPConv(BaseConvolution):
         x = self.nn(x)
         data = (x, pos_skip, batch_skip)
         return data
-
-def MLP(channels, batch_norm=True):
-    return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), LeakyReLU(0.2), BN(channels[i]))
-        for i in range(1, len(channels))
-    ])
