@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+import math
 import torch
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
-from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool
+from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 
 
 def MLP(channels, activation=ReLU()):
@@ -51,7 +52,7 @@ class BaseConvolution(ABC, torch.nn.Module):
     def conv(self):
         pass
 
-    def forward(self, data, returnIdx=False):
+    def forward(self, data):
         x, pos, batch = data
         idx = fps(pos, batch, ratio=self.ratio)
         row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
@@ -60,32 +61,45 @@ class BaseConvolution(ABC, torch.nn.Module):
         x = self.conv(x, (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
         data = (x, pos, batch)
-
-        if returnIdx:
-            return data, idx
         return data
 
-class BaseIdentityConvolution(ABC, torch.nn.Module):
-    '''
-        Base class for convolutions that do not downsample the point cloud.
-    '''
-    
-    def __init__(self, radius, *args, **kwargs):
-        super(BaseIdentityConvolution, self).__init__()
+class BaseKNNConvolution(ABC, torch.nn.Module):
 
-        self.radius = radius
-        self.max_num_neighbors = kwargs.get('max_num_neighbours', 64)
+    def __init__(self, ratio=None, k=None, sampling_strategy = None, *args, **kwargs):
+        torch.nn.Module.__init__(self)
 
-    @property
+        self.ratio = ratio
+        self.k = k
+        self.sampling_strategy = sampling_strategy
+
     @abstractmethod
-    def conv(self):
-        pass
+    def conv(self, x, pos, edge_index):
+        pass 
 
-    def forward(self, x, pos, batch):
-        row, col = radius(pos, pos, self.radius, batch, batch, self.max_num_neighbors)
-        edge_index = torch.stack([col, row], dim=0)
-        x = self.conv(x, (pos, pos), edge_index)
-        return x
+    def forward(self, data, returnIdx=False):
+        x, pos, batch = data
+
+        if self.ratio == 1: #convolve every point
+            row, col = knn(pos, pos, self.k, batch, batch)
+            edge_index = torch.stack([col, row], dim=0)
+            x = self.conv(x, (pos, pos), edge_index)
+            return (x, pos, batch)
+        else: #downsample using self.sampling_strategy and convolve 
+            if self.sampling_strategy == 'fps':
+                idx = fps(pos, batch, self.ratio)
+            elif self.sampling_strategy == 'random':
+                idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
+            else:
+                raise ValueError("Unrecognised sampling_strategy: " + self.sampling_strategy)
+            
+            row, col = knn(pos, pos[idx], self.k, batch, batch[idx])
+            edge_index = torch.stack([col, row], dim=0)
+            x = self.conv(x, (pos, pos[idx]), edge_index)
+            pos, batch = pos[idx], batch[idx]
+            if returnIdx:
+                return (x, pos, batch), idx
+            return (x, pos, batch)
+
 
 class BaseResnetBlock(ABC, torch.nn.Module):
 
@@ -95,7 +109,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
             outdim: desired size of x at the output
             convdim: size of x following convolution
         '''
-        super(BaseResnetBlock, self).__init__()
+        torch.nn.Module.__init__(self)
 
         self.indim = indim
         self.outdim = outdim

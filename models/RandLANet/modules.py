@@ -5,7 +5,7 @@ from torch_geometric.nn import MessagePassing, knn
 from models.core_modules import *
 import math
 
-class RandlaConv(MessagePassing):
+class RandlaConv(MessagePassing, BaseKNNConvolution):
     '''
         Implements both the Local Spatial Encoding and Attentive Pooling blocks from 
         RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
@@ -14,24 +14,17 @@ class RandlaConv(MessagePassing):
     '''
 
     def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
-        super(RandlaConv, self).__init__(aggr='add') 
-        print("initing randla conv", locals())
-        self.ratio = ratio
-        self.k = k
+        MessagePassing.__init__(self, aggr='add')
+        BaseKNNConvolution.__init__(self, ratio, k, sampling_strategy='random') 
+        #torch.nn.Module.__init__ will be called twice, but this should be fine
+
         self.point_pos_nn = MLP(point_pos_nn)
         self.attention_nn = MLP(attention_nn)
         self.global_nn = MLP(global_nn)
 
-    def forward(self, data):
-        x, pos, batch = data
-        idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
-        row, col = knn(pos, pos[idx], self.k, batch, batch[idx])
-        edge_index = torch.stack([col, row], dim=0)
-        x = self.propagate(edge_index, x=x, pos=(pos, pos[idx]))
-
-        pos, batch = pos[idx], batch[idx]
-        data = (x, pos, batch)
-        return data 
+    def conv(self, x, pos, edge_index):
+        x = self.propagate(edge_index, x=x, pos=pos)
+        return x
 
     def message(self, x_j, pos_i, pos_j):
 
@@ -68,6 +61,23 @@ class RandlaConv(MessagePassing):
 
     def update(self, aggr_out):
         return self.global_nn(aggr_out)
+
+class DialatedResidualBlock(BaseResnetBlock):
+
+    def __init__(self, indim, outdim, point_pos_nn1, point_pos_nn2, 
+            attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
+
+        super(DialatedResidualBlock, self).__init__(indim, outdim, outdim//2)
+
+        assert outdim//4 == point_pos_nn1[-1]
+
+        self.conv1 = RandlaConv(0.5, 16, point_pos_nn1, attention_nn1, global_nn1)
+        self.conv2 = RandlaConv(0.5, 16, point_pos_nn2, attention_nn2, global_nn2)
+
+    def convolution(self, data):
+        data, idx1 = self.conv1(data)
+        data, idx2 = self.conv2(data)
+        return data, idx1[idx2]
 
 #This is not the real randla-net - it is basically pointnet++ using the local spatial encoding 
 #and attentative pooling blocks from randla-net as the convolution. 
