@@ -85,8 +85,6 @@ def run(cfg, model, dataset, device):
 @hydra.main(config_path='conf/config.yaml')
 def main(cfg):
     
-    #print(cfg.pretty())
-    
     # GET ARGUMENTS
     device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
                           else 'cpu')

@@ -5,10 +5,9 @@ import os
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 
-
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
-        config_file = os.path.join(ROOT, 'conf/config.yaml')
+        config_file = os.path.join(ROOT, 'conf/models/segmentation.yaml')
         self.config = OmegaConf.load(config_file)
         import pdb; pdb.set_trace()
 

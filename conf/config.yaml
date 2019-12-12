@@ -18,10 +18,12 @@ data:
         name: shapenet
         dataroot: data
         category: Airplane
+
+    # This dataset can be used only for classification
     modelnet: 
         name: modelnet
         dataroot: data
         number: 10
 
 defaults:
-  - models: segmentation
+    - models: segmentation
