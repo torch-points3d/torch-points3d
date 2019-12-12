@@ -34,6 +34,14 @@ def train(epoch, model, train_loader, device, options):
         total_nodes += data.num_nodes
         iter_data_time = time.time()
 
+        #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
+        # if (i + 1) % 10 == 0:
+        #     print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
+        #     i + 1, len(train_loader), total_loss / 10,
+        #     correct_nodes / total_nodes))
+        #     total_loss = correct_nodes = total_nodes = 0
+
+    
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
 
 
