@@ -11,7 +11,6 @@ class RandlaConv(MessagePassing):
         RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
         https://arxiv.org/pdf/1911.11236
 
-
     '''
 
     def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
@@ -65,19 +64,8 @@ class RandlaConv(MessagePassing):
     def update(self, aggr_out):
         return self.global_nn(aggr_out)
 
-# class RandlaDilatedResidual(torch.nn.Module):
-
-#     def __init__(self, input_nn = None, output_nn = None, residual_nn = None, *args, **kwargs):
-#         super(RandlaDilatedResidual, self).__init__()
-
-#         self.input_nn = input_nn
-#         self.output_nn = output_nn
-#         self.residual_nn = residual_nn
-
-#         self.conv = RandlaConv(**kwargs)
-
-#     def forward(self, data):
-
+#This is not the real randla-net - it is basically pointnet++ using the local spatial encoding 
+#and attentative pooling blocks from randla-net as the convolution. 
 class RandLANet(torch.nn.Module):
 
     def __init__(self, *args, **kwargs):
