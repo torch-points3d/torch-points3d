@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os import makedirs
 from os.path import join, exists
+from .plyutils import read_ply, write_ply
 
 
 # ------------------------------------------------------------------------------------------
@@ -93,7 +94,7 @@ def kernel_point_optimization_debug(radius, num_points, num_kernels=1, dimension
     #####################
 
     # Initiate figure
-    if verbose>1:
+    if verbose > 1:
         fig = plt.figure()
 
     saved_gradient_norms = np.zeros((10000, num_kernels))
