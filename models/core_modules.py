@@ -97,6 +97,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         self.outdim = outdim
 
         self.features_downsample_nn = MLP([self.indim, self.indim//2])
+        
         self.features_upsample_nn = MLP([self.indim//2, self.outdim])
 
         self.shortcut_feature_resize_nn = MLP([self.indim, self.outdim])
