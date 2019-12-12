@@ -1,9 +1,9 @@
-name: Testing
+name: Unit Testing
 
 on: [push]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
 
