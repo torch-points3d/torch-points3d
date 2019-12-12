@@ -13,12 +13,13 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
+    - run: echo "::add-path::$HOME/.poetry/bin"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-        echo "::add-path::$HOME/.poetry/bin"
         echo "$PATH"
+        echo "$HOME"
         poerty install --dev
     - name: Lint with flake8
       run: |
