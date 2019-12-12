@@ -89,85 +89,48 @@ class BaseIdentityConvolution(ABC, torch.nn.Module):
 
 class BaseResnetBlock(ABC, torch.nn.Module):
 
-    def __init__(self, indim, convdim, outdim, *args, **kwargs):
+    def __init__(self, indim, outdim, convdim):
+        '''
+            indim: size of x at the input
+            outdim: desired size of x at the output
+            convdim: size of x following convolution
+        '''
         super(BaseResnetBlock, self).__init__()
 
         self.indim = indim
-        self.convdim = convdim
         self.outdim = outdim
+        self.convdim
 
-        self.features_downsample_nn = MLP([self.indim, self.indim//2])
-        
-        self.features_upsample_nn = MLP([self.indim//2, self.outdim])
+        self.features_downsample_nn = MLP([self.indim, self.outdim//4])
+        self.features_upsample_nn = MLP([self.convdim, self.outdim])
 
         self.shortcut_feature_resize_nn = MLP([self.indim, self.outdim])
 
         self.activation = ReLU()
 
+    @abstractmethod
+    def convolution(self, data):
+        pass
 
-class BaseIdentityResnet(torch.nn.Module):
-    
-    def __init__(self, conv1, conv2, dim, *args, **kwargs):
-        super(BaseIdentityResnet, self).__init__()
+    def forward(self, x, pos, data):
 
-        self.conv1 = conv1
-        self.conv2 = conv2
-        self.dim = dim
+        x, pos, batch = data #(N, indim)
 
-        self.features_downsample_nn = MLP([self.dim, self.dim//2])
-        self.features_upsample_nn = MLP([self.dim//2, self.dim])
+        shortcut = x #(N, indim)
 
-        self.shortcut_feature_resize_nn = MLP([self.])
+        x = self.features_dsample_nn(x) #(N, outdim//4)
 
-        self.activation = ReLU()
+        #if this is an identity resnet block, idx will be None
+        (x, pos, batch), idx = self.convolution((x, pos, batch)) #(N', convdim)
 
-    def forward(self, data):
+        x = self.features_upsample_nn(x) #(N', outdim)
 
-        x, pos, batch = data
+        if idx is not None:
+            shortcut = shortcut[idx] #(N', indim)
 
-        shortcut = x
-
-        x = self.features_downsample_nn(x)
-
-        x = self.conv1(x, pos, batch)
-
-        x = self.conv2(x, pos, batch)
+        shortcut = self.shortcut_feature_resize_nn(shortcut) #(N', outdim)
 
         x = shortcut + x
-
-        return self.activation(x)
-
-class BaseConvResnet(torch.nn.Module):
-
-    def __init__(self, conv1, indim, outdim, *args, **kwargs):
-        super(BaseConvResnet, self).__init__()
-
-        self.conv1 = conv1
-        self.indim = indim
-        self.outdim = outdim
-
-        self.features_dsample_nn = MLP([self.indim, self.indim//2])
-        self.features_upsample_nn = MLP([self.indim//2, self.outdim])
-
-        self.shortcut_feature_resize_nn = MLP([self.indim, self.outdim])
-
-        self.activation = ReLU()
-
-    def forward(self, data):
-
-        x, pos, batch = data
-
-        shortcut = x
-
-        x = self.features_dsample_nn(x)
-
-        (x, pos, batch), idx = self.conv1((x, pos, batch), returnIdx=True)
-
-        x = self.features_upsample_nn(x)
-
-        shortcut = self.shortcut_feature_resize_nn(shortcut[idx])
-
-        x = shortcut[idx] + x
 
         return self.activation(x)
 
