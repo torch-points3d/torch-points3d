@@ -9,7 +9,6 @@ class TestModelUtils(unittest.TestCase):
     def setUp(self):
         config_file = os.path.join(ROOT, 'conf/models/segmentation.yaml')
         self.config = OmegaConf.load(config_file)
-        import pdb; pdb.set_trace()
 
     def test_findmodel(self):
         for model_name in ['KPConv', 'RSConv', 'pointnet2']:
