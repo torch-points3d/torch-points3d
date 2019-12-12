@@ -1,6 +1,7 @@
 
 import torch.nn.functional as F
-from models.base_model import UnetBasedModel, FPModule
+from models.unet_base import UnetBasedModel
+from models.core_modules import FPModule
 from models.base_model import *
 
 class SegmentationModel(UnetBasedModel):
@@ -13,13 +14,20 @@ class SegmentationModel(UnetBasedModel):
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[3], args[1])
 
-    def forward(self, data):
+    def set_input(self, data):
+        self.input = (data.x, data.pos, data.batch)
+        self.labels = data.y
+
+    def forward(self):
         """Standard forward"""
-        input = (data.x, data.pos, data.batch)
-        x, _, _  = self.model(input)
+        x, _, _  = self.model(self.input)
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
-        return F.log_softmax(x, dim=-1)   
+        self.output = F.log_softmax(x, dim=-1)   
+
+    def backward(self):
+        self.loss_seg = F.nll_loss(self.output, self.labels)
+        self.loss_seg.backward()

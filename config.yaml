@@ -1,6 +1,6 @@
 data:
     name: shapenet
-    dataroot: /home/tristan/deeppointcloud-benchmarks/data
+    dataroot: data
     shapenet:
         category: Airplane
 
@@ -9,14 +9,15 @@ training:
     num_workers: 2
     batch_size: 4
     cuda: 0
+    print_frequency: 1
 
 experiment:
     name: RandLANet
-    task: SEGMENTATION
+    task: segmentation
     dataset: shapenet
 
 models:
-    SEGMENTATION:
+    segmentation:
         # This part describes a template model configuration
         TemplateModel:
             name: TemplateModel
@@ -105,7 +106,7 @@ models:
                 aggr: max
                 nn: [67, 128]
             mlp_cls: 
-                nn: [64, 64, 64, 64]
+                nn: [64, 64, 64, 64, 64]
                 dropout: 0.5
 
         pointnet2:
@@ -127,5 +128,5 @@ models:
                 aggr: max
                 nn: [259, 256, 512, 1024]
             mlp_cls: 
-                nn: [128, 128, 128, 128]
+                nn: [128, 128, 128, 128, 128]
                 dropout: 0.5

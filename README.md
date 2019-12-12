@@ -1,4 +1,6 @@
 # Deep Point Cloud Benchmark
+[![Actions Status](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/actions)
+
 This is a framework for running common depp learning models for point cloud analysis tasks against classic benchmark. It heavily relies on pytorch geometric and hydra core.
 
 ## Getting started
@@ -16,3 +18,4 @@ poetry run python train.py tested_model.name=pointnet2
 ## Contributers
 - [Thomas Chaton](https://github.com/tchaton)
 - [Nicolas Chaulet](https://github.com/nicolas-chaulet)
+- [Tristan Heywood](https://github.com/tristanheywood)

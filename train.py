@@ -8,43 +8,49 @@ from datasets.utils import find_dataset_using_name
 import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
 from models.utils import find_model_using_name
-import tqdm
+from tqdm import tqdm as tq
+import time
 import wandb
-wandb.init(project="dpc-benchmark")
+
+from visualizer import print_current_losses
+# wandb.init(project="dpc-benchmark")
 
 
-def train(model, train_loader,optimizer, device):
+def train(epoch, model, train_loader, device, options):
     model.train()
 
     total_loss = correct_nodes = total_nodes = 0
-    for i, data in enumerate(tqdm.tqdm(train_loader)):
+    iter_data_time = time.time()
+    for i, data in tq(enumerate(train_loader)):
+        iter_start_time = time.time()  # timer for computation per iteration
+        t_data = iter_start_time - iter_data_time
+
         data = data.to(device)
-        optimizer.zero_grad()
-        out = model(data)
-        loss = F.nll_loss(out, data.y)
-        loss.backward()
-        #import pdb; pdb.set_trace()
-        optimizer.step()
-        total_loss += loss.item()
-        correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
+        model.set_input(data)
+        model.optimize_parameters()
+        if i % options.training.print_frequency == 0:
+            print_current_losses(epoch, i, model.get_current_losses(), time.time() - iter_start_time, t_data)
+        correct_nodes += model.get_output().max(dim=1)[1].eq(data.y).sum().item()
         total_nodes += data.num_nodes
+        iter_data_time = time.time()
 
         #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
-        # if (i + 1) % 10 == 0:
-        #     print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
-        #     i + 1, len(train_loader), total_loss / 10,
-        #     correct_nodes / total_nodes))
-        #     total_loss = correct_nodes = total_nodes = 0
+        if (i + 1) % 10 == 0:
+            print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
+            i + 1, len(train_loader), total_loss / 10,
+            correct_nodes / total_nodes))
+            total_loss = correct_nodes = total_nodes = 0
 
     
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
+
 
 def test(model, loader, num_classes, device):
     model.eval()
 
     correct_nodes = total_nodes = 0
     intersections, unions, categories = [], [], []
-    for data in tqdm.tqdm(loader):
+    for data in tq(loader):
         data = data.to(device)
         with torch.no_grad():
             out = model(data)
@@ -73,11 +79,12 @@ def test(model, loader, num_classes, device):
 
     return correct_nodes / total_nodes, torch.tensor(ious).mean().item()
 
-def run(cfg, model, dataset, optimizer, device):
+
+def run(cfg, model, dataset, device):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
     for epoch in range(1, 31):
-        train(model, train_loader, optimizer, device)
+        train(epoch, model, train_loader, device, cfg)
         acc, iou = test(model, test_loader, dataset.num_classes, device)
         wandb.log({"Test Accuracy": acc, "Test IoU": iou})
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
@@ -85,30 +92,33 @@ def run(cfg, model, dataset, optimizer, device):
 
 @hydra.main(config_path='config.yaml')
 def main(cfg):
-    # GET ARGUMENTS
-    device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda) \
-        else 'cpu')
+    cfg.data.dataroot = hydra.utils.to_absolute_path(cfg.data.dataroot)
 
-    #Get task and model_name
+    # GET ARGUMENTS
+    device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
+                          else 'cpu')
+
+    # Get task and model_name
     tested_task = cfg.experiment.task
     tested_model_name = cfg.experiment.name
 
     # Find and create associated dataset
     dataset = find_dataset_using_name(cfg.experiment.dataset)(cfg.data, cfg.training)
-    
+
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
-    wandb.watch(model)
+    model.set_optimizer(torch.optim.Adam)
+
+    # wandb.watch(model)
     model = model.to(device)
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())    
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print("Model size = %i" % params)
-    # Create optimizer
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Run training / evaluation
-    run(cfg, model, dataset, optimizer, device)
+    run(cfg, model, dataset, device)
+
 
 if __name__ == "__main__":
     main()

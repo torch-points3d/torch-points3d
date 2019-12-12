@@ -2,7 +2,7 @@
 import torch 
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, knn
-from models.base_model import *
+from models.core_modules import *
 import math
 
 class RandlaConv(MessagePassing):

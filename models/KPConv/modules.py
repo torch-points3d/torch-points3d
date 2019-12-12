@@ -14,14 +14,9 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
-from torch_geometric.utils import remove_self_loops
-from models.base_model import *
+from models.core_modules import *
 
-special_args = [
-    'edge_index', 'edge_index_i', 'edge_index_j', 'size', 'size_i', 'size_j'
-]
-is_python2 = sys.version_info[0] < 3
-getargspec = inspect.getargspec if is_python2 else inspect.getfullargspec
+
 class PointKernel(MessagePassing):
 
     def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='linear'):
@@ -35,13 +30,13 @@ class PointKernel(MessagePassing):
         self.fixed = fixed
         self.ratio = ratio
         self.KP_influence = KP_influence
-        
+
         # Radius of the initial positions of the kernel points
         self.KP_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
-        
+
         # Associated weights
         self.kernel_weight = Parameter(torch.Tensor(num_points, in_features, out_features))
 
@@ -51,10 +46,10 @@ class PointKernel(MessagePassing):
         init.kaiming_uniform_(self.kernel_weight, a=math.sqrt(5))
 
         # Init the kernel using attrative + repulsion forces
-        kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1, \
-            dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
+        kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1,
+                                                    dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
         self.kernel.data = torch.from_numpy(kernel)
- 
+
     def forward(self, x, pos, edge_index):
         return self.propagate(edge_index, x=x, pos=pos)
 
@@ -63,13 +58,13 @@ class PointKernel(MessagePassing):
         if x_j is None:
             x_j = pos_j
 
-        #Center every neighborhood [SUM n_neighbors(n_points), dim]
+        # Center every neighborhood [SUM n_neighbors(n_points), dim]
         neighbors = (pos_j - pos_i)
 
         # Number of points
         n_points = neighbors.shape[0]
-        
-        #Get points kernels
+
+        # Get points kernels
         K_points = self.kernel
 
         # Get all difference matrices [SUM n_neighbors(n_points), n_kpoints, dim]
@@ -89,12 +84,13 @@ class PointKernel(MessagePassing):
             all_weights[all_weights < 0] = 0.0
         else:
             raise ValueError('Unknown influence function type (config.KP_influence)')
-        
+
         neighbors_1nn = torch.argmin(sq_distances, dim=-1)
         weights = all_weights.gather(1, neighbors_1nn.unsqueeze(-1))
 
         K_weights = self.kernel_weight
-        K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)).view((n_points, self.in_features, self.out_features))
+        K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)
+                                       ).view((n_points, self.in_features, self.out_features))
 
         # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
         features = x_j
@@ -115,10 +111,11 @@ class PointKernel(MessagePassing):
                 # PointKernel parameters
         return "PointKernel({}, {}, {}, {}, {})".format(self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence)
 
+
 class KPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
-        super(KPConv, self).__init__(ratio, radius)      
-        
+        super(KPConv, self).__init__(ratio, radius)
+
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments
@@ -135,7 +132,7 @@ class KPConv(BaseConvolution):
 
 class SimpleUpsampleKPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
-        super(SimpleUpsampleKPConv, self).__init__(ratio, radius)      
+        super(SimpleUpsampleKPConv, self).__init__(ratio, radius)
 
         in_features, out_features = up_conv_nn
 
@@ -144,14 +141,18 @@ class SimpleUpsampleKPConv(BaseConvolution):
         self.out_features = out_features
         self.num_points = num_points
 
-        self.conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+        self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
-        self.nn = MLP(mlp_nn)
+        self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
+
+    @property
+    def conv(self):
+        return self._conv
 
     def forward(self, data):
         x, pos, batch, x_skip, pos_skip, batch_skip = data
         row, col = radius(pos, pos_skip, self.radius, batch, batch_skip,
-                        max_num_neighbors=self.max_num_neighbors)
+                          max_num_neighbors=self.max_num_neighbors)
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos_skip), edge_index)
         if x_skip is not None:
@@ -159,9 +160,3 @@ class SimpleUpsampleKPConv(BaseConvolution):
         x = self.nn(x)
         data = (x, pos_skip, batch_skip)
         return data
-
-def MLP(channels, batch_norm=True):
-    return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), LeakyReLU(0.2), BN(channels[i]))
-        for i in range(1, len(channels))
-    ])
