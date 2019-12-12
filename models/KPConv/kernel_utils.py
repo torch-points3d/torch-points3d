@@ -27,7 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os import makedirs
 from os.path import join, exists
-from plyfile import read_ply, write_ply
+from .plyutils import read_ply, write_ply
 
 
 # ------------------------------------------------------------------------------------------
