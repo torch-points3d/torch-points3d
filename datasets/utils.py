@@ -1,6 +1,12 @@
 import importlib
 from datasets.base_dataset import BaseDataset
 
+def contains_key(opt, key):
+    try:
+        _ = opt[key]
+        return True
+    except:
+        return False
 
 def find_dataset_using_name(dataset_name):
     """Import the module "data/[dataset_name]_dataset.py".
