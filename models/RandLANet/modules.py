@@ -16,25 +16,25 @@ class RandlaConv(MessagePassing):
 
     def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
         super(RandlaConv, self).__init__(aggr='mean') #actual aggr in randlanet is sum, but mean is similar
+        print("initing randla conv", locals())
         self.ratio = ratio
         self.k = k
-        self.point_pos_nn = point_pos_nn
-        self.attention_nn = attention_nn
-        self.global_nn = global_nn
+        self.point_pos_nn = MLP(point_pos_nn)
+        self.attention_nn = MLP(attention_nn)
+        self.global_nn = MLP(global_nn)
 
     def forward(self, data):
         x, pos, batch = data
         idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
         row, col = knn(pos, pos[idx], self.k, batch, batch[idx])
-        edge_index = torch.stack([row, col], dim=0)
-        import pdb; pdb.set_trace()
-        x = self.propagate(edge_index, pos=(pos, pos[idx]), x=x)
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.propagate(edge_index, x=x, pos=(pos, pos[idx]))
 
         pos, batch = pos[idx], batch[idx]
         data = (x, pos, batch)
         return data 
 
-    def message(self, pos_i, pos_j, x_j):
+    def message(self, x_j, pos_i, pos_j):
 
         if x_j is None:
             x_j = pos_j
@@ -48,11 +48,11 @@ class RandlaConv(MessagePassing):
             pos_j,
             vij,
             dij
-        ])
+        ], dim=1)
 
         rij = self.point_pos_nn(relPointPos)
 
-        fij_hat = torch.cat([x_j, rij])
+        fij_hat = torch.cat([x_j, rij], dim=1)
 
         g_fij = self.attention_nn(fij_hat)
 
