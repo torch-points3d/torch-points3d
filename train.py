@@ -9,29 +9,30 @@ import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
 from models.utils import find_model_using_name
 from tqdm import tqdm as tq
+import time
 import wandb
+
+from visualizer import print_current_losses
 # wandb.init(project="dpc-benchmark")
 
 
-def train(model, train_loader, device):
+def train(epoch, model, train_loader, device, options):
     model.train()
 
     total_loss = correct_nodes = total_nodes = 0
+    iter_data_time = time.time()
     for i, data in tq(enumerate(train_loader)):
+        iter_start_time = time.time()  # timer for computation per iteration
+        t_data = iter_start_time - iter_data_time
 
         data = data.to(device)
         model.set_input(data)
         model.optimize_parameters()
-        total_loss += model.get_current_losses()
-        correct_nodes += out.max(dim=1)[1].eq(data.y).sum().item()
+        if i % options.training.print_frequency == 0:
+            print_current_losses(epoch, i, model.get_current_losses(), time.time() - iter_start_time, t_data)
+        correct_nodes += model.get_output().max(dim=1)[1].eq(data.y).sum().item()
         total_nodes += data.num_nodes
-
-        # uncomment to print loss and accurancy every 10 batches - to check if model is training correctly
-        # if opts.verbose and (i + 1) % 10 == 0:
-        #     print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
-        #     i + 1, len(train_loader), total_loss / 10,
-        #     correct_nodes / total_nodes))
-        #     total_loss = correct_nodes = total_nodes = 0
+        iter_data_time = time.time()
 
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
 
@@ -75,7 +76,7 @@ def run(cfg, model, dataset, device):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
     for epoch in range(1, 31):
-        train(model, train_loader, device)
+        train(epoch, model, train_loader, device, cfg)
         acc, iou = test(model, test_loader, dataset.num_classes, device)
         wandb.log({"Test Accuracy": acc, "Test IoU": iou})
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
@@ -99,16 +100,16 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
+    model.set_optimizer(torch.optim.Adam)
 
+    # wandb.watch(model)
+    model = model.to(device)
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print("Model size = %i" % params)
 
-# wandb.watch(model)
-model = model.to(device)
-model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-params = sum([np.prod(p.size()) for p in model_parameters])
-print("Model size = %i" % params)
-
-# Run training / evaluation
-run(cfg, model, dataset, device)
+    # Run training / evaluation
+    run(cfg, model, dataset, device)
 
 
 if __name__ == "__main__":

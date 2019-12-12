@@ -23,8 +23,6 @@ class SegmentationModel(UnetBasedModel):
         self.lin3 = torch.nn.Linear(nn[4], num_classes)
 
         self.loss_names = ['loss_seg']
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
-        self.optimizers = [self.optimizer]
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -43,7 +41,6 @@ class SegmentationModel(UnetBasedModel):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
-        print(self.output.shape)
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -51,10 +48,3 @@ class SegmentationModel(UnetBasedModel):
         # calculate loss given the input and intermediate results
         self.loss_seg = F.nll_loss(self.output, self.labels)
         self.loss_seg.backward()       # calculate gradients of network G w.r.t. loss_G
-
-    def optimize_parameters(self):
-        """Update network weights; it will be called in every training iteration."""
-        self.forward()               # first call forward to calculate intermediate results
-        self.optimizer.zero_grad()   # clear network G's existing gradients
-        self.backward()              # calculate gradients for network G
-        self.optimizer.step()        # update gradients for network

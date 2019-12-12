@@ -9,14 +9,15 @@ training:
     num_workers: 2
     batch_size: 4
     cuda: 0
+    print_frequency: 1
 
 experiment:
     name: KPConv
-    task: SEGMENTATION
+    task: segmentation
     dataset: shapenet
 
 models:
-    SEGMENTATION:
+    segmentation:
         # This part describes a template model configuration
         TemplateModel:
             name: TemplateModel

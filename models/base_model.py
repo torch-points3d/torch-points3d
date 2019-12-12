@@ -1,7 +1,9 @@
 import os
-import torch
 from collections import OrderedDict
 from abc import ABC, abstractmethod
+from typing import Optional
+import torch
+from torch.optim.optimizer import Optimizer
 
 
 class BaseModel(torch.nn.Module):
@@ -28,6 +30,8 @@ class BaseModel(torch.nn.Module):
         super(BaseModel, self).__init__()
         self.opt = opt
         self.loss_names = []
+        self.output = None
+        self.optimizer: Optional[Optimizer] = None
 
     @abstractmethod
     def set_input(self, input):
@@ -42,10 +46,15 @@ class BaseModel(torch.nn.Module):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         pass
 
-    @abstractmethod
+    def get_output(self):
+        return self.output
+
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        pass
+        self.forward()               # first call forward to calculate intermediate results
+        self.optimizer.zero_grad()   # clear existing gradients
+        self.backward()              # calculate gradients
+        self.optimizer.step()        # update parameters
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
@@ -53,5 +62,8 @@ class BaseModel(torch.nn.Module):
         for name in self.loss_names:
             if isinstance(name, str):
                 # float(...) works for both scalar tensor and float number
-                errors_ret[name] = float(getattr(self, 'loss_' + name))
+                errors_ret[name] = float(getattr(self, name))
         return errors_ret
+
+    def set_optimizer(self, optimizer_cls: Optimizer):
+        self.optimizer = optimizer_cls(self.parameters(), lr=0.001)

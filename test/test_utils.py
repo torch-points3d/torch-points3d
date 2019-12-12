@@ -13,5 +13,5 @@ class TestModelUtils(unittest.TestCase):
 
     def test_findmodel(self):
         for model_name in ['KPConv', 'RSConv', 'pointnet2']:
-            params = self.config['models']['SEGMENTATION'][model_name]
-            model = find_model_using_name(model_name, 'SEGMENTATION', params, 10)
+            params = self.config['models']['segmentation'][model_name]
+            model = find_model_using_name(model_name, 'segmentation', params, 10)
