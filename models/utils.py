@@ -4,7 +4,7 @@ import importlib
 
 def find_model_using_name(model_name, task, option, num_classes):
 
-    if task == "SEGMENTATION":
+    if task == "segmentation":
         cls_name = "SegmentationModel"
     else:
         cls_name = "ClassificationModel"
