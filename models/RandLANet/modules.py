@@ -15,7 +15,7 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
 
     def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
         MessagePassing.__init__(self, aggr='add')
-        BaseKNNConvolution.__init__(self, ratio, k, sampling_strategy='random') 
+        BaseKNNConvolution.__init__(self, ratio=ratio, k=k, sampling_strategy='random') 
         #torch.nn.Module.__init__ will be called twice, but this should be fine
 
         self.point_pos_nn = MLP(point_pos_nn)
@@ -75,8 +75,8 @@ class DialatedResidualBlock(BaseResnetBlock):
         self.conv2 = RandlaConv(0.5, 16, point_pos_nn2, attention_nn2, global_nn2)
 
     def convolution(self, data):
-        data, idx1 = self.conv1(data)
-        data, idx2 = self.conv2(data)
+        data, idx1 = self.conv1(data, returnIdx=True) #calls the forward function of BaseKNNConvolution
+        data, idx2 = self.conv2(data, returnIdx=True)
         return data, idx1[idx2]
 
 #This is not the real randla-net - it is basically pointnet++ using the local spatial encoding 
