@@ -1,13 +1,11 @@
-
+import torch
 import torch.nn.functional as F
-from models.base_model import BaseModel
-from models.base_modules import *
+from models.unet_base import UnetBasedModel
 
 
-class SegmentationModel(UnetBasedModel, BaseModel):
+class SegmentationModel(UnetBasedModel):
     def __init__(self, option, num_classes, modules):
         UnetBasedModel.__init__(self, option, num_classes, modules)  # call the initialization method of UnetBasedModel
-        BaseModel.__init__(self, option)  # call the initialization method of BaseModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')

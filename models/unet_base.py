@@ -8,11 +8,12 @@ from omegaconf.listconfig import ListConfig
 from collections import defaultdict
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
+from .base_model import BaseModel
 
 SPECIAL_NAMES = ['radius']
 
 
-class UnetBasedModel(nn.Module):
+class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
     def fetch_arguments_from_list(self, opt, index):
@@ -52,7 +53,7 @@ class UnetBasedModel(nn.Module):
         We construct the U-Net from the innermost layer to the outermost layer.
         It is a recursive process.
         """
-        super(UnetBasedModel, self).__init__()
+        super(UnetBasedModel, self).__init__(opt)
 
         num_convs = len(opt.down_conv.down_conv_nn)
 
@@ -149,10 +150,3 @@ class UnetSkipConnectionBlock(nn.Module):
             data_out2 = self.submodule(data_out)
             data = (*data_out2, *data)
             return self.up(data)
-
-
-def MLP(channels, activation=ReLU()):
-    return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i]))
-        for i in range(1, len(channels))
-    ])

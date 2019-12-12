@@ -2,7 +2,7 @@
 import torch
 from torch.nn import ReLU
 from torch_geometric.nn import MessagePassing
-from models.base_modules import *
+from models.core_modules import *
 
 
 class Convolution(MessagePassing):

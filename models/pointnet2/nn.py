@@ -2,17 +2,15 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
-from models.base_model import BaseModel
-from models.base_modules import *
+from models.unet_base import UnetBasedModel
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
 from .modules import SAModule
 
 
-class SegmentationModel(UnetBasedModel, BaseModel):
+class SegmentationModel(UnetBasedModel):
     def __init__(self, option, num_classes, modules):
         UnetBasedModel.__init__(self, option, num_classes, modules)  # call the initialization method of UnetBasedModel
-        BaseModel.__init__(self, option)  # call the initialization method of BaseModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')
