@@ -14,7 +14,7 @@ class RandlaConv(MessagePassing):
     '''
 
     def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
-        super(RandlaConv, self).__init__(aggr='mean') #actual aggr in randlanet is sum, but mean is similar
+        super(RandlaConv, self).__init__(aggr='add') 
         print("initing randla conv", locals())
         self.ratio = ratio
         self.k = k
@@ -38,6 +38,7 @@ class RandlaConv(MessagePassing):
         if x_j is None:
             x_j = pos_j
 
+        #compute relative position encoding 
         vij = pos_i - pos_j
 
         dij = torch.norm(vij, dim=1).unsqueeze(1)
@@ -51,8 +52,12 @@ class RandlaConv(MessagePassing):
 
         rij = self.point_pos_nn(relPointPos)
 
+
+        #concatenate position encoding with feature vector
         fij_hat = torch.cat([x_j, rij], dim=1)
 
+
+        #attentative pooling
         g_fij = self.attention_nn(fij_hat)
 
         s_ij = F.softmax(g_fij)
