@@ -5,6 +5,17 @@ from typing import Optional
 import torch
 from torch.optim.optimizer import Optimizer
 
+class BaseFactory(ABC):
+    def __init__(self, module_name_down, module_name_up, modules_lib):
+        self.module_name_down = module_name_down
+        self.module_name_up = module_name_up
+        self.modules_lib = modules_lib
+
+    @abstractmethod
+    def get_module_from_index(self):
+        pass
+    
+
 
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
