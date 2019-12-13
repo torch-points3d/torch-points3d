@@ -147,11 +147,9 @@ class UnetSkipConnectionBlock(nn.Module):
             assert outermost == False
             module_name = self.get_from_kwargs(args_innermost, 'module_name')
             inner_module_cls = getattr(modules_lib, module_name)
-            inner_module = [inner_module_cls(**args_innermost)]
-            self.inner = nn.Sequential(*inner_module)
+            self.inner = inner_module_cls(**args_innermost)
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
-            up = [upconv_cls(**args_up)]
-            self.up = nn.Sequential(*up)
+            self.up = upconv_cls(**args_up)
         else:
             downconv_cls = self.get_from_kwargs(args_down, 'down_conv_cls')
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
@@ -159,13 +157,9 @@ class UnetSkipConnectionBlock(nn.Module):
             downconv = downconv_cls(**args_down)
             upconv = upconv_cls(**args_up)
 
-            down = [downconv]
-            up = [upconv]
-            submodule = [submodule]
-
-            self.down = nn.Sequential(*down)
-            self.submodule = nn.Sequential(*submodule)
-            self.up = nn.Sequential(*up)
+            self.down = downconv
+            self.submodule = submodule
+            self.up = upconv
 
     def forward(self, data):
         if self.innermost:

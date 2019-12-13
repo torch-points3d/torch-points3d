@@ -252,7 +252,7 @@ class ResidualUpsampleBKPConv(nn.Module):
         self._conv = PointKernel(self.num_points, self.in_features  // 4, self.in_features // 4, radius=self.radius)
         self.post_mlp = nn.Linear(self.in_features // 4, out_features)
 
-        #self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
+        self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
 
         self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
 
@@ -270,12 +270,11 @@ class ResidualUpsampleBKPConv(nn.Module):
         x_side = self.conv(x_side, (pos, pos_skip), edge_index)
         x_side = self.post_mlp(x_side)
 
-        #x_shortcut = self.shortcut_mlp(x)
-        #import pdb; pdb.set_trace()
-        #x_shortcut = torch.index_select(x_shortcut, 0, col)
-        #x_shortcut = scatter_("add", x_shortcut, 0, row, dim_size=len(row))
+        x_shortcut = self.shortcut_mlp(x)
+        x_shortcut = torch.index_select(x_shortcut, 0, col)
+        x_shortcut = scatter_("add", x_shortcut, row)
 
-        x = x_side# + x_shortcut
+        x = x_side + x_shortcut
 
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
