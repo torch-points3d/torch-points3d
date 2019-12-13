@@ -16,6 +16,64 @@ SPECIAL_NAMES = ['radius']
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
+    def __init__(self, opt, model_name, num_classes, modules_lib):
+        """Construct a Unet generator
+        Parameters:
+            opt - options for the network generation
+            num_class - output of the network
+            modules_lib - all modules that can be used in the UNet
+        We construct the U-Net from the innermost layer to the outermost layer.
+        It is a recursive process.
+        """
+        super(UnetBasedModel, self).__init__(opt)
+
+        num_convs = len(opt.down_conv.down_conv_nn)
+
+        self.factory_module_cls, self.has_factory = self.check_if_contains_factory(model_name, modules_lib)
+
+        if self.has_factory:
+            self.down_conv_cls_name = opt.down_conv.module_name
+            self.up_conv_cls_name = opt.up_conv.module_name
+            self.factory_module = self.factory_module_cls(self.down_conv_cls_name, self.up_conv_cls_name, modules_lib) # Create the factory object
+        else:
+            self.down_conv_cls = getattr(modules_lib, opt.down_conv.module_name, None)
+            self.up_conv_cls = getattr(modules_lib, opt.up_conv.module_name, None)
+
+        # construct unet structure
+        contains_global = hasattr(opt, "innermost")
+        if contains_global:
+            assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
+            
+            args_up = self.fetch_arguments_from_list(opt.up_conv, 0)
+            args_up = self.get_module_cls(args_up, 0, 'up_conv_cls', "UP")
+            
+            unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
+                                                 input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
+        else:
+            unet_block = []
+
+        if num_convs > 1:
+            for index in range(num_convs - 1, 0, -1):
+                args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
+                unet_block = UnetSkipConnectionBlock(
+                    args_up=args_up, args_down=args_down, input_nc=None, submodule=unet_block, norm_layer=None)
+        else:
+            index = num_convs
+
+        index -= 1
+        args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
+        
+        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
+                                             outermost=True, norm_layer=None)  # add the outermost layer
+        print(self)
+
+    def check_if_contains_factory(self, model_name, modules_lib):
+        factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
+        if factory_module_cls is None:
+            return factory_module_cls, False
+        else:
+            return factory_module_cls, True
+
     def fetch_arguments_from_list(self, opt, index):
         args = {}
         for o, v in opt.items():
@@ -34,57 +92,22 @@ class UnetBasedModel(BaseModel):
         args['index'] = index
         return args
 
+    def get_module_cls(self, args, index, name, flow):
+        if self.has_factory:
+            args[name] = self.factory_module.get_module_from_index(index, flow=flow)
+        else:
+            args[name] = getattr(self, name, None)      
+        return args  
+
     def fetch_arguments_up_and_down(self, opt, index, count_convs):
         # Defines down arguments
         args_down = self.fetch_arguments_from_list(opt.down_conv, index)
-        args_down['down_conv_cls'] = self.down_conv_cls
+        args_down = self.get_module_cls(args_down, index, 'down_conv_cls', "DOWN")
 
         # Defines up arguments
         args_up = self.fetch_arguments_from_list(opt.up_conv, count_convs - index)
-        args_up['up_conv_cls'] = self.up_conv_cls
+        args_up = self.get_module_cls(args_up, count_convs - index, 'up_conv_cls', "UP")
         return args_up, args_down
-
-    def __init__(self, opt, num_classes, modules_lib):
-        """Construct a Unet generator
-        Parameters:
-            opt - options for the network generation
-            num_class - output of the network
-            modules_lib - all modules that can be used in the UNet
-        We construct the U-Net from the innermost layer to the outermost layer.
-        It is a recursive process.
-        """
-        super(UnetBasedModel, self).__init__(opt)
-
-        num_convs = len(opt.down_conv.down_conv_nn)
-
-        self.down_conv_cls = getattr(modules_lib, opt.down_conv.module_name, None)
-        self.up_conv_cls = getattr(modules_lib, opt.up_conv.module_name, None)
-
-        # construct unet structure
-        contains_global = hasattr(opt, "innermost")
-        if contains_global:
-            assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
-            args_up = self.fetch_arguments_from_list(opt.up_conv, 0)
-            args_up['up_conv_cls'] = self.up_conv_cls
-            unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
-                                                 input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
-        else:
-            unet_block = []
-
-        if num_convs > 1:
-            for index in range(num_convs - 1, 0, -1):
-                args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
-                unet_block = UnetSkipConnectionBlock(
-                    args_up=args_up, args_down=args_down, input_nc=None, submodule=unet_block, norm_layer=None)
-        else:
-            index = num_convs
-
-        index -= 1
-        args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
-        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
-                                             outermost=True, norm_layer=None)  # add the outermost layer
-
-        print(self)
 
 
 class UnetSkipConnectionBlock(nn.Module):
@@ -120,11 +143,9 @@ class UnetSkipConnectionBlock(nn.Module):
             assert outermost == False
             module_name = self.get_from_kwargs(args_innermost, 'module_name')
             inner_module_cls = getattr(modules_lib, module_name)
-            inner_module = [inner_module_cls(**args_innermost)]
-            self.inner = nn.Sequential(*inner_module)
+            self.inner = inner_module_cls(**args_innermost)
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
-            up = [upconv_cls(**args_up)]
-            self.up = nn.Sequential(*up)
+            self.up = upconv_cls(**args_up)
         else:
             downconv_cls = self.get_from_kwargs(args_down, 'down_conv_cls')
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
@@ -132,13 +153,9 @@ class UnetSkipConnectionBlock(nn.Module):
             downconv = downconv_cls(**args_down)
             upconv = upconv_cls(**args_up)
 
-            down = [downconv]
-            up = [upconv]
-            submodule = [submodule]
-
-            self.down = nn.Sequential(*down)
-            self.up = nn.Sequential(*up)
-            self.submodule = nn.Sequential(*submodule)
+            self.down = downconv
+            self.submodule = submodule
+            self.up = upconv
 
     def forward(self, data):
         if self.innermost:
