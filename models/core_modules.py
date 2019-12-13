@@ -76,14 +76,14 @@ class BaseKNNConvolution(ABC, torch.nn.Module):
     def conv(self, x, pos, edge_index):
         pass 
 
-    def forward(self, data, returnIdx=False):
+    def forward(self, data):
         x, pos, batch = data
 
         if self.ratio == 1: #convolve every point
             row, col = knn(pos, pos, self.k, batch, batch)
             edge_index = torch.stack([col, row], dim=0)
             x = self.conv(x, (pos, pos), edge_index)
-            return (x, pos, batch)
+            return x, pos, batch, None
         else: #downsample using self.sampling_strategy and convolve 
             if self.sampling_strategy == 'fps':
                 idx = fps(pos, batch, self.ratio)
@@ -96,9 +96,7 @@ class BaseKNNConvolution(ABC, torch.nn.Module):
             edge_index = torch.stack([col, row], dim=0)
             x = self.conv(x, (pos, pos[idx]), edge_index)
             pos, batch = pos[idx], batch[idx]
-            if returnIdx:
-                return (x, pos, batch), idx
-            return (x, pos, batch)
+            return x, pos, batch, idx
 
 
 class BaseResnetBlock(ABC, torch.nn.Module):
@@ -113,7 +111,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
 
         self.indim = indim
         self.outdim = outdim
-        self.convdim
+        self.convdim = convdim
 
         self.features_downsample_nn = MLP([self.indim, self.outdim//4])
         self.features_upsample_nn = MLP([self.convdim, self.outdim])
@@ -126,16 +124,16 @@ class BaseResnetBlock(ABC, torch.nn.Module):
     def convolution(self, data):
         pass
 
-    def forward(self, x, pos, data):
+    def forward(self, data):
 
         x, pos, batch = data #(N, indim)
 
         shortcut = x #(N, indim)
 
-        x = self.features_dsample_nn(x) #(N, outdim//4)
+        x = self.features_downsample_nn(x) #(N, outdim//4)
 
         #if this is an identity resnet block, idx will be None
-        (x, pos, batch), idx = self.convolution((x, pos, batch)) #(N', convdim)
+        x, pos, batch, idx = self.convolution((x, pos, batch)) #(N', convdim)
 
         x = self.features_upsample_nn(x) #(N', outdim)
 
@@ -146,7 +144,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
 
         x = shortcut + x
 
-        return self.activation(x)
+        return self.activation(x), pos, batch
 
 
 class GlobalBaseModule(torch.nn.Module):

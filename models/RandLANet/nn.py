@@ -15,7 +15,7 @@ class SegmentationModel(UnetBasedModel):
         self.lin3 = torch.nn.Linear(nn[3], args[1])
 
     def set_input(self, data):
-        self.input = (data.x, data.pos, data.batch)
+        self.input = (data.x if data.x is not None else data.pos, data.pos, data.batch)
         self.labels = data.y
 
     def forward(self):
