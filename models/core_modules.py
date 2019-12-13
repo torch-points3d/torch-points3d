@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+import math
 import torch
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
-from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool
+from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 
 
 def MLP(channels, activation=ReLU()):
@@ -24,11 +25,10 @@ class FPModule(torch.nn.Module):
     def __init__(self, up_k, up_conv_nn, *args, **kwargs):
         super(FPModule, self).__init__()
         self.k = up_k
-        import pdb; pdb.set_trace()
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
-        print([x.shape if x is not None else x for x in data])
+        #print([x.shape if x is not None else x for x in data])
         x, pos, batch, x_skip, pos_skip, batch_skip = data
         x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
         if x_skip is not None:
@@ -60,6 +60,53 @@ class BaseConvolution(ABC, torch.nn.Module):
         pos, batch = pos[idx], batch[idx]
         data = (x, pos, batch)
         return data
+
+class BaseResnetBlock(ABC, torch.nn.Module):
+
+    def __init__(self, indim, outdim, convdim):
+        '''
+            indim: size of x at the input
+            outdim: desired size of x at the output
+            convdim: size of x following convolution
+        '''
+        torch.nn.Module.__init__(self)
+
+        self.indim = indim
+        self.outdim = outdim
+        self.convdim = convdim
+
+        self.features_downsample_nn = MLP([self.indim, self.outdim//4])
+        self.features_upsample_nn = MLP([self.convdim, self.outdim])
+
+        self.shortcut_feature_resize_nn = MLP([self.indim, self.outdim])
+
+        self.activation = ReLU()
+
+    @abstractmethod
+    def convolution(self, data):
+        pass
+
+    def forward(self, data):
+
+        x, pos, batch = data #(N, indim)
+
+        shortcut = x #(N, indim)
+
+        x = self.features_downsample_nn(x) #(N, outdim//4)
+
+        #if this is an identity resnet block, idx will be None
+        x, pos, batch, idx = self.convolution((x, pos, batch)) #(N', convdim)
+
+        x = self.features_upsample_nn(x) #(N', outdim)
+
+        if idx is not None:
+            shortcut = shortcut[idx] #(N', indim)
+
+        shortcut = self.shortcut_feature_resize_nn(shortcut) #(N', outdim)
+
+        x = shortcut + x
+
+        return self.activation(x), pos, batch
 
 class GlobalBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):

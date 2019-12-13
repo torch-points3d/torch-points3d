@@ -62,9 +62,9 @@ class UnetBasedModel(BaseModel):
 
         index -= 1
         args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
+        
         self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
                                              outermost=True, norm_layer=None)  # add the outermost layer
-
         print(self)
 
     def check_if_contains_factory(self, model_name, modules_lib):
@@ -96,7 +96,7 @@ class UnetBasedModel(BaseModel):
         if self.has_factory:
             args[name] = self.factory_module.get_module_from_index(index, flow=flow)
         else:
-            args[name] = getattr(self, name.replace("_cls", ""), None)      
+            args[name] = getattr(self, name, None)      
         return args  
 
     def fetch_arguments_up_and_down(self, opt, index, count_convs):
@@ -105,7 +105,7 @@ class UnetBasedModel(BaseModel):
         args_down = self.get_module_cls(args_down, index, 'down_conv_cls', "DOWN")
 
         # Defines up arguments
-        args_up = self.fetch_arguments_from_list(opt.up_conv, index)
+        args_up = self.fetch_arguments_from_list(opt.up_conv, count_convs - index)
         args_up = self.get_module_cls(args_up, count_convs - index, 'up_conv_cls', "UP")
         return args_up, args_down
 

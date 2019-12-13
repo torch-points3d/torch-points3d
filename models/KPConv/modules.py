@@ -191,7 +191,7 @@ class ResidualBKPConv(nn.Module):
         
         x_side = self.pre_mlp(x)
         x_side = self.conv(x_side, (pos, pos[idx]), edge_index)
-        x_side = self.post_mlp(x)
+        x_side = self.post_mlp(x_side)
 
         x_shortcut = self.shortcut_mlp(x[idx])
 
