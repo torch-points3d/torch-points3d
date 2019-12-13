@@ -26,7 +26,6 @@ class FPModule(torch.nn.Module):
     def __init__(self, up_k, up_conv_nn, *args, **kwargs):
         super(FPModule, self).__init__()
         self.k = up_k
-        import pdb; pdb.set_trace()
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
@@ -40,12 +39,11 @@ class FPModule(torch.nn.Module):
         return data
         
 class BaseConvolution(ABC, torch.nn.Module):
-    def __init__(self, ratio, radius, *args, **kwargs):
+    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
-        self.ratio = ratio
-        self.radius = radius
-        self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
+        self.sampler = sampler
+        self.neighbour_finder = neighbour_finder
 
     @property
     @abstractmethod
@@ -54,50 +52,48 @@ class BaseConvolution(ABC, torch.nn.Module):
 
     def forward(self, data):
         x, pos, batch = data
-        idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
-                          max_num_neighbors=self.max_num_neighbors)
+        idx = self.sampler(pos, batch)
+        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
-        data = (x, pos, batch)
+        data = (x, pos, batch, idx)
         return data
 
-<<<<<<< HEAD
-class BaseKNNConvolution(ABC, torch.nn.Module):
+# class BaseKNNConvolution(ABC, torch.nn.Module):
 
-    def __init__(self, ratio=None, k=None, sampling_strategy = None, *args, **kwargs):
-        torch.nn.Module.__init__(self)
+#     def __init__(self, ratio=None, k=None, sampling_strategy = None, *args, **kwargs):
+#         torch.nn.Module.__init__(self)
 
-        self.ratio = ratio
-        self.k = k
-        self.sampling_strategy = sampling_strategy
+#         self.ratio = ratio
+#         self.k = k
+#         self.sampling_strategy = sampling_strategy
 
-    @abstractmethod
-    def conv(self, x, pos, edge_index):
-        pass 
+#     @abstractmethod
+#     def conv(self, x, pos, edge_index):
+#         pass 
 
-    def forward(self, data):
-        x, pos, batch = data
+#     def forward(self, data):
+#         x, pos, batch = data
 
-        if self.ratio == 1: #convolve every point
-            row, col = knn(pos, pos, self.k, batch, batch)
-            edge_index = torch.stack([col, row], dim=0)
-            x = self.conv(x, (pos, pos), edge_index)
-            return x, pos, batch, None
-        else: #downsample using self.sampling_strategy and convolve 
-            if self.sampling_strategy == 'fps':
-                idx = fps(pos, batch, self.ratio)
-            elif self.sampling_strategy == 'random':
-                idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
-            else:
-                raise ValueError("Unrecognised sampling_strategy: " + self.sampling_strategy)
+#         if self.ratio == 1: #convolve every point
+#             row, col = knn(pos, pos, self.k, batch, batch)
+#             edge_index = torch.stack([col, row], dim=0)
+#             x = self.conv(x, (pos, pos), edge_index)
+#             return x, pos, batch, None
+#         else: #downsample using self.sampling_strategy and convolve 
+#             if self.sampling_strategy == 'fps':
+#                 idx = fps(pos, batch, self.ratio)
+#             elif self.sampling_strategy == 'random':
+#                 idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
+#             else:
+#                 raise ValueError("Unrecognised sampling_strategy: " + self.sampling_strategy)
             
-            row, col = knn(pos, pos[idx], self.k, batch, batch[idx])
-            edge_index = torch.stack([col, row], dim=0)
-            x = self.conv(x, (pos, pos[idx]), edge_index)
-            pos, batch = pos[idx], batch[idx]
-            return x, pos, batch, idx
+#             row, col = knn(pos, pos[idx], self.k, batch, batch[idx])
+#             edge_index = torch.stack([col, row], dim=0)
+#             x = self.conv(x, (pos, pos[idx]), edge_index)
+#             pos, batch = pos[idx], batch[idx]
+#             return x, pos, batch, idx
 
 
 class BaseResnetBlock(ABC, torch.nn.Module):
@@ -148,8 +144,6 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         return self.activation(x), pos, batch
 
 
-=======
->>>>>>> dc87404a7bac1e4208571549a598fb58df17ab28
 class GlobalBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):
         super(GlobalBaseModule, self).__init__()
@@ -165,47 +159,100 @@ class GlobalBaseModule(torch.nn.Module):
         data = (x, pos, batch)
         return data
 
-class Sampler():
 
-    def __init__(self, sampling_strategy = 'fps', neighbour_strategy = 'radius', ratio = None, opts = None):
 
-        if sampling_strategy == 'fps':
-            self.sampling_func = partial(fps, ratio=ratio)
+class BaseSampler(ABC):
 
-        elif sampling_strategy == 'random':
+    def __init__(self, ratio):
+        self.ratio = ratio
 
-            def random_sample(pos, batch):
-                idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*ratio),))
-            return idx
+    @abstractmethod
+    def sample(self, pos, batch):
+        pass
 
-            self.sampling_func = random_sample
-        else:
-            raise ValueError("Unrecognised sampling strategy: ", sampling_strategy)
+class FPSSampler(BaseSampler):
 
-        if neighbour_strategy == 'radius':
+    def __init__(self, ratio):
+        super(FPSSampler, self).__init__(ratio)
 
-            def radius_wrapper(x, y, batch_x, batch_y):
-                return radius(x, y, opts['radius'], batch_x, batch_y, max_num_neighbors=opts['max_num_neighbours'])
+    def sample(self, pos, batch):
+        return fps(pos, batch, ratio=self.ratio)
 
-            self.neighbour_func = radius_wrapper
-        elif neighbour_strategy == 'knn':
+class RandomSampler(BaseSampler):
 
-            def knn_wrapper(x, y, batch_x, batch_y):
-                return knn(x, y, opts['k'], batch_x, batch_y)
+    def __init__(self, ratio):
+        super(RandomSampler, self).__init__(ratio)
 
-            self.neighbour_func = knn_wrapper
-        else:
-            raise ValueError("Unrecognised neighbour strategy: ", neighbour_strategy)
+    def sample(self, pos, batch):
+        idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
+        return idx
 
-    def build(self):
 
-        def sample_func(pos, batch):
-            idx = self.sampling_func(pos, batch)
-            row, col = self.neighbour_func(pos, pos[idx], batch, batch[idx])
-            edge_index = torch.stack([col, row], dim=0)
-            return edge_index
 
-        return sample_func
+class BaseNeighbourFinder(ABC):
+
+    @abstractmethod
+    def find_neighbours(self, x, y, batch_x, batch_y):
+        pass
+
+class RadiusNeighbourFinder(BaseNeighbourFinder):
+
+    def __init__(self, radius, max_num_neighbors=64):
+        self.radius = radius 
+        self.max_num_neighbors = max_num_neighbors
+
+    def find_neighbours(self, x, y, batch_x, batch_y):  
+        return radius(x, y, self.radius, batch_x, batch_y, max_num_neighbors=self.max_num_neighbors)
+
+class KNNNeighbourFinder(BaseNeighbourFinder):
+
+    def __init__(self, k):
+        self.k = k 
+
+    def find_neighbours(self, x, y, batch_x, batch_y):
+        return knn(x, y, self.k, batch_x, batch_y)      
+
+# class Sampler():
+
+#     def __init__(self, sampling_strategy = 'fps', neighbour_strategy = 'radius', ratio = None, opts = None):
+
+#         if sampling_strategy == 'fps':
+#             self.sampling_func = partial(fps, ratio=ratio)
+
+#         elif sampling_strategy == 'random':
+
+#             def random_sample(pos, batch):
+#                 idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*ratio),))
+#                 return idx
+
+#             self.sampling_func = random_sample
+#         else:
+#             raise ValueError("Unrecognised sampling strategy: ", sampling_strategy)
+
+#         if neighbour_strategy == 'radius':
+
+#             def radius_wrapper(x, y, batch_x, batch_y):
+#                 return radius(x, y, opts['radius'], batch_x, batch_y, max_num_neighbors=opts['max_num_neighbours'])
+
+#             self.neighbour_func = radius_wrapper
+#         elif neighbour_strategy == 'knn':
+
+#             def knn_wrapper(x, y, batch_x, batch_y):
+#                 return knn(x, y, opts['k'], batch_x, batch_y)
+
+#             self.neighbour_func = knn_wrapper
+#         else:
+#             raise ValueError("Unrecognised neighbour strategy: ", neighbour_strategy)
+
+#     def build(self):
+
+#         def sample_func(pos, batch):
+#             idx = self.sampling_func(pos, batch)
+#             row, col = self.neighbour_func(pos, pos[idx], batch, batch[idx])
+#             edge_index = torch.stack([col, row], dim=0)
+#             return edge_index
+
+#         return sample_func
             
 
 

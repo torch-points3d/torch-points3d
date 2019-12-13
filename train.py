@@ -90,7 +90,7 @@ def run(cfg, model, dataset, device):
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
 
 
-@hydra.main(config_path='conf/config.yaml')
+@hydra.main(config_path='config.yaml')
 def main(cfg):
     
     # GET ARGUMENTS

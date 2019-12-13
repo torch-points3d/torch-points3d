@@ -5,7 +5,7 @@ from torch_geometric.nn import MessagePassing, knn
 from models.core_modules import *
 import math
 
-class RandlaConv(MessagePassing, BaseKNNConvolution):
+class RandlaKernel(MessagePassing):
     '''
         Implements both the Local Spatial Encoding and Attentive Pooling blocks from 
         RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
@@ -13,10 +13,8 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
 
     '''
 
-    def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
+    def __init__(self, point_pos_nn=None, attention_nn=None, global_nn=None, *args, **kwargs):
         MessagePassing.__init__(self, aggr='add')
-        BaseKNNConvolution.__init__(self, ratio=ratio, k=k, sampling_strategy='random') 
-        #torch.nn.Module.__init__ will be called twice, but this should be fine
 
         self.point_pos_nn = MLP(point_pos_nn)
         self.attention_nn = MLP(attention_nn)
@@ -62,12 +60,23 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
     def update(self, aggr_out):
         return self.global_nn(aggr_out)
 
+class RandlaConv(BaseConvolution):
+
+    def __init__(self, ratio = None, k = None, *args, **kwargs):
+        super(RandlaConv, self).__init__(RandomSampler(ratio), KNNNeighbourFinder(k), *args, **kwargs)
+
+        self._conv = RandlaKernel(*args, **kwargs)
+
+    @property
+    def conv(self):
+        return self._conv
+
 class DilatedResidualBlock(BaseResnetBlock):
 
     def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2, 
             attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
 
-        super(DialatedResidualBlock, self).__init__(indim, outdim, outdim)
+        super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
 
         self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1)
         self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
