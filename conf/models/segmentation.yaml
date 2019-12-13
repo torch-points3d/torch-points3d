@@ -93,12 +93,12 @@ models:
     KPConv:
         name: KPConv
         down_conv:
-            module_name: KPConv #ResidualBKPConv
+            module_name: ResidualBKPConv
             ratios: [0.2, 0.25]
             radius: [0.1, 0.2]
             down_conv_nn: [[3, 32], [32, 64]]
         up_conv:
-            module_name: FPModule # SimpleUpsampleKPConv
+            module_name: ResidualUpsampleBKPConv
             radius: [1, 0.2, 0.1]
             up_conv_nn: [[128, 128], [64, 64], [64, 64]]     
             mlp_nn: [[192, 64], [96, 64], [64, 64]]     

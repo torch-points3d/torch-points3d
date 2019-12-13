@@ -17,10 +17,13 @@ from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from models.core_modules import *
 from models.base_model import BaseFactory
+from torch_geometric.utils import scatter_
+
 
 class KPConvModels(Enum):
     KPCONV = 0
     RESIDUALBKPCONV = 1
+    RESIDUALUPSAMPLEBKPCONV = 2
 
 class KPConvFactory(BaseFactory):
     def get_module_from_index(self, index, flow=None):
@@ -191,7 +194,7 @@ class ResidualBKPConv(nn.Module):
         
         x_side = self.pre_mlp(x)
         x_side = self.conv(x_side, (pos, pos[idx]), edge_index)
-        x_side = self.post_mlp(x)
+        x_side = self.post_mlp(x_side)
 
         x_shortcut = self.shortcut_mlp(x[idx])
 
@@ -224,6 +227,55 @@ class SimpleUpsampleKPConv(BaseConvolution):
                           max_num_neighbors=self.max_num_neighbors)
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos_skip), edge_index)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+        x = self.nn(x)
+        data = (x, pos_skip, batch_skip)
+        return data
+
+class ResidualUpsampleBKPConv(nn.Module):
+    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
+        super(ResidualUpsampleBKPConv, self).__init__()
+
+        self.ratio = ratio
+        self.radius = radius
+        self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
+        
+        in_features, out_features = up_conv_nn
+
+        # KPCONV arguments
+        self.in_features = in_features
+        self.out_features = out_features
+        self.num_points = num_points
+
+        self.pre_mlp = nn.Linear(self.in_features, self.in_features // 4)
+        self._conv = PointKernel(self.num_points, self.in_features  // 4, self.in_features // 4, radius=self.radius)
+        self.post_mlp = nn.Linear(self.in_features // 4, out_features)
+
+        self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
+
+        self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
+
+    @property
+    def conv(self):
+        return self._conv
+
+    def forward(self, data):
+        x, pos, batch, x_skip, pos_skip, batch_skip = data
+        row, col = radius(pos, pos_skip, self.radius, batch, batch_skip,
+                          max_num_neighbors=self.max_num_neighbors)
+        edge_index = torch.stack([col, row], dim=0)
+
+        x_side = self.pre_mlp(x)
+        x_side = self.conv(x_side, (pos, pos_skip), edge_index)
+        x_side = self.post_mlp(x_side)
+
+        x_shortcut = self.shortcut_mlp(x)
+        x_shortcut = torch.index_select(x_shortcut, 0, col)
+        x_shortcut = scatter_("add", x_shortcut, row)
+
+        x = x_side + x_shortcut
+
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
         x = self.nn(x)

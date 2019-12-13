@@ -62,9 +62,9 @@ class UnetBasedModel(BaseModel):
 
         index -= 1
         args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
+        
         self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
                                              outermost=True, norm_layer=None)  # add the outermost layer
-
         print(self)
 
     def check_if_contains_factory(self, model_name, modules_lib):
@@ -96,7 +96,7 @@ class UnetBasedModel(BaseModel):
         if self.has_factory:
             args[name] = self.factory_module.get_module_from_index(index, flow=flow)
         else:
-            args[name] = getattr(self, name.replace("_cls", ""), None)      
+            args[name] = getattr(self, name, None)      
         return args  
 
     def fetch_arguments_up_and_down(self, opt, index, count_convs):
@@ -105,7 +105,7 @@ class UnetBasedModel(BaseModel):
         args_down = self.get_module_cls(args_down, index, 'down_conv_cls', "DOWN")
 
         # Defines up arguments
-        args_up = self.fetch_arguments_from_list(opt.up_conv, index)
+        args_up = self.fetch_arguments_from_list(opt.up_conv, count_convs - index)
         args_up = self.get_module_cls(args_up, count_convs - index, 'up_conv_cls', "UP")
         return args_up, args_down
 
@@ -139,19 +139,13 @@ class UnetSkipConnectionBlock(nn.Module):
         self.outermost = outermost
         self.innermost = innermost
 
-        print(args_up)
-        print(args_down)
-        print()
-
         if innermost:
             assert outermost == False
             module_name = self.get_from_kwargs(args_innermost, 'module_name')
             inner_module_cls = getattr(modules_lib, module_name)
-            inner_module = [inner_module_cls(**args_innermost)]
-            self.inner = nn.Sequential(*inner_module)
+            self.inner = inner_module_cls(**args_innermost)
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
-            up = [upconv_cls(**args_up)]
-            self.up = nn.Sequential(*up)
+            self.up = upconv_cls(**args_up)
         else:
             downconv_cls = self.get_from_kwargs(args_down, 'down_conv_cls')
             upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
@@ -159,13 +153,9 @@ class UnetSkipConnectionBlock(nn.Module):
             downconv = downconv_cls(**args_down)
             upconv = upconv_cls(**args_up)
 
-            down = [downconv]
-            up = [upconv]
-            submodule = [submodule]
-
-            self.down = nn.Sequential(*down)
-            self.submodule = nn.Sequential(*submodule)
-            self.up = nn.Sequential(*up)
+            self.down = downconv
+            self.submodule = submodule
+            self.up = upconv
 
     def forward(self, data):
         if self.innermost:
