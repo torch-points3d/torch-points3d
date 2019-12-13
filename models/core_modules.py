@@ -65,12 +65,16 @@ class BaseConvolution(ABC, torch.nn.Module):
 
 class BaseKNNConvolution(ABC, torch.nn.Module):
 
-    def __init__(self, ratio=None, k=None, sampling_strategy = None, *args, **kwargs):
+    def __init__(self, ratio=None, k=None, sampling_strategy = None, return_idx = False, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
         self.ratio = ratio
         self.k = k
         self.sampling_strategy = sampling_strategy
+
+        #whether forward should return the idx used to downsample the point cloud
+        #this is needed for residual blocks to index the shortcut
+        self.returnIdx = return_idx 
 
     @abstractmethod
     def conv(self, x, pos, edge_index):
@@ -83,7 +87,10 @@ class BaseKNNConvolution(ABC, torch.nn.Module):
             row, col = knn(pos, pos, self.k, batch, batch)
             edge_index = torch.stack([col, row], dim=0)
             x = self.conv(x, (pos, pos), edge_index)
-            return x, pos, batch, None
+            if self.returnIdx:
+                return x, pos, batch, None
+            else:
+                return x, pos, batch
         else: #downsample using self.sampling_strategy and convolve 
             if self.sampling_strategy == 'fps':
                 idx = fps(pos, batch, self.ratio)
@@ -96,7 +103,10 @@ class BaseKNNConvolution(ABC, torch.nn.Module):
             edge_index = torch.stack([col, row], dim=0)
             x = self.conv(x, (pos, pos[idx]), edge_index)
             pos, batch = pos[idx], batch[idx]
-            return x, pos, batch, idx
+            if self.returnIdx:
+                return x, pos, batch, idx
+            else:
+                return x, pos, batch
 
 
 class BaseResnetBlock(ABC, torch.nn.Module):

@@ -35,11 +35,11 @@ def train(epoch, model, train_loader, device, options):
         iter_data_time = time.time()
 
         #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
-        # if (i + 1) % 10 == 0:
-        #     print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
-        #     i + 1, len(train_loader), total_loss / 10,
-        #     correct_nodes / total_nodes))
-        #     total_loss = correct_nodes = total_nodes = 0
+        if (i + 1) % 10 == 0:
+            print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
+            i + 1, len(train_loader), total_loss / 10,
+            correct_nodes / total_nodes))
+            total_loss = correct_nodes = total_nodes = 0
 
     
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
@@ -107,7 +107,7 @@ def main(cfg):
 
     # Find and create associated model
     model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
-    model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
+    model = find_model_using_name(model_config.type, tested_task, model_config, dataset.num_classes)
     model.set_optimizer(torch.optim.Adam)
 
     # wandb.watch(model)

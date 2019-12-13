@@ -13,14 +13,15 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
 
     '''
 
-    def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, **kwargs):
+    def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, is_residual = False, **kwargs):
         MessagePassing.__init__(self, aggr='add')
-        BaseKNNConvolution.__init__(self, ratio=ratio, k=k, sampling_strategy='random') 
+        BaseKNNConvolution.__init__(self, ratio=ratio, k=k, sampling_strategy='random', return_idx=is_residual) 
         #torch.nn.Module.__init__ will be called twice, but this should be fine
 
         self.point_pos_nn = MLP(point_pos_nn)
         self.attention_nn = MLP(attention_nn)
         self.global_nn = MLP(global_nn)
+        self.isResidual = is_residual
 
     def conv(self, x, pos, edge_index):
         x = self.propagate(edge_index, x=x, pos=pos)
@@ -67,10 +68,10 @@ class DilatedResidualBlock(BaseResnetBlock):
     def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2, 
             attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
 
-        super(DialatedResidualBlock, self).__init__(indim, outdim, outdim)
+        super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
 
-        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1)
-        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
+        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1, is_residual=True)
+        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2, is_residual=True)
 
     def convolution(self, data):
         *data, idx1 = self.conv1(data) #calls the forward function of BaseKNNConvolution
