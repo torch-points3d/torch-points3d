@@ -139,10 +139,6 @@ class UnetSkipConnectionBlock(nn.Module):
         self.outermost = outermost
         self.innermost = innermost
 
-        print(args_up)
-        print(args_down)
-        print()
-
         if innermost:
             assert outermost == False
             module_name = self.get_from_kwargs(args_innermost, 'module_name')
