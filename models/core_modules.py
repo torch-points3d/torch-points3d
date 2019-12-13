@@ -41,7 +41,7 @@ class FPModule(torch.nn.Module):
 
 
 class BaseConvolution(ABC, torch.nn.Module):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ratio, radius, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
         self.ratio = ratio
@@ -202,7 +202,7 @@ class Sampler():
             row, col = self.neighbour_func(pos, pos[idx], batch, batch[idx])
             edge_index = torch.stack([col, row], dim=0)
             return edge_index
-            
+
         return sample_func
             
 
