@@ -40,6 +40,7 @@ models:
             mlp_cls: 
                 nn: []
                 dropout: 0.5
+                
         RandLANet:
             name: ranldanet_res
             down_conv:
@@ -83,7 +84,6 @@ models:
         #     mlp_cls:
         #         nn: [64, 64, 64, 64]
         #         dropout: 0.5
-
         RSConv:
             name: RSConv
             down_conv:
