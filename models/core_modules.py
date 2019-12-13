@@ -12,7 +12,6 @@ def MLP(channels, activation=ReLU()):
         for i in range(1, len(channels))
     ])
 
-
 class FPModule(torch.nn.Module):
     """ Upsampling module from PointNet++
 
@@ -27,10 +26,11 @@ class FPModule(torch.nn.Module):
     def __init__(self, up_k, up_conv_nn, *args, **kwargs):
         super(FPModule, self).__init__()
         self.k = up_k
+        import pdb; pdb.set_trace()
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
-        # print([x.shape if x is not None else x for x in data])
+        print([x.shape if x is not None else x for x in data])
         x, pos, batch, x_skip, pos_skip, batch_skip = data
         x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
         if x_skip is not None:
@@ -38,8 +38,7 @@ class FPModule(torch.nn.Module):
         x = self.nn(x)
         data = (x, pos_skip, batch_skip)
         return data
-
-
+        
 class BaseConvolution(ABC, torch.nn.Module):
     def __init__(self, ratio, radius, *args, **kwargs):
         torch.nn.Module.__init__(self)
@@ -64,6 +63,7 @@ class BaseConvolution(ABC, torch.nn.Module):
         data = (x, pos, batch)
         return data
 
+<<<<<<< HEAD
 class BaseKNNConvolution(ABC, torch.nn.Module):
 
     def __init__(self, ratio=None, k=None, sampling_strategy = None, *args, **kwargs):
@@ -148,6 +148,8 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         return self.activation(x), pos, batch
 
 
+=======
+>>>>>>> dc87404a7bac1e4208571549a598fb58df17ab28
 class GlobalBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):
         super(GlobalBaseModule, self).__init__()

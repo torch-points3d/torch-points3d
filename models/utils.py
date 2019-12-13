@@ -1,7 +1,6 @@
 import os
 import importlib
 
-
 def find_model_using_name(model_name, task, option, num_classes):
 
     if task == "segmentation":
@@ -22,4 +21,4 @@ def find_model_using_name(model_name, task, option, num_classes):
 
     module_filename = '.'.join(["models", model_name, "modules"])
     modules = importlib.import_module(module_filename)
-    return model(option, num_classes, modules)
+    return model(option, model_name, num_classes, modules)

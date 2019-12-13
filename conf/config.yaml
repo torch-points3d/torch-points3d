@@ -1,0 +1,29 @@
+# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
+experiment:
+    name: KPConv
+    task: segmentation
+    dataset: shapenet
+
+# Those arguments defines the training hyper-parameters
+training:
+    shuffle: True
+    num_workers: 2
+    batch_size: 4
+    cuda: 0
+    print_frequency: 1
+
+# Those arguments defines the available datasets
+data:
+    shapenet: 
+        name: shapenet
+        dataroot: data
+        category: Airplane
+
+    # This dataset can be used only for classification
+    modelnet: 
+        name: modelnet
+        dataroot: data
+        number: 10
+
+defaults:
+    - models: segmentation
