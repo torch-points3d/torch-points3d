@@ -1,7 +1,6 @@
 import os
 import importlib
 
-
 def find_model_using_name(model_name, task, option, num_classes):
 
     if task == "segmentation":

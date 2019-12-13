@@ -19,6 +19,11 @@ from models.core_modules import *
 
 class PointKernel(MessagePassing):
 
+    '''
+    Implements KPConv: Flexible and Deformable Convolution for Point Clouds from 
+    https://arxiv.org/abs/1904.08889
+    '''
+
     def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='linear'):
         super(PointKernel, self).__init__()
         # PointKernel parameters
@@ -111,7 +116,6 @@ class PointKernel(MessagePassing):
                 # PointKernel parameters
         return "PointKernel({}, {}, {}, {}, {})".format(self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence)
 
-
 class KPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(KPConv, self).__init__(ratio, radius)
@@ -128,7 +132,6 @@ class KPConv(BaseConvolution):
     @property
     def conv(self):
         return self._conv
-
 
 class SimpleUpsampleKPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
