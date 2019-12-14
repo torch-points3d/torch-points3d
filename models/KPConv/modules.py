@@ -147,6 +147,9 @@ class KPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
+        self.ratio = ratio
+        self.radius = radius
+        
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments

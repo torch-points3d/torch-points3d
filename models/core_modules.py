@@ -83,29 +83,20 @@ class BaseResnetBlock(ABC, torch.nn.Module):
 
     @property
     @abstractmethod
-    def conv(self):
+    def convs(self):
         pass
 
     def forward(self, data):
-
         x, pos, batch = data #(N, indim)
-
         shortcut = x #(N, indim)
-
         x = self.features_downsample_nn(x) #(N, outdim//4)
-
         #if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.conv((x, pos, batch)) #(N', convdim)
-
+        x, pos, batch, idx = self.convs((x, pos, batch)) #(N', convdim)
         x = self.features_upsample_nn(x) #(N', outdim)
-
         if idx is not None:
             shortcut = shortcut[idx] #(N', indim)
-
         shortcut = self.shortcut_feature_resize_nn(shortcut) #(N', outdim)
-
         x = shortcut + x
-
         return self.activation(x), pos, batch
 
 class GlobalBaseModule(torch.nn.Module):

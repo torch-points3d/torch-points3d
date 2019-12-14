@@ -49,7 +49,6 @@ class RandlaKernel(MessagePassing):
 
         #attentative pooling
         g_fij = self.attention_nn(fij_hat)
-
         s_ij = F.softmax(g_fij, -1)
 
         msg = s_ij * fij_hat
@@ -90,7 +89,7 @@ class DilatedResidualBlock(BaseResnetBlock):
         self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1)
         self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
 
-    def conv(self, data):
+    def convs(self, data):
         *data, idx1 = self.conv1(data)
         *data, idx2 = self.conv2(data)
         if idx1 is None:
@@ -124,7 +123,7 @@ class RandLANetRes(torch.nn.Module):
         )
 
     def forward(self, data):
-        return self._conv(data)
+        return self._conv.forward(data)
 
 class RandLANet(BaseConvolution):
 

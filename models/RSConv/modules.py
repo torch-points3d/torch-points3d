@@ -3,7 +3,7 @@ import torch
 from torch.nn import ReLU
 from torch_geometric.nn import MessagePassing
 from models.core_modules import *
-from core_sampling_and_search import FPSSampler, RadiusNeighbourFinder
+from models.core_sampling_and_search import FPSSampler, RadiusNeighbourFinder
 
 class Convolution(MessagePassing):
     r"""The Relation Shape Convolution layer from "Relation-Shape Convolutional Neural Network for Point Cloud Analysis" 
