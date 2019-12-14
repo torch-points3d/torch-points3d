@@ -50,7 +50,7 @@ class RandlaKernel(MessagePassing):
         #attentative pooling
         g_fij = self.attention_nn(fij_hat)
 
-        s_ij = F.softmax(g_fij)
+        s_ij = F.softmax(g_fij, -1)
 
         msg = s_ij * fij_hat
         
