@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, knn
 from models.core_modules import *
+from models.core_sampling_and_search import *
 import math
 
 class RandlaKernel(MessagePassing):
@@ -20,7 +21,7 @@ class RandlaKernel(MessagePassing):
         self.attention_nn = MLP(attention_nn)
         self.global_nn = MLP(global_nn)
 
-    def conv(self, x, pos, edge_index):
+    def forward(self, x, pos, edge_index):
         x = self.propagate(edge_index, x=x, pos=pos)
         return x
 
@@ -43,10 +44,8 @@ class RandlaKernel(MessagePassing):
 
         rij = self.point_pos_nn(relPointPos)
 
-
         #concatenate position encoding with feature vector
         fij_hat = torch.cat([x_j, rij], dim=1)
-
 
         #attentative pooling
         g_fij = self.attention_nn(fij_hat)
