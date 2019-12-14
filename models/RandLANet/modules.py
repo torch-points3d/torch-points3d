@@ -70,6 +70,16 @@ class RandlaConv(BaseConvolution):
     def conv(self):
         return self._conv
 
+    def forward(self, data):
+        x, pos, batch = data
+        idx = self.sampler(pos, batch)
+        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv(x, (pos, pos[idx]), edge_index)
+        pos, batch = pos[idx], batch[idx]
+        data = (x, pos, batch, idx)
+        return data
+
 class DilatedResidualBlock(BaseResnetBlock):
 
     def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2, 
@@ -80,8 +90,8 @@ class DilatedResidualBlock(BaseResnetBlock):
         self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1)
         self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
 
-    def convolution(self, data):
-        *data, idx1 = self.conv1(data) #calls the forward function of BaseKNNConvolution
+    def conv(self, data):
+        *data, idx1 = self.conv1(data)
         *data, idx2 = self.conv2(data)
         if idx1 is None:
             if idx2 is None:
@@ -100,7 +110,7 @@ class RandLANetRes(torch.nn.Module):
         print('Init randlanetres with kwargs: ', kwargs)
         super(RandLANetRes, self).__init__()
 
-        self.conv = DilatedResidualBlock(
+        self._conv = DilatedResidualBlock(
             kwargs['indim'],
             kwargs['outdim'],
             kwargs['ratio'][0],
@@ -114,11 +124,9 @@ class RandLANetRes(torch.nn.Module):
         )
 
     def forward(self, data):
-        return self.conv(data)
+        return self._conv(data)
 
-# This is not the real randla-net - it is basically pointnet++ using the local spatial encoding 
-# and attentative pooling blocks from randla-net as the convolution. 
-class RandLANet(torch.nn.Module):
+class RandLANet(BaseConvolution):
 
     def __init__(self, *args, **kwargs):
         super(RandLANet, self).__init__()

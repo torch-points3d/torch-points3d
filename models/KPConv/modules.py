@@ -18,7 +18,7 @@ from .kernel_utils import kernel_point_optimization_debug
 from models.core_modules import *
 from models.base_model import BaseFactory
 from torch_geometric.utils import scatter_
-
+from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
 
 class KPConvModels(Enum):
     KPCONV = 0
@@ -145,7 +145,7 @@ class PointKernel(MessagePassing):
 
 class KPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
-        super(KPConv, self).__init__(ratio, radius)
+        super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         in_features, out_features = down_conv_nn
 
@@ -204,7 +204,7 @@ class ResidualBKPConv(nn.Module):
 
 class SimpleUpsampleKPConv(BaseConvolution):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
-        super(SimpleUpsampleKPConv, self).__init__(ratio, radius)
+        super(SimpleUpsampleKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         in_features, out_features = up_conv_nn
 

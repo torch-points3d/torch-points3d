@@ -57,7 +57,7 @@ class BaseConvolution(ABC, torch.nn.Module):
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
-        data = (x, pos, batch, idx)
+        data = (x, pos, batch)
         return data
 
 class BaseResnetBlock(ABC, torch.nn.Module):
@@ -81,8 +81,9 @@ class BaseResnetBlock(ABC, torch.nn.Module):
 
         self.activation = ReLU()
 
+    @property
     @abstractmethod
-    def convolution(self, data):
+    def conv(self):
         pass
 
     def forward(self, data):
@@ -94,7 +95,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         x = self.features_downsample_nn(x) #(N, outdim//4)
 
         #if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.convolution((x, pos, batch)) #(N', convdim)
+        x, pos, batch, idx = self.conv((x, pos, batch)) #(N', convdim)
 
         x = self.features_upsample_nn(x) #(N', outdim)
 
