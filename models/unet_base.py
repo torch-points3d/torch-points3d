@@ -12,7 +12,6 @@ from .base_model import BaseModel
 
 SPECIAL_NAMES = ['radius']
 
-
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
