@@ -1,12 +1,10 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-
 from models.unet_base import UnetBasedModel
 
-
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, num_classes, modules):
+    def __init__(self, option, model_name, num_classes, modules):
         """Initialize this model class.
         Parameters:
             opt -- training/test options
@@ -14,7 +12,7 @@ class SegmentationModel(UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, option, num_classes, modules)  # call the initialization method of UnetBasedModel
+        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')

@@ -4,8 +4,8 @@ from models.unet_base import UnetBasedModel
 
 
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, num_classes, modules):
-        UnetBasedModel.__init__(self, option, num_classes, modules)  # call the initialization method of UnetBasedModel
+    def __init__(self, option, model_name, num_classes, modules):
+        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')
@@ -31,7 +31,8 @@ class SegmentationModel(UnetBasedModel):
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
-        return F.log_softmax(x, dim=-1)
+        self.output = F.log_softmax(x, dim=-1)
+        return self.output
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""

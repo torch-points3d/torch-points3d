@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import math
+from functools import partial
 import torch
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
@@ -10,7 +11,6 @@ def MLP(channels, activation=ReLU()):
         Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i]))
         for i in range(1, len(channels))
     ])
-
 
 class FPModule(torch.nn.Module):
     """ Upsampling module from PointNet++
@@ -29,7 +29,7 @@ class FPModule(torch.nn.Module):
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
-        # print([x.shape if x is not None else x for x in data])
+        #print([x.shape if x is not None else x for x in data])
         x, pos, batch, x_skip, pos_skip, batch_skip = data
         x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
         if x_skip is not None:
@@ -37,15 +37,13 @@ class FPModule(torch.nn.Module):
         x = self.nn(x)
         data = (x, pos_skip, batch_skip)
         return data
-
-
+        
 class BaseConvolution(ABC, torch.nn.Module):
-    def __init__(self, ratio, radius, *args, **kwargs):
+    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
-        self.ratio = ratio
-        self.radius = radius
-        self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
+        self.sampler = sampler
+        self.neighbour_finder = neighbour_finder
 
     @property
     @abstractmethod
@@ -54,15 +52,15 @@ class BaseConvolution(ABC, torch.nn.Module):
 
     def forward(self, data):
         x, pos, batch = data
-        idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
-                          max_num_neighbors=self.max_num_neighbors)
+        idx = self.sampler(pos, batch)
+        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
         data = (x, pos, batch)
         return data
 
+<<<<<<< HEAD
 class BaseKNNConvolution(ABC, torch.nn.Module):
 
     def __init__(self, ratio=None, k=None, sampling_strategy = None, return_idx = False, *args, **kwargs):
@@ -109,6 +107,8 @@ class BaseKNNConvolution(ABC, torch.nn.Module):
                 return x, pos, batch
 
 
+=======
+>>>>>>> residual_block
 class BaseResnetBlock(ABC, torch.nn.Module):
 
     def __init__(self, indim, outdim, convdim):
@@ -130,32 +130,23 @@ class BaseResnetBlock(ABC, torch.nn.Module):
 
         self.activation = ReLU()
 
+    @property
     @abstractmethod
-    def convolution(self, data):
+    def convs(self):
         pass
 
     def forward(self, data):
-
         x, pos, batch = data #(N, indim)
-
         shortcut = x #(N, indim)
-
         x = self.features_downsample_nn(x) #(N, outdim//4)
-
         #if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.convolution((x, pos, batch)) #(N', convdim)
-
+        x, pos, batch, idx = self.convs((x, pos, batch)) #(N', convdim)
         x = self.features_upsample_nn(x) #(N', outdim)
-
         if idx is not None:
             shortcut = shortcut[idx] #(N', indim)
-
         shortcut = self.shortcut_feature_resize_nn(shortcut) #(N', outdim)
-
         x = shortcut + x
-
         return self.activation(x), pos, batch
-
 
 class GlobalBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):

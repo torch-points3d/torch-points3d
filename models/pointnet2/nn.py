@@ -7,10 +7,9 @@ from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
 from .modules import SAModule
 
-
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, num_classes, modules):
-        UnetBasedModel.__init__(self, option, num_classes, modules)  # call the initialization method of UnetBasedModel
+    def __init__(self, option, model_name, num_classes, modules):
+        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')

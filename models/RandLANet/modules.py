@@ -3,9 +3,10 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, knn
 from models.core_modules import *
+from models.core_sampling_and_search import *
 import math
 
-class RandlaConv(MessagePassing, BaseKNNConvolution):
+class RandlaKernel(MessagePassing):
     '''
         Implements both the Local Spatial Encoding and Attentive Pooling blocks from 
         RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
@@ -13,17 +14,15 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
 
     '''
 
-    def __init__(self, ratio=None, k=None, point_pos_nn=None, attention_nn=None, global_nn=None, is_residual = False, **kwargs):
+    def __init__(self, point_pos_nn=None, attention_nn=None, global_nn=None, *args, **kwargs):
         MessagePassing.__init__(self, aggr='add')
-        BaseKNNConvolution.__init__(self, ratio=ratio, k=k, sampling_strategy='random', return_idx=is_residual) 
-        #torch.nn.Module.__init__ will be called twice, but this should be fine
 
         self.point_pos_nn = MLP(point_pos_nn)
         self.attention_nn = MLP(attention_nn)
         self.global_nn = MLP(global_nn)
         self.isResidual = is_residual
 
-    def conv(self, x, pos, edge_index):
+    def forward(self, x, pos, edge_index):
         x = self.propagate(edge_index, x=x, pos=pos)
         return x
 
@@ -46,15 +45,12 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
 
         rij = self.point_pos_nn(relPointPos)
 
-
         #concatenate position encoding with feature vector
         fij_hat = torch.cat([x_j, rij], dim=1)
 
-
         #attentative pooling
         g_fij = self.attention_nn(fij_hat)
-
-        s_ij = F.softmax(g_fij)
+        s_ij = F.softmax(g_fij, -1)
 
         msg = s_ij * fij_hat
         
@@ -62,6 +58,27 @@ class RandlaConv(MessagePassing, BaseKNNConvolution):
 
     def update(self, aggr_out):
         return self.global_nn(aggr_out)
+
+class RandlaConv(BaseConvolution):
+
+    def __init__(self, ratio = None, k = None, *args, **kwargs):
+        super(RandlaConv, self).__init__(RandomSampler(ratio), KNNNeighbourFinder(k), *args, **kwargs)
+
+        self._conv = RandlaKernel(*args, **kwargs)
+
+    @property
+    def conv(self):
+        return self._conv
+
+    def forward(self, data):
+        x, pos, batch = data
+        idx = self.sampler(pos, batch)
+        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
+        edge_index = torch.stack([col, row], dim=0)
+        x = self.conv(x, (pos, pos[idx]), edge_index)
+        pos, batch = pos[idx], batch[idx]
+        data = (x, pos, batch, idx)
+        return data
 
 class DilatedResidualBlock(BaseResnetBlock):
 
@@ -73,8 +90,8 @@ class DilatedResidualBlock(BaseResnetBlock):
         self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1, is_residual=True)
         self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2, is_residual=True)
 
-    def convolution(self, data):
-        *data, idx1 = self.conv1(data) #calls the forward function of BaseKNNConvolution
+    def convs(self, data):
+        *data, idx1 = self.conv1(data)
         *data, idx2 = self.conv2(data)
         if idx1 is None:
             if idx2 is None:
@@ -93,7 +110,7 @@ class RandLANetRes(torch.nn.Module):
         print('Init randlanetres with kwargs: ', kwargs)
         super(RandLANetRes, self).__init__()
 
-        self.conv = DilatedResidualBlock(
+        self._conv = DilatedResidualBlock(
             kwargs['indim'],
             kwargs['outdim'],
             kwargs['ratio'][0],
@@ -107,11 +124,9 @@ class RandLANetRes(torch.nn.Module):
         )
 
     def forward(self, data):
-        return self.conv(data)
+        return self._conv.forward(data)
 
-# This is not the real randla-net - it is basically pointnet++ using the local spatial encoding 
-# and attentative pooling blocks from randla-net as the convolution. 
-class RandLANet(torch.nn.Module):
+class RandLANet(BaseConvolution):
 
     def __init__(self, *args, **kwargs):
         super(RandLANet, self).__init__()

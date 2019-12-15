@@ -13,7 +13,7 @@ import time
 import wandb
 
 from visualizer import print_current_losses
-# wandb.init(project="dpc-benchmark")
+#wandb.init(project="dpc-benchmark")
 
 
 def train(epoch, model, train_loader, device, options):
@@ -90,10 +90,9 @@ def run(cfg, model, dataset, device):
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
 
 
-@hydra.main(config_path='config.yaml')
+@hydra.main(config_path='conf/config.yaml')
 def main(cfg):
-    cfg.data.dataroot = hydra.utils.to_absolute_path(cfg.data.dataroot)
-
+    
     # GET ARGUMENTS
     device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
                           else 'cpu')
@@ -101,13 +100,16 @@ def main(cfg):
     # Get task and model_name
     tested_task = cfg.experiment.task
     tested_model_name = cfg.experiment.name
+    tested_dataset_name = cfg.experiment.dataset
 
     # Find and create associated dataset
-    dataset = find_dataset_using_name(cfg.experiment.dataset)(cfg.data, cfg.training)
+    dataset_config = getattr(cfg.data, tested_dataset_name, None)
+    dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
+    dataset = find_dataset_using_name(tested_dataset_name)(dataset_config, cfg.training)
 
     # Find and create associated model
-    model_config = getattr(getattr(cfg.models, tested_task, None), tested_model_name, None)
-    model = find_model_using_name(model_config.type, tested_task, model_config, dataset.num_classes)
+    model_config = getattr(cfg.models, tested_model_name, None)
+    model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
     model.set_optimizer(torch.optim.Adam)
 
     # wandb.watch(model)
