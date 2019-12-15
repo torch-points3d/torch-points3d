@@ -20,7 +20,6 @@ class RandlaKernel(MessagePassing):
         self.point_pos_nn = MLP(point_pos_nn)
         self.attention_nn = MLP(attention_nn)
         self.global_nn = MLP(global_nn)
-        self.isResidual = is_residual
 
     def forward(self, x, pos, edge_index):
         x = self.propagate(edge_index, x=x, pos=pos)
@@ -87,8 +86,8 @@ class DilatedResidualBlock(BaseResnetBlock):
 
         super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
 
-        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1, is_residual=True)
-        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2, is_residual=True)
+        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1)
+        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
 
     def convs(self, data):
         *data, idx1 = self.conv1(data)

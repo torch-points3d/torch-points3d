@@ -60,55 +60,6 @@ class BaseConvolution(ABC, torch.nn.Module):
         data = (x, pos, batch)
         return data
 
-<<<<<<< HEAD
-class BaseKNNConvolution(ABC, torch.nn.Module):
-
-    def __init__(self, ratio=None, k=None, sampling_strategy = None, return_idx = False, *args, **kwargs):
-        torch.nn.Module.__init__(self)
-
-        self.ratio = ratio
-        self.k = k
-        self.sampling_strategy = sampling_strategy
-
-        #whether forward should return the idx used to downsample the point cloud
-        #this is needed for residual blocks to index the shortcut
-        self.returnIdx = return_idx 
-
-    @abstractmethod
-    def conv(self, x, pos, edge_index):
-        pass 
-
-    def forward(self, data):
-        x, pos, batch = data
-
-        if self.ratio == 1: #convolve every point
-            row, col = knn(pos, pos, self.k, batch, batch)
-            edge_index = torch.stack([col, row], dim=0)
-            x = self.conv(x, (pos, pos), edge_index)
-            if self.returnIdx:
-                return x, pos, batch, None
-            else:
-                return x, pos, batch
-        else: #downsample using self.sampling_strategy and convolve 
-            if self.sampling_strategy == 'fps':
-                idx = fps(pos, batch, self.ratio)
-            elif self.sampling_strategy == 'random':
-                idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
-            else:
-                raise ValueError("Unrecognised sampling_strategy: " + self.sampling_strategy)
-            
-            row, col = knn(pos, pos[idx], self.k, batch, batch[idx])
-            edge_index = torch.stack([col, row], dim=0)
-            x = self.conv(x, (pos, pos[idx]), edge_index)
-            pos, batch = pos[idx], batch[idx]
-            if self.returnIdx:
-                return x, pos, batch, idx
-            else:
-                return x, pos, batch
-
-
-=======
->>>>>>> residual_block
 class BaseResnetBlock(ABC, torch.nn.Module):
 
     def __init__(self, indim, outdim, convdim):
