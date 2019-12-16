@@ -123,8 +123,8 @@ def permissive_loss(deformed_kpoints, radius):
     """This loss is responsible to penalize deformed_kpoints to 
     move outside from the radius defined for the convolution
     """
-    norm_deformed = F.normalize(deformed_kpoints)
-    return torch.mean(norm_deformed[norm_deformed > radius])
+    norm_deformed = F.normalize(deformed_kpoints / float(radius))
+    return torch.mean(norm_deformed[norm_deformed > 1.0])
 
 # Implements the Light Deformable KPConv
 #https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
@@ -135,7 +135,7 @@ class LightDeformablePointKernel(MessagePassing):
     https://arxiv.org/abs/1904.08889
     '''
 
-    def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='linear', modulated=False):
+    def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='square', modulated=False):
         super(LightDeformablePointKernel, self).__init__()
         # PointKernel parameters
         self.in_features = in_features
@@ -222,6 +222,12 @@ class LightDeformablePointKernel(MessagePassing):
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
             all_weights = 1. - (torch.sqrt(sq_distances) / (self.KP_extent))
             all_weights[all_weights < 0] = 0.0
+
+        elif self.KP_influence == 'square':
+        # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
+            all_weights = 1. - (sq_distances / (self.KP_extent**2))
+            all_weights[all_weights < 0] = 0.0
+
         else:
             raise ValueError('Unknown influence function type (config.KP_influence)')
 
@@ -229,6 +235,7 @@ class LightDeformablePointKernel(MessagePassing):
 
         # Fitting Loss
         sq_distances_min = sq_distances.gather(1, neighbors_1nn.unsqueeze(-1))
+        sq_distances_min /= (self.radius**2) # To be independant of the layer
         self.internal_losses['fitting_loss'] = torch.mean(sq_distances_min)
 
         weights = all_weights.gather(1, neighbors_1nn.unsqueeze(-1))
