@@ -5,17 +5,24 @@ from models.core_modules import FPModule
 from models.base_model import *
 
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, *args, **kwargs):
-        super(SegmentationModel, self).__init__(*args, **kwargs)
+    def __init__(self, option, model_name, num_classes, modules):
+        """Initialize this model class.
+        Parameters:
+            opt -- training/test options
+        A few things can be done here.
+        - (required) call the initialization function of BaseModel
+        - define loss function, visualization images, model names, and optimizers
+        """
+        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)  # call the initialization method of UnetBasedModel
     
-        nn = args[0].mlp_cls.nn
-        self.dropout = args[0].mlp_cls.get('dropout')
+        nn = option.mlp_cls.nn
+        self.dropout = option.mlp_cls.get('dropout')
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
-        self.lin3 = torch.nn.Linear(nn[3], args[1])
+        self.lin3 = torch.nn.Linear(nn[4], num_classes)
 
     def set_input(self, data):
-        self.input = (data.x, data.pos, data.batch)
+        self.input = (data.x if data.x is not None else data.pos, data.pos, data.batch)
         self.labels = data.y
 
     def forward(self):

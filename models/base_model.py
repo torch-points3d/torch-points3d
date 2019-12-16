@@ -15,8 +15,6 @@ class BaseFactory(ABC):
     def get_module_from_index(self):
         pass
     
-
-
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
     To create a subclass, you need to implement the following five functions:
@@ -76,5 +74,5 @@ class BaseModel(torch.nn.Module):
                 errors_ret[name] = float(getattr(self, name))
         return errors_ret
 
-    def set_optimizer(self, optimizer_cls: Optimizer):
-        self.optimizer = optimizer_cls(self.parameters(), lr=0.001)
+    def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
+        self.optimizer = optimizer_cls(self.parameters(), lr=lr)

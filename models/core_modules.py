@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import math
+from functools import partial
 import torch
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
@@ -38,12 +39,11 @@ class FPModule(torch.nn.Module):
         return data
         
 class BaseConvolution(ABC, torch.nn.Module):
-    def __init__(self, ratio, radius, *args, **kwargs):
+    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
-        self.ratio = ratio
-        self.radius = radius
-        self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
+        self.sampler = sampler
+        self.neighbour_finder = neighbour_finder
 
     @property
     @abstractmethod
@@ -52,9 +52,8 @@ class BaseConvolution(ABC, torch.nn.Module):
 
     def forward(self, data):
         x, pos, batch = data
-        idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
-                          max_num_neighbors=self.max_num_neighbors)
+        idx = self.sampler(pos, batch)
+        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
         edge_index = torch.stack([col, row], dim=0)
         x = self.conv(x, (pos, pos[idx]), edge_index)
         pos, batch = pos[idx], batch[idx]
@@ -82,30 +81,22 @@ class BaseResnetBlock(ABC, torch.nn.Module):
 
         self.activation = ReLU()
 
+    @property
     @abstractmethod
-    def convolution(self, data):
+    def convs(self):
         pass
 
     def forward(self, data):
-
         x, pos, batch = data #(N, indim)
-
         shortcut = x #(N, indim)
-
         x = self.features_downsample_nn(x) #(N, outdim//4)
-
         #if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.convolution((x, pos, batch)) #(N', convdim)
-
+        x, pos, batch, idx = self.convs((x, pos, batch)) #(N', convdim)
         x = self.features_upsample_nn(x) #(N', outdim)
-
         if idx is not None:
             shortcut = shortcut[idx] #(N', indim)
-
         shortcut = self.shortcut_feature_resize_nn(shortcut) #(N', outdim)
-
         x = shortcut + x
-
         return self.activation(x), pos, batch
 
 class GlobalBaseModule(torch.nn.Module):
