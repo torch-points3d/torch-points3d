@@ -16,11 +16,11 @@ class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
     def get_sampling_and_search_strategies(self):
-        return self.sampling_and_search_dict
+        return self._sampling_and_search_dict
 
     def save_sampling_and_search(self, submodule, index):
         down_conv = submodule.down
-        self.sampling_and_search_dict[index] = [getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
+        self._sampling_and_search_dict[index] = [getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
     def __init__(self, opt, model_name, num_classes, modules_lib):
         """Construct a Unet generator

@@ -1,5 +1,6 @@
 
 import numpy as np
+import torch
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial import Delaunay
 
@@ -37,21 +38,19 @@ class MultiScaleTransform(object):
     def __call__(self, data):
         if self.precompute_multi_scale:
             #Compute recursively multi_scale indexes
-            indices = []
-            edge_indexes = []
+            #indices = []
+            #edge_indexes = []
             pos = data.pos
-            batch = np.zeros(len(pos))
+            batch = torch.zeros(len(pos)).long()
             for index in range(self.num_layers):
                 sampler, neighbour_finder = self.strategies[index]
                 indice = sampler(pos, batch)
-                row, col = neighbour_finder(pos, pos[index], batch, batch[index])
+                row, col = neighbour_finder(pos, pos[indice], batch, batch[indice])
                 edge_index = torch.stack([col, row], dim=0)
-                indices.append(indice)
-                edge_indexes.append(edge_index)
+                setattr(data, "indice_{}".format(index), indice)
+                setattr(data, "edge_index_{}".format(index), edge_index)
                 pos = pos[indice]
-                batch = batch[index]
-            data.indices = indices
-            data.edge_indexes = edge_indexes
+                batch = batch[indice]
         return data
 
     def __repr__(self):

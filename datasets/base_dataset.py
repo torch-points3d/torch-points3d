@@ -32,18 +32,18 @@ class BaseDataset():
     def num_classes(self):
         pass
 
-    def set_transform(self):
+    def _set_multiscale_transform(self, transform):
         for attr_name, attr in self.__dict__.items():
             if "loader" in attr_name and isinstance(attr, DataLoader):
-                transform = attr.dataset.transform
-                if transform is None:
-                    setattr(attr.dataset, "transform", self.transform)
+                old_transform = attr.dataset.transform
+                if old_transform is None:
+                    setattr(attr.dataset, "transform", transform)
                 else:
                     raise NotImplementedError('Merging of transform not implemented yet')
 
     def set_strategies(self, strategies, precompute_multi_scale=False):
-        self.transform = MultiScaleTransform(strategies, precompute_multi_scale)
-        self.set_transform()
+        transform = MultiScaleTransform(strategies, precompute_multi_scale)
+        self._set_multiscale_transform(transform)
 
 
     
