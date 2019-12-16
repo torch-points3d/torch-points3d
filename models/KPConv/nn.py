@@ -44,5 +44,6 @@ class SegmentationModel(UnetBasedModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        self.loss_seg = F.nll_loss(self.output, self.labels)
+        
+        self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_losses()
         self.loss_seg.backward()       # calculate gradients of network G w.r.t. loss_G
