@@ -4,6 +4,8 @@ from abc import ABC, abstractmethod
 from typing import Optional
 import torch
 from torch.optim.optimizer import Optimizer
+import functools
+import operator
 
 class BaseFactory(ABC):
     def __init__(self, module_name_down, module_name_up, modules_lib):
@@ -76,3 +78,19 @@ class BaseModel(torch.nn.Module):
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
         self.optimizer = optimizer_cls(self.parameters(), lr=lr)
+
+    def get_internal_losses(self):
+        losses_global = []
+        search_key = "internal_losses"
+        def search_from_key(modules, losses_global):
+            for _, module in modules.items():
+                if hasattr(module, search_key):
+                    losses_global.append(getattr(module, search_key))   
+                search_from_key(module._modules, losses_global)                     
+        search_from_key(self._modules, losses_global)
+        losses = [[v for v in losses.values()] for losses in losses_global]
+        if len(losses) > 0:
+            losses = functools.reduce(operator.iconcat, losses, [])
+            return torch.mean(torch.stack(losses))
+        else:
+            return 0.
