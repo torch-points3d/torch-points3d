@@ -123,8 +123,8 @@ def permissive_loss(deformed_kpoints, radius):
     """This loss is responsible to penalize deformed_kpoints to 
     move outside from the radius defined for the convolution
     """
-    norm_deformed = F.normalize(deformed_kpoints / float(radius))
-    return torch.mean(norm_deformed[norm_deformed > 1.0])
+    norm_deformed_normalized = F.normalize(deformed_kpoints) / float(radius)
+    return torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
 
 # Implements the Light Deformable KPConv
 #https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
@@ -225,7 +225,7 @@ class LightDeformablePointKernel(MessagePassing):
 
         elif self.KP_influence == 'square':
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1. - (sq_distances / (self.KP_extent**2))
+            all_weights = 1. - (sq_distances / (self.KP_extent ** 2))
             all_weights[all_weights < 0] = 0.0
 
         else:
