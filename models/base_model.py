@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Dict
 import torch
 from torch.optim.optimizer import Optimizer
 import functools
@@ -43,6 +43,7 @@ class BaseModel(torch.nn.Module):
         self.loss_names = []
         self.output = None
         self.optimizer: Optional[Optimizer] = None
+        self.sampling_and_search_dict: Dict = {}
 
     @abstractmethod
     def set_input(self, input):

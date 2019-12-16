@@ -15,6 +15,13 @@ SPECIAL_NAMES = ['radius']
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
+    def get_sampling_and_search_strategies(self):
+        return self.sampling_and_search_dict
+
+    def save_sampling_and_search(self, submodule, index):
+        down_conv = submodule.down
+        self.sampling_and_search_dict[index] = [getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
+
     def __init__(self, opt, model_name, num_classes, modules_lib):
         """Construct a Unet generator
         Parameters:
@@ -56,14 +63,16 @@ class UnetBasedModel(BaseModel):
                 args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
                 unet_block = UnetSkipConnectionBlock(
                     args_up=args_up, args_down=args_down, input_nc=None, submodule=unet_block, norm_layer=None)
+                self.save_sampling_and_search(unet_block, index)
         else:
             index = num_convs
 
         index -= 1
         args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
         
-        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
+        self.model = unet_block = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
                                              outermost=True, norm_layer=None)  # add the outermost layer
+        self.save_sampling_and_search(unet_block, index)
         print(self)
 
     def check_if_contains_factory(self, model_name, modules_lib):

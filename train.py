@@ -110,7 +110,12 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
+    sampling_and_search_strategies = model.get_sampling_and_search_strategies()
     model.set_optimizer(torch.optim.Adam)
+
+    #Set sampling / search strategies:
+    dataset.set_strategies(sampling_and_search_strategies, \
+        precompute_multi_scale=cfg.training.precompute_multi_scale)
 
     # wandb.watch(model)
     model = model.to(device)

@@ -11,6 +11,7 @@ training:
     batch_size: 4
     cuda: 0
     print_frequency: 1
+    precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference 
 
 # Those arguments defines the available datasets
 data:
@@ -24,6 +25,12 @@ data:
         name: modelnet
         dataroot: data
         number: 10
+
+    # This dataset can be used only for classification
+    s3dis: 
+        name: s3dis
+        dataroot: data
+        fold: 5
 
 defaults:
     - models: segmentation
