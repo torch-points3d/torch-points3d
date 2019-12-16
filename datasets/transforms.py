@@ -29,13 +29,30 @@ class MultiScaleTransform(object):
     """
     def __init__(self, strategies, precompute_multi_scale=False):
         self.strategies = strategies
-        self.precompute_multi_scale = precompute_multi_scale
+        self.precompute_multi_scale = precompute_multi_scale 
+        if self.precompute_multi_scale and not bool(strategies):
+            raise Exception('Strategies are empty and precompute_multi_scale is set to True')
+        self.num_layers = len(self.strategies.keys())
 
     def __call__(self, data):
         if self.precompute_multi_scale:
             #Compute recursively multi_scale indexes
-            pass
+            indices = []
+            edge_indexes = []
+            pos = data.pos
+            batch = np.zeros(len(pos))
+            for index in range(self.num_layers):
+                sampler, neighbour_finder = self.strategies[index]
+                indice = sampler(pos, batch)
+                row, col = neighbour_finder(pos, pos[index], batch, batch[index])
+                edge_index = torch.stack([col, row], dim=0)
+                indices.append(indice)
+                edge_indexes.append(edge_index)
+                pos = pos[indice]
+                batch = batch[index]
+            data.indices = indices
+            data.edge_indexes = edge_indexes
         return data
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__)
+        return '{}'.format(self.__class__.__name__)

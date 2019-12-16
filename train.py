@@ -126,6 +126,5 @@ def main(cfg):
     # Run training / evaluation
     run(cfg, model, dataset, device)
 
-
 if __name__ == "__main__":
     main()

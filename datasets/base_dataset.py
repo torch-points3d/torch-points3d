@@ -34,15 +34,16 @@ class BaseDataset():
 
     def set_transform(self):
         for attr_name, attr in self.__dict__.items():
-            if "loader" in attr_name:
+            if "loader" in attr_name and isinstance(attr, DataLoader):
                 transform = attr.dataset.transform
                 if transform is None:
-                    attr.dataset.transform = self.transform
+                    setattr(attr.dataset, "transform", self.transform)
                 else:
                     raise NotImplementedError('Merging of transform not implemented yet')
 
     def set_strategies(self, strategies, precompute_multi_scale=False):
         self.transform = MultiScaleTransform(strategies, precompute_multi_scale)
+        self.set_transform()
 
 
     
