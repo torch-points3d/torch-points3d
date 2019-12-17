@@ -7,6 +7,7 @@ from torch.optim.optimizer import Optimizer
 import functools
 import operator
 
+
 class BaseFactory(ABC):
     def __init__(self, module_name_down, module_name_up, modules_lib):
         self.module_name_down = module_name_down
@@ -16,7 +17,8 @@ class BaseFactory(ABC):
     @abstractmethod
     def get_module_from_index(self):
         pass
-    
+
+
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
     To create a subclass, you need to implement the following five functions:
@@ -84,11 +86,12 @@ class BaseModel(torch.nn.Module):
     def get_internal_losses(self):
         losses_global = []
         search_key = "internal_losses"
+
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if hasattr(module, search_key):
-                    losses_global.append(getattr(module, search_key))   
-                search_from_key(module._modules, losses_global)                     
+                    losses_global.append(getattr(module, search_key))
+                search_from_key(module._modules, losses_global)
         search_from_key(self._modules, losses_global)
         losses = [[v for v in losses.values()] for losses in losses_global]
         if len(losses) > 0:
@@ -96,3 +99,6 @@ class BaseModel(torch.nn.Module):
             return torch.mean(torch.stack(losses))
         else:
             return 0.
+
+    def get_sampling_and_search_strategies(self):
+        return self._sampling_and_search_dict

@@ -14,7 +14,7 @@ import wandb
 from omegaconf import OmegaConf
 
 from visualizer import print_current_losses
-#wandb.init(project="dpc-benchmark")
+# wandb.init(project="dpc-benchmark")
 
 
 def train(epoch, model, train_loader, device, options):
@@ -34,13 +34,14 @@ def train(epoch, model, train_loader, device, options):
         total_nodes += data.num_nodes
         iter_data_time = time.time()
 
-        #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
+        # uncomment to print loss and accurancy every 10 batches - to check if model is training correctly
         if (i + 1) % 10 == 0:
             print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
-            i + 1, len(train_loader), total_loss / 10,
-            correct_nodes / total_nodes))
+                i + 1, len(train_loader), total_loss / 10,
+                correct_nodes / total_nodes))
             total_loss = correct_nodes = total_nodes = 0
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
+
 
 def test(model, loader, num_classes, device):
     model.eval()
@@ -89,7 +90,7 @@ def run(cfg, model, dataset, device):
 
 @hydra.main(config_path='conf/config.yaml')
 def main(cfg):
-    
+
     # GET ARGUMENTS
     device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
                           else 'cpu')
@@ -108,12 +109,10 @@ def main(cfg):
     model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
-    sampling_and_search_strategies = model.get_sampling_and_search_strategies()
     model.set_optimizer(torch.optim.Adam)
 
-    #Set sampling / search strategies:
-    dataset.set_strategies(sampling_and_search_strategies, \
-        precompute_multi_scale=cfg.training.precompute_multi_scale)
+    # Set sampling / search strategies:
+    dataset.set_strategies(model, precompute_multi_scale=cfg.training.precompute_multi_scale)
 
     # wandb.watch(model)
     model = model.to(device)
@@ -123,6 +122,7 @@ def main(cfg):
 
     # Run training / evaluation
     run(cfg, model, dataset, device)
+
 
 if __name__ == "__main__":
     main()

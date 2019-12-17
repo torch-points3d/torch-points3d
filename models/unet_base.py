@@ -12,15 +12,14 @@ from .base_model import BaseModel
 
 SPECIAL_NAMES = ['radius']
 
+
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
-    def get_sampling_and_search_strategies(self):
-        return self._sampling_and_search_dict
-
     def save_sampling_and_search(self, submodule, index):
         down_conv = submodule.down
-        self._sampling_and_search_dict[index] = [getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
+        self._sampling_and_search_dict[index] = [
+            getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
     def __init__(self, opt, model_name, num_classes, modules_lib):
         """Construct a Unet generator
@@ -40,7 +39,8 @@ class UnetBasedModel(BaseModel):
         if self.has_factory:
             self.down_conv_cls_name = opt.down_conv.module_name
             self.up_conv_cls_name = opt.up_conv.module_name
-            self.factory_module = self.factory_module_cls(self.down_conv_cls_name, self.up_conv_cls_name, modules_lib) # Create the factory object
+            self.factory_module = self.factory_module_cls(
+                self.down_conv_cls_name, self.up_conv_cls_name, modules_lib)  # Create the factory object
         else:
             self.down_conv_cls = getattr(modules_lib, opt.down_conv.module_name, None)
             self.up_conv_cls = getattr(modules_lib, opt.up_conv.module_name, None)
@@ -49,10 +49,10 @@ class UnetBasedModel(BaseModel):
         contains_global = hasattr(opt, "innermost")
         if contains_global:
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
-            
+
             args_up = self.fetch_arguments_from_list(opt.up_conv, 0)
             args_up = self.get_module_cls(args_up, 0, 'up_conv_cls', "UP")
-            
+
             unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
                                                  input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
         else:
@@ -69,10 +69,10 @@ class UnetBasedModel(BaseModel):
 
         index -= 1
         args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
-        
-        self.model = unet_block = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
+
+        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
                                              outermost=True, norm_layer=None)  # add the outermost layer
-        self.save_sampling_and_search(unet_block, index)
+        self.save_sampling_and_search(self.model, index)
         print(self)
 
     def check_if_contains_factory(self, model_name, modules_lib):
@@ -105,8 +105,8 @@ class UnetBasedModel(BaseModel):
         if self.has_factory:
             args[name] = self.factory_module.get_module_from_index(index, flow=flow)
         else:
-            args[name] = getattr(self, name, None)      
-        return args  
+            args[name] = getattr(self, name, None)
+        return args
 
     def fetch_arguments_up_and_down(self, opt, index, count_convs):
         # Defines down arguments
