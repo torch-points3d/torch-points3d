@@ -39,7 +39,7 @@ class BaseConvolutionDown(BaseConvolution):
         self._index = kwargs.get("index", None)
 
     def conv(self, x, pos, edge_index):
-        raise self._conv(x, pos, edge_index)
+        raise NotImplementedError
 
     def forward(self, data):
         batch_obj = Batch()
@@ -72,12 +72,14 @@ class BaseConvolutionUp(BaseConvolution):
     def forward(self, data):
         batch_obj = Batch()
         data, data_skip = data
-        x, pos, batch, x_skip, pos_skip, batch_skip = data.x, data.pos, data.batch, data_skip.x, data_skip.pos, data_skip.batch
+        x, pos, batch = data.x, data.pos, data.batch
+        x_skip, pos_skip, batch_skip = data_skip.x, data_skip.pos, data_skip.batch
 
         if self.neighbour_finder is not None:
-            if self._precompute_multi_scale:
+            if self._precompute_multi_scale:  # TODO For now, it uses the one calculated during down steps
                 edge_index = getattr(data_skip, "edge_index_{}".format(self._index), None)
-                edge_index = torch.cat([edge_index[-1], edge_index[0]], -1)  # Reverse the graph
+                col, row = edge_index
+                edge_index = torch.stack([row, col], dim=0)
             else:
                 row, col = self.neighbour_finder(pos, pos_skip, batch, batch_skip)
                 edge_index = torch.stack([col, row], dim=0)
@@ -103,7 +105,8 @@ class GlobalBaseModule(torch.nn.Module):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         x = self.nn(torch.cat([x, pos], dim=1))
-        batch_obj.x = self.pool(x, batch)
+        x = self.pool(x, batch)
+        batch_obj.x = x
         batch_obj.pos = pos.new_zeros((x.size(0), 3))
         batch_obj.batch = torch.arange(x.size(0), device=batch.device)
         copy_from_to(data, batch_obj)
@@ -130,60 +133,3 @@ class FPModule(BaseConvolutionUp):
 
     def conv(self, x, pos, pos_skip, batch, batch_skip, *args):
         return knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
-
-
-class BaseResnetBlock(ABC, torch.nn.Module):
-
-    def __init__(self, indim, outdim, convdim):
-        '''
-            indim: size of x at the input
-            outdim: desired size of x at the output
-            convdim: size of x following convolution
-        '''
-        torch.nn.Module.__init__(self)
-
-        self.indim = indim
-        self.outdim = outdim
-        self.convdim = convdim
-
-        self.features_downsample_nn = MLP([self.indim, self.outdim//4])
-        self.features_upsample_nn = MLP([self.convdim, self.outdim])
-
-        self.shortcut_feature_resize_nn = MLP([self.indim, self.outdim])
-
-        self.activation = ReLU()
-
-    @property
-    @abstractmethod
-    def convs(self):
-        pass
-
-    def forward(self, data):
-        x, pos, batch = data  # (N, indim)
-        shortcut = x  # (N, indim)
-        x = self.features_downsample_nn(x)  # (N, outdim//4)
-        # if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.convs((x, pos, batch))  # (N', convdim)
-        x = self.features_upsample_nn(x)  # (N', outdim)
-        if idx is not None:
-            shortcut = shortcut[idx]  # (N', indim)
-        shortcut = self.shortcut_feature_resize_nn(shortcut)  # (N', outdim)
-        x = shortcut + x
-        return self.activation(x), pos, batch
-
-
-class GlobalBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr='max'):
-        super(GlobalBaseModule, self).__init__()
-        self.nn = MLP(nn)
-        self.pool = global_max_pool if aggr == "max" else global_mean_pool
-
-    def forward(self, data):
-        batch_obj = Batch()
-        x, pos, batch = data.x, data.pos, data.batch
-        x = self.nn(torch.cat([x, pos], dim=1))
-        batch_obj.x = self.pool(x, batch)
-        batch_obj.pos = pos.new_zeros((x.size(0), 3))
-        batch_obj.batch = torch.arange(x.size(0), device=batch.device)
-        copy_from_to(data, batch_obj)
-        return batch_obj

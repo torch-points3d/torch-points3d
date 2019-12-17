@@ -115,12 +115,33 @@ models:
     ResidualKPConv:
         type: KPConv
         down_conv:
-            module_name: LightDeformableKPConv
+            module_name: ResidualBKPConv
             ratios: [0.2, 0.25]
             radius: [0.1, 0.2]
             down_conv_nn: [[3, 32], [32, 64]]
         up_conv:
             module_name: ResidualUpsampleBKPConv
+            radius: [1, 0.2, 0.1]
+            up_conv_nn: [[128, 128], [64, 64], [64, 64]]     
+            mlp_nn: [[192, 64], [96, 64], [64, 64]] 
+            skip: True    
+        innermost:
+            module_name: GlobalBaseModule
+            aggr: max
+            nn: [67, 128]
+        mlp_cls: 
+            nn: [64, 64, 64, 64, 64]
+            dropout: 0.5
+
+    DeformableResidualKPConv:
+        type: KPConv
+        down_conv:
+            module_name: LightDeformableKPConv
+            ratios: [0.2, 0.25]
+            radius: [0.1, 0.2]
+            down_conv_nn: [[3, 32], [32, 64]]
+        up_conv:
+            module_name: SimpleUpsampleKPConv
             radius: [1, 0.2, 0.1]
             up_conv_nn: [[128, 128], [64, 64], [64, 64]]     
             mlp_nn: [[192, 64], [96, 64], [64, 64]] 

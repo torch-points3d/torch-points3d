@@ -49,6 +49,8 @@ class KPConvFactory(BaseFactory):
                     return ResidualBKPConv
         raise NotImplementedError
 
+####################### BUILT WITH BaseConvolutionDown ############################
+
 
 class LightDeformableKPConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
@@ -91,9 +93,9 @@ class KPConv(BaseConvolutionDown):
         return self._conv(x, pos, edge_index)
 
 
-class ResidualBKPConv(nn.Module):
+class ResidualBKPConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
-        super(ResidualBKPConv, self).__init__()
+        super(ResidualBKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
         self.radius = radius
@@ -112,31 +114,24 @@ class ResidualBKPConv(nn.Module):
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
 
-    @property
-    def conv(self):
-        return self._conv
-
-    def forward(self, data):
-        x, pos, batch = data
-        idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
-                          max_num_neighbors=self.max_num_neighbors)
-        edge_index = torch.stack([col, row], dim=0)
-
+    def conv(self, x, pos, edge_index):
+        row, col = edge_index
         x_side = self.pre_mlp(x)
-        x_side = self.conv(x_side, (pos, pos[idx]), edge_index)
+        x_side = self._conv(x_side, pos, edge_index)
         x_side = self.post_mlp(x_side)
 
-        x_shortcut = self.shortcut_mlp(x[idx])
+        x_shortcut = self.shortcut_mlp(x)
+        x_shortcut = torch.index_select(x_shortcut, 0, row)
+        x_shortcut = scatter_("add", x_shortcut, col)
 
-        pos, batch = pos[idx], batch[idx]
-        data = (x_side + x_shortcut, pos, batch)
-        return data
+        return x_side + x_shortcut
+
+####################### BUILT WITH BaseConvolutionUp ############################
 
 
 class SimpleUpsampleKPConv(BaseConvolutionUp):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
-        super(SimpleUpsampleKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        super(SimpleUpsampleKPConv, self).__init__(RadiusNeighbourFinder(radius), *args, **kwargs)
 
         in_features, out_features = up_conv_nn
 
@@ -150,8 +145,8 @@ class SimpleUpsampleKPConv(BaseConvolutionUp):
 
         self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
 
-    def conv(self):
-        return self._conv
+    def conv(self, x, pos, pos_skip, batch, batch_skip, edge_index):
+        return self._conv(x, (pos, pos_skip), edge_index)
 
 
 class ResidualUpsampleBKPConv(BaseConvolutionUp):
@@ -184,7 +179,7 @@ class ResidualUpsampleBKPConv(BaseConvolutionUp):
         x_side = self.post_mlp(x_side)
 
         x_shortcut = self.shortcut_mlp(x)
-        x_shortcut = torch.index_select(x_shortcut, 0, col)
-        x_shortcut = scatter_("add", x_shortcut, row)
+        x_shortcut = torch.index_select(x_shortcut, 0, row)
+        x_shortcut = scatter_("add", x_shortcut, col)
 
         return x_side + x_shortcut
