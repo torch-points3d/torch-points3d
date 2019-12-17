@@ -17,6 +17,7 @@ def MLP(channels, activation=ReLU()):
         for i in range(1, len(channels))
     ])
 
+
 class FPModule(torch.nn.Module):
     """ Upsampling module from PointNet++
 
@@ -43,7 +44,7 @@ class FPModule(torch.nn.Module):
         batch_obj.x = self.nn(x)
         copy_from_to(data_skip, batch_obj)
         return batch_obj
-        
+
 class BaseConvolution(ABC, torch.nn.Module):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         torch.nn.Module.__init__(self)
@@ -93,6 +94,7 @@ class BaseConvolutionUP(ABC, torch.nn.Module):
     def forward(self, data):
         raise NotImplementedError
 
+
 class BaseResnetBlock(ABC, torch.nn.Module):
 
     def __init__(self, indim, outdim, convdim):
@@ -120,17 +122,18 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         pass
 
     def forward(self, data):
-        x, pos, batch = data #(N, indim)
-        shortcut = x #(N, indim)
-        x = self.features_downsample_nn(x) #(N, outdim//4)
-        #if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.convs((x, pos, batch)) #(N', convdim)
-        x = self.features_upsample_nn(x) #(N', outdim)
+        x, pos, batch = data  # (N, indim)
+        shortcut = x  # (N, indim)
+        x = self.features_downsample_nn(x)  # (N, outdim//4)
+        # if this is an identity resnet block, idx will be None
+        x, pos, batch, idx = self.convs((x, pos, batch))  # (N', convdim)
+        x = self.features_upsample_nn(x)  # (N', outdim)
         if idx is not None:
-            shortcut = shortcut[idx] #(N', indim)
-        shortcut = self.shortcut_feature_resize_nn(shortcut) #(N', outdim)
+            shortcut = shortcut[idx]  # (N', indim)
+        shortcut = self.shortcut_feature_resize_nn(shortcut)  # (N', outdim)
         x = shortcut + x
         return self.activation(x), pos, batch
+
 
 class GlobalBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):

@@ -1,11 +1,14 @@
+from typing import Any
 import torch
 import torch.nn.functional as F
+
 from models.unet_base import UnetBasedModel
 
 
 class SegmentationModel(UnetBasedModel):
     def __init__(self, option, model_name, num_classes, modules):
-        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)  # call the initialization method of UnetBasedModel
+        # call the initialization method of UnetBasedModel
+        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')
@@ -23,7 +26,7 @@ class SegmentationModel(UnetBasedModel):
         self.input = data
         self.labels = data.y
 
-    def forward(self):
+    def forward(self) -> Any:
         """Standard forward"""
         data = self.model(self.input)
         x = F.relu(self.lin1(data.x))

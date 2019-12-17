@@ -1,7 +1,10 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from typing import Any
+
 from models.unet_base import UnetBasedModel
+
 
 class SegmentationModel(UnetBasedModel):
     def __init__(self, option, model_name, num_classes, modules):
@@ -12,7 +15,8 @@ class SegmentationModel(UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, option, model_name, num_classes, modules)  # call the initialization method of UnetBasedModel
+        UnetBasedModel.__init__(self, option, model_name, num_classes,
+                                modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')
@@ -30,7 +34,7 @@ class SegmentationModel(UnetBasedModel):
         self.input = data
         self.labels = data.y
 
-    def forward(self):
+    def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         data = self.model(self.input)
         x = F.relu(self.lin1(data.x))
@@ -39,12 +43,13 @@ class SegmentationModel(UnetBasedModel):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
+        return self.output
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        
+
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_losses()
         if torch.isnan(self.loss_seg):
             import pdb; pdb.set_trace()
