@@ -4,7 +4,12 @@ from functools import partial
 import torch
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
+from torch_geometric.data import Batch
 
+def copy_from_to(data, batch):
+    for key in data.keys:
+        if key not in batch.keys:
+            setattr(batch, key, getattr(data, key, None))
 
 def MLP(channels, activation=ReLU()):
     return Seq(*[
@@ -30,15 +35,15 @@ class FPModule(torch.nn.Module):
         self.nn = MLP(up_conv_nn)
 
     def forward(self, data):
-        #print([x.shape if x is not None else x for x in data])
-        x, pos, batch, x_skip, pos_skip, batch_skip = data
+        batch_obj = Batch()
+        data, data_skip = data
+        x, pos, batch, x_skip, pos_skip, batch_skip = data.x, data.pos, data.batch, data_skip.x, data_skip.pos, data_skip.batch
         x = knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
-        x = self.nn(x)
-        data = (x, pos_skip, batch_skip)
-        return data
-
+        batch_obj.x = self.nn(x)
+        copy_from_to(data_skip, batch_obj)
+        return batch_obj
 
 class BaseConvolution(ABC, torch.nn.Module):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
@@ -47,20 +52,47 @@ class BaseConvolution(ABC, torch.nn.Module):
         self.sampler = sampler
         self.neighbour_finder = neighbour_finder
 
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+
     @property
     @abstractmethod
     def conv(self):
         pass
 
     def forward(self, data):
-        x, pos, batch = data
-        idx = self.sampler(pos, batch)
-        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
-        edge_index = torch.stack([col, row], dim=0)
-        x = self.conv(x, (pos, pos[idx]), edge_index)
-        pos, batch = pos[idx], batch[idx]
-        data = (x, pos, batch)
-        return data
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
+        if self._precompute_multi_scale:
+            idx = getattr(data, "idx_{}".format(self._index), None)
+            edge_index = getattr(data, "edge_index_{}".format(self._index), None)
+        else:
+            idx = self.sampler(pos, batch)
+            row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
+            edge_index = torch.stack([col, row], dim=0)
+        batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index)
+        batch_obj.pos = pos[idx]
+        batch_obj.batch = batch[idx]
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+class BaseConvolutionUP(ABC, torch.nn.Module):
+    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
+        torch.nn.Module.__init__(self)
+
+        self.sampler = sampler
+        self.neighbour_finder = neighbour_finder
+
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+
+    @property
+    @abstractmethod
+    def conv(self):
+        pass
+
+    def forward(self, data):
+        raise NotImplementedError
 
 
 class BaseResnetBlock(ABC, torch.nn.Module):
@@ -110,10 +142,11 @@ class GlobalBaseModule(torch.nn.Module):
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
 
     def forward(self, data):
-        x, pos, batch = data
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
         x = self.nn(torch.cat([x, pos], dim=1))
-        x = self.pool(x, batch)
-        pos = pos.new_zeros((x.size(0), 3))
-        batch = torch.arange(x.size(0), device=batch.device)
-        data = (x, pos, batch)
-        return data
+        batch_obj.x = self.pool(x, batch)
+        batch_obj.pos = pos.new_zeros((x.size(0), 3))
+        batch_obj.batch = torch.arange(x.size(0), device=batch.device)
+        copy_from_to(data, batch_obj)
+        return batch_obj

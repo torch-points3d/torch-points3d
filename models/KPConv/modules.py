@@ -136,6 +136,7 @@ class SimpleUpsampleKPConv(BaseConvolution):
         in_features, out_features = up_conv_nn
 
         # KPCONV arguments
+        self.radius = radius
         self.in_features = in_features
         self.out_features = out_features
         self.num_points = num_points
@@ -147,18 +148,6 @@ class SimpleUpsampleKPConv(BaseConvolution):
     @property
     def conv(self):
         return self._conv
-
-    def forward(self, data):
-        x, pos, batch, x_skip, pos_skip, batch_skip = data
-        row, col = radius(pos, pos_skip, self.radius, batch, batch_skip,
-                          max_num_neighbors=self.max_num_neighbors)
-        edge_index = torch.stack([col, row], dim=0)
-        x = self.conv(x, (pos, pos_skip), edge_index)
-        if x_skip is not None:
-            x = torch.cat([x, x_skip], dim=1)
-        x = self.nn(x)
-        data = (x, pos_skip, batch_skip)
-        return data
 
 class ResidualUpsampleBKPConv(nn.Module):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
