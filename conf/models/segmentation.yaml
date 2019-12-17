@@ -1,7 +1,7 @@
 models:
     # This part describes a template model configuration
-    TemplateModel:
-        name: TemplateModel
+    MyTemplateModel: #name of your model. experiement.name should reference this
+        type: TemplateModel #name of your model architecture. The modules will be looked for in models/<type>/nn.py
         down_conv:
             module_name: TemplateModelDownConv
             ratios: []
@@ -23,8 +23,8 @@ models:
             dropout: 0.5
 
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
-    RandLANet:
-        name: ranldanet_res
+    Randlanet_Res:
+        type: RandLANet
         down_conv:
             module_name: RandLANetRes
             ratio: [[1, 1], [0.5, 0.5]]
@@ -45,10 +45,31 @@ models:
         mlp_cls:
             nn: [64, 64, 64, 64, 64]
             dropout: 0.5
+    Randlanet_Conv:
+            type: RandLANet
+            down_conv:
+                module_name: RandLANet
+                ratio: [0.25, 0.25, 0.25]
+                k: [16, 16, 16]
+                point_pos_nn: [[10, 8, 3], [10, 8, 16], [10, 16, 32]]
+                attention_nn: [[6, 8, 6], [32, 64, 32], [64, 128, 64]]
+                down_conv_nn: [[6, 8, 16], [32, 64, 32], [64, 128, 128]]
+            innermost:
+                module_name: GlobalBaseModule
+                aggr: max
+                nn: [131, 128]
+            up_conv:
+                module_name: FPModule
+                up_conv_nn: [[256, 128], [160, 64], [80, 64], [67, 64]] 
+                up_k: [1, 1, 1, 1]
+                skip: True
+            mlp_cls:
+                nn: [64, 64, 64, 64]
+                dropout: 0.5
 
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv:
-        name: RSConv
+        type: RSConv
         down_conv:
             module_name: RSConv
             ratios: [0.2, 0.25]
@@ -72,7 +93,7 @@ models:
 
     # KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
     KPConv:
-        name: KPConv
+        type: KPConv
         down_conv:
             module_name: LightDeformableKPConv
             ratios: [0.2, 0.25]
@@ -93,7 +114,7 @@ models:
 
     # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2:
-        name: pointnet2
+        type: pointnet2
         down_conv:
             module_name: SAModule
             ratios: [0.2, 0.25]
