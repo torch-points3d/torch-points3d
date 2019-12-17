@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    name: RandLANet
+    name: Randlanet_Res
     task: segmentation
     dataset: shapenet
 
