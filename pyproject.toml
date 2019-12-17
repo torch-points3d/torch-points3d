@@ -15,11 +15,13 @@ matplotlib = "^3.1"
 hydra-core = "^0.11.2"
 wandb = "^0.8.18"
 tqdm = "^4.40"
+torchnet = "^0.0.4"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
 autopep8 = "^1.4"
 flake8 = "^3.7"
+rope = "^0.14.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
