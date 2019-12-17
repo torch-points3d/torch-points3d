@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -Wall -std=c++11 -fopenmp -O3  -shared -Wl,-soname,libply_c.so -o libply_c.so CMakeFiles/ply_c.dir/ply_c.cpp.o /usr/lib/x86_64-linux-gnu/libboost_numpy3.so /usr/lib/x86_64-linux-gnu/libpython3.6m.so 

@@ -75,6 +75,24 @@ class BaseConvolution(ABC, torch.nn.Module):
         copy_from_to(data, batch_obj)
         return batch_obj
 
+class BaseConvolutionUP(ABC, torch.nn.Module):
+    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
+        torch.nn.Module.__init__(self)
+
+        self.sampler = sampler
+        self.neighbour_finder = neighbour_finder
+
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+
+    @property
+    @abstractmethod
+    def conv(self):
+        pass
+
+    def forward(self, data):
+        raise NotImplementedError
+
 class BaseResnetBlock(ABC, torch.nn.Module):
 
     def __init__(self, indim, outdim, convdim):

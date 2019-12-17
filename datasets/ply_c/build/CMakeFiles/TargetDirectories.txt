@@ -1,3 +1,0 @@
-/home/thomas/HELIX/superpoint-graph-job/superpointgraph/partition/ply_c/build/CMakeFiles/rebuild_cache.dir
-/home/thomas/HELIX/superpoint-graph-job/superpointgraph/partition/ply_c/build/CMakeFiles/ply_c.dir
-/home/thomas/HELIX/superpoint-graph-job/superpointgraph/partition/ply_c/build/CMakeFiles/edit_cache.dir

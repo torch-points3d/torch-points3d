@@ -46,4 +46,6 @@ class SegmentationModel(UnetBasedModel):
         # calculate loss given the input and intermediate results
         
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_losses()
+        if torch.isnan(self.loss_seg):
+            import pdb; pdb.set_trace()
         self.loss_seg.backward()       # calculate gradients of network G w.r.t. loss_G
