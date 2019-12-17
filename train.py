@@ -12,7 +12,6 @@ import time
 import wandb
 from omegaconf import OmegaConf
 
-from visualizer import print_current_losses
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
 # wandb.init(project="dpc-benchmark")
@@ -42,6 +41,7 @@ def train(epoch, model: BaseModel, train_loader, device, options):
 
     msg = model.get_epoch_message()
     print("Test metrics for epoch: " + msg)
+
 
 def test(model: BaseModel, loader, num_classes, device):
     model.eval()

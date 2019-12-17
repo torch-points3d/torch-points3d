@@ -16,7 +16,7 @@ SPECIAL_NAMES = ['radius']
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
-    def save_sampling_and_search(self, submodule, index):
+    def _save_sampling_and_search(self, submodule, index):
         down_conv = submodule.down
         self._sampling_and_search_dict[index] = [
             getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
@@ -34,7 +34,7 @@ class UnetBasedModel(BaseModel):
 
         num_convs = len(opt.down_conv.down_conv_nn)
 
-        self.factory_module_cls, self.has_factory = self.check_if_contains_factory(model_name, modules_lib)
+        self.factory_module_cls = self._check_if_contains_factory(model_name, modules_lib)
 
         if self.has_factory:
             self.down_conv_cls_name = opt.down_conv.module_name
@@ -50,7 +50,7 @@ class UnetBasedModel(BaseModel):
         if contains_global:
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 
-            args_up = self.fetch_arguments_from_list(opt.up_conv, 0)
+            args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
             args_up = self.get_module_cls(args_up, 0, 'up_conv_cls', "UP")
 
             unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
@@ -60,29 +60,27 @@ class UnetBasedModel(BaseModel):
 
         if num_convs > 1:
             for index in range(num_convs - 1, 0, -1):
-                args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
+                args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
                 unet_block = UnetSkipConnectionBlock(
                     args_up=args_up, args_down=args_down, input_nc=None, submodule=unet_block, norm_layer=None)
-                self.save_sampling_and_search(unet_block, index)
+                self._save_sampling_and_search(unet_block, index)
         else:
             index = num_convs
 
         index -= 1
-        args_up, args_down = self.fetch_arguments_up_and_down(opt, index, num_convs)
+        args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
 
         self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
                                              outermost=True, norm_layer=None)  # add the outermost layer
-        self.save_sampling_and_search(self.model, index)
+        self._save_sampling_and_search(self.model, index)
         print(self)
 
-    def check_if_contains_factory(self, model_name, modules_lib):
+    def _check_if_contains_factory(self, model_name, modules_lib):
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
-        if factory_module_cls is None:
-            return factory_module_cls, False
-        else:
-            return factory_module_cls, True
+        self.has_factory = factory_module_cls is not None
+        return factory_module_cls
 
-    def fetch_arguments_from_list(self, opt, index):
+    def _fetch_arguments_from_list(self, opt, index):
         args = {}
         for o, v in opt.items():
             name = str(o)
@@ -108,13 +106,13 @@ class UnetBasedModel(BaseModel):
             args[name] = getattr(self, name, None)
         return args
 
-    def fetch_arguments_up_and_down(self, opt, index, count_convs):
+    def _fetch_arguments_up_and_down(self, opt, index, count_convs):
         # Defines down arguments
-        args_down = self.fetch_arguments_from_list(opt.down_conv, index)
+        args_down = self._fetch_arguments_from_list(opt.down_conv, index)
         args_down = self.get_module_cls(args_down, index, 'down_conv_cls', "DOWN")
 
         # Defines up arguments
-        args_up = self.fetch_arguments_from_list(opt.up_conv, count_convs - index)
+        args_up = self._fetch_arguments_from_list(opt.up_conv, count_convs - index)
         args_up = self.get_module_cls(args_up, count_convs - index, 'up_conv_cls', "UP")
         return args_up, args_down
 
