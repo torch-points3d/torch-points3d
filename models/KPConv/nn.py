@@ -31,13 +31,13 @@ class SegmentationModel(UnetBasedModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        self.input = (data.x, data.pos, data.batch)
+        self.input = data
         self.labels = data.y
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        x, _, _ = self.model(self.input)
-        x = F.relu(self.lin1(x))
+        data = self.model(self.input)
+        x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
@@ -51,4 +51,6 @@ class SegmentationModel(UnetBasedModel):
         # calculate loss given the input and intermediate results
 
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_losses()
+        if torch.isnan(self.loss_seg):
+            import pdb; pdb.set_trace()
         self.loss_seg.backward()       # calculate gradients of network G w.r.t. loss_G

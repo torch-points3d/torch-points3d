@@ -20,5 +20,5 @@ def find_model_using_name(model_name, task, option, num_classes):
             model_name, task))
 
     module_filename = '.'.join(["models", model_name, "modules"])
-    modules = importlib.import_module(module_filename)
-    return model(option, model_name, num_classes, modules)
+    modules_lib = importlib.import_module(module_filename)
+    return model(option, model_name, num_classes, modules_lib)

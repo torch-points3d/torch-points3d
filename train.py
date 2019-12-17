@@ -10,6 +10,7 @@ from torch_geometric.utils import intersection_and_union as i_and_u
 from tqdm import tqdm as tq
 import time
 import wandb
+from omegaconf import OmegaConf
 
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
@@ -108,8 +109,12 @@ def main(cfg):
 
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
-    model = find_model_using_name(model_config.type, tested_task, model_config, dataset.num_classes)
+    model_config = OmegaConf.merge(model_config, cfg.training)
+    model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
     model.set_optimizer(torch.optim.Adam)
+
+    # Set sampling / search strategies:
+    dataset.set_strategies(model, precompute_multi_scale=cfg.training.precompute_multi_scale)
 
     # wandb.watch(model)
     model = model.to(device)
