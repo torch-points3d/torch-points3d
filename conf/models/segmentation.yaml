@@ -95,7 +95,7 @@ models:
     KPConv:
         type: KPConv
         down_conv:
-            module_name: ResidualBKPConv
+            module_name: LightDeformableKPConv
             ratios: [0.2, 0.25]
             radius: [0.1, 0.2]
             down_conv_nn: [[3, 32], [32, 64]]
