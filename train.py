@@ -7,53 +7,52 @@ import torch.nn.functional as F
 from datasets.utils import find_dataset_using_name
 import hydra
 from torch_geometric.utils import intersection_and_union as i_and_u
-from models.utils import find_model_using_name
 from tqdm import tqdm as tq
 import time
 import wandb
 
-from visualizer import print_current_losses
-#wandb.init(project="dpc-benchmark")
+from models.utils import find_model_using_name
+from models.base_model import BaseModel
+# wandb.init(project="dpc-benchmark")
 
 
-def train(epoch, model, train_loader, device, options):
+def train(epoch, model: BaseModel, train_loader, device, options):
     model.train()
+    model.start_epoch()
 
-    total_loss = correct_nodes = total_nodes = 0
+    correct_nodes = total_nodes = 0
     iter_data_time = time.time()
-    for i, data in tq(enumerate(train_loader)):
-        iter_start_time = time.time()  # timer for computation per iteration
-        t_data = iter_start_time - iter_data_time
+    with tq(train_loader) as tq_train_loader:
+        for i, data in enumerate(tq_train_loader):
+            iter_start_time = time.time()  # timer for computation per iteration
+            t_data = iter_start_time - iter_data_time
 
-        data = data.to(device)
-        model.set_input(data)
-        model.optimize_parameters()
-        if i % options.training.print_frequency == 0:
-            print_current_losses(epoch, i, model.get_current_losses(), time.time() - iter_start_time, t_data)
-        correct_nodes += model.get_output().max(dim=1)[1].eq(data.y).sum().item()
-        total_nodes += data.num_nodes
-        iter_data_time = time.time()
+            data = data.to(device)
+            model.set_input(data)
+            model.optimize_parameters()
 
-        #uncomment to print loss and accurancy every 10 batches - to check if model is training correctly 
-        if (i + 1) % 10 == 0:
-            print('[{}/{}] Loss: {:.4f}, Train Accuracy: {:.4f}'.format(
-            i + 1, len(train_loader), total_loss / 10,
-            correct_nodes / total_nodes))
-            total_loss = correct_nodes = total_nodes = 0
+            correct_nodes += model.get_output().max(dim=1)[1].eq(data.y).sum().item()
+            total_nodes += data.num_nodes
+            iter_data_time = time.time()
 
-    
-    wandb.log({"Train Accuracy": correct_nodes / total_nodes})
+            tq_train_loader.set_postfix(batch_metrics=model.get_batch_message(), acc=correct_nodes /
+                                        total_nodes, data_loading=t_data, iteration=time.time() - iter_start_time)
+
+    msg = model.get_epoch_message()
+    print("Test metrics for epoch: " + msg)
 
 
-def test(model, loader, num_classes, device):
+def test(model: BaseModel, loader, num_classes, device):
     model.eval()
+    model.start_epoch()
 
     correct_nodes = total_nodes = 0
     intersections, unions, categories = [], [], []
     for data in tq(loader):
         data = data.to(device)
         with torch.no_grad():
-            out = model(data)
+            model.set_input(data)
+            out = model.forward()
         pred = out.max(dim=1)[1]
         correct_nodes += pred.eq(data.y).sum().item()
         total_nodes += data.num_nodes
@@ -86,13 +85,13 @@ def run(cfg, model, dataset, device):
     for epoch in range(1, 31):
         train(epoch, model, train_loader, device, cfg)
         acc, iou = test(model, test_loader, dataset.num_classes, device)
-        wandb.log({"Test Accuracy": acc, "Test IoU": iou})
+        # wandb.log({"Test Accuracy": acc, "Test IoU": iou})
         print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
 
 
 @hydra.main(config_path='conf/config.yaml')
 def main(cfg):
-    
+
     # GET ARGUMENTS
     device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
                           else 'cpu')

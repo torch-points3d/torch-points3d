@@ -1,11 +1,14 @@
 import os
 from collections import OrderedDict
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Dict, Any
 import torch
 from torch.optim.optimizer import Optimizer
 import functools
 import operator
+
+from utils.running_stats import RunningStats
+
 
 class BaseFactory(ABC):
     def __init__(self, module_name_down, module_name_up, modules_lib):
@@ -16,7 +19,8 @@ class BaseFactory(ABC):
     @abstractmethod
     def get_module_from_index(self):
         pass
-    
+
+
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
     To create a subclass, you need to implement the following five functions:
@@ -43,6 +47,7 @@ class BaseModel(torch.nn.Module):
         self.loss_names = []
         self.output = None
         self.optimizer: Optional[Optimizer] = None
+        self._running_stats: Dict[str, RunningStats] = {}
 
     @abstractmethod
     def set_input(self, input):
@@ -53,12 +58,18 @@ class BaseModel(torch.nn.Module):
         pass
 
     @abstractmethod
-    def forward(self):
+    def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         pass
 
     def get_output(self):
         return self.output
+
+    def start_epoch(self):
+        """ Call this method when you start an epoch. It resets running stats
+        """
+        for metric in self._running_stats:
+            self._running_stats[metric] = RunningStats()
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -66,15 +77,35 @@ class BaseModel(torch.nn.Module):
         self.optimizer.zero_grad()   # clear existing gradients
         self.backward()              # calculate gradients
         self.optimizer.step()        # update parameters
+        self._update_metrics()
 
     def get_current_losses(self):
-        """Return traning losses / errors. train.py will print out these errors on console, and save them to a file"""
+        """Return traning losses / errors. train.py will print out these errors on console"""
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
-                # float(...) works for both scalar tensor and float number
                 errors_ret[name] = float(getattr(self, name))
         return errors_ret
+
+    def get_batch_message(self):
+        message = ""
+        losses = self.get_current_losses()
+        for k, v in losses.items():
+            message += '%s: %.3f ' % (k, v)
+        return message
+
+    def get_epoch_message(self):
+        message = ""
+        for k, stat in self._running_stats.items():
+            message += '%s: %.3f ' % (k, stat.mean())
+        return message
+
+    def _update_metrics(self):
+        losses = self.get_current_losses()
+        for k, v in losses.items():
+            if k not in self._running_stats:
+                self._running_stats[k] = RunningStats()
+            self._running_stats[k].push(v)
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
         self.optimizer = optimizer_cls(self.parameters(), lr=lr)
@@ -82,11 +113,12 @@ class BaseModel(torch.nn.Module):
     def get_internal_losses(self):
         losses_global = []
         search_key = "internal_losses"
+
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if hasattr(module, search_key):
-                    losses_global.append(getattr(module, search_key))   
-                search_from_key(module._modules, losses_global)                     
+                    losses_global.append(getattr(module, search_key))
+                search_from_key(module._modules, losses_global)
         search_from_key(self._modules, losses_global)
         losses = [[v for v in losses.values()] for losses in losses_global]
         if len(losses) > 0:
