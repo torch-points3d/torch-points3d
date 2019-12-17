@@ -22,6 +22,7 @@ class TestSegmentationTracker(unittest.TestCase):
         metrics = tracker.get_metrics()
         for k in ['train_acc', 'train_miou', 'train_macc', 'train_acc']:
             self.assertEqual(metrics[k], 50)
+        self.assertEqual(metrics['train_loss'], 0)
 
         tracker.reset("test")
         tracker.track(torch.randint(1, (1,)), np.asarray([[1, 0], [1, 0]]), np.asarray([[0, 1], [0, 1]]))

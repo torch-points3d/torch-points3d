@@ -10,21 +10,30 @@ def meter_value(meter, dim=0):
 
 class SegmentationTracker:
 
-    def __init__(self, num_classes, stage="train", log_dir=None):
+    def __init__(self, num_classes, stage="train", tensorboard_dir=None):
+        """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
+
+        Arguments:
+            num_classes  -- number of classes
+
+        Keyword Arguments:
+            stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
+            tensorboard_dir {str} -- Directory for tensorboard logging
+        """
         self._num_classes = num_classes
         self._stage = stage
-        # self._best_selectors = {"loss": min, "acc": max, "miou": max, "std": min}
-        # self._best_metrics = {}
-        # self._internal_losses = []
-        self._with_in_n_per = 1
-        if log_dir is not None:
+        if tensorboard_dir is not None:
             from torch.utils.tensorboard import SummaryWriter
-            print("Show tensorboard metrics with the command <tensorboard --logdir={}>".format(log_dir))
-            self._writer = SummaryWriter(log_dir=log_dir)
+            print("Show tensorboard metrics with the command <tensorboard --logdir={}>".format(tensorboard_dir))
+            self._writer = SummaryWriter(log_dir=tensorboard_dir)
         else:
             self._writer = None
         self._n_iter = 0
         self.reset(stage)
+
+    @property
+    def confusion_matrix(self):
+        return self._confusion_matrix.confusion_matrix
 
     def reset(self, stage="train"):
         self._stage = stage
@@ -36,25 +45,14 @@ class SegmentationTracker:
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
 
     @staticmethod
-    def convert(x):
+    def _convert(x):
         if torch.is_tensor(x):
             return x.detach().cpu().numpy()
         else:
             return x
 
-    # def track_internal_losses(self, internal_losses):
-    #     self._internal_losses = internal_losses.keys()
-    #     for loss_name, loss_value in internal_losses.items():
-    #         if not isinstance(loss_value, int):
-    #             if hasattr(self, loss_name):
-    #                 getattr(self, loss_name).add(loss_value.item())
-    #             else:
-    #                 averageValueMeter = tnt.meter.AverageValueMeter()
-    #                 averageValueMeter.add(loss_value.item())
-    #                 setattr(self, loss_name, averageValueMeter)
-
     def track(self, loss, outputs, targets):
-        """ Add current model stats to the tracking
+        """ Add current model predictions (usually the result of a batch) to the tracking
 
         Arguments:
             loss -- main loss
@@ -62,8 +60,8 @@ class SegmentationTracker:
             targets -- target values NxK
         """
         self._loss_meter.add(loss.item())
-        outputs = self.convert(outputs)
-        targets = self.convert(targets)
+        outputs = self._convert(outputs)
+        targets = self._convert(targets)
 
         self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
 
@@ -72,62 +70,6 @@ class SegmentationTracker:
         self._acc_meter.add(100 * confusion_matrix_tmp.get_overall_accuracy())
         self._macc_meter.add(100 * confusion_matrix_tmp.get_mean_class_accuracy())
         self._miou_meter.add(100 * confusion_matrix_tmp.get_average_intersection_union())
-
-    # def from_stats(self, stats):
-    #     print('LOADING FROM STATS')
-    #     if len(stats) == 0:
-    #         print('STATS IS EMPTY')
-    #         return
-    #     self.n_iter = len(stats)  # Restart the iter
-    #     for key in stats[-1].keys():
-    #         if 'best' in key:
-
-    #             if self.is_legacy(key):
-    #             splits = key.replace('iou', 'miou').split('_')
-    #             splits.insert(1, 'val')
-    #             new_key = '_'.join(splits)
-    #             print(new_key, stats[-1][key])
-    #             setattr(self, new_key, stats[-1][key])
-    #             else:
-    #             print(key, stats[-1][key])
-    #             setattr(self, key, stats[-1][key])
-
-    # def get_best_metrics(self):
-    #     self._best_metrics
-
-    # def _check_not_only_internal_losses(self, improved_metrics, stage):
-    #     internal_keys = ['{}_{}'.format(stage, k) for k in list(self._internal_losses)]
-    #     for key_name in improved_metrics.keys():
-    #         if key_name not in internal_keys:
-    #             return improved_metrics
-    #     return {}
-
-    # def _add_metrics(self, metrics, stage):
-    #     improved_metrics = {}
-    #     for metric_name, metric_score in metrics.items():
-    #         for mn, func in self._best_selectors.items():
-    #             if mn not in metric_name:
-    #                 continue
-
-    #             ref = "best_{}".format(metric_name)
-    #             if ref not in self._best_metrics:
-    #                 self._best_metrics[ref] = metric_score
-    #                 improved_metrics[metric_name] = metric_score
-    #             else:
-    #                 old_score = self._best_metrics[ref]
-    #                 best_score = func(old_score, metric_score)
-    #                 if self._with_in_n_per > 0:
-    #                     ratio = 100 * np.abs(metric_score - old_score) / old_score
-    #                     if ratio < self._with_in_n_per:
-    #                         improved_metrics[metric_name] = metric_score
-    #                 if metric_score == best_score:
-    #                     improved_metrics[metric_name] = metric_score
-    #                     self._best_metrics[ref] = best_score
-    #     return self._check_not_only_internal_losses(improved_metrics, stage)
-
-    @property
-    def confusion_matrix(self):
-        return self._confusion_matrix.confusion_matrix
 
     def _publish_to_tensorboard(self, metrics):
         if self._stage == "train":
