@@ -98,6 +98,7 @@ class UnetBasedModel(BaseModel):
                     v = list(v)
                 args[name] = v
         args['index'] = index
+        args['precompute_multi_scale'] = self._precompute_multi_scale
         return args
 
     def get_module_cls(self, args, index, name, flow):
@@ -168,10 +169,10 @@ class UnetSkipConnectionBlock(nn.Module):
     def forward(self, data):
         if self.innermost:
             data_out = self.inner(data)
-            data = (*data_out, *data)
+            data = (data_out, data)
             return self.up(data)
         else:
             data_out = self.down(data)
             data_out2 = self.submodule(data_out)
-            data = (*data_out2, *data)
+            data = (data_out2, data)
             return self.up(data)

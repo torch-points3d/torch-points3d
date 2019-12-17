@@ -27,13 +27,13 @@ class SegmentationModel(UnetBasedModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        self.input = (data.x, data.pos, data.batch)
+        self.input = data
         self.labels = data.y
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        x, _, _ = self.model(self.input)
-        x = F.relu(self.lin1(x))
+        data = self.model(self.input)
+        x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)

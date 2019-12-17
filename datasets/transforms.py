@@ -37,20 +37,18 @@ class MultiScaleTransform(object):
 
     def __call__(self, data):
         if self.precompute_multi_scale:
-            #Compute recursively multi_scale indexes
-            #indices = []
-            #edge_indexes = []
+            #Compute sequentially multi_scale indexes on cpu
             pos = data.pos
-            batch = torch.zeros(len(pos)).long()
+            batch = data.batch
             for index in range(self.num_layers):
                 sampler, neighbour_finder = self.strategies[index]
-                indice = sampler(pos, batch)
-                row, col = neighbour_finder(pos, pos[indice], batch, batch[indice])
+                idx = sampler(pos, batch)
+                row, col = neighbour_finder(pos, pos[idx], batch, batch[idx])
                 edge_index = torch.stack([col, row], dim=0)
-                setattr(data, "indice_{}".format(index), indice)
+                setattr(data, "idx_{}".format(index), idx)
                 setattr(data, "edge_index_{}".format(index), edge_index)
-                pos = pos[indice]
-                batch = batch[indice]
+                pos = pos[idx]
+                batch = batch[idx]
         return data
 
     def __repr__(self):

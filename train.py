@@ -11,6 +11,7 @@ from models.utils import find_model_using_name
 from tqdm import tqdm as tq
 import time
 import wandb
+from omegaconf import OmegaConf
 
 from visualizer import print_current_losses
 #wandb.init(project="dpc-benchmark")
@@ -24,7 +25,6 @@ def train(epoch, model, train_loader, device, options):
     for i, data in tq(enumerate(train_loader)):
         iter_start_time = time.time()  # timer for computation per iteration
         t_data = iter_start_time - iter_data_time
-
         data = data.to(device)
         model.set_input(data)
         model.optimize_parameters()
@@ -40,10 +40,7 @@ def train(epoch, model, train_loader, device, options):
             i + 1, len(train_loader), total_loss / 10,
             correct_nodes / total_nodes))
             total_loss = correct_nodes = total_nodes = 0
-
-    
     wandb.log({"Train Accuracy": correct_nodes / total_nodes})
-
 
 def test(model, loader, num_classes, device):
     model.eval()
@@ -109,6 +106,7 @@ def main(cfg):
 
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
+    model_config = OmegaConf.merge(model_config, cfg.training)
     model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
     sampling_and_search_strategies = model.get_sampling_and_search_strategies()
     model.set_optimizer(torch.optim.Adam)

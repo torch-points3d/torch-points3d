@@ -22,13 +22,13 @@ class SegmentationModel(UnetBasedModel):
         self.lin3 = torch.nn.Linear(nn[4], num_classes)
 
     def set_input(self, data):
-        self.input = (data.x if data.x is not None else data.pos, data.pos, data.batch)
+        self.input = data
         self.labels = data.y
 
     def forward(self):
         """Standard forward"""
-        x, _, _  = self.model(self.input)
-        x = F.relu(self.lin1(x))
+        data = self.model(self.input)
+        x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
