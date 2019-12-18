@@ -202,7 +202,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
     def forward(self, data):
         print(data)
         batch_obj = Batch()
-        x, pos, batch = data.x, data.pos, data.batch  # (N, indim)
+        x = data.x  # (N, indim)
         shortcut = x  # (N, indim)
         x = self.features_downsample_nn(x)  # (N, outdim//4)
         # if this is an identity resnet block, idx will be None
@@ -215,7 +215,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         shortcut = self.shortcut_feature_resize_nn(shortcut)  # (N', outdim)
         x = shortcut + x
         batch_obj.x = x
-        batch_obj.pos = pos
-        batch_obj.batch = batch
+        batch_obj.pos = data.pos
+        batch_obj.batch = data.batch
         copy_from_to(data, batch_obj)
         return batch_obj
