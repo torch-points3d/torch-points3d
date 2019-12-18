@@ -29,6 +29,8 @@ class SegmentationModel(UnetBasedModel):
 
     def set_input(self, data):
         self.input = data
+        if self.input.x is None:
+            self.input.x = self.input.pos
         self.labels = data.y
 
     def forward(self) -> Any:

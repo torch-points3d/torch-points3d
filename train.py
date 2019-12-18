@@ -83,7 +83,7 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
-    model = find_model_using_name(tested_model_name, tested_task, model_config, dataset.num_classes)
+    model = find_model_using_name(model_config.type, tested_task, model_config, dataset.num_classes)
     model.set_optimizer(torch.optim.Adam)
 
     # Set sampling / search strategies:
