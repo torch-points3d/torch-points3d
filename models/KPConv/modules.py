@@ -21,20 +21,22 @@ from torch_geometric.utils import scatter_
 from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
 from .kernels import PointKernel, LightDeformablePointKernel
 
+
 class KPConvModels(Enum):
     KPCONV = 0
     RESIDUALBKPCONV = 1
     RESIDUALUPSAMPLEBKPCONV = 2
     LIGHTDEFORMABLEKPCONV = 3
 
+
 class KPConvFactory(BaseFactory):
     def get_module_from_index(self, index, flow=None):
         if flow is None:
             raise NotImplementedError
-        
+
         if flow.upper() == "UP":
             return getattr(self.modules_lib, self.module_name_up, None)
-        
+
         if flow.upper() == "DOWN":
             if self.module_name_down.upper() == str(KPConvModels.KPCONV.name):
                 return KPConv
@@ -47,13 +49,16 @@ class KPConvFactory(BaseFactory):
                     return ResidualBKPConv
         raise NotImplementedError
 
-class LightDeformableKPConv(BaseConvolution):
+####################### BUILT WITH BaseConvolutionDown ############################
+
+
+class LightDeformableKPConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(LightDeformableKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
         self.radius = radius
-        
+
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments
@@ -61,19 +66,20 @@ class LightDeformableKPConv(BaseConvolution):
         self.out_features = out_features
         self.num_points = num_points
 
-        self._conv = LightDeformablePointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+        self._conv = LightDeformablePointKernel(self.num_points, self.in_features,
+                                                self.out_features, radius=self.radius)
 
-    @property
-    def conv(self):
-        return self._conv
+    def conv(self, x, pos, edge_index, batch):
+        return self._conv(x, pos, edge_index)
 
-class KPConv(BaseConvolution):
+
+class KPConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
         super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
         self.radius = radius
-        
+
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments
@@ -83,18 +89,18 @@ class KPConv(BaseConvolution):
 
         self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
-    @property
-    def conv(self):
-        return self._conv
+    def conv(self, x, pos, edge_index, batch):
+        return self._conv(x, pos, edge_index)
 
-class ResidualBKPConv(nn.Module):
+
+class ResidualBKPConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
-        super(ResidualBKPConv, self).__init__()
-        
+        super(ResidualBKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+
         self.ratio = ratio
         self.radius = radius
         self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
-        
+
         in_features, out_features = down_conv_nn
 
         # KPCONV arguments
@@ -108,30 +114,24 @@ class ResidualBKPConv(nn.Module):
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
 
-    @property
-    def conv(self):
-        return self._conv
-
-    def forward(self, data):
-        x, pos, batch = data
-        idx = fps(pos, batch, ratio=self.ratio)
-        row, col = radius(pos, pos[idx], self.radius, batch, batch[idx],
-                          max_num_neighbors=self.max_num_neighbors)
-        edge_index = torch.stack([col, row], dim=0)
-        
+    def conv(self, x, pos, edge_index, batch):
+        row, col = edge_index
         x_side = self.pre_mlp(x)
-        x_side = self.conv(x_side, (pos, pos[idx]), edge_index)
+        x_side = self._conv(x_side, pos, edge_index)
         x_side = self.post_mlp(x_side)
 
-        x_shortcut = self.shortcut_mlp(x[idx])
+        x_shortcut = self.shortcut_mlp(x)
+        x_shortcut = torch.index_select(x_shortcut, 0, row)
+        x_shortcut = scatter_("add", x_shortcut, col)
 
-        pos, batch = pos[idx], batch[idx]
-        data = (x_side + x_shortcut, pos, batch)
-        return data
+        return x_side + x_shortcut
 
-class SimpleUpsampleKPConv(BaseConvolution):
+####################### BUILT WITH BaseConvolutionUp ############################
+
+
+class SimpleUpsampleKPConv(BaseConvolutionUp):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
-        super(SimpleUpsampleKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        super(SimpleUpsampleKPConv, self).__init__(RadiusNeighbourFinder(radius), *args, **kwargs)
 
         in_features, out_features = up_conv_nn
 
@@ -145,18 +145,18 @@ class SimpleUpsampleKPConv(BaseConvolution):
 
         self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
 
-    @property
-    def conv(self):
-        return self._conv
+    def conv(self, x, pos, pos_skip, batch, batch_skip, edge_index):
+        return self._conv(x, (pos, pos_skip), edge_index)
 
-class ResidualUpsampleBKPConv(nn.Module):
+
+class ResidualUpsampleBKPConv(BaseConvolutionUp):
     def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
-        super(ResidualUpsampleBKPConv, self).__init__()
+        super(ResidualUpsampleBKPConv, self).__init__(RadiusNeighbourFinder(radius))
 
         self.ratio = ratio
         self.radius = radius
         self.max_num_neighbors = kwargs.get("max_num_neighbors", 64)
-        
+
         in_features, out_features = up_conv_nn
 
         # KPCONV arguments
@@ -165,35 +165,21 @@ class ResidualUpsampleBKPConv(nn.Module):
         self.num_points = num_points
 
         self.pre_mlp = nn.Linear(self.in_features, self.in_features // 4)
-        self._conv = PointKernel(self.num_points, self.in_features  // 4, self.in_features // 4, radius=self.radius)
+        self._conv = PointKernel(self.num_points, self.in_features // 4, self.in_features // 4, radius=self.radius)
         self.post_mlp = nn.Linear(self.in_features // 4, out_features)
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
 
         self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
 
-    @property
-    def conv(self):
-        return self._conv
-
-    def forward(self, data):
-        x, pos, batch, x_skip, pos_skip, batch_skip = data
-        row, col = radius(pos, pos_skip, self.radius, batch, batch_skip,
-                          max_num_neighbors=self.max_num_neighbors)
-        edge_index = torch.stack([col, row], dim=0)
-
+    def conv(self, x, pos, pos_skip, batch, batch_skip, edge_index):
+        row, col = edge_index
         x_side = self.pre_mlp(x)
-        x_side = self.conv(x_side, (pos, pos_skip), edge_index)
+        x_side = self._conv(x_side, (pos, pos_skip), edge_index)
         x_side = self.post_mlp(x_side)
 
         x_shortcut = self.shortcut_mlp(x)
-        x_shortcut = torch.index_select(x_shortcut, 0, col)
-        x_shortcut = scatter_("add", x_shortcut, row)
+        x_shortcut = torch.index_select(x_shortcut, 0, row)
+        x_shortcut = scatter_("add", x_shortcut, col)
 
-        x = x_side + x_shortcut
-
-        if x_skip is not None:
-            x = torch.cat([x, x_skip], dim=1)
-        x = self.nn(x)
-        data = (x, pos_skip, batch_skip)
-        return data
+        return x_side + x_shortcut

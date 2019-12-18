@@ -128,6 +128,6 @@ class BaseModel(torch.nn.Module):
             return torch.mean(torch.stack(losses))
         else:
             return 0.
-          
+
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
