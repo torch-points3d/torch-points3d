@@ -78,8 +78,8 @@ class DilatedResidualBlock(BaseResnetBlock):
 
         super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
 
-        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, global_nn1)
-        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
+        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, down_conv_nn=global_nn1)
+        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, down_conv_nn=global_nn2)
 
     def convs(self, data):
         data = self.conv1(data)

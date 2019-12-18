@@ -53,6 +53,9 @@ class BaseConvolutionDown(BaseConvolution):
             idx = self.sampler(pos, batch)
             row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
             edge_index = torch.stack([col, row], dim=0)
+            batch_obj.idx = idx
+            batch_obj.edge_index = edge_index
+
         batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]
@@ -197,12 +200,15 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         pass
 
     def forward(self, data):
+        print(data)
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch  # (N, indim)
         shortcut = x  # (N, indim)
         x = self.features_downsample_nn(x)  # (N, outdim//4)
         # if this is an identity resnet block, idx will be None
-        x, pos, batch, idx = self.convs(data)  # (N', convdim)
+        data = self.convs(data)  # (N', convdim)
+        x = data.x
+        idx = data.idx
         x = self.features_upsample_nn(x)  # (N', outdim)
         if idx is not None:
             shortcut = shortcut[idx]  # (N', indim)
@@ -212,4 +218,4 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         batch_obj.pos = pos
         batch_obj.batch = batch
         copy_from_to(data, batch_obj)
-        return self.activation(x), pos, batch
+        return batch_obj

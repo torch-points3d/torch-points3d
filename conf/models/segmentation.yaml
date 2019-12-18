@@ -31,6 +31,30 @@ models:
             indim: [3, 32]
             outdim: [32, 128]
             point_pos_nn: [[[10, 8, 3], [10, 16, 16]], [[10, 16, 32], [10, 32, 64]]]
+            attention_nn: [[[6, 8, 6], [32, 64, 32]], [[64, 128, 64], [128, 256, 128]]]
+            down_conv_nn: [[[6, 8, 16], [32, 64, 32]], [[64, 64, 64], [128, 128, 128]]]
+        innermost:
+            module_name: GlobalBaseModule
+            aggr: max
+            nn: [131, 128]
+        up_conv:
+            module_name: FPModule
+            up_conv_nn: [[256, 128], [160, 64], [67, 64]]
+            up_k: [1, 1, 1]
+            skip: True
+        mlp_cls:
+            nn: [64, 64, 64, 64, 64]
+            dropout: 0.5
+
+
+    Randlanet_Res_Tristan:
+        type: RandLANet
+        down_conv:
+            module_name: RandLANetRes
+            ratio: [[1, 1], [0.5, 0.5]]
+            indim: [3, 32]
+            outdim: [32, 128]
+            point_pos_nn: [[[10, 8, 3], [10, 16, 16]], [[10, 16, 32], [10, 32, 64]]]
             attention_nn: [[[11, 16, 11], [32, 64, 32]], [[64, 128, 64], [128, 256, 128]]]
             down_conv_nn: [[[11, 16, 16], [32, 64, 32]], [[64, 64, 64], [128, 128, 128]]]
         innermost:
