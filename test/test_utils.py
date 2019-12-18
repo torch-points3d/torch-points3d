@@ -20,3 +20,7 @@ class TestModelUtils(unittest.TestCase):
             if model_name not in ["MyTemplateModel"]:
                 params = self.config['models'][model_name]
                 model = find_model_using_name(params.type, 'segmentation', params, 10)
+
+
+if __name__ == "__main__":
+    unittest.main()
