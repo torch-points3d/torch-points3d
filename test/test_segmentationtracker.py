@@ -6,7 +6,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 sys.path.append(ROOT)
 
-from metrics.metricstracker import SegmentationTracker
+from metrics.metrics_tracker import SegmentationTracker
 
 
 class MockDataset:

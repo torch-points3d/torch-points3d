@@ -5,7 +5,7 @@ from typing import Dict
 from abc import abstractmethod
 import wandb
 
-from metrics.confusionmatrix import ConfusionMatrix
+from metrics.confusion_matrix import ConfusionMatrix
 
 
 def get_tracker(task: str, dataset, wandb_log: bool):
@@ -19,7 +19,7 @@ def get_tracker(task: str, dataset, wandb_log: bool):
         [BaseTracker] -- tracker
     """
     if task.lower() == 'segmentation':
-        return SegmentationTracker(dataset)
+        return SegmentationTracker(dataset, wandb_log=wandb_log)
     raise NotImplementedError('No tracker for %s task' % task)
 
 
