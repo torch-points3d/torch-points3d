@@ -5,6 +5,7 @@ from torch_geometric.nn import MessagePassing
 from models.core_modules import *
 from models.core_sampling_and_search import FPSSampler, RadiusNeighbourFinder
 
+
 class Convolution(MessagePassing):
     r"""The Relation Shape Convolution layer from "Relation-Shape Convolutional Neural Network for Point Cloud Analysis" 
     https://arxiv.org/pdf/1904.07601
@@ -52,12 +53,12 @@ class Convolution(MessagePassing):
             x = self.global_nn(x)
         return x
 
-class RSConv(BaseConvolution):
+
+class RSConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, *args, **kwargs):
         super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
 
-    @property
-    def conv(self):
-        return self._conv
+    def conv(self, x, pos, edge_index, batch):
+        return self._conv(x, pos, edge_index)

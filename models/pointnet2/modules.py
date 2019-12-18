@@ -10,5 +10,5 @@ class SAModule(BaseConvolutionDown):
         local_nn = MLP(down_conv_nn) if down_conv_nn is not None else None
         self._conv = PointConv(local_nn=local_nn, global_nn=None)
 
-    def conv(self, x, pos, edge_index):
+    def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
