@@ -6,7 +6,22 @@ from abc import abstractmethod
 from metrics.confusionmatrix import ConfusionMatrix
 
 
-def meter_value(meter, dim=0):
+def get_tracker(task: str, dataset):
+    """Factory method for the tracker
+
+    Arguments:
+        task {str} -- task description
+        dataset {[type]}
+
+    Returns:
+        [BaseTracker] -- tracker
+    """
+    if task.lower() == 'segmentation':
+        return SegmentationTracker(dataset)
+    raise NotImplementedError('No tracker for %s task' % task)
+
+
+def _meter_value(meter, dim=0):
     return meter.value()[dim] if meter.n > 0 else 0
 
 
@@ -26,17 +41,17 @@ class BaseTracker:
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, num_classes, stage="train", tensorboard_dir=None):
+    def __init__(self, dataset, stage="train", tensorboard_dir=None):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
-            num_classes  -- number of classes
+            dataset  -- dataset to track (used for the number of classes)
 
         Keyword Arguments:
             stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
             tensorboard_dir {str} -- Directory for tensorboard logging
         """
-        self._num_classes = num_classes
+        self._num_classes = dataset.num_classes
         self._stage = stage
 
         if tensorboard_dir is not None:
@@ -108,11 +123,11 @@ class SegmentationTracker(BaseTracker):
         """
         metrics = {}
         for key, loss_meter in self._loss_meters.items():
-            metrics[key] = meter_value(loss_meter, dim=0)
+            metrics[key] = _meter_value(loss_meter, dim=0)
 
-        metrics['{}_acc'.format(self._stage)] = meter_value(self._acc_meter, dim=0)
-        metrics['{}_macc'.format(self._stage)] = meter_value(self._macc_meter, dim=0)
-        metrics['{}_miou'.format(self._stage)] = meter_value(self._miou_meter, dim=0)
+        metrics['{}_acc'.format(self._stage)] = _meter_value(self._acc_meter, dim=0)
+        metrics['{}_macc'.format(self._stage)] = _meter_value(self._macc_meter, dim=0)
+        metrics['{}_miou'.format(self._stage)] = _meter_value(self._miou_meter, dim=0)
 
         if self._writer:
             self._publish_to_tensorboard(metrics)

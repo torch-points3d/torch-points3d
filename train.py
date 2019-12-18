@@ -14,7 +14,7 @@ from omegaconf import OmegaConf
 
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
-from metrics.metricstracker import SegmentationTracker, BaseTracker
+from metrics.metricstracker import get_tracker, BaseTracker
 # wandb.init(project="dpc-benchmark")
 
 
@@ -22,10 +22,9 @@ def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseT
     model.train()
     tracker.reset("train")
 
-    correct_nodes = total_nodes = 0
     iter_data_time = time.time()
     with tq(train_loader) as tq_train_loader:
-        for i, data in enumerate(tq_train_loader):
+        for data in tq_train_loader:
             iter_start_time = time.time()  # timer for computation per iteration
             t_data = iter_start_time - iter_data_time
 
@@ -33,7 +32,6 @@ def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseT
             model.set_input(data)
             model.optimize_parameters()
 
-            correct_nodes += model.get_output().max(dim=1)[1].eq(data.y).sum().item()
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
             iter_data_time = time.time()
 
@@ -98,7 +96,7 @@ def main(cfg):
     print("Model size = %i" % params)
 
     # metric tracker
-    tracker = SegmentationTracker(dataset.num_classes)
+    tracker = get_tracker(tested_task, dataset)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker)

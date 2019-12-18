@@ -7,8 +7,6 @@ from torch.optim.optimizer import Optimizer
 import functools
 import operator
 
-from utils.running_stats import RunningStats
-
 
 class BaseFactory(ABC):
     def __init__(self, module_name_down, module_name_up, modules_lib):
@@ -49,7 +47,6 @@ class BaseModel(torch.nn.Module):
         self.optimizer: Optional[Optimizer] = None
         self._sampling_and_search_dict: Dict = {}
         self._precompute_multi_scale = opt.precompute_multi_scale
-        self._running_stats: Dict[str, RunningStats] = {}
 
     @abstractmethod
     def set_input(self, input):
@@ -67,19 +64,12 @@ class BaseModel(torch.nn.Module):
     def get_output(self):
         return self.output
 
-    def start_epoch(self):
-        """ Call this method when you start an epoch. It resets running stats
-        """
-        for metric in self._running_stats:
-            self._running_stats[metric] = RunningStats()
-
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self.forward()               # first call forward to calculate intermediate results
         self.optimizer.zero_grad()   # clear existing gradients
         self.backward()              # calculate gradients
         self.optimizer.step()        # update parameters
-        self._update_metrics()
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -88,26 +78,6 @@ class BaseModel(torch.nn.Module):
             if isinstance(name, str):
                 errors_ret[name] = float(getattr(self, name))
         return errors_ret
-
-    def get_batch_message(self):
-        message = ""
-        losses = self.get_current_losses()
-        for k, v in losses.items():
-            message += '%s: %.3f ' % (k, v)
-        return message
-
-    def get_epoch_message(self):
-        message = ""
-        for k, stat in self._running_stats.items():
-            message += '%s: %.3f ' % (k, stat.mean())
-        return message
-
-    def _update_metrics(self):
-        losses = self.get_current_losses()
-        for k, v in losses.items():
-            if k not in self._running_stats:
-                self._running_stats[k] = RunningStats()
-            self._running_stats[k].push(v)
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
         self.optimizer = optimizer_cls(self.parameters(), lr=lr)
@@ -128,6 +98,6 @@ class BaseModel(torch.nn.Module):
             return torch.mean(torch.stack(losses))
         else:
             return 0.
-          
+
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
