@@ -76,7 +76,7 @@ models:
             module_name: RandlaConv
             ratio: [0.25, 0.25, 0.25]
             k: [16, 16, 16]
-            point_pos_nn: [[10, 8, 3], [10, 8, 16], [10, 16, 32]]
+            point_pos_nn: [[10, 8, INPUT_DIM], [10, 8, 16], [10, 16, 32]]
             attention_nn: [[6, 8, 6], [32, 64, 32], [64, 128, 64]]
             down_conv_nn: [[6, 8, 16], [32, 64, 32], [64, 128, 128]]
         innermost:

@@ -1,8 +1,30 @@
 
 import numpy as np
 import torch
+from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors
 from scipy.spatial import Delaunay
+
+
+class MeshToNormal(object):
+    r"""Compute geometric features (linearity, planarity, scattering and verticality)
+    """
+
+    def __init__(self):
+        pass
+
+    def __call__(self, data):
+        if hasattr(data, "face"):
+            pos = data.pos
+            face = data.face
+            vertices = [pos[f] for f in face]
+            normals = torch.cross(vertices[0] - vertices[1], vertices[0] - vertices[2], dim=1)
+            normals = F.normalize(normals)
+            data.normals = normals
+        return data
+
+    def __repr__(self):
+        return '{}'.format(self.__class__.__name__)
 
 
 class MultiScaleTransform(object):
