@@ -51,6 +51,7 @@ def test(model: BaseModel, loader, num_classes, device, tracker: BaseTracker):
 
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
             tq_test_loader.set_postfix(**tracker.get_metrics())
+    tracker.publish()
 
 
 def run(cfg, model, dataset, device, tracker: BaseTracker):
@@ -59,8 +60,6 @@ def run(cfg, model, dataset, device, tracker: BaseTracker):
     for epoch in range(1, 31):
         train(epoch, model, train_loader, device, cfg, tracker)
         test(model, test_loader, dataset.num_classes, device, tracker)
-        # wandb.log({"Test Accuracy": acc, "Test IoU": iou})
-        print('Epoch: {:02d}: {}'.format(epoch, tracker.get_metrics()))
 
 
 @hydra.main(config_path='conf/config.yaml')
