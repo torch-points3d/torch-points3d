@@ -51,6 +51,11 @@ class BaseDataset():
     def num_classes(self):
         pass
 
+    @property
+    @abstractmethod
+    def input_dim(self):
+        pass
+
     def _set_multiscale_transform(self, batch_transform):
         for _, attr in self.__dict__.items():
             if isinstance(attr, DataLoader):
