@@ -3,16 +3,18 @@ import torchnet as tnt
 import torch
 from typing import Dict
 from abc import abstractmethod
+import wandb
+
 from metrics.confusionmatrix import ConfusionMatrix
 
 
-def get_tracker(task: str, dataset):
+def get_tracker(task: str, dataset, wandb_log: bool):
     """Factory method for the tracker
 
     Arguments:
         task {str} -- task description
         dataset {[type]}
-
+        wandb_log - Log using weight and biases
     Returns:
         [BaseTracker] -- tracker
     """
@@ -26,6 +28,9 @@ def _meter_value(meter, dim=0):
 
 
 class BaseTracker:
+    def __init__(self,  wandb_log: bool):
+        self._wandb = wandb_log
+
     @abstractmethod
     def reset(self, stage="train"):
         pass
@@ -38,10 +43,14 @@ class BaseTracker:
     def track(self, loss, outputs, targets):
         pass
 
+    def publish(self):
+        if self._wandb:
+            wandb.log(self.get_metrics())
+
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, dataset, stage="train", tensorboard_dir=None):
+    def __init__(self, dataset, stage="train", wandb_log=False):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
@@ -49,17 +58,11 @@ class SegmentationTracker(BaseTracker):
 
         Keyword Arguments:
             stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
-            tensorboard_dir {str} -- Directory for tensorboard logging
+            wandb_log {str} --  Log using weight and biases
         """
+        super(SegmentationTracker, self).__init__(wandb_log)
         self._num_classes = dataset.num_classes
         self._stage = stage
-
-        if tensorboard_dir is not None:
-            from torch.utils.tensorboard import SummaryWriter
-            print("Show tensorboard metrics with the command <tensorboard --logdir={}>".format(tensorboard_dir))
-            self._writer = SummaryWriter(log_dir=tensorboard_dir)
-        else:
-            self._writer = None
         self._n_iter = 0
 
         self.reset(stage)
@@ -110,14 +113,6 @@ class SegmentationTracker(BaseTracker):
         self._macc_meter.add(100 * confusion_matrix_tmp.get_mean_class_accuracy())
         self._miou_meter.add(100 * confusion_matrix_tmp.get_average_intersection_union())
 
-    def _publish_to_tensorboard(self, metrics):
-        if self._stage == "train":
-            self._n_iter += 1
-
-        for metric_name, metric_value in metrics.items():
-            metric_name = "{}/{}".format(metric_name.replace(self._stage+"_", ""), self._stage)
-            self._writer.add_scalar(metric_name, metric_value, self._n_iter)
-
     def get_metrics(self) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
@@ -129,6 +124,4 @@ class SegmentationTracker(BaseTracker):
         metrics['{}_macc'.format(self._stage)] = _meter_value(self._macc_meter, dim=0)
         metrics['{}_miou'.format(self._stage)] = _meter_value(self._miou_meter, dim=0)
 
-        if self._writer:
-            self._publish_to_tensorboard(metrics)
         return metrics

@@ -9,10 +9,15 @@ sys.path.append(ROOT)
 from metrics.metricstracker import SegmentationTracker
 
 
+class MockDataset:
+    def __init__(self):
+        self.num_classes = 2
+
+
 class TestSegmentationTracker(unittest.TestCase):
 
     def test_track(self):
-        tracker = SegmentationTracker(2)
+        tracker = SegmentationTracker(MockDataset())
         tracker.track({'loss_1': 1, 'loss_2': 2}, np.asarray([[0, 1], [0, 1]]), np.asarray([1, 1]))
         metrics = tracker.get_metrics()
         for k in ['train_acc', 'train_miou', 'train_macc', 'train_acc']:

@@ -15,7 +15,6 @@ from omegaconf import OmegaConf
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
 from metrics.metricstracker import get_tracker, BaseTracker
-# wandb.init(project="dpc-benchmark")
 
 
 def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseTracker):
@@ -37,6 +36,7 @@ def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseT
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=t_data,
                                         iteration=time.time() - iter_start_time)
+    tracker.publish()
 
 
 def test(model: BaseModel, loader, num_classes, device, tracker: BaseTracker):
@@ -89,14 +89,16 @@ def main(cfg):
     # Set sampling / search strategies:
     dataset.set_strategies(model, precompute_multi_scale=cfg.training.precompute_multi_scale)
 
-    # wandb.watch(model)
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     print("Model size = %i" % params)
 
     # metric tracker
-    tracker = get_tracker(tested_task, dataset)
+    if cfg.wandb.log:
+        wandb.init(project=cfg.wandb.project)
+        # wandb.watch(model)
+    tracker = get_tracker(tested_task, dataset, cfg.wandb.log)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker)
