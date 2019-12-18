@@ -1,6 +1,8 @@
 import numpy as np
 import torchnet as tnt
 import torch
+from typing import Dict
+from abc import abstractmethod
 from metrics.confusionmatrix import ConfusionMatrix
 
 
@@ -8,7 +10,21 @@ def meter_value(meter, dim=0):
     return meter.value()[dim] if meter.n > 0 else 0
 
 
-class SegmentationTracker:
+class BaseTracker:
+    @abstractmethod
+    def reset(self, stage="train"):
+        pass
+
+    @abstractmethod
+    def get_metrics(self) -> Dict[str, float]:
+        pass
+
+    @abstractmethod
+    def track(self, loss, outputs, targets):
+        pass
+
+
+class SegmentationTracker(BaseTracker):
 
     def __init__(self, num_classes, stage="train", tensorboard_dir=None):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
@@ -22,6 +38,7 @@ class SegmentationTracker:
         """
         self._num_classes = num_classes
         self._stage = stage
+
         if tensorboard_dir is not None:
             from torch.utils.tensorboard import SummaryWriter
             print("Show tensorboard metrics with the command <tensorboard --logdir={}>".format(tensorboard_dir))
@@ -29,20 +46,21 @@ class SegmentationTracker:
         else:
             self._writer = None
         self._n_iter = 0
-        self.reset(stage)
 
-    @property
-    def confusion_matrix(self):
-        return self._confusion_matrix.confusion_matrix
+        self.reset(stage)
 
     def reset(self, stage="train"):
         self._stage = stage
 
-        self._loss_meter = tnt.meter.AverageValueMeter()
+        self._loss_meters = {}
         self._acc_meter = tnt.meter.AverageValueMeter()
         self._macc_meter = tnt.meter.AverageValueMeter()
         self._miou_meter = tnt.meter.AverageValueMeter()
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
+
+    @property
+    def confusion_matrix(self):
+        return self._confusion_matrix.confusion_matrix
 
     @staticmethod
     def _convert(x):
@@ -51,15 +69,21 @@ class SegmentationTracker:
         else:
             return x
 
-    def track(self, loss, outputs, targets):
+    def track(self, losses: Dict[str, float], outputs, targets):
         """ Add current model predictions (usually the result of a batch) to the tracking
 
         Arguments:
-            loss -- main loss
+            losses Dict[str,float] -- main loss
             outputs -- model predictions (NxK) where K is the number of labels
-            targets -- target values NxK
+            targets -- class labels  - size N
         """
-        self._loss_meter.add(loss.item())
+        assert outputs.shape[0] == len(targets)
+        for key, loss in losses.items():
+            loss_key = '%s_%s' % (self._stage, key)
+            if loss_key not in self._loss_meters:
+                self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
+            self._loss_meters[loss_key].add(loss)
+
         outputs = self._convert(outputs)
         targets = self._convert(targets)
 
@@ -79,25 +103,17 @@ class SegmentationTracker:
             metric_name = "{}/{}".format(metric_name.replace(self._stage+"_", ""), self._stage)
             self._writer.add_scalar(metric_name, metric_value, self._n_iter)
 
-    def get_metrics(self):
+    def get_metrics(self) -> Dict[str, float]:
+        """ Returns a dictionnary of all metrics and losses being tracked
+        """
         metrics = {}
-        metrics['{}_loss'.format(self._stage)] = meter_value(self._loss_meter)
+        for key, loss_meter in self._loss_meters.items():
+            metrics[key] = meter_value(loss_meter, dim=0)
+
         metrics['{}_acc'.format(self._stage)] = meter_value(self._acc_meter, dim=0)
         metrics['{}_macc'.format(self._stage)] = meter_value(self._macc_meter, dim=0)
         metrics['{}_miou'.format(self._stage)] = meter_value(self._miou_meter, dim=0)
 
-        # Estimate lower bound performance based on the variance
-        metrics['{}_lb_acc'.format(self._stage)] = meter_value(self._acc_meter, dim=0) - \
-            meter_value(self._acc_meter, dim=1)
-        metrics['{}_lb_macc'.format(self._stage)] = meter_value(self._macc_meter, dim=0) - \
-            meter_value(self._macc_meter, dim=1)
-        metrics['{}_lb_miou'.format(self._stage)] = meter_value(self._miou_meter, dim=0) - \
-            meter_value(self._miou_meter, dim=1)
-
-        # for loss_name in self._internal_losses:
-        #     metrics['{}_{}'.format(self._stage, loss_name)] = getattr(self, loss_name).value()[0]
-
-        # improved_metrics = self._add_metrics(metrics, self._stage)
         if self._writer:
             self._publish_to_tensorboard(metrics)
         return metrics

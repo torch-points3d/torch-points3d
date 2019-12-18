@@ -16,16 +16,10 @@ class ConfusionMatrix:
     def count_predicted(self, ground_truth, predicted, number_of_added_elements=1):
         self.confusion_matrix[ground_truth][predicted] += number_of_added_elements
 
-    def count_predicted_batch(self, ground_truth_vec, predicted):  # added
-        # Added code ---------------------------------------------------------------
-        gt_vec_copy = np.zeros((ground_truth_vec.shape[0], self.confusion_matrix.shape[1]))
-        gt_vec_copy[:, :ground_truth_vec.shape[1]] = ground_truth_vec
+    def count_predicted_batch(self, ground_truth_vec, predicted):
+        assert np.max(predicted) < self.number_of_labels
         for i in range(ground_truth_vec.shape[0]):
-            if len(ground_truth_vec[i, :]) != len(self.confusion_matrix[:, predicted[i]]):
-                self.confusion_matrix[:, predicted[i]] += gt_vec_copy[i, :]
-            else:
-                # Added code ---------------------------------------------------------------
-                self.confusion_matrix[:, predicted[i]] += ground_truth_vec[i, :]
+            self.confusion_matrix[ground_truth_vec[i], predicted[i]] += 1
 
     def count_predicted_batch_hard(self, ground_truth_vec, predicted):  # added
         for i in range(ground_truth_vec.shape[0]):

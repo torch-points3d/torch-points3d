@@ -14,12 +14,13 @@ from omegaconf import OmegaConf
 
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
+from metrics.metricstracker import SegmentationTracker, BaseTracker
 # wandb.init(project="dpc-benchmark")
 
 
-def train(epoch, model: BaseModel, train_loader, device, options):
+def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseTracker):
     model.train()
-    model.start_epoch()
+    tracker.reset("train")
 
     correct_nodes = total_nodes = 0
     iter_data_time = time.time()
@@ -33,61 +34,35 @@ def train(epoch, model: BaseModel, train_loader, device, options):
             model.optimize_parameters()
 
             correct_nodes += model.get_output().max(dim=1)[1].eq(data.y).sum().item()
-            total_nodes += data.num_nodes
+            tracker.track(model.get_current_losses(), model.get_output(), data.y)
             iter_data_time = time.time()
 
-            tq_train_loader.set_postfix(batch_metrics=model.get_batch_message(), acc=correct_nodes /
-                                        total_nodes, data_loading=t_data, iteration=time.time() - iter_start_time)
-
-    msg = model.get_epoch_message()
-    print("Test metrics for epoch: " + msg)
+            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=t_data,
+                                        iteration=time.time() - iter_start_time)
 
 
-def test(model: BaseModel, loader, num_classes, device):
+def test(model: BaseModel, loader, num_classes, device, tracker: BaseTracker):
     model.eval()
-    model.start_epoch()
+    tracker.reset("test")
+    with tq(loader) as tq_test_loader:
+        for data in tq_test_loader:
+            data = data.to(device)
+            with torch.no_grad():
+                model.set_input(data)
+                model.forward()
 
-    correct_nodes = total_nodes = 0
-    intersections, unions, categories = [], [], []
-    for data in tq(loader):
-        data = data.to(device)
-        with torch.no_grad():
-            model.set_input(data)
-            out = model.forward()
-        pred = out.max(dim=1)[1]
-        correct_nodes += pred.eq(data.y).sum().item()
-        total_nodes += data.num_nodes
-        i, u = i_and_u(pred, data.y, num_classes, data.batch)
-        intersections.append(i.to(device))
-        unions.append(u.to(device))
-        categories.append(data.category.to(device))
-
-    category = torch.cat(categories, dim=0)
-    intersection = torch.cat(intersections, dim=0)
-    union = torch.cat(unions, dim=0)
-
-    ious = [[] for _ in range(len(loader.dataset.categories))]
-    for j in range(len(loader.dataset)):
-        i = intersection[j, loader.dataset.y_mask[category[j]]]
-        u = union[j, loader.dataset.y_mask[category[j]]]
-        iou = i.to(torch.float) / u.to(torch.float)
-        iou[torch.isnan(iou)] = 1
-        ious[category[j]].append(iou.mean().item())
-
-    for cat in range(len(loader.dataset.categories)):
-        ious[cat] = torch.tensor(ious[cat]).mean().item()
-
-    return correct_nodes / total_nodes, torch.tensor(ious).mean().item()
+            tracker.track(model.get_current_losses(), model.get_output(), data.y)
+            tq_test_loader.set_postfix(**tracker.get_metrics())
 
 
-def run(cfg, model, dataset, device):
+def run(cfg, model, dataset, device, tracker: BaseTracker):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
     for epoch in range(1, 31):
-        train(epoch, model, train_loader, device, cfg)
-        acc, iou = test(model, test_loader, dataset.num_classes, device)
+        train(epoch, model, train_loader, device, cfg, tracker)
+        test(model, test_loader, dataset.num_classes, device, tracker)
         # wandb.log({"Test Accuracy": acc, "Test IoU": iou})
-        print('Epoch: {:02d}, Acc: {:.4f}, IoU: {:.4f}'.format(epoch, acc, iou))
+        print('Epoch: {:02d}: {}'.format(epoch, tracker.get_metrics()))
 
 
 @hydra.main(config_path='conf/config.yaml')
@@ -122,8 +97,11 @@ def main(cfg):
     params = sum([np.prod(p.size()) for p in model_parameters])
     print("Model size = %i" % params)
 
+    # metric tracker
+    tracker = SegmentationTracker(dataset.num_classes)
+
     # Run training / evaluation
-    run(cfg, model, dataset, device)
+    run(cfg, model, dataset, device, tracker)
 
 
 if __name__ == "__main__":
