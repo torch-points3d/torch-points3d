@@ -48,7 +48,7 @@ class BaseModel(torch.nn.Module):
         self.output = None
         self.optimizer: Optional[Optimizer] = None
         self._sampling_and_search_dict: Dict = {}
-        self._precompute_multi_scale = opt.precompute_multi_scale
+        self._precompute_multi_scale = getattr(opt, "precompute_multi_scale", False)
         self._running_stats: Dict[str, RunningStats] = {}
 
     @abstractmethod
@@ -128,6 +128,6 @@ class BaseModel(torch.nn.Module):
             return torch.mean(torch.stack(losses))
         else:
             return 0.
-          
+
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict

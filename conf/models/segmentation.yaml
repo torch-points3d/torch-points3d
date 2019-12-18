@@ -45,7 +45,8 @@ models:
         mlp_cls:
             nn: [64, 64, 64, 64, 64]
             dropout: 0.5
-    Randlanet_Conv:
+    
+        Randlanet_Conv:
             type: RandLANet
             down_conv:
                 module_name: RandLANet

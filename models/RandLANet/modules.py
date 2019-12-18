@@ -1,10 +1,11 @@
 
-import torch 
+import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, knn
 from models.core_modules import *
 from models.core_sampling_and_search import *
 import math
+
 
 class RandlaKernel(MessagePassing):
     '''
@@ -30,7 +31,7 @@ class RandlaKernel(MessagePassing):
         if x_j is None:
             x_j = pos_j
 
-        #compute relative position encoding 
+        # compute relative position encoding
         vij = pos_i - pos_j
 
         dij = torch.norm(vij, dim=1).unsqueeze(1)
@@ -44,45 +45,36 @@ class RandlaKernel(MessagePassing):
 
         rij = self.point_pos_nn(relPointPos)
 
-        #concatenate position encoding with feature vector
+        # concatenate position encoding with feature vector
         fij_hat = torch.cat([x_j, rij], dim=1)
 
-        #attentative pooling
+        # attentative pooling
         g_fij = self.attention_nn(fij_hat)
         s_ij = F.softmax(g_fij, -1)
 
         msg = s_ij * fij_hat
-        
+
         return msg
 
     def update(self, aggr_out):
         return self.global_nn(aggr_out)
 
-class RandlaConv(BaseConvolution):
 
-    def __init__(self, ratio = None, k = None, *args, **kwargs):
+class RandlaConv(BaseConvolutionDown):
+
+    def __init__(self, ratio=None, k=None, *args, **kwargs):
         super(RandlaConv, self).__init__(RandomSampler(ratio), KNNNeighbourFinder(k), *args, **kwargs)
 
         self._conv = RandlaKernel(*args, **kwargs)
 
-    @property
-    def conv(self):
-        return self._conv
+    def conv(self, x, pos, edge_index):
+        return self._conv(x, pos, edge_index)
 
-    def forward(self, data):
-        x, pos, batch = data
-        idx = self.sampler(pos, batch)
-        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
-        edge_index = torch.stack([col, row], dim=0)
-        x = self.conv(x, (pos, pos[idx]), edge_index)
-        pos, batch = pos[idx], batch[idx]
-        data = (x, pos, batch, idx)
-        return data
 
 class DilatedResidualBlock(BaseResnetBlock):
 
-    def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2, 
-            attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
+    def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2,
+                 attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
 
         super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
 
@@ -102,6 +94,7 @@ class DilatedResidualBlock(BaseResnetBlock):
                 return (*data, idx1)
             else:
                 return (*data, idx1[idx2])
+
 
 class RandLANetRes(torch.nn.Module):
 
@@ -124,6 +117,7 @@ class RandLANetRes(torch.nn.Module):
 
     def forward(self, data):
         return self._conv.forward(data)
+
 
 class RandLANet(BaseConvolution):
 
