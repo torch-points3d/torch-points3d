@@ -46,27 +46,27 @@ models:
             nn: [64, 64, 64, 64, 64]
             dropout: 0.5
     
-        Randlanet_Conv:
-            type: RandLANet
-            down_conv:
-                module_name: RandLANet
-                ratio: [0.25, 0.25, 0.25]
-                k: [16, 16, 16]
-                point_pos_nn: [[10, 8, 3], [10, 8, 16], [10, 16, 32]]
-                attention_nn: [[6, 8, 6], [32, 64, 32], [64, 128, 64]]
-                down_conv_nn: [[6, 8, 16], [32, 64, 32], [64, 128, 128]]
-            innermost:
-                module_name: GlobalBaseModule
-                aggr: max
-                nn: [131, 128]
-            up_conv:
-                module_name: FPModule
-                up_conv_nn: [[256, 128], [160, 64], [80, 64], [67, 64]] 
-                up_k: [1, 1, 1, 1]
-                skip: True
-            mlp_cls:
-                nn: [64, 64, 64, 64]
-                dropout: 0.5
+    Randlanet_Conv:
+        type: RandLANet
+        down_conv:
+            module_name: RandlaConv
+            ratio: [0.25, 0.25, 0.25]
+            k: [16, 16, 16]
+            point_pos_nn: [[10, 8, 3], [10, 8, 16], [10, 16, 32]]
+            attention_nn: [[6, 8, 6], [32, 64, 32], [64, 128, 64]]
+            down_conv_nn: [[6, 8, 16], [32, 64, 32], [64, 128, 128]]
+        innermost:
+            module_name: GlobalBaseModule
+            aggr: max
+            nn: [131, 128]
+        up_conv:
+            module_name: FPModule
+            up_conv_nn: [[256, 128], [160, 64], [80, 64], [67, 64]] 
+            up_k: [1, 1, 1, 1]
+            skip: True
+        mlp_cls:
+            nn: [64, 64, 64, 64, 64]
+            dropout: 0.5
 
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv:

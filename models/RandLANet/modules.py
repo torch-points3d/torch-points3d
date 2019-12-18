@@ -65,9 +65,9 @@ class RandlaConv(BaseConvolutionDown):
     def __init__(self, ratio=None, k=None, *args, **kwargs):
         super(RandlaConv, self).__init__(RandomSampler(ratio), KNNNeighbourFinder(k), *args, **kwargs)
 
-        self._conv = RandlaKernel(*args, **kwargs)
+        self._conv = RandlaKernel(*args, global_nn=kwargs['down_conv_nn'], **kwargs)
 
-    def conv(self, x, pos, edge_index):
+    def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
@@ -82,18 +82,9 @@ class DilatedResidualBlock(BaseResnetBlock):
         self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, global_nn2)
 
     def convs(self, data):
-        *data, idx1 = self.conv1(data)
-        *data, idx2 = self.conv2(data)
-        if idx1 is None:
-            if idx2 is None:
-                return (*data, None)
-            else:
-                return (*data, idx2)
-        else:
-            if idx2 is None:
-                return (*data, idx1)
-            else:
-                return (*data, idx1[idx2])
+        data = self.conv1(data)
+        data = self.conv2(data)
+        return data
 
 
 class RandLANetRes(torch.nn.Module):
@@ -117,14 +108,3 @@ class RandLANetRes(torch.nn.Module):
 
     def forward(self, data):
         return self._conv.forward(data)
-
-
-class RandLANet(BaseConvolution):
-
-    def __init__(self, *args, **kwargs):
-        super(RandLANet, self).__init__()
-
-        self.conv = RandlaConv(global_nn=kwargs['down_conv_nn'], **kwargs)
-
-    def forward(self, data):
-        return self.conv(data)

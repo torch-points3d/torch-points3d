@@ -69,7 +69,7 @@ class LightDeformableKPConv(BaseConvolutionDown):
         self._conv = LightDeformablePointKernel(self.num_points, self.in_features,
                                                 self.out_features, radius=self.radius)
 
-    def conv(self, x, pos, edge_index):
+    def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
@@ -89,7 +89,7 @@ class KPConv(BaseConvolutionDown):
 
         self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
 
-    def conv(self, x, pos, edge_index):
+    def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
@@ -114,7 +114,7 @@ class ResidualBKPConv(BaseConvolutionDown):
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
 
-    def conv(self, x, pos, edge_index):
+    def conv(self, x, pos, edge_index, batch):
         row, col = edge_index
         x_side = self.pre_mlp(x)
         x_side = self._conv(x_side, pos, edge_index)
