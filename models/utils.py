@@ -1,8 +1,9 @@
 import os
 import importlib
+from datasets.base_dataset import BaseDataset
 
 
-def find_model_using_name(model_type, task, option, num_classes):
+def find_model_using_name(model_type, task, option, dataset: BaseDataset):
 
     if task == "segmentation":
         cls_name = "SegmentationModel"
@@ -22,4 +23,4 @@ def find_model_using_name(model_type, task, option, num_classes):
 
     module_filename = '.'.join(["models", model_type, "modules"])
     modules_lib = importlib.import_module(module_filename)
-    return model(option, model_type, num_classes, modules_lib)
+    return model(option, model_type, dataset, modules_lib)

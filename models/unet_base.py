@@ -9,6 +9,7 @@ from collections import defaultdict
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
 
+from datasets.base_dataset import BaseDataset
 from .base_model import BaseModel, BaseFactory
 
 SPECIAL_NAMES = ['radius']
@@ -22,7 +23,7 @@ class UnetBasedModel(BaseModel):
         self._sampling_and_search_dict[index] = [
             getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
-    def __init__(self, opt, model_type, num_classes, modules_lib):
+    def __init__(self, opt, model_type, dataset, modules_lib):
         """Construct a Unet generator
         Parameters:
             opt - options for the network generation
@@ -68,7 +69,7 @@ class UnetBasedModel(BaseModel):
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
 
-        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
+        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=dataset.num_classes, input_nc=None, submodule=unet_block,
                                              outermost=True, norm_layer=None)  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
         print(self)

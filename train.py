@@ -17,7 +17,7 @@ from models.base_model import BaseModel
 from metrics.metrics_tracker import get_tracker, BaseTracker
 
 
-def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseTracker):
+def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
     model.train()
     tracker.reset("train")
 
@@ -39,7 +39,7 @@ def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseT
     tracker.publish()
 
 
-def test(model: BaseModel, loader, num_classes, device, tracker: BaseTracker):
+def test(model: BaseModel, loader, device, tracker: BaseTracker):
     model.eval()
     tracker.reset("test")
 
@@ -59,8 +59,8 @@ def run(cfg, model, dataset, device, tracker: BaseTracker):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
     for epoch in range(1, 31):
-        train(epoch, model, train_loader, device, cfg, tracker)
-        test(model, test_loader, dataset.num_classes, device, tracker)
+        train(epoch, model, train_loader, device, tracker)
+        test(model, test_loader, device, tracker)
 
 
 @hydra.main(config_path='conf/config.yaml')
@@ -82,7 +82,7 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
-    model = find_model_using_name(model_config.type, tested_task, model_config, dataset.num_classes)
+    model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
     model.set_optimizer(torch.optim.Adam)
 
     # Set sampling / search strategies:

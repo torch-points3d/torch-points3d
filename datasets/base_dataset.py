@@ -52,7 +52,6 @@ class BaseDataset():
         return self._num_classes
 
     @property
-    @abstractmethod
     def feature_dimension(self):
         return self._feature_dimension
 

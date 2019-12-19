@@ -10,6 +10,11 @@ from models.utils import find_model_using_name
 from models.pointnet2.nn import SegmentationModel
 
 
+class MockDataset:
+    num_classes = 10
+    feature_dimension = 5
+
+
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
         models_conf = os.path.join(ROOT, 'conf/models/segmentation.yaml')
@@ -23,7 +28,7 @@ class TestModelUtils(unittest.TestCase):
             print(model_name)
             if model_name not in ["MyTemplateModel"]:
                 params = self.config['models'][model_name]
-                find_model_using_name(params.type, 'segmentation', params, 10)
+                find_model_using_name(params.type, 'segmentation', params, MockDataset())
 
     # def test_pointnet2(self):
     #     params = self.config['models']['pointnet2']
