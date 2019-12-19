@@ -23,7 +23,7 @@ class UnetBasedModel(BaseModel):
         self._sampling_and_search_dict[index] = [
             getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
-    def __init__(self, opt, model_type, dataset, modules_lib):
+    def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
         Parameters:
             opt - options for the network generation
@@ -53,7 +53,7 @@ class UnetBasedModel(BaseModel):
             args_up['up_conv_cls'] = self._factory_module.get_module(0, 'UP')
 
             unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
-                                                 input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
+                                                 submodule=None, innermost=True)  # add the innermost layer
         else:
             unet_block = []
 
@@ -61,16 +61,16 @@ class UnetBasedModel(BaseModel):
             for index in range(num_convs - 1, 0, -1):
                 args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
                 unet_block = UnetSkipConnectionBlock(
-                    args_up=args_up, args_down=args_down, input_nc=None, submodule=unet_block, norm_layer=None)
+                    args_up=args_up, args_down=args_down, submodule=unet_block)
                 self._save_sampling_and_search(unet_block, index)
         else:
             index = num_convs
 
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
-
-        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=dataset.num_classes, input_nc=None, submodule=unet_block,
-                                             outermost=True, norm_layer=None)  # add the outermost layer
+        args_down['input_nc'] = dataset.feature_dimension
+        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block,
+                                             outermost=True)  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
         print(self)
 
@@ -122,17 +122,15 @@ class UnetSkipConnectionBlock(nn.Module):
         kwargs.pop(name)
         return module
 
-    def __init__(self, args_up=None, args_down=None, args_innermost=None, modules_lib=None, submodule=None, outermost=False, innermost=False, use_dropout=False, name=None, *args, **kwargs):
+    def __init__(self, args_up=None, args_down=None, args_innermost=None, modules_lib=None, submodule=None, outermost=False, innermost=False):
         """Construct a Unet submodule with skip connections.
         Parameters:
-            outer_nc (int) -- the number of filters in the outer conv layer
-            inner_nc (int) -- the number of filters in the inner conv layer
-            input_nc (int) -- the number of channels in input images/features
+            args_up -- arguments for up convs
+            args_down -- arguments for down convs
+            args_innermost -- arguments for innermost
             submodule (UnetSkipConnectionBlock) -- previously defined submodules
             outermost (bool)    -- if this module is the outermost module
             innermost (bool)    -- if this module is the innermost module
-            norm_layer          -- normalization layer
-            user_dropout (bool) -- if use dropout layers.
         """
         super(UnetSkipConnectionBlock, self).__init__()
 
