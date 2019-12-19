@@ -31,6 +31,8 @@ class BaseDataset():
         self.strategies = {}
 
     def _create_dataloaders(self, train_dataset,  test_dataset, validation=None):
+        """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
+        """
         self._num_classes = train_dataset.num_classes
         self._feature_dimension = self.extract_point_dimension(train_dataset)
         self._train_loader = DataLoader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
