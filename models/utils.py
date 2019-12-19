@@ -2,14 +2,14 @@ import os
 import importlib
 
 
-def find_model_using_name(model_name, task, option, num_classes):
+def find_model_using_name(model_type, task, option, num_classes):
 
     if task == "segmentation":
         cls_name = "SegmentationModel"
     else:
         cls_name = "ClassificationModel"
 
-    model_filename = '.'.join(["models", model_name, "nn"])
+    model_filename = '.'.join(["models", model_type, "nn"])
     modellib = importlib.import_module(model_filename)
 
     for name, cls in modellib.__dict__.items():
@@ -18,8 +18,8 @@ def find_model_using_name(model_name, task, option, num_classes):
 
     if model is None:
         raise NotImplementedError("In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase." % (
-            model_name, task))
+            model_type, task))
 
-    module_filename = '.'.join(["models", model_name, "modules"])
+    module_filename = '.'.join(["models", model_type, "modules"])
     modules_lib = importlib.import_module(module_filename)
-    return model(option, model_name, num_classes, modules_lib)
+    return model(option, model_type, num_classes, modules_lib)

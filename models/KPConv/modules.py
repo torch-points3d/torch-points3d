@@ -30,7 +30,7 @@ class KPConvModels(Enum):
 
 
 class KPConvFactory(BaseFactory):
-    def get_module_from_index(self, index, flow=None):
+    def get_module(self, index, flow=None):
         if flow is None:
             raise NotImplementedError
 

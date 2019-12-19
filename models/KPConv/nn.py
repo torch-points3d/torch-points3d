@@ -7,7 +7,7 @@ from models.unet_base import UnetBasedModel
 
 
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, model_name, num_classes, modules):
+    def __init__(self, option, model_type, num_classes, modules):
         """Initialize this model class.
         Parameters:
             opt -- training/test options
@@ -15,7 +15,7 @@ class SegmentationModel(UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, option, model_name, num_classes,
+        UnetBasedModel.__init__(self, option, model_type, num_classes,
                                 modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
@@ -52,5 +52,6 @@ class SegmentationModel(UnetBasedModel):
 
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_losses()
         if torch.isnan(self.loss_seg):
-            import pdb; pdb.set_trace()
+            import pdb
+            pdb.set_trace()
         self.loss_seg.backward()       # calculate gradients of network G w.r.t. loss_G

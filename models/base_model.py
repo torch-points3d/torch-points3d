@@ -14,9 +14,11 @@ class BaseFactory(ABC):
         self.module_name_up = module_name_up
         self.modules_lib = modules_lib
 
-    @abstractmethod
-    def get_module_from_index(self):
-        pass
+    def get_module(self, index, flow):
+        if flow.upper() == "UP":
+            return getattr(self.modules_lib, self.module_name_up, None)
+        else:
+            return getattr(self.modules_lib, self.module_name_down, None)
 
 
 class BaseModel(torch.nn.Module):

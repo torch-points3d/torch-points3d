@@ -8,7 +8,8 @@ from omegaconf.listconfig import ListConfig
 from collections import defaultdict
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
-from .base_model import BaseModel
+
+from .base_model import BaseModel, BaseFactory
 
 SPECIAL_NAMES = ['radius']
 
@@ -21,10 +22,11 @@ class UnetBasedModel(BaseModel):
         self._sampling_and_search_dict[index] = [
             getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
-    def __init__(self, opt, model_name, num_classes, modules_lib):
+    def __init__(self, opt, model_type, num_classes, modules_lib):
         """Construct a Unet generator
         Parameters:
             opt - options for the network generation
+            model_type - type of the model to be generated
             num_class - output of the network
             modules_lib - all modules that can be used in the UNet
         We construct the U-Net from the innermost layer to the outermost layer.
@@ -34,16 +36,12 @@ class UnetBasedModel(BaseModel):
 
         num_convs = len(opt.down_conv.down_conv_nn)
 
-        self.factory_module_cls = self._check_if_contains_factory(model_name, modules_lib)
-
-        if self.has_factory:
-            self.down_conv_cls_name = opt.down_conv.module_name
-            self.up_conv_cls_name = opt.up_conv.module_name
-            self.factory_module = self.factory_module_cls(
-                self.down_conv_cls_name, self.up_conv_cls_name, modules_lib)  # Create the factory object
-        else:
-            self.down_conv_cls = getattr(modules_lib, opt.down_conv.module_name, None)
-            self.up_conv_cls = getattr(modules_lib, opt.up_conv.module_name, None)
+        # Factory for creating up and down modules
+        factory_module_cls = self._get_factory(model_type, modules_lib)
+        down_conv_cls_name = opt.down_conv.module_name
+        up_conv_cls_name = opt.up_conv.module_name
+        self._factory_module = factory_module_cls(
+            down_conv_cls_name, up_conv_cls_name, modules_lib)  # Create the factory object
 
         # construct unet structure
         contains_global = hasattr(opt, "innermost")
@@ -51,7 +49,7 @@ class UnetBasedModel(BaseModel):
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
-            args_up = self.get_module_cls(args_up, 0, 'up_conv_cls', "UP")
+            args_up['up_conv_cls'] = self._factory_module.get_module(0, 'UP')
 
             unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
                                                  input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
@@ -75,9 +73,10 @@ class UnetBasedModel(BaseModel):
         self._save_sampling_and_search(self.model, index)
         print(self)
 
-    def _check_if_contains_factory(self, model_name, modules_lib):
+    def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
-        self.has_factory = factory_module_cls is not None
+        if factory_module_cls is None:
+            factory_module_cls = BaseFactory
         return factory_module_cls
 
     def _fetch_arguments_from_list(self, opt, index):
@@ -99,21 +98,14 @@ class UnetBasedModel(BaseModel):
         args['precompute_multi_scale'] = self._precompute_multi_scale
         return args
 
-    def get_module_cls(self, args, index, name, flow):
-        if self.has_factory:
-            args[name] = self.factory_module.get_module_from_index(index, flow=flow)
-        else:
-            args[name] = getattr(self, name, None)
-        return args
-
     def _fetch_arguments_up_and_down(self, opt, index, count_convs):
         # Defines down arguments
         args_down = self._fetch_arguments_from_list(opt.down_conv, index)
-        args_down = self.get_module_cls(args_down, index, 'down_conv_cls', "DOWN")
+        args_down['down_conv_cls'] = self._factory_module.get_module(index, 'DOWN')
 
         # Defines up arguments
         args_up = self._fetch_arguments_from_list(opt.up_conv, count_convs - index)
-        args_up = self.get_module_cls(args_up, count_convs - index, 'up_conv_cls', "UP")
+        args_up['up_conv_cls'] = self._factory_module.get_module(index, 'UP')
         return args_up, args_down
 
 

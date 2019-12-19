@@ -42,6 +42,7 @@ def train(epoch, model: BaseModel, train_loader, device, options, tracker: BaseT
 def test(model: BaseModel, loader, num_classes, device, tracker: BaseTracker):
     model.eval()
     tracker.reset("test")
+
     with tq(loader) as tq_test_loader:
         for data in tq_test_loader:
             data = data.to(device)
@@ -64,8 +65,7 @@ def run(cfg, model, dataset, device, tracker: BaseTracker):
 
 @hydra.main(config_path='conf/config.yaml')
 def main(cfg):
-
-    # GET ARGUMENTS
+    # Get device
     device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
                           else 'cpu')
 

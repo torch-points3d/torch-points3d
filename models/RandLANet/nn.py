@@ -8,7 +8,7 @@ from models.base_model import *
 
 
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, model_name, num_classes, modules):
+    def __init__(self, option, model_type, num_classes, modules):
         """Initialize this model class.
         Parameters:
             opt -- training/test options
@@ -16,7 +16,7 @@ class SegmentationModel(UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, option, model_name, num_classes,
+        UnetBasedModel.__init__(self, option, model_type, num_classes,
                                 modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
