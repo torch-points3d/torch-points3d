@@ -17,6 +17,7 @@ class BaseSampler(ABC):
     def sample(self, pos, batch):
         pass
 
+
 class FPSSampler(BaseSampler):
 
     def __init__(self, ratio):
@@ -24,6 +25,7 @@ class FPSSampler(BaseSampler):
 
     def sample(self, pos, batch):
         return fps(pos, batch, ratio=self.ratio)
+
 
 class RandomSampler(BaseSampler):
 
@@ -34,6 +36,7 @@ class RandomSampler(BaseSampler):
         idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
         return idx
 
+
 class BaseNeighbourFinder(ABC):
 
     def __call__(self, x, y, batch_x, batch_y):
@@ -43,19 +46,21 @@ class BaseNeighbourFinder(ABC):
     def find_neighbours(self, x, y, batch_x, batch_y):
         pass
 
+
 class RadiusNeighbourFinder(BaseNeighbourFinder):
 
     def __init__(self, radius, max_num_neighbors=64):
-        self.radius = radius 
+        self.radius = radius
         self.max_num_neighbors = max_num_neighbors
 
-    def find_neighbours(self, x, y, batch_x, batch_y):  
+    def find_neighbours(self, x, y, batch_x, batch_y):
         return radius(x, y, self.radius, batch_x, batch_y, max_num_neighbors=self.max_num_neighbors)
+
 
 class KNNNeighbourFinder(BaseNeighbourFinder):
 
     def __init__(self, k):
-        self.k = k 
+        self.k = k
 
     def find_neighbours(self, x, y, batch_x, batch_y):
         return knn(x, y, self.k, batch_x, batch_y)

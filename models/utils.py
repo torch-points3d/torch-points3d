@@ -1,9 +1,10 @@
 import os
 import importlib
+from .base_model import BaseModel
 from datasets.base_dataset import BaseDataset
 
 
-def find_model_using_name(model_type, task, option, dataset: BaseDataset):
+def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> BaseModel:
 
     if task == "segmentation":
         cls_name = "SegmentationModel"

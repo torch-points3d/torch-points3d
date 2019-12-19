@@ -59,8 +59,8 @@ class BaseDataset():
     def extract_point_dimension(dataset: Dataset):
         sample = dataset[0]
         if sample.x is None:
-            return 3
-        return sample.x.shape[1] + 3
+            return 0
+        return sample.x.shape[1]
 
     def _set_multiscale_transform(self, batch_transform):
         for _, attr in self.__dict__.items():

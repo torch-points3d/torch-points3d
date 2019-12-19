@@ -3,11 +3,10 @@ import numpy as np
 import torch
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors
-from scipy.spatial import Delaunay
 
 
 class MeshToNormal(object):
-    r"""Compute geometric features (linearity, planarity, scattering and verticality)
+    """ Computes mesh normals (IN PROGRESS)
     """
 
     def __init__(self):
@@ -28,7 +27,7 @@ class MeshToNormal(object):
 
 
 class MultiScaleTransform(object):
-    r"""Compute geometric features (linearity, planarity, scattering and verticality)
+    """ Pre-computes a sequence of downsampling / neighboorhood search
     """
 
     def __init__(self, strategies, precompute_multi_scale=False):

@@ -25,10 +25,10 @@ class MockDataset(torch.utils.data.Dataset):
 class TestDataset(unittest.TestCase):
     def test_extractdims(self):
         dataset = MockDataset(2)
-        self.assertEqual(BaseDataset.extract_point_dimension(dataset), 5)
+        self.assertEqual(BaseDataset.extract_point_dimension(dataset), 2)
 
         dataset = MockDataset(0)
-        self.assertEqual(BaseDataset.extract_point_dimension(dataset), 3)
+        self.assertEqual(BaseDataset.extract_point_dimension(dataset), 0)
 
 
 if __name__ == "__main__":

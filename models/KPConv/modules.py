@@ -53,8 +53,10 @@ class KPConvFactory(BaseFactory):
 
 
 class LightDeformableKPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
         super(LightDeformableKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        if down_conv_nn is not None and nb_feature:
+            down_conv_nn[0] = nb_feature
 
         self.ratio = ratio
         self.radius = radius
@@ -74,8 +76,10 @@ class LightDeformableKPConv(BaseConvolutionDown):
 
 
 class KPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16,  nb_feature=0,  *args, **kwargs):
         super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        if down_conv_nn is not None and nb_feature:
+            down_conv_nn[0] = nb_feature
 
         self.ratio = ratio
         self.radius = radius
@@ -94,8 +98,10 @@ class KPConv(BaseConvolutionDown):
 
 
 class ResidualBKPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
         super(ResidualBKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        if down_conv_nn is not None and nb_feature:
+            down_conv_nn[0] = nb_feature
 
         self.ratio = ratio
         self.radius = radius
@@ -130,8 +136,10 @@ class ResidualBKPConv(BaseConvolutionDown):
 
 
 class SimpleUpsampleKPConv(BaseConvolutionUp):
-    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
         super(SimpleUpsampleKPConv, self).__init__(RadiusNeighbourFinder(radius), *args, **kwargs)
+        if up_conv_nn is not None and nb_feature:
+            up_conv_nn[0] = nb_feature
 
         in_features, out_features = up_conv_nn
 
@@ -150,8 +158,10 @@ class SimpleUpsampleKPConv(BaseConvolutionUp):
 
 
 class ResidualUpsampleBKPConv(BaseConvolutionUp):
-    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
         super(ResidualUpsampleBKPConv, self).__init__(RadiusNeighbourFinder(radius))
+        if up_conv_nn is not None and nb_feature:
+            up_conv_nn[0] = nb_feature
 
         self.ratio = ratio
         self.radius = radius

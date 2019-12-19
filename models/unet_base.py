@@ -68,7 +68,8 @@ class UnetBasedModel(BaseModel):
 
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
-        args_down['input_nc'] = dataset.feature_dimension
+        args_down['nb_feature'] = dataset.feature_dimension
+        args_up['nb_feature'] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block,
                                              outermost=True)  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
