@@ -3,7 +3,7 @@ import logging
 
 import torch
 import torch_geometric
-from torch_geometric.data import Batch, DataLoader
+from torch_geometric.data import Batch, DataLoader, Dataset
 
 from datasets.transforms import MultiScaleTransform
 
@@ -30,31 +30,36 @@ class BaseDataset():
         self.training_opt = training_opt
         self.strategies = {}
 
-    def create_dataloaders(self, train_dataset,  test_dataset, validation=None):
+    def _create_dataloaders(self, train_dataset,  test_dataset, validation=None):
         self._num_classes = train_dataset.num_classes
+        self._feature_dimension = self.extract_point_dimension(train_dataset)
         self._train_loader = DataLoader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
                                         num_workers=self.training_opt.num_workers)
 
         self._test_loader = DataLoader(test_dataset, batch_size=self.training_opt.batch_size, shuffle=False,
                                        num_workers=self.training_opt.num_workers)
 
-    @abstractmethod
     def test_dataloader(self):
-        pass
+        return self._test_loader
 
-    @abstractmethod
     def train_dataloader(self):
-        pass
+        return self._train_loader
 
     @property
-    @abstractmethod
     def num_classes(self):
-        pass
+        return self._num_classes
 
     @property
     @abstractmethod
-    def input_dim(self):
-        pass
+    def feature_dimension(self):
+        return self._feature_dimension
+
+    @staticmethod
+    def extract_point_dimension(dataset: Dataset):
+        sample = dataset[0]
+        if sample.x is None:
+            return 3
+        return sample.x.shape[1] + 3
 
     def _set_multiscale_transform(self, batch_transform):
         for _, attr in self.__dict__.items():
