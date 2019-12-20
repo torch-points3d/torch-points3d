@@ -89,10 +89,10 @@ class BaseTracker:
         self._use_tensorboard = use_tensorboard
         self._stage = None
         self._n_iter = 0
-        dirname = Path(os.path.abspath(__file__)).parent.parent
-        self._log_dir = os.path.join(dirname, log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
 
         if self._use_tensorboard and HAS_TENSORBOARD_INSTALLED:
+            dirname = Path(os.path.abspath(__file__)).parent.parent
+            self._log_dir = os.path.join(dirname, log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
             print("Find tensorboard metrics with the command <tensorboard --logdir={}>".format(self._log_dir))
             self._writer = SummaryWriter(log_dir=self._log_dir)
 
