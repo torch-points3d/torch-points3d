@@ -131,8 +131,10 @@ class FPModule(BaseConvolutionUp):
         [type] -- [description]
     """
 
-    def __init__(self, up_k, up_conv_nn, *args, **kwargs):
+    def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
         super(FPModule, self).__init__(None)
+        if nb_feature is not None:
+            up_conv_nn[0] += nb_feature
         self.k = up_k
         self.nn = MLP(up_conv_nn)
 

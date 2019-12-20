@@ -8,7 +8,7 @@ from models.base_model import *
 
 
 class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, model_name, num_classes, modules):
+    def __init__(self, option, model_type, dataset, modules):
         """Initialize this model class.
         Parameters:
             opt -- training/test options
@@ -16,14 +16,14 @@ class SegmentationModel(UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, option, model_name, num_classes,
+        UnetBasedModel.__init__(self, option, model_type, dataset,
                                 modules)  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
-        self.lin3 = torch.nn.Linear(nn[4], num_classes)
+        self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
 
         self.loss_names = ['loss_seg']
 

@@ -37,14 +37,4 @@ class ModelNetDataset(BaseDataset):
             transform=transform,
             pre_transform=pre_transform)
 
-        self.create_dataloaders(train_dataset, test_dataset, validation=None)
-
-    def test_dataloader(self):
-        return self._test_loader
-
-    def train_dataloader(self):
-        return self._train_loader
-
-    @property
-    def num_classes(self):
-        return self._num_classes
+        self._create_dataloaders(train_dataset, test_dataset, validation=None)

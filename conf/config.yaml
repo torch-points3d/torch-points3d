@@ -1,13 +1,13 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    name: RSConv
+    name: pointnet2
     task: segmentation
-    dataset: shapenet
+    dataset: s3dis
 
 # parameters for Weights and Biases
 wandb:
     project: benchmarking
-    log: True
+    log: False
 
 # Those arguments defines the training hyper-parameters
 training:

@@ -8,9 +8,24 @@ from omegaconf.listconfig import ListConfig
 from collections import defaultdict
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
+
+from datasets.base_dataset import BaseDataset
 from .base_model import BaseModel
 
 SPECIAL_NAMES = ['radius']
+
+
+class BaseFactory:
+    def __init__(self, module_name_down, module_name_up, modules_lib):
+        self.module_name_down = module_name_down
+        self.module_name_up = module_name_up
+        self.modules_lib = modules_lib
+
+    def get_module(self, index, flow):
+        if flow.upper() == "UP":
+            return getattr(self.modules_lib, self.module_name_up, None)
+        else:
+            return getattr(self.modules_lib, self.module_name_down, None)
 
 
 class UnetBasedModel(BaseModel):
@@ -21,10 +36,11 @@ class UnetBasedModel(BaseModel):
         self._sampling_and_search_dict[index] = [
             getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
-    def __init__(self, opt, model_name, num_classes, modules_lib):
+    def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
         Parameters:
             opt - options for the network generation
+            model_type - type of the model to be generated
             num_class - output of the network
             modules_lib - all modules that can be used in the UNet
         We construct the U-Net from the innermost layer to the outermost layer.
@@ -34,16 +50,12 @@ class UnetBasedModel(BaseModel):
 
         num_convs = len(opt.down_conv.down_conv_nn)
 
-        self.factory_module_cls = self._check_if_contains_factory(model_name, modules_lib)
-
-        if self.has_factory:
-            self.down_conv_cls_name = opt.down_conv.module_name
-            self.up_conv_cls_name = opt.up_conv.module_name
-            self.factory_module = self.factory_module_cls(
-                self.down_conv_cls_name, self.up_conv_cls_name, modules_lib)  # Create the factory object
-        else:
-            self.down_conv_cls = getattr(modules_lib, opt.down_conv.module_name, None)
-            self.up_conv_cls = getattr(modules_lib, opt.up_conv.module_name, None)
+        # Factory for creating up and down modules
+        factory_module_cls = self._get_factory(model_type, modules_lib)
+        down_conv_cls_name = opt.down_conv.module_name
+        up_conv_cls_name = opt.up_conv.module_name
+        self._factory_module = factory_module_cls(
+            down_conv_cls_name, up_conv_cls_name, modules_lib)  # Create the factory object
 
         # construct unet structure
         contains_global = hasattr(opt, "innermost")
@@ -51,10 +63,10 @@ class UnetBasedModel(BaseModel):
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
-            args_up = self.get_module_cls(args_up, 0, 'up_conv_cls', "UP")
+            args_up['up_conv_cls'] = self._factory_module.get_module(0, 'UP')
 
             unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
-                                                 input_nc=None, submodule=None, norm_layer=None, innermost=True)  # add the innermost layer
+                                                 submodule=None, innermost=True)  # add the innermost layer
         else:
             unet_block = []
 
@@ -62,22 +74,24 @@ class UnetBasedModel(BaseModel):
             for index in range(num_convs - 1, 0, -1):
                 args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
                 unet_block = UnetSkipConnectionBlock(
-                    args_up=args_up, args_down=args_down, input_nc=None, submodule=unet_block, norm_layer=None)
+                    args_up=args_up, args_down=args_down, submodule=unet_block)
                 self._save_sampling_and_search(unet_block, index)
         else:
             index = num_convs
 
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
-
-        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, output_nc=num_classes, input_nc=None, submodule=unet_block,
-                                             outermost=True, norm_layer=None)  # add the outermost layer
+        args_down['nb_feature'] = dataset.feature_dimension
+        args_up['nb_feature'] = dataset.feature_dimension
+        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block,
+                                             outermost=True)  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
         print(self)
 
-    def _check_if_contains_factory(self, model_name, modules_lib):
+    def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
-        self.has_factory = factory_module_cls is not None
+        if factory_module_cls is None:
+            factory_module_cls = BaseFactory
         return factory_module_cls
 
     def _fetch_arguments_from_list(self, opt, index):
@@ -99,21 +113,14 @@ class UnetBasedModel(BaseModel):
         args['precompute_multi_scale'] = self._precompute_multi_scale
         return args
 
-    def get_module_cls(self, args, index, name, flow):
-        if self.has_factory:
-            args[name] = self.factory_module.get_module_from_index(index, flow=flow)
-        else:
-            args[name] = getattr(self, name, None)
-        return args
-
     def _fetch_arguments_up_and_down(self, opt, index, count_convs):
         # Defines down arguments
         args_down = self._fetch_arguments_from_list(opt.down_conv, index)
-        args_down = self.get_module_cls(args_down, index, 'down_conv_cls', "DOWN")
+        args_down['down_conv_cls'] = self._factory_module.get_module(index, 'DOWN')
 
         # Defines up arguments
         args_up = self._fetch_arguments_from_list(opt.up_conv, count_convs - index)
-        args_up = self.get_module_cls(args_up, count_convs - index, 'up_conv_cls', "UP")
+        args_up['up_conv_cls'] = self._factory_module.get_module(index, 'UP')
         return args_up, args_down
 
 
@@ -129,17 +136,15 @@ class UnetSkipConnectionBlock(nn.Module):
         kwargs.pop(name)
         return module
 
-    def __init__(self, args_up=None, args_down=None, args_innermost=None, modules_lib=None, submodule=None, outermost=False, innermost=False, use_dropout=False, name=None, *args, **kwargs):
+    def __init__(self, args_up=None, args_down=None, args_innermost=None, modules_lib=None, submodule=None, outermost=False, innermost=False):
         """Construct a Unet submodule with skip connections.
         Parameters:
-            outer_nc (int) -- the number of filters in the outer conv layer
-            inner_nc (int) -- the number of filters in the inner conv layer
-            input_nc (int) -- the number of channels in input images/features
+            args_up -- arguments for up convs
+            args_down -- arguments for down convs
+            args_innermost -- arguments for innermost
             submodule (UnetSkipConnectionBlock) -- previously defined submodules
             outermost (bool)    -- if this module is the outermost module
             innermost (bool)    -- if this module is the innermost module
-            norm_layer          -- normalization layer
-            user_dropout (bool) -- if use dropout layers.
         """
         super(UnetSkipConnectionBlock, self).__init__()
 
