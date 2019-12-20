@@ -14,7 +14,7 @@ from omegaconf import OmegaConf
 
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
-from metrics.metrics_tracker import get_tracker, BaseTracker
+from metrics.metrics_tracker import get_tracker, BaseTracker, COLORS, Coloredtqdm as Ctq
 
 
 def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
@@ -22,7 +22,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
     tracker.reset("train")
 
     iter_data_time = time.time()
-    with tq(train_loader) as tq_train_loader:
+    with Ctq(train_loader) as tq_train_loader:
         for data in tq_train_loader:
             iter_start_time = time.time()  # timer for computation per iteration
             t_data = iter_start_time - iter_data_time
@@ -35,7 +35,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
             iter_data_time = time.time()
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=t_data,
-                                        iteration=time.time() - iter_start_time)
+                                        iteration=time.time() - iter_start_time, color=COLORS.TRAIN_COLOR)
     tracker.publish()
 
 
@@ -43,7 +43,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
     model.eval()
     tracker.reset("test")
 
-    with tq(loader) as tq_test_loader:
+    with Ctq(loader) as tq_test_loader:
         for data in tq_test_loader:
             data = data.to(device)
             with torch.no_grad():
@@ -51,7 +51,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
                 model.forward()
 
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
-            tq_test_loader.set_postfix(**tracker.get_metrics())
+            tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
     tracker.publish()
 
 
