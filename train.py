@@ -58,9 +58,10 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
 def run(cfg, model, dataset, device, tracker: BaseTracker):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
-    for epoch in range(1, 31):
+    for epoch in range(1, cfg.training.epochs):
         train(epoch, model, train_loader, device, tracker)
         test(model, test_loader, device, tracker)
+        print()
 
 
 @hydra.main(config_path='conf/config.yaml')
