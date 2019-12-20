@@ -39,7 +39,7 @@ models:
             nn: [131, 128]
         up_conv:
             module_name: FPModule
-            up_conv_nn: [[256, 128], [160, 64], [67, 64]]
+            up_conv_nn: [[256, 128], [160, 64], [64, 64]]
             up_k: [1, 1, 1]
             skip: True
         mlp_cls:
@@ -85,7 +85,7 @@ models:
             nn: [131, 128]
         up_conv:
             module_name: FPModule
-            up_conv_nn: [[256, 128], [160, 64], [80, 64], [67, 64]] 
+            up_conv_nn: [[256, 128], [160, 64], [80, 64], [64, 64]] 
             up_k: [1, 1, 1, 1]
             skip: True
         mlp_cls:

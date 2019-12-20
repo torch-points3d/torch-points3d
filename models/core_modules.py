@@ -133,7 +133,7 @@ class FPModule(BaseConvolutionUp):
 
     def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
         super(FPModule, self).__init__(None)
-        if nb_feature is not None:
+        if kwargs.get('index') == 0 and nb_feature is not None:
             up_conv_nn[0] += nb_feature
         self.k = up_k
         self.nn = MLP(up_conv_nn)
@@ -202,7 +202,6 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         pass
 
     def forward(self, data):
-        print(data)
         batch_obj = Batch()
         x = data.x  # (N, indim)
         shortcut = x  # (N, indim)
