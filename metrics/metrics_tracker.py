@@ -21,39 +21,29 @@ class COLORS:
 class Coloredtqdm(tqdm):
 
     def set_postfix(self, ordered_dict=None, refresh=True, color=None, round=4, **kwargs):
-        """
-        Set/modify postfix (additional stats)
-        with automatic formatting based on datatype.
-
-        Parameters
-        ----------
-        ordered_dict  : dict or OrderedDict, optional
-        refresh  : bool, optional
-            Forces refresh [default: True].
-        kwargs  : dict, optional
-        """
-        # Sort in alphabetical order to be more deterministic
         postfix = std._OrderedDict([] if ordered_dict is None else ordered_dict)
+
         for key in sorted(kwargs.keys()):
             postfix[key] = kwargs[key]
-        # Preprocess stats according to datatype
+
         for key in postfix.keys():
-            # Number: limit the length of the string
             if isinstance(postfix[key], std.Number):
                 postfix[key] = self.format_num_to_k(np.round(postfix[key], round), k=round + 1)
-            # Else for any other type, try to get the string conversion
-            elif not isinstance(postfix[key], std._basestring):
+            if isinstance(postfix[key], std._basestring):
                 postfix[key] = str(postfix[key])
-            # Else if it's a string, don't need to preprocess anything
-        # Stitch together to get the final postfix
+            if len(postfix[key]) != round:
+                postfix[key] += (round - len(postfix[key])) * " "
+
         if color is not None:
             self.postfix = color
         else:
             self.postfix = ''
-        self.postfix += ', '.join(key + '=' + postfix[key].strip()
+
+        self.postfix += ', '.join(key + '=' + postfix[key]
                                   for key in postfix.keys())
         if color is not None:
             self.postfix += '\033[0m'
+
         if refresh:
             self.refresh()
 
@@ -80,7 +70,7 @@ def get_tracker(task: str, dataset, wandb_log: bool):
 
 
 def _meter_value(meter, dim=0):
-    return meter.value()[dim] if meter.n > 0 else 0
+    return float(meter.value()[dim]) if meter.n > 0 else 0.
 
 
 class BaseTracker:

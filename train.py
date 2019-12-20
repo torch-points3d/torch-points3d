@@ -34,8 +34,8 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
             iter_data_time = time.time()
 
-            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=t_data,
-                                        iteration=time.time() - iter_start_time, color=COLORS.TRAIN_COLOR)
+            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
+                                        iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
     tracker.publish()
 
 
@@ -84,7 +84,7 @@ def main(cfg):
     model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
     model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
-    model.set_optimizer(torch.optim.Adam)
+    model.set_optimizer(getattr(torch.optim, cfg.training.optimizer, None), lr=cfg.training.lr)
 
     # Set sampling / search strategies:
     dataset.set_strategies(model, precompute_multi_scale=cfg.training.precompute_multi_scale)
