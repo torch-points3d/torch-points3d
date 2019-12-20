@@ -16,7 +16,7 @@ from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessageP
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from models.core_modules import *
-from models.base_model import BaseFactory
+from models.unet_base import BaseFactory
 from torch_geometric.utils import scatter_
 from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
 from .kernels import PointKernel, LightDeformablePointKernel

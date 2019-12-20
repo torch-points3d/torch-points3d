@@ -10,9 +10,22 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
 
 from datasets.base_dataset import BaseDataset
-from .base_model import BaseModel, BaseFactory
+from .base_model import BaseModel
 
 SPECIAL_NAMES = ['radius']
+
+
+class BaseFactory:
+    def __init__(self, module_name_down, module_name_up, modules_lib):
+        self.module_name_down = module_name_down
+        self.module_name_up = module_name_up
+        self.modules_lib = modules_lib
+
+    def get_module(self, index, flow):
+        if flow.upper() == "UP":
+            return getattr(self.modules_lib, self.module_name_up, None)
+        else:
+            return getattr(self.modules_lib, self.module_name_down, None)
 
 
 class UnetBasedModel(BaseModel):

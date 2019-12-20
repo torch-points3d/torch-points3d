@@ -28,7 +28,7 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(BaseDataset.extract_point_dimension(dataset), 2)
 
         dataset = MockDataset(0)
-        self.assertEqual(BaseDataset.extract_point_dimension(dataset), 0)
+        self.assertEqual(BaseDataset.extract_point_dimension(dataset), 3)
 
 
 if __name__ == "__main__":
