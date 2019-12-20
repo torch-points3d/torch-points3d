@@ -9,6 +9,11 @@ wandb:
     project: benchmarking
     log: False
 
+# parameters for TensorBoard Visualization
+tensorboard:
+    log_dir: logs
+    log: True
+
 # Those arguments defines the training hyper-parameters
 training:
     shuffle: True

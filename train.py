@@ -98,7 +98,7 @@ def main(cfg):
     if cfg.wandb.log:
         wandb.init(project=cfg.wandb.project)
         # wandb.watch(model)
-    tracker = get_tracker(tested_task, dataset, cfg.wandb.log)
+    tracker = get_tracker(tested_task, dataset, cfg.wandb.log, cfg.tensorboard.log, cfg.tensorboard.log_dir)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker)
