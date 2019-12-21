@@ -1,17 +1,57 @@
 import os
-from .base_dataset import BaseDataset
+import numpy as np
+import torch
 from torch_geometric.datasets import S3DIS
 from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
+
+from .base_dataset import BaseDataset
+
+
+class S3DIS_With_Weights(S3DIS):
+    def __init__(self,
+                 root,
+                 test_area=6,
+                 train=True,
+                 transform=None,
+                 pre_transform=None,
+                 pre_filter=None,
+                 method=None):
+        super(S3DIS_With_Weights, self).__init__(root,
+                                                 test_area=test_area,
+                                                 train=train,
+                                                 transform=transform,
+                                                 pre_transform=pre_transform,
+                                                 pre_filter=pre_filter)
+        inv_class_map = {0: 'ceiling', 1: 'floor', 2: 'wall', 3: 'column', 4: 'beam', 5: 'window',
+                         6: 'door', 7: 'table', 8: 'chair', 9: 'bookcase', 10: 'sofa', 11: 'board', 12: 'clutter'}
+        if train:
+            if method is None:
+                weights = torch.ones((len(inv_class_map.keys())))
+            else:
+                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
+                weights = weights.float()
+                weights = weights.mean()/weights
+                if method == 'sqrt':
+                    weights = torch.sqrt(weights)
+                elif method == 'log':
+                    weights = 1 / torch.log(1.1 + weights / weights.sum())
+
+                weights /= torch.sum(weights)
+            print("CLASS WEIGHT : {}".format(
+                {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}))
+            self.weight_classes = weights
+        else:
+            self.weight_classes = torch.ones((len(inv_class_map.keys())))
 
 
 class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, 'S3DIS')
-        train_dataset = S3DIS(self._data_path, test_area=self.dataset_opt.fold, train=True,
-                              pre_transform=None)
-        test_dataset = S3DIS(self._data_path, test_area=self.dataset_opt.fold, train=False,
-                             pre_transform=None)
+        train_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=True,
+                                           pre_transform=None, method='sqrt')
+        test_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=False,
+                                          pre_transform=None)
 
         self._create_dataloaders(train_dataset, test_dataset, validation=None)

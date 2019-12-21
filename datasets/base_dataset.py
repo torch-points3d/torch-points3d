@@ -52,6 +52,10 @@ class BaseDataset():
         return self._num_classes
 
     @property
+    def weight_classes(self):
+        return getattr(self._train_loader.dataset, "weight_classes", None)
+
+    @property
     def feature_dimension(self):
         return self._feature_dimension
 
