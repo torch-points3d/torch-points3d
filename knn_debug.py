@@ -9,6 +9,8 @@ k = check['k']
 batch_x = check['batch_x']
 batch_y = check['batch_y']
 
+print(x.shape, y.shape, k, batch_x.shape, batch_y.shape)
+
 import pdb
 pdb.set_trace()
 

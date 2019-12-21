@@ -59,6 +59,7 @@ def run(cfg, model, dataset, device, tracker: BaseTracker):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
     for epoch in range(1, cfg.training.epochs):
+        print("EPOCH {} / {}".format(epoch, cfg.training.epochs))
         train(epoch, model, train_loader, device, tracker)
         test(model, test_loader, device, tracker)
         print()
