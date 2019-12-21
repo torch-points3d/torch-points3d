@@ -16,7 +16,7 @@ class S3DIS_With_Weights(S3DIS):
                  transform=None,
                  pre_transform=None,
                  pre_filter=None,
-                 method=None):
+                 class_weight_method=None):
         super(S3DIS_With_Weights, self).__init__(root,
                                                  test_area=test_area,
                                                  train=train,
@@ -26,15 +26,16 @@ class S3DIS_With_Weights(S3DIS):
         inv_class_map = {0: 'ceiling', 1: 'floor', 2: 'wall', 3: 'column', 4: 'beam', 5: 'window',
                          6: 'door', 7: 'table', 8: 'chair', 9: 'bookcase', 10: 'sofa', 11: 'board', 12: 'clutter'}
         if train:
-            if method is None:
+            if class_weight_method is None:
                 weights = torch.ones((len(inv_class_map.keys())))
             else:
                 self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
                 weights = weights.float()
                 weights = weights.mean()/weights
-                if method == 'sqrt':
+                if class_weight_method == 'sqrt':
                     weights = torch.sqrt(weights)
-                elif method == 'log':
+                elif str(class_weight_method).startswith('log'):
+                    w = float(class_weight_method.replace('log', ''))
                     weights = 1 / torch.log(1.1 + weights / weights.sum())
 
                 weights /= torch.sum(weights)
@@ -50,7 +51,7 @@ class S3DISDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, 'S3DIS')
         train_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=True,
-                                           pre_transform=None, method='sqrt')
+                                           pre_transform=None, class_weight_method=dataset_opt.class_weight_method)
         test_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=False,
                                           pre_transform=None)
 

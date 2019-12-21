@@ -43,6 +43,7 @@ data:
         name: s3dis
         dataroot: data
         fold: 5
+        class_weight_method: 'sqrt'
 
 defaults:
     - models: segmentation
