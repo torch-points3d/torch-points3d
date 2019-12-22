@@ -21,7 +21,7 @@ We use [autopep8](https://github.com/hhatto/autopep8) for formating with the fol
 
 ## S3DIS
 
-[RSConv 2LD](benchmark/s3dis_fold5/RSConv_2DL.md)
+[RSConv 2LD](/benchmark/s3dis_fold5/RSConv_2LD.md)
 
 
 ## Contributers
