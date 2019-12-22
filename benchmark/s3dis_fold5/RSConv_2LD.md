@@ -1,3 +1,30 @@
+
+```
+# Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
+RSConv:
+    type: RSConv
+    down_conv:
+        module_name: RSConv
+        ratios: [0.2, 0.25]
+        radius: [0.1, 0.2]
+        local_nn: [[10, 8, 3], [10, 32, 64, 64]]
+        down_conv_nn: [[6, 16, 32, 64], [64, 64, 128]]
+    innermost:
+        module_name: GlobalBaseModule
+        aggr: max
+        nn: [131, 128] #[3  + 128]
+    up_conv:
+        module_name: FPModule
+        ratios: [1, 0.25, 0.2]
+        radius: [0.2, 0.2, 0.1]
+        up_conv_nn: [[256, 64], [128, 64], [64, 64]] #[128 + 128, ...], [64+64, ...]
+        up_k: [1, 3, 3]
+        skip: True
+    mlp_cls:
+        nn: [64, 64, 64, 64]
+        dropout: 0.5
+```
+
 ```
 CLASS WEIGHT : {'ceiling': 0.0249, 'floor': 0.026, 'wall': 0.0301, 'column': 0.0805, 'beam': 0.1004, 'window': 0.1216, 'door': 0.0584, 'table': 0.0679, 'chair': 0.0542, 'bookcase': 0.179, 'sofa': 0.069, 'board': 0.1509, 'clutter': 0.0371}
 SegmentationModel(
