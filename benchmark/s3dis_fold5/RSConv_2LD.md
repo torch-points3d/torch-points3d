@@ -1,3 +1,4 @@
+```
 CLASS WEIGHT : {'ceiling': 0.0249, 'floor': 0.026, 'wall': 0.0301, 'column': 0.0805, 'beam': 0.1004, 'window': 0.1216, 'door': 0.0584, 'table': 0.0679, 'chair': 0.0542, 'bookcase': 0.179, 'sofa': 0.069, 'board': 0.1509, 'clutter': 0.0371}
 SegmentationModel(
   (model): UnetSkipConnectionBlock(
@@ -112,7 +113,7 @@ SegmentationModel(
   )
 )
 Model size = 78919
-
+```
 
 EPOCH 105 / 350
 100%|███████████████████████████████████████████████████| 1395/1395 [08:40<00:00,  2.68it/s, data_loading=0.002, iteration=0.161, train_acc=92.19, train_loss_seg=0.278, train_macc=88.40, train_miou=60.00]
