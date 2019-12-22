@@ -19,6 +19,10 @@ poetry run python train.py tested_model.name=pointnet2
 We use [autopep8](https://github.com/hhatto/autopep8) for formating with the following options:
 `--max-line-length 120 --ignore E402,E226,E24,W50,W690`
 
+## S3DIS
+
+[RSConv 2LD](benchmark/s3dis_fold5/RSConv_2DL.md)
+
 
 ## Contributers
 - [Thomas Chaton](https://github.com/tchaton)
