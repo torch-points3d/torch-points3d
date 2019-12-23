@@ -136,7 +136,6 @@ class FPModule(BaseConvolutionUp):
         super(FPModule, self).__init__(None)
         if kwargs.get('index') == 0 and nb_feature is not None:
             up_conv_nn = utils.resolve_mlp_list(up_conv_nn, FEAT = nb_feature)
-            # up_conv_nn[0] += nb_feature
         self.k = up_k
         self.nn = MLP(up_conv_nn)
 

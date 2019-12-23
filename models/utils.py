@@ -32,7 +32,3 @@ def resolve_mlp_list(mlp, **kwargs):
             mlp[ind] = eval(x, kwargs)
 
     return mlp 
-
-    
-
-    
