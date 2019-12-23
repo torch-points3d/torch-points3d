@@ -7,6 +7,7 @@ from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNor
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
+import models.utils as utils 
 
 
 def copy_from_to(data, batch):
@@ -134,7 +135,8 @@ class FPModule(BaseConvolutionUp):
     def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
         super(FPModule, self).__init__(None)
         if kwargs.get('index') == 0 and nb_feature is not None:
-            up_conv_nn[0] += nb_feature
+            up_conv_nn = utils.resolve_mlp_list(up_conv_nn, FEAT = nb_feature)
+            # up_conv_nn[0] += nb_feature
         self.k = up_k
         self.nn = MLP(up_conv_nn)
 

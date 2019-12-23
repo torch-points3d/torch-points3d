@@ -59,10 +59,7 @@ class RSConv(BaseConvolutionDown):
         super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         if down_conv_nn is not None and nb_feature is not None:
-            print('Setting mlp value')
-            # import pdb; pdb.set_trace()
-            # local_nn[-1] = nb_feature
-            local_nn = utils.resolve_mlp_list(local_nn, expectedEndDim = nb_feature)
+            local_nn = utils.resolve_mlp_list(local_nn, FEAT = nb_feature)
         self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
 
     def conv(self, x, pos, edge_index, batch):

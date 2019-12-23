@@ -25,24 +25,11 @@ def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> Bas
     modules_lib = importlib.import_module(module_filename)
     return model(option, model_type, dataset, modules_lib)
 
-def resolve_mlp_list(mlp, expectedStartDim=None, expectedEndDim=None):
+def resolve_mlp_list(mlp, **kwargs):
 
-    DYNAMIC_PLACEHOLDER = '_'
-
-    if expectedStartDim is not None:
-        if mlp[0] == DYNAMIC_PLACEHOLDER:
-            mlp[0] = expectedStartDim
-        elif mlp[0] != expectedStartDim:
-            raise ValueError("Layer 0 of {} is misshapen".format(mlp))
-
-    if expectedEndDim is not None:
-        if mlp[-1] == DYNAMIC_PLACEHOLDER:
-            mlp[-1] = expectedEndDim
-        elif mlp[-1] != expectedEndDim:
-            raise ValueError("Layer -1 of {} is misshapen".format(mlp))
-
-    if any(x == DYNAMIC_PLACEHOLDER for x in mlp):
-        raise ValueError("MLP list contains placeholders which cannot be resolved")
+    for ind, x in enumerate(mlp):
+        if type(x) == str:
+            mlp[ind] = eval(x, kwargs)
 
     return mlp 
 
