@@ -25,3 +25,25 @@ def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> Bas
     module_filename = '.'.join(["models", model_type, "modules"])
     modules_lib = importlib.import_module(module_filename)
     return model(option, model_type, dataset, modules_lib)
+
+def resolve_mlp_list(mlp, expectedStartDim=None, expectedEndDim=None):
+
+    DYNAMIC_PLACEHOLDER = -1
+
+    if expectedStartDim is not None and mlp[0] == DYNAMIC_PLACEHOLDER:
+        mlp[0] = expectedStartDim
+
+    if expectedEndDim is not None and mlp[-1] == DYNAMIC_PLACEHOLDER:
+        mlp[-1] = expectedEndDim
+
+    if any(x == DYNAMIC_PLACEHOLDER for x in mlp):
+        raise IllegalArgumentException("MLP list contains placeholders which cannot be resolved")
+
+    if mlp[0] != expectedStartDim or mlp[-1] != expectedEndDim:
+        raise IllegalArgumentException("MLP list is not compatible")
+
+    return mlp 
+
+    
+
+    

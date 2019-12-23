@@ -114,7 +114,9 @@ class BaseTracker:
 
         for metric_name, metric_value in metrics.items():
             metric_name = "{}/{}".format(metric_name.replace(self._stage+"_", ""), self._stage)
-            self._writer.add_scalar(metric_name, metric_value, self._n_iter)
+                    
+            if self._use_tensorboard and HAS_TENSORBOARD_INSTALLED:
+                self._writer.add_scalar(metric_name, metric_value, self._n_iter)
 
     def publish(self):
         if self._wandb:
