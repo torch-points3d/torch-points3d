@@ -75,7 +75,7 @@ models:
             module_name: RSConv
             ratios: [0.2, 0.25]
             radius: [0.1, 0.2]
-            local_nn: [[10, 8, 3], [10, 32, 64, 64]]
+            local_nn: [[10, 8, _], [10, 32, 64, 64]]
             down_conv_nn: [[3, 16, 32, 64], [64, 64, 128]]
         innermost:
             module_name: GlobalBaseModule

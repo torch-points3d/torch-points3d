@@ -3,7 +3,6 @@ import importlib
 from .base_model import BaseModel
 from datasets.base_dataset import BaseDataset
 
-
 def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> BaseModel:
 
     if task == "segmentation":
@@ -28,19 +27,22 @@ def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> Bas
 
 def resolve_mlp_list(mlp, expectedStartDim=None, expectedEndDim=None):
 
-    DYNAMIC_PLACEHOLDER = -1
+    DYNAMIC_PLACEHOLDER = '_'
 
-    if expectedStartDim is not None and mlp[0] == DYNAMIC_PLACEHOLDER:
-        mlp[0] = expectedStartDim
+    if expectedStartDim is not None:
+        if mlp[0] == DYNAMIC_PLACEHOLDER:
+            mlp[0] = expectedStartDim
+        elif mlp[0] != expectedStartDim:
+            raise ValueError("Layer 0 of {} is misshapen".format(mlp))
 
-    if expectedEndDim is not None and mlp[-1] == DYNAMIC_PLACEHOLDER:
-        mlp[-1] = expectedEndDim
+    if expectedEndDim is not None:
+        if mlp[-1] == DYNAMIC_PLACEHOLDER:
+            mlp[-1] = expectedEndDim
+        elif mlp[-1] != expectedEndDim:
+            raise ValueError("Layer -1 of {} is misshapen".format(mlp))
 
     if any(x == DYNAMIC_PLACEHOLDER for x in mlp):
-        raise IllegalArgumentException("MLP list contains placeholders which cannot be resolved")
-
-    if mlp[0] != expectedStartDim or mlp[-1] != expectedEndDim:
-        raise IllegalArgumentException("MLP list is not compatible")
+        raise ValueError("MLP list contains placeholders which cannot be resolved")
 
     return mlp 
 
