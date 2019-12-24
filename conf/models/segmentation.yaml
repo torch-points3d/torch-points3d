@@ -22,6 +22,10 @@ models:
             nn: []
             dropout: 0.5
 
+    pointcnn_modelnet:
+        type: PointCNN
+        
+
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:
         type: RandLANet

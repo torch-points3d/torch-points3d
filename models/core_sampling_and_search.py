@@ -64,3 +64,24 @@ class KNNNeighbourFinder(BaseNeighbourFinder):
 
     def find_neighbours(self, x, y, batch_x, batch_y):
         return knn(x, y, self.k, batch_x, batch_y)
+
+class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
+
+    def __init__(self, k, dilation):
+        self.k = k 
+        self.dilation = dilation
+        self.initialFinder = KNNNeighbourFinder(k * dilation)
+
+    def find_neighbours(self, x, y, batch_x, batch_y):
+        #find the self.k * self.dilation closest neighbours in x for each y
+        row, col = self.initialFinder.find_neighbours(x, y, batch_x, batch_y) 
+
+        #for each point in y, randomly select k of its neighbours
+        index = torch.randint(self.k * self.dilation, (len(y), self.k), device = row.device, dtype = torch.long)
+
+        arange = torch.arange(len(y), dtype=torch.long, device = row.device)
+        arange = arange * (self.k * dil) 
+        index = (index + arange.view(-1, 1)).view(-1)
+        row, col = row[index], col[index]
+
+        return row, col
