@@ -1,8 +1,8 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    name: pointcnn_modelnet
+    name: pointcnn_shapenet
     task: segmentation
-    dataset: modelnet
+    dataset: shapenet
 
 # parameters for Weights and Biases
 wandb:

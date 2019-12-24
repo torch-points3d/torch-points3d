@@ -2,7 +2,7 @@
 import torch 
 from torch.nn import Sequential as S, Linear as L, BatchNorm1d as BN
 from torch.nn import ELU, Conv1d
-from models.core_sampling_and_search import DilatedKNNNeighbourFinder, RandomSampler
+from models.core_sampling_and_search import DilatedKNNNeighbourFinder, RandomSampler, FPSSampler
 from models.core_modules import BaseConvolutionDown
 from torch_geometric.nn import Reshape
 
@@ -144,7 +144,7 @@ class XConv(torch.nn.Module):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
 
-class PointCNNClassificationConv(BaseConvolutionDown):
+class PointCNNSegmentationConv(BaseConvolutionDown):
 
     def __init__(self, 
         inN=None, 
@@ -157,8 +157,8 @@ class PointCNNClassificationConv(BaseConvolutionDown):
         *args, 
         **kwargs,
     ):
-        super(PointCNNClassificationConv, self).__init__(
-            RandomSampler(inN/outN), 
+        super(PointCNNSegmentationConv, self).__init__(
+            FPSSampler(inN/outN), 
             DilatedKNNNeighbourFinder(K, D)
         )
 

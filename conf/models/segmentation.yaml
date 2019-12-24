@@ -22,9 +22,30 @@ models:
             nn: []
             dropout: 0.5
 
-    pointcnn_modelnet:
+    pointcnn_shapenet:
         type: PointCNN
-        
+        down_conv_layers:
+          - conv: PointCNNSegmentationConv
+            inN: 2048
+            outN: 768
+            K: 8
+            D: 1
+            C1: FEAT
+            C2: 256
+            dim: FEAT
+          - conv: PointCNNSegmentationConv
+            inN: 768
+            outN: 384
+            K: 12
+            D: 2
+            C1: 256
+            C2: 256
+            dim: FEAT
+
+
+
+
+
 
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:

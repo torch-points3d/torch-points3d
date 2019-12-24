@@ -36,6 +36,20 @@ class UnetBasedModel(BaseModel):
         self._sampling_and_search_dict[index] = [
             getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
 
+    def from_layer_list(self, opt, model_type, dataset, modules_lib):
+        factory_module_cls = self._get_factory(model_type, modules_lib)
+
+        num_convs = len(opt.down_conv_layers)
+        
+        for index in range(num_convs):
+            down_conv_layer = opt.down_conv_layers[index]
+            up_conv_layer = opt.up_conv_layers[-index]
+
+            down_conv_layer['down_conv_cls'] = getattr(modules_lib, )
+
+
+        import pdb; pdb.set_trace()
+
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
         Parameters:
@@ -47,6 +61,10 @@ class UnetBasedModel(BaseModel):
         It is a recursive process.
         """
         super(UnetBasedModel, self).__init__(opt)
+
+        if hasattr(opt, 'down_conv_layers'):
+            self.from_layer_list(opt, model_type, dataset, modules_lib)
+            return 
 
         num_convs = len(opt.down_conv.down_conv_nn)
 
