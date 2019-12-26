@@ -22,17 +22,17 @@ class Checkpoint(object):
     def _initialize_objects(self):
         self._objects = {}
         self._objects['models'] = {}
-        self._objects['stats'] = []
+        self._objects['stats'] = {'train': [], 'test': [], 'val': []}
         self._objects['optimizer'] = None
         self._objects['scheduler'] = None
         self._objects['args'] = None
         self._objects['kwargs'] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, current_stat, optimizer, scheduler, **kwargs):
+    def save_objects(self, models_to_save, stage, current_stat, optimizer, scheduler, **kwargs):
         print(models_to_save.keys())
         self._objects['models'] = models_to_save
-        self._objects['stats'].append(current_stat)
+        self._objects['stats'][stage].append(current_stat)
         self._objects['optimizer'] = optimizer
         self._objects['scheduler'] = scheduler
         #self._objects['kwargs'] = kwargs
@@ -69,9 +69,15 @@ class Checkpoint(object):
             try:
                 models = self._objects['models']
                 try:
-                    return models["best_train_{}".format(weight_name)]
+                    key_name = "best_train_{}".format(weight_name)
+                    model = models["best_train_{}".format(weight_name)]
+                    print("Model loaded from {}/{}".format(self._check_path, key_name))
+                    return model
                 except:
-                    return models['default']
+                    key_name = 'default'
+                    model = models['default']
+                    print("Model loaded from {}/{}".format(self._check_path, key_name))
+                    return model
             except:
                 raise Exception("This weight name isn't within the checkpoint ")
 
@@ -89,8 +95,8 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
-            #optimizer = self._checkpoint.get_optimizer()
-            #model.set_optimizer(optimizer.__class__, lr=optimizer.defaults['lr'])
+            optimizer = self._checkpoint.get_optimizer()
+            model.set_optimizer(optimizer.__class__, lr=optimizer.defaults['lr'])
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -99,21 +105,21 @@ class ModelCheckpoint(object):
         raise Exception(
             'The metric name doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}')
 
-    def save_object(self, kwargs, stage, metrics, default_metrics_func):
+    def save_object(self, kwargs, stage, n_iter, metrics, default_metrics_func):
 
+        stats = self._checkpoint.stats
         model = kwargs.get('model')
         state_dict = model.state_dict()
         optimizer = model.optimizer
+
         current_stat = {}
+        current_stat['epoch'] = n_iter
 
         models_to_save = self._checkpoint.models_to_save
         models_to_save['default'] = state_dict
 
-        stats = self._checkpoint.stats
-
-        if len(stats) > 0:
-            current_stat = {}
-            latest_stats = stats[-1]
+        if len(stats[stage]) > 0:
+            latest_stats = stats[stage][-1]
 
             for metric_name, metric_value in metrics.items():
                 current_stat[metric_name] = metric_value
@@ -125,14 +131,16 @@ class ModelCheckpoint(object):
 
                 # This new value seems to be better under metric_func
                 if (("test" in metric_name) and best_metric != best_value):  # Update the model weights
+                    import pdb
+                    pdb.set_trace()
                     models_to_save['best_{}'.format(metric_name)] = state_dict
         else:
             # Stats are empty.
-            current_stat = {}
             models_to_save = {}
             for metric_name, metric_value in metrics.items():
                 current_stat[metric_name] = metric_value
                 current_stat['best_{}'.format(metric_name)] = metric_value
                 if stage == "test":
                     models_to_save['best_{}'.format(metric_name)] = model.state_dict()
-        self._checkpoint.save_objects(models_to_save, current_stat, None, None, **kwargs)
+
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, None, **kwargs)

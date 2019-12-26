@@ -53,6 +53,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
 
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
             tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+
     tracker.publish()
 
 

@@ -101,20 +101,23 @@ class BaseTracker:
 
     def publish_to_model_checkpoint(self, metrics):
         metrics = self._remove_stage_from_metric_keys(metrics)
-        self._model_checkpoint.save_object(self._kwargs, self._stage, metrics, self._default_metric_to_func)
+        self._model_checkpoint.save_object(self._kwargs, self._stage, self._n_iter,
+                                           metrics, self._default_metric_to_func)
 
     def publish(self):
-        if self._wandb or self._use_tensorboard:
-            metrics = self.get_metrics()
+        if self._stage == "train":
+            self._n_iter += 1
 
-            if self._wandb:
-                wandb.log(metrics)
+        metrics = self.get_metrics()
 
-            if self._use_tensorboard:
-                self.publish_to_tensorboard(metrics)
+        if self._wandb:
+            wandb.log(metrics)
 
-            if self._use_checkpoint:
-                self.publish_to_model_checkpoint(metrics)
+        if self._use_tensorboard:
+            self.publish_to_tensorboard(metrics)
+
+        if self._use_checkpoint:
+            self.publish_to_model_checkpoint(metrics)
 
 
 class SegmentationTracker(BaseTracker):
