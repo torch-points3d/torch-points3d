@@ -29,12 +29,15 @@ def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboa
     """
     tracker = None
     if task.lower() == 'segmentation':
-        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.wandb_log, use_tensorboard=tensorboard_opt.log,
+        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log,
                                       log_dir=tensorboard_opt.log_dir, experiment_name=experiment_opt.experiment_name, checkpoint=training_opt.checkpoint)
-        if training_opt.checkpoint:
-            tracker.initialize_model(model, weight_name=training_opt.weight_name)
     else:
         raise NotImplementedError('No tracker for %s task' % task)
+
+    if training_opt.checkpoint:
+        tracker.initialize_model(model, weight_name=training_opt.weight_name)
+
+    return tracker
 
 
 def _meter_value(meter, dim=0):
@@ -90,15 +93,28 @@ class BaseTracker:
             metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
             self._writer.add_scalar(metric_name, metric_value, self._n_iter)
 
+    def _remove_stage_from_metric_keys(self, metrics):
+        new_metrics = {}
+        for metric_name, metric_value in metrics.items():
+            new_metrics[metric_name.replace(self._stage, '')] = metric_value
+        return new_metrics
+
+    def publish_to_model_checkpoint(self, metrics):
+        metrics = self._remove_stage_from_metric_keys(metrics)
+        self._model_checkpoint.save_object(self._kwargs, self._stage, metrics, self._default_metric_to_func)
+
     def publish(self):
         if self._wandb or self._use_tensorboard:
             metrics = self.get_metrics()
+
             if self._wandb:
                 wandb.log(metrics)
+
             if self._use_tensorboard:
                 self.publish_to_tensorboard(metrics)
+
             if self._use_checkpoint:
-                self._model_checkpoint.save_on(self._kwargs, metrics, self._default_metric_to_func)
+                self.publish_to_model_checkpoint(metrics)
 
 
 class SegmentationTracker(BaseTracker):
