@@ -5,6 +5,8 @@ import sys
 import torch
 
 from models.base_model import BaseModel
+from metrics.colored_tqdm import COLORS
+from utils.utils import colored_print
 
 
 class Checkpoint(object):
@@ -30,7 +32,6 @@ class Checkpoint(object):
         self._filled = False
 
     def save_objects(self, models_to_save, stage, current_stat, optimizer, scheduler, **kwargs):
-        print(models_to_save.keys())
         self._objects['models'] = models_to_save
         self._objects['stats'][stage].append(current_stat)
         self._objects['optimizer'] = optimizer
@@ -126,17 +127,28 @@ class ModelCheckpoint(object):
         if len(stats[stage]) > 0:
             latest_stats = stats[stage][-1]
 
+            msg = ''
+            improved_metric = 0
+
             for metric_name, current_metric_value in metrics.items():
                 current_stat[metric_name] = current_metric_value
 
                 metric_func = self.find_func_from_metric_name(metric_name, default_metrics_func)
-                best_metric = latest_stats['best_{}'.format(metric_name)]
-                best_value = metric_func(best_metric, current_metric_value)
+                best_metric_from_stats = latest_stats['best_{}'.format(metric_name)]
+                best_value = metric_func(best_metric_from_stats, current_metric_value)
                 current_stat['best_{}'.format(metric_name)] = best_value
 
                 # This new value seems to be better under metric_func
                 if (("test" == stage) and (current_metric_value == best_value)):  # Update the model weights
                     models_to_save['best_{}'.format(metric_name)] = state_dict
+
+                    msg += "{}: {} -> {}, ".format(metric_name,
+                                                   best_metric_from_stats,
+                                                   best_value)
+                    improved_metric += 1
+
+            if improved_metric > 0:
+                colored_print(COLORS.VAL_COLOR, msg[:-2])
         else:
             # stats[stage] is empty.
             for metric_name, metric_value in metrics.items():

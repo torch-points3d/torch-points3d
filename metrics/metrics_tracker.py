@@ -86,9 +86,6 @@ class BaseTracker:
         pass
 
     def publish_to_tensorboard(self, metrics):
-        if self._stage == "train":
-            self._n_iter += 1
-
         for metric_name, metric_value in metrics.items():
             metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
             self._writer.add_scalar(metric_name, metric_value, self._n_iter)
