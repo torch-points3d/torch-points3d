@@ -9,12 +9,15 @@ from typing import Dict
 from abc import abstractmethod
 import wandb
 from collections import OrderedDict
-
-from metrics.confusion_matrix import ConfusionMatrix
 from torch.utils.tensorboard import SummaryWriter
 
 
-def get_tracker(task: str, dataset, wandb_log: bool, use_tensorboard: bool, log_dir: str):
+from metrics.confusion_matrix import ConfusionMatrix
+from metrics.model_checkpoint import ModelCheckpoint
+from models.base_model import BaseModel
+
+
+def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, experiment_opt, training_opt: bool = True):
     """Factory method for the tracker
 
     Arguments:
@@ -24,9 +27,14 @@ def get_tracker(task: str, dataset, wandb_log: bool, use_tensorboard: bool, log_
     Returns:
         [BaseTracker] -- tracker
     """
+    tracker = None
     if task.lower() == 'segmentation':
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=use_tensorboard, log_dir=log_dir)
-    raise NotImplementedError('No tracker for %s task' % task)
+        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.wandb_log, use_tensorboard=tensorboard_opt.log,
+                                      log_dir=tensorboard_opt.log_dir, experiment_name=experiment_opt.experiment_name, checkpoint=training_opt.checkpoint)
+        if training_opt.checkpoint:
+            tracker.initialize_model(model, weight_name=training_opt.weight_name)
+    else:
+        raise NotImplementedError('No tracker for %s task' % task)
 
 
 def _meter_value(meter, dim=0):
@@ -34,17 +42,33 @@ def _meter_value(meter, dim=0):
 
 
 class BaseTracker:
-    def __init__(self,  wandb_log: bool, use_tensorboard: bool, log_dir: str = 'logs'):
+    def __init__(self, wandb_log: bool, use_tensorboard: bool, log_dir: str = 'logs', experiment_name: str = None, use_checkpoint: bool = True):
         self._wandb = wandb_log
         self._use_tensorboard = use_tensorboard
         self._stage = None
         self._n_iter = 0
+        self._use_checkpoint = use_checkpoint
+        self._default_metric_to_func = {'acc': max, 'iou': max, 'loss': min}
+
+        dirname = Path(os.path.abspath(__file__)).parent.parent
+        parent_log_dir = os.path.join(dirname, log_dir)
 
         if self._use_tensorboard:
-            dirname = Path(os.path.abspath(__file__)).parent.parent
-            self._log_dir = os.path.join(dirname, log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
+            self._log_dir = os.path.join(parent_log_dir, experiment_name)
             print("Find tensorboard metrics with the command <tensorboard --logdir={}>".format(self._log_dir))
             self._writer = SummaryWriter(log_dir=self._log_dir)
+
+        if self._use_checkpoint:
+            self._model_checkpoint: ModelCheckpoint = ModelCheckpoint(parent_log_dir,
+                                                                      experiment_name)
+
+    def initialize_model(self, model: BaseModel, weight_name: str = None):
+        if self._use_checkpoint:
+            self._model_checkpoint.initialize_model(model, weight_name)
+
+    def track_elements(self, *args, **kwargs):
+        self._args = args
+        self._kwargs = kwargs
 
     @abstractmethod
     def reset(self, stage="train"):
@@ -73,11 +97,13 @@ class BaseTracker:
                 wandb.log(metrics)
             if self._use_tensorboard:
                 self.publish_to_tensorboard(metrics)
+            if self._use_checkpoint:
+                self._model_checkpoint.save_on(self._kwargs, metrics, self._default_metric_to_func)
 
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = None):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = None, experiment_name: str = None, checkpoint: bool = True):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
@@ -87,7 +113,8 @@ class SegmentationTracker(BaseTracker):
             stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
             wandb_log {str} --  Log using weight and biases
         """
-        super(SegmentationTracker, self).__init__(wandb_log, use_tensorboard, log_dir)
+        super(SegmentationTracker, self).__init__(wandb_log,
+                                                  use_tensorboard, log_dir, experiment_name, checkpoint)
         self._num_classes = dataset.num_classes
         self._stage = stage
 

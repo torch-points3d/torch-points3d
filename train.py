@@ -100,7 +100,9 @@ def main(cfg):
     if cfg.wandb.log:
         wandb.init(project=cfg.wandb.project)
         # wandb.watch(model)
-    tracker = get_tracker(tested_task, dataset, cfg.wandb.log, cfg.tensorboard.log, cfg.tensorboard.log_dir)
+    tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb,
+                                       cfg.tensorboard, cfg.experiment, cfg.training)
+    tracker.track_elements(model=model)  # More elements can be tracker there by providing keys
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker)

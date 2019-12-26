@@ -1,5 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
+    experiment_name: test_1
     name: RSConv_2LD
     task: segmentation
     dataset: shapenet
@@ -24,6 +25,8 @@ training:
     epochs: 350
     optimizer: Adam
     lr : 0.001
+    checkpoint: True
+    weight_name: 'macc' # Load the highest acc model
 
 # Those arguments defines the available datasets
 data:
