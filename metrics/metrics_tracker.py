@@ -96,7 +96,7 @@ class BaseTracker:
     def _remove_stage_from_metric_keys(self, metrics):
         new_metrics = {}
         for metric_name, metric_value in metrics.items():
-            new_metrics[metric_name.replace(self._stage, '')] = metric_value
+            new_metrics[metric_name.replace(self._stage+"_", '')] = metric_value
         return new_metrics
 
     def publish_to_model_checkpoint(self, metrics):
@@ -118,6 +118,13 @@ class BaseTracker:
 
         if self._use_checkpoint:
             self.publish_to_model_checkpoint(metrics)
+
+    @property
+    def start_epoch(self):
+        if self._use_checkpoint:
+            return self._model_checkpoint.get_starting_epoch()
+        else:
+            return 1
 
 
 class SegmentationTracker(BaseTracker):

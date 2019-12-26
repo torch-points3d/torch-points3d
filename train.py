@@ -57,10 +57,10 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
     tracker.publish()
 
 
-def run(cfg, model, dataset, device, tracker: BaseTracker):
+def run(cfg, start_epoch, model, dataset, device, tracker: BaseTracker):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
-    for epoch in range(1, cfg.training.epochs):
+    for epoch in range(start_epoch, cfg.training.epochs):
         print("EPOCH {} / {}".format(epoch, cfg.training.epochs))
         train(epoch, model, train_loader, device, tracker)
         test(model, test_loader, device, tracker)
@@ -106,7 +106,7 @@ def main(cfg):
     tracker.track_elements(model=model)  # More elements can be tracker there by providing keys
 
     # Run training / evaluation
-    run(cfg, model, dataset, device, tracker)
+    run(cfg, tracker.start_epoch, model, dataset, device, tracker)
 
 
 if __name__ == "__main__":

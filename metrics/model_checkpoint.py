@@ -69,14 +69,14 @@ class Checkpoint(object):
             try:
                 models = self._objects['models']
                 try:
-                    key_name = "best_train_{}".format(weight_name)
-                    model = models["best_train_{}".format(weight_name)]
-                    print("Model loaded from {}/{}".format(self._check_path, key_name))
+                    key_name = "best_{}".format(weight_name)
+                    model = models[key_name]
+                    print("Model loaded from {}:{}".format(self._check_path, key_name))
                     return model
                 except:
                     key_name = 'default'
                     model = models['default']
-                    print("Model loaded from {}/{}".format(self._check_path, key_name))
+                    print("Model loaded from {}:{}".format(self._check_path, key_name))
                     return model
             except:
                 raise Exception("This weight name isn't within the checkpoint ")
@@ -90,6 +90,9 @@ class ModelCheckpoint(object):
 
     def __init__(self, to_save: str = None, check_name: str = None):
         self._checkpoint = Checkpoint.load_objects(to_save, check_name)
+
+    def get_starting_epoch(self):
+        return len(self._checkpoint.stats["train"]) + 1
 
     def initialize_model(self, model: BaseModel, weight_name: str = None):
         if not self._checkpoint.is_empty:
@@ -116,31 +119,28 @@ class ModelCheckpoint(object):
         current_stat['epoch'] = n_iter
 
         models_to_save = self._checkpoint.models_to_save
-        models_to_save['default'] = state_dict
+
+        if stage == "train":
+            models_to_save['default'] = state_dict
 
         if len(stats[stage]) > 0:
             latest_stats = stats[stage][-1]
 
-            for metric_name, metric_value in metrics.items():
-                current_stat[metric_name] = metric_value
+            for metric_name, current_metric_value in metrics.items():
+                current_stat[metric_name] = current_metric_value
 
                 metric_func = self.find_func_from_metric_name(metric_name, default_metrics_func)
                 best_metric = latest_stats['best_{}'.format(metric_name)]
-                best_value = metric_func(best_metric, metric_value)
+                best_value = metric_func(best_metric, current_metric_value)
                 current_stat['best_{}'.format(metric_name)] = best_value
 
                 # This new value seems to be better under metric_func
-                if (("test" in metric_name) and best_metric != best_value):  # Update the model weights
-                    import pdb
-                    pdb.set_trace()
+                if (("test" == stage) and (current_metric_value == best_value)):  # Update the model weights
                     models_to_save['best_{}'.format(metric_name)] = state_dict
         else:
-            # Stats are empty.
-            models_to_save = {}
+            # stats[stage] is empty.
             for metric_name, metric_value in metrics.items():
                 current_stat[metric_name] = metric_value
                 current_stat['best_{}'.format(metric_name)] = metric_value
-                if stage == "test":
-                    models_to_save['best_{}'.format(metric_name)] = model.state_dict()
 
         self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, None, **kwargs)
