@@ -43,7 +43,7 @@ class TestModelUtils(unittest.TestCase):
             print(model_name)
             if model_name not in ["MyTemplateModel", "Randlanet_Res", "Randlanet_Conv"]:
                 params = self.config['models'][model_name]
-                find_model_using_name(params.type, 'segmentation', params, MockDataset())
+                find_model_using_name(params.type, 'segmentation', params, MockDataset(6))
 
     def test_pointnet2(self):
         model_type = 'pointnet2'
