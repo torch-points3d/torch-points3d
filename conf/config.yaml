@@ -50,3 +50,4 @@ data:
 
 defaults:
     - models: segmentation
+    - sota: sota
