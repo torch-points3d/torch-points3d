@@ -1,10 +1,14 @@
 
+from math import ceil 
+
 import torch 
 from torch.nn import Sequential as S, Linear as L, BatchNorm1d as BN
 from torch.nn import ELU, Conv1d
 from models.core_sampling_and_search import DilatedKNNNeighbourFinder, RandomSampler, FPSSampler
+from models.core_modules import *
 from models.core_modules import BaseConvolutionDown
 from torch_geometric.nn import Reshape
+from torch_geometric.nn.inits import reset
 
 #XConv from torch geometric, modified for this framework  
 #https://github.com/rusty1s/pytorch_geometric/blob/master/torch_geometric/nn/conv/x_conv.py
@@ -152,17 +156,18 @@ class PointCNNSegmentationConv(BaseConvolutionDown):
         K=None, 
         D=None, 
         C1=None, 
-        C2=None, 
+        C2=None,
+        hidden_channels=None,
         dim=None,
         *args, 
         **kwargs,
     ):
         super(PointCNNSegmentationConv, self).__init__(
-            FPSSampler(inN/outN), 
+            FPSSampler(outN/inN), 
             DilatedKNNNeighbourFinder(K, D)
         )
 
-        self._conv = XConv(C1, C2, dim, K)
+        self._conv = XConv(C1, C2, dim, K, hidden_channels=hidden_channels)
 
     def conv(self, x, pos, edge_index, batch):
         return self._conv.foward(x, pos, edge_index, batch)

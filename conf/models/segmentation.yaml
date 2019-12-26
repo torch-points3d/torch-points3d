@@ -24,23 +24,43 @@ models:
 
     pointcnn_shapenet:
         type: PointCNN
-        down_conv_layers:
-          - conv: PointCNNSegmentationConv
+        down_conv:
+        -   
+            module_name: PointCNNSegmentationConv
             inN: 2048
             outN: 768
             K: 8
             D: 1
-            C1: FEAT
+            C1: 3
             C2: 256
-            dim: FEAT
-          - conv: PointCNNSegmentationConv
+            dim: 3
+            hidden_channels: 32
+        - 
+            module_name: PointCNNSegmentationConv
             inN: 768
             outN: 384
             K: 12
             D: 2
             C1: 256
             C2: 256
-            dim: FEAT
+            dim: 3
+            hidden_channels: 64
+
+        innermost:
+            module_name: GlobalBaseModule
+            aggr: max
+            nn: [131, 128]
+        up_conv:
+            module_name: FPModule
+            ratios: [1, 0.25, 0.2]
+            radius: [1, 0.2, 0.1]
+            up_conv_nn: [[1280, 256, 256], [384, 256, 128], [128, 128, 128, 128]]
+            up_k: [1, 3, 3]   
+            skip: True    
+        mlp_cls: 
+            nn: [64, 64, 64, 64, 64]
+            dropout: 0.5
+
 
 
 
