@@ -11,57 +11,7 @@ import wandb
 from collections import OrderedDict
 
 from metrics.confusion_matrix import ConfusionMatrix
-from tqdm import tqdm, std
-
-HAS_TENSORBOARD_INSTALLED = False
-try:
-    from torch.utils.tensorboard import SummaryWriter
-    HAS_TENSORBOARD_INSTALLED = True
-except:
-    pass
-
-
-class COLORS:
-    TRAIN_COLOR = '\033[0;92m'
-    VAL_COLOR = '\033[0;94m'
-    TEST_COLOR = '\033[0;93m'
-    BEST_COLOR = '\033[0;92m'
-
-
-class Coloredtqdm(tqdm):
-
-    def set_postfix(self, ordered_dict=None, refresh=True, color=None, round=4, **kwargs):
-        postfix = std._OrderedDict([] if ordered_dict is None else ordered_dict)
-
-        for key in sorted(kwargs.keys()):
-            postfix[key] = kwargs[key]
-
-        for key in postfix.keys():
-            if isinstance(postfix[key], std.Number):
-                postfix[key] = self.format_num_to_k(np.round(postfix[key], round), k=round + 1)
-            if isinstance(postfix[key], std._basestring):
-                postfix[key] = str(postfix[key])
-            if len(postfix[key]) != round:
-                postfix[key] += (round - len(postfix[key])) * " "
-
-        if color is not None:
-            self.postfix = color
-        else:
-            self.postfix = ''
-
-        self.postfix += ', '.join(key + '=' + postfix[key]
-                                  for key in postfix.keys())
-        if color is not None:
-            self.postfix += '\033[0m'
-
-        if refresh:
-            self.refresh()
-
-    def format_num_to_k(self, seq, k=4):
-        seq = str(seq)
-        length = len(seq)
-        out = seq + ' ' * (k - length) if length < k else seq
-        return out if length < k else seq[:k]
+from torch.utils.tensorboard import SummaryWriter
 
 
 def get_tracker(task: str, dataset, wandb_log: bool, use_tensorboard: bool, log_dir: str):
@@ -90,7 +40,7 @@ class BaseTracker:
         self._stage = None
         self._n_iter = 0
 
-        if self._use_tensorboard and HAS_TENSORBOARD_INSTALLED:
+        if self._use_tensorboard:
             dirname = Path(os.path.abspath(__file__)).parent.parent
             self._log_dir = os.path.join(dirname, log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
             print("Find tensorboard metrics with the command <tensorboard --logdir={}>".format(self._log_dir))
@@ -113,14 +63,16 @@ class BaseTracker:
             self._n_iter += 1
 
         for metric_name, metric_value in metrics.items():
-            metric_name = "{}/{}".format(metric_name.replace(self._stage+"_", ""), self._stage)
-                    
-            if self._use_tensorboard and HAS_TENSORBOARD_INSTALLED:
-                self._writer.add_scalar(metric_name, metric_value, self._n_iter)
+            metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
+            self._writer.add_scalar(metric_name, metric_value, self._n_iter)
 
     def publish(self):
-        if self._wandb:
-            wandb.log(self.get_metrics())
+        if self._wandb or self._use_tensorboard:
+            metrics = self.get_metrics()
+            if self._wandb:
+                wandb.log(metrics)
+            if self._use_tensorboard:
+                self.publish_to_tensorboard(metrics)
 
 
 class SegmentationTracker(BaseTracker):
@@ -198,6 +150,4 @@ class SegmentationTracker(BaseTracker):
         metrics['{}_macc'.format(self._stage)] = _meter_value(self._macc_meter, dim=0)
         metrics['{}_miou'.format(self._stage)] = _meter_value(self._miou_meter, dim=0)
 
-        if self._use_tensorboard:
-            self.publish_to_tensorboard(metrics)
         return metrics
