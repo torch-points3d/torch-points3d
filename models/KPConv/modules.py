@@ -139,6 +139,7 @@ class SimpleUpsampleKPConv(BaseConvolutionUp):
         super(SimpleUpsampleKPConv, self).__init__(RadiusNeighbourFinder(radius), *args, **kwargs)
 
         up_conv_nn = utils.resolve_mlp_list(up_conv_nn, FEAT=nb_feature)
+        mlp_nn = utils.resolve_mlp_list(mlp_nn, FEAT=nb_feature)
 
         in_features, out_features = up_conv_nn
 
@@ -161,6 +162,7 @@ class ResidualUpsampleBKPConv(BaseConvolutionUp):
         super(ResidualUpsampleBKPConv, self).__init__(RadiusNeighbourFinder(radius))
 
         up_conv_nn = utils.resolve_mlp_list(up_conv_nn, FEAT=nb_feature)
+        mlp_nn = utils.resolve_mlp_list(mlp_nn, FEAT=nb_feature)
 
         self.ratio = ratio
         self.radius = radius
