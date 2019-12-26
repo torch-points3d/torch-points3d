@@ -7,11 +7,21 @@ from torch_geometric.nn import fps, radius, knn
 
 class BaseSampler(ABC):
 
-    def __init__(self, ratio):
+    def __init__(self, ratio=None, num_to_sample=None):
+        '''If num_to_sample is provided, sample exactly 
+        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+        '''
         self.ratio = ratio
+        self.num_to_sample = num_to_sample
 
     def __call__(self, pos, batch):
         return self.sample(pos, batch)
+
+    def get_num_to_sample(self, pos):
+        if self.num_to_sample is not None:
+            return self.num_to_sample
+        else:
+            return math.floor(pos.shape[0]*self.ratio)
 
     @abstractmethod
     def sample(self, pos, batch):
@@ -29,11 +39,11 @@ class FPSSampler(BaseSampler):
 
 class RandomSampler(BaseSampler):
 
-    def __init__(self, ratio):
-        super(RandomSampler, self).__init__(ratio)
+    def __init__(self, ratio=None, num_to_sample=None):
+        super(RandomSampler, self).__init__(ratio, num_to_sample)
 
     def sample(self, pos, batch):
-        idx = torch.randint(0, pos.shape[0], (math.floor(pos.shape[0]*self.ratio),))
+        idx = torch.randint(0, pos.shape[0], self.get_num_to_sample(pos))
         return idx
 
 
@@ -80,7 +90,7 @@ class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
         index = torch.randint(self.k * self.dilation, (len(y), self.k), device = row.device, dtype = torch.long)
 
         arange = torch.arange(len(y), dtype=torch.long, device = row.device)
-        arange = arange * (self.k * dil) 
+        arange = arange * (self.k * self.dilation) 
         index = (index + arange.view(-1, 1)).view(-1)
         row, col = row[index], col[index]
 

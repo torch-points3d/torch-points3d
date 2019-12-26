@@ -122,11 +122,16 @@ class XConv(torch.nn.Module):
         #     index = (index + arange.view(-1, 1)).view(-1)
         #     row, col = row[index], col[index]
 
+        (N, D), K = pos.size(), self.kernel_size
+
         row, col = edge_index
 
-        pos = pos[col] - pos[row]
+        relPos = pos[col] - pos[row]
 
-        x_star = self.mlp1(pos.view(N * K, D))
+        import pdb; pdb.set_trace()
+
+        x_star = self.mlp1(relPos) 
+        # x_star = self.mlp1(relPos.view(len(row), D))
         if x is not None:
             x = x.unsqueeze(-1) if x.dim() == 1 else x
             x = x[col].view(N, K, self.in_channels)
@@ -134,7 +139,7 @@ class XConv(torch.nn.Module):
         x_star = x_star.transpose(1, 2).contiguous()
         x_star = x_star.view(N, self.in_channels + self.hidden_channels, K, 1)
 
-        transform_matrix = self.mlp2(pos.view(N, K * D))
+        transform_matrix = self.mlp2(relPos.view(N, K * D))
         transform_matrix = transform_matrix.view(N, 1, K, K)
 
         x_transformed = torch.matmul(transform_matrix, x_star)
@@ -170,7 +175,9 @@ class PointCNNSegmentationConv(BaseConvolutionDown):
         self._conv = XConv(C1, C2, dim, K, hidden_channels=hidden_channels)
 
     def conv(self, x, pos, edge_index, batch):
-        return self._conv.foward(x, pos, edge_index, batch)
+        #pass only the full positition list of positions, only the representative
+        #points will be centers for convolution, as determined by the edge_index
+        return self._conv.forward(x, pos[0], edge_index, batch)
 
 
         
