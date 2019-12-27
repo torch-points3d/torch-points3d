@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    experiment_name: test_1
+    experiment_name: test_2
     name: RSConv_2LD
     task: segmentation
     dataset: shapenet
@@ -50,4 +50,4 @@ data:
 
 defaults:
     - models: segmentation
-    - sota: sota
+    - sota
