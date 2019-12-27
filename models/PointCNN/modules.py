@@ -122,13 +122,13 @@ class XConv(torch.nn.Module):
         #     index = (index + arange.view(-1, 1)).view(-1)
         #     row, col = row[index], col[index]
 
-        (N, D), K = pos.size(), self.kernel_size
+        posAll, posConv = pos
+
+        (N, D), K = posConv.size(), self.kernel_size
 
         row, col = edge_index
 
-        relPos = pos[col] - pos[row]
-
-        import pdb; pdb.set_trace()
+        relPos = posAll[col] - posAll[row]
 
         x_star = self.mlp1(relPos) 
         # x_star = self.mlp1(relPos.view(len(row), D))
@@ -163,7 +163,6 @@ class PointCNNSegmentationConv(BaseConvolutionDown):
         C1=None, 
         C2=None,
         hidden_channels=None,
-        dim=None,
         *args, 
         **kwargs,
     ):
@@ -172,12 +171,12 @@ class PointCNNSegmentationConv(BaseConvolutionDown):
             DilatedKNNNeighbourFinder(K, D)
         )
 
-        self._conv = XConv(C1, C2, dim, K, hidden_channels=hidden_channels)
+        self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channels)
 
     def conv(self, x, pos, edge_index, batch):
         #pass only the full positition list of positions, only the representative
         #points will be centers for convolution, as determined by the edge_index
-        return self._conv.forward(x, pos[0], edge_index, batch)
+        return self._conv.forward(x, pos, edge_index, batch)
 
 
         
