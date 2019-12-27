@@ -48,7 +48,6 @@ class UnetBasedModel(BaseModel):
         It is a recursive process.
         """
         super(UnetBasedModel, self).__init__(opt)
-
         #detect which options format has been used to define the model 
         if type(opt.down_conv) is ListConfig:
             self._init_from_layer_list_format(opt, model_type, dataset, modules_lib)

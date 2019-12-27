@@ -6,7 +6,7 @@ from torch.nn import Sequential as S, Linear as L, BatchNorm1d as BN
 from torch.nn import ELU, Conv1d
 from models.core_sampling_and_search import DilatedKNNNeighbourFinder, RandomSampler, FPSSampler
 from models.core_modules import *
-from models.core_modules import BaseConvolutionDown
+from models.core_modules import BaseConvolutionDown, BaseConvolutionUp
 from torch_geometric.nn import Reshape
 from torch_geometric.nn.inits import reset
 
@@ -122,13 +122,17 @@ class XConv(torch.nn.Module):
         #     index = (index + arange.view(-1, 1)).view(-1)
         #     row, col = row[index], col[index]
 
-        posAll, posConv = pos
+        #posTo = the points that will be centers of convolutions
+        #posFrom = points that have edges to the centers of convolutions 
+        #For a down conv, posFrom = pos, posTo = pos[idx]
+        #For an up conv, posFrom = pos, posTo = pos_skip 
+        posFrom, posTo = pos
 
-        (N, D), K = posConv.size(), self.kernel_size
+        (N, D), K = posTo.size(), self.kernel_size
 
         row, col = edge_index
 
-        relPos = posAll[col] - posAll[row]
+        relPos = posFrom[col] - posFrom[row]
 
         x_star = self.mlp1(relPos) 
         # x_star = self.mlp1(relPos.view(len(row), D))
@@ -153,7 +157,7 @@ class XConv(torch.nn.Module):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
 
-class PointCNNSegmentationConv(BaseConvolutionDown):
+class PointCNNConvDown(BaseConvolutionDown):
 
     def __init__(self, 
         inN=None, 
@@ -166,7 +170,7 @@ class PointCNNSegmentationConv(BaseConvolutionDown):
         *args, 
         **kwargs,
     ):
-        super(PointCNNSegmentationConv, self).__init__(
+        super(PointCNNConvDown, self).__init__(
             FPSSampler(outN/inN), 
             DilatedKNNNeighbourFinder(K, D)
         )
@@ -174,9 +178,24 @@ class PointCNNSegmentationConv(BaseConvolutionDown):
         self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channels)
 
     def conv(self, x, pos, edge_index, batch):
-        #pass only the full positition list of positions, only the representative
-        #points will be centers for convolution, as determined by the edge_index
         return self._conv.forward(x, pos, edge_index, batch)
 
 
-        
+class PointCNNConvUp(BaseConvolutionUp):
+
+    def __init__(self,
+        K = None, 
+        D = None, 
+        C1 = None, 
+        C2 = None, 
+        *args, 
+        **kwargs
+    ):
+        super(PointCNNConvUp, self).__init__(
+            DilatedKNNNeighbourFinder(K, D)
+        )
+
+        self._conv = XConv(C1, C2, 3, K)
+
+    def conv(self, x, pos, pos_skip, edge_index, batch):
+        return self._conv.forward(x, (pos, pos_skip), edge_index, batch)
