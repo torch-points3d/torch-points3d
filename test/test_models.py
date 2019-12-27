@@ -15,6 +15,7 @@ class MockDataset(torch.utils.data.Dataset):
     def __init__(self, feature_size=0):
         self.feature_dimension = feature_size
         self.num_classes = 10
+        self.weight_classes = None
         nb_points = 100
         self._pos = torch.randn((nb_points, 3))
         if feature_size > 0:
@@ -40,9 +41,9 @@ class TestModelUtils(unittest.TestCase):
     def test_createall(self):
         for model_name in self.config['models'].keys():
             print(model_name)
-            if model_name not in ["MyTemplateModel"]:
+            if model_name not in ["MyTemplateModel", "Randlanet_Res", "Randlanet_Conv"]:
                 params = self.config['models'][model_name]
-                find_model_using_name(params.type, 'segmentation', params, MockDataset())
+                find_model_using_name(params.type, 'segmentation', params, MockDataset(6))
 
     def test_pointnet2(self):
         model_type = 'pointnet2'

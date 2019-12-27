@@ -9,7 +9,7 @@ import math
 
 class RandlaKernel(MessagePassing):
     '''
-        Implements both the Local Spatial Encoding and Attentive Pooling blocks from 
+        Implements both the Local Spatial Encoding and Attentive Pooling blocks from
         RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
         https://arxiv.org/pdf/1911.11236
 
@@ -64,7 +64,10 @@ class RandlaConv(BaseConvolutionDown):
 
     def __init__(self, ratio=None, k=None, *args, **kwargs):
         super(RandlaConv, self).__init__(RandomSampler(ratio), KNNNeighbourFinder(k), *args, **kwargs)
-
+        if kwargs.get('index') == 0 and kwargs.get("nb_feature") is not None:
+            kwargs["point_pos_nn"][-1] = kwargs.get("nb_feature")
+            kwargs["attention_nn"][0] = kwargs["attention_nn"][-1] = kwargs.get("nb_feature") * 2
+            kwargs['down_conv_nn'][0] = kwargs.get("nb_feature") * 2
         self._conv = RandlaKernel(*args, global_nn=kwargs['down_conv_nn'], **kwargs)
 
     def conv(self, x, pos, edge_index, batch):
@@ -75,11 +78,14 @@ class DilatedResidualBlock(BaseResnetBlock):
 
     def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2,
                  attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
-
+        if kwargs.get('index') == 0 and kwargs.get("nb_feature") is not None:
+            indim = kwargs.get("nb_feature")
         super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
-
-        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn1, attention_nn1, down_conv_nn=global_nn1)
-        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn2, attention_nn2, down_conv_nn=global_nn2)
+        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn=point_pos_nn1,
+                                attention_nn=attention_nn1, down_conv_nn=global_nn1, *args, **kwargs)
+        kwargs['nb_feature'] = None
+        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn=point_pos_nn2,
+                                attention_nn=attention_nn2, down_conv_nn=global_nn2, *args, **kwargs)
 
     def convs(self, data):
         data = self.conv1(data)
@@ -89,21 +95,21 @@ class DilatedResidualBlock(BaseResnetBlock):
 
 class RandLANetRes(torch.nn.Module):
 
-    def __init__(self, *args, **kwargs):
-        print('Init randlanetres with kwargs: ', kwargs)
+    def __init__(self, indim, outdim, ratio, point_pos_nn, attention_nn, down_conv_nn, *args, **kwargs):
         super(RandLANetRes, self).__init__()
 
         self._conv = DilatedResidualBlock(
-            kwargs['indim'],
-            kwargs['outdim'],
-            kwargs['ratio'][0],
-            kwargs['ratio'][1],
-            kwargs['point_pos_nn'][0],
-            kwargs['point_pos_nn'][1],
-            kwargs['attention_nn'][0],
-            kwargs['attention_nn'][1],
-            kwargs['down_conv_nn'][0],
-            kwargs['down_conv_nn'][1]
+            indim,
+            outdim,
+            ratio[0],
+            ratio[1],
+            point_pos_nn[0],
+            point_pos_nn[1],
+            attention_nn[0],
+            attention_nn[1],
+            down_conv_nn[0],
+            down_conv_nn[1],
+            *args, **kwargs
         )
 
     def forward(self, data):

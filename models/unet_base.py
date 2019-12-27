@@ -169,17 +169,18 @@ class UnetBasedModel(BaseModel):
                 if isinstance(v, ListConfig):
                     v = list(v)
                 args[name] = v
-        args['index'] = index
         args['precompute_multi_scale'] = self._precompute_multi_scale
         return args
 
     def _fetch_arguments_up_and_down(self, opt, index, count_convs):
         # Defines down arguments
         args_down = self._fetch_arguments_from_list(opt.down_conv, index)
+        args_down['index'] = index
         args_down['down_conv_cls'] = self._factory_module.get_module(index, 'DOWN')
 
         # Defines up arguments
         args_up = self._fetch_arguments_from_list(opt.up_conv, count_convs - index)
+        args_up['index'] = index
         args_up['up_conv_cls'] = self._factory_module.get_module(index, 'UP')
         return args_up, args_down
 

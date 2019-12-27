@@ -9,13 +9,21 @@ wandb:
     project: benchmarking
     log: False
 
+# parameters for TensorBoard Visualization
+tensorboard:
+    log_dir: logs
+    log: True
+
 # Those arguments defines the training hyper-parameters
 training:
     shuffle: True
-    num_workers: 4
+    num_workers: 8
     batch_size: 8
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference 
+    epochs: 350
+    optimizer: Adam
+    lr : 0.001
 
 # Those arguments defines the available datasets
 data:
@@ -35,6 +43,7 @@ data:
         name: s3dis
         dataroot: data
         fold: 5
+        class_weight_method: 'sqrt'
 
 defaults:
     - models: segmentation
