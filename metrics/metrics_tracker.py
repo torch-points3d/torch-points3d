@@ -1,14 +1,20 @@
+import os
+from pathlib import Path
+from datetime import datetime
+from enum import Enum
 import numpy as np
 import torchnet as tnt
 import torch
 from typing import Dict
 from abc import abstractmethod
 import wandb
+from collections import OrderedDict
 
 from metrics.confusion_matrix import ConfusionMatrix
+from torch.utils.tensorboard import SummaryWriter
 
 
-def get_tracker(task: str, dataset, wandb_log: bool):
+def get_tracker(task: str, dataset, wandb_log: bool, use_tensorboard: bool, log_dir: str):
     """Factory method for the tracker
 
     Arguments:
@@ -19,17 +25,26 @@ def get_tracker(task: str, dataset, wandb_log: bool):
         [BaseTracker] -- tracker
     """
     if task.lower() == 'segmentation':
-        return SegmentationTracker(dataset, wandb_log=wandb_log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=use_tensorboard, log_dir=log_dir)
     raise NotImplementedError('No tracker for %s task' % task)
 
 
 def _meter_value(meter, dim=0):
-    return meter.value()[dim] if meter.n > 0 else 0
+    return float(meter.value()[dim]) if meter.n > 0 else 0.
 
 
 class BaseTracker:
-    def __init__(self,  wandb_log: bool):
+    def __init__(self,  wandb_log: bool, use_tensorboard: bool, log_dir: str = 'logs'):
         self._wandb = wandb_log
+        self._use_tensorboard = use_tensorboard
+        self._stage = None
+        self._n_iter = 0
+
+        if self._use_tensorboard:
+            dirname = Path(os.path.abspath(__file__)).parent.parent
+            self._log_dir = os.path.join(dirname, log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
+            print("Find tensorboard metrics with the command <tensorboard --logdir={}>".format(self._log_dir))
+            self._writer = SummaryWriter(log_dir=self._log_dir)
 
     @abstractmethod
     def reset(self, stage="train"):
@@ -43,14 +58,26 @@ class BaseTracker:
     def track(self, loss, outputs, targets):
         pass
 
+    def publish_to_tensorboard(self, metrics):
+        if self._stage == "train":
+            self._n_iter += 1
+
+        for metric_name, metric_value in metrics.items():
+            metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
+            self._writer.add_scalar(metric_name, metric_value, self._n_iter)
+
     def publish(self):
-        if self._wandb:
-            wandb.log(self.get_metrics())
+        if self._wandb or self._use_tensorboard:
+            metrics = self.get_metrics()
+            if self._wandb:
+                wandb.log(metrics)
+            if self._use_tensorboard:
+                self.publish_to_tensorboard(metrics)
 
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, dataset, stage="train", wandb_log=False):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = None):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
@@ -60,10 +87,9 @@ class SegmentationTracker(BaseTracker):
             stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
             wandb_log {str} --  Log using weight and biases
         """
-        super(SegmentationTracker, self).__init__(wandb_log)
+        super(SegmentationTracker, self).__init__(wandb_log, use_tensorboard, log_dir)
         self._num_classes = dataset.num_classes
         self._stage = stage
-        self._n_iter = 0
 
         self.reset(stage)
 

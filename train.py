@@ -15,6 +15,7 @@ from omegaconf import OmegaConf
 from models.utils import find_model_using_name
 from models.base_model import BaseModel
 from metrics.metrics_tracker import get_tracker, BaseTracker
+from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
 
 
 def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
@@ -22,7 +23,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
     tracker.reset("train")
 
     iter_data_time = time.time()
-    with tq(train_loader) as tq_train_loader:
+    with Ctq(train_loader) as tq_train_loader:
         for data in tq_train_loader:
             iter_start_time = time.time()  # timer for computation per iteration
             t_data = iter_start_time - iter_data_time
@@ -34,8 +35,8 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker):
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
             iter_data_time = time.time()
 
-            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=t_data,
-                                        iteration=time.time() - iter_start_time)
+            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
+                                        iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
     tracker.publish()
 
 
@@ -43,7 +44,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
     model.eval()
     tracker.reset("test")
 
-    with tq(loader) as tq_test_loader:
+    with Ctq(loader) as tq_test_loader:
         for data in tq_test_loader:
             data = data.to(device)
             with torch.no_grad():
@@ -51,16 +52,18 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker):
                 model.forward()
 
             tracker.track(model.get_current_losses(), model.get_output(), data.y)
-            tq_test_loader.set_postfix(**tracker.get_metrics())
+            tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
     tracker.publish()
 
 
 def run(cfg, model, dataset, device, tracker: BaseTracker):
     train_loader = dataset.train_dataloader()
     test_loader = dataset.test_dataloader()
-    for epoch in range(1, 31):
+    for epoch in range(1, cfg.training.epochs):
+        print("EPOCH {} / {}".format(epoch, cfg.training.epochs))
         train(epoch, model, train_loader, device, tracker)
         test(model, test_loader, device, tracker)
+        print()
 
 
 @hydra.main(config_path='conf/config.yaml')
@@ -83,7 +86,7 @@ def main(cfg):
     model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
     model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
-    model.set_optimizer(torch.optim.Adam)
+    model.set_optimizer(getattr(torch.optim, cfg.training.optimizer, None), lr=cfg.training.lr)
 
     # Set sampling / search strategies:
     dataset.set_strategies(model, precompute_multi_scale=cfg.training.precompute_multi_scale)
@@ -97,7 +100,7 @@ def main(cfg):
     if cfg.wandb.log:
         wandb.init(project=cfg.wandb.project)
         # wandb.watch(model)
-    tracker = get_tracker(tested_task, dataset, cfg.wandb.log)
+    tracker = get_tracker(tested_task, dataset, cfg.wandb.log, cfg.tensorboard.log, cfg.tensorboard.log_dir)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker)

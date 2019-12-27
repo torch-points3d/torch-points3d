@@ -4,3 +4,5 @@ __pycache__
 .vscode
 *outputs*
 wandb
+logs
+results
