@@ -127,7 +127,7 @@ class UnetBasedModel(BaseModel):
 
         for index in range(num_convs-1, 0, -1):
             down_layer = dict(down_conv_layers[index])
-            up_layer = dict(up_conv_layers[-index])
+            up_layer = dict(up_conv_layers[num_convs-index])
 
             down_layer['down_conv_cls'] = getattr(modules_lib, down_layer['module_name'])
             up_layer['up_conv_cls'] = getattr(modules_lib, up_layer['module_name'])
