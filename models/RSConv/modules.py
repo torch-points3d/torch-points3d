@@ -57,10 +57,6 @@ class Convolution(MessagePassing):
 class RSConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, nb_feature=None, *args, **kwargs):
         super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
-
-        local_nn = utils.resolve_mlp_list(local_nn, FEAT = nb_feature)
-
-        down_conv_nn = utils.resolve_mlp_list(down_conv_nn, FEAT = nb_feature)
         
         self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
 

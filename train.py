@@ -13,6 +13,7 @@ import wandb
 from omegaconf import OmegaConf
 
 from models.utils import find_model_using_name
+from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from metrics.metrics_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
@@ -92,6 +93,7 @@ def main(cfg):
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
+    resolve_model(model_config, dataset, tested_task)
     model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
     model.set_optimizer(getattr(torch.optim, cfg.training.optimizer, None), lr=cfg.training.lr)
 
