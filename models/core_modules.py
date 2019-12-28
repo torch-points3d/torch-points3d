@@ -134,8 +134,7 @@ class FPModule(BaseConvolutionUp):
 
     def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
         super(FPModule, self).__init__(None)
-        # if kwargs.get('index') == 0 and nb_feature is not None:
-            # up_conv_nn = utils.resolve_mlp_list(up_conv_nn, FEAT = nb_feature)
+
         self.k = up_k
         self.nn = MLP(up_conv_nn)
 
