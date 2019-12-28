@@ -1,0 +1,18 @@
+type: mytype
+define_constants:
+    L1_OUT: 20
+    MODULE: RSConv
+down_conv:
+    module_name: MODULE
+    aggr: max
+    number: 5
+    expression: 5 + 5
+    variable: FEAT
+    variable_expression: FEAT + 5
+    number_nn: [8, 16]
+    nn: [FEAT, FEAT * 2, 16 + 16, L1_OUT * 2, L1_OUT]
+    nested_nn: [[16*2, 8], [FEAT, FEAT*2]]
+    nested_nested_nn: [[[8+8, 16], [16, 16//2]], [[8, 4], [4, FEAT]]]
+    nested_dict:
+        number: 3
+        nn: [FEAT, 16 + 8]
