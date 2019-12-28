@@ -1,0 +1,18 @@
+type: mytype
+define_constants:
+    L1_OUT: 20
+    MODULE: RSConv
+down_conv:
+    module_name: RSConv
+    aggr: max
+    number: 5
+    expression: 10
+    variable: 6
+    variable_expression: 11
+    number_nn: [8, 16]
+    nn: [6, 12, 32, 40, 20]
+    nested_nn: [[32, 8], [6, 12]]
+    nested_nested_nn: [[[16, 16], [16, 8]], [[8, 4], [4, 6]]]
+    nested_dict:
+        number: 3
+        nn: [6, 24]

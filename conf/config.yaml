@@ -1,6 +1,9 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
     name: pointcnn_small
+    experiment_name: "" # Wether to use hydra naming convention for the experiment
+    log_dir: "" # Wether to use hydra automatic path generation for saving training
+    resume: True
     task: segmentation
     dataset: shapenet
 
@@ -11,7 +14,6 @@ wandb:
 
 # parameters for TensorBoard Visualization
 tensorboard:
-    log_dir: logs
     log: True
 
 # Those arguments defines the training hyper-parameters
@@ -24,6 +26,7 @@ training:
     epochs: 350
     optimizer: Adam
     lr : 0.001
+    weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
 
 # Those arguments defines the available datasets
 data:
@@ -47,3 +50,4 @@ data:
 
 defaults:
     - models: segmentation
+    - sota # Contains current SOTA results on different datasets (extracted from papers !).
