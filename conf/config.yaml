@@ -26,7 +26,7 @@ training:
     epochs: 350
     optimizer: Adam
     lr : 0.001
-    weight_name: 'macc' # Used during resume, select with model to load from [metric_name..., default]
+    weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
 
 # Those arguments defines the available datasets
 data:
