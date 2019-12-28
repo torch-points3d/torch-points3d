@@ -83,7 +83,6 @@ class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
         self.initialFinder = KNNNeighbourFinder(k * dilation)
 
     def find_neighbours(self, x, y, batch_x, batch_y):
-        import pdb; pdb.set_trace()
         #find the self.k * self.dilation closest neighbours in x for each y
         row, col = self.initialFinder.find_neighbours(x, y, batch_x, batch_y) 
 

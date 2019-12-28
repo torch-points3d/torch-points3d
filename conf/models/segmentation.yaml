@@ -22,6 +22,58 @@ models:
             nn: []
             dropout: 0.5
 
+    pointcnn_small:
+        type: PointCNN
+        down_conv:
+        -   
+            module_name: PointCNNConvDown
+            inN: 2048
+            outN: 768
+            K: 8
+            D: 1
+            C1: 0
+            C2: 32
+            hidden_channels: 64
+        -
+            module_name: PointCNNConvDown
+            inN: 768
+            outN: 384
+            K: 12
+            D: 2
+            C1: 32
+            C2: 32
+        innermost:
+            module_name: PointCNNConvDown
+            inN: 384
+            outN: 128
+            K: 16
+            D: 2
+            C1: 32
+            C2: 64
+        up_conv:  
+        -   
+            module_name: PointCNNConvUp
+            K: 16
+            D: 6
+            C1: 64
+            C2: 32
+        -
+            module_name: PointCNNConvUp
+            K: 12
+            D: 6
+            C1: 64
+            C2: 32
+        -
+            module_name: PointCNNConvUp
+            K: 8
+            D: 6
+            C1: 64
+            C2: 32
+        mlp_cls: 
+            nn: [32, 32, 32, 32]
+            dropout: 0.5
+
+
     pointcnn_shapenet:
         type: PointCNN
         down_conv:
@@ -42,25 +94,15 @@ models:
             D: 2
             C1: 256
             C2: 256
-        # - 
-        #     module_name: PointCNNConvDown
-        #     inN: 384
-        #     outN: 128
-        #     K: 16
-        #     D: 2
-        #     C1: 256
-        #     C2: 512
         innermost:
-            module_name: GlobalBaseModule
-            aggr: max
-            nn: [259, 512]
-        up_conv:
-            # module_name: FPModule
-            # ratios: [1, 0.25, 0.2]
-            # radius: [1, 0.2, 0.1]
-            # up_conv_nn: [[384, 256, 256], [384, 256, 128], [128, 64, 64]]
-            # up_k: [1, 3, 3]   
-            # skip: True    
+            module_name: PointCNNConvDown
+            inN: 384
+            outN: 128
+            K: 16
+            D: 2
+            C1: 256
+            C2: 512
+        up_conv:  
         -   
             module_name: PointCNNConvUp
             K: 16

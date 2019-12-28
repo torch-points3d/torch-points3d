@@ -105,7 +105,7 @@ class XConv(torch.nn.Module):
         reset(self.mlp2)
         reset(self.conv)
 
-    def forward(self, x, pos, edge_index, batch=None):
+    def forward(self, x, pos, edge_index):
         """"""
         # pos = pos.unsqueeze(-1) if pos.dim() == 1 else pos
         # (N, D), K = pos.size(), self.kernel_size
@@ -130,15 +130,15 @@ class XConv(torch.nn.Module):
 
         (N, D), K = posTo.size(), self.kernel_size
 
-        row, col = edge_index
+        idxFrom, idxTo = edge_index
 
-        relPos = posFrom[col] - posFrom[row]
+        relPos = posTo[idxTo] - posFrom[idxFrom]
 
         x_star = self.mlp1(relPos) 
         # x_star = self.mlp1(relPos.view(len(row), D))
         if x is not None:
             x = x.unsqueeze(-1) if x.dim() == 1 else x
-            x = x[col].view(N, K, self.in_channels)
+            x = x[idxFrom].view(N, K, self.in_channels)
             x_star = torch.cat([x_star, x], dim=-1)
         x_star = x_star.transpose(1, 2).contiguous()
         x_star = x_star.view(N, self.in_channels + self.hidden_channels, K, 1)
@@ -178,7 +178,8 @@ class PointCNNConvDown(BaseConvolutionDown):
         self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channels)
 
     def conv(self, x, pos, edge_index, batch):
-        return self._conv.forward(x, pos, edge_index, batch)
+        # print('PointCNNConvDown:', pos[0].shape, pos[1].shape)
+        return self._conv.forward(x, pos, edge_index)
 
 
 class PointCNNConvUp(BaseConvolutionUp):
@@ -197,5 +198,5 @@ class PointCNNConvUp(BaseConvolutionUp):
 
         self._conv = XConv(C1, C2, 3, K)
 
-    def conv(self, x, pos, pos_skip, edge_index, batch):
-        return self._conv.forward(x, (pos, pos_skip), edge_index, batch)
+    def conv(self, x, pos, pos_skip, batch, batch_skip, edge_index):
+        return self._conv.forward(x, (pos, pos_skip), edge_index)

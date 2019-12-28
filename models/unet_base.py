@@ -116,7 +116,7 @@ class UnetBasedModel(BaseModel):
 
         unet_block = [] 
 
-        if hasattr(opt, 'innermost'):
+        if 'innermost' in opt:
             assert len(down_conv_layers) + 1 == len(up_conv_layers)
 
             up_layer = dict(up_conv_layers[0])
@@ -140,6 +140,8 @@ class UnetBasedModel(BaseModel):
         up_layer['nb_feature'] = dataset.feature_dimension
         down_layer['nb_feature'] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(args_up=up_layer, args_down=down_layer, submodule=unet_block, outermost=True)
+
+        self._save_sampling_and_search(self.model, index)
 
         print(self)
 

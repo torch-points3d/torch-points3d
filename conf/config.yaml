@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    name: pointcnn_shapenet
+    name: pointcnn_small
     task: segmentation
     dataset: shapenet
 

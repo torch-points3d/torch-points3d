@@ -96,7 +96,10 @@ class BaseConvolutionUp(BaseConvolution):
 
         if x_skip is not None and self._skip:
             x = torch.cat([x, x_skip], dim=1)
-        batch_obj.x = self.nn(x)
+        if hasattr(self, 'nn'):
+            batch_obj.x = self.nn(x)
+        else:
+            batch_obj.x = x
         copy_from_to(data_skip, batch_obj)
         return batch_obj
 
