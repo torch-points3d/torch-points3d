@@ -9,12 +9,14 @@ from typing import Dict
 from abc import abstractmethod
 import wandb
 from collections import OrderedDict
-
-from metrics.confusion_matrix import ConfusionMatrix
 from torch.utils.tensorboard import SummaryWriter
 
+from metrics.confusion_matrix import ConfusionMatrix
+from metrics.model_checkpoint import ModelCheckpoint
+from models.base_model import BaseModel
 
-def get_tracker(task: str, dataset, wandb_log: bool, use_tensorboard: bool, log_dir: str):
+
+def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, log_dir: str):
     """Factory method for the tracker
 
     Arguments:
@@ -24,9 +26,15 @@ def get_tracker(task: str, dataset, wandb_log: bool, use_tensorboard: bool, log_
     Returns:
         [BaseTracker] -- tracker
     """
+    tracker = None
     if task.lower() == 'segmentation':
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=use_tensorboard, log_dir=log_dir)
-    raise NotImplementedError('No tracker for %s task' % task)
+        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.log,
+                                      use_tensorboard=tensorboard_opt.log,
+                                      log_dir=log_dir)
+    else:
+        raise NotImplementedError('No tracker for %s task' % task)
+
+    return tracker
 
 
 def _meter_value(meter, dim=0):
@@ -34,16 +42,16 @@ def _meter_value(meter, dim=0):
 
 
 class BaseTracker:
-    def __init__(self,  wandb_log: bool, use_tensorboard: bool, log_dir: str = 'logs'):
+    def __init__(self, wandb_log: bool, use_tensorboard: bool, log_dir: str):
         self._wandb = wandb_log
         self._use_tensorboard = use_tensorboard
+        self._log_dir = os.path.join(log_dir, "tensorboard")
+
         self._stage = None
         self._n_iter = 0
 
         if self._use_tensorboard:
-            dirname = Path(os.path.abspath(__file__)).parent.parent
-            self._log_dir = os.path.join(dirname, log_dir, datetime.now().strftime("%Y%m%d-%H%M%S"))
-            print("Find tensorboard metrics with the command <tensorboard --logdir={}>".format(self._log_dir))
+            print("Access tensorboard with the following command <tensorboard --logdir={}>".format(self._log_dir))
             self._writer = SummaryWriter(log_dir=self._log_dir)
 
     @abstractmethod
@@ -59,25 +67,36 @@ class BaseTracker:
         pass
 
     def publish_to_tensorboard(self, metrics):
-        if self._stage == "train":
-            self._n_iter += 1
-
         for metric_name, metric_value in metrics.items():
             metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
             self._writer.add_scalar(metric_name, metric_value, self._n_iter)
 
+    @staticmethod
+    def _remove_stage_from_metric_keys(stage, metrics):
+        new_metrics = {}
+        for metric_name, metric_value in metrics.items():
+            new_metrics[metric_name.replace(stage + "_", '')] = metric_value
+        return new_metrics
+
     def publish(self):
-        if self._wandb or self._use_tensorboard:
-            metrics = self.get_metrics()
-            if self._wandb:
-                wandb.log(metrics)
-            if self._use_tensorboard:
-                self.publish_to_tensorboard(metrics)
+        if self._stage == "train":
+            self._n_iter += 1
+
+        metrics = self.get_metrics()
+
+        if self._wandb:
+            wandb.log(metrics)
+
+        if self._use_tensorboard:
+            self.publish_to_tensorboard(metrics)
+
+        return {'stage': self._stage, "epoch": self._n_iter, "current_metrics":
+                self._remove_stage_from_metric_keys(self._stage, metrics)}
 
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = None):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = ""):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:

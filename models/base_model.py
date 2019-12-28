@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import torch
 from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
 
@@ -33,9 +34,18 @@ class BaseModel(torch.nn.Module):
         self.opt = opt
         self.loss_names = []
         self.output = None
-        self.optimizer: Optional[Optimizer] = None
+        self._optimizer: Optional[Optimizer] = None
+        self._scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
         self._precompute_multi_scale = opt.precompute_multi_scale
+
+    @property
+    def scheduler(self):
+        return self._scheduler
+
+    @property
+    def optimizer(self):
+        return self._optimizer
 
     @abstractmethod
     def set_input(self, input):
@@ -56,9 +66,9 @@ class BaseModel(torch.nn.Module):
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self.forward()               # first call forward to calculate intermediate results
-        self.optimizer.zero_grad()   # clear existing gradients
+        self._optimizer.zero_grad()   # clear existing gradients
         self.backward()              # calculate gradients
-        self.optimizer.step()        # update parameters
+        self._optimizer.step()        # update parameters
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -69,7 +79,7 @@ class BaseModel(torch.nn.Module):
         return errors_ret
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
-        self.optimizer = optimizer_cls(self.parameters(), lr=lr)
+        self._optimizer = optimizer_cls(self.parameters(), lr=lr)
 
     def get_internal_losses(self):
         losses_global = []
