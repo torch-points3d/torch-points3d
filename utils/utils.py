@@ -3,6 +3,16 @@ import matplotlib.pyplot as plt
 import os
 
 
+def get_log_dir(log_dir, experiment_name):
+    hydra_generated_dir = os.getcwd()
+    splits = hydra_generated_dir.split('/')
+    if log_dir == "":
+        parent_log_dir = '/'.join(splits[:-1])
+    else:
+        parent_log_dir = log_dir
+    return parent_log_dir, experiment_name if experiment_name != "" else splits[-1]
+
+
 def colored_print(color, msg):
     print(color + msg + '\033[0m')
 

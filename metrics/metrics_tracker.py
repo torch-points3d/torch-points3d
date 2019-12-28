@@ -11,13 +11,12 @@ import wandb
 from collections import OrderedDict
 from torch.utils.tensorboard import SummaryWriter
 
-
 from metrics.confusion_matrix import ConfusionMatrix
 from metrics.model_checkpoint import ModelCheckpoint
 from models.base_model import BaseModel
 
 
-def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, experiment_opt, training_opt: bool = True):
+def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, log_dir: str):
     """Factory method for the tracker
 
     Arguments:
@@ -29,13 +28,11 @@ def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboa
     """
     tracker = None
     if task.lower() == 'segmentation':
-        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log,
-                                      log_dir=tensorboard_opt.log_dir, experiment_name=experiment_opt.experiment_name, checkpoint=training_opt.checkpoint)
+        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.log,
+                                      use_tensorboard=tensorboard_opt.log,
+                                      log_dir=log_dir)
     else:
         raise NotImplementedError('No tracker for %s task' % task)
-
-    if training_opt.checkpoint:
-        tracker.initialize_model(model, weight_name=training_opt.weight_name)
 
     return tracker
 
@@ -45,33 +42,17 @@ def _meter_value(meter, dim=0):
 
 
 class BaseTracker:
-    def __init__(self, wandb_log: bool, use_tensorboard: bool, log_dir: str = 'logs', experiment_name: str = None, use_checkpoint: bool = True):
+    def __init__(self, wandb_log: bool, use_tensorboard: bool, log_dir: str):
         self._wandb = wandb_log
         self._use_tensorboard = use_tensorboard
+        self._log_dir = os.path.join(log_dir, "tensorboard")
+
         self._stage = None
         self._n_iter = 0
-        self._use_checkpoint = use_checkpoint
-        self._default_metric_to_func = {'acc': max, 'iou': max, 'loss': min}
-
-        dirname = Path(os.path.abspath(__file__)).parent.parent
-        parent_log_dir = os.path.join(dirname, log_dir)
 
         if self._use_tensorboard:
-            self._log_dir = os.path.join(parent_log_dir, experiment_name)
-            print("Find tensorboard metrics with the command <tensorboard --logdir={}>".format(self._log_dir))
+            print("Access tensorboard with the following command <tensorboard --logdir={}>".format(self._log_dir))
             self._writer = SummaryWriter(log_dir=self._log_dir)
-
-        if self._use_checkpoint:
-            self._model_checkpoint: ModelCheckpoint = ModelCheckpoint(parent_log_dir,
-                                                                      experiment_name)
-
-    def initialize_model(self, model: BaseModel, weight_name: str = None):
-        if self._use_checkpoint:
-            self._model_checkpoint.initialize_model(model, weight_name)
-
-    def track_elements(self, *args, **kwargs):
-        self._args = args
-        self._kwargs = kwargs
 
     @abstractmethod
     def reset(self, stage="train"):
@@ -90,16 +71,12 @@ class BaseTracker:
             metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
             self._writer.add_scalar(metric_name, metric_value, self._n_iter)
 
-    def _remove_stage_from_metric_keys(self, metrics):
+    @staticmethod
+    def _remove_stage_from_metric_keys(stage, metrics):
         new_metrics = {}
         for metric_name, metric_value in metrics.items():
-            new_metrics[metric_name.replace(self._stage+"_", '')] = metric_value
+            new_metrics[metric_name.replace(stage + "_", '')] = metric_value
         return new_metrics
-
-    def publish_to_model_checkpoint(self, metrics):
-        metrics = self._remove_stage_from_metric_keys(metrics)
-        self._model_checkpoint.save_object(self._kwargs, self._stage, self._n_iter,
-                                           metrics, self._default_metric_to_func)
 
     def publish(self):
         if self._stage == "train":
@@ -113,20 +90,13 @@ class BaseTracker:
         if self._use_tensorboard:
             self.publish_to_tensorboard(metrics)
 
-        if self._use_checkpoint:
-            self.publish_to_model_checkpoint(metrics)
-
-    @property
-    def start_epoch(self):
-        if self._use_checkpoint:
-            return self._model_checkpoint.get_starting_epoch()
-        else:
-            return 1
+        return {'stage': self._stage, "epoch": self._n_iter, "current_metrics":
+                self._remove_stage_from_metric_keys(self._stage, metrics)}
 
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = "", experiment_name: str = "", checkpoint: bool = True):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = None):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
@@ -136,8 +106,7 @@ class SegmentationTracker(BaseTracker):
             stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
             wandb_log {str} --  Log using weight and biases
         """
-        super(SegmentationTracker, self).__init__(wandb_log,
-                                                  use_tensorboard, log_dir, experiment_name, checkpoint)
+        super(SegmentationTracker, self).__init__(wandb_log, use_tensorboard, log_dir)
         self._num_classes = dataset.num_classes
         self._stage = stage
 
