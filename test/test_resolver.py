@@ -2,6 +2,7 @@ import unittest
 
 from omegaconf import OmegaConf
 import torch 
+from torch_geometric.data import Data, Batch
 import os
 import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
