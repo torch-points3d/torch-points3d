@@ -1,4 +1,5 @@
 import os
+from os import path as osp
 import tempfile
 import warnings
 import sys
@@ -11,11 +12,12 @@ from utils.utils import colored_print
 DEFAULT_METRICS_FUNC = {'iou': max, 'acc': max, 'loss': min}  # Those map subsentences to their optimization functions
 
 
-def get_model_checkpoint(model: BaseModel, to_save: str = None, check_name: str = None, resume: bool = True, weight_name: str = None):
+def get_model_checkpoint(model: BaseModel, log_dir: str = None, check_name: str = None, resume: bool = True, weight_name: str = None):
 
-    model_checkpoint: ModelCheckpoint = ModelCheckpoint(to_save, check_name, resume)
+    model_checkpoint: ModelCheckpoint = ModelCheckpoint(log_dir, check_name, resume)
+
     if resume:
-        model_checkpoint.initialize_model(weight_name)
+        model_checkpoint.initialize_model(model, weight_name)
     return model_checkpoint
 
 

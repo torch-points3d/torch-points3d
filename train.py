@@ -108,12 +108,12 @@ def main(cfg):
         wandb.init(project=cfg.wandb.project)
         # wandb.watch(model)
 
-    log_dir, experiment_name = get_log_dir(exp.log_dir, exp.experiment_name)
+    log_dir = get_log_dir(exp.log_dir, exp.experiment_name)
 
     tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb,
-                                       cfg.tensorboard, osp.join(log_dir, experiment_name))
+                                       cfg.tensorboard, log_dir)
 
-    checkpoint = get_model_checkpoint(log_dir, experiment_name, exp.resume, cfg.training.weight_name)
+    checkpoint = get_model_checkpoint(model, log_dir, tested_model_name, exp.resume, cfg.training.weight_name)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker, checkpoint)

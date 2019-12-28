@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from os import path as osp
 
 
 def get_log_dir(log_dir, experiment_name):
@@ -10,7 +11,7 @@ def get_log_dir(log_dir, experiment_name):
         parent_log_dir = '/'.join(splits[:-1])
     else:
         parent_log_dir = log_dir
-    return parent_log_dir, experiment_name if experiment_name != "" else splits[-1]
+    return osp.join(parent_log_dir, experiment_name if experiment_name != "" else splits[-1])
 
 
 def colored_print(color, msg):
