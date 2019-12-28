@@ -25,10 +25,10 @@ def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> Bas
     modules_lib = importlib.import_module(module_filename)
     return model(option, model_type, dataset, modules_lib)
 
-def resolve_mlp_list(mlp, **kwargs):
+# def resolve_mlp_list(mlp, **kwargs):
 
-    for ind, x in enumerate(mlp):
-        if type(x) == str:
-            mlp[ind] = eval(x, kwargs)
+#     for ind, x in enumerate(mlp):
+#         if type(x) == str:
+#             mlp[ind] = eval(x, kwargs)
 
-    return mlp 
+#     return mlp 
