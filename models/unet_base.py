@@ -109,9 +109,7 @@ class UnetBasedModel(BaseModel):
         factory_module_cls = self._get_factory(model_type, modules_lib)
 
         down_conv_layers = opt.down_conv if type(opt.down_conv) is ListConfig else self._flatten_compact_options(opt.down_conv)
-
         up_conv_layers = opt.up_conv if type(opt.up_conv) is ListConfig else self._flatten_compact_options(opt.up_conv)
-
         num_convs = len(down_conv_layers)
 
         unet_block = [] 
@@ -188,7 +186,6 @@ class UnetBasedModel(BaseModel):
     def _flatten_compact_options(self, opt):
         '''Converts from a dict of lists, to a list of dicts 
         '''
-
         flattenedOpts = []
 
         for index in range(int(1e6)):
@@ -198,7 +195,6 @@ class UnetBasedModel(BaseModel):
                 break 
 
         return flattenedOpts
-        
 
 
 class UnetSkipConnectionBlock(nn.Module):

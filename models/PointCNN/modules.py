@@ -106,21 +106,6 @@ class XConv(torch.nn.Module):
         reset(self.conv)
 
     def forward(self, x, pos, edge_index):
-        """"""
-        # pos = pos.unsqueeze(-1) if pos.dim() == 1 else pos
-        # (N, D), K = pos.size(), self.kernel_size
-
-        # row, col = knn_graph(pos, K * self.dilation, batch, loop=True,
-        #                      flow='target_to_source', **self.kwargs)
-
-        # if self.dilation > 1:
-        #     dil = self.dilation
-        #     index = torch.randint(K * dil, (N, K), dtype=torch.long,
-        #                           device=row.device)
-        #     arange = torch.arange(N, dtype=torch.long, device=row.device)
-        #     arange = arange * (K * dil)
-        #     index = (index + arange.view(-1, 1)).view(-1)
-        #     row, col = row[index], col[index]
 
         #posTo = the points that will be centers of convolutions
         #posFrom = points that have edges to the centers of convolutions 
@@ -178,7 +163,6 @@ class PointCNNConvDown(BaseConvolutionDown):
         self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channels)
 
     def conv(self, x, pos, edge_index, batch):
-        # print('PointCNNConvDown:', pos[0].shape, pos[1].shape)
         return self._conv.forward(x, pos, edge_index)
 
 
