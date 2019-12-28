@@ -17,6 +17,7 @@ wandb = "^0.8.18"
 tqdm = "^4.40"
 torchnet = "^0.0.4"
 tensorboard = "^2.1"
+mkdocs = "^1.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"

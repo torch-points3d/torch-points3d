@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>How to do Series - Deep Point Cloud Benchmark</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "How to do Series";
+    var mkdocs_page_input_path = "how_to_do/how_to_do.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Deep Point Cloud Benchmark</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">How to do Series</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#understand-hydra-configuration">Understand hydra configuration</a></li>
+    
+
+    <li class="toctree-l2"><a href="#create-a-new-dataset">Create a new dataset</a></li>
+    
+
+    <li class="toctree-l2"><a href="#create-a-new-model">Create a new model</a></li>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">About</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">About</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Deep Point Cloud Benchmark</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>How to do Series</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="understand-hydra-configuration">Understand hydra configuration</h1>
+<p>We recommend people willing to use the framework to get familiries with <a href="https://hydra.cc/docs/intro"><code>Facebook Hydra library</code></a>.</p>
+<p>Reading quickly through Hydra documentation should give one the basic understanding of its core functionalites.</p>
+<p>To make it short, it is <a href="https://docs.python.org/2/library/argparse.html"><code>argparse</code></a> built on top of yaml file, allowing <code>arguments to be defined in a tree structure</code>.</p>
+<h2>Configuration architecture</h2>
+
+<ul>
+<li>config.yaml<ul>
+<li>models/<ul>
+<li>segmentation.yaml (architecture of all seg models)</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4>Experiment</h4>
+
+<p>The experiment conf defines are going to be done.</p>
+<pre><code class="yaml">experiment:
+    experiment_name: &quot;&quot; # Wether to use hydra naming convention for the experiment
+    log_dir: &quot;&quot; # Wether to use hydra automatic path generation for saving training
+    resume: True  # Wether to load model
+    name: RSConv_2LD # Name of the model to be created
+    task: segmentation # Task to be benchmarked
+    dataset: shapenet # Dataset to be loaded
+</code></pre>
+
+<h6> The associated logging </h6>
+
+<p>As experiment is empty, it will use hydra naming convention for the experiment
+As log_dir is empty, it will use hydra naming convention for the log directory
+{path_to_project}/outputs/2019-12-28/12-05-45 (Y-M-D/H-M-S)</p>
+<p>The <code>name</code> is let to the user choose.</p>
+<h6>The associated dataset</h6>
+
+<p><code>experiment.dataset</code> value is used as a key to dynamically choose the associated dataset arguments</p>
+<h6> The associated visualization </h6>
+
+<p>The framework currently support both <a href="https://www.wandb.com/"><code>wandb</code></a> and <a href="https://www.tensorflow.org/tensorboard"><code>tensorboard</code></a></p>
+<pre><code class="yaml"># parameters for Weights and Biases
+wandb:
+    project: benchmarking
+    log: False
+
+# parameters for TensorBoard Visualization
+tensorboard:
+    log: True
+</code></pre>
+
+<h4> Training arguments </h4>
+
+<pre><code class="yaml">training:
+    shuffle: True
+    num_workers: 8
+    batch_size: 8
+    cuda: 1
+    epochs: 350
+    optimizer: Adam
+    lr : 0.001
+    weight_name: 'default'
+    precompute_multi_scale: False
+</code></pre>
+
+<p></br></p>
+<ul>
+<li>
+<p><code>weight_name</code>: Used when <code>resume is True</code>, <code>select</code> with model to load from <code>[metric_name..., default]</code></p>
+</li>
+<li>
+<p><code>precompute_multi_scale</code>: Compute multiscate features on cpu for faster</p>
+</li>
+</ul>
+<h4> Architecture of the loaded model </h4>
+
+<p><code>experiment.name</code> value is used as a key to dynamically choose the associated model architecture</p>
+<p>Here, <code>RSConv_2LD</code> is a child model from the <code>type: RSConv</code>.</p>
+<pre><code class="python">RSConv_2LD:
+    type: RSConv
+    down_conv:
+        module_name: RSConv
+        ratios: [0.2, 0.25]
+        radius: [0.1, 0.2]
+        local_nn: [[10, 8, FEAT], [10, 32, 64, 64]]
+        down_conv_nn: [[FEAT, 16, 32, 64], [64, 64, 128]]
+    innermost:
+        module_name: GlobalBaseModule
+        aggr: max
+        nn: [128 + FEAT, 128] 
+    up_conv:
+        module_name: FPModule
+        ratios: [1, 0.25, 0.2]
+        radius: [0.2, 0.2, 0.1]
+        up_conv_nn: [[128 + 128, 64], [64 + 64, 64], [64, 64]]
+        up_k: [1, 3, 3]
+        skip: True
+    mlp_cls:
+        nn: [64, 64, 64, 64]
+        dropout: 0.5
+</code></pre>
+
+<p>Model definition will be discussed more in details later on.</p>
+<h1 id="create-a-new-dataset">Create a new dataset</h1>
+<p>Create ShapeNet dataset from <code>Pytorch Geometric</code></p>
+<p>Naming matters as we use them to automatically create the dataset with its given arguments.</p>
+<p>One need to create a new file in datasets/ with the following name {dataset_name}_dataset.py.
+We create <code>shapenet_dataset.py</code> file.</p>
+<p>One need to create a dataset class with the following name {dataset_name}dataset.py ().
+We create <code>ShapeNetDataset.py</code> class which inherit from <code>BaseDataset</code> class.
+The dataset is going to receive automatically the associated dataset_opt, training_opt.</p>
+<pre><code class="python">class ShapeNetDataset(BaseDataset):
+
+    def __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+
+        ...
+
+</code></pre>
+
+<p>In order to implement a working dataset, one should define a train_dataset, test_dataset and (optionally: val_dataset)
+and call the <code>create_dataloaders</code> function with the created {}_dataset from the parent <code>BaseDataset</code> class</p>
+<pre><code class="python">class ShapeNetDataset(BaseDataset):
+
+    def __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+
+        self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
+        self._category = dataset_opt.category
+        pre_transform = T.NormalizeScale()
+        train_dataset = ShapeNet(self._data_path, self._category, train=True,
+                                 pre_transform=pre_transform)
+        test_dataset = ShapeNet(self._data_path, self._category, train=False,
+                                pre_transform=pre_transform)
+
+        # The function creates the associated dataset using the training arguments and some dataset_opt
+        self._create_dataloaders(train_dataset, test_dataset, val_dataset=None)
+</code></pre>
+
+<p>Here is the implementation of BaseDataset</p>
+<pre><code class="python">class BaseDataset():
+    def __init__(self, dataset_opt, training_opt):
+        self.dataset_opt = dataset_opt
+        self.training_opt = training_opt
+        self.strategies = {}
+
+    def _create_dataloaders(self, train_dataset,  test_dataset, val_dataset=None):
+        &quot;&quot;&quot; Creates the data loaders. Must be called in order to complete the setup of the Dataset
+        &quot;&quot;&quot;
+        self._num_classes = train_dataset.num_classes
+        self._feature_dimension = self.extract_point_dimension(train_dataset)
+        self._train_loader = DataLoader(train_dataset, 
+                                        batch_size=self.training_opt.batch_size, 
+                                        shuffle=self.training_opt.shuffle,
+                                        num_workers=self.training_opt.num_workers)
+
+        self._test_loader = DataLoader(test_dataset, 
+                                       batch_size=self.training_opt.batch_size, 
+                                       shuffle=False,
+                                       num_workers=self.training_opt.num_workers)
+
+    def test_dataloader(self):
+        return self._test_loader
+
+    def train_dataloader(self):
+        return self._train_loader
+
+    @property
+    def num_classes(self):
+        return self._num_classes
+
+    @property
+    def weight_classes(self):
+        return getattr(self._train_loader.dataset, &quot;weight_classes&quot;, None)
+
+    @property
+    def feature_dimension(self):
+        return self._feature_dimension
+
+    @staticmethod
+    def extract_point_dimension(dataset: Dataset):
+        sample = dataset[0]
+        if sample.x is None:
+            return 3  # (x,y,z)
+        return sample.x.shape[1]
+
+    def _set_multiscale_transform(self, batch_transform):
+        for _, attr in self.__dict__.items():
+            if isinstance(attr, DataLoader):
+                def collate_fn(data_list): return BatchWithTransform.from_data_list_with_transform(
+                    data_list, [], batch_transform)
+                setattr(attr, &quot;collate_fn&quot;, collate_fn)
+
+    def set_strategies(self, model, precompute_multi_scale=False):
+        strategies = model.get_sampling_and_search_strategies()
+        batch_transform = MultiScaleTransform(strategies, precompute_multi_scale)
+        self._set_multiscale_transform(batch_transform)
+</code></pre>
+
+<h1 id="create-a-new-model">Create a new model</h1>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../.." class="btn btn-neutral float-right" title="About">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../.." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../.." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../.." style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>
