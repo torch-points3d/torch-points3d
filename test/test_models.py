@@ -48,7 +48,7 @@ class TestModelUtils(unittest.TestCase):
     def test_pointnet2(self):
         model_type = 'pointnet2'
         params = self.config['models'][model_type]
-        dataset = MockDataset(5)
+        dataset = MockDataset(1)
         model = find_model_using_name(model_type, 'segmentation', params, dataset)
         model.set_input(dataset[0])
         model.forward()

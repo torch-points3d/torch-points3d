@@ -96,7 +96,7 @@ class BaseTracker:
 
 class SegmentationTracker(BaseTracker):
 
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = None):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = ""):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
