@@ -1,9 +1,9 @@
-![Screenshot](logo.png)
+![Screenshot](/imgs/logo.png)
 
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro).
 
-We aim at building a tool for both benchmarking SOTA models and to efficiently pursue research for point cloud analysis.
+We aim at building a tool for both benchmarking SOTA models and to efficiently pursue research for point cloud analysis with hope to bring them into real-life applications.
 
 <h2>Core features</h2>
 
@@ -14,6 +14,17 @@ We aim at building a tool for both benchmarking SOTA models and to efficiently p
 * ```2 API``` to write models ```(compact / sequential)``` to ease reproducibility
 * Several visualiation tool ```(tensorboard, wandb)``` and ```dynamic metric-based model checkpointing``` for one to customize
 * ```Dynamic customized placeholder resolution``` for smart model definition
+
+<h2>Current supported models</h2>
+
+* [```RandLA-Net```: Efficient Semantic Segmentation of Large-Scale Point Clouds ](https://arxiv.org/pdf/1911.11236.pdf)
+* [```Relation-Shape Convolutional (RSConv)``` Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601)
+* [```KPConv```: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1904.08889)
+* [```PointCNN```: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791)
+* [```PointNet++```: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
+
+and much more to come ...
+
 
 <h2>Current supported tasks</h2>
 
