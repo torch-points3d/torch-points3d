@@ -33,9 +33,6 @@ The framework allows lean and yet complex model to be built with minimum effort.
 
 ## Getting started
 You will first need to install [poetry](https://poetry.eustace.io/) in order to setup a virtual environments and install the relevant packages, then run
-
-## Getting started
-You will first need to install [poetry](https://poetry.eustace.io/) in order to setup a virtual environments and install the relevant packages, then run
 ```
 poetry install
 ```
