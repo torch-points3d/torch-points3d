@@ -2,4 +2,6 @@ site_name: Deep Point Cloud Benchmark
 nav:
     - Home: index.md
     - How to do Series: how_to_do/how_to_do.md
+    - About: index.md
+
 theme: readthedocs
