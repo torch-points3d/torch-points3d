@@ -4,7 +4,7 @@ This is a framework for running common deep learning models for point cloud anal
 
 **[Documentation](https://deeppointcloud-benchmarks.readthedocs.io/en/latest/)** | **[Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html)** | **[Facebook Hydra](https://hydra.cc/)**
 
-The framework allows lean and yet complex model to be built with minimum effort. 
+The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
 # COMPACT API
 ```yaml
@@ -41,6 +41,8 @@ This will install all required dependencies in a new virtual environment.
 ```
 poetry run python train.py tested_model.name=pointnet2
 ```
+
+![Project Logo](/docs/logging.png)
 
 # Benchmark
 ## S3DIS
