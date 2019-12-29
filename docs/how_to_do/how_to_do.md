@@ -236,7 +236,7 @@ As many created models for segmentation, U-Net architecture is used as a backbon
 
 RSConv doesn't make exception and here are screenshot from the paper:
 
-![RSConv](/imgs/rs_conv_archi.png)
+![RSConv](../imgs/rs_conv_archi.png)
 
 Let's implement this new model
 
@@ -333,7 +333,7 @@ class BaseConvolutionDown(BaseConvolution):
 
 The Relation Shape Convolution is main contribution of the paper. Here is what we need to implement.
 
-![RSConv](/imgs/rs_conv_conv.png)
+![RSConv](../imgs/rs_conv_conv.png)
 
 ```python
 class Convolution(MessagePassing):
