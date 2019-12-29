@@ -41,8 +41,9 @@ This will install all required dependencies in a new virtual environment.
 ```
 poetry run python train.py tested_model.name=pointnet2
 ```
+And you should see something like that
 
-![Project Logo](/docs/logging.png)
+![logging](/docs/imgs/logging.png)
 
 # Benchmark
 ## S3DIS
