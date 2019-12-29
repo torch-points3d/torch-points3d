@@ -151,7 +151,7 @@ class PointCNNConvDown(BaseConvolutionDown):
         D=None, 
         C1=None, 
         C2=None,
-        hidden_channels=None,
+        hidden_channel=None,
         *args, 
         **kwargs,
     ):
@@ -160,7 +160,7 @@ class PointCNNConvDown(BaseConvolutionDown):
             DilatedKNNNeighbourFinder(K, D)
         )
 
-        self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channels)
+        self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channel)
 
     def conv(self, x, pos, edge_index, batch):
         return self._conv.forward(x, pos, edge_index)

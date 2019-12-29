@@ -49,7 +49,7 @@ class UnetBasedModel(BaseModel):
         """
         super(UnetBasedModel, self).__init__(opt)
         #detect which options format has been used to define the model 
-        if type(opt.down_conv) is ListConfig:
+        if type(opt.down_conv) is ListConfig or 'down_conv_nn' not in opt.down_conv:
             self._init_from_layer_list_format(opt, model_type, dataset, modules_lib)
         else:
             self._init_from_compact_format(opt, model_type, dataset, modules_lib)

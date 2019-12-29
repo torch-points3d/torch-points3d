@@ -7,7 +7,7 @@ def resolve_model(model_config, dataset, tested_task):
     #placeholders to subsitute 
     constants = {
         'FEAT': dataset.feature_dimension, 
-        'TASK': tested_task
+        'TASK': tested_task,
     }
 
     #user defined contants to subsitute 
