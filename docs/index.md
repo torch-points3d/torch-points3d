@@ -3,6 +3,8 @@
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro).
 
+Here is the link toward the [```Github```](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/doc) project.
+
 We aim at building a tool for both benchmarking SOTA models and to efficiently pursue research for point cloud analysis with hope to bring them into real-life applications.
 
 <h2>Core features</h2>
