@@ -3,7 +3,7 @@
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on pytorch geometric and hydra core.
 
 
-**[Documentation](https://deeppointcloud-benchmarks.readthedocs.io/en/latest/)** | **[Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) | **[Facebook Hydra](https://hydra.cc/)**
+**[Documentation](https://deeppointcloud-benchmarks.readthedocs.io/en/latest/) | **[Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) | **[Facebook Hydra](https://hydra.cc/)**
 
 The framework allows lean and yet complex model to be built with minimum effort. 
 
