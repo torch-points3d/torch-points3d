@@ -2,4 +2,6 @@ site_name: Deep Point Cloud Benchmark
 nav:
     - Home: index.md
     - Introduction by Example: how_to_do/how_to_do.md
+repo_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+site_url: http://keras.io/
 theme: readthedocs

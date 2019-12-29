@@ -7,6 +7,7 @@ Here is the link toward the [```Github```](https://github.com/nicolas-chaulet/de
 
 We aim at building a tool for both benchmarking SOTA models and to efficiently pursue research for point cloud analysis with hope to bring them into real-life applications.
 
+
 <h2>Core features</h2>
 
 * ```Task driven``` implementation with dynamic model and dataset resolution from arguments
