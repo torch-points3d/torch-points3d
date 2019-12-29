@@ -1,4 +1,4 @@
-![Screenshot](/imgs/logo.png)
+![Screenshot](/site_dir/imgs/logo.png)
 
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro).
