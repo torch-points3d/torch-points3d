@@ -9,7 +9,12 @@ sys.path.append(ROOT)
 
 from models.utils import find_model_using_name
 from models.pointnet2.nn import SegmentationModel
+from models.model_building_utils.model_definition_resolver import resolve_model
 
+#calls resolve_model, then find_model_using_name
+def _find_model_using_name(model_type, task, model_config, dataset):
+    resolve_model(model_config, dataset, task)
+    return find_model_using_name(model_type, task, model_config, dataset)
 
 class MockDataset(torch.utils.data.Dataset):
     def __init__(self, feature_size=0):
@@ -43,13 +48,13 @@ class TestModelUtils(unittest.TestCase):
             print(model_name)
             if model_name not in ["MyTemplateModel", "Randlanet_Res", "Randlanet_Conv"]:
                 params = self.config['models'][model_name]
-                find_model_using_name(params.type, 'segmentation', params, MockDataset())
+                _find_model_using_name(params.type, 'segmentation', params, MockDataset(6))
 
     def test_pointnet2(self):
         model_type = 'pointnet2'
         params = self.config['models'][model_type]
         dataset = MockDataset(5)
-        model = find_model_using_name(model_type, 'segmentation', params, dataset)
+        model = _find_model_using_name(model_type, 'segmentation', params, dataset)
         model.set_input(dataset[0])
         model.forward()
 
@@ -57,7 +62,7 @@ class TestModelUtils(unittest.TestCase):
         model_type = 'KPConv'
         params = self.config['models']['SimpleKPConv']
         dataset = MockDataset(5)
-        model = find_model_using_name(model_type, 'segmentation', params, dataset)
+        model = _find_model_using_name(model_type, 'segmentation', params, dataset)
         model.set_input(dataset[0])
         model.forward()
 

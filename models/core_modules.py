@@ -96,7 +96,10 @@ class BaseConvolutionUp(BaseConvolution):
 
         if x_skip is not None and self._skip:
             x = torch.cat([x, x_skip], dim=1)
-        batch_obj.x = self.nn(x)
+        if hasattr(self, 'nn'):
+            batch_obj.x = self.nn(x)
+        else:
+            batch_obj.x = x
         copy_from_to(data_skip, batch_obj)
         return batch_obj
 
@@ -134,8 +137,7 @@ class FPModule(BaseConvolutionUp):
 
     def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
         super(FPModule, self).__init__(None)
-        if kwargs.get('index') == 0 and nb_feature is not None:
-            up_conv_nn = utils.resolve_mlp_list(up_conv_nn, FEAT = nb_feature)
+
         self.k = up_k
         self.nn = MLP(up_conv_nn)
 

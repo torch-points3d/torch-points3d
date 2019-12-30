@@ -1,10 +1,24 @@
 import os
+from os import path as osp
 import tempfile
 import warnings
 import sys
 import torch
 
 from models.base_model import BaseModel
+from metrics.colored_tqdm import COLORS
+from utils.utils import colored_print
+
+DEFAULT_METRICS_FUNC = {'iou': max, 'acc': max, 'loss': min}  # Those map subsentences to their optimization functions
+
+
+def get_model_checkpoint(model: BaseModel, log_dir: str = None, check_name: str = None, resume: bool = True, weight_name: str = None):
+
+    model_checkpoint: ModelCheckpoint = ModelCheckpoint(log_dir, check_name, resume)
+
+    if resume:
+        model_checkpoint.initialize_model(model, weight_name)
+    return model_checkpoint
 
 
 class Checkpoint(object):
@@ -30,7 +44,6 @@ class Checkpoint(object):
         self._filled = False
 
     def save_objects(self, models_to_save, stage, current_stat, optimizer, scheduler, **kwargs):
-        print(models_to_save.keys())
         self._objects['models'] = models_to_save
         self._objects['stats'][stage].append(current_stat)
         self._objects['optimizer'] = optimizer
@@ -88,8 +101,16 @@ class Checkpoint(object):
 
 class ModelCheckpoint(object):
 
-    def __init__(self, to_save: str = None, check_name: str = None):
+    def __init__(self, to_save: str = None, check_name: str = None, resume: bool = True):
         self._checkpoint = Checkpoint.load_objects(to_save, check_name)
+        self._resume = resume
+
+    @property
+    def start_epoch(self):
+        if self._resume:
+            return self.get_starting_epoch()
+        else:
+            return 1
 
     def get_starting_epoch(self):
         return len(self._checkpoint.stats["train"]) + 1
@@ -108,15 +129,24 @@ class ModelCheckpoint(object):
         raise Exception(
             'The metric name doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}')
 
-    def save_object(self, kwargs, stage, n_iter, metrics, default_metrics_func):
+    def save_best_models_under_current_metrics(self, model: BaseModel, metrics_holder: dict, **kwargs):
+        """[This function is responsible to save checkpoint under the current metrics and their associated DEFAULT_METRICS_FUNC]
+
+        Arguments:
+            model {[BaseModel]} -- [Model]
+            metrics_holder {[Dict]} -- [Need to contain stage, epoch, current_metrics]
+        """
+
+        metrics = metrics_holder['current_metrics']
+        stage = metrics_holder['stage']
+        epoch = metrics_holder['epoch']
 
         stats = self._checkpoint.stats
-        model = kwargs.get('model')
         state_dict = model.state_dict()
         optimizer = model.optimizer
 
         current_stat = {}
-        current_stat['epoch'] = n_iter
+        current_stat['epoch'] = epoch
 
         models_to_save = self._checkpoint.models_to_save
 
@@ -126,21 +156,32 @@ class ModelCheckpoint(object):
         if len(stats[stage]) > 0:
             latest_stats = stats[stage][-1]
 
+            msg = ''
+            improved_metric = 0
+
             for metric_name, current_metric_value in metrics.items():
                 current_stat[metric_name] = current_metric_value
 
-                metric_func = self.find_func_from_metric_name(metric_name, default_metrics_func)
-                best_metric = latest_stats['best_{}'.format(metric_name)]
-                best_value = metric_func(best_metric, current_metric_value)
+                metric_func = self.find_func_from_metric_name(metric_name, DEFAULT_METRICS_FUNC)
+                best_metric_from_stats = latest_stats['best_{}'.format(metric_name)]
+                best_value = metric_func(best_metric_from_stats, current_metric_value)
                 current_stat['best_{}'.format(metric_name)] = best_value
 
                 # This new value seems to be better under metric_func
                 if (("test" == stage) and (current_metric_value == best_value)):  # Update the model weights
                     models_to_save['best_{}'.format(metric_name)] = state_dict
+
+                    msg += "{}: {} -> {}, ".format(metric_name,
+                                                   best_metric_from_stats,
+                                                   best_value)
+                    improved_metric += 1
+
+            if improved_metric > 0:
+                colored_print(COLORS.VAL_COLOR, msg[:-2])
         else:
             # stats[stage] is empty.
             for metric_name, metric_value in metrics.items():
                 current_stat[metric_name] = metric_value
                 current_stat['best_{}'.format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, None, **kwargs)
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, model.scheduler, **kwargs)

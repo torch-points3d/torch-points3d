@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import torch
 from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
 
@@ -34,8 +35,13 @@ class BaseModel(torch.nn.Module):
         self.loss_names = []
         self.output = None
         self._optimizer: Optional[Optimizer] = None
+        self._scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
         self._precompute_multi_scale = opt.precompute_multi_scale
+
+    @property
+    def scheduler(self):
+        return self._scheduler
 
     @property
     def optimizer(self):

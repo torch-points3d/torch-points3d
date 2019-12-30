@@ -1,12 +1,34 @@
-# Deep Point Cloud Benchmark
-[![Actions Status](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/actions)
+![Project Logo](/docs/logo.png)
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on pytorch geometric and hydra core.
 
-# Benchmark
-## S3DIS
+**[Documentation](https://deeppointcloud-benchmarks.readthedocs.io/en/latest/)** | **[Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html)** | **[Facebook Hydra](https://hydra.cc/)**
 
-[RSConv 2LD](/benchmark/s3dis_fold5/RSConv_2LD.md)
+The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
+
+# COMPACT API
+```yaml
+  # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
+  pointnet2:
+      type: pointnet2
+      down_conv:
+          module_name: SAModule
+          ratios: [0.2, 0.25]
+          radius: [0.2, 0.4]
+          down_conv_nn: [[FEAT + 3, 64, 64, 128], [128 + 3, 128, 128, 256]]
+      up_conv:
+          module_name: FPModule
+          up_conv_nn: [[1024 + 256, 256, 256], [256 + 128, 256, 128], [128 + FEAT, 128, 128, 128]]
+          up_k: [1, 3, 3]   
+          skip: True    
+      innermost:
+          module_name: GlobalBaseModule
+          aggr: max
+          nn: [256 + 3, 256, 512, 1024]
+      mlp_cls: 
+          nn: [128, 128, 128, 128, 128]
+          dropout: 0.5
+```
 
 ## Getting started
 You will first need to install [poetry](https://poetry.eustace.io/) in order to setup a virtual environments and install the relevant packages, then run
@@ -15,14 +37,18 @@ poetry install
 ```
 This will install all required dependencies in a new virtual environment.
 
-## Benchmark pointnet++ on Segmentation task for shapenet (default dataset)
+## Train pointnet++ on Segmentation task for dataset shapenet
 ```
-poetry run python train.py tested_model.name=pointnet2
+poetry run python train.py experiment.name=pointnet2 experiment.data=shapenet
 ```
+And you should see something like that
 
-## Documentation
+![logging](/docs/imgs/logging.png)
 
-To come :)
+# Benchmark
+## S3DIS
+
+[RSConv 2LD](/benchmark/s3dis_fold5/RSConv_2LD.md)
 
 ## Contributing
 We use [autopep8](https://github.com/hhatto/autopep8) for formating with the following options:

@@ -6,8 +6,7 @@ from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
 class SAModule(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, nb_feature=None, *args, **kwargs):
         super(SAModule, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
-        if down_conv_nn is not None and nb_feature is not None:
-            down_conv_nn[0] = nb_feature + 3
+
         local_nn = MLP(down_conv_nn) if down_conv_nn is not None else None
         self._conv = PointConv(local_nn=local_nn, global_nn=None)
 
