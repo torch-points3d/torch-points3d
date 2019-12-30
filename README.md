@@ -37,9 +37,9 @@ poetry install
 ```
 This will install all required dependencies in a new virtual environment.
 
-## Benchmark pointnet++ on Segmentation task for shapenet (default dataset)
+## Train pointnet++ on Segmentation task for dataset shapenet
 ```
-poetry run python train.py tested_model.name=pointnet2
+poetry run python train.py experiment.name=pointnet2 experiment.data=shapenet
 ```
 And you should see something like that
 
