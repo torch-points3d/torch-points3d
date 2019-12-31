@@ -7,3 +7,4 @@ wandb
 logs
 results
 site
+*.DS_Store

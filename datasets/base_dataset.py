@@ -34,7 +34,7 @@ class BaseDataset():
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
         self._num_classes = train_dataset.num_classes
-        self._feature_dimension = self.extract_point_dimension(train_dataset)
+        self._feature_dimension = train_dataset.num_features
         self._train_loader = DataLoader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
                                         num_workers=self.training_opt.num_workers)
 
@@ -58,13 +58,6 @@ class BaseDataset():
     @property
     def feature_dimension(self):
         return self._feature_dimension
-
-    @staticmethod
-    def extract_point_dimension(dataset: Dataset):
-        sample = dataset[0]
-        if sample.x is None:
-            return 3  # (x,y,z)
-        return sample.x.shape[1]
 
     def _set_multiscale_transform(self, batch_transform):
         for _, attr in self.__dict__.items():
