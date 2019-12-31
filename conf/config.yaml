@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    name: pointcnn_small
+    name: pointnet2
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
@@ -35,6 +35,7 @@ data:
         dataroot: data
         category: Airplane
         normal: True
+        num_points: 2048
 
     # This dataset can be used only for classification
     modelnet: 
