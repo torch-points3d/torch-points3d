@@ -130,15 +130,16 @@ class ShapeNet(InMemoryDataset):
         ]
 
     def download(self):
-        path = download_url(self.url_with_normal, self.raw_dir)
-        extract_zip(path, self.raw_dir)
+        path = download_url(self.url_with_normal, self.root)
+        extract_zip(path, self.root)
+        os.rename(os.path.join(self.root, 'shapenetcore_partanno_segmentation_benchmark_v0_normal'), self.raw_dir)
         os.unlink(path)
 
     def process_raw_files(self, raw_file_paths):
         data_list = []
         categories_ids_to_process = [self.category_ids[cat] for cat in self.categories]
         cat_idx = {self.category_ids[cat]: i for i, cat in enumerate(self.categories)}
-        cat_ys = {}
+
         for raw_file in raw_file_paths:
             cat = raw_file.split(os.path.sep)[0]
             if cat not in categories_ids_to_process:
@@ -199,9 +200,10 @@ class ShapeNetDataset(BaseDataset):
         self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
         self._category = dataset_opt.category
         pre_transform = T.NormalizeScale()
+        transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(self._data_path, self._category, normal=dataset_opt.normal, split='trainval',
-                                 pre_transform=pre_transform)
-        test_dataset = ShapeNet(self._data_path, self._category,  normal=dataset_opt.normal, split='test',
-                                pre_transform=pre_transform)
+                                 pre_transform=pre_transform, transform=transform)
+        test_dataset = ShapeNet(self._data_path, self._category, normal=dataset_opt.normal, split='test',
+                                pre_transform=pre_transform, transform=transform)
 
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
