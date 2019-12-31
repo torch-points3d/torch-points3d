@@ -32,7 +32,8 @@ class ShapeNet(InMemoryDataset):
             (default: :obj:`None`)
         split (string): If :obj:`"train"`, loads the training dataset.
             If :obj:`"val"`, loads the validation dataset.
-            If :obj:`"test"`, loads the test dataset. (default: :obj:`"train"`)
+            If :obj:`"val"`, loads the training and validation dataset
+            If :obj:`"test"`, loads the test dataset. (default: :obj:`"trainval"`)
         transform (callable, optional): A function/transform that takes in an
             :obj:`torch_geometric.data.Data` object and returns a transformed
             version. The data object will be transformed before every access.
@@ -86,7 +87,7 @@ class ShapeNet(InMemoryDataset):
         'Knife': [22, 23]
     }
 
-    def __init__(self, root, categories=None, normal=True, split='train', transform=None,
+    def __init__(self, root, categories=None, normal=True, split='trainval', transform=None,
                  pre_transform=None, pre_filter=None):
         if categories is None:
             categories = list(self.category_ids.keys())
@@ -109,11 +110,13 @@ class ShapeNet(InMemoryDataset):
             path = self.processed_paths[1]
         elif split == 'test':
             path = self.processed_paths[2]
+        elif split == 'trainval':
+            path = self.processed_paths[3]
         else:
-            raise ValueError("Not supported split: %s, should be train, val or test" % split)
+            raise ValueError("Not supported split: %s, should be train, val, trainval or test" % split)
 
         self.data, self.slices = torch.load(path)
-        self.y_mask = torch.load(y_mask)
+        self.y_mask = torch.load(self.processed_paths[4])
 
     @property
     def raw_file_names(self):
@@ -123,7 +126,7 @@ class ShapeNet(InMemoryDataset):
     def processed_file_names(self):
         cats = '_'.join([cat[:3].lower() for cat in self.categories])
         return [
-            os.path.join('{}_{}.pt'.format(cats, s)) for s in ['train', 'val', 'test', 'y_mask']
+            os.path.join('{}_{}.pt'.format(cats, s)) for s in ['train',  'val', 'test', 'trainval', 'y_mask']
         ]
 
     def download(self):
@@ -158,6 +161,7 @@ class ShapeNet(InMemoryDataset):
         return data_list
 
     def process(self):
+        trainval = []
         for i, split in enumerate(['train', 'val', 'test']):
             with open(os.path.join(self.raw_dir, 'train_test_split', 'shuffled_%s_file_list.json' % split), 'r') as fp:
                 raw_files = json.load(fp)
@@ -165,7 +169,10 @@ class ShapeNet(InMemoryDataset):
                              for f in raw_files]  # removing first directory, useless here
                 file_split = raw_files
             data_list = self.process_raw_files(file_split)
+            if split == 'train' or split == 'val':
+                trainval += data_list
             torch.save(self.collate(data_list), self.processed_paths[i])
+        torch.save(self.collate(trainval), self.processed_paths[3])
 
         max_y = 0
         for labels in self.seg_classes.values():
@@ -173,7 +180,7 @@ class ShapeNet(InMemoryDataset):
         y_mask = torch.zeros((len(self.seg_classes.keys()), max_y+1), dtype=torch.bool)
         for i, labels in enumerate(self.seg_classes.values()):
             y_mask[i, labels] = 1
-        torch.save(y_mask, self.processed_paths[3])
+        torch.save(y_mask, self.processed_paths[4])
 
     def __repr__(self):
         return '{}({}, categories={}, normal: {})'.format(self.__class__.__name__,
@@ -192,9 +199,9 @@ class ShapeNetDataset(BaseDataset):
         self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
         self._category = dataset_opt.category
         pre_transform = T.NormalizeScale()
-        train_dataset = ShapeNet(self._data_path, self._category, normal=dataset_opt.normal, train=True,
+        train_dataset = ShapeNet(self._data_path, self._category, normal=dataset_opt.normal, split='trainval',
                                  pre_transform=pre_transform)
-        test_dataset = ShapeNet(self._data_path, self._category,  normal=dataset_opt.normal, train=False,
+        test_dataset = ShapeNet(self._data_path, self._category,  normal=dataset_opt.normal, split='test',
                                 pre_transform=pre_transform)
 
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
