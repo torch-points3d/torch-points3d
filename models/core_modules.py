@@ -7,7 +7,7 @@ from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNor
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
-import models.utils as utils 
+import models.utils as utils
 
 
 def copy_from_to(data, batch):
