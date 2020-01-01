@@ -3,7 +3,7 @@ experiment:
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
-    name: RSConv_2LD
+    name: PointNet
     task: segmentation
     dataset: shapenet
 

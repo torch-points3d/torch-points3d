@@ -1,9 +1,8 @@
 
 import torch 
 from torch.nn import Linear
-from torch_geometric.nn import global_max_pool
 
-class LinearTransformSTNkD(torch.nn.Module):
+class BaseLinearTransformSTNkD(torch.nn.Module):
     '''STN which learns a k-dimensional linear transformation
 
     Arguments:
@@ -14,7 +13,7 @@ class LinearTransformSTNkD(torch.nn.Module):
     '''
 
     def __init__(self, nn, nn_feat_size, k=3, batch_size=1):
-        super(LinearTransformSTNkD, self).__init__()
+        super().__init__()
 
         self.nn = nn
         self.k = k 
@@ -40,8 +39,10 @@ class LinearTransformSTNkD(torch.nn.Module):
         trans = trans + self.identity.to(feat_x.device)
         trans = trans.view(-1, self.k, self.k)
 
+        # import pdb; pdb.set_trace()
         # convert trans_x from (N, K) to (B, N, K) to do batched matrix multiplication
-        batch_x = trans_x.view(self.batch_size, -1, trans_x.shape[1])
-        x_transformed = torch.bmm(batch_x, trans)
+        # batch_x = trans_x.view(self.batch_size, -1, trans_x.shape[1])
+        batch_x = trans_x.view(trans_x.shape[0], 1, trans_x.shape[1])
+        x_transformed = torch.bmm(batch_x, trans[batch])
 
         return x_transformed.view(len(trans_x), trans_x.shape[1])

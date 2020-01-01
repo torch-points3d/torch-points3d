@@ -7,7 +7,8 @@ def resolve_model(model_config, dataset, tested_task):
     #placeholders to subsitute 
     constants = {
         'FEAT': dataset.feature_dimension, 
-        'TASK': tested_task
+        'TASK': tested_task,
+        'N_CLS': dataset.num_classes if hasattr(dataset, 'num_classes') else None
     }
 
     #user defined contants to subsitute 
