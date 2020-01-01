@@ -7,7 +7,7 @@ from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNor
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
-import models.utils as utils 
+import models.utils as utils
 
 
 def copy_from_to(data, batch):
@@ -48,7 +48,7 @@ class BaseConvolutionDown(BaseConvolution):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         if self._precompute_multi_scale:
-            idx = getattr(data, "idx_{}".format(self._index), None)
+            idx = getattr(data, "index_{}".format(self._index), None)
             edge_index = getattr(data, "edge_index_{}".format(self._index), None)
         else:
             idx = self.sampler(pos, batch)
@@ -58,6 +58,7 @@ class BaseConvolutionDown(BaseConvolution):
             batch_obj.edge_index = edge_index
 
         batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
+
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]
         copy_from_to(data, batch_obj)

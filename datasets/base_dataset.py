@@ -3,6 +3,7 @@ import logging
 
 import torch
 import torch_geometric
+import torch_geometric.transforms as T
 from torch_geometric.data import Batch, DataLoader, Dataset
 
 from datasets.transforms import MultiScaleTransform
@@ -10,18 +11,6 @@ from datasets.transforms import MultiScaleTransform
 
 # A logger for this file
 log = logging.getLogger(__name__)
-
-
-class BatchWithTransform(Batch):
-
-    @staticmethod
-    def from_data_list_with_transform(data_list, follow_batch=[], batch_transform=None):
-        batch = Batch.from_data_list(
-            data_list, follow_batch)
-        if batch_transform is not None:
-            return batch_transform(batch).contiguous()
-        else:
-            return batch
 
 
 class BaseDataset():
@@ -59,14 +48,19 @@ class BaseDataset():
     def feature_dimension(self):
         return self._feature_dimension
 
-    def _set_multiscale_transform(self, batch_transform):
+    def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
             if isinstance(attr, DataLoader):
-                def collate_fn(data_list): return BatchWithTransform.from_data_list_with_transform(
-                    data_list, [], batch_transform)
-                setattr(attr, "collate_fn", collate_fn)
+                current_transform = getattr(attr.dataset, "transform", None)
+                if current_transform is None:
+                    setattr(attr.dataset, "transform", transform)
+                else:
+                    if isinstance(current_transform, T.Compose):  # The transform contains several transformations
+                        current_transform.transforms += [transform]
+                    else:
+                        setattr(attr.dataset, "transform", T.Compose([current_transform, transform]))
 
     def set_strategies(self, model, precompute_multi_scale=False):
         strategies = model.get_sampling_and_search_strategies()
-        batch_transform = MultiScaleTransform(strategies, precompute_multi_scale)
-        self._set_multiscale_transform(batch_transform)
+        transform = MultiScaleTransform(strategies, precompute_multi_scale)
+        self._set_multiscale_transform(transform)
