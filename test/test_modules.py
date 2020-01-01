@@ -10,7 +10,7 @@ import numpy as np
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 sys.path.append(ROOT)
 
-from models.PointNet.modules import AffineSTNkD
+from models.PointNet.modules import PointNetSTN3D
 
 class TestPointnet(unittest.TestCase):
 
@@ -24,7 +24,7 @@ class TestPointnet(unittest.TestCase):
         ]).to(torch.float32)
         batch = torch.tensor([0, 0, 1, 1])
 
-        stn = AffineSTNkD(num_batches=2)
+        stn = PointNetSTN3D(batch_size=2)
 
         trans_pos = stn(pos, batch)
 
