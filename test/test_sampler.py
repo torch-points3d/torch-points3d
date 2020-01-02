@@ -26,25 +26,69 @@ class TestSampler(unittest.TestCase):
 
 
 class TestNeighboorhoodSearch(unittest.TestCase):
-    def test_radius_search(self):
+    def test_single_search(self):
         x = torch.Tensor([[-1, -1], [-1, 1], [1, -1], [1, 1]])
         batch_x = torch.tensor([0, 0, 0, 0])
         y = torch.Tensor([[-1, 0], [1, 0]])
         batch_y = torch.tensor([0, 0])
 
-        nei_finder = RadiusNeighbourFinder(1, 4)
-        self.assertEqual(nei_finder(x, y, batch_x, batch_y)[1, :].shape[0], 4)
+        nei_finder = MultiscaleRadiusNeighbourFinder(1, 4)
+        self.assertEqual(nei_finder(x, y, batch_x, batch_y, 0)[1, :].shape[0], 4)
 
-    def test_multiscale_radius_search(self):
+    def test_multi_radius_search(self):
         x = torch.Tensor([[-1, -1], [-1, 1], [1, -1], [1, 1]])
         batch_x = torch.tensor([0, 0, 0, 0])
         y = torch.Tensor([[-1, 0], [1, 0]])
         batch_y = torch.tensor([0, 0])
         nei_finder = MultiscaleRadiusNeighbourFinder([1, 10], 4)
-        multiscale = nei_finder(x, y, batch_x, batch_y)
+        multiscale = []
+        for i in range(2):
+            multiscale.append(nei_finder(x, y, batch_x, batch_y, i))
+
         self.assertEqual(len(multiscale), 2)
         self.assertEqual(multiscale[0][1, :].shape[0], 4)
         self.assertEqual(multiscale[1][1, :].shape[0], 8)
+
+    def test_multi_num_search(self):
+        x = torch.Tensor([[-1, -1], [-1, 1], [1, -1], [1, 1]])
+        batch_x = torch.tensor([0, 0, 0, 0])
+        y = torch.Tensor([[-1, 0], [1, 0]])
+        batch_y = torch.tensor([0, 0])
+        nei_finder = MultiscaleRadiusNeighbourFinder(10, [3, 4])
+        multiscale = []
+        for i in range(2):
+            multiscale.append(nei_finder(x, y, batch_x, batch_y, i))
+
+        self.assertEqual(len(multiscale), 2)
+        self.assertEqual(multiscale[0][1, :].shape[0], 6)
+        self.assertEqual(multiscale[1][1, :].shape[0], 8)
+
+    def test_multiall(self):
+        x = torch.Tensor([[-1, -1], [-1, 1], [1, -1], [1, 1]])
+        batch_x = torch.tensor([0, 0, 0, 0])
+        y = torch.Tensor([[-1, 0], [1, 0]])
+        batch_y = torch.tensor([0, 0])
+
+        nei_finder = MultiscaleRadiusNeighbourFinder([1, 10], [3, 4])
+        multiscale = []
+        for i in range(2):
+            multiscale.append(nei_finder(x, y, batch_x, batch_y, i))
+
+        self.assertEqual(len(multiscale), 2)
+        self.assertEqual(multiscale[0][1, :].shape[0], 4)
+        self.assertEqual(multiscale[1][1, :].shape[0], 8)
+
+    def test_raises(self):
+        with self.assertRaises(ValueError):
+            nei_finder = MultiscaleRadiusNeighbourFinder([1], [3, 4])
+
+        x = torch.Tensor([[-1, -1], [-1, 1], [1, -1], [1, 1]])
+        batch_x = torch.tensor([0, 0, 0, 0])
+        y = torch.Tensor([[-1, 0], [1, 0]])
+        batch_y = torch.tensor([0, 0])
+        nei_finder = MultiscaleRadiusNeighbourFinder([1, 2], [3, 4])
+        with self.assertRaises(ValueError):
+            nei_finder(x, y, batch_x, batch_y, 10)
 
 
 if __name__ == '__main__':

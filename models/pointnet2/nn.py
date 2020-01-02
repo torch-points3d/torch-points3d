@@ -18,8 +18,8 @@ class SegmentationModel(UnetBasedModel):
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get('dropout')
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
-        self.lin2 = torch.nn.Linear(nn[2], nn[3])
-        self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
+        self.lin2 = torch.nn.Linear(nn[1], nn[2])
+        self.lin3 = torch.nn.Linear(nn[2], dataset.num_classes)
 
         self.loss_names = ['loss_seg']
 

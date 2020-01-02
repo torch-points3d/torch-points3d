@@ -8,6 +8,7 @@ from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, gl
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
 import models.utils as utils
+from models.core_sampling_and_search import BaseMSNeighbourFinder
 
 
 def copy_from_to(data, batch):
@@ -59,6 +60,49 @@ class BaseConvolutionDown(BaseConvolution):
 
         batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
 
+        batch_obj.pos = pos[idx]
+        batch_obj.batch = batch[idx]
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+
+class BaseMSConvolutionDown(BaseConvolution):
+    """ Multiscale convolution down (also supports single scale). Convolution kernel is shared accross the scales
+
+        Arguments:
+            sampler  -- Strategy for sampling the input clouds
+            neighbour_finder -- Multiscale strategy for finding neighbours
+    """
+
+    def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
+        super(BaseMSConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
+
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+
+    def conv(self, x, pos, edge_index, batch):
+        raise NotImplementedError
+
+    def forward(self, data):
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
+        if self._precompute_multi_scale:
+            idx = getattr(data, "idx_{}".format(self._index), None)
+        else:
+            idx = self.sampler(pos, batch)
+            batch_obj.idx = idx
+
+        ms_x = []
+        for scale_idx in range(self.neighbour_finder.num_scales):
+            if self._precompute_multi_scale:
+                edge_index = getattr(data, "edge_index_{}_{}".format(self._index, scale_idx), None)
+            else:
+                row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx], scale_idx)
+                edge_index = torch.stack([col, row], dim=0)
+
+            ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
+
+        batch_obj.x = torch.cat(ms_x, -1)
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]
         copy_from_to(data, batch_obj)
