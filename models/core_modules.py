@@ -99,7 +99,6 @@ class BaseMSConvolutionDown(BaseConvolution):
             else:
                 row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx], scale_idx)
                 edge_index = torch.stack([col, row], dim=0)
-                # batch_obj.edge_index = edge_index # THOMAS, is this used anywhere at the moment?
 
             ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
 
