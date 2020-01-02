@@ -11,10 +11,13 @@ from models.utils import find_model_using_name
 from models.pointnet2.nn import SegmentationModel
 from models.model_building_utils.model_definition_resolver import resolve_model
 
-#calls resolve_model, then find_model_using_name
+# calls resolve_model, then find_model_using_name
+
+
 def _find_model_using_name(model_type, task, model_config, dataset):
     resolve_model(model_config, dataset, task)
     return find_model_using_name(model_type, task, model_config, dataset)
+
 
 class MockDataset(torch.utils.data.Dataset):
     def __init__(self, feature_size=0):
@@ -61,6 +64,14 @@ class TestModelUtils(unittest.TestCase):
     def test_kpconv(self):
         model_type = 'KPConv'
         params = self.config['models']['SimpleKPConv']
+        dataset = MockDataset(5)
+        model = _find_model_using_name(model_type, 'segmentation', params, dataset)
+        model.set_input(dataset[0])
+        model.forward()
+
+    def test_pointnet2ms(self):
+        model_type = 'pointnet2'
+        params = self.config['models']['pointnet2ms']
         dataset = MockDataset(5)
         model = _find_model_using_name(model_type, 'segmentation', params, dataset)
         model.set_input(dataset[0])
