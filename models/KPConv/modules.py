@@ -26,9 +26,9 @@ from torch_scatter import scatter_max
 
 # Kernel Point Convolution in Pytorch
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
-from KPConv.kernel_points import load_kernels as create_kernel_points
-from KPConv.convolution_ops import KPConv_ops, KPConv_deform_ops
-from KPConv.utils import weight_variable
+from .kernel_utils import load_kernels as create_kernel_points
+from .convolution_ops import KPConv_ops, KPConv_deform_ops
+from .utils import weight_variable
 
 
 class KPConvModels(Enum):
