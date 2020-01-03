@@ -59,13 +59,13 @@ class TestModelUtils(unittest.TestCase):
         model.set_input(dataset[0])
         model.forward()
 
-    def test_pointnet2_customekernel(self):
-        model_type = 'pointnet2_customkernel'
-        params = self.config['models']['pointnet2_kc']
-        dataset = MockDataset(5)
-        model = _find_model_using_name(model_type, 'segmentation', params, dataset)
-        model.set_input(dataset[0])
-        model.forward()
+    # def test_pointnet2_customekernel(self):
+    #     model_type = 'pointnet2_customkernel'
+    #     params = self.config['models']['pointnet2_kc']
+    #     dataset = MockDataset(5)
+    #     model = _find_model_using_name(model_type, 'segmentation', params, dataset)
+    #     model.set_input(dataset[0])
+    #     model.forward()
 
 
 if __name__ == "__main__":

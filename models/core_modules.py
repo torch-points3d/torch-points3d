@@ -156,7 +156,6 @@ class BaseDenseConvolutionDown(BaseConvolution):
                 raise NotImplementedError()
             else:
                 radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
-
             ms_x.append(self.conv(x, pos, new_pos, radius_idx))
 
         batch_obj.x = torch.cat(ms_x, -1)
