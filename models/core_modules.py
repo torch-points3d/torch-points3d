@@ -7,6 +7,8 @@ from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNor
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
+import torch_points as tp
+
 import models.utils as utils
 from models.core_sampling_and_search import BaseMSNeighbourFinder
 
@@ -53,7 +55,7 @@ class BaseConvolutionDown(BaseConvolution):
             edge_index = getattr(data, "edge_index_{}".format(self._index), None)
         else:
             idx = self.sampler(pos, batch)
-            row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
+            row, col = self.neighbour_finder(pos, pos[idx],  batch_x=batch, batch_y=batch[idx])
             edge_index = torch.stack([col, row], dim=0)
             batch_obj.idx = idx
             batch_obj.edge_index = edge_index
@@ -97,7 +99,7 @@ class BaseMSConvolutionDown(BaseConvolution):
             if self._precompute_multi_scale:
                 edge_index = getattr(data, "edge_index_{}_{}".format(self._index, scale_idx), None)
             else:
-                row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx], scale_idx)
+                row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx)
                 edge_index = torch.stack([col, row], dim=0)
 
             ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
@@ -105,6 +107,60 @@ class BaseMSConvolutionDown(BaseConvolution):
         batch_obj.x = torch.cat(ms_x, -1)
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+
+class BaseDenseConvolutionDown(BaseConvolution):
+    """ Multiscale convolution down (also supports single scale). Convolution kernel is shared accross the scales
+
+        Arguments:
+            sampler  -- Strategy for sampling the input clouds
+            neighbour_finder -- Multiscale strategy for finding neighbours
+    """
+
+    def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
+        super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
+
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+
+    def conv(self, x, pos, new_pos, radius_idx):
+        """ Implements a Dense convolution where radius_idx represents
+        the indexes of the points in x and pos to be agragated into the new feature
+        for each point in new_pos
+
+        Arguments:
+            x -- Previous features [B, N, C]
+            pos -- Previous positions [B, N, 3]
+            new_pos  -- Sampled positions [B, npoints, 3]
+            radius_idx -- Indexes to group [B, npoints, nsample]
+        """
+        raise NotImplementedError
+
+    def forward(self, data):
+        batch_obj = Batch()
+        x, pos = data.x, data.pos
+        if self._precompute_multi_scale:
+            idx = getattr(data, "idx_{}".format(self._index), None)
+        else:
+            idx = self.sampler(pos)
+            batch_obj.idx = idx
+
+        pos_flipped = pos.transpose(1, 2).contiguous()
+        new_pos = tp.gather_operation(pos_flipped, idx).transpose(1, 2).contiguous()
+
+        ms_x = []
+        for scale_idx in range(self.neighbour_finder.num_scales):
+            if self._precompute_multi_scale:
+                raise NotImplementedError()
+            else:
+                radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
+
+            ms_x.append(self.conv(x, pos, new_pos, radius_idx))
+
+        batch_obj.x = torch.cat(ms_x, -1)
+        batch_obj.pos = new_pos
         copy_from_to(data, batch_obj)
         return batch_obj
 

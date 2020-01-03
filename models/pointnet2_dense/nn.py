@@ -27,6 +27,7 @@ class SegmentationModel(UnetBasedModel):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
+            Dimensions: [B, N, ...] 
         """
         self.input = data
         self.labels = data.y
@@ -34,7 +35,7 @@ class SegmentationModel(UnetBasedModel):
     def forward(self) -> Any:
         """Standard forward"""
         data = self.model(self.input)
-        x = F.relu(self.lin1(data.x))
+        x = F.relu(self.lin1(self.input.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
