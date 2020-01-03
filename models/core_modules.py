@@ -8,7 +8,8 @@ from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, gl
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
 import models.utils as utils
-from models.core_sampling_and_search import BaseMSNeighbourFinder
+from models.core_sampling_and_search import BaseSampler, BaseNeighbourFinder, BaseMSNeighbourFinder
+import torch_points
 
 
 def copy_from_to(data, batch):
@@ -31,11 +32,17 @@ class BaseConvolution(ABC, torch.nn.Module):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
-        self.sampler = sampler
-        self.neighbour_finder = neighbour_finder
+        self.sampler: BaseSampler = sampler
+        self.neighbour_finder: BaseNeighbourFinder = neighbour_finder
 
 
 class BaseConvolutionDown(BaseConvolution):
+    """
+    This implementation is legacy and was used to work with PyG.
+    We changed for now, until the release of segment_add from torch-scatter
+    and the update of MessagePassing
+    """
+
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         super(BaseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
 
@@ -60,6 +67,39 @@ class BaseConvolutionDown(BaseConvolution):
 
         batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
 
+        batch_obj.pos = pos[idx]
+        batch_obj.batch = batch[idx]
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+
+class BaseDenseConvolutionDown(BaseConvolution):
+    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
+        super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
+
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+
+    def conv(self, x, pos, pos_support):
+        raise NotImplementedError
+
+    def forward(self, data):
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
+        if self._precompute_multi_scale:
+            pass  # TODO
+        else:
+            idx = self.sampler(pos, batch)
+
+        pos_flipped = pos.transpose(1, 2).contiguous()
+        new_pos = torch_points.gather_operation(pos_flipped, idx).transpose(1, 2).contiguous()
+
+        ms_x = []
+        for scale_idx in range(self.neighbour_finder.num_scales):
+            new_features = self.neighbour_finder(pos, new_pos, x, idx, scale_idx)
+            ms_x.append(self.conv(new_features))
+
+        batch_obj.x = torch.cat(ms_x, -1).squeeze()
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]
         copy_from_to(data, batch_obj)
