@@ -50,9 +50,18 @@ class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, 'S3DIS')
-        train_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=True,
-                                           pre_transform=None, class_weight_method=dataset_opt.class_weight_method)
-        test_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=False,
-                                          pre_transform=None)
+        pre_transform = T.NormalizeScale()
 
-        self._create_dataloaders(train_dataset, test_dataset, validation=None)
+        transform = T.Compose([
+            T.FixedPoints(dataset_opt.num_points),
+            T.RandomTranslate(0.01),
+            T.RandomRotate(15, axis=0),
+            T.RandomRotate(15, axis=1),
+        ])
+        train_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=True,
+                                           pre_transform=pre_transform, transform=transform, class_weight_method=dataset_opt.class_weight_method)
+        test_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=False,
+                                          pre_transform=pre_transform, transform=T.FixedPoints(dataset_opt.num_points))
+
+        self._create_dataloaders(train_dataset, test_dataset, validation=None,
+                                 torch_loader=training_opt.use_torch_loader)

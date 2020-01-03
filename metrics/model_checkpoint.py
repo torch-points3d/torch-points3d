@@ -29,7 +29,7 @@ class Checkpoint(object):
 
         self._to_save = to_save
         self._check_name = check_name
-        self._check_path = os.path.join(to_save, "{}.p".format(check_name))
+        self._check_path = os.path.join(to_save, "{}.pt".format(check_name))
         self._initialize_objects()
         self._load_objects()
 

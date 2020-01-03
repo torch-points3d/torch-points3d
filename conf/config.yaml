@@ -1,5 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
+    name: pointnet2
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
@@ -19,14 +20,15 @@ tensorboard:
 # Those arguments defines the training hyper-parameters
 training:
     shuffle: True
-    num_workers: 8
-    batch_size: 8
+    num_workers: 4
+    batch_size: 4
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference 
     epochs: 350
     optimizer: Adam
     lr : 0.001
     weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
+    use_torch_loader: True
 
 # Those arguments defines the available datasets
 data:
@@ -34,6 +36,8 @@ data:
         name: shapenet
         dataroot: data
         category: Airplane
+        normal: True
+        num_points: 2048
 
     # This dataset can be used only for classification
     modelnet: 
@@ -47,6 +51,8 @@ data:
         dataroot: data
         fold: 5
         class_weight_method: 'sqrt'
+        num_points: 2048
+
 
 defaults:
     - models: segmentation
