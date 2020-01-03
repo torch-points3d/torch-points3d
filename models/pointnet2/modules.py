@@ -9,6 +9,7 @@ class SAModule(BaseMSConvolutionDown):
                                        MultiscaleRadiusNeighbourFinder(radius, max_num_neighbors=radius_num_point), *args, **kwargs)
 
         local_nn = MLP(down_conv_nn) if down_conv_nn is not None else None
+
         self._conv = PointConv(local_nn=local_nn, global_nn=None)
         self._radius = radius
         self._ratio = ratio
