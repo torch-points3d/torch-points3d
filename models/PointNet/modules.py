@@ -9,7 +9,7 @@ from models.core_transforms import BaseLinearTransformSTNkD
 class MiniPointNet(torch.nn.Module):
 
     def __init__(self, local_nn, global_nn):
-        super(MiniPointNet, self).__init__()
+        super().__init__()
 
         self.local_nn = MLP(local_nn)
         self.global_nn = MLP(global_nn)
@@ -48,45 +48,6 @@ class PointNetSTNkD(BaseLinearTransformSTNkD):
     def forward(self, x, batch):
         return super().forward(x, x, batch)
 
-class PointNetGlobalFeat(torch.nn.Module):
-
-    def __init__(self, 
-        local_nn_1 = [3, 64, 64],
-        stn3d_local_nn = [3, 64, 128, 1024],
-        stn3d_global_nn = [1024, 512, 256], 
-        local_nn_2 = [64, 64, 128, 1024],
-        stnkd_k = 64,
-        stnkd_local_nn = [64, 64, 128, 1024],
-        stnkd_global_nn = [1024, 512, 256],
-        global_nn = [1024, 512, 265],
-        batch_size = 1,
-        ):
-
-        self.local_nn_1 = MLP(local_nn_1)
-        self.local_nn_2 = MLP(local_nn_2)
-
-        self.stn3d = PointNetSTN3D(stn3d_local_nn, stn3d_global_nn, batch_size)
-        self.stnkd = PointNetSTNkD(stnkd_k, stnkd_local_nn, stnkd_global_nn, batch_size)
-
-        self.global_nn = MLP(global_nn) if global_nn is not None else None
-
-    def forward(self, x, batch):
-
-        x = self.stn3d(x)
-
-        x = self.local_nn_1(x)
-
-        x = self.stnkd(x)
-
-        x = self.local_nn_2(x)
-
-        feat = global_max_pool(x, batch)
-
-        if self.global_nn is not None:
-            x = self.global_nn(x)
-
-        return x
-
 class PointNetSeg(torch.nn.Module):
 
     def __init__(self, 
@@ -98,7 +59,8 @@ class PointNetSeg(torch.nn.Module):
         feat_stn_global_nn = [1024, 512, 256],
         local_nn_2 = [64, 64, 128, 1024],
         seg_nn = [1088, 512, 256, 128, 4],
-        batch_size = 1, *args, **kwargs):
+        batch_size = 1, *args, **kwargs
+    ):
         super().__init__()
 
         self.batch_size = batch_size

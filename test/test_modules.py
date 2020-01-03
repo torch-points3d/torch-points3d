@@ -12,7 +12,7 @@ sys.path.append(ROOT)
 
 from models.PointNet.modules import PointNetSTN3D
 
-class TestPointnet(unittest.TestCase):
+class TestPointnetModules(unittest.TestCase):
 
     # test that stn forward works and is initialised with the identity
     def test_stn(self):
