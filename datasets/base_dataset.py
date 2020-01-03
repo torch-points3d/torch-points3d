@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import logging
+from functools import partial
 
 import torch
 import torch_geometric
@@ -7,6 +8,7 @@ import torch_geometric.transforms as T
 from torch_geometric.data import Batch, DataLoader, Dataset
 
 from datasets.transforms import MultiScaleTransform
+from datasets.batch import SimpleBatch
 
 
 # A logger for this file
@@ -19,15 +21,21 @@ class BaseDataset():
         self.training_opt = training_opt
         self.strategies = {}
 
-    def _create_dataloaders(self, train_dataset,  test_dataset, validation=None):
+    def _create_dataloaders(self, train_dataset,  test_dataset, validation=None, torch_loader=False):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
         self._num_classes = train_dataset.num_classes
         self._feature_dimension = train_dataset.num_features
-        self._train_loader = DataLoader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
+        if torch_loader:
+            dataloader = partial(torch.utils.data.DataLoader,
+                                 collate_fn=lambda data_list: SimpleBatch.from_data_list(
+                                     data_list))
+        else:
+            dataloader = DataLoader
+        self._train_loader = dataloader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
                                         num_workers=self.training_opt.num_workers)
 
-        self._test_loader = DataLoader(test_dataset, batch_size=self.training_opt.batch_size, shuffle=False,
+        self._test_loader = dataloader(test_dataset, batch_size=self.training_opt.batch_size, shuffle=False,
                                        num_workers=self.training_opt.num_workers)
 
     def test_dataloader(self):
