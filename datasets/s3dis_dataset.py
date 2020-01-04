@@ -63,5 +63,4 @@ class S3DISDataset(BaseDataset):
         test_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=False,
                                           pre_transform=pre_transform, transform=T.FixedPoints(dataset_opt.num_points))
 
-        self._create_dataloaders(train_dataset, test_dataset, validation=None,
-                                 torch_loader=training_opt.use_torch_loader)
+        self._create_dataloaders(train_dataset, test_dataset, validation=None)

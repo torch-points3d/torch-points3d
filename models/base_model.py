@@ -55,6 +55,9 @@ class BaseModel(torch.nn.Module):
         """
         pass
 
+    def get_labels(self):
+        return getattr(self, "labels", None)
+
     @abstractmethod
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""

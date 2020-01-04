@@ -35,7 +35,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
             model.set_input(data)
             model.optimize_parameters()
 
-            tracker.track(model.get_current_losses(), model.get_output(), data.y)
+            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
             iter_data_time = time.time()
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
@@ -56,7 +56,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: Mod
                 model.set_input(data)
                 model.forward()
 
-            tracker.track(model.get_current_losses(), model.get_output(), data.y)
+            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
             tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
     metrics = tracker.publish()

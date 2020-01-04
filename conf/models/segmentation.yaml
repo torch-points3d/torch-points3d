@@ -313,7 +313,7 @@ models:
             down_conv_nn: [[FEAT + 3, 64, 64, 128], [128 + 3, 128, 128, 256]]
             radius_num_points: [64, 64]
         up_conv:
-            module_name: FPModule
+            module_name: DenseFPModule
             up_conv_nn: [[1024 + 256, 256, 256], [256 + 128, 256, 128], [128 + FEAT, 128, 128, 128]]
             up_k: [1, 3, 3]   
             skip: True    

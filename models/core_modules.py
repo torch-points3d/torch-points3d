@@ -364,6 +364,42 @@ class BaseConvolutionUp(BaseConvolution):
         return batch_obj
 
 
+class BaseDenseConvolutionUp(BaseConvolution):
+    def __init__(self, neighbour_finder, *args, **kwargs):
+        super(BaseDenseConvolutionUp, self).__init__(None, neighbour_finder, *args, **kwargs)
+
+        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
+        self._index = kwargs.get("index", None)
+        self._skip = kwargs.get("skip", True)
+
+    def conv(self, x, x_skip, pos, pos_skip, batch, batch_skip):
+        raise NotImplementedError
+
+    def forward(self, data):
+        batch_obj = Batch()
+        data, data_skip = data
+        x, pos, batch = data.x, data.pos, data.batch
+        x_skip, pos_skip, batch_skip = data_skip.x, data_skip.pos, data_skip.batch
+
+        x = self.conv(x, x_skip, pos, pos_skip, batch, batch_skip)
+
+        if x_skip is not None and self._skip:
+            if x.shape[-1] == x_skip.shape[-1]:
+                x = torch.cat([x, x_skip], dim=1)
+            else:
+                x_skip = x_skip.transpose(1, 2).contiguous()
+                x = torch.cat([x, x_skip], dim=1)
+
+        x = x.unsqueeze(-1)
+
+        if hasattr(self, 'nn'):
+            batch_obj.x = self.nn(x)
+        else:
+            batch_obj.x = x
+        copy_from_to(data_skip, batch_obj)
+        return batch_obj
+
+
 class GlobalBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):
         super(GlobalBaseModule, self).__init__()
@@ -394,7 +430,7 @@ class GlobalDenseBaseModule(torch.nn.Module):
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
         x = x.squeeze().max(-1)[0]
         batch_obj.x = x
-        batch_obj.pos = pos.new_zeros((x.size(0), 3))
+        batch_obj.pos = pos.new_zeros((x.size(0), 3, 1))
         batch_obj.batch = torch.arange(x.size(0), device=x.device)
         copy_from_to(data, batch_obj)
         return batch_obj
@@ -421,6 +457,34 @@ class FPModule(BaseConvolutionUp):
 
     def conv(self, x, pos, pos_skip, batch, batch_skip, *args):
         return knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
+
+
+class DenseFPModule(BaseDenseConvolutionUp):
+    def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
+        super(DenseFPModule, self).__init__(None)
+
+        self.k = up_k
+        self.nn = SharedMLP(up_conv_nn)
+
+    def conv(self, x, x_skip, pos, pos_skip, batch, batch_skip):
+
+        if x_skip is not None:
+            dist, idx = tp.three_nn(pos_skip, pos)
+            dist_recip = 1.0 / (dist + 1e-8)
+            norm = torch.sum(dist_recip, dim=2, keepdim=True)
+            weight = dist_recip / norm
+
+            x = x.squeeze()
+            if x.dim() == 2:
+                x = x.unsqueeze(-1)
+            interpolated_feats = tp.three_interpolate(
+                x, idx, weight
+            )
+        else:  # TODO Look into it, even if x_skip is always defined.
+            interpolated_feats = x.expand(
+                *(x.size()[0:2] + [x_skip.size(1)])
+            )
+        return interpolated_feats
 
 ########################## BASE RESIDUAL DOWN #####################
 

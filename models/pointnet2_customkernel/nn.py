@@ -30,12 +30,14 @@ class SegmentationModel(UnetBasedModel):
             Dimensions: [B, N, ...] 
         """
         self.input = data
-        self.labels = data.y
+        self.labels = torch.flatten(data.y)
 
     def forward(self) -> Any:
         """Standard forward"""
         data = self.model(self.input)
-        x = F.relu(self.lin1(self.input.x))
+        x = data.x.squeeze()
+        x = x.view((-1, x.shape[1]))
+        x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
