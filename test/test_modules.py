@@ -43,12 +43,12 @@ class TestInternalLosses(unittest.TestCase):
         lossDict = self.model.get_named_internal_losses()
         self.assertEqual(lossDict, {'mock_loss_3': 1, 'mock_loss_1': 0.5, 'mock_loss_2': 0.3})
 
-    def test_get_internal_losses(self):
+    def test_get_internal_loss(self):
 
         loss = self.model.get_internal_loss()
         self.assertAlmostEqual(loss.item(), 0.6)
 
-        
+
 if __name__ == '__main__':
     unittest.main()
 
