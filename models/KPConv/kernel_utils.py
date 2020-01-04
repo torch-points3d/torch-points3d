@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os import makedirs
 from os.path import join, exists
+
 from .plyutils import read_ply, write_ply
 
 
@@ -200,12 +201,13 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
     if not exists(kernel_file):
 
         # Create kernels
-        kernel_points, grad_norms = kernel_point_optimization_debug(1.0,
-                                                                    num_kpoints,
-                                                                    num_kernels=num_tries,
-                                                                    dimension=dimension,
-                                                                    fixed=fixed,
-                                                                    verbose=0)
+        kernel_points, grad_norms = kernel_point_optimization_debug(
+            1.0,
+            num_kpoints,
+            num_kernels=num_tries,
+            dimension=dimension,
+            fixed=fixed,
+            verbose=0)
 
         # Find best candidate
         best_k = np.argmin(grad_norms[-1, :])
