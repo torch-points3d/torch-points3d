@@ -6,7 +6,7 @@ from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
 
-from .modules import SAModule
+from .modules import SADenseModule
 from models.unet_base import UnetBasedModel
 
 

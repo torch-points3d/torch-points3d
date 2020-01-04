@@ -27,7 +27,7 @@ class BaseSampler(ABC):
         if hasattr(self, '_num_to_sample'):
             return self._num_to_sample
         else:
-            return math.floor(pos.shape[0]*self._ratio)
+            return math.floor(pos.shape[1] * self._ratio)
 
     def _get_ratio_to_sample(self, pos) -> float:
         if hasattr(self, '_ratio'):
@@ -63,7 +63,7 @@ class DenseFPSSampler(BaseSampler):
         Returns:
             indexes -- [B, num_sample]
         """
-        return tp.furthest_point_sample(pos, self._get_num_to_sample(pos.shape[1]))
+        return tp.furthest_point_sample(pos, self._get_num_to_sample(pos))
 
 
 class RandomSampler(BaseSampler):

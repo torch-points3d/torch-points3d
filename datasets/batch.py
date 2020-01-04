@@ -21,9 +21,11 @@ class SimpleBatch(Data):
         keys = [set(data.keys) for data in data_list]
         keys = list(set.union(*keys))
 
-        batch_size = data_list[0][keys[0]].size(0)
-        for key in keys:
-            assert batch_size == data_list[0][key].size(0)
+        # Check if all dimensions matches and we can concatenate data
+        if len(data_list) > 0:
+            for data in data_list[1:]:
+                for key in keys:
+                    assert data_list[0][key].shape == data[key].shape
 
         batch = SimpleBatch()
         batch.__data_class__ = data_list[0].__class__

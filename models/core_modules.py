@@ -156,6 +156,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
                 raise NotImplementedError()
             else:
                 radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
+
             ms_x.append(self.conv(x, pos, new_pos, radius_idx))
 
         batch_obj.x = torch.cat(ms_x, -1)
@@ -213,6 +214,27 @@ class GlobalBaseModule(torch.nn.Module):
     def forward(self, data):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
+        pos_flipped = pos.transpose(1, 2).contiguous()
+
+        x = self.nn(torch.cat([x, pos_flipped], dim=1))
+        x = self.pool(x, batch)
+        batch_obj.x = x
+        batch_obj.pos = pos.new_zeros((x.size(0), 3))
+        batch_obj.batch = torch.arange(x.size(0), device=batch.device)
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+
+class GlobalDenseBaseModule(torch.nn.Module):
+    def __init__(self, nn, aggr='max'):
+        super(GlobalDenseBaseModule, self).__init__()
+        self.nn = MLP(nn)
+
+    def forward(self, data):
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
+        import pdb
+        pdb.set_trace()
         x = self.nn(torch.cat([x, pos], dim=1))
         x = self.pool(x, batch)
         batch_obj.x = x

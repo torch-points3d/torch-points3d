@@ -13,6 +13,7 @@ class SADenseModule(BaseDenseConvolutionDown):
                                             DenseRadiusNeighbourFinder(radius, max_num_neighbors=radius_num_point), *args, **kwargs)
 
         self._local_nn = SharedMLP(down_conv_nn, bn=True) if down_conv_nn is not None else None
+        self._dim_in = down_conv_nn[0] if down_conv_nn is not None else None
 
         self._radius = radius
         self._ratio = ratio
@@ -24,7 +25,8 @@ class SADenseModule(BaseDenseConvolutionDown):
         grouped_pos -= new_pos.transpose(1, 2).unsqueeze(-1)
 
         if x is not None:
-            grouped_features = tp.grouping_operation(x, radius_idx)
+            x_trans = x.view((pos.shape[0], self._dim_in - pos.shape[-1], -1)).contiguous()
+            grouped_features = tp.grouping_operation(x_trans, radius_idx)
             new_features = torch.cat(
                 [grouped_pos, grouped_features], dim=1
             )  # (B, C + 3, npoint, nsample)
