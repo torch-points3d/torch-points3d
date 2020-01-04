@@ -1,5 +1,6 @@
 from typing import Any
 import torch
+torch.backends.cudnn.enabled = False
 from torch import nn
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
@@ -35,7 +36,7 @@ class SegmentationModel(UnetBasedModel):
     def forward(self) -> Any:
         """Standard forward"""
         data = self.model(self.input)
-        x = data.x.squeeze()
+        x = data.x.squeeze(-1)
         x = x.view((-1, x.shape[1]))
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
@@ -49,5 +50,12 @@ class SegmentationModel(UnetBasedModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        self.loss_seg = F.nll_loss(self.output, self.labels)
+        try:
+            self.loss_seg = F.nll_loss(self.output, self.labels.long())
+            if torch.isnan(self.loss_seg):
+                import pdb
+                pdb.set_trace()
+        except:
+            import pdb
+            pdb.set_trace()
         self.loss_seg.backward()

@@ -474,12 +474,12 @@ class DenseFPModule(BaseDenseConvolutionUp):
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
 
-            x = x.squeeze()
+            x = x.squeeze(-1)
             if x.dim() == 2:
                 x = x.unsqueeze(-1)
-            interpolated_feats = tp.three_interpolate(
-                x, idx, weight
-            )
+            if x.dim() == 1:
+                x = x.unsqueeze(0).unsqueeze(-1)
+            interpolated_feats = tp.three_interpolate(x, idx, weight)
         else:  # TODO Look into it, even if x_skip is always defined.
             interpolated_feats = x.expand(
                 *(x.size()[0:2] + [x_skip.size(1)])

@@ -78,7 +78,11 @@ class BaseModel(torch.nn.Module):
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[name] = float(getattr(self, name))
+                if hasattr(self, name):
+                    try:
+                        errors_ret[name] = float(getattr(self, name))
+                    except:
+                        errors_ret[name] = None
         return errors_ret
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):

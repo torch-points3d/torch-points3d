@@ -142,6 +142,8 @@ class SegmentationTracker(BaseTracker):
         """
         assert outputs.shape[0] == len(targets)
         for key, loss in losses.items():
+            if loss is None:
+                continue
             loss_key = '%s_%s' % (self._stage, key)
             if loss_key not in self._loss_meters:
                 self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
