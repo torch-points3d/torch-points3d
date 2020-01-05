@@ -45,7 +45,8 @@ class SimpleBatch(Data):
             else:
                 raise ValueError('Unsupported attribute type')
 
-        return batch  # .contiguous()
+        return batch.contiguous()
+        # return [batch.x.transpose(1, 2).contiguous(), batch.pos, batch.y.view(-1)]
 
     @property
     def num_graphs(self):

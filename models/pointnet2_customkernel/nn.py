@@ -87,8 +87,9 @@ class SegmentationModel(BaseModel):
         self.FP_modules.append(PointnetFPModule(mlp=[512 + c_out_1, 512, 512]))
         self.FP_modules.append(PointnetFPModule(mlp=[c_out_3 + c_out_2, 512, 512]))
 
-        self.FC_layer = MLP([128, 128,  dataset.num_classes])
-
+        self.lin1 = torch.nn.Linear(128, 128)
+        self.norm = nn.BatchNorm1d(128)
+        self.lin2 = torch.nn.Linear(128, dataset.num_classes)
         print(self)
 
     def _break_up_pc(self, pc):
@@ -97,6 +98,26 @@ class SegmentationModel(BaseModel):
 
         return xyz, features
 
+    def process(self, data):
+        x = data.x.transpose(1, 2).contiguous()
+        pos = data.pos.to("cuda", non_blocking=True)
+        labels = torch.flatten(data.y).to("cuda", non_blocking=True)
+        l_xyz, l_features = [pos], [x]
+        for i in range(len(self.SA_modules)):
+            li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
+            l_xyz.append(li_xyz)
+            l_features.append(li_features)
+
+        for i in range(-1, -(len(self.FP_modules) + 1), -1):
+            l_features[i - 1] = self.FP_modules[i](
+                l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
+            )
+        out = l_features[0]
+        out = out.view((-1, out.shape[1])).contiguous()
+        out = self.FC_layer(out)
+        loss = F.cross_entropy(out, labels.long())
+        loss.backward()
+
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -104,8 +125,8 @@ class SegmentationModel(BaseModel):
             Dimensions: [B, N, ...]
         """
         self.x = data.x.transpose(1, 2).contiguous()
-        self.pos = data.pos
-        self.labels = torch.flatten(data.y)
+        self.pos = data.pos.to("cuda", non_blocking=True)
+        self.labels = torch.flatten(data.y).to("cuda", non_blocking=True)
 
     def forward(self):
         # type: (Pointnet2MSG, torch.cuda.FloatTensor) -> pt_utils.Seq
@@ -131,9 +152,10 @@ class SegmentationModel(BaseModel):
             l_features[i - 1] = self.FP_modules[i](
                 l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
             )
-        out = l_features[0]
-        out = out.view((-1, out.shape[1])).contiguous()
-        self.output = self.FC_layer(out)
+        x = l_features[0].view((-1, l_features[0].shape[1])).contiguous()
+        x = F.leaky_relu(self.norm(self.lin1(x)))
+        x = F.dropout(x, p=0.5, training=self.training)
+        self.output = F.leaky_relu(self.lin2(x))
         return self.output
 
     def backward(self):

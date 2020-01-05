@@ -29,6 +29,7 @@ class BaseDataset():
         self._feature_dimension = train_dataset.num_features
         if self._torch_loader:
             dataloader = partial(torch.utils.data.DataLoader,
+                                 pin_memory=True,
                                  collate_fn=lambda data_list: SimpleBatch.from_data_list(
                                      data_list))
         else:

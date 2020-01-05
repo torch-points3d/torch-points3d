@@ -1,7 +1,7 @@
 from os import path as osp
 
 import torch
-torch.backends.cudnn.enabled = False
+from torch import nn
 from torch import autograd
 import numpy as np
 import torch.nn.functional as F
@@ -18,7 +18,7 @@ from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from metrics.metrics_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
-from utils.utils import get_log_dir
+from utils.utils import get_log_dir, model_fn_decorator
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 
 
@@ -26,22 +26,29 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
     model.train()
     tracker.reset("train")
 
+    #model_fn = model_fn_decorator(nn.CrossEntropyLoss())
+
     iter_data_time = time.time()
-    with autograd.detect_anomaly():
-        with Ctq(train_loader) as tq_train_loader:
-            for data in tq_train_loader:
-                iter_start_time = time.time()  # timer for computation per iteration
-                t_data = iter_start_time - iter_data_time
+    with Ctq(train_loader) as tq_train_loader:
+        for data in tq_train_loader:
+            iter_start_time = time.time()  # timer for computation per iteration
+            t_data = iter_start_time - iter_data_time
 
-                data = data.to(device)
-                model.set_input(data)
-                model.optimize_parameters()
+            data = data.to(device)
+            model.set_input(data)
+            model.optimize_parameters()
 
-                tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
-                iter_data_time = time.time()
+            """
+            modelReturn = model_fn(model, data)
+            iter_data_time = time.time()
+            tracker.track({'loss': modelReturn.loss}, modelReturn.preds, data[-1])
+            """
 
-                tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
-                                            iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
+            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
+            iter_data_time = time.time()
+
+            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
+                                        iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
 
         metrics = tracker.publish()
         checkpoint.save_best_models_under_current_metrics(model, metrics)
