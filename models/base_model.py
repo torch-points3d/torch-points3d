@@ -1,5 +1,5 @@
 import os
-from collections import OrderedDict
+from collections import OrderedDict, ChainMap
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import torch
@@ -7,7 +7,7 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
-
+from models.core_modules import BaseInternalLossModule
 
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
@@ -37,7 +37,7 @@ class BaseModel(torch.nn.Module):
         self._optimizer: Optional[Optimizer] = None
         self._scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
-        self._precompute_multi_scale = opt.precompute_multi_scale
+        self._precompute_multi_scale = opt.precompute_multi_scale if 'precompute_multi_scale' in opt else False
 
     @property
     def scheduler(self):
@@ -81,19 +81,32 @@ class BaseModel(torch.nn.Module):
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
         self._optimizer = optimizer_cls(self.parameters(), lr=lr)
 
-    def get_internal_losses(self):
+    def get_named_internal_losses(self):
+        '''
+            Modules which have internal losses return a dict of the form
+            {<loss_name>: <loss>}
+            This method merges the dicts of all child modules with internal loss
+            and returns this merged dict
+        '''
+        
         losses_global = []
-        search_key = "internal_losses"
-
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
-                if hasattr(module, search_key):
-                    losses_global.append(getattr(module, search_key))
+                if isinstance(module, BaseInternalLossModule):
+                    losses_global.append(module.get_internal_losses())
                 search_from_key(module._modules, losses_global)
         search_from_key(self._modules, losses_global)
-        losses = [[v for v in losses.values()] for losses in losses_global]
+
+        return dict(ChainMap(*losses_global))
+
+    def get_internal_loss(self):
+        '''
+            Returns the average internal loss of all child modules with 
+            internal losses
+        '''
+
+        losses = tuple(self.get_named_internal_losses().values())
         if len(losses) > 0:
-            losses = functools.reduce(operator.iconcat, losses, [])
             return torch.mean(torch.stack(losses))
         else:
             return 0.
