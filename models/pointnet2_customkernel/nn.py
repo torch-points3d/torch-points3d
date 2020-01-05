@@ -32,6 +32,7 @@ class SegmentationModel(BaseModel):
 
         self.SA_modules = nn.ModuleList()
         use_xyz = True
+        self.loss_names = ['loss_seg']
 
         c_in = input_channels = dataset.feature_dimension
         self.SA_modules.append(
