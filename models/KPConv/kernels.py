@@ -8,6 +8,7 @@ import math
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from torch_geometric.nn import MessagePassing
+from models.core_modules import BaseInternalLossModule
 
 def KPconv_op(self, x_j, pos_i, pos_j):
     if x_j is None:
@@ -128,7 +129,7 @@ def permissive_loss(deformed_kpoints, radius):
 
 # Implements the Light Deformable KPConv
 #https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
-class LightDeformablePointKernel(MessagePassing):
+class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
     '''
     Implements KPConv: Flexible and Deformable Convolution for Point Clouds from 
@@ -254,6 +255,9 @@ class LightDeformablePointKernel(MessagePassing):
         out_features = torch.einsum("na, nac -> nc", weighted_features, K_weights)
         
         return out_features
+
+    def get_internal_losses(self):
+        return self.internal_losses
 
     def update(self, aggr_out, pos):
         return aggr_out

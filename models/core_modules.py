@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 import math
 from functools import partial
+from typing import Dict, Any
 import torch
 from torch import nn
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
 from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
-import models.utils as utils
 from models.core_sampling_and_search import BaseMSNeighbourFinder
 
 
@@ -268,3 +268,12 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         batch_obj.batch = data.batch
         copy_from_to(data, batch_obj)
         return batch_obj
+
+
+class BaseInternalLossModule(ABC):
+    '''ABC for modules which have internal loss(es)
+    '''
+
+    @abstractmethod
+    def get_internal_losses(self) -> Dict[str, Any]:
+        pass
