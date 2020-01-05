@@ -43,19 +43,29 @@ class SegmentationModel(UnetBasedModel):
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
-        self.output = F.log_softmax(x, dim=-1)
+        self.output = x
         return self.output
 
-    def backward(self):
+    def backward(self, debug=False):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        try:
-            self.loss_seg = F.nll_loss(self.output, self.labels.long())
-            if torch.isnan(self.loss_seg):
+
+        if debug:
+            print(self.output, torch.isnan(self.output).any(), torch.unique(self.labels))
+            print(self.output.shape, self.labels.shape)
+
+            try:
+                self.loss_seg = F.cross_entropy(self.output, self.labels.long())
+                if torch.isnan(self.loss_seg):
+                    import pdb
+                    pdb.set_trace()
+                self.loss_seg.backward()
+            except:
                 import pdb
                 pdb.set_trace()
-        except:
-            import pdb
-            pdb.set_trace()
-        self.loss_seg.backward()
+            grad_ = self.model.down._local_nn[0].conv.weight.grad
+            print(torch.sum(grad_) != 0)
+        else:
+            self.loss_seg = F.cross_entropy(self.output, self.labels.long())
+            self.loss_seg.backward()

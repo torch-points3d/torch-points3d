@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import *
 import math
 from functools import partial
 import torch
@@ -356,6 +357,7 @@ class BaseConvolutionUp(BaseConvolution):
 
         if x_skip is not None and self._skip:
             x = torch.cat([x, x_skip], dim=1)
+
         if hasattr(self, 'nn'):
             batch_obj.x = self.nn(x)
         else:
@@ -467,23 +469,22 @@ class DenseFPModule(BaseDenseConvolutionUp):
         self.nn = SharedMLP(up_conv_nn)
 
     def conv(self, x, x_skip, pos, pos_skip, batch, batch_skip):
+        # unknown, known, unknow_feats, known_feats
+        # torch.Size([32, 64, 3]) torch.Size([32, 16, 3]) torch.Size([32, 512, 64]) torch.Size([32, 1024, 16])
 
-        if x_skip is not None:
-            dist, idx = tp.three_nn(pos_skip, pos)
-            dist_recip = 1.0 / (dist + 1e-8)
-            norm = torch.sum(dist_recip, dim=2, keepdim=True)
-            weight = dist_recip / norm
+        dist, idx = tp.three_nn(pos_skip, pos)
+        dist_recip = 1.0 / (dist + 1e-8)
+        norm = torch.sum(dist_recip, dim=2, keepdim=True)
+        weight = dist_recip / norm
 
-            x = x.squeeze(-1)
-            if x.dim() == 2:
-                x = x.unsqueeze(-1)
-            if x.dim() == 1:
-                x = x.unsqueeze(0).unsqueeze(-1)
-            interpolated_feats = tp.three_interpolate(x, idx, weight)
-        else:  # TODO Look into it, even if x_skip is always defined.
-            interpolated_feats = x.expand(
-                *(x.size()[0:2] + [x_skip.size(1)])
-            )
+        x = x.squeeze(-1)
+        if x.dim() == 2:
+            x = x.unsqueeze(-1)
+        if x.dim() == 1:
+            x = x.unsqueeze(0).unsqueeze(-1)
+
+        #print(x.shape, x_skip.shape, pos.shape, pos_skip.shape)
+        interpolated_feats = tp.three_interpolate(x, idx, weight)
         return interpolated_feats
 
 ########################## BASE RESIDUAL DOWN #####################

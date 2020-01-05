@@ -2,6 +2,7 @@ from os import path as osp
 
 import torch
 torch.backends.cudnn.enabled = False
+from torch import autograd
 import numpy as np
 import torch.nn.functional as F
 from datasets.utils import find_dataset_using_name
@@ -26,23 +27,24 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
     tracker.reset("train")
 
     iter_data_time = time.time()
-    with Ctq(train_loader) as tq_train_loader:
-        for data in tq_train_loader:
-            iter_start_time = time.time()  # timer for computation per iteration
-            t_data = iter_start_time - iter_data_time
+    with autograd.detect_anomaly():
+        with Ctq(train_loader) as tq_train_loader:
+            for data in tq_train_loader:
+                iter_start_time = time.time()  # timer for computation per iteration
+                t_data = iter_start_time - iter_data_time
 
-            data = data.to(device)
-            model.set_input(data)
-            model.optimize_parameters()
+                data = data.to(device)
+                model.set_input(data)
+                model.optimize_parameters()
 
-            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
-            iter_data_time = time.time()
+                tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
+                iter_data_time = time.time()
 
-            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
-                                        iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
+                tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
+                                            iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
 
-    metrics = tracker.publish()
-    checkpoint.save_best_models_under_current_metrics(model, metrics)
+        metrics = tracker.publish()
+        checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
 def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
