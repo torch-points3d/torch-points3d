@@ -22,10 +22,10 @@ class SimpleBatch(Data):
         keys = list(set.union(*keys))
 
         # Check if all dimensions matches and we can concatenate data
-        if len(data_list) > 0:
-            for data in data_list[1:]:
-                for key in keys:
-                    assert data_list[0][key].shape == data[key].shape
+        # if len(data_list) > 0:
+        #    for data in data_list[1:]:
+        #        for key in keys:
+        #            assert data_list[0][key].shape == data[key].shape
 
         batch = SimpleBatch()
         batch.__data_class__ = data_list[0].__class__
@@ -33,7 +33,7 @@ class SimpleBatch(Data):
         for key in keys:
             batch[key] = []
 
-        for i, data in enumerate(data_list):
+        for _, data in enumerate(data_list):
             for key in data.keys:
                 item = data[key]
                 batch[key].append(item)
@@ -45,7 +45,7 @@ class SimpleBatch(Data):
             else:
                 raise ValueError('Unsupported attribute type')
 
-        return batch.contiguous()
+        return batch  # .contiguous()
 
     @property
     def num_graphs(self):
