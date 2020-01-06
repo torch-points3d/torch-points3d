@@ -33,6 +33,7 @@ class SegmentationModel(BaseModel):
         self.SA_modules = nn.ModuleList()
         use_xyz = True
         self.loss_names = ['loss_seg']
+        self.weight_classes = dataset.weight_classes
 
         c_in = input_channels = dataset.feature_dimension
         self._num_classes = dataset.num_classes
@@ -141,7 +142,8 @@ class SegmentationModel(BaseModel):
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
 
-        self.loss_seg = F.cross_entropy(self.output, self.labels.long())
+        self.loss_seg = F.cross_entropy(self.output, self.labels.long(),
+                                        weight=self.weight_classes.to(self.output.device))
         self.loss_seg.backward()
 
 
