@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import *
 import math
 from functools import partial
+from typing import Dict, Any
 import torch
 from torch import nn
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
@@ -566,3 +567,12 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         batch_obj.batch = data.batch
         copy_from_to(data, batch_obj)
         return batch_obj
+
+
+class BaseInternalLossModule(ABC):
+    '''ABC for modules which have internal loss(es)
+    '''
+
+    @abstractmethod
+    def get_internal_losses(self) -> Dict[str, Any]:
+        pass
