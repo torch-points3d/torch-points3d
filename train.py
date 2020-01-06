@@ -26,7 +26,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
     model.train()
     tracker.reset("train")
 
-    #model_fn = model_fn_decorator(nn.CrossEntropyLoss())
+    model_fn = model_fn_decorator(nn.CrossEntropyLoss())
 
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
@@ -35,8 +35,11 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
             t_data = iter_start_time - iter_data_time
 
             data = data.to(device)
+
+            iter_start_time = time.time()
             model.set_input(data)
             model.optimize_parameters()
+            iter_data_time = time.time()
 
             """
             modelReturn = model_fn(model, data)
@@ -45,7 +48,6 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
             """
 
             tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
-            iter_data_time = time.time()
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
                                         iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
