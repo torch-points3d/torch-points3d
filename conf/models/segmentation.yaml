@@ -22,6 +22,19 @@ models:
             nn: []
             dropout: 0.5
 
+    PointNet:
+        type: PointNet
+        input_stn:
+            local_nn: [3, 64, 128, 1024]
+            global_nn: [1024, 512, 256]
+        local_nn_1: [3, 64, 64]
+        feat_stn:
+            k: 64
+            local_nn: [64, 64, 128, 1024]
+            global_nn: [1024, 512, 256]
+        local_nn_2: [64, 64, 128, 1024]
+        seg_nn: [1024 + 64, 512, 256, 128, N_CLS]
+
     pointcnn_small:
         type: PointCNN
         define_constants:
@@ -54,7 +67,6 @@ models:
         mlp_cls: 
             nn: [32, 32, 32, 32]
             dropout: 0.5
-
 
     pointcnn_shapenet:
         type: PointCNN

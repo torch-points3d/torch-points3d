@@ -5,6 +5,7 @@ from functools import partial
 import torch
 import torch_geometric
 import torch_geometric.transforms as T
+from torch_geometric.transforms import Compose, FixedPoints
 from torch_geometric.data import Batch, DataLoader, Dataset
 
 from datasets.transforms import MultiScaleTransform
@@ -40,6 +41,34 @@ class BaseDataset():
 
     def test_dataloader(self):
         return self._test_loader
+
+    @property
+    def has_fixed_points_transform(self):
+        """
+        This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
+        """
+        transform_train = self._train_loader.dataset.transform
+        transform_test = self._test_loader.dataset.transform
+
+        if transform_train is None or transform_test is None:
+            return False
+
+        if not isinstance(transform_train, Compose):
+            transform_train = Compose([transform_train])
+
+        if not isinstance(transform_test, Compose):
+            transform_test = Compose([transform_test])
+
+        train_bool = False
+        test_bool = False
+
+        for transform in transform_train.transforms:
+            if isinstance(transform, FixedPoints):
+                train_bool = True
+        for transform in transform_test.transforms:
+            if isinstance(transform, FixedPoints):
+                test_bool = True
+        return train_bool and test_bool
 
     def train_dataloader(self):
         return self._train_loader
