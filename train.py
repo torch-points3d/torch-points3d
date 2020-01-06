@@ -91,7 +91,7 @@ def main(cfg):
     # Get task and model_name
     exp = cfg.experiment
     tested_task = exp.task
-    tested_model_name = exp.name
+    tested_model_name = exp.model_name
     tested_dataset_name = exp.dataset
 
     # Find and create associated dataset

@@ -87,6 +87,7 @@ class BaseModel(torch.nn.Module):
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
         self._optimizer = optimizer_cls(self.parameters(), lr=lr)
+        print(self._optimizer)
 
     def get_internal_losses(self):
         losses_global = []

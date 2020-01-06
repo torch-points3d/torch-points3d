@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
-
+import etw_pytorch_utils as pt_utils
 from .modules import *
 from models.unet_base import UnetBasedModel, BaseModel
 
@@ -35,6 +35,8 @@ class SegmentationModel(BaseModel):
         self.loss_names = ['loss_seg']
 
         c_in = input_channels = dataset.feature_dimension
+        self._num_classes = dataset.num_classes
+
         self.SA_modules.append(
             PointnetSAModuleMSG(
                 npoint=1024,
@@ -88,36 +90,13 @@ class SegmentationModel(BaseModel):
         self.FP_modules.append(PointnetFPModule(mlp=[512 + c_out_1, 512, 512]))
         self.FP_modules.append(PointnetFPModule(mlp=[c_out_3 + c_out_2, 512, 512]))
 
-        self.lin1 = torch.nn.Linear(128, 128)
-        self.norm = nn.BatchNorm1d(128)
-        self.lin2 = torch.nn.Linear(128, dataset.num_classes)
+        self.FC_layer = (
+            pt_utils.Seq(128)
+            .conv1d(128, bn=True)
+            .dropout()
+            .conv1d(self._num_classes, activation=None)
+        )
         print(self)
-
-    def _break_up_pc(self, pc):
-        xyz = pc[..., 0:3].contiguous()
-        features = pc[..., 3:].transpose(1, 2).contiguous() if pc.size(-1) > 3 else None
-
-        return xyz, features
-
-    def process(self, data):
-        x = data.x.transpose(1, 2).contiguous()
-        pos = data.pos.to("cuda", non_blocking=True)
-        labels = torch.flatten(data.y).to("cuda", non_blocking=True)
-        l_xyz, l_features = [pos], [x]
-        for i in range(len(self.SA_modules)):
-            li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
-            l_xyz.append(li_xyz)
-            l_features.append(li_features)
-
-        for i in range(-1, -(len(self.FP_modules) + 1), -1):
-            l_features[i - 1] = self.FP_modules[i](
-                l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
-            )
-        out = l_features[0]
-        out = out.view((-1, out.shape[1])).contiguous()
-        out = self.FC_layer(out)
-        loss = F.cross_entropy(out, labels.long())
-        loss.backward()
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -142,7 +121,7 @@ class SegmentationModel(BaseModel):
                 Each point in the point-cloud MUST
                 be formated as (x, y, z, features...)
         """
-        #torch.Size([32, 4096, 3]), torch.Size([32, 6, 4096])
+        # torch.Size([32, 4096, 3]), torch.Size([32, 6, 4096])
         l_xyz, l_features = [self.pos], [self.x]
         for i in range(len(self.SA_modules)):
             li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
@@ -153,10 +132,8 @@ class SegmentationModel(BaseModel):
             l_features[i - 1] = self.FP_modules[i](
                 l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
             )
-        x = l_features[0].view((-1, l_features[0].shape[1])).contiguous()
-        x = F.leaky_relu(self.norm(self.lin1(x)))
-        x = F.dropout(x, p=0.5, training=self.training)
-        self.output = F.leaky_relu(self.lin2(x))
+
+        self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 
     def backward(self):
