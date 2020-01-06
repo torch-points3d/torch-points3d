@@ -9,6 +9,7 @@ def resolve_model(model_config, dataset, tested_task):
     constants = {
         'FEAT': max(dataset.feature_dimension, 3),
         'TASK': tested_task,
+        'N_CLS': dataset.num_classes if hasattr(dataset, 'num_classes') else None
     }
 
     # user defined contants to subsitute
