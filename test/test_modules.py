@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 import unittest
 
-import sys 
-import os 
-
-=======
->>>>>>> 8527a5fafb2a2799c42648e03a257260748f27f5
 import torch
 
 import os
@@ -35,11 +29,7 @@ class TestPointnetModules(unittest.TestCase):
 
         trans_pos = stn(pos, batch)
 
-<<<<<<< HEAD
-        npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))        
-=======
-        npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))    
->>>>>>> 8527a5fafb2a2799c42648e03a257260748f27f5
+        npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))
 
 class MockLossModule(torch.nn.Module, BaseInternalLossModule):
 
