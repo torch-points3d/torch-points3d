@@ -14,7 +14,7 @@ class SegmentationModel(BaseModel):
     def __init__(self, opt, type, dataset, modules_lib):
         super().__init__(opt)
 
-        self.has_fixed_points_transform = dataset.has_fixed_points_transform
+        self.has_fixed_points_transform = dataset.has_fixed_points_transform if hasattr(dataset, 'has_fixed_points_transform') else False
         self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
         print(self)
 
