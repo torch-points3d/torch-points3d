@@ -4,6 +4,10 @@ experiment:
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
+<<<<<<< HEAD
+=======
+    name: PointNet
+>>>>>>> 8527a5fafb2a2799c42648e03a257260748f27f5
     task: segmentation
     dataset: shapenet
 

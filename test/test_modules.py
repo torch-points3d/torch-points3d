@@ -1,15 +1,20 @@
+<<<<<<< HEAD
 import unittest
 
 import sys 
 import os 
 
+=======
+>>>>>>> 8527a5fafb2a2799c42648e03a257260748f27f5
 import torch
-import numpy.testing as npt
-import numpy as np
 
+import os
+import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 sys.path.append(ROOT)
 
+from models.core_modules import BaseInternalLossModule
+from models.base_model import BaseModel
 from models.PointNet.modules import PointNetSTN3D
 from models.core_modules import BaseInternalLossModule
 from models.base_model import BaseModel
@@ -30,7 +35,11 @@ class TestPointnetModules(unittest.TestCase):
 
         trans_pos = stn(pos, batch)
 
+<<<<<<< HEAD
         npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))        
+=======
+        npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))    
+>>>>>>> 8527a5fafb2a2799c42648e03a257260748f27f5
 
 class MockLossModule(torch.nn.Module, BaseInternalLossModule):
 

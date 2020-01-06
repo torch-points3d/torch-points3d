@@ -7,7 +7,11 @@ def resolve_model(model_config, dataset, tested_task):
 
     # placeholders to subsitute
     constants = {
+<<<<<<< HEAD
         'FEAT': max(dataset.feature_dimension, 3),
+=======
+        'FEAT': dataset.feature_dimension, 
+>>>>>>> 8527a5fafb2a2799c42648e03a257260748f27f5
         'TASK': tested_task,
         'N_CLS': dataset.num_classes if hasattr(dataset, 'num_classes') else None
     }
