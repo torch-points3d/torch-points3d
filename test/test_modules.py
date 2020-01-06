@@ -7,6 +7,9 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 sys.path.append(ROOT)
 
+import numpy as np
+import numpy.testing as npt
+
 from models.core_modules import BaseInternalLossModule
 from models.base_model import BaseModel
 from models.PointNet.modules import PointNetSTN3D
