@@ -6,7 +6,6 @@ authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-torch = "1.1.0"
 torch-scatter = "^1.4"
 torch-sparse = "^0.4.3"
 torch-cluster = "^1.4"
@@ -17,6 +16,9 @@ wandb = "^0.8.18"
 tqdm = "^4.40"
 torchnet = "^0.0.4"
 tensorboard = "^2.1"
+mkdocs = "^1.0"
+torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git"}
+torch = "1.2.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"

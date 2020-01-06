@@ -6,3 +6,5 @@ __pycache__
 wandb
 logs
 results
+site
+*.DS_Store
