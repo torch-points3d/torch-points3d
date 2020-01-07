@@ -129,6 +129,14 @@ version = "0.4.0"
 six = ">=1.4.0"
 
 [[package]]
+category = "main"
+description = "Docutils -- Python Documentation Utilities"
+name = "docutils"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+version = "0.15.2"
+
+[[package]]
 category = "dev"
 description = "Discover and load entry points from installed packages."
 name = "entrypoints"
@@ -136,6 +144,26 @@ optional = false
 python-versions = ">=2.7"
 version = "0.3"
 
+[[package]]
+category = "main"
+description = ""
+name = "etw-pytorch-utils"
+optional = false
+python-versions = "~2.7 || ^3.5"
+version = "1.1.2"
+
+[package.dependencies]
+numpy = "^1.16"
+scipy = "^1.2"
+statistics = "^1.0"
+torch = "^1.0"
+tqdm = "^4.29"
+visdom = "^0.1.8"
+
+[package.source]
+reference = "4a99f9e27f291dce25d16f06aa52eb127f3b68ed"
+type = "git"
+url = "https://github.com/erikwijmans/etw_pytorch_utils.git"
 [[package]]
 category = "dev"
 description = "the modular source code checker: pep8, pyflakes and co"
@@ -849,6 +877,17 @@ version = "2.0.5"
 
 [[package]]
 category = "main"
+description = "A Python 2.* port of 3.4 Statistics Module"
+name = "statistics"
+optional = false
+python-versions = "*"
+version = "1.0.3.5"
+
+[package.dependencies]
+docutils = ">=0.3"
+
+[[package]]
+category = "main"
 description = "A backport of the subprocess module from Python 3 for use on 2.x."
 name = "subprocess32"
 optional = false
@@ -935,6 +974,7 @@ version = "0.1.2"
 reference = "5f0b1184171d9fac6d4807305fba4ac9e9f0c6d8"
 type = "git"
 url = "https://github.com/nicolas-chaulet/torch-points.git"
+
 [[package]]
 category = "main"
 description = "PyTorch Extension Library of Optimized Scatter Operations"
@@ -1122,7 +1162,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [metadata]
-content-hash = "384943a0b1705b1688095c143e67d74126f17cdf4f9730200d8a8dfe37905a5c"
+content-hash = "817bdfe16017cc9dee4086174ed8cafd890fef0b4816ea52631a3522528a880b"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -1176,10 +1216,16 @@ docker-pycreds = [
     {file = "docker-pycreds-0.4.0.tar.gz", hash = "sha256:6ce3270bcaf404cc4c3e27e4b6c70d3521deae82fb508767870fdbf772d584d4"},
     {file = "docker_pycreds-0.4.0-py2.py3-none-any.whl", hash = "sha256:7266112468627868005106ec19cd0d722702d2b7d5912a28e19b826c3d37af49"},
 ]
+docutils = [
+    {file = "docutils-0.15.2-py2-none-any.whl", hash = "sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827"},
+    {file = "docutils-0.15.2-py3-none-any.whl", hash = "sha256:6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0"},
+    {file = "docutils-0.15.2.tar.gz", hash = "sha256:a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99"},
+]
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
     {file = "entrypoints-0.3.tar.gz", hash = "sha256:c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"},
 ]
+etw-pytorch-utils = []
 flake8 = [
     {file = "flake8-3.7.9-py2.py3-none-any.whl", hash = "sha256:49356e766643ad15072a789a20915d3c91dc89fd313ccd71802303fd67e4deca"},
     {file = "flake8-3.7.9.tar.gz", hash = "sha256:45681a117ecc81e870cbf1262835ae4af5e7a8b08e40b944a8a6e6b895914cfb"},
@@ -1754,6 +1800,9 @@ six = [
 smmap2 = [
     {file = "smmap2-2.0.5-py2.py3-none-any.whl", hash = "sha256:0555a7bf4df71d1ef4218e4807bbf9b201f910174e6e08af2e138d4e517b4dde"},
     {file = "smmap2-2.0.5.tar.gz", hash = "sha256:29a9ffa0497e7f2be94ca0ed1ca1aa3cd4cf25a1f6b4f5f87f74b46ed91d609a"},
+]
+statistics = [
+    {file = "statistics-1.0.3.5.tar.gz", hash = "sha256:2dc379b80b07bf2ddd5488cad06b2b9531da4dd31edb04dc9ec0dc226486c138"},
 ]
 subprocess32 = [
     {file = "subprocess32-3.5.4-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:88e37c1aac5388df41cc8a8456bb49ebffd321a3ad4d70358e3518176de3a56b"},

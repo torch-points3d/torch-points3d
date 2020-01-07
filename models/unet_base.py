@@ -29,6 +29,15 @@ class BaseFactory:
             return getattr(self.modules_lib, self.module_name_down, None)
 
 
+class Identity(nn.Module):
+
+    def __init__(self):
+        super(Identity, self).__init__()
+
+    def forward(self, data):
+        return data
+
+
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
@@ -80,11 +89,11 @@ class UnetBasedModel(BaseModel):
             unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
                                                  submodule=None, innermost=True)  # add the innermost layer
         else:
-            unet_block = []
+            unet_block = Identity()
 
         if num_convs > 1:
             for index in range(num_convs - 1, 0, -1):
-                args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
+                args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
                 unet_block = UnetSkipConnectionBlock(
                     args_up=args_up, args_down=args_down, submodule=unet_block)
                 self._save_sampling_and_search(unet_block, index)
@@ -92,7 +101,7 @@ class UnetBasedModel(BaseModel):
             index = num_convs
 
         index -= 1
-        args_up, args_down = self._fetch_arguments_up_and_down(opt, index, num_convs)
+        args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
         args_down['nb_feature'] = dataset.feature_dimension
         args_up['nb_feature'] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block,
@@ -174,14 +183,15 @@ class UnetBasedModel(BaseModel):
         args['precompute_multi_scale'] = self._precompute_multi_scale
         return args
 
-    def _fetch_arguments_up_and_down(self, opt, index, count_convs):
+    def _fetch_arguments_up_and_down(self, opt, index):
         # Defines down arguments
         args_down = self._fetch_arguments_from_list(opt.down_conv, index)
         args_down['index'] = index
         args_down['down_conv_cls'] = self._factory_module.get_module(index, 'DOWN')
 
         # Defines up arguments
-        args_up = self._fetch_arguments_from_list(opt.up_conv, count_convs - index)
+        idx = len(getattr(opt.up_conv, 'up_conv_nn')) - index - 1
+        args_up = self._fetch_arguments_from_list(opt.up_conv, idx)
         args_up['index'] = index
         args_up['up_conv_cls'] = self._factory_module.get_module(index, 'UP')
         return args_up, args_down

@@ -4,6 +4,7 @@ import math
 from functools import partial
 import torch
 from torch_geometric.nn import fps, radius, knn
+import torch_points as tp
 
 
 class BaseSampler(ABC):
@@ -19,23 +20,23 @@ class BaseSampler(ABC):
         else:
             self._ratio = ratio
 
-    def __call__(self, pos, batch):
-        return self.sample(pos, batch)
+    def __call__(self, pos, batch=None):
+        return self.sample(pos, batch=batch)
 
-    def _get_num_to_sample(self, pos) -> int:
+    def _get_num_to_sample(self, batch_size) -> int:
         if hasattr(self, '_num_to_sample'):
             return self._num_to_sample
         else:
-            return math.floor(pos.shape[0]*self._ratio)
+            return math.floor(batch_size * self._ratio)
 
-    def _get_ratio_to_sample(self, pos) -> float:
+    def _get_ratio_to_sample(self, batch_size) -> float:
         if hasattr(self, '_ratio'):
             return self._ratio
         else:
-            return self._num_to_sample / float(pos.shape[0])
+            return self._num_to_sample / float(batch_size)
 
     @abstractmethod
-    def sample(self, pos, batch):
+    def sample(self, pos, batch=None):
         pass
 
 
@@ -45,7 +46,28 @@ class FPSSampler(BaseSampler):
     """
 
     def sample(self, pos, batch):
-        return fps(pos, batch, ratio=self._get_ratio_to_sample(pos))
+        if len(pos.shape) != 2:
+            raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
+        return fps(pos, batch, ratio=self._get_ratio_to_sample(pos.shape[0]))
+
+
+class DenseFPSSampler(BaseSampler):
+    """If num_to_sample is provided, sample exactly
+        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+    """
+
+    def sample(self, pos, **kwargs):
+        """ Sample pos
+
+        Arguments:
+            pos -- [B, N, 3]
+
+        Returns:
+            indexes -- [B, num_sample]
+        """
+        if len(pos.shape) != 3:
+            raise ValueError(" This class is for dense data and expects the pos tensor to be of dimension 2")
+        return tp.furthest_point_sample(pos, self._get_num_to_sample(pos.shape[1]))
 
 
 class RandomSampler(BaseSampler):
@@ -54,7 +76,23 @@ class RandomSampler(BaseSampler):
     """
 
     def sample(self, pos, batch):
-        idx = torch.randint(0, pos.shape[0], (self._get_num_to_sample(pos),))
+        if len(pos.shape) != 2:
+            raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
+        idx = torch.randint(0, pos.shape[0], (self._get_num_to_sample(pos.shape[0]),))
+        return idx
+
+
+class DenseRandomSampler(BaseSampler):
+    """If num_to_sample is provided, sample exactly
+        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+        Arguments:
+            pos -- [B, N, 3]
+    """
+
+    def sample(self, pos, **kwargs):
+        if len(pos.shape) != 3:
+            raise ValueError(" This class is for dense data and expects the pos tensor to be of dimension 2")
+        idx = torch.randint(0, pos.shape[1], (self._get_num_to_sample(pos.shape[1]),))
         return idx
 
 
@@ -111,11 +149,11 @@ class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
 
 class BaseMSNeighbourFinder(ABC):
 
-    def __call__(self, x, y, batch_x, batch_y, scale_idx=0):
-        return self.find_neighbours(x, y, batch_x, batch_y, scale_idx)
+    def __call__(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
+        return self.find_neighbours(x, y, batch_x=batch_x, batch_y=batch_y, scale_idx=scale_idx)
 
     @abstractmethod
-    def find_neighbours(self, x, y, batch_x, batch_y, scale_idx=0):
+    def find_neighbours(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
         pass
 
     @property
@@ -125,7 +163,7 @@ class BaseMSNeighbourFinder(ABC):
 
 
 class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
-    """ Radius search with support for multiscale
+    """ Radius search with support for multiscale for sparse graphs
 
         Arguments:
             radius {Union[float, List[float]]} 
@@ -158,7 +196,7 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
         self._max_num_neighbors = [max_num_neighbors]
         self._radius = [radius]
 
-    def find_neighbours(self, x, y, batch_x, batch_y, scale_idx=0):
+    def find_neighbours(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
         if scale_idx >= self.num_scales:
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
         return radius(x, y, self._radius[scale_idx], batch_x, batch_y, max_num_neighbors=self._max_num_neighbors[scale_idx])
@@ -166,3 +204,23 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     @property
     def num_scales(self):
         return len(self._radius)
+
+    def __call__(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
+        """ Sparse interface of the neighboorhood finder
+        """
+        return self.find_neighbours(x, y, batch_x, batch_y, scale_idx)
+
+
+class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
+    """ Multiscale radius search for dense graphs
+    """
+
+    def find_neighbours(self, x, y, scale_idx=0):
+        if scale_idx >= self.num_scales:
+            raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
+        return tp.ball_query(self._radius[scale_idx], self._max_num_neighbors[scale_idx], x, y)
+
+    def __call__(self, x, y, scale_idx=0, **kwargs):
+        """ Dense interface of the neighboorhood finder
+        """
+        return self.find_neighbours(x, y, scale_idx)

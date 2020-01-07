@@ -2,6 +2,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from os import path as osp
+import torch
+from collections import namedtuple
+
+
+def model_fn_decorator(criterion):
+    ModelReturn = namedtuple("ModelReturn", ["preds", "loss"])
+
+    def model_fn(model, data, epoch=0, eval=False):
+        with torch.set_grad_enabled(not eval):
+            x, pos, labels = data
+            x = x.to("cuda", non_blocking=True)
+            pos = pos.to("cuda", non_blocking=True)
+            labels = labels.to("cuda", non_blocking=True)
+
+            preds = model(x, pos)
+            loss = criterion(preds.view(labels.numel(), -1), labels.view(-1))
+            loss.backward()
+            model.optim_step()
+
+        return ModelReturn(preds, loss.item())
+
+    return model_fn
 
 
 def get_log_dir(log_dir, experiment_name):
