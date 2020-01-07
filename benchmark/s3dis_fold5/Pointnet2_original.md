@@ -1,3 +1,4 @@
+```
 (superpoint-graph-job-py3.6) ➜  deeppointcloud-benchmarks git:(pn2) ✗ poetry run python train.py experiment.model_name=pointnet2_kc experiment.dataset=s3dis experiment.experiment_name=15-59-58
 CLASS WEIGHT : {'ceiling': 0.0249, 'floor': 0.026, 'wall': 0.0301, 'column': 0.0805, 'beam': 0.1004, 'window': 0.1216, 'door': 0.0584, 'table': 0.0679, 'chair': 0.0542, 'bookcase': 0.179, 'sofa': 0.069, 'board': 0.1509, 'clutter': 0.0371}
 SegmentationModel(
@@ -690,3 +691,4 @@ BEST:
 * acc: 85.26667395303411
 * miou: 45.583527852040845
 * macc: 73.11160574504926
+```
