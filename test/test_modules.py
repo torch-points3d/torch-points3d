@@ -10,11 +10,10 @@ sys.path.append(ROOT)
 import numpy as np
 import numpy.testing as npt
 
-from models.core_modules import BaseInternalLossModule
 from models.base_model import BaseModel
 from models.PointNet.modules import PointNetSTN3D
-from models.core_modules import BaseInternalLossModule
-from models.base_model import BaseModel
+from models.base_model import BaseModel, BaseInternalLossModule
+
 
 class TestPointnetModules(unittest.TestCase):
 
@@ -34,6 +33,7 @@ class TestPointnetModules(unittest.TestCase):
 
         npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))
 
+
 class MockLossModule(torch.nn.Module, BaseInternalLossModule):
 
     def __init__(self, internal_losses):
@@ -42,6 +42,7 @@ class MockLossModule(torch.nn.Module, BaseInternalLossModule):
 
     def get_internal_losses(self):
         return self.internal_losses
+
 
 class MockModel(BaseModel):
 
@@ -56,6 +57,7 @@ class MockModel(BaseModel):
         self.model2 = MockLossModule({
             'mock_loss_3': torch.tensor(1.0),
         })
+
 
 class TestInternalLosses(unittest.TestCase):
 
@@ -75,7 +77,3 @@ class TestInternalLosses(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-
-

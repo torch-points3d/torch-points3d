@@ -23,17 +23,17 @@ class BaseSampler(ABC):
     def __call__(self, pos, batch=None):
         return self.sample(pos, batch=batch)
 
-    def _get_num_to_sample(self, pos) -> int:
+    def _get_num_to_sample(self, batch_size) -> int:
         if hasattr(self, '_num_to_sample'):
             return self._num_to_sample
         else:
-            return math.floor(pos.shape[1] * self._ratio)
+            return math.floor(batch_size * self._ratio)
 
-    def _get_ratio_to_sample(self, pos) -> float:
+    def _get_ratio_to_sample(self, batch_size) -> float:
         if hasattr(self, '_ratio'):
             return self._ratio
         else:
-            return self._num_to_sample / float(pos.shape[0])
+            return self._num_to_sample / float(batch_size)
 
     @abstractmethod
     def sample(self, pos, batch=None):
@@ -46,7 +46,9 @@ class FPSSampler(BaseSampler):
     """
 
     def sample(self, pos, batch):
-        return fps(pos, batch, ratio=self._get_ratio_to_sample(pos))
+        if len(pos.shape) != 2:
+            raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
+        return fps(pos, batch, ratio=self._get_ratio_to_sample(pos.shape[0]))
 
 
 class DenseFPSSampler(BaseSampler):
@@ -63,7 +65,9 @@ class DenseFPSSampler(BaseSampler):
         Returns:
             indexes -- [B, num_sample]
         """
-        return tp.furthest_point_sample(pos, self._get_num_to_sample(pos))
+        if len(pos.shape) != 3:
+            raise ValueError(" This class is for dense data and expects the pos tensor to be of dimension 2")
+        return tp.furthest_point_sample(pos, self._get_num_to_sample(pos.shape[1]))
 
 
 class RandomSampler(BaseSampler):
@@ -72,7 +76,23 @@ class RandomSampler(BaseSampler):
     """
 
     def sample(self, pos, batch):
-        idx = torch.randint(0, pos.shape[0], (self._get_num_to_sample(pos),))
+        if len(pos.shape) != 2:
+            raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
+        idx = torch.randint(0, pos.shape[0], (self._get_num_to_sample(pos.shape[0]),))
+        return idx
+
+
+class DenseRandomSampler(BaseSampler):
+    """If num_to_sample is provided, sample exactly
+        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+        Arguments:
+            pos -- [B, N, 3]
+    """
+
+    def sample(self, pos, **kwargs):
+        if len(pos.shape) != 3:
+            raise ValueError(" This class is for dense data and expects the pos tensor to be of dimension 2")
+        idx = torch.randint(0, pos.shape[1], (self._get_num_to_sample(pos.shape[1]),))
         return idx
 
 

@@ -7,7 +7,7 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
-from models.core_modules import BaseInternalLossModule
+
 
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
@@ -96,8 +96,9 @@ class BaseModel(torch.nn.Module):
             This method merges the dicts of all child modules with internal loss
             and returns this merged dict
         '''
-        
+
         losses_global = []
+
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
@@ -121,3 +122,12 @@ class BaseModel(torch.nn.Module):
 
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
+
+
+class BaseInternalLossModule(ABC):
+    '''ABC for modules which have internal loss(es)
+    '''
+
+    @abstractmethod
+    def get_internal_losses(self) -> Dict[str, Any]:
+        pass

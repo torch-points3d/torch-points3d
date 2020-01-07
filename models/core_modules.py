@@ -567,12 +567,3 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         batch_obj.batch = data.batch
         copy_from_to(data, batch_obj)
         return batch_obj
-
-
-class BaseInternalLossModule(ABC):
-    '''ABC for modules which have internal loss(es)
-    '''
-
-    @abstractmethod
-    def get_internal_losses(self) -> Dict[str, Any]:
-        pass
