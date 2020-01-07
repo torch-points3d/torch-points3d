@@ -9,10 +9,8 @@ from torch_geometric.nn import radius, global_max_pool
 import etw_pytorch_utils as pt_utils
 from .modules import *
 from models.unet_base import UnetBasedModel, BaseModel
-<< << << < HEAD
+
 from utils.timer import time_func
-== == == =
->>>>>> > master
 
 
 class SegmentationModel(BaseModel):
