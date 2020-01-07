@@ -33,6 +33,8 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
         for data in tq_train_loader:
             iter_start_time = time.time()  # timer for computation per iteration
             data = data.to(device)
+
+            iter_start_time = time.time()
             model.set_input(data)
             t_data = iter_start_time - iter_data_time
 
