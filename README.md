@@ -48,17 +48,10 @@ And you should see something like that
 # Benchmark
 ## S3DIS
 
-* loss_seg: 0.051259834319353104
-* acc: 85.26667395303411
-* miou: 45.583527852040845
-* macc: 73.11160574504926
-
 
 | Model Name / Type  | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| ```pointnet2_original```(/benchmark/s3dis_fold5/Pointnet2_original.md) / pointnet2_customkernel  | 3026829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11 
-
-[RSConv 2LD](/benchmark/s3dis_fold5/RSConv_2LD.md)
+| [```pointnet2_original/pointnet2_customkernel```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3026829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11 
 
 ## Contributing
 We use [autopep8](https://github.com/hhatto/autopep8) for formating with the following options:
