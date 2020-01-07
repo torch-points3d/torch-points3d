@@ -3,6 +3,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import BatchNorm1d, BatchNorm2d
 import torch_points as tp
+
+import os
+import sys
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(DIR_PATH, '../..'))
 from models.core_modules import *
 from models.core_sampling_and_search import DenseRadiusNeighbourFinder, DenseFPSSampler
 import etw_pytorch_utils.pytorch_utils as ptutils
@@ -193,7 +198,6 @@ class PointnetFPModule(nn.Module):
         super(PointnetFPModule, self).__init__()
         self.mlp = ptutils.SharedMLP(mlp, bn=bn)
 
-    @time_func(print_rec=10, measure_runtime=True)
     def forward(self, unknown, known, unknow_feats, known_feats):
         # type: (PointnetFPModule, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor
         r"""
@@ -243,11 +247,12 @@ class PointnetFPModule(nn.Module):
         return new_features.squeeze(-1)
 
 
-@time_func(print_rec=10, measure_runtime=True)
+@time_func(print_rec=50, measure_runtime=True)
 def mlp_warpper(PF, new_features):
     return PF.mlp(new_features)
 
 
+@time_func(print_rec=50, measure_runtime=True)
 def three_nn_wrapper(unknown, known):
     return tp.three_nn(unknown, known)
 
@@ -355,3 +360,31 @@ class GroupAll(nn.Module):
             new_features = grouped_xyz
 
         return new_features
+
+
+if __name__ == "__main__":
+    from torch.autograd import Variable
+
+    torch.manual_seed(1)
+    torch.cuda.manual_seed_all(1)
+    xyz = Variable(torch.randn(32, 3, 4096).cuda(), requires_grad=True)
+    xyz_feats = Variable(torch.randn(32, 6, 4096).cuda(), requires_grad=True)
+
+    # test_module = PointnetSAModuleMSG(
+    #     npoint=2, radii=[5.0, 10.0], nsamples=[6, 3], mlps=[[9, 3], [9, 6]]
+    # )
+    # test_module.cuda()
+    # print(test_module(xyz, xyz_feats))
+
+    test_module = PointnetFPModule(mlp=[6, 64, 128])
+    test_module.cuda()
+    #  from torch.autograd import gradcheck
+    #  inputs = (xyz, xyz, None, xyz_feats)
+    #  test = gradcheck(test_module, inputs, eps=1e-6, atol=1e-4)
+    #  print(test)
+
+    for _ in range(501):
+        test_module(xyz, xyz, None, xyz_feats)
+        # new_features.backward(torch.cuda.FloatTensor(*new_features.size()).fill_(1))
+        # print(new_features)
+        # print(xyz.grad)
