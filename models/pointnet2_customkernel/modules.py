@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import BatchNorm1d, BatchNorm2d
 import torch_points as tp
+
 from models.core_modules import *
 from models.core_sampling_and_search import DenseRadiusNeighbourFinder, DenseFPSSampler
-import torch_points as tp
 
 
 class SADenseModule(BaseDenseConvolutionDown):
