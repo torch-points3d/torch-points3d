@@ -26,18 +26,17 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
     model.train()
     tracker.reset("train")
 
-    model_fn = model_fn_decorator(nn.CrossEntropyLoss())
+    # model_fn = model_fn_decorator(nn.CrossEntropyLoss())
 
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
         for data in tq_train_loader:
             iter_start_time = time.time()  # timer for computation per iteration
+            data = data.to(device)
+            model.set_input(data)
             t_data = iter_start_time - iter_data_time
 
-            data = data.to(device)
-
             iter_start_time = time.time()
-            model.set_input(data)
             model.optimize_parameters()
             iter_data_time = time.time()
 

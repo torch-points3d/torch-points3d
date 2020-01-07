@@ -9,6 +9,7 @@ from torch_geometric.nn import radius, global_max_pool
 import etw_pytorch_utils as pt_utils
 from .modules import *
 from models.unet_base import UnetBasedModel, BaseModel
+from utils.timer import time_func
 
 
 class SegmentationModel(BaseModel):
@@ -106,8 +107,23 @@ class SegmentationModel(BaseModel):
             Dimensions: [B, N, ...]
         """
         self.x = data.x.transpose(1, 2).contiguous()
-        self.pos = data.pos.to("cuda", non_blocking=True)
-        self.labels = torch.flatten(data.y).to("cuda", non_blocking=True)
+        self.pos = data.pos
+        self.labels = torch.flatten(data.y)
+
+    def _first_step(self, l_xyz, l_features):
+        for i in range(len(self.SA_modules)):
+            li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
+            l_xyz.append(li_xyz)
+            l_features.append(li_features)
+        return l_xyz, l_features
+
+    def _second_step(self, l_xyz, l_features):
+        for i in range(-1, -(len(self.FP_modules) + 1), -1):
+            l_features[i - 1] = self.FP_modules[i](
+                l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
+            )
+
+        return l_features
 
     def forward(self):
         # type: (Pointnet2MSG, torch.cuda.FloatTensor) -> pt_utils.Seq
@@ -124,17 +140,9 @@ class SegmentationModel(BaseModel):
         """
         # torch.Size([32, 4096, 3]), torch.Size([32, 6, 4096])
         l_xyz, l_features = [self.pos], [self.x]
-        for i in range(len(self.SA_modules)):
-            li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
-            l_xyz.append(li_xyz)
-            l_features.append(li_features)
-
-        for i in range(-1, -(len(self.FP_modules) + 1), -1):
-            l_features[i - 1] = self.FP_modules[i](
-                l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
-            )
-
-        self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
+        l_xyz, l_features = self._first_step(l_xyz, l_features)
+        l_features = self._second_step(l_xyz, l_features)
+        self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view(-1, self._num_classes)
         return self.output
 
     def backward(self):

@@ -8,6 +8,8 @@ from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
 
+from utils. timer import time_func
+
 
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.

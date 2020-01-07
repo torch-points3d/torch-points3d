@@ -5,7 +5,9 @@ from torch.nn import BatchNorm1d, BatchNorm2d
 import torch_points as tp
 from models.core_modules import *
 from models.core_sampling_and_search import DenseRadiusNeighbourFinder, DenseFPSSampler
+import etw_pytorch_utils.pytorch_utils as ptutils
 import torch_points as tp
+from utils.timer import time_func
 
 
 class SADenseModule(BaseDenseConvolutionDown):
@@ -13,7 +15,7 @@ class SADenseModule(BaseDenseConvolutionDown):
         super(SADenseModule, self).__init__(DenseFPSSampler(ratio=ratio),
                                             DenseRadiusNeighbourFinder(radius, max_num_neighbors=radius_num_point), *args, **kwargs)
 
-        self._local_nn = SharedMLP(down_conv_nn, bn=True) if down_conv_nn is not None else None
+        self._local_nn = ptutils.SharedMLP(down_conv_nn, bn=True) if down_conv_nn is not None else None
         self._dim_in = down_conv_nn[0] if down_conv_nn is not None else None
 
         self._radius = radius
@@ -141,7 +143,7 @@ class PointnetSAModuleMSG(_PointnetSAModuleBase):
             if use_xyz:
                 mlp_spec[0] += 3
 
-            self.mlps.append(SharedMLP(mlp_spec, bn=bn))
+            self.mlps.append(ptutils.SharedMLP(mlp_spec, bn=bn))
 
 
 class PointnetSAModule(PointnetSAModuleMSG):
@@ -189,8 +191,9 @@ class PointnetFPModule(nn.Module):
     def __init__(self, mlp, bn=True):
         # type: (PointnetFPModule, List[int], bool) -> None
         super(PointnetFPModule, self).__init__()
-        self.mlp = SharedMLP(mlp, bn=bn)
+        self.mlp = ptutils.SharedMLP(mlp, bn=bn)
 
+    @time_func(print_rec=10, measure_runtime=True)
     def forward(self, unknown, known, unknow_feats, known_feats):
         # type: (PointnetFPModule, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor
         r"""
@@ -216,16 +219,12 @@ class PointnetFPModule(nn.Module):
         #import pdb; pdb.set_trace()
 
         if known is not None:
-            dist, idx = tp.three_nn(unknown, known)
+            dist, idx = three_nn_wrapper(unknown, known)
             dist_recip = 1.0 / (dist + 1e-8)
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
 
-            #print(known_feats.shape, idx.shape, weight.shape)
-
-            interpolated_feats = tp.three_interpolate(
-                known_feats, idx, weight
-            )
+            interpolated_feats = three_wrapper(known_feats, idx, weight)
         else:
             interpolated_feats = known_feats.expand(
                 *(known_feats.size()[0:2] + [unknown.size(1)])
@@ -239,9 +238,24 @@ class PointnetFPModule(nn.Module):
             new_features = interpolated_feats
 
         new_features = new_features.unsqueeze(-1)
-        new_features = self.mlp(new_features)
+        new_features = mlp_warpper(self, new_features)
 
         return new_features.squeeze(-1)
+
+
+@time_func(print_rec=10, measure_runtime=True)
+def mlp_warpper(PF, new_features):
+    return PF.mlp(new_features)
+
+
+def three_nn_wrapper(unknown, known):
+    return tp.three_nn(unknown, known)
+
+
+def three_wrapper(known_feats, idx, weight):
+    return tp.three_interpolate(
+        known_feats, idx, weight
+    )
 
 
 class QueryAndGroup(nn.Module):

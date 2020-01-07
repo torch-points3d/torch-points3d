@@ -31,8 +31,7 @@ class BaseDataset():
         if self._torch_loader:
             dataloader = partial(torch.utils.data.DataLoader,
                                  pin_memory=True,
-                                 collate_fn=lambda data_list: SimpleBatch.from_data_list(
-                                     data_list))
+                                 collate_fn=lambda data_list: SimpleBatch.from_data_list(data_list))
         else:
             dataloader = DataLoader
         self._train_loader = dataloader(train_dataset, batch_size=self.training_opt.batch_size, shuffle=self.training_opt.shuffle,
