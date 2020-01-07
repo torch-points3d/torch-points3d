@@ -11,7 +11,9 @@ from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
 import torch_points as tp
 
-import models.utils as utils
+import sys
+
+import utils as utils
 from models.core_sampling_and_search import BaseMSNeighbourFinder
 
 

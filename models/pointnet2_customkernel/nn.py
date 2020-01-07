@@ -1,6 +1,5 @@
 from typing import Any
 import torch
-torch.backends.cudnn.enabled = False
 from torch import nn
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
