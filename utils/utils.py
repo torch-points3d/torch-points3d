@@ -26,6 +26,15 @@ def model_fn_decorator(criterion):
     return model_fn
 
 
+def set_format(model_config, cfg, available_format):
+    format_type = getattr(model_config, "format_type", None)
+    if format_type not in available_format.keys():
+        raise Exception("The format type should be defined within {}".format(available_format.keys()))
+    else:
+        cfg.training.format_type = format_type
+        cfg.training.use_torch_loader = available_format[format_type]
+
+
 def get_log_dir(log_dir, experiment_name):
     hydra_generated_dir = os.getcwd()
     splits = hydra_generated_dir.split('/')

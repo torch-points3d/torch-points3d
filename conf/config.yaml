@@ -27,7 +27,6 @@ training:
     optimizer: Adam
     lr : 0.01
     weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
-    use_torch_loader: True
 
 # Those arguments defines the available datasets
 data:

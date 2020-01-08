@@ -18,8 +18,13 @@ from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from metrics.metrics_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
-from utils.utils import get_log_dir, model_fn_decorator
+from utils.utils import get_log_dir, model_fn_decorator, set_format
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+
+# Available format defines if we need to use torch_loader
+AVAILABLE_FORMAT = {"DENSE": True,  # Data will be in [batch_size, num_points, n_dim] + dense_graph
+                    "PARTIAL_DENSE": False,  # Data will be in [TOTAL(num_points), n_dim] + dense_graph
+                    "MESSAGE_PASSING": False}  # Data will be in [TOTAL(num_points), n_dim] + sparse_graph
 
 
 def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
@@ -96,13 +101,18 @@ def main(cfg):
     tested_model_name = exp.model_name
     tested_dataset_name = exp.dataset
 
+    # Find and create associated model
+    model_config = getattr(cfg.models, tested_model_name, None)
+
+    # Find which dataloader to use
+    set_format(model_config, cfg.training, AVAILABLE_FORMAT)
+
     # Find and create associated dataset
     dataset_config = getattr(cfg.data, tested_dataset_name, None)
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = find_dataset_using_name(tested_dataset_name)(dataset_config, cfg.training)
 
     # Find and create associated model
-    model_config = getattr(cfg.models, tested_model_name, None)
     model_config = OmegaConf.merge(model_config, cfg.training)
     resolve_model(model_config, dataset, tested_task)
     model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
