@@ -31,7 +31,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
     model.train()
     tracker.reset("train")
 
-    model_fn = model_fn_decorator(nn.CrossEntropyLoss())
+    #model_fn = model_fn_decorator(nn.CrossEntropyLoss())
 
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
