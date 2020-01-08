@@ -98,15 +98,13 @@ class SegmentationModel(BaseModel):
             datas.append(self.SA_modules[i](datas[i]))
 
         for i in range(-1, -(len(self.FP_modules) + 1), -1):
-            import pdb
-            pdb.set_trace()
             x, pos = datas[i].x.transpose(1, 2).contiguous(), datas[i].pos
             new_x, new_pos = datas[i-1].x.transpose(1, 2).contiguous(), datas[i-1].pos
             datas[i-1].x = self.FP_modules[i](
-                new_pos, pos, x, new_x
+                new_pos, pos, new_x, x
             ).transpose(1, 2)
-
-        self.output = self.FC_layer(datas[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
+        self.output = self.FC_layer(datas[0].x.transpose(1, 2)).transpose(
+            1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 
     def backward(self):
@@ -120,7 +118,7 @@ class SegmentationModel(BaseModel):
         self.loss_seg.backward()
 
 
-class _egmentationModel(UnetBasedModel):
+class _SegmentationModel(UnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
@@ -145,8 +143,7 @@ class _egmentationModel(UnetBasedModel):
     def forward(self) -> Any:
         """Standard forward"""
         data = self.model(self.input)
-        x = data.x.squeeze(-1).transpose(2, 1).contiguous()
-        x = x.view((-1, x.shape[2]))
+        x = data.x.reshape(-1, data.x.shape[2])
         x = F.relu(self.lin1(x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)

@@ -3,8 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import BatchNorm1d, BatchNorm2d
 import torch_points as tp
+import etw_pytorch_utils as pt_utils
 
-from models.core_modules import *
+from models.dense_modules import *
 from models.core_sampling_and_search import DenseRadiusNeighbourFinder, DenseFPSSampler
 
 
@@ -13,7 +14,7 @@ class SADenseModule(BaseDenseConvolutionDown):
         super(SADenseModule, self).__init__(DenseFPSSampler(ratio=ratio),
                                             DenseRadiusNeighbourFinder(radius, max_num_neighbors=radius_num_point), *args, **kwargs)
 
-        self._local_nn = SharedMLP(down_conv_nn, bn=True) if down_conv_nn is not None else None
+        self._local_nn = pt_utils.SharedMLP(down_conv_nn, bn=True) if down_conv_nn is not None else None
         self._dim_in = down_conv_nn[0] if down_conv_nn is not None else None
 
         self._radius = radius
@@ -42,8 +43,8 @@ class SADenseModule(BaseDenseConvolutionDown):
         new_features = F.max_pool2d(
             new_features, kernel_size=[1, new_features.size(3)]
         )  # (B, mlp[-1], npoint, 1)
-        new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
-        return new_features
+        new_features = new_features.squeeze(-1)
+        return new_features.transpose(1, 2).contiguous()
 
     def extra_repr(self):
         return '{}(ratio {}, radius {}, radius_points {})'.format(self.__class__.__name__, self._ratio, self._radius, self._num_points)
@@ -189,7 +190,7 @@ class PointnetFPModule(nn.Module):
     def __init__(self, mlp, bn=True):
         # type: (PointnetFPModule, List[int], bool) -> None
         super(PointnetFPModule, self).__init__()
-        self.mlp = SharedMLP(mlp, bn=bn)
+        self.mlp = pt_utils.SharedMLP(mlp, bn=bn)
 
     def forward(self, unknown, known, unknow_feats, known_feats):
         # type: (PointnetFPModule, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor

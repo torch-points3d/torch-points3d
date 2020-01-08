@@ -34,7 +34,7 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
             iter_start_time = time.time()
             model.optimize_parameters()
 
-            if i % 50 == 0:
+            if i % 10 == 0:
                 tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
