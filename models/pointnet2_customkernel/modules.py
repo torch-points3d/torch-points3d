@@ -299,6 +299,74 @@ class QueryAndGroup(nn.Module):
         return new_features
 
 
+class QueryAndGroupShadow(nn.Module):
+    r"""
+    Groups with a ball query of radius and shift with shadow points (0, 0, 0) and 0 features
+    Parameters
+    ---------
+    radius : float32
+        Radius of ball
+    nsample : int32
+        Maximum number of features to gather in the ball
+    """
+
+    def __init__(self, radius, nsample, shadow_point=torch.zeros((3, )), set_zero=True, use_xyz=True):
+        # type: (QueryAndGroup, float, int, bool) -> None
+        super(QueryAndGroupShadow, self).__init__()
+        self.radius, self.nsample, self.use_xyz = radius, nsample, use_xyz
+        self._shadow_point = shadow_point
+        self._set_zero = set_zero
+
+    def forward(self, xyz, new_xyz, features=None):
+        # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> Tuple[Torch.Tensor]
+        r"""
+        Parameters
+        ----------
+        xyz : torch.Tensor
+            xyz coordinates of the features (B, N, 3)
+        new_xyz : torch.Tensor
+            centriods (B, npoint, 3)
+        features : torch.Tensor
+            Descriptors of the features (B, C, N)
+        Returns
+        -------
+        new_features : torch.Tensor
+            (B, 3 + C, npoint, nsample) tensor
+        """
+        B, C, N = features.shape
+        # Return indices + 1 to allow shadow points to be added.
+        idx = tp.ball_query_shifted(self.radius, self.nsample, xyz, new_xyz)
+
+        shadow_point = self._shadow_point.unsqueeze(0).unsqueeze(0)
+        shadow_point = shadow_point.repeat((xyz.shape[0], 1, 1)) .to(xyz.device)
+
+        xyz_trans = torch.cat([shadow_point, xyz], dim=1)\
+            .transpose(1, 2).contiguous()
+
+        grouped_xyz = tp.grouping_operation(xyz_trans, idx)  # (B, 3, npoint, nsample)
+        grouped_xyz -= new_xyz.transpose(1, 2).unsqueeze(-1)
+        if self._set_zero:
+            grouped_xyz[idx.unsqueeze(1).repeat((1, grouped_xyz.shape[1], 1, 1)) == 0] = 0  # Set all shadow points to 0
+
+        if features is not None:
+            shadow_features = torch.zeros((B, C, 1)).to(features.device)
+            features = torch.cat([shadow_features, features], dim=-1)  # Add a shadow features at the beginning
+            grouped_features = tp.grouping_operation(features, idx)
+            if self.use_xyz:
+                new_features = torch.cat(
+                    [grouped_xyz, grouped_features], dim=1
+                )  # (B, C + 3, npoint, nsample)
+            else:
+                new_features = grouped_features
+        else:
+            assert (
+                self.use_xyz
+            ), "Cannot have not features and not use xyz as a feature!"
+            new_features = grouped_xyz
+
+        return new_features
+
+
 class GroupAll(nn.Module):
     r"""
     Groups all features
