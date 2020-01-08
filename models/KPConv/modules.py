@@ -102,6 +102,26 @@ class KPConv(BaseConvolutionDown):
         return self._conv(x, pos, edge_index)
 
 
+class KPConv(BaseDenseConvolutionDown):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16,  nb_feature=0,  *args, **kwargs):
+        super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+
+        self.ratio = ratio
+        self.radius = radius
+
+        in_features, out_features = down_conv_nn
+
+        # KPCONV arguments
+        self.in_features = in_features
+        self.out_features = out_features
+        self.num_points = num_points
+
+        self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+
+    def conv(self, x, pos, edge_index, batch):
+        return self._conv(x, pos, edge_index)
+
+
 class ResidualBKPConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
         super(ResidualBKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)

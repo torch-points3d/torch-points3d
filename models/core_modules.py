@@ -286,17 +286,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
-    def conv(self, x, pos, new_pos, radius_idx):
-        """ Implements a Dense convolution where radius_idx represents
-        the indexes of the points in x and pos to be agragated into the new feature
-        for each point in new_pos
-
-        Arguments:
-            x -- Previous features [B, N, C]
-            pos -- Previous positions [B, N, 3]
-            new_pos  -- Sampled positions [B, npoints, 3]
-            radius_idx -- Indexes to group [B, npoints, nsample]
-        """
+    def conv(self, features):
         raise NotImplementedError
 
     def forward(self, data):
@@ -316,9 +306,9 @@ class BaseDenseConvolutionDown(BaseConvolution):
             if self._precompute_multi_scale:
                 raise NotImplementedError()
             else:
-                radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
+                features = self.neighbour_finder(pos, new_pos, features, idx, scale_idx=scale_idx)
 
-            ms_x.append(self.conv(x, pos, new_pos, radius_idx))
+            ms_x.append(self.conv(features))
 
         batch_obj.x = torch.cat(ms_x, -1)
         batch_obj.pos = new_pos
