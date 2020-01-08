@@ -237,10 +237,10 @@ models:
         type: KPConv
         format_type: 'PARTIAL_DENSE'
         down_conv:
-            module_name: KPConv
+            module_name: ResnetBottleNeckPartialDense
             ratios: [0.2, 0.25]
             radius: [0.2, 0.4]
-            down_conv_nn: [[FEAT, 32], [32, 64]]
+            down_conv_nn: [[FEAT, 32 // 4, 32], [32, 32 // 4, 64]]
         up_conv:
             module_name: FPModule
             up_conv_nn: [[128 + 64, 64], [64 + 32, 64], [64 + FEAT, 64]]     

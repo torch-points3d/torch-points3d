@@ -131,7 +131,7 @@ class ResnetPartialDense(BaseKPConvPartialDense):
         return x
 
 
-class ResnetBottleNeckPartialDense(BaseKPConvPartialDense)
+class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
    def __init__(self, *args, **kwargs):
         super(ResnetPartialDense, self).__init__(*args, **kwargs)
 
