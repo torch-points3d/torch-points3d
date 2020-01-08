@@ -176,7 +176,7 @@ class PointnetSAModule(PointnetSAModuleMSG):
 
 
 class PointnetFPModule(nn.Module):
-    r"""Propigates the features of one set to another
+    r"""Propagates the features of one set to another
 
     Parameters
     ----------
@@ -201,28 +201,20 @@ class PointnetFPModule(nn.Module):
         known : torch.Tensor
             (B, m, 3) tensor of the xyz positions of the known features
         unknow_feats : torch.Tensor
-            (B, C1, n) tensor of the features to be propigated to
+            (B, C1, n) tensor of the features to be propagated to
         known_feats : torch.Tensor
-            (B, C2, m) tensor of features to be propigated
+            (B, C2, m) tensor of features to be propagated
 
         Returns
         -------
         new_features : torch.Tensor
             (B, mlp[-1], n) tensor of the features of the unknown features
         """
-
-        #print(unknown.shape, known.shape, unknow_feats.shape, known_feats.shape)
-
-        #import pdb; pdb.set_trace()
-
         if known is not None:
             dist, idx = tp.three_nn(unknown, known)
             dist_recip = 1.0 / (dist + 1e-8)
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
-
-            #print(known_feats.shape, idx.shape, weight.shape)
-
             interpolated_feats = tp.three_interpolate(
                 known_feats, idx, weight
             )

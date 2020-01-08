@@ -27,10 +27,9 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
-            data = data.to(device)
+            data = data.to(device)  # This takes time
             model.set_input(data)
-            iter_start_time = time.time()  # timer for computation per iteration
-            t_data = iter_start_time - iter_data_time
+            t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()
             model.optimize_parameters()

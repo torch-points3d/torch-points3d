@@ -60,6 +60,7 @@ class TestModelUtils(unittest.TestCase):
         model.forward()
 
     # def test_pointnet2_customekernel(self):
+    # NEEDS cpu kernels!
     #     model_type = 'pointnet2_customkernel'
     #     params = self.config['models']['pointnet2_kc']
     #     dataset = MockDataset(5)
