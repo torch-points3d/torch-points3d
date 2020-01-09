@@ -7,7 +7,7 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
-from models.core_modules import BaseInternalLossModule
+
 
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.
@@ -55,6 +55,9 @@ class BaseModel(torch.nn.Module):
         """
         pass
 
+    def get_labels(self):
+        return getattr(self, "labels", None)
+
     @abstractmethod
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
@@ -75,11 +78,16 @@ class BaseModel(torch.nn.Module):
         errors_ret = OrderedDict()
         for name in self.loss_names:
             if isinstance(name, str):
-                errors_ret[name] = float(getattr(self, name))
+                if hasattr(self, name):
+                    try:
+                        errors_ret[name] = float(getattr(self, name))
+                    except:
+                        errors_ret[name] = None
         return errors_ret
 
     def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
         self._optimizer = optimizer_cls(self.parameters(), lr=lr)
+        print(self._optimizer)
 
     def get_named_internal_losses(self):
         '''
@@ -88,8 +96,9 @@ class BaseModel(torch.nn.Module):
             This method merges the dicts of all child modules with internal loss
             and returns this merged dict
         '''
-        
+
         losses_global = []
+
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
@@ -113,3 +122,12 @@ class BaseModel(torch.nn.Module):
 
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
+
+
+class BaseInternalLossModule(ABC):
+    '''ABC for modules which have internal loss(es)
+    '''
+
+    @abstractmethod
+    def get_internal_losses(self) -> Dict[str, Any]:
+        pass

@@ -1,7 +1,8 @@
 from os import path as osp
 
 import torch
-torch.backends.cudnn.enabled = False
+from torch import nn
+from torch import autograd
 import numpy as np
 import torch.nn.functional as F
 from datasets.utils import find_dataset_using_name
@@ -17,13 +18,15 @@ from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from metrics.metrics_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
-from utils.utils import get_log_dir
+from utils.utils import get_log_dir, model_fn_decorator
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 
 
 def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     model.train()
     tracker.reset("train")
+
+    model_fn = model_fn_decorator(nn.CrossEntropyLoss())
 
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
@@ -32,17 +35,25 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
             t_data = iter_start_time - iter_data_time
 
             data = data.to(device)
+
+            iter_start_time = time.time()
             model.set_input(data)
             model.optimize_parameters()
-
-            tracker.track(model.get_current_losses(), model.get_output(), data.y)
             iter_data_time = time.time()
+
+            """
+            modelReturn = model_fn(model, data)
+            iter_data_time = time.time()
+            tracker.track({'loss': modelReturn.loss}, modelReturn.preds, data[-1])
+            """
+
+            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
                                         iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
 
-    metrics = tracker.publish()
-    checkpoint.save_best_models_under_current_metrics(model, metrics)
+        metrics = tracker.publish()
+        checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
 def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
@@ -56,7 +67,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: Mod
                 model.set_input(data)
                 model.forward()
 
-            tracker.track(model.get_current_losses(), model.get_output(), data.y)
+            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
             tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
     metrics = tracker.publish()
@@ -82,7 +93,7 @@ def main(cfg):
     # Get task and model_name
     exp = cfg.experiment
     tested_task = exp.task
-    tested_model_name = exp.name
+    tested_model_name = exp.model_name
     tested_dataset_name = exp.dataset
 
     # Find and create associated dataset

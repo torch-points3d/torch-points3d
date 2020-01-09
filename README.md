@@ -48,7 +48,10 @@ And you should see something like that
 # Benchmark
 ## S3DIS
 
-[RSConv 2LD](/benchmark/s3dis_fold5/RSConv_2LD.md)
+
+| Model Name | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
+| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| [```pointnet2```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3,026,829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11 
 
 ## Contributing
 We use [autopep8](https://github.com/hhatto/autopep8) for formating with the following options:

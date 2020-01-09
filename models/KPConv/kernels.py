@@ -8,7 +8,8 @@ import math
 from torch.nn.parameter import Parameter
 from .kernel_utils import kernel_point_optimization_debug
 from torch_geometric.nn import MessagePassing
-from models.core_modules import BaseInternalLossModule
+from models.base_model import BaseInternalLossModule
+
 
 def KPconv_op(self, x_j, pos_i, pos_j):
     if x_j is None:
@@ -31,11 +32,11 @@ def KPconv_op(self, x_j, pos_i, pos_j):
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
     if self.KP_influence == 'constant':
-    # Every point get an influence of 1.
+        # Every point get an influence of 1.
         all_weights = torch.ones_like(sq_distances)
 
     elif self.KP_influence == 'linear':
-    # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
+        # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
         all_weights = 1. - (sq_distances / (self.KP_extent ** 2))
         all_weights[all_weights < 0] = 0.0
     else:
@@ -46,7 +47,7 @@ def KPconv_op(self, x_j, pos_i, pos_j):
 
     K_weights = self.kernel_weight
     K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)
-                                ).view((n_points, self.in_features, self.out_features))
+                                   ).view((n_points, self.in_features, self.out_features))
 
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
     features = x_j
@@ -56,8 +57,9 @@ def KPconv_op(self, x_j, pos_i, pos_j):
 
     # Apply network weights [n_kpoints, n_points, out_fdim]
     out_features = torch.einsum("na, nac -> nc", weighted_features, K_weights)
-    
+
     return out_features, neighbors
+
 
 class PointKernel(MessagePassing):
 
@@ -117,8 +119,10 @@ class LossKPConvEnum(Enum):
     FITTING = 1
     REPULSION = 2
 
+
 def repulsion_loss(deformed_kpoints):
     pass
+
 
 def permissive_loss(deformed_kpoints, radius):
     """This loss is responsible to penalize deformed_kpoints to 
@@ -128,7 +132,9 @@ def permissive_loss(deformed_kpoints, radius):
     return torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
 
 # Implements the Light Deformable KPConv
-#https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
+# https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
+
+
 class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
     '''
@@ -216,16 +222,16 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
         # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
         if self.KP_influence == 'constant':
-        # Every point get an influence of 1.
+            # Every point get an influence of 1.
             all_weights = torch.ones_like(sq_distances)
 
         elif self.KP_influence == 'linear':
-        # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
+            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
             all_weights = 1. - (torch.sqrt(sq_distances) / (self.KP_extent))
             all_weights[all_weights < 0] = 0.0
 
         elif self.KP_influence == 'square':
-        # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
+            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
             all_weights = 1. - (sq_distances / (self.KP_extent ** 2))
             all_weights[all_weights < 0] = 0.0
 
@@ -236,14 +242,14 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
         # Fitting Loss
         sq_distances_min = sq_distances.gather(1, neighbors_1nn.unsqueeze(-1))
-        sq_distances_min /= (self.radius**2) # To be independant of the layer
+        sq_distances_min /= (self.radius**2)  # To be independant of the layer
         self.internal_losses['fitting_loss'] = torch.mean(sq_distances_min)
 
         weights = all_weights.gather(1, neighbors_1nn.unsqueeze(-1))
 
         K_weights = self.kernel_weight
         K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)
-                                    ).view((n_points, self.in_features, self.out_features))
+                                       ).view((n_points, self.in_features, self.out_features))
 
         # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
         features = x_j
@@ -253,7 +259,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
         # Apply network weights [n_kpoints, n_points, out_fdim]
         out_features = torch.einsum("na, nac -> nc", weighted_features, K_weights)
-        
+
         return out_features
 
     def get_internal_losses(self):

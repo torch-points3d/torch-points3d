@@ -21,14 +21,16 @@ class BaseDataset():
         self.dataset_opt = dataset_opt
         self.training_opt = training_opt
         self.strategies = {}
+        self._torch_loader = training_opt.use_torch_loader
 
-    def _create_dataloaders(self, train_dataset,  test_dataset, validation=None, torch_loader=False):
+    def _create_dataloaders(self, train_dataset,  test_dataset, validation=None):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
         self._num_classes = train_dataset.num_classes
         self._feature_dimension = train_dataset.num_features
-        if torch_loader:
+        if self._torch_loader:
             dataloader = partial(torch.utils.data.DataLoader,
+                                 pin_memory=True,
                                  collate_fn=lambda data_list: SimpleBatch.from_data_list(
                                      data_list))
         else:

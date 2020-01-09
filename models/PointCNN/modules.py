@@ -1,17 +1,18 @@
 
-from math import ceil 
+from math import ceil
 
-import torch 
+import torch
 from torch.nn import Sequential as S, Linear as L, BatchNorm1d as BN
 from torch.nn import ELU, Conv1d
 from models.core_sampling_and_search import DilatedKNNNeighbourFinder, RandomSampler, FPSSampler
-from models.core_modules import *
 from models.core_modules import BaseConvolutionDown, BaseConvolutionUp
 from torch_geometric.nn import Reshape
 from torch_geometric.nn.inits import reset
 
-#XConv from torch geometric, modified for this framework  
-#https://github.com/rusty1s/pytorch_geometric/blob/master/torch_geometric/nn/conv/x_conv.py
+# XConv from torch geometric, modified for this framework
+# https://github.com/rusty1s/pytorch_geometric/blob/master/torch_geometric/nn/conv/x_conv.py
+
+
 class XConv(torch.nn.Module):
     r"""The convolutional operator on :math:`\mathcal{X}`-transformed points
     from the `"PointCNN: Convolution On X-Transformed Points"
@@ -48,6 +49,7 @@ class XConv(torch.nn.Module):
         **kwargs (optional): Additional arguments of
             :class:`torch_cluster.knn_graph`.
     """
+
     def __init__(self, in_channels, out_channels, dim, kernel_size,
                  hidden_channels=None, dilation=1, bias=True, **kwargs):
         super(XConv, self).__init__()
@@ -107,10 +109,10 @@ class XConv(torch.nn.Module):
 
     def forward(self, x, pos, edge_index):
 
-        #posTo = the points that will be centers of convolutions
-        #posFrom = points that have edges to the centers of convolutions 
-        #For a down conv, posFrom = pos, posTo = pos[idx]
-        #For an up conv, posFrom = pos, posTo = pos_skip 
+        # posTo = the points that will be centers of convolutions
+        # posFrom = points that have edges to the centers of convolutions
+        # For a down conv, posFrom = pos, posTo = pos[idx]
+        # For an up conv, posFrom = pos, posTo = pos_skip
         posFrom, posTo = pos
 
         (N, D), K = posTo.size(), self.kernel_size
@@ -119,7 +121,7 @@ class XConv(torch.nn.Module):
 
         relPos = posTo[idxTo] - posFrom[idxFrom]
 
-        x_star = self.mlp1(relPos) 
+        x_star = self.mlp1(relPos)
         # x_star = self.mlp1(relPos.view(len(row), D))
         if x is not None:
             x = x.unsqueeze(-1) if x.dim() == 1 else x
@@ -142,21 +144,22 @@ class XConv(torch.nn.Module):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
 
+
 class PointCNNConvDown(BaseConvolutionDown):
 
-    def __init__(self, 
-        inN=None, 
-        outN=None, 
-        K=None, 
-        D=None, 
-        C1=None, 
-        C2=None,
-        hidden_channel=None,
-        *args, 
-        **kwargs,
-    ):
+    def __init__(self,
+                 inN=None,
+                 outN=None,
+                 K=None,
+                 D=None,
+                 C1=None,
+                 C2=None,
+                 hidden_channel=None,
+                 *args,
+                 **kwargs,
+                 ):
         super(PointCNNConvDown, self).__init__(
-            FPSSampler(outN/inN), 
+            FPSSampler(outN/inN),
             DilatedKNNNeighbourFinder(K, D)
         )
 
@@ -169,13 +172,13 @@ class PointCNNConvDown(BaseConvolutionDown):
 class PointCNNConvUp(BaseConvolutionUp):
 
     def __init__(self,
-        K = None, 
-        D = None, 
-        C1 = None, 
-        C2 = None, 
-        *args, 
-        **kwargs
-    ):
+                 K=None,
+                 D=None,
+                 C1=None,
+                 C2=None,
+                 *args,
+                 **kwargs
+                 ):
         super(PointCNNConvUp, self).__init__(
             DilatedKNNNeighbourFinder(K, D)
         )
