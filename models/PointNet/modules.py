@@ -5,6 +5,7 @@ from torch_geometric.nn import global_max_pool
 
 from models.core_modules import *
 from models.core_transforms import BaseLinearTransformSTNkD
+from models.base_model import BaseInternalLossModule
 
 
 class MiniPointNet(torch.nn.Module):
@@ -16,7 +17,6 @@ class MiniPointNet(torch.nn.Module):
         self.global_nn = MLP(global_nn)
 
     def forward(self, x, batch):
-
         x = self.local_nn(x)
         x = global_max_pool(x, batch)
         x = self.global_nn(x)
@@ -38,7 +38,7 @@ class PointNetSTN3D(BaseLinearTransformSTNkD):
         return super().forward(x, x, batch)
 
 
-class PointNetSTNkD(BaseLinearTransformSTNkD):
+class PointNetSTNkD(BaseLinearTransformSTNkD, BaseInternalLossModule):
 
     def __init__(self, k=64, local_nn=[64, 64, 128, 1024], global_nn=[1024, 512, 256], batch_size=1):
         super().__init__(
@@ -50,6 +50,12 @@ class PointNetSTNkD(BaseLinearTransformSTNkD):
 
     def forward(self, x, batch):
         return super().forward(x, x, batch)
+
+    def get_internal_losses(self):
+        return {
+            'orthogonal_regularization_loss': 
+            self.get_orthogonal_regularization_loss()
+        }
 
 
 class PointNetSeg(torch.nn.Module):

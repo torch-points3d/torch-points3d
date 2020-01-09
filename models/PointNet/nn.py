@@ -34,5 +34,6 @@ class SegmentationModel(BaseModel):
         return self.output
 
     def backward(self):
-        self.loss = F.nll_loss(self.output, self.labels)
+        internal_loss = self.get_internal_loss()
+        self.loss = F.nll_loss(self.output, self.labels) + (internal_loss if internal_loss.item() != 0 else 0) * 0.001
         self.loss.backward()
