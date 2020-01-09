@@ -1,7 +1,7 @@
 import numpy as np
 
-class RunningStats:
 
+class RunningStats:
     def __init__(self):
         self.n = 0
         self.old_m = 0

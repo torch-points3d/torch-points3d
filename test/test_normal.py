@@ -6,16 +6,16 @@ import torch
 from torch_geometric.data import Data
 from datasets.transforms import MeshToNormal
 
-ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 
 
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
 
-        pos = np.array([[0, 1, 0], [0, 0, 0], [1, 0, 0],
-                        [0, 0, 0], [0, 0, 1], [0, 1, 0]])  # Should be [0, 0, 1], [1, 0, 0]
-        face = np.array([[0, 1, 2],
-                         [3, 4, 5]]).T
+        pos = np.array(
+            [[0, 1, 0], [0, 0, 0], [1, 0, 0], [0, 0, 0], [0, 0, 1], [0, 1, 0]]
+        )  # Should be [0, 0, 1], [1, 0, 0]
+        face = np.array([[0, 1, 2], [3, 4, 5]]).T
 
         self.data = Data(pos=torch.from_numpy(pos).float(), face=torch.from_numpy(face))
 

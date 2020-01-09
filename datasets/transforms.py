@@ -1,4 +1,3 @@
-
 import numpy as np
 import re
 import torch
@@ -20,13 +19,15 @@ class MeshToNormal(object):
             pos = data.pos
             face = data.face
             vertices = [pos[f] for f in face]
-            normals = torch.cross(vertices[0] - vertices[1], vertices[0] - vertices[2], dim=1)
+            normals = torch.cross(
+                vertices[0] - vertices[1], vertices[0] - vertices[2], dim=1
+            )
             normals = F.normalize(normals)
             data.normals = normals
         return data
 
     def __repr__(self):
-        return '{}'.format(self.__class__.__name__)
+        return "{}".format(self.__class__.__name__)
 
 
 class MultiScaleTransform(object):
@@ -37,7 +38,9 @@ class MultiScaleTransform(object):
         self.strategies = strategies
         self.precompute_multi_scale = precompute_multi_scale
         if self.precompute_multi_scale and not bool(strategies):
-            raise Exception('Strategies are empty and precompute_multi_scale is set to True')
+            raise Exception(
+                "Strategies are empty and precompute_multi_scale is set to True"
+            )
         self.num_layers = len(self.strategies.keys())
 
     @staticmethod
@@ -68,8 +71,9 @@ class MultiScaleTransform(object):
                 setattr(data, index_name, idx)
                 setattr(data, edge_name, edge_index)
 
-                num_nodes_for_edge_index = torch.from_numpy(np.array([pos.shape[0],
-                                                                      pos[idx].shape[0]])).unsqueeze(-1)
+                num_nodes_for_edge_index = torch.from_numpy(
+                    np.array([pos.shape[0], pos[idx].shape[0]])
+                ).unsqueeze(-1)
 
                 special_params[index_name] = num_nodes_for_edge_index[0]
 
@@ -81,4 +85,4 @@ class MultiScaleTransform(object):
         return data
 
     def __repr__(self):
-        return '{}'.format(self.__class__.__name__)
+        return "{}".format(self.__class__.__name__)

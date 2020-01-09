@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, knn
@@ -8,15 +7,15 @@ import math
 
 
 class RandlaKernel(MessagePassing):
-    '''
+    """
         Implements both the Local Spatial Encoding and Attentive Pooling blocks from
         RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
         https://arxiv.org/pdf/1911.11236
 
-    '''
+    """
 
     def __init__(self, point_pos_nn=None, attention_nn=None, global_nn=None, *args, **kwargs):
-        MessagePassing.__init__(self, aggr='add')
+        MessagePassing.__init__(self, aggr="add")
 
         self.point_pos_nn = MLP(point_pos_nn)
         self.attention_nn = MLP(attention_nn)
@@ -36,12 +35,7 @@ class RandlaKernel(MessagePassing):
 
         dij = torch.norm(vij, dim=1).unsqueeze(1)
 
-        relPointPos = torch.cat([
-            pos_i,
-            pos_j,
-            vij,
-            dij
-        ], dim=1)
+        relPointPos = torch.cat([pos_i, pos_j, vij, dij], dim=1)
 
         rij = self.point_pos_nn(relPointPos)
 
@@ -61,31 +55,44 @@ class RandlaKernel(MessagePassing):
 
 
 class RandlaConv(BaseConvolutionDown):
-
     def __init__(self, ratio=None, k=None, *args, **kwargs):
         super(RandlaConv, self).__init__(RandomSampler(ratio), KNNNeighbourFinder(k), *args, **kwargs)
-        if kwargs.get('index') == 0 and kwargs.get("nb_feature") is not None:
+        if kwargs.get("index") == 0 and kwargs.get("nb_feature") is not None:
             kwargs["point_pos_nn"][-1] = kwargs.get("nb_feature")
             kwargs["attention_nn"][0] = kwargs["attention_nn"][-1] = kwargs.get("nb_feature") * 2
-            kwargs['down_conv_nn'][0] = kwargs.get("nb_feature") * 2
-        self._conv = RandlaKernel(*args, global_nn=kwargs['down_conv_nn'], **kwargs)
+            kwargs["down_conv_nn"][0] = kwargs.get("nb_feature") * 2
+        self._conv = RandlaKernel(*args, global_nn=kwargs["down_conv_nn"], **kwargs)
 
     def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
 class DilatedResidualBlock(BaseResnetBlock):
-
-    def __init__(self, indim, outdim, ratio1, ratio2, point_pos_nn1, point_pos_nn2,
-                 attention_nn1, attention_nn2, global_nn1, global_nn2, *args, **kwargs):
-        if kwargs.get('index') == 0 and kwargs.get("nb_feature") is not None:
+    def __init__(
+        self,
+        indim,
+        outdim,
+        ratio1,
+        ratio2,
+        point_pos_nn1,
+        point_pos_nn2,
+        attention_nn1,
+        attention_nn2,
+        global_nn1,
+        global_nn2,
+        *args,
+        **kwargs
+    ):
+        if kwargs.get("index") == 0 and kwargs.get("nb_feature") is not None:
             indim = kwargs.get("nb_feature")
         super(DilatedResidualBlock, self).__init__(indim, outdim, outdim)
-        self.conv1 = RandlaConv(ratio1, 16, point_pos_nn=point_pos_nn1,
-                                attention_nn=attention_nn1, down_conv_nn=global_nn1, *args, **kwargs)
-        kwargs['nb_feature'] = None
-        self.conv2 = RandlaConv(ratio2, 16, point_pos_nn=point_pos_nn2,
-                                attention_nn=attention_nn2, down_conv_nn=global_nn2, *args, **kwargs)
+        self.conv1 = RandlaConv(
+            ratio1, 16, point_pos_nn=point_pos_nn1, attention_nn=attention_nn1, down_conv_nn=global_nn1, *args, **kwargs
+        )
+        kwargs["nb_feature"] = None
+        self.conv2 = RandlaConv(
+            ratio2, 16, point_pos_nn=point_pos_nn2, attention_nn=attention_nn2, down_conv_nn=global_nn2, *args, **kwargs
+        )
 
     def convs(self, data):
         data = self.conv1(data)
@@ -94,7 +101,6 @@ class DilatedResidualBlock(BaseResnetBlock):
 
 
 class RandLANetRes(torch.nn.Module):
-
     def __init__(self, indim, outdim, ratio, point_pos_nn, attention_nn, down_conv_nn, *args, **kwargs):
         super(RandLANetRes, self).__init__()
 
@@ -109,7 +115,8 @@ class RandLANetRes(torch.nn.Module):
             attention_nn[1],
             down_conv_nn[0],
             down_conv_nn[1],
-            *args, **kwargs
+            *args,
+            **kwargs
         )
 
     def forward(self, data):

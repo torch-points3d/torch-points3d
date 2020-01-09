@@ -40,10 +40,14 @@ class SimpleBatch(Data):
 
         for key in batch.keys:
             item = batch[key][0]
-            if torch.is_tensor(item) or isinstance(item, int) or isinstance(item, float):
+            if (
+                torch.is_tensor(item)
+                or isinstance(item, int)
+                or isinstance(item, float)
+            ):
                 batch[key] = torch.stack(batch[key])
             else:
-                raise ValueError('Unsupported attribute type')
+                raise ValueError("Unsupported attribute type")
 
         return batch.contiguous()
         # return [batch.x.transpose(1, 2).contiguous(), batch.pos, batch.y.view(-1)]
