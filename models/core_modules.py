@@ -213,8 +213,8 @@ class BaseConvolutionDown(BaseConvolution):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         idx_sampler = self.sampler(pos, batch)
-        idx_neighbour, _ = self.neighbour_finder(pos, pos[idx_sampler],  batch_x=batch,
-                                                 batch_y=batch[idx_sampler])
+        idx_neighbour, _ = self.neighbour_finder(pos, pos,  batch_x=batch,
+                                                 batch_y=batch)
         batch_obj.x = self.conv(x, pos, batch, idx_sampler, idx_neighbour)
 
         batch_obj.pos = pos[idx]

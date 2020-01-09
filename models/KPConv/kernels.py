@@ -328,7 +328,7 @@ class PointKernelPartialDense(nn.Module):
     def forward(self, x, pos, idx_sampler, idx_neighbour):
         features = KPConv_ops(pos,
                               pos[idx_sampler] if self.is_strided else pos,
-                              idx_neighbour,
+                              idx_neighbour[idx_sampler] if self.is_strided else idx_neighbour,
                               x,
                               self.kernel.to(x.device),
                               self.kernel_weight.to(x.device),
