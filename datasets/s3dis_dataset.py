@@ -55,8 +55,7 @@ class S3DISDataset(BaseDataset):
         transform = T.Compose([
             T.FixedPoints(dataset_opt.num_points),
             T.RandomTranslate(0.01),
-            T.RandomRotate(15, axis=0),
-            T.RandomRotate(15, axis=1),
+            T.RandomRotate(180, axis=2)
         ])
         train_dataset = S3DIS_With_Weights(self._data_path, test_area=self.dataset_opt.fold, train=True,
                                            pre_transform=pre_transform, transform=transform, class_weight_method=dataset_opt.class_weight_method)
