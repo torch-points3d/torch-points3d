@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    model_name: pointnet2_kc
+    model_name: pointnet2_original
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True

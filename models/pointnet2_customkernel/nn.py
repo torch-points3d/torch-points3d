@@ -29,74 +29,40 @@ class SegmentationModel(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(SegmentationModel, self).__init__(option)
-
-        self.SA_modules = nn.ModuleList()
         use_xyz = True
         self.loss_names = ['loss_seg']
         self._weight_classes = dataset.weight_classes
-
-        c_in = input_channels = dataset.feature_dimension
         self._num_classes = dataset.num_classes
 
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=1024,
-                radii=[0.05, 0.1],
-                nsamples=[16, 32],
-                mlps=[[c_in, 16, 16, 32], [c_in, 32, 32, 64]],
-                use_xyz=use_xyz,
+        # Downconv
+        downconv_opt = option.down_conv
+        self.SA_modules = nn.ModuleList()
+        for i in range(len(downconv_opt.down_conv_nn)):
+            self.SA_modules.append(
+                PointnetSAModuleMSG(
+                    npoint=downconv_opt.npoint[i],
+                    radii=downconv_opt.radii[i],
+                    nsamples=downconv_opt.nsamples[i],
+                    mlps=downconv_opt.down_conv_nn[i],
+                    use_xyz=use_xyz,
+                )
             )
-        )
-        c_out_0 = 32 + 64
 
-        c_in = c_out_0
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=256,
-                radii=[0.1, 0.2],
-                nsamples=[16, 32],
-                mlps=[[c_in, 64, 64, 128], [c_in, 64, 96, 128]],
-                use_xyz=use_xyz,
-            )
-        )
-        c_out_1 = 128 + 128
-
-        c_in = c_out_1
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=64,
-                radii=[0.2, 0.4],
-                nsamples=[16, 32],
-                mlps=[[c_in, 128, 196, 256], [c_in, 128, 196, 256]],
-                use_xyz=use_xyz,
-            )
-        )
-        c_out_2 = 256 + 256
-
-        c_in = c_out_2
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=16,
-                radii=[0.4, 0.8],
-                nsamples=[16, 32],
-                mlps=[[c_in, 256, 256, 512], [c_in, 256, 384, 512]],
-                use_xyz=use_xyz,
-            )
-        )
-        c_out_3 = 512 + 512
-
+        # Up conv
+        up_conv_opt = option.up_conv
         self.FP_modules = nn.ModuleList()
-        self.FP_modules.append(PointnetFPModule(mlp=[256 + input_channels, 128, 128]))
-        self.FP_modules.append(PointnetFPModule(mlp=[512 + c_out_0, 256, 256]))
-        self.FP_modules.append(PointnetFPModule(mlp=[512 + c_out_1, 512, 512]))
-        self.FP_modules.append(PointnetFPModule(mlp=[c_out_3 + c_out_2, 512, 512]))
+        for i in range(len(up_conv_opt.up_conv_nn)):
+            self.FP_modules.append(PointnetFPModule(mlp=up_conv_opt.up_conv_nn[i]))
 
-        self.FC_layer = (
-            pt_utils.Seq(128)
-            .conv1d(128, bn=True)
-            .dropout()
-            .conv1d(self._num_classes, activation=None)
-        )
+        # Last MLP
+        last_mlp_opt = option.mlp_cls
+        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0])
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
+        if last_mlp_opt.dropout:
+            self.FC_layer.dropout(p=last_mlp_opt.dropout)
+
+        self.FC_layer.conv1d(self._num_classes, activation=None)
         print(self)
 
     def set_input(self, data):
@@ -129,11 +95,10 @@ class SegmentationModel(BaseModel):
             l_xyz.append(li_xyz)
             l_features.append(li_features)
 
-        for i in range(-1, -(len(self.FP_modules) + 1), -1):
-            l_features[i - 1] = self.FP_modules[i](
-                l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
+        for i in range(len(self.FP_modules)):
+            l_features[-i - 2] = self.FP_modules[i](
+                l_xyz[-i - 2], l_xyz[-i-1], l_features[-i - 2], l_features[-i-1]
             )
-
         self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 

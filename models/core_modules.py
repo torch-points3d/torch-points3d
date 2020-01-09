@@ -10,6 +10,7 @@ from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, gl
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
 import torch_points as tp
+import etw_pytorch_utils as pt_utils
 
 import models.utils as utils
 from models.core_sampling_and_search import BaseMSNeighbourFinder
@@ -26,167 +27,6 @@ def MLP(channels, activation=ReLU()):
         Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i]))
         for i in range(1, len(channels))
     ])
-
-################## BASE MLP BUILT USING CONV_2D #####################
-
-
-class SharedMLP(nn.Sequential):
-    def __init__(
-        self,
-        layers,
-        bn=False,
-        activation=nn.ReLU(inplace=True),
-        preact=False,
-        first=False,
-        name="",
-    ):
-        # type: (SharedMLP, List[int], bool, Any, bool, bool, AnyStr) -> None
-        super(SharedMLP, self).__init__()
-
-        for i in range(len(layers) - 1):
-            self.add_module(
-                name + "layer{}".format(i),
-                Conv2d(
-                    layers[i],
-                    layers[i + 1],
-                    bn=(not first or not preact or (i != 0)) and bn,
-                    activation=activation
-                    if (not first or not preact or (i != 0))
-                    else None,
-                    preact=preact,
-                ),
-            )
-
-
-class _ConvBase(nn.Sequential):
-    def __init__(
-        self,
-        in_size,
-        out_size,
-        kernel_size,
-        stride,
-        padding,
-        dilation,
-        activation,
-        bn,
-        init,
-        conv=None,
-        norm_layer=None,
-        bias=True,
-        preact=False,
-        name="",
-    ):
-        super(_ConvBase, self).__init__()
-
-        bias = bias and (not bn)
-        conv_unit = conv(
-            in_size,
-            out_size,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding,
-            dilation=dilation,
-            bias=bias,
-        )
-        init(conv_unit.weight)
-        if bias:
-            nn.init.constant_(conv_unit.bias, 0)
-
-        if bn:
-            if not preact:
-                bn_unit = norm_layer(out_size)
-            else:
-                bn_unit = norm_layer(in_size)
-
-        if preact:
-            if bn:
-                self.add_module(name + "normlayer", bn_unit)
-
-            if activation is not None:
-                self.add_module(name + "activation", activation)
-
-        self.add_module(name + "conv", conv_unit)
-
-        if not preact:
-            if bn:
-                self.add_module(name + "normlayer", bn_unit)
-
-            if activation is not None:
-                self.add_module(name + "activation", activation)
-
-
-class Conv1d(_ConvBase):
-    def __init__(
-        self,
-        in_size,
-        out_size,
-        kernel_size=1,
-        stride=1,
-        padding=0,
-        dilation=1,
-        activation=nn.ReLU(inplace=True),
-        bn=False,
-        init=nn.init.kaiming_normal_,
-        bias=True,
-        preact=False,
-        name="",
-        norm_layer=nn.BatchNorm1d,
-    ):
-        # type: (Conv1d, int, int, int, int, int, int, Any, bool, Any, bool, bool, AnyStr, _BNBase) -> None
-        super(Conv1d, self).__init__(
-            in_size,
-            out_size,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            activation,
-            bn,
-            init,
-            conv=nn.Conv1d,
-            norm_layer=norm_layer,
-            bias=bias,
-            preact=preact,
-            name=name,
-        )
-
-
-class Conv2d(_ConvBase):
-    def __init__(
-        self,
-        in_size,
-        out_size,
-        kernel_size=(1, 1),
-        stride=(1, 1),
-        padding=(0, 0),
-        dilation=(1, 1),
-        activation=nn.ReLU(inplace=True),
-        bn=False,
-        init=nn.init.kaiming_normal_,
-        bias=True,
-        preact=False,
-        name="",
-        norm_layer=nn.BatchNorm2d,
-    ):
-        # type: (Conv2d, int, int, Tuple[int, int], Tuple[int, int], Tuple[int, int], Tuple[int, int], Any, bool, Any, bool, bool, AnyStr, _BNBase) -> None
-        super(Conv2d, self).__init__(
-            in_size,
-            out_size,
-            kernel_size,
-            stride,
-            padding,
-            dilation,
-            activation,
-            bn,
-            init,
-            conv=nn.Conv2d,
-            norm_layer=norm_layer,
-            bias=bias,
-            preact=preact,
-            name=name,
-        )
-
-################## BASE CONVOLUTION #####################
 
 
 class BaseConvolution(ABC, torch.nn.Module):
@@ -424,7 +264,7 @@ class GlobalBaseModule(torch.nn.Module):
 class GlobalDenseBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr='max'):
         super(GlobalDenseBaseModule, self).__init__()
-        self.nn = SharedMLP(nn)
+        self.nn = pt_utils.SharedMLP(nn)
 
     def forward(self, data):
         batch_obj = Batch()
@@ -467,7 +307,7 @@ class DenseFPModule(BaseDenseConvolutionUp):
         super(DenseFPModule, self).__init__(None)
 
         self.k = up_k
-        self.nn = SharedMLP(up_conv_nn)
+        self.nn = pt_utils.SharedMLP(up_conv_nn)
 
     def conv(self, x, x_skip, pos, pos_skip, batch, batch_skip):
         # unknown, known, unknow_feats, known_feats
