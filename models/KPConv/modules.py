@@ -155,9 +155,6 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
 
     def conv(self, input, pos, idx):
 
-        import pdb
-        pdb.set_trace()
-
         x = self.uconv_0(input)
         x = self._kp_conv0(x, pos, idx)
         x = self._kp_conv1(x, pos, idx)
@@ -499,6 +496,9 @@ class UnaryConv(torch.nn.Module):
         features(Torch Tensor): size N x d d is the size of inputs
         """
         return torch.matmul(features, self.weight)
+
+    def __repr__(self):
+        return "UnaryConv({}, {})".format(self.num_inputs, self.num_outputs)
 
 
 def max_pool(features, pools):

@@ -49,7 +49,7 @@ data:
         dataroot: data
         fold: 5
         class_weight_method: 'sqrt'
-        num_points: 4096
+        num_points: 1024
         FIRST_SUBSAMPLING: 0.04
         DENSITY_PARAMETER: 5.0
         KP_EXTENT: 1.0

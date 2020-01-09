@@ -298,7 +298,7 @@ class PointKernelPartialDense(nn.Module):
         self.KP_influence = KP_influence
         self.aggregation_mode = aggregation_mode
         self.is_strided = is_strided
-        self.norm = norm(out_features) if norm is not None else None
+        self.norm = None  # norm(out_features) if norm is not None else None
         self.act = act()
 
         # Radius of the initial positions of the kernel points
