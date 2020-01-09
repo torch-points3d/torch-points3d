@@ -1,6 +1,6 @@
 from typing import Any
 import torch
-torch.backends.cudnn.enabled = False
+
 from torch import nn
 import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
@@ -29,74 +29,40 @@ class SegmentationModel(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(SegmentationModel, self).__init__(option)
-
-        self.SA_modules = nn.ModuleList()
         use_xyz = True
         self.loss_names = ['loss_seg']
-        self.weight_classes = dataset.weight_classes
-
-        c_in = input_channels = dataset.feature_dimension
+        self._weight_classes = dataset.weight_classes
         self._num_classes = dataset.num_classes
 
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=1024,
-                radii=[0.05, 0.1],
-                nsamples=[16, 32],
-                mlps=[[c_in, 16, 16, 32], [c_in, 32, 32, 64]],
-                use_xyz=use_xyz,
+        # Downconv
+        downconv_opt = option.down_conv
+        self.SA_modules = nn.ModuleList()
+        for i in range(len(downconv_opt.down_conv_nn)):
+            self.SA_modules.append(
+                PointnetSAModuleMSG(
+                    npoint=downconv_opt.npoint[i],
+                    radii=downconv_opt.radii[i],
+                    nsamples=downconv_opt.nsamples[i],
+                    mlps=downconv_opt.down_conv_nn[i],
+                    use_xyz=use_xyz,
+                )
             )
-        )
-        c_out_0 = 32 + 64
 
-        c_in = c_out_0
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=256,
-                radii=[0.1, 0.2],
-                nsamples=[16, 32],
-                mlps=[[c_in, 64, 64, 128], [c_in, 64, 96, 128]],
-                use_xyz=use_xyz,
-            )
-        )
-        c_out_1 = 128 + 128
-
-        c_in = c_out_1
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=64,
-                radii=[0.2, 0.4],
-                nsamples=[16, 32],
-                mlps=[[c_in, 128, 196, 256], [c_in, 128, 196, 256]],
-                use_xyz=use_xyz,
-            )
-        )
-        c_out_2 = 256 + 256
-
-        c_in = c_out_2
-        self.SA_modules.append(
-            PointnetSAModuleMSG(
-                npoint=16,
-                radii=[0.4, 0.8],
-                nsamples=[16, 32],
-                mlps=[[c_in, 256, 256, 512], [c_in, 256, 384, 512]],
-                use_xyz=use_xyz,
-            )
-        )
-        c_out_3 = 512 + 512
-
+        # Up conv
+        up_conv_opt = option.up_conv
         self.FP_modules = nn.ModuleList()
-        self.FP_modules.append(PointnetFPModule(mlp=[256 + input_channels, 128, 128]))
-        self.FP_modules.append(PointnetFPModule(mlp=[512 + c_out_0, 256, 256]))
-        self.FP_modules.append(PointnetFPModule(mlp=[512 + c_out_1, 512, 512]))
-        self.FP_modules.append(PointnetFPModule(mlp=[c_out_3 + c_out_2, 512, 512]))
+        for i in range(len(up_conv_opt.up_conv_nn)):
+            self.FP_modules.append(PointnetFPModule(mlp=up_conv_opt.up_conv_nn[i]))
 
-        self.FC_layer = (
-            pt_utils.Seq(128)
-            .conv1d(128, bn=True)
-            .dropout()
-            .conv1d(self._num_classes, activation=None)
-        )
+        # Last MLP
+        last_mlp_opt = option.mlp_cls
+        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0])
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
+        if last_mlp_opt.dropout:
+            self.FC_layer.dropout(p=last_mlp_opt.dropout)
+
+        self.FC_layer.conv1d(self._num_classes, activation=None)
         print(self)
 
     def set_input(self, data):
@@ -106,11 +72,10 @@ class SegmentationModel(BaseModel):
             Dimensions: [B, N, ...]
         """
         self.x = data.x.transpose(1, 2).contiguous()
-        self.pos = data.pos.to("cuda", non_blocking=True)
-        self.labels = torch.flatten(data.y).to("cuda", non_blocking=True)
+        self.pos = data.pos
+        self.labels = torch.flatten(data.y)
 
     def forward(self):
-        # type: (Pointnet2MSG, torch.cuda.FloatTensor) -> pt_utils.Seq
         r"""
             Forward pass of the network
 
@@ -129,11 +94,10 @@ class SegmentationModel(BaseModel):
             l_xyz.append(li_xyz)
             l_features.append(li_features)
 
-        for i in range(-1, -(len(self.FP_modules) + 1), -1):
-            l_features[i - 1] = self.FP_modules[i](
-                l_xyz[i - 1], l_xyz[i], l_features[i - 1], l_features[i]
+        for i in range(len(self.FP_modules)):
+            l_features[-i - 2] = self.FP_modules[i](
+                l_xyz[-i - 2], l_xyz[-i-1], l_features[-i - 2], l_features[-i-1]
             )
-
         self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 
@@ -141,67 +105,8 @@ class SegmentationModel(BaseModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
         self.loss_seg = F.cross_entropy(self.output, self.labels.long(),
-                                        weight=self.weight_classes.to(self.output.device))
+                                        weight=self._weight_classes)
         self.loss_seg.backward()
-
-
-# class SegmentationModel(UnetBasedModel):
-#     def __init__(self, option, model_type, dataset, modules):
-#         # call the initialization method of UnetBasedModel
-#         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
-
-#         nn = option.mlp_cls.nn
-#         self.dropout = option.mlp_cls.get('dropout')
-#         self.lin1 = torch.nn.Linear(nn[0], nn[1])
-#         self.lin2 = torch.nn.Linear(nn[1], nn[2])
-#         self.lin3 = torch.nn.Linear(nn[2], dataset.num_classes)
-
-#         self.loss_names = ['loss_seg']
-
-#     def set_input(self, data):
-#         """Unpack input data from the dataloader and perform necessary pre-processing steps.
-#         Parameters:
-#             input: a dictionary that contains the data itself and its metadata information.
-#             Dimensions: [B, N, ...]
-#         """
-#         self.input = data
-#         self.labels = torch.flatten(data.y)
-
-#     def forward(self) -> Any:
-#         """Standard forward"""
-#         data = self.model(self.input)
-#         x = data.x.squeeze(-1)
-#         x = x.view((-1, x.shape[1]))
-#         x = F.relu(self.lin1(x))
-#         x = F.dropout(x, p=self.dropout, training=self.training)
-#         x = self.lin2(x)
-#         x = F.dropout(x, p=self.dropout, training=self.training)
-#         x = self.lin3(x)
-#         self.output = x
-#         return self.output
-
-#     def backward(self, debug=False):
-#         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-#         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-#         # calculate loss given the input and intermediate results
-
-#         if debug:
-#             print(self.output, torch.isnan(self.output).any(), torch.unique(self.labels))
-#             print(self.output.shape, self.labels.shape)
-
-#             try:
-#                 self.loss_seg = F.cross_entropy(self.output, self.labels.long())
-#                 if torch.isnan(self.loss_seg):
-#                     import pdb
-#                     pdb.set_trace()
-#                 self.loss_seg.backward()
-#             except:
-#                 import pdb
-#                 pdb.set_trace()
-#             grad_ = self.model.down._local_nn[0].conv.weight.grad
-#             print(torch.sum(grad_) != 0)
-#         else:
-#             self.loss_seg = F.cross_entropy(self.output, self.labels.long())
-#             self.loss_seg.backward()

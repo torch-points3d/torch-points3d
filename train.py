@@ -1,13 +1,10 @@
 from os import path as osp
-
 import torch
 from torch import nn
 from torch import autograd
 import numpy as np
 import torch.nn.functional as F
-from datasets.utils import find_dataset_using_name
 import hydra
-from torch_geometric.utils import intersection_and_union as i_and_u
 from tqdm import tqdm as tq
 import time
 import wandb
@@ -20,37 +17,29 @@ from metrics.metrics_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
 from utils.utils import get_log_dir, model_fn_decorator
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+from datasets.utils import find_dataset_using_name
 
 
 def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     model.train()
     tracker.reset("train")
 
-    model_fn = model_fn_decorator(nn.CrossEntropyLoss())
-
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
-        for data in tq_train_loader:
-            iter_start_time = time.time()  # timer for computation per iteration
-            t_data = iter_start_time - iter_data_time
-
-            data = data.to(device)
+        for i, data in enumerate(tq_train_loader):
+            data = data.to(device)  # This takes time
+            model.set_input(data)
+            t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()
-            model.set_input(data)
             model.optimize_parameters()
-            iter_data_time = time.time()
 
-            """
-            modelReturn = model_fn(model, data)
-            iter_data_time = time.time()
-            tracker.track({'loss': modelReturn.loss}, modelReturn.preds, data[-1])
-            """
-
-            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
+            if i % 10 == 0:
+                tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
 
             tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
                                         iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
+            iter_data_time = time.time()
 
         metrics = tracker.publish()
         checkpoint.save_best_models_under_current_metrics(model, metrics)
