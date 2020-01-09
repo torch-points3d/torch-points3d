@@ -31,18 +31,28 @@ class BaseLinearTransformSTNkD(torch.nn.Module):
             Learns and applies a linear transformation to trans_x based on feat_x.
             feat_x and trans_x may be the same or different.
         """
-
         global_feature = self.nn(feat_x, batch)
         trans = self.fc_layer(global_feature)
 
         # needed so that transform is initialized to identity
         trans = trans + self.identity.to(feat_x.device)
         trans = trans.view(-1, self.k, self.k)
+        self.trans = trans
 
-        # import pdb; pdb.set_trace()
         # convert trans_x from (N, K) to (B, N, K) to do batched matrix multiplication
         # batch_x = trans_x.view(self.batch_size, -1, trans_x.shape[1])
         batch_x = trans_x.view(trans_x.shape[0], 1, trans_x.shape[1])
         x_transformed = torch.bmm(batch_x, trans[batch])
 
         return x_transformed.view(len(trans_x), trans_x.shape[1])
+
+    def get_orthogonal_regularization_loss(self):
+        loss = torch.mean(
+            torch.norm(
+                torch.bmm(self.trans, self.trans.transpose(2, 1))
+                - self.identity.to(self.trans.device).view(-1, self.k, self.k),
+                dim=(1, 2),
+            )
+        )
+
+        return loss
