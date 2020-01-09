@@ -76,7 +76,6 @@ class SegmentationModel(BaseModel):
         self.labels = torch.flatten(data.y)
 
     def forward(self):
-        # type: (Pointnet2MSG, torch.cuda.FloatTensor) -> pt_utils.Seq
         r"""
             Forward pass of the network
 
