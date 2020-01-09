@@ -325,10 +325,10 @@ class PointKernelPartialDense(nn.Module):
                                                     dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
         self.kernel.data = torch.from_numpy(kernel).float()
 
-    def forward(self, x, pos, idx):
+    def forward(self, x, pos, idx_sampler, idx_neighbour):
         features = KPConv_ops(pos,
-                              pos[idx] if self.is_strided else pos,
-                              idx,
+                              pos[idx_sampler] if self.is_strided else pos,
+                              idx_neighbour,
                               x,
                               self.kernel.to(x.device),
                               self.kernel_weight.to(x.device),

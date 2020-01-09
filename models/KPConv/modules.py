@@ -101,8 +101,8 @@ class KPConvPartialDense(BaseKPConvPartialDense):
                                              KP_EXTENT=self.KP_EXTENT, DENSITY_PARAMETER=self.DENSITY_PARAMETER)
         self.activation = kwargs.get("act", nn.LeakyReLU(0.2))
 
-    def conv(self, x, pos, idx):
-        return self._conv(x, pos, idx)
+    def conv(self, x, pos, idx_sampler, idx_neighbour):
+        return self._conv(x, pos, idx_sampler, idx_neighbour)
 
 
 class ResnetPartialDense(BaseKPConvPartialDense):
@@ -122,13 +122,13 @@ class ResnetPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def conv(self, input, pos, idx):
-        x = self.kp_conv0(input, pos, idx)
+    def conv(self, input, pos, idx_sampler, idx_neighbour):
+        x = self.kp_conv0(input, pos, idx_sampler, idx_neighbour)
 
-        x = self.kp_conv1(x, pos, idx)
+        x = self.kp_conv1(x, pos, idx_sampler, idx_neighbour)
 
         if(self.is_strided):
-            input = max_pool(input, idx)
+            input = max_pool(input, idx_sampler)
         x = x + self.shortcut_op(input)
 
         return x
@@ -153,14 +153,14 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def conv(self, input, pos, idx):
+    def conv(self, input, pos, batch, idx_sampler, idx_neighbour):
 
         x = self.uconv_0(input)
-        x = self._kp_conv0(x, pos, idx)
-        x = self._kp_conv1(x, pos, idx)
+        x = self._kp_conv0(x, pos, idx_sampler, idx_neighbour)
+        x = self._kp_conv1(x, pos, idx_sampler, idx_neighbour)
 
         if (self.is_strided):
-            input = max_pool(input, idx)
+            input = max_pool(idx_neighbour, idx_neighbour.view(-1))
         x = x + self.shortcut_op(input)
 
         return x

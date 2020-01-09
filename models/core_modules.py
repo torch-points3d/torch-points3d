@@ -213,11 +213,9 @@ class BaseConvolutionDown(BaseConvolution):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         idx_sampler = self.sampler(pos, batch)
-        idx, _ = self.neighbour_finder(pos, pos[idx_sampler],  batch_x=batch,
-                                       batch_y=batch[idx_sampler])
-        import pdb
-        pdb.set_trace()
-        batch_obj.x = self.conv(x, pos, idx)
+        idx_neighbour, _ = self.neighbour_finder(pos, pos[idx_sampler],  batch_x=batch,
+                                                 batch_y=batch[idx_sampler])
+        batch_obj.x = self.conv(x, pos, batch, idx_sampler, idx_neighbour)
 
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]
