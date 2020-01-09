@@ -274,6 +274,6 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
 
         # Add a small noise
         kernels = kernels
-        kernels = kernels + np.random.normal(scale=radius*0.01, size=kernels.shape)
+        kernels = kernels + np.random.normal(scale=radius * 0.01, size=kernels.shape)
 
     return kernels

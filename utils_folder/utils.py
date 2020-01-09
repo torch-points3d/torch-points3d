@@ -1,9 +1,15 @@
 import numpy as np
+from typing import List
 import matplotlib.pyplot as plt
 import os
 from os import path as osp
 import torch
 from collections import namedtuple
+from omegaconf import OmegaConf
+from omegaconf.listconfig import ListConfig
+from omegaconf.dictconfig import DictConfig
+
+from utils_folder.enums import CONVOLUTION_FORMAT
 
 
 def model_fn_decorator(criterion):
@@ -26,13 +32,33 @@ def model_fn_decorator(criterion):
     return model_fn
 
 
-def set_format(model_config, cfg, available_format):
+def set_format(model_config, cfg_training):
     format_type = getattr(model_config, "format_type", None)
-    if format_type not in available_format.keys():
-        raise Exception("The format type should be defined within {}".format(available_format.keys()))
+    if format_type not in [d.name for d in CONVOLUTION_FORMAT]:
+        raise Exception("The format type should be defined within {}".format([d.name for d in CONVOLUTION_FORMAT]))
     else:
-        cfg.training.format_type = format_type
-        cfg.training.use_torch_loader = available_format[format_type]
+        format_conf = OmegaConf.create({"format_type": format_type,
+                                        "use_torch_loader": CONVOLUTION_FORMAT[format_type].value[1]})
+        return OmegaConf.merge(cfg_training, format_conf)
+
+
+def merges(x, list_conf: List):
+    for c in list_conf:
+        x = OmegaConf.merge(x, c)
+    return x
+
+
+def merges_in_sub(x, list_conf: List):
+    dict_ = {}
+    for o, v in x.items():
+        name = str(o)
+        if (isinstance(v, DictConfig)):
+            for c in list_conf:
+                v = OmegaConf.merge(v, c)
+            dict_[name] = v
+        else:
+            dict_[name] = v
+    return OmegaConf.create(dict_)
 
 
 def get_log_dir(log_dir, experiment_name):
@@ -60,7 +86,7 @@ def save_confusion_matrix(cm, path2save, ordered_names):
     fig, ax = plt.subplots(figsize=(31, 31))
     g = sns.heatmap(cmn, annot=True, fmt='.2f', xticklabels=ordered_names,
                     yticklabels=ordered_names, annot_kws={"size": 20})
-    #g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
+    # g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
     path_precision = template_path.format("precision")
@@ -72,7 +98,7 @@ def save_confusion_matrix(cm, path2save, ordered_names):
     fig, ax = plt.subplots(figsize=(31, 31))
     g = sns.heatmap(cmn, annot=True, fmt='.2f', xticklabels=ordered_names,
                     yticklabels=ordered_names, annot_kws={"size": 20})
-    #g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
+    # g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
     path_recall = template_path.format("recall")

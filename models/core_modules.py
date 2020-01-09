@@ -404,7 +404,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class GlobalBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr='max'):
+    def __init__(self, nn, aggr='max', *args, **kwargs):
         super(GlobalBaseModule, self).__init__()
         self.nn = MLP(nn)
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
@@ -452,7 +452,7 @@ class FPModule(BaseConvolutionUp):
         [type] -- [description]
     """
 
-    def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
+    def __init__(self, up_k, up_conv_nn, nb_feature=None, *args, **kwargs):
         super(FPModule, self).__init__(None)
 
         self.k = up_k

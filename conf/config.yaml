@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    name: pointnet2_kc
+    model_name: pointnet2_kc
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
@@ -50,6 +50,9 @@ data:
         fold: 5
         class_weight_method: 'sqrt'
         num_points: 4096
+        FIRST_SUBSAMPLING: 0.04
+        DENSITY_PARAMETER: 5.0
+        KP_EXTENT: 1.0
 
 defaults:
     - models: segmentation

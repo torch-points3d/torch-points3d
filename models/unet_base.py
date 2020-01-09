@@ -165,7 +165,6 @@ class UnetBasedModel(BaseModel):
         '''Fetch the arguments for a single convolution from multiple lists
         of arguments - for models specified in the compact format. 
         '''
-
         args = {}
         for o, v in opt.items():
             name = str(o)
