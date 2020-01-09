@@ -45,7 +45,7 @@ def KPConv_ops(query_points,
     # print(support_points.shape)
     # Add a fake point in the last row for shadow neighbors
     shadow_point = torch.ones_like(support_points[:1, :]) * 1e6
-    support_points = torch.cat([support_points, shadow_point], axis=0)
+    support_points = torch.cat([support_points, shadow_point], dim=0)
 
     # Get neighbor points [n_points, n_neighbors, dim]
     # print(shadow_point.shape)
@@ -62,7 +62,7 @@ def KPConv_ops(query_points,
     differences = neighbors - K_points
 
     # Get the square distances [n_points, n_neighbors, n_kpoints]
-    sq_distances = torch.sum(differences ** 2, axis=3)
+    sq_distances = torch.sum(differences ** 2, dim=3)
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
     if KP_influence == 'constant':
@@ -85,10 +85,10 @@ def KPConv_ops(query_points,
 
     # In case of closest mode, only the closest KP can influence each point
     if aggregation_mode == 'closest':
-        neighbors_1nn = torch.argmin(sq_distances, axis=2,
+        neighbors_1nn = torch.argmin(sq_distances, dim=2,
                                      output_type=torch.long)
         #
-        # all_weights *= tf.one_hot(neighbors_1nn, n_kp, axis=1,
+        # all_weights *= tf.one_hot(neighbors_1nn, n_kp, dim=1,
         #                           dtype=torch.float32)
         all_weights *= torch.zeros_like(all_weights,
                                         dtype=torch.float32).scatter_(
@@ -97,7 +97,7 @@ def KPConv_ops(query_points,
     elif aggregation_mode != 'sum':
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
-    features = torch.cat([features, torch.zeros_like(features[:1, :])], axis=0)
+    features = torch.cat([features, torch.zeros_like(features[:1, :])], dim=0)
 
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
     neighborhood_features = features[neighbors_indices]
@@ -110,7 +110,7 @@ def KPConv_ops(query_points,
     kernel_outputs = torch.matmul(weighted_features, K_values)
 
     # Convolution sum to get [n_points, out_fdim]
-    output_features = torch.sum(kernel_outputs, axis=0)
+    output_features = torch.sum(kernel_outputs, dim=0)
 
     return output_features
 

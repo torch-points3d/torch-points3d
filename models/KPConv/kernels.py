@@ -310,10 +310,10 @@ class PointKernelPartialDense(nn.Module):
         self.KP_extent = radius / 1.5
 
         # Point position in kernel_dim
-        self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
+        self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim)).float()
 
         # Associated weights
-        self.kernel_weight = Parameter(torch.Tensor(num_points, in_features, out_features))
+        self.kernel_weight = Parameter(torch.Tensor(num_points, in_features, out_features)).float()
 
         self.reset_parameters()
 
@@ -323,15 +323,15 @@ class PointKernelPartialDense(nn.Module):
         # Init the kernel using attrative + repulsion forces
         kernel, _ = kernel_point_optimization_debug(self.K_radius, self.num_points, num_kernels=1,
                                                     dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
-        self.kernel.data = torch.from_numpy(kernel)
+        self.kernel.data = torch.from_numpy(kernel).float()
 
-    def forward(self, x, pos, idx, batch):
+    def forward(self, x, pos, idx):
         features = KPConv_ops(pos,
                               pos[idx] if self.is_strided else pos,
                               idx,
                               x,
-                              self.kernel,
-                              self.kernel_weight,
+                              self.kernel.to(x.device),
+                              self.kernel_weight.to(x.device),
                               self.extent,
                               self.KP_influence,
                               self.aggregation_mode)

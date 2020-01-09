@@ -64,7 +64,8 @@ class KPConvFactory(BaseFactory):
 
 class BaseKPConvPartialDense(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, down_conv_nn=None, kp_points=16,  nb_feature=0,  is_strided=False, KP_EXTENT=None, DENSITY_PARAMETER=None, *args, **kwargs):
-        super(BaseKPConvPartialDense, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        super(BaseKPConvPartialDense, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(
+            radius, conv_type=kwargs.get("conv_type")), *args, **kwargs)
 
         self.ratio = ratio
         self.radius = radius
@@ -100,8 +101,8 @@ class KPConvPartialDense(BaseKPConvPartialDense):
                                              KP_EXTENT=self.KP_EXTENT, DENSITY_PARAMETER=self.DENSITY_PARAMETER)
         self.activation = kwargs.get("act", nn.LeakyReLU(0.2))
 
-    def conv(self, x, pos, idx, batch):
-        return self._conv(x, pos, idx, batch)
+    def conv(self, x, pos, idx):
+        return self._conv(x, pos, idx)
 
 
 class ResnetPartialDense(BaseKPConvPartialDense):
@@ -121,10 +122,10 @@ class ResnetPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def forward(self, input, pos, idx, batch):
-        x = self.kp_conv0(input, pos, idx, batch)
+    def conv(self, input, pos, idx):
+        x = self.kp_conv0(input, pos, idx)
 
-        x = self.kp_conv1(x, pos, idx, batch)
+        x = self.kp_conv1(x, pos, idx)
 
         if(self.is_strided):
             input = max_pool(input, idx)
@@ -152,11 +153,14 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def forward(self, input, pos, idx, batch):
+    def conv(self, input, pos, idx):
+
+        import pdb
+        pdb.set_trace()
 
         x = self.uconv_0(input)
-        x = self.kp_conv0(x, pos, idx, batch)
-        x = self.kp_conv1(x, pos, idx, batch)
+        x = self._kp_conv0(x, pos, idx)
+        x = self._kp_conv1(x, pos, idx)
 
         if (self.is_strided):
             input = max_pool(input, idx)

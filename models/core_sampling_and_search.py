@@ -108,12 +108,18 @@ class BaseNeighbourFinder(ABC):
 
 class RadiusNeighbourFinder(BaseNeighbourFinder):
 
-    def __init__(self, radius: float, max_num_neighbors: int = 64):
+    def __init__(self, radius: float, max_num_neighbors: int = 64, conv_type="MESSAGE_PASSING"):
         self._radius = radius
         self._max_num_neighbors = max_num_neighbors
+        self._conv_type = conv_type
 
     def find_neighbours(self, x, y, batch_x, batch_y):
-        return radius(x, y, self._radius, batch_x, batch_y, max_num_neighbors=self._max_num_neighbors)
+        if self._conv_type == "MESSAGE_PASSING":
+            return radius(x, y, self._radius, batch_x, batch_y, max_num_neighbors=self._max_num_neighbors)
+        elif self._conv_type == "PARTIAL_DENSE" or self._conv_type == "DENSE":
+            return tp.ball_query(self._radius, self._max_num_neighbors, x, y, batch_x, batch_y, mode=self._conv_type)
+        else:
+            raise NotImplementedError
 
 
 class KNNNeighbourFinder(BaseNeighbourFinder):

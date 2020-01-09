@@ -204,24 +204,20 @@ class BaseConvolutionDown(BaseConvolution):
 
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
+        self._conv_type = kwargs.get("conv_type", None)
 
-    def conv(self, x, pos, edge_index, batch):
-        raise NotImplementedError
+        if self._conv_type == "PARTIAL_DENSE":
+            self.forward = self.forward_partial
 
-    def forward(self, data):
+    def forward_partial(self, data):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
-        if self._precompute_multi_scale:
-            idx = getattr(data, "index_{}".format(self._index), None)
-            edge_index = getattr(data, "edge_index_{}".format(self._index), None)
-        else:
-            idx = self.sampler(pos, batch)
-            row, col = self.neighbour_finder(pos, pos[idx],  batch_x=batch, batch_y=batch[idx])
-            edge_index = torch.stack([col, row], dim=0)
-            batch_obj.idx = idx
-            batch_obj.edge_index = edge_index
-
-        batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
+        idx_sampler = self.sampler(pos, batch)
+        idx, _ = self.neighbour_finder(pos, pos[idx_sampler],  batch_x=batch,
+                                       batch_y=batch[idx_sampler])
+        import pdb
+        pdb.set_trace()
+        batch_obj.x = self.conv(x, pos, idx)
 
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]

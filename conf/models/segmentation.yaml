@@ -235,7 +235,7 @@ models:
 
     SimplePDKPConv:
         type: KPConv
-        format_type: 'PARTIAL_DENSE'
+        conv_type: "PARTIAL_DENSE"
         down_conv:
             module_name: ResnetBottleNeckPartialDense
             ratios: [0.2, 0.25]

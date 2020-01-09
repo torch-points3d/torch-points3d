@@ -33,12 +33,12 @@ def model_fn_decorator(criterion):
 
 
 def set_format(model_config, cfg_training):
-    format_type = getattr(model_config, "format_type", None)
-    if format_type not in [d.name for d in CONVOLUTION_FORMAT]:
+    conv_type = getattr(model_config, "conv_type", None)
+    if conv_type not in [d.name for d in CONVOLUTION_FORMAT]:
         raise Exception("The format type should be defined within {}".format([d.name for d in CONVOLUTION_FORMAT]))
     else:
-        format_conf = OmegaConf.create({"format_type": format_type,
-                                        "use_torch_loader": CONVOLUTION_FORMAT[format_type].value[1]})
+        format_conf = OmegaConf.create({"conv_type": conv_type,
+                                        "use_torch_loader": CONVOLUTION_FORMAT[conv_type].value[1]})
         return OmegaConf.merge(cfg_training, format_conf)
 
 
