@@ -5,6 +5,7 @@ from torch_geometric.nn import global_max_pool
 
 from models.core_modules import *
 from models.core_transforms import BaseLinearTransformSTNkD
+from models.base_model import BaseInternalLossModule
 
 
 class MiniPointNet(torch.nn.Module):
