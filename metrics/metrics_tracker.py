@@ -16,7 +16,9 @@ from metrics.model_checkpoint import ModelCheckpoint
 from models.base_model import BaseModel
 
 
-def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, log_dir: str):
+def get_tracker(
+    model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, log_dir: str,
+):
     """Factory method for the tracker
 
     Arguments:
@@ -27,18 +29,18 @@ def get_tracker(model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboa
         [BaseTracker] -- tracker
     """
     tracker = None
-    if task.lower() == 'segmentation':
-        tracker = SegmentationTracker(dataset, wandb_log=wandb_opt.log,
-                                      use_tensorboard=tensorboard_opt.log,
-                                      log_dir=log_dir)
+    if task.lower() == "segmentation":
+        tracker = SegmentationTracker(
+            dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log, log_dir=log_dir,
+        )
     else:
-        raise NotImplementedError('No tracker for %s task' % task)
+        raise NotImplementedError("No tracker for %s task" % task)
 
     return tracker
 
 
 def _meter_value(meter, dim=0):
-    return float(meter.value()[dim]) if meter.n > 0 else 0.
+    return float(meter.value()[dim]) if meter.n > 0 else 0.0
 
 
 class BaseTracker:
@@ -75,7 +77,7 @@ class BaseTracker:
     def _remove_stage_from_metric_keys(stage, metrics):
         new_metrics = {}
         for metric_name, metric_value in metrics.items():
-            new_metrics[metric_name.replace(stage + "_", '')] = metric_value
+            new_metrics[metric_name.replace(stage + "_", "")] = metric_value
         return new_metrics
 
     def publish(self):
@@ -90,13 +92,17 @@ class BaseTracker:
         if self._use_tensorboard:
             self.publish_to_tensorboard(metrics)
 
-        return {'stage': self._stage, "epoch": self._n_iter, "current_metrics":
-                self._remove_stage_from_metric_keys(self._stage, metrics)}
+        return {
+            "stage": self._stage,
+            "epoch": self._n_iter,
+            "current_metrics": self._remove_stage_from_metric_keys(self._stage, metrics),
+        }
 
 
 class SegmentationTracker(BaseTracker):
-
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = ""):
+    def __init__(
+        self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, log_dir: str = "",
+    ):
         """ Use the tracker to track an epoch. You can use the reset function before you start a new epoch
 
         Arguments:
@@ -144,7 +150,7 @@ class SegmentationTracker(BaseTracker):
         for key, loss in losses.items():
             if loss is None:
                 continue
-            loss_key = '%s_%s' % (self._stage, key)
+            loss_key = "%s_%s" % (self._stage, key)
             if loss_key not in self._loss_meters:
                 self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
             self._loss_meters[loss_key].add(loss)
@@ -167,8 +173,8 @@ class SegmentationTracker(BaseTracker):
         for key, loss_meter in self._loss_meters.items():
             metrics[key] = _meter_value(loss_meter, dim=0)
 
-        metrics['{}_acc'.format(self._stage)] = _meter_value(self._acc_meter, dim=0)
-        metrics['{}_macc'.format(self._stage)] = _meter_value(self._macc_meter, dim=0)
-        metrics['{}_miou'.format(self._stage)] = _meter_value(self._miou_meter, dim=0)
+        metrics["{}_acc".format(self._stage)] = _meter_value(self._acc_meter, dim=0)
+        metrics["{}_macc".format(self._stage)] = _meter_value(self._macc_meter, dim=0)
+        metrics["{}_miou".format(self._stage)] = _meter_value(self._miou_meter, dim=0)
 
         return metrics

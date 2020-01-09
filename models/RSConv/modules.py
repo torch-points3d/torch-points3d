@@ -1,19 +1,19 @@
-
 import torch
 from torch.nn import ReLU
 from torch_geometric.nn import MessagePassing
 from models.core_modules import *
 from models.core_sampling_and_search import FPSSampler, RadiusNeighbourFinder
-import models.utils as utils 
+import models.utils as utils
+
 
 class Convolution(MessagePassing):
-    r"""The Relation Shape Convolution layer from "Relation-Shape Convolutional Neural Network for Point Cloud Analysis" 
+    r"""The Relation Shape Convolution layer from "Relation-Shape Convolutional Neural Network for Point Cloud Analysis"
     https://arxiv.org/pdf/1904.07601
 
-    local_nn - an MLP which is applied to the relation vector h_ij between points i and j to determine 
+    local_nn - an MLP which is applied to the relation vector h_ij between points i and j to determine
     the weights applied to each element of the feature for x_j
 
-    global_nn - an optional MPL for channel-raising following the convolution 
+    global_nn - an optional MPL for channel-raising following the convolution
 
     """
 
@@ -34,12 +34,7 @@ class Convolution(MessagePassing):
         vij = pos_i - pos_j
         dij = torch.norm(vij, dim=1).unsqueeze(1)
 
-        hij = torch.cat([
-            dij,
-            vij,
-            pos_i,
-            pos_j,
-        ], dim=1)
+        hij = torch.cat([dij, vij, pos_i, pos_j,], dim=1)
 
         M_hij = self.local_nn(hij)
 
@@ -57,7 +52,7 @@ class Convolution(MessagePassing):
 class RSConv(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, nb_feature=None, *args, **kwargs):
         super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
-        
+
         self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
 
     def conv(self, x, pos, edge_index, batch):

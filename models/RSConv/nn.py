@@ -11,12 +11,12 @@ class SegmentationModel(UnetBasedModel):
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
 
         nn = option.mlp_cls.nn
-        self.dropout = option.mlp_cls.get('dropout')
+        self.dropout = option.mlp_cls.get("dropout")
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[3], dataset.num_classes)
 
-        self.loss_names = ['loss_seg']
+        self.loss_names = ["loss_seg"]
         self.weight_classes = dataset.weight_classes
 
     def set_input(self, data):
@@ -42,6 +42,9 @@ class SegmentationModel(UnetBasedModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        self.loss_seg = F.nll_loss(self.output, self.labels, 
-            weight=(self.weight_classes.to(self.output.device) if self.weight_classes else None))
+        self.loss_seg = F.nll_loss(
+            self.output,
+            self.labels,
+            weight=(self.weight_classes.to(self.output.device) if self.weight_classes else None),
+        )
         self.loss_seg.backward()

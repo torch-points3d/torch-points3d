@@ -16,7 +16,7 @@ def KPconv_op(self, x_j, pos_i, pos_j):
         x_j = pos_j
 
     # Center every neighborhood [SUM n_neighbors(n_points), dim]
-    neighbors = (pos_j - pos_i)
+    neighbors = pos_j - pos_i
 
     # Number of points
     n_points = neighbors.shape[0]
@@ -28,26 +28,27 @@ def KPconv_op(self, x_j, pos_i, pos_j):
     neighbors = neighbors.unsqueeze(1)
 
     differences = neighbors - K_points.float().view((-1, 3)).unsqueeze(0)
-    sq_distances = (differences**2).sum(-1)
+    sq_distances = (differences ** 2).sum(-1)
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
-    if self.KP_influence == 'constant':
+    if self.KP_influence == "constant":
         # Every point get an influence of 1.
         all_weights = torch.ones_like(sq_distances)
 
-    elif self.KP_influence == 'linear':
+    elif self.KP_influence == "linear":
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-        all_weights = 1. - (sq_distances / (self.KP_extent ** 2))
+        all_weights = 1.0 - (sq_distances / (self.KP_extent ** 2))
         all_weights[all_weights < 0] = 0.0
     else:
-        raise ValueError('Unknown influence function type (config.KP_influence)')
+        raise ValueError("Unknown influence function type (config.KP_influence)")
 
     neighbors_1nn = torch.argmin(sq_distances, dim=-1)
     weights = all_weights.gather(1, neighbors_1nn.unsqueeze(-1))
 
     K_weights = self.kernel_weight
-    K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)
-                                   ).view((n_points, self.in_features, self.out_features))
+    K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)).view(
+        (n_points, self.in_features, self.out_features)
+    )
 
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
     features = x_j
@@ -63,12 +64,22 @@ def KPconv_op(self, x_j, pos_i, pos_j):
 
 class PointKernel(MessagePassing):
 
-    '''
-    Implements KPConv: Flexible and Deformable Convolution for Point Clouds from 
+    """
+    Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
     https://arxiv.org/abs/1904.08889
-    '''
+    """
 
-    def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='linear'):
+    def __init__(
+        self,
+        num_points,
+        in_features,
+        out_features,
+        radius=1,
+        kernel_dim=3,
+        fixed="center",
+        ratio=1,
+        KP_influence="linear",
+    ):
         super(PointKernel, self).__init__()
         # PointKernel parameters
         self.in_features = in_features
@@ -95,8 +106,15 @@ class PointKernel(MessagePassing):
         init.kaiming_uniform_(self.kernel_weight, a=math.sqrt(5))
 
         # Init the kernel using attrative + repulsion forces
-        kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1,
-                                                    dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
+        kernel, _ = kernel_point_optimization_debug(
+            self.radius,
+            self.num_points,
+            num_kernels=1,
+            dimension=self.kernel_dim,
+            fixed=self.fixed,
+            ratio=self.ratio,
+            verbose=False,
+        )
         self.kernel.data = torch.from_numpy(kernel)
 
     def forward(self, x, pos, edge_index):
@@ -110,8 +128,10 @@ class PointKernel(MessagePassing):
         return aggr_out
 
     def __repr__(self):
-                # PointKernel parameters
-        return "PointKernel({}, {}, {}, {}, {})".format(self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence)
+        # PointKernel parameters
+        return "PointKernel({}, {}, {}, {}, {})".format(
+            self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence,
+        )
 
 
 class LossKPConvEnum(Enum):
@@ -125,11 +145,12 @@ def repulsion_loss(deformed_kpoints):
 
 
 def permissive_loss(deformed_kpoints, radius):
-    """This loss is responsible to penalize deformed_kpoints to 
+    """This loss is responsible to penalize deformed_kpoints to
     move outside from the radius defined for the convolution
     """
     norm_deformed_normalized = F.normalize(deformed_kpoints) / float(radius)
     return torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
+
 
 # Implements the Light Deformable KPConv
 # https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
@@ -137,12 +158,23 @@ def permissive_loss(deformed_kpoints, radius):
 
 class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
-    '''
-    Implements KPConv: Flexible and Deformable Convolution for Point Clouds from 
+    """
+    Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
     https://arxiv.org/abs/1904.08889
-    '''
+    """
 
-    def __init__(self, num_points, in_features, out_features, radius=1, kernel_dim=3, fixed='center', ratio=1, KP_influence='square', modulated=False):
+    def __init__(
+        self,
+        num_points,
+        in_features,
+        out_features,
+        radius=1,
+        kernel_dim=3,
+        fixed="center",
+        ratio=1,
+        KP_influence="square",
+        modulated=False,
+    ):
         super(LightDeformablePointKernel, self).__init__()
         # PointKernel parameters
         self.in_features = in_features
@@ -181,8 +213,15 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         self.offset_mlp.reset_parameters()
 
         # Init the kernel using attrative + repulsion forces
-        kernel, _ = kernel_point_optimization_debug(self.radius, self.num_points, num_kernels=1,
-                                                    dimension=self.kernel_dim, fixed=self.fixed, ratio=self.ratio, verbose=False)
+        kernel, _ = kernel_point_optimization_debug(
+            self.radius,
+            self.num_points,
+            num_kernels=1,
+            dimension=self.kernel_dim,
+            fixed=self.fixed,
+            ratio=self.ratio,
+            verbose=False,
+        )
         self.kernel.data = torch.from_numpy(kernel)
 
     def forward(self, x, pos, edge_index):
@@ -202,7 +241,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         offsets *= self.KP_extent
 
         # Center every neighborhood [SUM n_neighbors(n_points), dim]
-        neighbors = (pos_j - pos_i)
+        neighbors = pos_j - pos_i
 
         # Number of points
         n_points = neighbors.shape[0]
@@ -211,45 +250,46 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         K_points = self.kernel
         K_points = K_points.float().view((-1, 3)).unsqueeze(0)
         K_points_deformed = K_points + offsets
-        self.internal_losses['permissive_loss'] = permissive_loss(K_points_deformed, self.radius)
+        self.internal_losses["permissive_loss"] = permissive_loss(K_points_deformed, self.radius)
 
         # Get all difference matrices [SUM n_neighbors(n_points), n_kpoints, dim]
         neighbors = neighbors.unsqueeze(1)
 
         differences = neighbors - K_points_deformed
 
-        sq_distances = (differences**2).sum(-1)
+        sq_distances = (differences ** 2).sum(-1)
 
         # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
-        if self.KP_influence == 'constant':
+        if self.KP_influence == "constant":
             # Every point get an influence of 1.
             all_weights = torch.ones_like(sq_distances)
 
-        elif self.KP_influence == 'linear':
+        elif self.KP_influence == "linear":
             # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1. - (torch.sqrt(sq_distances) / (self.KP_extent))
+            all_weights = 1.0 - (torch.sqrt(sq_distances) / (self.KP_extent))
             all_weights[all_weights < 0] = 0.0
 
-        elif self.KP_influence == 'square':
+        elif self.KP_influence == "square":
             # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1. - (sq_distances / (self.KP_extent ** 2))
+            all_weights = 1.0 - (sq_distances / (self.KP_extent ** 2))
             all_weights[all_weights < 0] = 0.0
 
         else:
-            raise ValueError('Unknown influence function type (config.KP_influence)')
+            raise ValueError("Unknown influence function type (config.KP_influence)")
 
         neighbors_1nn = torch.argmin(sq_distances, dim=-1)
 
         # Fitting Loss
         sq_distances_min = sq_distances.gather(1, neighbors_1nn.unsqueeze(-1))
-        sq_distances_min /= (self.radius**2)  # To be independant of the layer
-        self.internal_losses['fitting_loss'] = torch.mean(sq_distances_min)
+        sq_distances_min /= self.radius ** 2  # To be independant of the layer
+        self.internal_losses["fitting_loss"] = torch.mean(sq_distances_min)
 
         weights = all_weights.gather(1, neighbors_1nn.unsqueeze(-1))
 
         K_weights = self.kernel_weight
-        K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)
-                                       ).view((n_points, self.in_features, self.out_features))
+        K_weights = torch.index_select(K_weights, 0, neighbors_1nn.view(-1)).view(
+            (n_points, self.in_features, self.out_features)
+        )
 
         # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
         features = x_j
@@ -269,5 +309,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         return aggr_out
 
     def __repr__(self):
-                # PointKernel parameters
-        return "PointKernel({}, {}, {}, {}, {})".format(self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence)
+        # PointKernel parameters
+        return "PointKernel({}, {}, {}, {}, {})".format(
+            self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence,
+        )

@@ -30,7 +30,7 @@ class SegmentationModel(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(SegmentationModel, self).__init__(option)
         use_xyz = True
-        self.loss_names = ['loss_seg']
+        self.loss_names = ["loss_seg"]
         self._weight_classes = dataset.weight_classes
         self._num_classes = dataset.num_classes
 
@@ -96,7 +96,7 @@ class SegmentationModel(BaseModel):
 
         for i in range(len(self.FP_modules)):
             l_features[-i - 2] = self.FP_modules[i](
-                l_xyz[-i - 2], l_xyz[-i-1], l_features[-i - 2], l_features[-i-1]
+                l_xyz[-i - 2], l_xyz[-i - 1], l_features[-i - 2], l_features[-i - 1]
             )
         self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
@@ -107,6 +107,5 @@ class SegmentationModel(BaseModel):
         # calculate loss given the input and intermediate results
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.cross_entropy(self.output, self.labels.long(),
-                                        weight=self._weight_classes)
+        self.loss_seg = F.cross_entropy(self.output, self.labels.long(), weight=self._weight_classes)
         self.loss_seg.backward()

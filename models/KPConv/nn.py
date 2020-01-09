@@ -15,16 +15,17 @@ class SegmentationModel(UnetBasedModel):
         - (required) call the initialization function of BaseModel
         - define loss function, visualization images, model names, and optimizers
         """
-        UnetBasedModel.__init__(self, option, model_type, dataset,
-                                modules)  # call the initialization method of UnetBasedModel
+        UnetBasedModel.__init__(
+            self, option, model_type, dataset, modules
+        )  # call the initialization method of UnetBasedModel
 
         nn = option.mlp_cls.nn
-        self.dropout = option.mlp_cls.get('dropout')
+        self.dropout = option.mlp_cls.get("dropout")
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
 
-        self.loss_names = ['loss_seg']
+        self.loss_names = ["loss_seg"]
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -53,5 +54,6 @@ class SegmentationModel(UnetBasedModel):
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
         if torch.isnan(self.loss_seg):
             import pdb
+
             pdb.set_trace()
-        self.loss_seg.backward()       # calculate gradients of network G w.r.t. loss_G
+        self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G

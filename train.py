@@ -20,7 +20,9 @@ from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from datasets.utils import find_dataset_using_name
 
 
-def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def train(
+    epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint,
+):
     model.train()
     tracker.reset("train")
 
@@ -37,8 +39,12 @@ def train(epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, c
             if i % 10 == 0:
                 tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
 
-            tq_train_loader.set_postfix(**tracker.get_metrics(), data_loading=float(t_data),
-                                        iteration=float(time.time() - iter_start_time), color=COLORS.TRAIN_COLOR)
+            tq_train_loader.set_postfix(
+                **tracker.get_metrics(),
+                data_loading=float(t_data),
+                iteration=float(time.time() - iter_start_time),
+                color=COLORS.TRAIN_COLOR
+            )
             iter_data_time = time.time()
 
         metrics = tracker.publish()
@@ -73,11 +79,10 @@ def run(cfg, model, dataset, device, tracker: BaseTracker, checkpoint: ModelChec
         print()
 
 
-@hydra.main(config_path='conf/config.yaml')
+@hydra.main(config_path="conf/config.yaml")
 def main(cfg):
     # Get device
-    device = torch.device('cuda' if (torch.cuda.is_available() and cfg.training.cuda)
-                          else 'cpu')
+    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
 
     # Get task and model_name
     exp = cfg.experiment
@@ -112,8 +117,7 @@ def main(cfg):
 
     log_dir = get_log_dir(exp.log_dir, exp.experiment_name)
 
-    tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb,
-                                       cfg.tensorboard, log_dir)
+    tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, log_dir)
 
     checkpoint = get_model_checkpoint(model, log_dir, tested_model_name, exp.resume, cfg.training.weight_name)
 

@@ -26,7 +26,12 @@ pylint = "^2.4"
 autopep8 = "^1.4"
 flake8 = "^3.7"
 rope = "^0.14.0"
+pre-commit = "^1.21.0"
+black = "^19.10b0"
 
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.black]
+line-length = 120

@@ -1,10 +1,13 @@
-
 from math import ceil
 
 import torch
 from torch.nn import Sequential as S, Linear as L, BatchNorm1d as BN
 from torch.nn import ELU, Conv1d
-from models.core_sampling_and_search import DilatedKNNNeighbourFinder, RandomSampler, FPSSampler
+from models.core_sampling_and_search import (
+    DilatedKNNNeighbourFinder,
+    RandomSampler,
+    FPSSampler,
+)
 from models.core_modules import BaseConvolutionDown, BaseConvolutionUp
 from torch_geometric.nn import Reshape
 from torch_geometric.nn.inits import reset
@@ -50,8 +53,9 @@ class XConv(torch.nn.Module):
             :class:`torch_cluster.knn_graph`.
     """
 
-    def __init__(self, in_channels, out_channels, dim, kernel_size,
-                 hidden_channels=None, dilation=1, bias=True, **kwargs):
+    def __init__(
+        self, in_channels, out_channels, dim, kernel_size, hidden_channels=None, dilation=1, bias=True, **kwargs,
+    ):
         super(XConv, self).__init__()
 
         self.in_channels = in_channels
@@ -69,26 +73,20 @@ class XConv(torch.nn.Module):
         D, K = dim, kernel_size
 
         self.mlp1 = S(
-            L(dim, C_delta),
-            ELU(),
-            BN(C_delta),
-            L(C_delta, C_delta),
-            ELU(),
-            BN(C_delta),
-            Reshape(-1, K, C_delta),
+            L(dim, C_delta), ELU(), BN(C_delta), L(C_delta, C_delta), ELU(), BN(C_delta), Reshape(-1, K, C_delta),
         )
 
         self.mlp2 = S(
-            L(D * K, K**2),
+            L(D * K, K ** 2),
             ELU(),
-            BN(K**2),
+            BN(K ** 2),
             Reshape(-1, K, K),
-            Conv1d(K, K**2, K, groups=K),
+            Conv1d(K, K ** 2, K, groups=K),
             ELU(),
-            BN(K**2),
+            BN(K ** 2),
             Reshape(-1, K, K),
-            Conv1d(K, K**2, K, groups=K),
-            BN(K**2),
+            Conv1d(K, K ** 2, K, groups=K),
+            BN(K ** 2),
             Reshape(-1, K, K),
         )
 
@@ -141,27 +139,14 @@ class XConv(torch.nn.Module):
         return out
 
     def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
-                                   self.out_channels)
+        return "{}({}, {})".format(self.__class__.__name__, self.in_channels, self.out_channels)
 
 
 class PointCNNConvDown(BaseConvolutionDown):
-
-    def __init__(self,
-                 inN=None,
-                 outN=None,
-                 K=None,
-                 D=None,
-                 C1=None,
-                 C2=None,
-                 hidden_channel=None,
-                 *args,
-                 **kwargs,
-                 ):
-        super(PointCNNConvDown, self).__init__(
-            FPSSampler(outN/inN),
-            DilatedKNNNeighbourFinder(K, D)
-        )
+    def __init__(
+        self, inN=None, outN=None, K=None, D=None, C1=None, C2=None, hidden_channel=None, *args, **kwargs,
+    ):
+        super(PointCNNConvDown, self).__init__(FPSSampler(outN / inN), DilatedKNNNeighbourFinder(K, D))
 
         self._conv = XConv(C1, C2, 3, K, hidden_channels=hidden_channel)
 
@@ -170,18 +155,8 @@ class PointCNNConvDown(BaseConvolutionDown):
 
 
 class PointCNNConvUp(BaseConvolutionUp):
-
-    def __init__(self,
-                 K=None,
-                 D=None,
-                 C1=None,
-                 C2=None,
-                 *args,
-                 **kwargs
-                 ):
-        super(PointCNNConvUp, self).__init__(
-            DilatedKNNNeighbourFinder(K, D)
-        )
+    def __init__(self, K=None, D=None, C1=None, C2=None, *args, **kwargs):
+        super(PointCNNConvUp, self).__init__(DilatedKNNNeighbourFinder(K, D))
 
         self._conv = XConv(C1, C2, 3, K)
 

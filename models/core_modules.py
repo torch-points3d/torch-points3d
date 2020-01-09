@@ -5,8 +5,22 @@ from functools import partial
 from typing import Dict, Any
 import torch
 from torch import nn
-from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
-from torch_geometric.nn import knn_interpolate, fps, radius, global_max_pool, global_mean_pool, knn
+from torch.nn import (
+    Sequential as Seq,
+    Linear as Lin,
+    ReLU,
+    LeakyReLU,
+    BatchNorm1d as BN,
+    Dropout,
+)
+from torch_geometric.nn import (
+    knn_interpolate,
+    fps,
+    radius,
+    global_max_pool,
+    global_mean_pool,
+    knn,
+)
 from torch_geometric.data import Batch
 from torch_geometric.utils import scatter_
 import torch_points as tp
@@ -23,14 +37,10 @@ def copy_from_to(data, batch):
 
 
 def MLP(channels, activation=ReLU()):
-    return Seq(*[
-        Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i]))
-        for i in range(1, len(channels))
-    ])
+    return Seq(*[Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i])) for i in range(1, len(channels))])
 
 
 class BaseConvolution(ABC, torch.nn.Module):
-
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         torch.nn.Module.__init__(self)
 
@@ -56,7 +66,7 @@ class BaseConvolutionDown(BaseConvolution):
             edge_index = getattr(data, "edge_index_{}".format(self._index), None)
         else:
             idx = self.sampler(pos, batch)
-            row, col = self.neighbour_finder(pos, pos[idx],  batch_x=batch, batch_y=batch[idx])
+            row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx])
             edge_index = torch.stack([col, row], dim=0)
             batch_obj.idx = idx
             batch_obj.edge_index = edge_index
@@ -100,7 +110,7 @@ class BaseMSConvolutionDown(BaseConvolution):
             if self._precompute_multi_scale:
                 edge_index = getattr(data, "edge_index_{}_{}".format(self._index, scale_idx), None)
             else:
-                row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx)
+                row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx,)
                 edge_index = torch.stack([col, row], dim=0)
 
             ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
@@ -199,7 +209,7 @@ class BaseConvolutionUp(BaseConvolution):
         if x_skip is not None and self._skip:
             x = torch.cat([x, x_skip], dim=1)
 
-        if hasattr(self, 'nn'):
+        if hasattr(self, "nn"):
             batch_obj.x = self.nn(x)
         else:
             batch_obj.x = x
@@ -235,7 +245,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
         x = x.unsqueeze(-1)
 
-        if hasattr(self, 'nn'):
+        if hasattr(self, "nn"):
             batch_obj.x = self.nn(x)
         else:
             batch_obj.x = x
@@ -244,7 +254,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class GlobalBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr='max'):
+    def __init__(self, nn, aggr="max"):
         super(GlobalBaseModule, self).__init__()
         self.nn = MLP(nn)
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
@@ -262,7 +272,7 @@ class GlobalBaseModule(torch.nn.Module):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr='max'):
+    def __init__(self, nn, aggr="max"):
         super(GlobalDenseBaseModule, self).__init__()
         self.nn = pt_utils.SharedMLP(nn)
 
@@ -277,6 +287,7 @@ class GlobalDenseBaseModule(torch.nn.Module):
         batch_obj.batch = torch.arange(x.size(0), device=x.device)
         copy_from_to(data, batch_obj)
         return batch_obj
+
 
 #################### COMMON MODULE ########################
 
@@ -324,15 +335,15 @@ class DenseFPModule(BaseDenseConvolutionUp):
         if x.dim() == 1:
             x = x.unsqueeze(0).unsqueeze(-1)
 
-        #print(x.shape, x_skip.shape, pos.shape, pos_skip.shape)
+        # print(x.shape, x_skip.shape, pos.shape, pos_skip.shape)
         interpolated_feats = tp.three_interpolate(x, idx, weight)
         return interpolated_feats
+
 
 ########################## BASE RESIDUAL DOWN #####################
 
 
 class BaseResnetBlockDown(BaseConvolutionDown):
-
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         super(BaseResnetBlockDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
 
@@ -363,20 +374,19 @@ class BaseResnetBlockDown(BaseConvolutionDown):
 
 
 class BaseResnetBlock(ABC, torch.nn.Module):
-
     def __init__(self, indim, outdim, convdim):
-        '''
+        """
             indim: size of x at the input
             outdim: desired size of x at the output
             convdim: size of x following convolution
-        '''
+        """
         torch.nn.Module.__init__(self)
 
         self.indim = indim
         self.outdim = outdim
         self.convdim = convdim
 
-        self.features_downsample_nn = MLP([self.indim, self.outdim//4])
+        self.features_downsample_nn = MLP([self.indim, self.outdim // 4])
         self.features_upsample_nn = MLP([self.convdim, self.outdim])
 
         self.shortcut_feature_resize_nn = MLP([self.indim, self.outdim])

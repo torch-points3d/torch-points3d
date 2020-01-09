@@ -8,18 +8,19 @@ from torch import nn
 import torch.nn.functional as F
 from torch.nn import init
 import math
-from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN
+from torch.nn import (
+    Sequential as Seq,
+    Linear as Lin,
+    ReLU,
+    LeakyReLU,
+    BatchNorm1d as BN,
+)
 from torch_geometric.datasets import ModelNet
 import torch_geometric.transforms as T
 from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
 from torch.nn.parameter import Parameter
-from .kernel_utils import kernel_point_optimization_debug
-from models.core_modules import *
-from models.unet_base import BaseFactory
 from torch_geometric.utils import scatter_
-from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
-from .kernels import PointKernel, LightDeformablePointKernel
 from torch_geometric.nn import global_mean_pool
 from torch_scatter import scatter_max
 
@@ -29,6 +30,11 @@ from torch_scatter import scatter_max
 from .kernel_utils import load_kernels as create_kernel_points
 from .convolution_ops import KPConv_ops, KPConv_deform_ops
 from .utils import weight_variable
+from .kernels import PointKernel, LightDeformablePointKernel
+from .kernel_utils import kernel_point_optimization_debug
+from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
+from models.core_modules import *
+from models.unet_base import BaseFactory
 
 
 class KPConvModels(Enum):
@@ -58,6 +64,7 @@ class KPConvFactory(BaseFactory):
                     return ResidualBKPConv
         raise NotImplementedError
 
+
 ####################### BUILT WITH BaseConvolutionDown ############################
 
 
@@ -75,15 +82,16 @@ class LightDeformableKPConv(BaseConvolutionDown):
         self.out_features = out_features
         self.num_points = num_points
 
-        self._conv = LightDeformablePointKernel(self.num_points, self.in_features,
-                                                self.out_features, radius=self.radius)
+        self._conv = LightDeformablePointKernel(
+            self.num_points, self.in_features, self.out_features, radius=self.radius
+        )
 
     def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
 class KPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16,  nb_feature=0,  *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
         super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
@@ -118,7 +126,7 @@ class ResidualBKPConv(BaseConvolutionDown):
         self.num_points = num_points
 
         self.pre_mlp = nn.Linear(self.in_features, self.in_features // 2)
-        self._conv = PointKernel(self.num_points, self.in_features // 2, self.in_features // 2, radius=self.radius)
+        self._conv = PointKernel(self.num_points, self.in_features // 2, self.in_features // 2, radius=self.radius,)
         self.post_mlp = nn.Linear(self.in_features // 2, out_features)
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
@@ -135,11 +143,14 @@ class ResidualBKPConv(BaseConvolutionDown):
 
         return x_side + x_shortcut
 
+
 ####################### BUILT WITH BaseConvolutionUp ############################
 
 
 class SimpleUpsampleKPConv(BaseConvolutionUp):
-    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
+    def __init__(
+        self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs
+    ):
         super(SimpleUpsampleKPConv, self).__init__(RadiusNeighbourFinder(radius), *args, **kwargs)
 
         in_features, out_features = up_conv_nn
@@ -159,7 +170,9 @@ class SimpleUpsampleKPConv(BaseConvolutionUp):
 
 
 class ResidualUpsampleBKPConv(BaseConvolutionUp):
-    def __init__(self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
+    def __init__(
+        self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs
+    ):
         super(ResidualUpsampleBKPConv, self).__init__(RadiusNeighbourFinder(radius))
 
         self.ratio = ratio
@@ -174,7 +187,7 @@ class ResidualUpsampleBKPConv(BaseConvolutionUp):
         self.num_points = num_points
 
         self.pre_mlp = nn.Linear(self.in_features, self.in_features // 4)
-        self._conv = PointKernel(self.num_points, self.in_features // 4, self.in_features // 4, radius=self.radius)
+        self._conv = PointKernel(self.num_points, self.in_features // 4, self.in_features // 4, radius=self.radius,)
         self.post_mlp = nn.Linear(self.in_features // 4, out_features)
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
@@ -192,6 +205,7 @@ class ResidualUpsampleBKPConv(BaseConvolutionUp):
         x_shortcut = scatter_("add", x_shortcut, col)
 
         return x_side + x_shortcut
+
 
 # Kernel Point Convolution in Pytorch
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
@@ -216,8 +230,7 @@ class KPConvLayer(torch.nn.Module):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.config = config
-        self.extent = self.config.NETWORK.KP_EXTENT * self.radius /\
-            self.config.NETWORK.DENSITY_PARAMETER
+        self.extent = self.config.NETWORK.KP_EXTENT * self.radius / self.config.NETWORK.DENSITY_PARAMETER
 
         # Initial kernel extent for this layer
         K_radius = 1.5 * self.extent
@@ -226,17 +239,19 @@ class KPConvLayer(torch.nn.Module):
             self.config.NETWORK.NUM_KERNEL_POINTS,
             num_kernels=1,
             dimension=self.config.INPUT.POINTS_DIM,
-            fixed=self.config.NETWORK.FIXED_KERNEL_POINTS)
+            fixed=self.config.NETWORK.FIXED_KERNEL_POINTS,
+        )
 
-        self.K_points = Parameter(torch.from_numpy(K_points_numpy.reshape((
-            self.config.NETWORK.NUM_KERNEL_POINTS,
-            self.config.INPUT.POINTS_DIM))).to(torch.float),
-            requires_grad=False)
+        self.K_points = Parameter(
+            torch.from_numpy(
+                K_points_numpy.reshape((self.config.NETWORK.NUM_KERNEL_POINTS, self.config.INPUT.POINTS_DIM,))
+            ).to(torch.float),
+            requires_grad=False,
+        )
 
         self.weight = Parameter(
-            weight_variable([self.config.NETWORK.NUM_KERNEL_POINTS,
-                             self.num_inputs,
-                             self.num_outputs]))
+            weight_variable([self.config.NETWORK.NUM_KERNEL_POINTS, self.num_inputs, self.num_outputs,])
+        )
 
     def forward(self, pos, neighbors, x):
         """
@@ -247,22 +262,22 @@ class KPConvLayer(torch.nn.Module):
         - features : feature of size N x d (d is the number of inputs)
         """
         support_points, query_points = pos
-        new_feat = KPConv_ops(query_points,
-                              support_points,
-                              neighbors,
-                              x,
-                              self.K_points,
-                              self.weight,
-                              self.extent,
-                              self.config.NETWORK.KP_INFLUENCE,
-                              self.config.NETWORK.CONVOLUTION_MODE)
+        new_feat = KPConv_ops(
+            query_points,
+            support_points,
+            neighbors,
+            x,
+            self.K_points,
+            self.weight,
+            self.extent,
+            self.config.NETWORK.KP_INFLUENCE,
+            self.config.NETWORK.CONVOLUTION_MODE,
+        )
         return new_feat
 
 
 class DeformableKPConvLayer(torch.nn.Module):
-
-    def __init__(self, radius, num_inputs,
-                 num_outputs, config, version=0, modulated=False):
+    def __init__(self, radius, num_inputs, num_outputs, config, version=0, modulated=False):
         """
         it doesn't work yet :
         """
@@ -271,8 +286,7 @@ class DeformableKPConvLayer(torch.nn.Module):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.config = config
-        self.extent = self.config.NETWORK.KP_EXTENT * self.radius /\
-            self.config.NETWORK.DENSITY_PARAMETER
+        self.extent = self.config.NETWORK.KP_EXTENT * self.radius / self.config.NETWORK.DENSITY_PARAMETER
         self.version = version
         self.modulated = modulated
 
@@ -283,97 +297,96 @@ class DeformableKPConvLayer(torch.nn.Module):
             self.config.NETWORK.NUM_KERNEL_POINTS,
             num_kernels=1,
             dimension=self.config.INPUT.POINTS_DIM,
-            fixed=self.config.NETWORK.FIXED_KERNEL_POINTS)
+            fixed=self.config.NETWORK.FIXED_KERNEL_POINTS,
+        )
 
-        self.K_points = Parameter(torch.from_numpy(K_points_numpy.reshape((
-            self.config.NETWORK.NUM_KERNEL_POINTS,
-            self.config.INPUT.POINTS_DIM))).to(torch.float),
-            requires_grad=False)
+        self.K_points = Parameter(
+            torch.from_numpy(
+                K_points_numpy.reshape((self.config.NETWORK.NUM_KERNEL_POINTS, self.config.INPUT.POINTS_DIM,))
+            ).to(torch.float),
+            requires_grad=False,
+        )
 
         # Parameter of the deformable convolution
         self.weight = Parameter(
-            weight_variable([self.config.NETWORK.NUM_KERNEL_POINTS,
-                             self.num_inputs,
-                             self.num_outputs]))
-        if(self.modulated):
+            weight_variable([self.config.NETWORK.NUM_KERNEL_POINTS, self.num_inputs, self.num_outputs,])
+        )
+        if self.modulated:
             offset_dim = (self.config.INPUT.POINTS_DIM + 1) * (self.config.NETWORK.NUM_KERNEL_POINTS - 1)
         else:
             offset_dim = (self.config.INPUT.POINTS_DIM) * (self.config.NETWORK.NUM_KERNEL_POINTS - 1)
 
-        if(self.version == 0):
+        if self.version == 0:
             # kp conv to estimate the offset
             self.deformable_weight = Parameter(
-                weight_variable([self.config.NETWORK.NUM_KERNEL_POINTS,
-                                 self.num_inputs,
-                                 offset_dim]))
-        elif(self.version == 1):
+                weight_variable([self.config.NETWORK.NUM_KERNEL_POINTS, self.num_inputs, offset_dim])
+            )
+        elif self.version == 1:
             # MLP to estimate the offset
-            self.deformable_weight = Parameter(
-                weight_variable([self.num_inputs,
-                                 offset_dim]))
-        self.bias = torch.nn.Parameter(
-            torch.zeros(offset_dim, dtype=torch.float32), requires_grad=True)
+            self.deformable_weight = Parameter(weight_variable([self.num_inputs, offset_dim]))
+        self.bias = torch.nn.Parameter(torch.zeros(offset_dim, dtype=torch.float32), requires_grad=True)
 
     def forward(self, query_points, support_points, neighbors, features):
 
         points_dim = self.config.INPUT.POINTS_DIM
         num_kpoints = self.config.NETWORK.NUM_KERNEL_POINTS
-        if(self.version == 0):
-            features0 = KPConv_ops(query_points,
-                                   support_points,
-                                   neighbors,
-                                   features,
-                                   self.K_points,
-                                   self.deformable_weight,
-                                   self.extent,
-                                   self.config.NETWORK.KP_INFLUENCE,
-                                   self.config.NETWORK.CONVOLUTION_MODE) + self.bias
+        if self.version == 0:
+            features0 = (
+                KPConv_ops(
+                    query_points,
+                    support_points,
+                    neighbors,
+                    features,
+                    self.K_points,
+                    self.deformable_weight,
+                    self.extent,
+                    self.config.NETWORK.KP_INFLUENCE,
+                    self.config.NETWORK.CONVOLUTION_MODE,
+                )
+                + self.bias
+            )
 
         if self.modulated:
             # Get offset (in normalized scale) from features
-            offsets = features0[:, :points_dim * (num_kpoints - 1)]
+            offsets = features0[:, : points_dim * (num_kpoints - 1)]
             offsets = offsets.reshape([-1, (num_kpoints - 1), points_dim])
 
             # Get modulations
-            modulations = 2 * torch.sigmoid(
-                features0[:, points_dim * (num_kpoints - 1):])
+            modulations = 2 * torch.sigmoid(features0[:, points_dim * (num_kpoints - 1) :])
 
             #  No offset for the first Kernel points
-            if(self.version == 1):
-                offsets = torch.cat([torch.zeros_like(offsets[:, :1, :]),
-                                     offsets], axis=1)
-                modulations = torch.cat([torch.zeros_like(modulations[:, :1]),
-                                         modulations], axis=1)
+            if self.version == 1:
+                offsets = torch.cat([torch.zeros_like(offsets[:, :1, :]), offsets], axis=1)
+                modulations = torch.cat([torch.zeros_like(modulations[:, :1]), modulations], axis=1)
         else:
             # Get offset (in normalized scale) from features
             offsets = features0.reshape([-1, (num_kpoints - 1), points_dim])
             # No offset for the first Kernel points
-            offsets = torch.cat(
-                [torch.zeros_like(offsets[:, :1, :]), offsets],
-                axis=1)
+            offsets = torch.cat([torch.zeros_like(offsets[:, :1, :]), offsets], axis=1)
 
             # No modulations
             modulations = None
 
         # Rescale offset for this layer
         offsets *= self.config.NETWORK.KP_EXTENT
-        feat, sq_distances, _ = KPConv_deform_ops(query_points,
-                                                  support_points,
-                                                  neighbors,
-                                                  features,
-                                                  self.K_points,
-                                                  offsets,
-                                                  modulations,
-                                                  self.weight,
-                                                  self.extent,
-                                                  self.config.NETWORK.KP_INFLUENCE,
-                                                  self.config.NETWORK.CONVOLUTION_MODE)
+        feat, sq_distances, _ = KPConv_deform_ops(
+            query_points,
+            support_points,
+            neighbors,
+            features,
+            self.K_points,
+            offsets,
+            modulations,
+            self.weight,
+            self.extent,
+            self.config.NETWORK.KP_INFLUENCE,
+            self.config.NETWORK.CONVOLUTION_MODE,
+        )
         self.sq_distances = torch.nn.Parameter(sq_distances)
         return feat
 
 
 class UnaryConv(torch.nn.Module):
-
     def __init__(self, num_inputs, num_outputs, config):
         """
         1x1 convolution on point cloud (we can even call it a mini pointnet)
@@ -382,8 +395,7 @@ class UnaryConv(torch.nn.Module):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.config = config
-        self.weight = Parameter(weight_variable([self.num_inputs,
-                                                 self.num_outputs]))
+        self.weight = Parameter(weight_variable([self.num_inputs, self.num_outputs]))
 
     def forward(self, features):
         """
@@ -394,7 +406,7 @@ class UnaryConv(torch.nn.Module):
 
 def max_pool(features, pools):
 
-    if(pools.shape[1] > 2):
+    if pools.shape[1] > 2:
         x = torch.cat([features, torch.min(features, axis=0).values.view(1, -1)], axis=0)
         pool_features = x[pools]
         return torch.max(pool_features, axis=1).values

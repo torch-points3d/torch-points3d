@@ -5,8 +5,7 @@ import json
 
 import torch
 
-from torch_geometric.data import (Data, InMemoryDataset, download_url,
-                                  extract_zip)
+from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
@@ -53,89 +52,100 @@ class ShapeNet(InMemoryDataset):
             final dataset. (default: :obj:`None`)
     """
 
-    url = ('https://shapenet.cs.stanford.edu/media/'
-           'shapenetcore_partanno_segmentation_benchmark_v0_normal.zip')
+    url = (
+        "https://shapenet.cs.stanford.edu/media/"
+        "shapenetcore_partanno_segmentation_benchmark_v0_normal.zip"
+    )
 
     category_ids = {
-        'Airplane': '02691156',
-        'Bag': '02773838',
-        'Cap': '02954340',
-        'Car': '02958343',
-        'Chair': '03001627',
-        'Earphone': '03261776',
-        'Guitar': '03467517',
-        'Knife': '03624134',
-        'Lamp': '03636649',
-        'Laptop': '03642806',
-        'Motorbike': '03790512',
-        'Mug': '03797390',
-        'Pistol': '03948459',
-        'Rocket': '04099429',
-        'Skateboard': '04225987',
-        'Table': '04379243',
+        "Airplane": "02691156",
+        "Bag": "02773838",
+        "Cap": "02954340",
+        "Car": "02958343",
+        "Chair": "03001627",
+        "Earphone": "03261776",
+        "Guitar": "03467517",
+        "Knife": "03624134",
+        "Lamp": "03636649",
+        "Laptop": "03642806",
+        "Motorbike": "03790512",
+        "Mug": "03797390",
+        "Pistol": "03948459",
+        "Rocket": "04099429",
+        "Skateboard": "04225987",
+        "Table": "04379243",
     }
 
     seg_classes = {
-        'Airplane': [0, 1, 2, 3],
-        'Bag': [4, 5],
-        'Cap': [6, 7],
-        'Car': [8, 9, 10, 11],
-        'Chair': [12, 13, 14, 15],
-        'Earphone': [16, 17, 18],
-        'Guitar': [19, 20, 21],
-        'Knife': [22, 23],
-        'Lamp': [24, 25, 26, 27],
-        'Laptop': [28, 29],
-        'Motorbike': [30, 31, 32, 33, 34, 35],
-        'Mug': [36, 37],
-        'Pistol': [38, 39, 40],
-        'Rocket': [41, 42, 43],
-        'Skateboard': [44, 45, 46],
-        'Table': [47, 48, 49],
+        "Airplane": [0, 1, 2, 3],
+        "Bag": [4, 5],
+        "Cap": [6, 7],
+        "Car": [8, 9, 10, 11],
+        "Chair": [12, 13, 14, 15],
+        "Earphone": [16, 17, 18],
+        "Guitar": [19, 20, 21],
+        "Knife": [22, 23],
+        "Lamp": [24, 25, 26, 27],
+        "Laptop": [28, 29],
+        "Motorbike": [30, 31, 32, 33, 34, 35],
+        "Mug": [36, 37],
+        "Pistol": [38, 39, 40],
+        "Rocket": [41, 42, 43],
+        "Skateboard": [44, 45, 46],
+        "Table": [47, 48, 49],
     }
 
-    def __init__(self, root, categories=None, include_normals=True,
-                 split='trainval', transform=None, pre_transform=None,
-                 pre_filter=None):
+    def __init__(
+        self,
+        root,
+        categories=None,
+        include_normals=True,
+        split="trainval",
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+    ):
         if categories is None:
             categories = list(self.category_ids.keys())
         if isinstance(categories, str):
             categories = [categories]
         assert all(category in self.category_ids for category in categories)
         self.categories = categories
-        super(ShapeNet, self).__init__(root, transform, pre_transform,
-                                       pre_filter)
+        super(ShapeNet, self).__init__(root, transform, pre_transform, pre_filter)
 
-        if split == 'train':
+        if split == "train":
             path = self.processed_paths[0]
-        elif split == 'val':
+        elif split == "val":
             path = self.processed_paths[1]
-        elif split == 'test':
+        elif split == "test":
             path = self.processed_paths[2]
-        elif split == 'trainval':
+        elif split == "trainval":
             path = self.processed_paths[3]
         else:
-            raise ValueError((f'Split {split} found, but expected either '
-                              'train, val, trainval or test'))
+            raise ValueError(
+                (
+                    f"Split {split} found, but expected either "
+                    "train, val, trainval or test"
+                )
+            )
 
         self.data, self.slices = torch.load(path)
         self.data.x = self.data.x if include_normals else None
 
-        self.y_mask = torch.zeros((len(self.seg_classes.keys()), 50),
-                                  dtype=torch.bool)
+        self.y_mask = torch.zeros((len(self.seg_classes.keys()), 50), dtype=torch.bool)
         for i, labels in enumerate(self.seg_classes.values()):
             self.y_mask[i, labels] = 1
 
     @property
     def raw_file_names(self):
-        return list(self.category_ids.values()) + ['train_test_split']
+        return list(self.category_ids.values()) + ["train_test_split"]
 
     @property
     def processed_file_names(self):
-        cats = '_'.join([cat[:3].lower() for cat in self.categories])
+        cats = "_".join([cat[:3].lower() for cat in self.categories])
         return [
-            os.path.join('{}_{}.pt'.format(cats, split))
-            for split in ['train', 'val', 'test', 'trainval']
+            os.path.join("{}_{}.pt".format(cats, split))
+            for split in ["train", "val", "test", "trainval"]
         ]
 
     def download(self):
@@ -143,7 +153,7 @@ class ShapeNet(InMemoryDataset):
         extract_zip(path, self.root)
         os.unlink(path)
         shutil.rmtree(self.raw_dir)
-        name = self.url.split('/')[-1].split('.')[0]
+        name = self.url.split("/")[-1].split(".")[0]
         os.rename(osp.join(self.root, name), self.raw_dir)
 
     def process_filenames(self, filenames):
@@ -171,35 +181,49 @@ class ShapeNet(InMemoryDataset):
 
     def process(self):
         trainval = []
-        for i, split in enumerate(['train', 'val', 'test']):
-            path = osp.join(self.raw_dir, 'train_test_split',
-                            f'shuffled_{split}_file_list.json')
-            with open(path, 'r') as f:
+        for i, split in enumerate(["train", "val", "test"]):
+            path = osp.join(
+                self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json"
+            )
+            with open(path, "r") as f:
                 filenames = [
-                    osp.sep.join(name.split(osp.sep)[1:]) + '.txt'
+                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt"
                     for name in json.load(f)
                 ]  # Removing first directory.
             data_list = self.process_filenames(filenames)
-            if split == 'train' or split == 'val':
+            if split == "train" or split == "val":
                 trainval += data_list
             torch.save(self.collate(data_list), self.processed_paths[i])
         torch.save(self.collate(trainval), self.processed_paths[3])
 
     def __repr__(self):
-        return '{}({}, categories={})'.format(self.__class__.__name__,
-                                              len(self), self.categories)
+        return "{}({}, categories={})".format(
+            self.__class__.__name__, len(self), self.categories
+        )
 
 
 class ShapeNetDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
-        self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
+        self._data_path = os.path.join(dataset_opt.dataroot, "ShapeNet")
         self._category = dataset_opt.category
         pre_transform = T.NormalizeScale()
         transform = T.FixedPoints(dataset_opt.num_points)
-        train_dataset = ShapeNet(self._data_path, self._category, include_normals=dataset_opt.normal, split='trainval',
-                                 pre_transform=pre_transform, transform=transform)
-        test_dataset = ShapeNet(self._data_path, self._category, include_normals=dataset_opt.normal, split='test',
-                                pre_transform=pre_transform, transform=transform)
+        train_dataset = ShapeNet(
+            self._data_path,
+            self._category,
+            include_normals=dataset_opt.normal,
+            split="trainval",
+            pre_transform=pre_transform,
+            transform=transform,
+        )
+        test_dataset = ShapeNet(
+            self._data_path,
+            self._category,
+            include_normals=dataset_opt.normal,
+            split="test",
+            pre_transform=pre_transform,
+            transform=transform,
+        )
 
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
