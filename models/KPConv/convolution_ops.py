@@ -44,7 +44,11 @@ def KPConv_ops_partial(
     # Get variables
     n_kp = int(K_points.shape[0])
 
-    if idx_sampler:
+    import pdb
+
+    pdb.set_trace()
+
+    if idx_sampler is None:
         neighbours_centered = neighbours_centered[idx_sampler]
 
     # Get all difference matrices [n_points, n_neighbors, n_kpoints, dim]
@@ -56,42 +60,40 @@ def KPConv_ops_partial(
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
     if KP_influence == "constant":
         # Every point get an influence of 1.
-        all_weights = torch.ones_like(sq_distances)
-        all_weights = all_weights.transpose(1, 2)
+        all_weights = torch.ones_like(sq_distances).permute(0, 2, 1)
 
     elif KP_influence == "linear":
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
         corr = 1 - torch.sqrt(sq_distances + 1e-10) / KP_extent
-        all_weights = torch.max(corr, torch.zeros_like(sq_distances))
-        all_weights = all_weights.transpose(1, 2)
+        all_weights = torch.max(corr, torch.zeros_like(sq_distances)).permute(0, 2, 1)
 
     elif KP_influence == "gaussian":
         # Influence in gaussian of the distance.
         sigma = KP_extent * 0.3
-        all_weights = radius_gaussian(sq_distances, sigma)
-        all_weights = all_weights.transpose(1, 2)
+        all_weights = radius_gaussian(sq_distances, sigma).permute(0, 2, 1)
     else:
         raise ValueError("Unknown influence function type (config.KP_influence)")
 
     # In case of closest mode, only the closest KP can influence each point
     if aggregation_mode == "closest":
         neighbors_1nn = torch.argmin(sq_distances, dim=-1)
-        all_weights = all_weights.gather(1, neighbors_1nn.unsqueeze(-1))
+        all_weights *= torch.zeros_like(all_weights, dtype=torch.float32).scatter_(1, neighbors_1nn.unsqueeze(1), 1)
 
     elif aggregation_mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
     neighborhood_features = features[idx_neighbour, :]
-    if idx_sampler:
+    if idx_sampler is None:
         neighborhood_features = neighborhood_features[idx_sampler]
 
+    # [n_points, n_kpoints, n_neighbors] * [n_points, n_neighbors, in_fdim]
     # Apply distance weights [n_points, n_kpoints, in_fdim]
+    # torch.einsum('nab, nbc -> nac', all_weights, neighborhood_features)
     weighted_features = torch.matmul(all_weights, neighborhood_features)
 
     # Apply network weights [n_kpoints, n_points, out_fdim]
-    weighted_features = weighted_features.transpose(0, 1)
-    kernel_outputs = torch.matmul(weighted_features, K_values)
+    kernel_outputs = torch.matmul(weighted_features.permute(1, 0, 2), K_values)
 
     # Convolution sum to get [n_points, out_fdim]
     output_features = torch.sum(kernel_outputs, dim=0, keepdim=False)

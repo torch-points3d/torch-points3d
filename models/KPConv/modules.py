@@ -113,6 +113,10 @@ class BaseKPConvPartialDense(BaseConvolutionDown):
         self.KP_EXTENT = KP_EXTENT
         self.DENSITY_PARAMETER = DENSITY_PARAMETER
 
+        # PARAMTERS IMPORTANT FOR SHADOWING
+        self.shadow_features_fill = 0.0
+        self.shadow_points_fill_ = float(10e6)
+
 
 class KPConvPartialDense(BaseKPConvPartialDense):
     def __init__(self, *args, **kwargs):
@@ -206,11 +210,11 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def conv(self, input, pos, input_neighbour, pos_neighbour, idx_neighbour, idx_sampler):
+    def conv(self, input, pos, input_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
 
         x = self.uconv_0(input)
-        x = self._kp_conv0(input_neighbour, pos_neighbour, idx_sampler)
-        x = self._kp_conv1(x, pos_neighbour, idx_sampler)
+        x = self._kp_conv0(x, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
+        x = self._kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler=idx_sampler)
         if self.is_strided:
             x = input_neighbour[idx_sampler].max(-1)
         x = x + self.shortcut_op(input)
@@ -540,7 +544,7 @@ class DeformableKPConvLayer(torch.nn.Module):
 
 
 class UnaryConv(torch.nn.Module):
-    def __init__(self, num_inputs, num_outputs, config):
+    def __init__(self, num_inputs, num_outputs):
         """
         1x1 convolution on point cloud (we can even call it a mini pointnet)
         """
@@ -549,8 +553,6 @@ class UnaryConv(torch.nn.Module):
         self.num_outputs = num_outputs
 
         self.weight = Parameter(weight_variable([self.num_inputs, self.num_outputs]))
-
-        self.config = config
 
     def forward(self, features):
         """

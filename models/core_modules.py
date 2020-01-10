@@ -66,11 +66,14 @@ class BaseConvolutionDown(BaseConvolution):
 
         idx_neighbour, _ = self.neighbour_finder(pos, pos, batch_x=batch, batch_y=batch)
 
-        x = torch.cat([x, self.shadow_features], dim=0)
-        pos = torch.cat([pos, self.shadow_point], dim=0)
+        shadow_x = torch.full((1,) + x.shape[1:], self.shadow_features_fill).to(x.device)
+        shadow_points = torch.full((1,) + pos.shape[1:], self.shadow_points_fill_).to(x.device)
+
+        x = torch.cat([x, shadow_x], dim=0)
+        pos = torch.cat([pos, shadow_points], dim=0)
 
         x_neighbour = x[idx_neighbour]
-        pos_centered_neighbour = pos[idx_neighbour] - pos.unsqueeze(-1)  # Centered the points
+        pos_centered_neighbour = pos[idx_neighbour] - pos[:-1].unsqueeze(1)  # Centered the points
 
         batch_obj.x = self.conv(x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler)
 
