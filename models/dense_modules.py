@@ -64,36 +64,34 @@ class BaseDenseConvolutionUp(BaseConvolution):
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
 
-    def conv(self, x, pos, pos_skip):
+    def conv(self, known_pos, uknown_pos, known_feat):
         raise NotImplementedError
 
-    def forward(self, x, x_skip, pos, pos_skip):
-        new_features = self.conv(x, pos, pos_skip)
-        if x_skip is not None:
-            new_features = torch.cat([new_features, x_skip], dim=1)  # (B, C2 + C1, n)
-        else:
-            new_features = new_features
+    def forward(self, known_pos, uknown_pos, known_feat, unknown_feat):
+        new_features = self.conv(known_pos, uknown_pos, known_feat)
+        if unknown_feat is not None:
+            new_features = torch.cat([new_features, unknown_feat], dim=1)  # (B, C2 + C1, n)
 
         new_features = new_features.unsqueeze(-1)
         if hasattr(self, "nn"):
             new_features = self.nn(new_features)
-        else:
-            new_features = new_features
+
         return new_features.squeeze(-1)
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, **kwargs):
+    def __init__(self, up_conv_nn, bn=True, **kwargs):
         super(DenseFPModule, self).__init__(None)
-        self.nn = pt_utils.SharedMLP(up_conv_nn)
+        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
 
-    def conv(self, x, pos, pos_skip):
-        if pos is not None:
-            dist, idx = tp.three_nn(pos_skip, pos)
+    def conv(self, known_pos, unknown_pos, known_feat):
+        assert unknown_pos.shape[2] == 3
+        if known_pos is not None:
+            dist, idx = tp.three_nn(unknown_pos, known_pos)
             dist_recip = 1.0 / (dist + 1e-8)
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
-            interpolated_feats = tp.three_interpolate(x, idx, weight)
+            interpolated_feats = tp.three_interpolate(known_feat, idx, weight)
         else:
-            interpolated_feats = x.expand(*(x.size()[0:2] + [pos.size(1)]))
+            interpolated_feats = known_feat.expand(*(known_feat.size()[0:2] + [unknown_pos.size(1)]))
         return interpolated_feats

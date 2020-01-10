@@ -6,7 +6,9 @@ import torch.nn.functional as F
 from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
 from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
+from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
+
 from .modules import *
 from models.dense_modules import DenseFPModule
 from models.unet_base import UnetBasedModel, BaseModel
@@ -70,26 +72,22 @@ class SegmentationModel(BaseModel):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
-            Dimensions: [B, N, ...]
+        Sets:
+            self.data:
+                x -- Features [B, C, N]
+                pos -- Features [B, 3, N]
         """
-        self.x = data.x.transpose(1, 2).contiguous()
-        self.pos = data.pos
-        self.labels = torch.flatten(data.y)
+        self.data = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
+        self.labels = torch.flatten(data.y).long()  # [B,N]
 
     def forward(self):
         r"""
             Forward pass of the network
-
-            Parameters
-            ----------
-            pointcloud: Variable(torch.cuda.FloatTensor)
-                (B, N, 3 + input_channels) tensor
-                Point cloud to run predicts on
-                Each point in the point-cloud MUST
-                be formated as (x, y, z, features...)
+            self.data:
+                x -- Features [B, C, N]
+                pos -- Features [B, 3, N]
         """
-        # torch.Size([32, 4096, 3]), torch.Size([32, 6, 4096])
-        l_xyz, l_features = [self.pos], [self.x]
+        l_xyz, l_features = [self.data.pos], [self.data.x]
         for i in range(len(self.SA_modules)):
             li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
             l_xyz.append(li_xyz)
@@ -97,11 +95,8 @@ class SegmentationModel(BaseModel):
 
         for i in range(len(self.FP_modules)):
             l_features[-i - 2] = self.FP_modules[i](
-                l_features[-i - 1], l_features[-i - 2], l_xyz[-i - 1], l_xyz[-i - 2],
+                l_xyz[-i - 1], l_xyz[-i - 2], l_features[-i - 1], l_features[-i - 2]
             )
-        # l_features[-i - 2] = self.FP_modules[i](
-        #     l_xyz[-i - 2], l_xyz[-i - 1], l_features[-i - 2], l_features[-i - 1]
-        # )
         self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 
@@ -111,5 +106,5 @@ class SegmentationModel(BaseModel):
         # calculate loss given the input and intermediate results
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.cross_entropy(self.output, self.labels.long(), weight=self._weight_classes)
+        self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
         self.loss_seg.backward()
