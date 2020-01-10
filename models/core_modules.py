@@ -62,20 +62,20 @@ class BaseConvolutionDown(BaseConvolution):
     def forward_partial(self, data):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
-        if self._precompute_multi_scale:
-            idx = getattr(data, "index_{}".format(self._index), None)
-            edge_index = getattr(data, "edge_index_{}".format(self._index), None)
-        else:
-            idx = self.sampler(pos, batch)
-            row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx])
-            edge_index = torch.stack([col, row], dim=0)
-            batch_obj.idx = idx
-            batch_obj.edge_index = edge_index
+        idx_sampler = self.sampler(pos, batch)
 
-        batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
+        idx_neighbour, _ = self.neighbour_finder(pos, pos, batch_x=batch, batch_y=batch)
 
-        batch_obj.pos = pos[idx]
-        batch_obj.batch = batch[idx]
+        x = torch.cat([x, self.shadow_features], dim=0)
+        pos = torch.cat([pos, self.shadow_point], dim=0)
+
+        x_neighbour = x[idx_neighbour]
+        pos_centered_neighbour = pos[idx_neighbour] - pos.unsqueeze(-1)  # Centered the points
+
+        batch_obj.x = self.conv(x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler)
+
+        batch_obj.pos = pos[idx_sampler]
+        batch_obj.batch = batch[idx_sampler]
         copy_from_to(data, batch_obj)
         return batch_obj
 

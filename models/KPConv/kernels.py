@@ -65,7 +65,6 @@ def KPconv_op(self, x_j, pos_i, pos_j):
 
 
 class PointKernel(MessagePassing):
-
     """
     Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
     https://arxiv.org/abs/1904.08889
@@ -321,7 +320,6 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 
 
 class PointKernelPartialDense(nn.Module):
-
     """
     Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
     https://arxiv.org/abs/1904.08889
@@ -390,12 +388,14 @@ class PointKernelPartialDense(nn.Module):
         )
         self.kernel.data = torch.from_numpy(kernel).float()
 
-    def forward(self, x, pos, idx_sampler, idx_neighbour):
-        features = KPConv_ops(
-            pos,
-            pos[idx_sampler] if self.is_strided else pos,
-            idx_neighbour[idx_sampler] if self.is_strided else idx_neighbour,
+    def forward(self, x, idx_neighbour, pos_centered_neighbour, idx_sampler=None):
+        if idx_sampler is None and self.is_strided:
+            raise Exception("This convolution needs to be provided idx_sampler as it is defined as strided")
+        features = KPConv_ops_partial(
             x,
+            idx_neighbour,
+            pos_centered_neighbour,
+            idx_sampler,
             self.kernel.to(x.device),
             self.kernel_weight.to(x.device),
             self.extent,

@@ -129,8 +129,8 @@ class KPConvPartialDense(BaseKPConvPartialDense):
         )
         self.activation = kwargs.get("act", nn.LeakyReLU(0.2))
 
-    def conv(self, x, pos, idx_sampler, idx_neighbour):
-        return self._conv(x, pos, idx_sampler, idx_neighbour)
+    def conv(self, input, pos, input_neighbour, pos_neighbour, idx_neighbour, idx_sampler):
+        return self._conv(input_neighbour, pos_neighbour, idx_sampler)
 
 
 class ResnetPartialDense(BaseKPConvPartialDense):
@@ -162,13 +162,14 @@ class ResnetPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def conv(self, input, pos, idx_sampler, idx_neighbour):
-        x = self.kp_conv0(input, pos, idx_sampler, idx_neighbour)
+    def conv(self, input, pos, input_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
 
-        x = self.kp_conv1(x, pos, idx_sampler, idx_neighbour)
+        x = self.kp_conv0(input, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
+
+        x = self.kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler)
 
         if self.is_strided:
-            input = max_pool(input, idx_sampler)
+            x = x[idx_neighbour][idx_sampler].max(-1)
         x = x + self.shortcut_op(input)
 
         return x
@@ -205,14 +206,13 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
-    def conv(self, input, pos, batch, idx_sampler, idx_neighbour):
+    def conv(self, input, pos, input_neighbour, pos_neighbour, idx_neighbour, idx_sampler):
 
         x = self.uconv_0(input)
-        x = self._kp_conv0(x, pos, idx_sampler, idx_neighbour)
-        x = self._kp_conv1(x, pos, idx_sampler, idx_neighbour)
-
+        x = self._kp_conv0(input_neighbour, pos_neighbour, idx_sampler)
+        x = self._kp_conv1(x, pos_neighbour, idx_sampler)
         if self.is_strided:
-            input = max_pool(idx_neighbour, idx_neighbour.view(-1))
+            x = input_neighbour[idx_sampler].max(-1)
         x = x + self.shortcut_op(input)
 
         return x
