@@ -9,25 +9,31 @@ The framework allows lean and yet complex model to be built with minimum effort 
 # COMPACT API
 ```yaml
   # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
-  pointnet2:
-      type: pointnet2
-      down_conv:
-          module_name: SAModule
-          ratios: [0.2, 0.25]
-          radius: [0.2, 0.4]
-          down_conv_nn: [[FEAT + 3, 64, 64, 128], [128 + 3, 128, 128, 256]]
-      up_conv:
-          module_name: FPModule
-          up_conv_nn: [[1024 + 256, 256, 256], [256 + 128, 256, 128], [128 + FEAT, 128, 128, 128]]
-          up_k: [1, 3, 3]  
-          skip: True  
-      innermost:
-          module_name: GlobalBaseModule
-          aggr: max
-          nn: [256 + 3, 256, 512, 1024]
-      mlp_cls:
-          nn: [128, 128, 128, 128, 128]
-          dropout: 0.5
+    pointnet2_original:
+        type: pointnet2_customkernel
+        down_conv:
+            npoint: [1024, 256, 64, 16]
+            radii: [[0.05, 0.1], [0.1, 0.2], [0.2, 0.4], [0.4, 0.8]]
+            nsamples: [[16, 32], [16, 32], [16, 32], [16, 32]]
+            down_conv_nn:
+                [
+                    [[FEAT, 16, 16, 32], [FEAT, 32, 32, 64]],
+                    [[32 + 64, 64, 64, 128], [32 + 64, 64, 96, 128]],
+                    [[128 + 128, 128, 196, 256], [128 + 128, 128, 196, 256]],
+                    [[256 + 256, 256, 256, 512], [256 + 256, 256, 384, 512]],
+                ]
+        up_conv:
+            up_conv_nn:
+                [
+                    [512 + 512 + 256 + 256, 512, 512],
+                    [512 + 128 + 128, 512, 512],
+                    [512 + 64 + 32, 256, 256],
+                    [256 + FEAT, 128, 128],
+                ]
+            skip: True
+        mlp_cls:
+            nn: [128, 128]
+            dropout: 0.5
 ```
 
 ## Getting started
@@ -51,7 +57,7 @@ And you should see something like that
 
 | Model Name | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3,026,829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11
+| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3,026,829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11
 
 ## Contributing
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
