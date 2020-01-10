@@ -76,8 +76,8 @@ class BaseDenseConvolutionUp(BaseConvolution):
         """
         known_data, unknown_data = data
         known_pos, known_feat = known_data.pos, known_data.x
-        uknown_pos, unknown_feat = unknown_data.pos, unknown_data.x
-        new_features = self.conv(known_pos, uknown_pos, known_feat)
+        unknown_pos, unknown_feat = unknown_data.pos, unknown_data.x
+        new_features = self.conv(known_pos, unknown_pos, known_feat)
         if unknown_feat is not None:
             new_features = torch.cat([new_features, unknown_feat], dim=1)  # (B, C2 + C1, n)
 
@@ -85,7 +85,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
         if hasattr(self, "nn"):
             new_features = self.nn(new_features)
 
-        return new_features.squeeze(-1)
+        return Data(x=new_features.squeeze(-1), pos=unknown_pos)
 
 
 class DenseFPModule(BaseDenseConvolutionUp):

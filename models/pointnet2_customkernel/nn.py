@@ -11,10 +11,10 @@ import etw_pytorch_utils as pt_utils
 
 from .modules import *
 from models.dense_modules import DenseFPModule
-from models.unet_base import UnetBasedModel, BaseModel
+from models.unet_base import UnetBasedModel
 
 
-class SegmentationModel(BaseModel):
+class SegmentationModel(UnetBasedModel):
     r"""
         PointNet2 with multi-scale grouping
         Semantic segmentation network that uses feature propogation layers
@@ -31,31 +31,10 @@ class SegmentationModel(BaseModel):
     """
 
     def __init__(self, option, model_type, dataset, modules):
-        super(SegmentationModel, self).__init__(option)
-        use_xyz = True
-        self.loss_names = ["loss_seg"]
-        self._weight_classes = dataset.weight_classes
+        # call the initialization method of UnetBasedModel
+        UnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self._num_classes = dataset.num_classes
-
-        # Downconv
-        downconv_opt = option.down_conv
-        self.SA_modules = nn.ModuleList()
-        for i in range(len(downconv_opt.down_conv_nn)):
-            self.SA_modules.append(
-                PointNetMSGDown(
-                    npoint=downconv_opt.npoint[i],
-                    radii=downconv_opt.radii[i],
-                    nsamples=downconv_opt.nsamples[i],
-                    mlps=downconv_opt.down_conv_nn[i],
-                    use_xyz=use_xyz,
-                )
-            )
-
-        # Up conv
-        up_conv_opt = option.up_conv
-        self.FP_modules = nn.ModuleList()
-        for i in range(len(up_conv_opt.up_conv_nn)):
-            self.FP_modules.append(DenseFPModule(up_conv_nn=up_conv_opt.up_conv_nn[i]))
+        self._weight_classes = dataset.weight_classes
 
         # Last MLP
         last_mlp_opt = option.mlp_cls
@@ -66,7 +45,7 @@ class SegmentationModel(BaseModel):
             self.FC_layer.dropout(p=last_mlp_opt.dropout)
 
         self.FC_layer.conv1d(self._num_classes, activation=None)
-        print(self)
+        self.loss_names = ["loss_seg"]
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -77,7 +56,7 @@ class SegmentationModel(BaseModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, 3, N]
         """
-        self.data = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
+        self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B,N]
 
     def forward(self):
@@ -87,14 +66,8 @@ class SegmentationModel(BaseModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, 3, N]
         """
-        datas = [self.data]
-        for i in range(len(self.SA_modules)):
-            datas.append(self.SA_modules[i](datas[i]))
-
-        for i in range(len(self.FP_modules)):
-            datas[-i - 2].x = self.FP_modules[i]((datas[-i - 1], datas[-i - 2]))
-
-        last_feature = datas[0].x
+        data = self.model(self.input)
+        last_feature = data.x
         self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 

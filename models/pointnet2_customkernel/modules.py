@@ -6,25 +6,24 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 from typing import Tuple, List
 
-from models.dense_modules import BaseDenseConvolutionDown
+from models.dense_modules import *
 from models.core_sampling_and_search import DenseFPSSampler, DenseRadiusNeighbourFinder
 
 
 class PointNetMSGDown(BaseDenseConvolutionDown):
-    def __init__(self, npoint, radii, nsamples, mlps, bn=True, use_xyz=True):
-        # type: (PointnetSAModuleMSG, int, List[float], List[int], List[List[int]], bool, bool) -> None
-        assert len(radii) == len(nsamples) == len(mlps)
+    def __init__(self, npoint=None, radii=None, nsample=None, down_conv_nn=None, bn=True, use_xyz=True, **kwargs):
+        assert len(radii) == len(nsample) == len(down_conv_nn)
         super(PointNetMSGDown, self).__init__(
-            DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsamples)
+            DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample)
         )
         self.use_xyz = use_xyz
         self.npoint = npoint
         self.mlps = nn.ModuleList()
         for i in range(len(radii)):
-            mlp_spec = mlps[i]
+            mlp_spec = down_conv_nn[i]
             if self.use_xyz:
                 mlp_spec[0] += 3
-            self.mlps.append(pt_utils.SharedMLP(mlps[i], bn=bn))
+            self.mlps.append(pt_utils.SharedMLP(down_conv_nn[i], bn=bn))
 
     def _prepare_features(self, x, pos, new_pos, idx):
         new_pos_trans = pos.transpose(1, 2).contiguous()
