@@ -173,17 +173,17 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     def __init__(
         self, radius: Union[float, List[float]], max_num_neighbors: Union[int, List[int]] = 64,
     ):
-        if not isinstance(max_num_neighbors, list) and isinstance(radius, list):
+        if isinstance(max_num_neighbors, float) and not isinstance(radius, float):
             self._radius = radius
             self._max_num_neighbors = [max_num_neighbors for i in range(len(self._radius))]
             return
 
-        if not isinstance(radius, list) and isinstance(max_num_neighbors, list):
+        if isinstance(radius, float) and not isinstance(max_num_neighbors, float):
             self._max_num_neighbors = max_num_neighbors
             self._radius = [radius for i in range(len(self._max_num_neighbors))]
             return
 
-        if isinstance(max_num_neighbors, list):
+        if not isinstance(max_num_neighbors, float):
             if len(max_num_neighbors) != len(radius):
                 raise ValueError("Both lists max_num_neighbors and radius should be of the same length")
             self._max_num_neighbors = max_num_neighbors

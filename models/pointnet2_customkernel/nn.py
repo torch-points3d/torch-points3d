@@ -8,6 +8,7 @@ from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
 import etw_pytorch_utils as pt_utils
 from .modules import *
+from models.dense_modules import DenseFPModule
 from models.unet_base import UnetBasedModel, BaseModel
 
 
@@ -39,7 +40,7 @@ class SegmentationModel(BaseModel):
         self.SA_modules = nn.ModuleList()
         for i in range(len(downconv_opt.down_conv_nn)):
             self.SA_modules.append(
-                PointnetSAModuleMSG(
+                PointNetMSGDown(
                     npoint=downconv_opt.npoint[i],
                     radii=downconv_opt.radii[i],
                     nsamples=downconv_opt.nsamples[i],
@@ -52,7 +53,7 @@ class SegmentationModel(BaseModel):
         up_conv_opt = option.up_conv
         self.FP_modules = nn.ModuleList()
         for i in range(len(up_conv_opt.up_conv_nn)):
-            self.FP_modules.append(PointnetFPModule(mlp=up_conv_opt.up_conv_nn[i]))
+            self.FP_modules.append(DenseFPModule(up_conv_nn=up_conv_opt.up_conv_nn[i]))
 
         # Last MLP
         last_mlp_opt = option.mlp_cls
@@ -96,8 +97,11 @@ class SegmentationModel(BaseModel):
 
         for i in range(len(self.FP_modules)):
             l_features[-i - 2] = self.FP_modules[i](
-                l_xyz[-i - 2], l_xyz[-i - 1], l_features[-i - 2], l_features[-i - 1]
+                l_features[-i - 1], l_features[-i - 2], l_xyz[-i - 1], l_xyz[-i - 2],
             )
+        # l_features[-i - 2] = self.FP_modules[i](
+        #     l_xyz[-i - 2], l_xyz[-i - 1], l_features[-i - 2], l_features[-i - 1]
+        # )
         self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 
