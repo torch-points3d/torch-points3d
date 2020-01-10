@@ -337,6 +337,7 @@ class PointKernelPartialDense(nn.Module):
         KP_influence="linear",
         aggregation_mode="closest",
         is_strided=True,
+        shadow_features_fill=0.0,
         norm=nn.BatchNorm1d,
         act=nn.ReLU,
         KP_EXTENT=None,
@@ -356,6 +357,9 @@ class PointKernelPartialDense(nn.Module):
         self.is_strided = is_strided
         self.norm = None  # norm(out_features) if norm is not None else None
         self.act = act()
+
+        # Position of the fill for shadow points
+        self.shadow_features_fill = shadow_features_fill
 
         # Radius of the initial positions of the kernel points
         self.extent = KP_EXTENT * self.radius / DENSITY_PARAMETER
@@ -391,6 +395,7 @@ class PointKernelPartialDense(nn.Module):
     def forward(self, x, idx_neighbour, pos_centered_neighbour, idx_sampler=None):
         if idx_sampler is None and self.is_strided:
             raise Exception("This convolution needs to be provided idx_sampler as it is defined as strided")
+
         features = KPConv_ops_partial(
             x,
             idx_neighbour,
@@ -402,6 +407,10 @@ class PointKernelPartialDense(nn.Module):
             self.KP_influence,
             self.aggregation_mode,
         )
+
+        if not self.is_strided:
+            shadow_features = torch.full((1,) + features.shape[1:], self.shadow_features_fill).to(x.device)
+            features = torch.cat([features, shadow_features], dim=0)
 
         if self.norm:
             return self.act(self.norm(features))

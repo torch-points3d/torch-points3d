@@ -44,11 +44,7 @@ def KPConv_ops_partial(
     # Get variables
     n_kp = int(K_points.shape[0])
 
-    import pdb
-
-    pdb.set_trace()
-
-    if idx_sampler is None:
+    if idx_sampler is not None:
         neighbours_centered = neighbours_centered[idx_sampler]
 
     # Get all difference matrices [n_points, n_neighbors, n_kpoints, dim]
@@ -82,9 +78,13 @@ def KPConv_ops_partial(
     elif aggregation_mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
+    import pdb
+
+    pdb.set_trace()
+
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
-    neighborhood_features = features[idx_neighbour, :]
-    if idx_sampler is None:
+    neighborhood_features = features[idx_neighbour]
+    if idx_sampler is not None:
         neighborhood_features = neighborhood_features[idx_sampler]
 
     # [n_points, n_kpoints, n_neighbors] * [n_points, n_neighbors, in_fdim]

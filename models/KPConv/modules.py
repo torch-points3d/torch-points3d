@@ -79,7 +79,7 @@ class BaseKPConvPartialDense(BaseConvolutionDown):
         down_conv_nn=None,
         kp_points=16,
         nb_feature=0,
-        is_strided=False,
+        is_strided=True,
         KP_EXTENT=None,
         DENSITY_PARAMETER=None,
         *args,
@@ -196,7 +196,7 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         self._kp_conv1 = PointKernelPartialDense(
             self.kp_points,
             self.intermediate_features,
-            self.intermediate_features,
+            self.out_features,
             radius=self.radius,
             is_strided=self.is_strided,
             KP_EXTENT=self.KP_EXTENT,
@@ -206,7 +206,7 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         self.uconv_0 = UnaryConv(self.in_features, self.intermediate_features)
 
         if self.out_features != self.intermediate_features:
-            self.shortcut_op = UnaryConv(self.intermediate_features, self.out_features)
+            self.shortcut_op = UnaryConv(self.in_features, self.out_features)
         else:
             self.shortcut_op = torch.nn.Identity()
 
@@ -215,10 +215,10 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         x = self.uconv_0(input)
         x = self._kp_conv0(x, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
         x = self._kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler=idx_sampler)
-        if self.is_strided:
-            x = input_neighbour[idx_sampler].max(-1)
-        x = x + self.shortcut_op(input)
 
+        if self.is_strided:
+            input = input_neighbour[idx_sampler].max(1)[0]
+        x = x + self.shortcut_op(input)
         return x
 
 
