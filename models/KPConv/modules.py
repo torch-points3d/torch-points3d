@@ -168,12 +168,11 @@ class ResnetPartialDense(BaseKPConvPartialDense):
 
     def conv(self, input, pos, input_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
 
-        x = self.kp_conv0(input, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
-
-        x = self.kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler)
+        x = self._kp_conv0(x, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
+        x = self._kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler=idx_sampler)
 
         if self.is_strided:
-            x = x[idx_neighbour][idx_sampler].max(-1)
+            input = input_neighbour[idx_sampler].max(1)[0]
         x = x + self.shortcut_op(input)
 
         return x
