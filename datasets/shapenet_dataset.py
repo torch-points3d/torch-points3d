@@ -10,6 +10,7 @@ from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
 from .base_dataset import BaseDataset
+from utils.enums import METRICS
 
 
 class ShapeNet(InMemoryDataset):
@@ -206,7 +207,13 @@ class ShapeNetDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "ShapeNet")
+
+        self.add_metrics([METRICS.ACC, METRICS.MIOU, METRICS.MACC])
         self._category = dataset_opt.category
+
+        if self._category is None:
+            self.add_metrics([METRICS.MCIOU])
+
         pre_transform = T.NormalizeScale()
         transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(
@@ -226,4 +233,4 @@ class ShapeNetDataset(BaseDataset):
             transform=transform,
         )
 
-        self._create_dataloaders(train_dataset, test_dataset, validation=None)
+        self._create_dataloaders(train_dataset, test_dataset, val_dataset=None)

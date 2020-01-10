@@ -114,6 +114,7 @@ class SegmentationTracker(BaseTracker):
         """
         super(SegmentationTracker, self).__init__(wandb_log, use_tensorboard, log_dir)
         self._num_classes = dataset.num_classes
+        self._dataset_metrics = dataset.metrics
         self._stage = stage
 
         self.reset(stage)

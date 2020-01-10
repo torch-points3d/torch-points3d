@@ -6,6 +6,7 @@ from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
 
 from .base_dataset import BaseDataset
+from utils.enums import METRICS
 
 
 class S3DIS_With_Weights(S3DIS):
@@ -76,6 +77,8 @@ class S3DISDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
+        self.add_metrics([METRICS.ACC, METRICS.MIOU, METRICS.MACC])
+
         transform = T.Compose(
             [
                 T.FixedPoints(dataset_opt.num_points),
@@ -97,4 +100,4 @@ class S3DISDataset(BaseDataset):
             transform=T.FixedPoints(dataset_opt.num_points),
         )
 
-        self._create_dataloaders(train_dataset, test_dataset, validation=None)
+        self._create_dataloaders(train_dataset, test_dataset, val_dataset=None)
