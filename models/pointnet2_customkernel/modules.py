@@ -3,50 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import BatchNorm1d, BatchNorm2d
 import torch_points as tp
-from models.core_modules import *
-from models.core_sampling_and_search import DenseRadiusNeighbourFinder, DenseFPSSampler
-import torch_points as tp
-
-
-class SADenseModule(BaseDenseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, radius_num_point=None, down_conv_nn=None, nb_feature=None, *args, **kwargs):
-        super(SADenseModule, self).__init__(DenseFPSSampler(ratio=ratio),
-                                            DenseRadiusNeighbourFinder(radius, max_num_neighbors=radius_num_point), *args, **kwargs)
-
-        self._local_nn = SharedMLP(down_conv_nn, bn=True) if down_conv_nn is not None else None
-        self._dim_in = down_conv_nn[0] if down_conv_nn is not None else None
-
-        self._radius = radius
-        self._ratio = ratio
-        self._num_points = radius_num_point
-
-    def _prepare_features(self, x, pos, new_pos, radius_idx):
-        pos_trans = pos.transpose(1, 2).contiguous()
-        grouped_pos = tp.grouping_operation(pos_trans, radius_idx)  # (B, 3, npoint, nsample)
-        grouped_pos -= new_pos.transpose(1, 2).unsqueeze(-1)
-
-        if x is not None:
-            x_trans = x.view((pos.shape[0], self._dim_in - pos.shape[-1], -1)).contiguous()
-            grouped_features = tp.grouping_operation(x_trans, radius_idx)
-            new_features = torch.cat(
-                [grouped_pos, grouped_features], dim=1
-            )  # (B, C + 3, npoint, nsample)
-        else:
-            new_features = grouped_pos
-
-        return new_features
-
-    def conv(self, x, pos, new_pos, radius_idx):
-        features = self._prepare_features(x, pos, new_pos, radius_idx)
-        new_features = self._local_nn(features)
-        new_features = F.max_pool2d(
-            new_features, kernel_size=[1, new_features.size(3)]
-        )  # (B, mlp[-1], npoint, 1)
-        new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
-        return new_features
-
-    def extra_repr(self):
-        return '{}(ratio {}, radius {}, radius_points {})'.format(self.__class__.__name__, self._ratio, self._radius, self._num_points)
+import etw_pytorch_utils as pt_utils
+from typing import Tuple, List
 
 
 class _PointnetSAModuleBase(nn.Module):
@@ -78,24 +36,16 @@ class _PointnetSAModuleBase(nn.Module):
 
         xyz_flipped = xyz.transpose(1, 2).contiguous()
         new_xyz = (
-            tp.gather_operation(
-                xyz_flipped, tp.furthest_point_sample(xyz, self.npoint)
-            )
-            .transpose(1, 2)
-            .contiguous()
+            tp.gather_operation(xyz_flipped, tp.furthest_point_sample(xyz, self.npoint)).transpose(1, 2).contiguous()
             if self.npoint is not None
             else None
         )
 
         for i in range(len(self.groupers)):
-            new_features = self.groupers[i](
-                xyz, new_xyz, features
-            )  # (B, C, npoint, nsample)
+            new_features = self.groupers[i](xyz, new_xyz, features)  # (B, C, npoint, nsample)
 
             new_features = self.mlps[i](new_features)  # (B, mlp[-1], npoint, nsample)
-            new_features = F.max_pool2d(
-                new_features, kernel_size=[1, new_features.size(3)]
-            )  # (B, mlp[-1], npoint, 1)
+            new_features = F.max_pool2d(new_features, kernel_size=[1, new_features.size(3)])  # (B, mlp[-1], npoint, 1)
             new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
 
             new_features_list.append(new_features)
@@ -133,15 +83,13 @@ class PointnetSAModuleMSG(_PointnetSAModuleBase):
             radius = radii[i]
             nsample = nsamples[i]
             self.groupers.append(
-                QueryAndGroup(radius, nsample, use_xyz=use_xyz)
-                if npoint is not None
-                else GroupAll(use_xyz)
+                QueryAndGroup(radius, nsample, use_xyz=use_xyz) if npoint is not None else GroupAll(use_xyz)
             )
             mlp_spec = mlps[i]
             if use_xyz:
                 mlp_spec[0] += 3
 
-            self.mlps.append(SharedMLP(mlp_spec, bn=bn))
+            self.mlps.append(pt_utils.SharedMLP(mlp_spec, bn=bn))
 
 
 class PointnetSAModule(PointnetSAModuleMSG):
@@ -161,17 +109,10 @@ class PointnetSAModule(PointnetSAModuleMSG):
         Use batchnorm
     """
 
-    def __init__(
-        self, mlp, npoint=None, radius=None, nsample=None, bn=True, use_xyz=True
-    ):
+    def __init__(self, mlp, npoint=None, radius=None, nsample=None, bn=True, use_xyz=True):
         # type: (PointnetSAModule, List[int], int, float, int, bool, bool) -> None
         super(PointnetSAModule, self).__init__(
-            mlps=[mlp],
-            npoint=npoint,
-            radii=[radius],
-            nsamples=[nsample],
-            bn=bn,
-            use_xyz=use_xyz,
+            mlps=[mlp], npoint=npoint, radii=[radius], nsamples=[nsample], bn=bn, use_xyz=use_xyz,
         )
 
 
@@ -189,7 +130,7 @@ class PointnetFPModule(nn.Module):
     def __init__(self, mlp, bn=True):
         # type: (PointnetFPModule, List[int], bool) -> None
         super(PointnetFPModule, self).__init__()
-        self.mlp = SharedMLP(mlp, bn=bn)
+        self.mlp = pt_utils.SharedMLP(mlp, bn=bn)
 
     def forward(self, unknown, known, unknow_feats, known_feats):
         # type: (PointnetFPModule, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor
@@ -211,9 +152,9 @@ class PointnetFPModule(nn.Module):
             (B, mlp[-1], n) tensor of the features of the unknown features
         """
 
-        #print(unknown.shape, known.shape, unknow_feats.shape, known_feats.shape)
+        # print(unknown.shape, known.shape, unknow_feats.shape, known_feats.shape)
 
-        #import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
         if known is not None:
             dist, idx = tp.three_nn(unknown, known)
@@ -221,20 +162,14 @@ class PointnetFPModule(nn.Module):
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
 
-            #print(known_feats.shape, idx.shape, weight.shape)
+            # print(known_feats.shape, idx.shape, weight.shape)
 
-            interpolated_feats = tp.three_interpolate(
-                known_feats, idx, weight
-            )
+            interpolated_feats = tp.three_interpolate(known_feats, idx, weight)
         else:
-            interpolated_feats = known_feats.expand(
-                *(known_feats.size()[0:2] + [unknown.size(1)])
-            )
+            interpolated_feats = known_feats.expand(*(known_feats.size()[0:2] + [unknown.size(1)]))
 
         if unknow_feats is not None:
-            new_features = torch.cat(
-                [interpolated_feats, unknow_feats], dim=1
-            )  # (B, C2 + C1, n)
+            new_features = torch.cat([interpolated_feats, unknow_feats], dim=1)  # (B, C2 + C1, n)
         else:
             new_features = interpolated_feats
 
@@ -261,7 +196,7 @@ class QueryAndGroup(nn.Module):
         self.radius, self.nsample, self.use_xyz = radius, nsample, use_xyz
 
     def forward(self, xyz, new_xyz, features=None):
-        # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> Tuple[Torch.Tensor]
+        # type: (QueryAndGroup, torch.Tensor. torch.Tensor, torch.Tensor) -> torch.Tensor
         r"""
         Parameters
         ----------
@@ -285,15 +220,11 @@ class QueryAndGroup(nn.Module):
         if features is not None:
             grouped_features = tp.grouping_operation(features, idx)
             if self.use_xyz:
-                new_features = torch.cat(
-                    [grouped_xyz, grouped_features], dim=1
-                )  # (B, C + 3, npoint, nsample)
+                new_features = torch.cat([grouped_xyz, grouped_features], dim=1)  # (B, C + 3, npoint, nsample)
             else:
                 new_features = grouped_features
         else:
-            assert (
-                self.use_xyz
-            ), "Cannot have not features and not use xyz as a feature!"
+            assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
             new_features = grouped_xyz
 
         return new_features
@@ -332,9 +263,7 @@ class GroupAll(nn.Module):
         if features is not None:
             grouped_features = features.unsqueeze(2)
             if self.use_xyz:
-                new_features = torch.cat(
-                    [grouped_xyz, grouped_features], dim=1
-                )  # (B, 3 + C, 1, N)
+                new_features = torch.cat([grouped_xyz, grouped_features], dim=1)  # (B, 3 + C, 1, N)
             else:
                 new_features = grouped_features
         else:

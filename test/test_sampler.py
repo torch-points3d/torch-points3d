@@ -2,7 +2,12 @@ import os
 import unittest
 import torch
 
-from models.core_sampling_and_search import FPSSampler, RandomSampler, RadiusNeighbourFinder, MultiscaleRadiusNeighbourFinder
+from models.core_sampling_and_search import (
+    FPSSampler,
+    RandomSampler,
+    RadiusNeighbourFinder,
+    MultiscaleRadiusNeighbourFinder,
+)
 
 
 class TestSampler(unittest.TestCase):
@@ -91,5 +96,5 @@ class TestNeighboorhoodSearch(unittest.TestCase):
             nei_finder(x, y, batch_x, batch_y, 10)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

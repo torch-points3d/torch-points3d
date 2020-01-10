@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import global_max_pool
@@ -10,11 +9,12 @@ from models.model_building_utils.config_utils import flatten_dict
 
 
 class SegmentationModel(BaseModel):
-
     def __init__(self, opt, type, dataset, modules_lib):
         super().__init__(opt)
 
-        self.has_fixed_points_transform = dataset.has_fixed_points_transform if hasattr(dataset, 'has_fixed_points_transform') else False
+        self.has_fixed_points_transform = (
+            dataset.has_fixed_points_transform if hasattr(dataset, "has_fixed_points_transform") else False
+        )
         self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
         print(self)
 
@@ -22,9 +22,8 @@ class SegmentationModel(BaseModel):
         self.input = data
         self.labels = data.y
 
-        batch_size = len(data.__slices__['pos']) - 1
-        self.pointnet_seg.set_scatter_pooling(not self.has_fixed_points_transform,
-                                              batch_size)
+        batch_size = len(data.__slices__["pos"]) - 1
+        self.pointnet_seg.set_scatter_pooling(not self.has_fixed_points_transform, batch_size)
 
     def forward(self):
 
@@ -34,5 +33,6 @@ class SegmentationModel(BaseModel):
         return self.output
 
     def backward(self):
-        self.loss = F.nll_loss(self.output, self.labels)
+        internal_loss = self.get_internal_loss()
+        self.loss = F.nll_loss(self.output, self.labels) + (internal_loss if internal_loss.item() != 0 else 0) * 0.001
         self.loss.backward()

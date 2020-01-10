@@ -37,8 +37,9 @@ def set_format(model_config, cfg_training):
     if conv_type not in [d.name for d in CONVOLUTION_FORMAT]:
         raise Exception("The format type should be defined within {}".format([d.name for d in CONVOLUTION_FORMAT]))
     else:
-        format_conf = OmegaConf.create({"conv_type": conv_type,
-                                        "use_torch_loader": CONVOLUTION_FORMAT[conv_type].value[1]})
+        format_conf = OmegaConf.create(
+            {"conv_type": conv_type, "use_torch_loader": CONVOLUTION_FORMAT[conv_type].value[1]}
+        )
         return OmegaConf.merge(cfg_training, format_conf)
 
 
@@ -52,7 +53,7 @@ def merges_in_sub(x, list_conf: List):
     dict_ = {}
     for o, v in x.items():
         name = str(o)
-        if (isinstance(v, DictConfig)):
+        if isinstance(v, DictConfig):
             for c in list_conf:
                 v = OmegaConf.merge(v, c)
             dict_[name] = v
@@ -63,43 +64,46 @@ def merges_in_sub(x, list_conf: List):
 
 def get_log_dir(log_dir, experiment_name):
     hydra_generated_dir = os.getcwd()
-    splits = hydra_generated_dir.split('/')
+    splits = hydra_generated_dir.split("/")
     if log_dir == "":
-        parent_log_dir = '/'.join(splits[:-1])
+        parent_log_dir = "/".join(splits[:-1])
     else:
         parent_log_dir = log_dir
     return osp.join(parent_log_dir, experiment_name if experiment_name != "" else splits[-1])
 
 
 def colored_print(color, msg):
-    print(color + msg + '\033[0m')
+    print(color + msg + "\033[0m")
 
 
 def save_confusion_matrix(cm, path2save, ordered_names):
     import seaborn as sns
+
     sns.set(font_scale=5)
 
     template_path = os.path.join(path2save, "{}.svg")
     # PRECISION
-    cmn = cm.astype('float') / cm.sum(axis=-1)[:, np.newaxis]
+    cmn = cm.astype("float") / cm.sum(axis=-1)[:, np.newaxis]
     cmn[np.isnan(cmn) | np.isinf(cmn)] = 0
     fig, ax = plt.subplots(figsize=(31, 31))
-    g = sns.heatmap(cmn, annot=True, fmt='.2f', xticklabels=ordered_names,
-                    yticklabels=ordered_names, annot_kws={"size": 20})
+    g = sns.heatmap(
+        cmn, annot=True, fmt=".2f", xticklabels=ordered_names, yticklabels=ordered_names, annot_kws={"size": 20}
+    )
     # g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
-    plt.ylabel('Actual')
-    plt.xlabel('Predicted')
+    plt.ylabel("Actual")
+    plt.xlabel("Predicted")
     path_precision = template_path.format("precision")
     plt.savefig(path_precision, format="svg")
 
     # RECALL
-    cmn = cm.astype('float') / cm.sum(axis=0)[np.newaxis, :]
+    cmn = cm.astype("float") / cm.sum(axis=0)[np.newaxis, :]
     cmn[np.isnan(cmn) | np.isinf(cmn)] = 0
     fig, ax = plt.subplots(figsize=(31, 31))
-    g = sns.heatmap(cmn, annot=True, fmt='.2f', xticklabels=ordered_names,
-                    yticklabels=ordered_names, annot_kws={"size": 20})
+    g = sns.heatmap(
+        cmn, annot=True, fmt=".2f", xticklabels=ordered_names, yticklabels=ordered_names, annot_kws={"size": 20}
+    )
     # g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
-    plt.ylabel('Actual')
-    plt.xlabel('Predicted')
+    plt.ylabel("Actual")
+    plt.xlabel("Predicted")
     path_recall = template_path.format("recall")
     plt.savefig(path_recall, format="svg")

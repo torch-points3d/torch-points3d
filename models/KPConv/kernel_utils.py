@@ -38,7 +38,10 @@ from .plyutils import read_ply, write_ply
 #
 #
 
-def kernel_point_optimization_debug(radius, num_points, num_kernels=1, dimension=3, fixed='center', ratio=1.0, verbose=0):
+
+def kernel_point_optimization_debug(
+    radius, num_points, num_kernels=1, dimension=3, fixed="center", ratio=1.0, verbose=0
+):
     """
     Creation of kernel point via optimization of potentials.
     :param radius: Radius of the kernels
@@ -75,17 +78,17 @@ def kernel_point_optimization_debug(radius, num_points, num_kernels=1, dimension
 
     # Random kernel points
     kernel_points = np.random.rand(num_kernels * num_points - 1, dimension) * diameter0 - radius0
-    while (kernel_points.shape[0] < num_kernels * num_points):
+    while kernel_points.shape[0] < num_kernels * num_points:
         new_points = np.random.rand(num_kernels * num_points - 1, dimension) * diameter0 - radius0
         kernel_points = np.vstack((kernel_points, new_points))
         d2 = np.sum(np.power(kernel_points, 2), axis=1)
         kernel_points = kernel_points[d2 < 0.5 * radius0 * radius0, :]
-    kernel_points = kernel_points[:num_kernels * num_points, :].reshape((num_kernels, num_points, -1))
+    kernel_points = kernel_points[: num_kernels * num_points, :].reshape((num_kernels, num_points, -1))
 
     # Optionnal fixing
-    if fixed == 'center':
+    if fixed == "center":
         kernel_points[:, 0, :] *= 0
-    if fixed == 'verticals':
+    if fixed == "verticals":
         kernel_points[:, :3, :] *= 0
         kernel_points[:, 1, -1] += 2 * radius0 / 3
         kernel_points[:, 2, -1] -= 2 * radius0 / 3
@@ -109,16 +112,16 @@ def kernel_point_optimization_debug(radius, num_points, num_kernels=1, dimension
         A = np.expand_dims(kernel_points, axis=2)
         B = np.expand_dims(kernel_points, axis=1)
         interd2 = np.sum(np.power(A - B, 2), axis=-1)
-        inter_grads = (A - B) / (np.power(np.expand_dims(interd2, -1), 3/2) + 1e-6)
+        inter_grads = (A - B) / (np.power(np.expand_dims(interd2, -1), 3 / 2) + 1e-6)
         inter_grads = np.sum(inter_grads, axis=1)
 
         # Derivative of the radius potential
-        circle_grads = 10*kernel_points
+        circle_grads = 10 * kernel_points
 
         # All gradients
         gradients = inter_grads + circle_grads
 
-        if fixed == 'verticals':
+        if fixed == "verticals":
             gradients[:, 1:3, :-1] = 0
 
         # Stop condition
@@ -130,9 +133,9 @@ def kernel_point_optimization_debug(radius, num_points, num_kernels=1, dimension
 
         # Stop if all moving points are gradients fixed (low gradients diff)
 
-        if fixed == 'center' and np.max(np.abs(old_gradient_norms[:, 1:] - gradients_norms[:, 1:])) < thresh:
+        if fixed == "center" and np.max(np.abs(old_gradient_norms[:, 1:] - gradients_norms[:, 1:])) < thresh:
             break
-        elif fixed == 'verticals' and np.max(np.abs(old_gradient_norms[:, 3:] - gradients_norms[:, 3:])) < thresh:
+        elif fixed == "verticals" and np.max(np.abs(old_gradient_norms[:, 3:] - gradients_norms[:, 3:])) < thresh:
             break
         elif np.max(np.abs(old_gradient_norms - gradients_norms)) < thresh:
             break
@@ -145,24 +148,24 @@ def kernel_point_optimization_debug(radius, num_points, num_kernels=1, dimension
         moving_dists = np.minimum(moving_factor * gradients_norms, clip)
 
         # Fix central point
-        if fixed == 'center':
+        if fixed == "center":
             moving_dists[:, 0] = 0
-        if fixed == 'verticals':
+        if fixed == "verticals":
             moving_dists[:, 0] = 0
 
         # Move points
         kernel_points -= np.expand_dims(moving_dists, -1) * gradients / np.expand_dims(gradients_norms + 1e-6, -1)
 
         if verbose:
-            print('iter {:5d} / max grad = {:f}'.format(iter, np.max(gradients_norms[:, 3:])))
+            print("iter {:5d} / max grad = {:f}".format(iter, np.max(gradients_norms[:, 3:])))
         if verbose > 1:
             plt.clf()
-            plt.plot(kernel_points[0, :, 0], kernel_points[0, :, 1], '.')
-            circle = plt.Circle((0, 0), radius, color='r', fill=False)
+            plt.plot(kernel_points[0, :, 0], kernel_points[0, :, 1], ".")
+            circle = plt.Circle((0, 0), radius, color="r", fill=False)
             fig.axes[0].add_artist(circle)
-            fig.axes[0].set_xlim((-radius*1.1, radius*1.1))
-            fig.axes[0].set_ylim((-radius*1.1, radius*1.1))
-            fig.axes[0].set_aspect('equal')
+            fig.axes[0].set_xlim((-radius * 1.1, radius * 1.1))
+            fig.axes[0].set_ylim((-radius * 1.1, radius * 1.1))
+            fig.axes[0].set_aspect("equal")
             plt.draw()
             plt.pause(0.001)
             plt.show(block=False)
@@ -185,47 +188,43 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
     num_tries = 100
 
     # Kernel directory
-    kernel_dir = 'kernels/dispositions'
+    kernel_dir = "kernels/dispositions"
     if not exists(kernel_dir):
         makedirs(kernel_dir)
 
     # Kernel_file
     if dimension == 3:
-        kernel_file = join(kernel_dir, 'k_{:03d}_{:s}.ply'.format(num_kpoints, fixed))
+        kernel_file = join(kernel_dir, "k_{:03d}_{:s}.ply".format(num_kpoints, fixed))
     elif dimension == 2:
-        kernel_file = join(kernel_dir, 'k_{:03d}_{:s}_2D.ply'.format(num_kpoints, fixed))
+        kernel_file = join(kernel_dir, "k_{:03d}_{:s}_2D.ply".format(num_kpoints, fixed))
     else:
-        raise ValueError('Unsupported dimpension of kernel : ' + str(dimension))
+        raise ValueError("Unsupported dimpension of kernel : " + str(dimension))
 
     # Check if already done
     if not exists(kernel_file):
 
         # Create kernels
         kernel_points, grad_norms = kernel_point_optimization_debug(
-            1.0,
-            num_kpoints,
-            num_kernels=num_tries,
-            dimension=dimension,
-            fixed=fixed,
-            verbose=0)
+            1.0, num_kpoints, num_kernels=num_tries, dimension=dimension, fixed=fixed, verbose=0,
+        )
 
         # Find best candidate
         best_k = np.argmin(grad_norms[-1, :])
 
         # Save points
         original_kernel = kernel_points[best_k, :, :]
-        write_ply(kernel_file, original_kernel, ['x', 'y', 'z'])
+        write_ply(kernel_file, original_kernel, ["x", "y", "z"])
 
     else:
         data = read_ply(kernel_file)
-        original_kernel = np.vstack((data['x'], data['y'], data['z'])).T
+        original_kernel = np.vstack((data["x"], data["y"], data["z"])).T
 
     # N.B. 2D kernels are not supported yet
     if dimension == 2:
         return original_kernel
 
     # Random rotations depending of the fixed points
-    if fixed == 'verticals':
+    if fixed == "verticals":
 
         # Create random rotations
         thetas = np.random.rand(num_kernels) * 2 * np.pi

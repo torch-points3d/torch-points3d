@@ -37,7 +37,7 @@ class BaseModel(torch.nn.Module):
         self._optimizer: Optional[Optimizer] = None
         self._scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
-        self._precompute_multi_scale = opt.precompute_multi_scale if 'precompute_multi_scale' in opt else False
+        self._precompute_multi_scale = opt.precompute_multi_scale if "precompute_multi_scale" in opt else False
 
     @property
     def scheduler(self):
@@ -68,10 +68,10 @@ class BaseModel(torch.nn.Module):
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        self.forward()               # first call forward to calculate intermediate results
-        self._optimizer.zero_grad()   # clear existing gradients
-        self.backward()              # calculate gradients
-        self._optimizer.step()        # update parameters
+        self.forward()  # first call forward to calculate intermediate results
+        self._optimizer.zero_grad()  # clear existing gradients
+        self.backward()  # calculate gradients
+        self._optimizer.step()  # update parameters
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -90,12 +90,12 @@ class BaseModel(torch.nn.Module):
         print(self._optimizer)
 
     def get_named_internal_losses(self):
-        '''
+        """
             Modules which have internal losses return a dict of the form
             {<loss_name>: <loss>}
             This method merges the dicts of all child modules with internal loss
             and returns this merged dict
-        '''
+        """
 
         losses_global = []
 
@@ -104,29 +104,30 @@ class BaseModel(torch.nn.Module):
                 if isinstance(module, BaseInternalLossModule):
                     losses_global.append(module.get_internal_losses())
                 search_from_key(module._modules, losses_global)
+
         search_from_key(self._modules, losses_global)
 
         return dict(ChainMap(*losses_global))
 
     def get_internal_loss(self):
-        '''
-            Returns the average internal loss of all child modules with 
+        """
+            Returns the average internal loss of all child modules with
             internal losses
-        '''
+        """
 
         losses = tuple(self.get_named_internal_losses().values())
         if len(losses) > 0:
             return torch.mean(torch.stack(losses))
         else:
-            return 0.
+            return 0.0
 
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
 
 
 class BaseInternalLossModule(ABC):
-    '''ABC for modules which have internal loss(es)
-    '''
+    """ABC for modules which have internal loss(es)
+    """
 
     @abstractmethod
     def get_internal_losses(self) -> Dict[str, Any]:

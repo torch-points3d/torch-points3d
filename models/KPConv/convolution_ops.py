@@ -1,4 +1,3 @@
-
 # defining KPConv using torch ops
 # Adaptation of https://github.com/HuguesTHOMAS/KPConv/
 # Adaption from https://github.com/humanpose1/KPConvTorch/
@@ -16,15 +15,17 @@ def radius_gaussian(sq_r, sig, eps=1e-9):
     return torch.exp(-sq_r / (2 * sig ** 2 + eps))
 
 
-def KPConv_ops(query_points,
-               support_points,
-               neighbors_indices,
-               features,
-               K_points,
-               K_values,
-               KP_extent,
-               KP_influence,
-               aggregation_mode):
+def KPConv_ops(
+    query_points,
+    support_points,
+    neighbors_indices,
+    features,
+    K_points,
+    K_values,
+    KP_extent,
+    KP_influence,
+    aggregation_mode,
+):
     """
     This function creates a graph of operations to define Kernel Point Convolution in tensorflow. See KPConv function
     above for a description of each parameter
@@ -60,32 +61,34 @@ def KPConv_ops(query_points,
     sq_distances = torch.sum(torch.mul(differences, differences), dim=3)
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
-    if KP_influence == 'constant':
+    if KP_influence == "constant":
         # Every point get an influence of 1.
         all_weights = torch.ones_like(sq_distances)
         all_weights = all_weights.transpose(1, 2)
 
-    elif KP_influence == 'linear':
+    elif KP_influence == "linear":
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
         corr = 1 - torch.sqrt(sq_distances + 1e-10) / KP_extent
         all_weights = torch.max(corr, torch.zeros_like(sq_distances))
         all_weights = all_weights.transpose(1, 2)
 
-    elif KP_influence == 'gaussian':
+    elif KP_influence == "gaussian":
         # Influence in gaussian of the distance.
         sigma = KP_extent * 0.3
         all_weights = radius_gaussian(sq_distances, sigma)
         all_weights = all_weights.transpose(1, 2)
     else:
-        raise ValueError('Unknown influence function type (config.KP_influence)')
+        raise ValueError("Unknown influence function type (config.KP_influence)")
 
     # In case of closest mode, only the closest KP can influence each point
-    if aggregation_mode == 'closest':
-        pass
-    #     neighbors_1nn = tf.argmin(sq_distances, axis=2, output_type=tf.int32)
-    #     all_weights *= tf.one_hot(neighbors_1nn, n_kp, axis=1, dtype=tf.float32)
+    if aggregation_mode == "closest":
+        neighbors_1nn = torch.argmin(sq_distances, axis=2, output_type=torch.long)
+        all_weights *= torch.zeros_like(all_weights, dtype=torch.float32).scatter_(1, neighbors_1nn, 1)
 
-    elif aggregation_mode != 'sum':
+    elif aggregation_mode == "sum":
+        raise NotImplementedError
+
+    else:
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
     features = torch.cat([features, torch.zeros_like(features[:1, :])], dim=0)
@@ -106,17 +109,19 @@ def KPConv_ops(query_points,
     return output_features
 
 
-def KPConv_deform_ops(query_points,
-                      support_points,
-                      neighbors_indices,
-                      features,
-                      K_points,
-                      offsets,
-                      modulations,
-                      K_values,
-                      KP_extent,
-                      KP_influence,
-                      mode):
+def KPConv_deform_ops(
+    query_points,
+    support_points,
+    neighbors_indices,
+    features,
+    K_points,
+    offsets,
+    modulations,
+    K_values,
+    KP_extent,
+    KP_influence,
+    mode,
+):
     """
     This function creates a graph of operations to define Deformable Kernel Point Convolution in tensorflow. See
     KPConv_deformable function above for a description of each parameter
@@ -157,10 +162,10 @@ def KPConv_deform_ops(query_points,
     differences = neighbors - deformed_K_points.unsqueeze(1)
 
     # Get the square distances [n_points, n_neighbors, n_kpoints]
-    sq_distances = torch.sum(differences**2, axis=3)
+    sq_distances = torch.sum(differences ** 2, axis=3)
 
     # Boolean of the neighbors in range of a kernel point [n_points, n_neighbors]
-    in_range = (sq_distances < KP_extent**2).any(2).to(torch.long)
+    in_range = (sq_distances < KP_extent ** 2).any(2).to(torch.long)
 
     # New value of max neighbors
     new_max_neighb = torch.max(torch.sum(in_range, axis=1))
@@ -179,33 +184,30 @@ def KPConv_deform_ops(query_points,
     new_neighbors_indices += (1 - new_neighb_bool) * shadow_ind
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
-    if KP_influence == 'constant':
+    if KP_influence == "constant":
         # Every point get an influence of 1.
         all_weights = (new_sq_distances < KP_extent ** 2).to(torch.float32)
         all_weights = all_weights.permute(0, 2, 1)
 
-    elif KP_influence == 'linear':
+    elif KP_influence == "linear":
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
         all_weights = torch.relu(1 - torch.sqrt(new_sq_distances) / KP_extent)
         all_weights = all_weights.permute(0, 2, 1)
 
-    elif KP_influence == 'gaussian':
+    elif KP_influence == "gaussian":
         # Influence in gaussian of the distance.
         sigma = KP_extent * 0.3
         all_weights = radius_gaussian(new_sq_distances, sigma)
         all_weights = all_weights.permute(0, 2, 1)
     else:
-        raise ValueError('Unknown influence function type (config.KP_influence)')
+        raise ValueError("Unknown influence function type (config.KP_influence)")
 
     # In case of closest mode, only the closest KP can influence each point
-    if mode == 'closest':
-        neighbors_1nn = torch.argmin(new_sq_distances, axis=2,
-                                     output_type=torch.long)
-        all_weights *= torch.zeros_like(all_weights,
-                                        dtype=torch.float32).scatter_(
-                                            1, neighbors_1nn, 1)
+    if mode == "closest":
+        neighbors_1nn = torch.argmin(new_sq_distances, axis=2, output_type=torch.long)
+        all_weights *= torch.zeros_like(all_weights, dtype=torch.float32).scatter_(1, neighbors_1nn, 1)
 
-    elif mode != 'sum':
+    elif mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
     features = torch.cat([features, torch.zeros_like(features[:1, :])], axis=0)

@@ -34,7 +34,6 @@ class LossAnnealer(torch.nn.modules.loss._Loss):
 
 
 class LossFactory(torch.nn.modules.loss._Loss):
-
     def __init__(self, loss, dbinfo):
         super(LossFactory, self).__init__()
 
@@ -43,15 +42,15 @@ class LossFactory(torch.nn.modules.loss._Loss):
         self.search_for_args = []
         if self._loss == "cross_entropy":
             self._loss_func = nn.functional.cross_entropy
-            self.special_args = {'weight': dbinfo["class_weights"]}
-            #self.search_for_args = ['cloug_flag']
+            self.special_args = {"weight": dbinfo["class_weights"]}
+            # self.search_for_args = ['cloug_flag']
 
         elif self._loss == "focal_loss":
             self._loss_func = FocalLoss(alphas=dbinfo["class_weights"])
 
         elif self._loss == "KLDivLoss":
             self._loss_func = WrapperKLDivLoss()
-            self.search_for_args = ['segm_size', 'label_vec']
+            self.search_for_args = ["segm_size", "label_vec"]
 
         else:
             raise NotImplementedError
@@ -65,8 +64,9 @@ class LossFactory(torch.nn.modules.loss._Loss):
 
 
 class FocalLoss(torch.nn.modules.loss._Loss):
-
-    def __init__(self, gamma: float = 2, alphas: Any = None, size_average: bool = True, normalized: bool = True):
+    def __init__(
+        self, gamma: float = 2, alphas: Any = None, size_average: bool = True, normalized: bool = True,
+    ):
         super(FocalLoss, self).__init__()
         self._gamma = gamma
         self._alphas = alphas
@@ -88,13 +88,12 @@ class FocalLoss(torch.nn.modules.loss._Loss):
         else:
             sum_ = 1
 
-        loss = - 1 * sum_ * (1 - pt) ** self._gamma * logpt
+        loss = -1 * sum_ * (1 - pt) ** self._gamma * logpt
         return loss.sum()
 
 
 class WrapperKLDivLoss(torch.nn.modules.loss._Loss):
-
-    def __init__(self, size_average=None, reduce=None, reduction='mean'):
+    def __init__(self, size_average=None, reduce=None, reduction="mean"):
         super(WrapperKLDivLoss, self).__init__(size_average, reduce, reduction)
 
     def forward(self, input, target, label_vec=None, segm_size=None):

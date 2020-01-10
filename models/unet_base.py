@@ -2,8 +2,21 @@ import torch
 from torch import nn
 from abc import abstractmethod
 import torch_geometric
-from torch_geometric.nn import global_max_pool, global_mean_pool, fps, radius, knn_interpolate
-from torch.nn import Sequential as Seq, Linear as Lin, ReLU, LeakyReLU, BatchNorm1d as BN, Dropout
+from torch_geometric.nn import (
+    global_max_pool,
+    global_mean_pool,
+    fps,
+    radius,
+    knn_interpolate,
+)
+from torch.nn import (
+    Sequential as Seq,
+    Linear as Lin,
+    ReLU,
+    LeakyReLU,
+    BatchNorm1d as BN,
+    Dropout,
+)
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 from collections import defaultdict
@@ -13,7 +26,7 @@ from torch_geometric.nn.inits import reset
 from datasets.base_dataset import BaseDataset
 from .base_model import BaseModel
 
-SPECIAL_NAMES = ['radius']
+SPECIAL_NAMES = ["radius"]
 
 
 class BaseFactory:
@@ -30,7 +43,6 @@ class BaseFactory:
 
 
 class Identity(nn.Module):
-
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -44,7 +56,9 @@ class UnetBasedModel(BaseModel):
     def _save_sampling_and_search(self, submodule, index):
         down_conv = submodule.down
         self._sampling_and_search_dict[index] = [
-            getattr(down_conv, "sampler", None), getattr(down_conv, "neighbour_finder", None)]
+            getattr(down_conv, "sampler", None),
+            getattr(down_conv, "neighbour_finder", None),
+        ]
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
@@ -58,16 +72,16 @@ class UnetBasedModel(BaseModel):
         """
         super(UnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
-        if type(opt.down_conv) is ListConfig or 'down_conv_nn' not in opt.down_conv:
+        if type(opt.down_conv) is ListConfig or "down_conv_nn" not in opt.down_conv:
             self._init_from_layer_list_format(opt, model_type, dataset, modules_lib)
         else:
             self._init_from_compact_format(opt, model_type, dataset, modules_lib)
 
     def _init_from_compact_format(self, opt, model_type, dataset, modules_lib):
-        '''Create a unetbasedmodel from the compact options format - where the 
-        same convolution is given for each layer, and arguments are given 
-        in lists 
-        '''
+        """Create a unetbasedmodel from the compact options format - where the
+        same convolution is given for each layer, and arguments are given
+        in lists
+        """
 
         num_convs = len(opt.down_conv.down_conv_nn)
 
@@ -76,7 +90,8 @@ class UnetBasedModel(BaseModel):
         down_conv_cls_name = opt.down_conv.module_name
         up_conv_cls_name = opt.up_conv.module_name
         self._factory_module = factory_module_cls(
-            down_conv_cls_name, up_conv_cls_name, modules_lib)  # Create the factory object
+            down_conv_cls_name, up_conv_cls_name, modules_lib
+        )  # Create the factory object
 
         # construct unet structure
         contains_global = hasattr(opt, "innermost") and opt.innermost is not None
@@ -84,40 +99,42 @@ class UnetBasedModel(BaseModel):
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
-            args_up['up_conv_cls'] = self._factory_module.get_module(0, 'UP')
+            args_up["up_conv_cls"] = self._factory_module.get_module(0, "UP")
 
-            unet_block = UnetSkipConnectionBlock(args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib,
-                                                 submodule=None, innermost=True)  # add the innermost layer
+            unet_block = UnetSkipConnectionBlock(
+                args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib, submodule=None, innermost=True,
+            )  # add the innermost layer
         else:
             unet_block = Identity()
 
         if num_convs > 1:
             for index in range(num_convs - 1, 0, -1):
                 args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
-                unet_block = UnetSkipConnectionBlock(
-                    args_up=args_up, args_down=args_down, submodule=unet_block)
+                unet_block = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block)
                 self._save_sampling_and_search(unet_block, index)
         else:
             index = num_convs
 
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
-        args_down['nb_feature'] = dataset.feature_dimension
-        args_up['nb_feature'] = dataset.feature_dimension
-        self.model = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block,
-                                             outermost=True)  # add the outermost layer
+        args_down["nb_feature"] = dataset.feature_dimension
+        args_up["nb_feature"] = dataset.feature_dimension
+        self.model = UnetSkipConnectionBlock(
+            args_up=args_up, args_down=args_down, submodule=unet_block, outermost=True
+        )  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
         print(self)
 
     def _init_from_layer_list_format(self, opt, model_type, dataset, modules_lib):
-        '''Create a unetbasedmodel from the layer list options format - where 
-        each layer of the unet is specified separately  
-        '''
+        """Create a unetbasedmodel from the layer list options format - where
+        each layer of the unet is specified separately
+        """
 
         factory_module_cls = self._get_factory(model_type, modules_lib)
 
-        down_conv_layers = opt.down_conv if type(
-            opt.down_conv) is ListConfig else self._flatten_compact_options(opt.down_conv)
+        down_conv_layers = (
+            opt.down_conv if type(opt.down_conv) is ListConfig else self._flatten_compact_options(opt.down_conv)
+        )
         up_conv_layers = opt.up_conv if type(opt.up_conv) is ListConfig else self._flatten_compact_options(opt.up_conv)
         num_convs = len(down_conv_layers)
 
@@ -127,29 +144,32 @@ class UnetBasedModel(BaseModel):
             assert len(down_conv_layers) + 1 == len(up_conv_layers)
 
             up_layer = dict(up_conv_layers[0])
-            up_layer['up_conv_cls'] = getattr(modules_lib, up_layer['module_name'])
+            up_layer["up_conv_cls"] = getattr(modules_lib, up_layer["module_name"])
 
             unet_block = UnetSkipConnectionBlock(
-                args_up=up_layer, args_innermost=opt.innermost, modules_lib=modules_lib, innermost=True)
+                args_up=up_layer, args_innermost=opt.innermost, modules_lib=modules_lib, innermost=True,
+            )
 
-        for index in range(num_convs-1, 0, -1):
+        for index in range(num_convs - 1, 0, -1):
             down_layer = dict(down_conv_layers[index])
-            up_layer = dict(up_conv_layers[num_convs-index])
+            up_layer = dict(up_conv_layers[num_convs - index])
 
-            down_layer['down_conv_cls'] = getattr(modules_lib, down_layer['module_name'])
-            up_layer['up_conv_cls'] = getattr(modules_lib, up_layer['module_name'])
+            down_layer["down_conv_cls"] = getattr(modules_lib, down_layer["module_name"])
+            up_layer["up_conv_cls"] = getattr(modules_lib, up_layer["module_name"])
 
-            unet_block = UnetSkipConnectionBlock(args_up=up_layer, args_down=down_layer,
-                                                 modules_lib=modules_lib, submodule=unet_block)
+            unet_block = UnetSkipConnectionBlock(
+                args_up=up_layer, args_down=down_layer, modules_lib=modules_lib, submodule=unet_block,
+            )
 
         up_layer = dict(up_conv_layers[-1])
         down_layer = dict(down_conv_layers[0])
-        down_layer['down_conv_cls'] = getattr(modules_lib, down_layer['module_name'])
-        up_layer['up_conv_cls'] = getattr(modules_lib, up_layer['module_name'])
-        up_layer['nb_feature'] = dataset.feature_dimension
-        down_layer['nb_feature'] = dataset.feature_dimension
-        self.model = UnetSkipConnectionBlock(args_up=up_layer, args_down=down_layer,
-                                             submodule=unet_block, outermost=True)
+        down_layer["down_conv_cls"] = getattr(modules_lib, down_layer["module_name"])
+        up_layer["up_conv_cls"] = getattr(modules_lib, up_layer["module_name"])
+        up_layer["nb_feature"] = dataset.feature_dimension
+        down_layer["nb_feature"] = dataset.feature_dimension
+        self.model = UnetSkipConnectionBlock(
+            args_up=up_layer, args_down=down_layer, submodule=unet_block, outermost=True
+        )
 
         self._save_sampling_and_search(self.model, index)
 
@@ -162,14 +182,14 @@ class UnetBasedModel(BaseModel):
         return factory_module_cls
 
     def _fetch_arguments_from_list(self, opt, index):
-        '''Fetch the arguments for a single convolution from multiple lists
-        of arguments - for models specified in the compact format. 
-        '''
+        """Fetch the arguments for a single convolution from multiple lists
+        of arguments - for models specified in the compact format.
+        """
         args = {}
         for o, v in opt.items():
             name = str(o)
-            if (isinstance(getattr(opt, o), ListConfig) and len(getattr(opt, o)) > 0):
-                if name[-1] == 's' and name not in SPECIAL_NAMES:
+            if isinstance(getattr(opt, o), ListConfig) and len(getattr(opt, o)) > 0:
+                if name[-1] == "s" and name not in SPECIAL_NAMES:
                     name = name[:-1]
                 v_index = v[index]
                 if isinstance(v_index, ListConfig):
@@ -179,25 +199,25 @@ class UnetBasedModel(BaseModel):
                 if isinstance(v, ListConfig):
                     v = list(v)
                 args[name] = v
-        args['precompute_multi_scale'] = self._precompute_multi_scale
+        args["precompute_multi_scale"] = self._precompute_multi_scale
         return args
 
     def _fetch_arguments_up_and_down(self, opt, index):
         # Defines down arguments
         args_down = self._fetch_arguments_from_list(opt.down_conv, index)
-        args_down['index'] = index
-        args_down['down_conv_cls'] = self._factory_module.get_module(index, 'DOWN')
+        args_down["index"] = index
+        args_down["down_conv_cls"] = self._factory_module.get_module(index, "DOWN")
 
         # Defines up arguments
-        idx = len(getattr(opt.up_conv, 'up_conv_nn')) - index - 1
+        idx = len(getattr(opt.up_conv, "up_conv_nn")) - index - 1
         args_up = self._fetch_arguments_from_list(opt.up_conv, idx)
-        args_up['index'] = index
-        args_up['up_conv_cls'] = self._factory_module.get_module(index, 'UP')
+        args_up["index"] = index
+        args_up["up_conv_cls"] = self._factory_module.get_module(index, "UP")
         return args_up, args_down
 
     def _flatten_compact_options(self, opt):
-        '''Converts from a dict of lists, to a list of dicts 
-        '''
+        """Converts from a dict of lists, to a list of dicts
+        """
         flattenedOpts = []
 
         for index in range(int(1e6)):
@@ -221,7 +241,16 @@ class UnetSkipConnectionBlock(nn.Module):
         kwargs.pop(name)
         return module
 
-    def __init__(self, args_up=None, args_down=None, args_innermost=None, modules_lib=None, submodule=None, outermost=False, innermost=False):
+    def __init__(
+        self,
+        args_up=None,
+        args_down=None,
+        args_innermost=None,
+        modules_lib=None,
+        submodule=None,
+        outermost=False,
+        innermost=False,
+    ):
         """Construct a Unet submodule with skip connections.
         Parameters:
             args_up -- arguments for up convs
@@ -238,14 +267,14 @@ class UnetSkipConnectionBlock(nn.Module):
 
         if innermost:
             assert outermost == False
-            module_name = self.get_from_kwargs(args_innermost, 'module_name')
+            module_name = self.get_from_kwargs(args_innermost, "module_name")
             inner_module_cls = getattr(modules_lib, module_name)
             self.inner = inner_module_cls(**args_innermost)
-            upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
+            upconv_cls = self.get_from_kwargs(args_up, "up_conv_cls")
             self.up = upconv_cls(**args_up)
         else:
-            downconv_cls = self.get_from_kwargs(args_down, 'down_conv_cls')
-            upconv_cls = self.get_from_kwargs(args_up, 'up_conv_cls')
+            downconv_cls = self.get_from_kwargs(args_down, "down_conv_cls")
+            upconv_cls = self.get_from_kwargs(args_up, "up_conv_cls")
 
             downconv = downconv_cls(**args_down)
             upconv = upconv_cls(**args_up)

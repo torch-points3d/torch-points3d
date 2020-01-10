@@ -24,13 +24,13 @@ class BaseSampler(ABC):
         return self.sample(pos, batch=batch)
 
     def _get_num_to_sample(self, batch_size) -> int:
-        if hasattr(self, '_num_to_sample'):
+        if hasattr(self, "_num_to_sample"):
             return self._num_to_sample
         else:
             return math.floor(batch_size * self._ratio)
 
     def _get_ratio_to_sample(self, batch_size) -> float:
-        if hasattr(self, '_ratio'):
+        if hasattr(self, "_ratio"):
             return self._ratio
         else:
             return self._num_to_sample / float(batch_size)
@@ -97,7 +97,6 @@ class DenseRandomSampler(BaseSampler):
 
 
 class BaseNeighbourFinder(ABC):
-
     def __call__(self, x, y, batch_x, batch_y):
         return self.find_neighbours(x, y, batch_x, batch_y)
 
@@ -107,7 +106,6 @@ class BaseNeighbourFinder(ABC):
 
 
 class RadiusNeighbourFinder(BaseNeighbourFinder):
-
     def __init__(self, radius: float, max_num_neighbors: int = 64, conv_type="MESSAGE_PASSING"):
         self._radius = radius
         self._max_num_neighbors = max_num_neighbors
@@ -123,7 +121,6 @@ class RadiusNeighbourFinder(BaseNeighbourFinder):
 
 
 class KNNNeighbourFinder(BaseNeighbourFinder):
-
     def __init__(self, k):
         self.k = k
 
@@ -132,7 +129,6 @@ class KNNNeighbourFinder(BaseNeighbourFinder):
 
 
 class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
-
     def __init__(self, k, dilation):
         self.k = k
         self.dilation = dilation
@@ -143,7 +139,7 @@ class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
         row, col = self.initialFinder.find_neighbours(x, y, batch_x, batch_y)
 
         # for each point in y, randomly select k of its neighbours
-        index = torch.randint(self.k * self.dilation, (len(y), self.k), device=row.device, dtype=torch.long)
+        index = torch.randint(self.k * self.dilation, (len(y), self.k), device=row.device, dtype=torch.long,)
 
         arange = torch.arange(len(y), dtype=torch.long, device=row.device)
         arange = arange * (self.k * self.dilation)
@@ -154,7 +150,6 @@ class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
 
 
 class BaseMSNeighbourFinder(ABC):
-
     def __call__(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
         return self.find_neighbours(x, y, batch_x=batch_x, batch_y=batch_y, scale_idx=scale_idx)
 
@@ -172,7 +167,7 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     """ Radius search with support for multiscale for sparse graphs
 
         Arguments:
-            radius {Union[float, List[float]]} 
+            radius {Union[float, List[float]]}
 
         Keyword Arguments:
             max_num_neighbors {Union[int, List[int]]}  (default: {64})
@@ -181,7 +176,9 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
             ValueError: [description]
     """
 
-    def __init__(self, radius: Union[float, List[float]], max_num_neighbors: Union[int, List[int]] = 64):
+    def __init__(
+        self, radius: Union[float, List[float]], max_num_neighbors: Union[int, List[int]] = 64,
+    ):
         if not isinstance(max_num_neighbors, list) and isinstance(radius, list):
             self._radius = radius
             self._max_num_neighbors = [max_num_neighbors for i in range(len(self._radius))]
@@ -205,7 +202,9 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     def find_neighbours(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
         if scale_idx >= self.num_scales:
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
-        return radius(x, y, self._radius[scale_idx], batch_x, batch_y, max_num_neighbors=self._max_num_neighbors[scale_idx])
+        return radius(
+            x, y, self._radius[scale_idx], batch_x, batch_y, max_num_neighbors=self._max_num_neighbors[scale_idx],
+        )
 
     @property
     def num_scales(self):
