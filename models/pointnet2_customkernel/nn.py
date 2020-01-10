@@ -87,17 +87,15 @@ class SegmentationModel(BaseModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, 3, N]
         """
-        l_xyz, l_features = [self.data.pos], [self.data.x]
+        datas = [self.data]
         for i in range(len(self.SA_modules)):
-            li_xyz, li_features = self.SA_modules[i](l_xyz[i], l_features[i])
-            l_xyz.append(li_xyz)
-            l_features.append(li_features)
+            datas.append(self.SA_modules[i](datas[i]))
 
         for i in range(len(self.FP_modules)):
-            l_features[-i - 2] = self.FP_modules[i](
-                l_xyz[-i - 1], l_xyz[-i - 2], l_features[-i - 1], l_features[-i - 2]
-            )
-        self.output = self.FC_layer(l_features[0]).transpose(1, 2).contiguous().view((-1, self._num_classes))
+            datas[-i - 2].x = self.FP_modules[i]((datas[-i - 1], datas[-i - 2]))
+
+        last_feature = datas[0].x
+        self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 
     def backward(self):

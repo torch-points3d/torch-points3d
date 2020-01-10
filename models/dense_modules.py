@@ -35,12 +35,13 @@ class BaseDenseConvolutionDown(BaseConvolution):
         """
         raise NotImplementedError
 
-    def forward(self, pos, x=None):
+    def forward(self, data):
         """
         Arguments:
             x -- Previous features [B, C, N]
             pos -- Previous positions [B, N, 3]
         """
+        x, pos = data.x, data.pos
         idx = self.sampler(pos)
         pos_flipped = pos.transpose(1, 2).contiguous()
         new_pos = tp.gather_operation(pos_flipped, idx).transpose(1, 2).contiguous()
@@ -53,7 +54,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
                 radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
             ms_x.append(self.conv(x, pos, new_pos, radius_idx, scale_idx))
         new_x = torch.cat(ms_x, 1)
-        return new_pos, new_x
+        return Data(pos=new_pos, x=new_x)
 
 
 class BaseDenseConvolutionUp(BaseConvolution):
@@ -67,7 +68,15 @@ class BaseDenseConvolutionUp(BaseConvolution):
     def conv(self, known_pos, uknown_pos, known_feat):
         raise NotImplementedError
 
-    def forward(self, known_pos, uknown_pos, known_feat, unknown_feat):
+    def forward(self, data):
+        """ Propagates features from known_data to unknown_data
+
+        Arguments:
+            data -- (known_data, unknown_data)
+        """
+        known_data, unknown_data = data
+        known_pos, known_feat = known_data.pos, known_data.x
+        uknown_pos, unknown_feat = unknown_data.pos, unknown_data.x
         new_features = self.conv(known_pos, uknown_pos, known_feat)
         if unknown_feat is not None:
             new_features = torch.cat([new_features, unknown_feat], dim=1)  # (B, C2 + C1, n)
