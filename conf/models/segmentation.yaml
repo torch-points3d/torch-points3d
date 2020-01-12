@@ -265,7 +265,7 @@ models:
             up_k: [1, 3, 3]   
             skip: True    
         innermost:
-            module_name: GlobalBaseModule
+            module_name: GlobalPartialDenseBaseModule
             aggr: max
             nn: [67, 128]
         mlp_cls: 

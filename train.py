@@ -96,6 +96,9 @@ def main(cfg):
     # Find which dataloader to use
     cfg_training = set_format(model_config, cfg.training)
 
+    # Enable CUDNN BACKEND
+    torch.backends.cudnn.enabled = cfg_training.enable_cudnn
+
     # Find and create associated dataset
     dataset_config = getattr(cfg.data, tested_dataset_name, None)
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)

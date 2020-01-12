@@ -27,6 +27,7 @@ training:
     optimizer: Adam
     lr : 0.01
     weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
+    enable_cudnn: False
 
 # Those arguments defines the available datasets
 data:

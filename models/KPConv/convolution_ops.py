@@ -41,9 +41,6 @@ def KPConv_ops_partial(
     :return:                        [n_points, out_fdim]
     """
 
-    # Get variables
-    n_kp = int(K_points.shape[0])
-
     if idx_sampler is not None:
         neighbours_centered = neighbours_centered[idx_sampler]
 
@@ -78,10 +75,6 @@ def KPConv_ops_partial(
     elif aggregation_mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
-    import pdb
-
-    pdb.set_trace()
-
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
     neighborhood_features = features[idx_neighbour]
     if idx_sampler is not None:
@@ -89,7 +82,6 @@ def KPConv_ops_partial(
 
     # [n_points, n_kpoints, n_neighbors] * [n_points, n_neighbors, in_fdim]
     # Apply distance weights [n_points, n_kpoints, in_fdim]
-    # torch.einsum('nab, nbc -> nac', all_weights, neighborhood_features)
     weighted_features = torch.matmul(all_weights, neighborhood_features)
 
     # Apply network weights [n_kpoints, n_points, out_fdim]
