@@ -41,7 +41,7 @@ def get_tracker(
     if tracker is None:
         raise NotImplementedError("No tracker for %s task" % task)
 
-    return tracker
+    return tracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log, log_dir=log_dir)
 
 
 def meter_value(meter, dim=0):

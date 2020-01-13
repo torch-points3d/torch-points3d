@@ -30,9 +30,6 @@ class SegmentationTracker(BaseTracker):
         self._stage = stage
 
         self._loss_meters = {}
-        self._acc_meter = tnt.meter.AverageValueMeter()
-        self._macc_meter = tnt.meter.AverageValueMeter()
-        self._miou_meter = tnt.meter.AverageValueMeter()
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
 
     @property
@@ -68,9 +65,9 @@ class SegmentationTracker(BaseTracker):
 
         self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
 
-        self._acc_meter.add(100 * self._confusion_matrix.get_overall_accuracy())
-        self._macc_meter.add(100 * self._confusion_matrix.get_mean_class_accuracy())
-        self._miou_meter.add(100 * self._confusion_matrix.get_average_intersection_union())
+        self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
+        self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
+        self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
@@ -79,8 +76,8 @@ class SegmentationTracker(BaseTracker):
         for key, loss_meter in self._loss_meters.items():
             metrics[key] = meter_value(loss_meter, dim=0)
 
-        metrics["{}_acc".format(self._stage)] = meter_value(self._acc_meter, dim=0)
-        metrics["{}_macc".format(self._stage)] = meter_value(self._macc_meter, dim=0)
-        metrics["{}_miou".format(self._stage)] = meter_value(self._miou_meter, dim=0)
+        metrics["{}_acc".format(self._stage)] = self._acc
+        metrics["{}_macc".format(self._stage)] = self._macc
+        metrics["{}_miou".format(self._stage)] = self._miou
 
         return metrics
