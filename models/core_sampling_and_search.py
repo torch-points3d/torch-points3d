@@ -5,6 +5,7 @@ from functools import partial
 import torch
 from torch_geometric.nn import fps, radius, knn
 import torch_points as tp
+from omegaconf import ListConfig
 
 
 class BaseSampler(ABC):
@@ -163,6 +164,10 @@ class BaseMSNeighbourFinder(ABC):
         pass
 
 
+def is_list(entity):
+    return isinstance(entity, list) or isinstance(entity, ListConfig)
+
+
 class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     """ Radius search with support for multiscale for sparse graphs
 
@@ -179,17 +184,17 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     def __init__(
         self, radius: Union[float, List[float]], max_num_neighbors: Union[int, List[int]] = 64,
     ):
-        if not isinstance(max_num_neighbors, list) and isinstance(radius, list):
+        if not is_list(max_num_neighbors) and is_list(radius):
             self._radius = radius
             self._max_num_neighbors = [max_num_neighbors for i in range(len(self._radius))]
             return
 
-        if not isinstance(radius, list) and isinstance(max_num_neighbors, list):
+        if not is_list(radius) and is_list(max_num_neighbors):
             self._max_num_neighbors = max_num_neighbors
             self._radius = [radius for i in range(len(self._max_num_neighbors))]
             return
 
-        if isinstance(max_num_neighbors, list):
+        if is_list(max_num_neighbors):
             if len(max_num_neighbors) != len(radius):
                 raise ValueError("Both lists max_num_neighbors and radius should be of the same length")
             self._max_num_neighbors = max_num_neighbors
