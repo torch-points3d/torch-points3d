@@ -7,7 +7,7 @@ import torch
 
 from models.base_model import BaseModel
 from metrics.colored_tqdm import COLORS
-from utils.utils import colored_print
+from utils_folder.utils import colored_print
 
 DEFAULT_METRICS_FUNC = {
     "iou": max,

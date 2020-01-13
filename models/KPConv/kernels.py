@@ -6,9 +6,11 @@ import torch.nn.functional as F
 from torch.nn import init
 import math
 from torch.nn.parameter import Parameter
-from .kernel_utils import kernel_point_optimization_debug
 from torch_geometric.nn import MessagePassing
 from models.base_model import BaseInternalLossModule
+
+from .kernel_utils import kernel_point_optimization_debug
+from .convolution_ops import *
 
 
 def KPconv_op(self, x_j, pos_i, pos_j):
@@ -36,8 +38,8 @@ def KPconv_op(self, x_j, pos_i, pos_j):
         all_weights = torch.ones_like(sq_distances)
 
     elif self.KP_influence == "linear":
-        # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-        all_weights = 1.0 - (sq_distances / (self.KP_extent ** 2))
+        # Influence decrease linearly with the distance, and get to zero when d = kp_extent.
+        all_weights = 1.0 - (sq_distances / (self.kp_extent ** 2))
         all_weights[all_weights < 0] = 0.0
     else:
         raise ValueError("Unknown influence function type (config.KP_influence)")
@@ -63,7 +65,6 @@ def KPconv_op(self, x_j, pos_i, pos_j):
 
 
 class PointKernel(MessagePassing):
-
     """
     Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
     https://arxiv.org/abs/1904.08889
@@ -92,7 +93,7 @@ class PointKernel(MessagePassing):
         self.KP_influence = KP_influence
 
         # Radius of the initial positions of the kernel points
-        self.KP_extent = radius / 1.5
+        self.kp_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
@@ -188,7 +189,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         self.modulated = modulated
 
         # Radius of the initial positions of the kernel points
-        self.KP_extent = radius / 1.5
+        self.kp_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
@@ -238,7 +239,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         offsets = offsets.view((-1, self.num_points, self.kernel_dim))
 
         # Rescale offset for this layer
-        offsets *= self.KP_extent
+        offsets *= self.kp_extent
 
         # Center every neighborhood [SUM n_neighbors(n_points), dim]
         neighbors = pos_j - pos_i
@@ -265,13 +266,13 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
             all_weights = torch.ones_like(sq_distances)
 
         elif self.KP_influence == "linear":
-            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1.0 - (torch.sqrt(sq_distances) / (self.KP_extent))
+            # Influence decrease linearly with the distance, and get to zero when d = kp_extent.
+            all_weights = 1.0 - (torch.sqrt(sq_distances) / (self.kp_extent))
             all_weights[all_weights < 0] = 0.0
 
         elif self.KP_influence == "square":
-            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1.0 - (sq_distances / (self.KP_extent ** 2))
+            # Influence decrease linearly with the distance, and get to zero when d = kp_extent.
+            all_weights = 1.0 - (sq_distances / (self.kp_extent ** 2))
             all_weights[all_weights < 0] = 0.0
 
         else:
@@ -311,5 +312,112 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
     def __repr__(self):
         # PointKernel parameters
         return "PointKernel({}, {}, {}, {}, {})".format(
-            self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence,
+            self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence
+        )
+
+
+####################### BUILT WITH PARTIAL DENSE FORMAT ############################
+
+
+class PointKernelPartialDense(nn.Module):
+    """
+    Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
+    https://arxiv.org/abs/1904.08889
+    """
+
+    def __init__(
+        self,
+        num_points,
+        in_features,
+        out_features,
+        radius=1,
+        kernel_dim=3,
+        fixed="center",
+        ratio=1,
+        KP_influence="linear",
+        aggregation_mode="closest",
+        is_strided=True,
+        shadow_features_fill=0.0,
+        norm=nn.BatchNorm1d,
+        act=nn.LeakyReLU,
+        kp_extent=None,
+        density_parameter=None,
+    ):
+        super(PointKernelPartialDense, self).__init__()
+        # PointKernel parameters
+        self.in_features = in_features
+        self.out_features = out_features
+        self.num_points = num_points
+        self.radius = radius
+        self.kernel_dim = kernel_dim
+        self.fixed = fixed
+        self.ratio = ratio
+        self.KP_influence = KP_influence
+        self.aggregation_mode = aggregation_mode
+        self.is_strided = is_strided
+        self.norm = norm(out_features) if norm is not None else None
+        self.act = act()
+
+        # Position of the fill for shadow points
+        self.shadow_features_fill = shadow_features_fill
+
+        # Radius of the initial positions of the kernel points
+        self.extent = kp_extent * self.radius / density_parameter
+
+        # Initial kernel extent for this layer
+        self.K_radius = 1.5 * self.extent
+
+        self.kp_extent = radius / 1.5
+
+        # Point position in kernel_dim
+        self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim)).float()
+
+        # Associated weights
+        self.kernel_weight = Parameter(torch.Tensor(num_points, in_features, out_features)).float()
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        init.kaiming_uniform_(self.kernel_weight, a=math.sqrt(5))
+
+        # Init the kernel using attrative + repulsion forces
+        kernel, _ = kernel_point_optimization_debug(
+            self.K_radius,
+            self.num_points,
+            num_kernels=1,
+            dimension=self.kernel_dim,
+            fixed=self.fixed,
+            ratio=self.ratio,
+            verbose=False,
+        )
+        self.kernel.data = torch.from_numpy(kernel).float()
+
+    def forward(self, x, idx_neighbour, pos_centered_neighbour, idx_sampler=None):
+        if idx_sampler is None and self.is_strided:
+            raise Exception("This convolution needs to be provided idx_sampler as it is defined as strided")
+
+        features = KPConv_ops_partial(
+            x,
+            idx_neighbour,
+            pos_centered_neighbour,
+            idx_sampler,
+            self.kernel.to(x.device),
+            self.kernel_weight.to(x.device),
+            self.extent,
+            self.KP_influence,
+            self.aggregation_mode,
+        )
+
+        if not self.is_strided:
+            shadow_features = torch.full((1,) + features.shape[1:], self.shadow_features_fill).to(x.device)
+            features = torch.cat([features, shadow_features], dim=0)
+
+        if self.norm:
+            return self.act(self.norm(features))
+        return self.act(features)
+
+    def __repr__(self):
+        # PointKernel parameters
+        return "PointKernel({}, {}, {}, {}, {})".format(
+            self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence
         )

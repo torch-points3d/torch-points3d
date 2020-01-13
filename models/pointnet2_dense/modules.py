@@ -14,7 +14,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
     def __init__(self, npoint=None, radii=None, nsample=None, down_conv_nn=None, bn=True, use_xyz=True, **kwargs):
         assert len(radii) == len(nsample) == len(down_conv_nn)
         super(PointNetMSGDown, self).__init__(
-            DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample)
+            DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
         self.use_xyz = use_xyz
         self.npoint = npoint

@@ -20,14 +20,15 @@ tensorboard:
 training:
     shuffle: True
     num_workers: 2
+    batch_size: 8
     batch_size: 32
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
     epochs: 100
     optimizer: Adam
-    lr: 0.001
-    weight_name: "default" # Used during resume, select with model to load from [metric_name..., default]
-    use_torch_loader: True
+    lr : 0.01
+    weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
+    enable_cudnn: True
 
 # Those arguments defines the available datasets
 data:
@@ -48,8 +49,11 @@ data:
         name: s3dis
         dataroot: data
         fold: 5
-        class_weight_method: "sqrt"
-        num_points: 4096
+        class_weight_method: 'sqrt'
+        num_points: 1024
+        first_subsampling: 0.04
+        density_parameter: 5.0
+        kp_extent: 1.0
 
 defaults:
     - models: segmentation

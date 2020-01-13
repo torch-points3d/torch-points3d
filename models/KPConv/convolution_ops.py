@@ -15,11 +15,11 @@ def radius_gaussian(sq_r, sig, eps=1e-9):
     return torch.exp(-sq_r / (2 * sig ** 2 + eps))
 
 
-def KPConv_ops(
-    query_points,
-    support_points,
-    neighbors_indices,
+def KPConv_ops_partial(
     features,
+    idx_neighbour,
+    neighbours_centered,
+    idx_sampler,
     K_points,
     K_values,
     KP_extent,
@@ -29,88 +29,71 @@ def KPConv_ops(
     """
     This function creates a graph of operations to define Kernel Point Convolution in tensorflow. See KPConv function
     above for a description of each parameter
-    :param query_points:        [n_points, dim]
-    :param support_points:      [n0_points, dim]
-    :param neighbors_indices:   [n_points, n_neighbors]
-    :param features:            [n_points, in_fdim]
-    :param K_points:            [n_kpoints, dim]
-    :param K_values:            [n_kpoints, in_fdim, out_fdim]
-    :param KP_extent:           float32
-    :param KP_influence:        string
-    :param aggregation_mode:    string
-    :return:                    [n_points, out_fdim]
+    :param x:                       [n0_points, in_fdim]
+    :param idx_neighbour:           [n0_points, n_neighbors]
+    :param neighbours_centered:     [n0_points, n_neighbors]
+    :param idx_sampler:             [Indices in n0_points] # Filter
+    :param K_points:                [n_kpoints, dim]
+    :param K_values:                [n_kpoints, in_fdim, out_fdim]
+    :param KP_extent:               float32
+    :param KP_influence:            string
+    :param aggregation_mode:        string
+    :return:                        [n_points, out_fdim]
     """
 
-    # Get variables
-    n_kp = int(K_points.shape[0])
-    # print(support_points.shape)
-    # Add a fake point in the last row for shadow neighbors
-    shadow_point = torch.ones_like(support_points[:1, :]) * 1e6
-    support_points = torch.cat([support_points, shadow_point], axis=0)
-
-    # Get neighbor points [n_points, n_neighbors, dim]
-    # print(shadow_point.shape)
-    # print(support_points.shape)
-    # print(neighbors_indices.shape)
-    neighbors = support_points[neighbors_indices]
-
-    # Center every neighborhood
-    neighbors = neighbors - query_points.unsqueeze(1)
+    if idx_sampler is not None:
+        neighbours_centered = neighbours_centered[idx_sampler]
 
     # Get all difference matrices [n_points, n_neighbors, n_kpoints, dim]
-    neighbors = neighbors.unsqueeze(2)
-    neighbors = neighbors.repeat([1, 1, n_kp, 1])
-    differences = neighbors - K_points
+    differences = neighbours_centered.unsqueeze(2) - K_points
 
     # Get the square distances [n_points, n_neighbors, n_kpoints]
-    sq_distances = torch.sum(differences ** 2, axis=3)
+    sq_distances = torch.sum(torch.mul(differences, differences), dim=3)
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
     if KP_influence == "constant":
         # Every point get an influence of 1.
-        all_weights = torch.ones_like(sq_distances)
-        all_weights = all_weights.permute(0, 2, 1)
+        all_weights = torch.ones_like(sq_distances).permute(0, 2, 1)
 
     elif KP_influence == "linear":
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-        all_weights = torch.relu(1 - torch.sqrt(sq_distances) / KP_extent)
-        all_weights = all_weights.permute(0, 2, 1)
+        corr = 1 - torch.sqrt(sq_distances + 1e-10) / KP_extent
+        all_weights = torch.max(corr, torch.zeros_like(sq_distances)).permute(0, 2, 1)
 
     elif KP_influence == "gaussian":
         # Influence in gaussian of the distance.
         sigma = KP_extent * 0.3
-        all_weights = radius_gaussian(sq_distances, sigma)
-        all_weights = all_weights.permute(0, 2, 1)
+        all_weights = radius_gaussian(sq_distances, sigma).permute(0, 2, 1)
     else:
         raise ValueError("Unknown influence function type (config.KP_influence)")
 
     # In case of closest mode, only the closest KP can influence each point
     if aggregation_mode == "closest":
-        neighbors_1nn = torch.argmin(sq_distances, axis=2, output_type=torch.long)
-        #
-        # all_weights *= tf.one_hot(neighbors_1nn, n_kp, axis=1,
-        #                           dtype=torch.float32)
-        all_weights *= torch.zeros_like(all_weights, dtype=torch.float32).scatter_(1, neighbors_1nn, 1)
+        neighbors_1nn = torch.argmin(sq_distances, dim=-1)
+        all_weights *= torch.zeros_like(all_weights, dtype=torch.float32).scatter_(1, neighbors_1nn.unsqueeze(1), 1)
 
     elif aggregation_mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
 
-    features = torch.cat([features, torch.zeros_like(features[:1, :])], axis=0)
-
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
-    neighborhood_features = features[neighbors_indices]
+    neighborhood_features = features[idx_neighbour]
+    if idx_sampler is not None:
+        neighborhood_features = neighborhood_features[idx_sampler]
 
+    # [n_points, n_kpoints, n_neighbors] * [n_points, n_neighbors, in_fdim]
     # Apply distance weights [n_points, n_kpoints, in_fdim]
     weighted_features = torch.matmul(all_weights, neighborhood_features)
 
     # Apply network weights [n_kpoints, n_points, out_fdim]
-    weighted_features = weighted_features.permute(1, 0, 2)
-    kernel_outputs = torch.matmul(weighted_features, K_values)
+    kernel_outputs = torch.matmul(weighted_features.permute(1, 0, 2), K_values)
 
     # Convolution sum to get [n_points, out_fdim]
-    output_features = torch.sum(kernel_outputs, axis=0)
+    output_features = torch.sum(kernel_outputs, dim=0, keepdim=False)
 
     return output_features
+
+
+######################## STILL NEED TO CONVERT INTO DENSE_PARTIAL_FORMAT ###############
 
 
 def KPConv_deform_ops(

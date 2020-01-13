@@ -15,7 +15,7 @@ from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from metrics.base_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
-from utils.utils import get_log_dir, model_fn_decorator
+from utils_folder.utils import merges_in_sub, get_log_dir, model_fn_decorator, set_format, merges
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from datasets.utils import find_dataset_using_name
 
@@ -91,20 +91,28 @@ def main(cfg):
     tested_model_name = exp.model_name
     tested_dataset_name = exp.dataset
 
+    # Find and create associated model
+    model_config = getattr(cfg.models, tested_model_name, None)
+
+    # Find which dataloader to use
+    cfg_training = set_format(model_config, cfg.training)
+
+    # Enable CUDNN BACKEND
+    torch.backends.cudnn.enabled = cfg_training.enable_cudnn
+
     # Find and create associated dataset
     dataset_config = getattr(cfg.data, tested_dataset_name, None)
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_name)(dataset_config, cfg.training)
+    dataset = find_dataset_using_name(tested_dataset_name)(dataset_config, cfg_training)
 
     # Find and create associated model
-    model_config = getattr(cfg.models, tested_model_name, None)
-    model_config = OmegaConf.merge(model_config, cfg.training)
     resolve_model(model_config, dataset, tested_task)
+    model_config = merges_in_sub(model_config, [cfg_training, dataset_config])
     model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
-    model.set_optimizer(getattr(torch.optim, cfg.training.optimizer, None), lr=cfg.training.lr)
+    model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), lr=cfg_training.lr)
 
     # Set sampling / search strategies
-    dataset.set_strategies(model, precompute_multi_scale=cfg.training.precompute_multi_scale)
+    dataset.set_strategies(model, precompute_multi_scale=cfg_training.precompute_multi_scale)
 
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
@@ -120,7 +128,7 @@ def main(cfg):
 
     tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, log_dir)
 
-    checkpoint = get_model_checkpoint(model, log_dir, tested_model_name, exp.resume, cfg.training.weight_name)
+    checkpoint = get_model_checkpoint(model, log_dir, tested_model_name, exp.resume, cfg_training.weight_name)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker, checkpoint)

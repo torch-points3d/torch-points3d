@@ -5,6 +5,7 @@ from functools import partial
 from typing import Dict, Any
 import torch
 from torch import nn
+from torch.nn.parameter import Parameter
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -36,8 +37,36 @@ def copy_from_to(data, batch):
             setattr(batch, key, getattr(data, key, None))
 
 
-def MLP(channels, activation=ReLU()):
+def weight_variable(shape):
+
+    initial = torch.empty(shape, dtype=torch.float)
+    torch.nn.init.xavier_normal_(initial)
+    return initial
+
+
+def MLP(channels, activation=nn.LeakyReLU(0.2)):
     return Seq(*[Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i])) for i in range(1, len(channels))])
+
+
+class UnaryConv(torch.nn.Module):
+    def __init__(self, num_inputs, num_outputs):
+        """
+        1x1 convolution on point cloud (we can even call it a mini pointnet)
+        """
+        super(UnaryConv, self).__init__()
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+
+        self.weight = Parameter(weight_variable([self.num_inputs, self.num_outputs]))
+
+    def forward(self, features):
+        """
+        features(Torch Tensor): size N x d d is the size of inputs
+        """
+        return torch.matmul(features, self.weight)
+
+    def __repr__(self):
+        return "UnaryConv({}, {})".format(self.num_inputs, self.num_outputs)
 
 
 class BaseConvolution(ABC, torch.nn.Module):
@@ -164,7 +193,7 @@ class BaseConvolutionUp(BaseConvolution):
 
 
 class GlobalBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max"):
+    def __init__(self, nn, aggr="max", *args, **kwargs):
         super(GlobalBaseModule, self).__init__()
         self.nn = MLP(nn)
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
@@ -182,7 +211,7 @@ class GlobalBaseModule(torch.nn.Module):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max"):
+    def __init__(self, nn, aggr="max", *args, **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
         self.nn = pt_utils.SharedMLP(nn)
 
@@ -194,6 +223,25 @@ class GlobalDenseBaseModule(torch.nn.Module):
         x = x.squeeze().max(-1)[0]
         batch_obj.x = x
         batch_obj.pos = pos.new_zeros((x.size(0), 3, 1))
+        batch_obj.batch = torch.arange(x.size(0), device=x.device)
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+
+class GlobalPartialDenseBaseModule(torch.nn.Module):
+    def __init__(self, nn, aggr="max", *args, **kwargs):
+        super(GlobalPartialDenseBaseModule, self).__init__()
+
+        self.nn = MLP(nn)
+        self.pool = global_max_pool if aggr == "max" else global_mean_pool
+
+    def forward(self, data):
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
+        x = self.nn(torch.cat([x, pos], dim=1))
+        x = self.pool(x, batch)
+        batch_obj.x = x
+        batch_obj.pos = pos.new_zeros((x.size(0), 3))
         batch_obj.batch = torch.arange(x.size(0), device=x.device)
         copy_from_to(data, batch_obj)
         return batch_obj
@@ -213,7 +261,7 @@ class FPModule(BaseConvolutionUp):
         [type] -- [description]
     """
 
-    def __init__(self, up_k, up_conv_nn, nb_feature=None, **kwargs):
+    def __init__(self, up_k, up_conv_nn, nb_feature=None, *args, **kwargs):
         super(FPModule, self).__init__(None)
 
         self.k = up_k
