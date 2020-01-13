@@ -10,7 +10,7 @@ experiment:
 # parameters for Weights and Biases
 wandb:
     project: s3dis-pn2
-    log: True
+    log: False
 
 # parameters for TensorBoard Visualization
 tensorboard:

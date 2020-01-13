@@ -29,9 +29,12 @@ def get_tracker(
     Returns:
         [BaseTracker] -- tracker
     """
-    tracker_filename = ".".join(["metrics", task + "_tracker"])
+    tracker_name = task + "_tracker"
+    if dataset.is_hierarchical:
+        tracker_name = "hierarchical_" + tracker_name
+    tracker_filename = ".".join(["metrics", tracker_name])
     trackerlib = importlib.import_module(tracker_filename)
-    cls_name = task + "tracker"
+    cls_name = "".join(tracker_name.split("_"))
 
     tracker = None
     for name, cls in trackerlib.__dict__.items():
@@ -102,3 +105,10 @@ class BaseTracker:
             "epoch": self._n_iter,
             "current_metrics": self._remove_stage_from_metric_keys(self._stage, metrics),
         }
+
+    def print_summary(self):
+        metrics = self.get_metrics(verbose=True)
+        print(["=" for i in range(50)])
+        for key, value in metrics:
+            print("    {} = {}".format(key, value))
+        print(["=" for i in range(50)])

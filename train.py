@@ -66,6 +66,7 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: Mod
             tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
     metrics = tracker.publish()
+    tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 

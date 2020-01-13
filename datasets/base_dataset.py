@@ -85,6 +85,12 @@ class BaseDataset:
         return self._train_loader
 
     @property
+    def is_hierarchical(self):
+        """ Used by the metric trackers to log hierarchical metrics
+        """
+        return False
+
+    @property
     def num_classes(self):
         return self._num_classes
 
@@ -103,15 +109,11 @@ class BaseDataset:
                 if current_transform is None:
                     setattr(attr.dataset, "transform", transform)
                 else:
-                    if isinstance(
-                        current_transform, T.Compose
-                    ):  # The transform contains several transformations
+                    if isinstance(current_transform, T.Compose):  # The transform contains several transformations
                         current_transform.transforms += [transform]
                     else:
                         setattr(
-                            attr.dataset,
-                            "transform",
-                            T.Compose([current_transform, transform]),
+                            attr.dataset, "transform", T.Compose([current_transform, transform]),
                         )
 
     def set_strategies(self, model, precompute_multi_scale=False):
