@@ -7,7 +7,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from metrics.hierachical_segmentation_tracker import HierachicalSegmentationTracker
+from metrics.hierarchical_segmentation_tracker import HierarchicalSegmentationTracker
 
 
 class MockDataset:
@@ -19,7 +19,7 @@ class MockDataset:
 
 class TestSegmentationTracker(unittest.TestCase):
     def test_track(self):
-        tracker = HierachicalSegmentationTracker(MockDataset())
+        tracker = HierarchicalSegmentationTracker(MockDataset())
         tracker.track({"loss_1": 1, "loss_2": 2}, np.asarray([[0, 1, 0], [0, 1, 0]]), np.asarray([1, 1]))
         metrics = tracker.get_metrics(verbose=True)
         for k in ["train_acc", "train_miou", "train_macc", "train_acc"]:

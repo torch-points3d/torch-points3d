@@ -5,7 +5,7 @@ experiment:
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
     task: segmentation
-    dataset: s3dis
+    dataset: shapenet
 
 # parameters for Weights and Biases
 wandb:
@@ -34,7 +34,6 @@ data:
     shapenet:
         name: shapenet
         dataroot: data
-        category: Airplane
         normal: True
         num_points: 2048
 

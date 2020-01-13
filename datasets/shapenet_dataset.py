@@ -190,7 +190,10 @@ class ShapeNetDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "ShapeNet")
-        self._category = dataset_opt.category
+        try:
+            self._category = dataset_opt.category
+        except KeyError:
+            self._category = None
         pre_transform = T.NormalizeScale()
         transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(
@@ -213,7 +216,7 @@ class ShapeNetDataset(BaseDataset):
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
 
     @property
-    def class_to_segment(self):
+    def class_to_segments(self):
         return ShapeNet.seg_classes
 
     @property
