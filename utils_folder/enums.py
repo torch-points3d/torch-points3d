@@ -1,7 +1,7 @@
 import enum
 
 
-class CONVOLUTION_FORMAT(enum.Enum):
-    DENSE = (0, True)
-    PARTIAL_DENSE = (1, False)
-    MESSAGE_PASSING = (2, False)
+class ConvolutionFormat(enum.Enum):
+    DENSE = (0, True, "dense")
+    PARTIAL_DENSE = (1, False, "partial_dense")
+    MESSAGE_PASSING = (2, False, "message_passing")

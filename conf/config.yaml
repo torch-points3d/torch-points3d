@@ -27,7 +27,7 @@ training:
     optimizer: Adam
     lr : 0.01
     weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
-    enable_cudnn: False
+    enable_cudnn: True
 
 # Those arguments defines the available datasets
 data:
@@ -51,9 +51,9 @@ data:
         fold: 5
         class_weight_method: 'sqrt'
         num_points: 1024
-        FIRST_SUBSAMPLING: 0.04
-        DENSITY_PARAMETER: 5.0
-        KP_EXTENT: 1.0
+        first_subsampling: 0.04
+        density_parameter: 5.0
+        kp_extent: 1.0
 
 defaults:
     - models: segmentation

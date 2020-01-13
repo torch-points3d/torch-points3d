@@ -38,8 +38,8 @@ def KPconv_op(self, x_j, pos_i, pos_j):
         all_weights = torch.ones_like(sq_distances)
 
     elif self.KP_influence == "linear":
-        # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-        all_weights = 1.0 - (sq_distances / (self.KP_extent ** 2))
+        # Influence decrease linearly with the distance, and get to zero when d = kp_extent.
+        all_weights = 1.0 - (sq_distances / (self.kp_extent ** 2))
         all_weights[all_weights < 0] = 0.0
     else:
         raise ValueError("Unknown influence function type (config.KP_influence)")
@@ -93,7 +93,7 @@ class PointKernel(MessagePassing):
         self.KP_influence = KP_influence
 
         # Radius of the initial positions of the kernel points
-        self.KP_extent = radius / 1.5
+        self.kp_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
@@ -189,7 +189,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         self.modulated = modulated
 
         # Radius of the initial positions of the kernel points
-        self.KP_extent = radius / 1.5
+        self.kp_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim))
@@ -239,7 +239,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
         offsets = offsets.view((-1, self.num_points, self.kernel_dim))
 
         # Rescale offset for this layer
-        offsets *= self.KP_extent
+        offsets *= self.kp_extent
 
         # Center every neighborhood [SUM n_neighbors(n_points), dim]
         neighbors = pos_j - pos_i
@@ -266,13 +266,13 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
             all_weights = torch.ones_like(sq_distances)
 
         elif self.KP_influence == "linear":
-            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1.0 - (torch.sqrt(sq_distances) / (self.KP_extent))
+            # Influence decrease linearly with the distance, and get to zero when d = kp_extent.
+            all_weights = 1.0 - (torch.sqrt(sq_distances) / (self.kp_extent))
             all_weights[all_weights < 0] = 0.0
 
         elif self.KP_influence == "square":
-            # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-            all_weights = 1.0 - (sq_distances / (self.KP_extent ** 2))
+            # Influence decrease linearly with the distance, and get to zero when d = kp_extent.
+            all_weights = 1.0 - (sq_distances / (self.kp_extent ** 2))
             all_weights[all_weights < 0] = 0.0
 
         else:
@@ -340,8 +340,8 @@ class PointKernelPartialDense(nn.Module):
         shadow_features_fill=0.0,
         norm=nn.BatchNorm1d,
         act=nn.LeakyReLU,
-        KP_EXTENT=None,
-        DENSITY_PARAMETER=None,
+        kp_extent=None,
+        density_parameter=None,
     ):
         super(PointKernelPartialDense, self).__init__()
         # PointKernel parameters
@@ -362,12 +362,12 @@ class PointKernelPartialDense(nn.Module):
         self.shadow_features_fill = shadow_features_fill
 
         # Radius of the initial positions of the kernel points
-        self.extent = KP_EXTENT * self.radius / DENSITY_PARAMETER
+        self.extent = kp_extent * self.radius / density_parameter
 
         # Initial kernel extent for this layer
         self.K_radius = 1.5 * self.extent
 
-        self.KP_extent = radius / 1.5
+        self.kp_extent = radius / 1.5
 
         # Point position in kernel_dim
         self.kernel = Parameter(torch.Tensor(1, num_points, kernel_dim)).float()

@@ -258,7 +258,7 @@ models:
             module_name: ResnetBottleNeckPartialDense
             ratios: [0.25, 0.5, 0.5]
             radius: [0.2, 0.4, 0.6]
-            radius_num_points: [32, 32, 16]
+            max_num_neighbors: [32, 32, 16]
             down_conv_nn: [[FEAT, 32 // 4, 32], [32, 64 // 4, 64], [64, 128 // 4, 128]]
         up_conv:
             module_name: FPModule

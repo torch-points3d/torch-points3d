@@ -3,10 +3,9 @@ import torch_points as tp
 from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
 
+from utils_folder.enums import ConvolutionFormat
 from .core_sampling_and_search import BaseMSNeighbourFinder
 from .core_modules import BaseConvolution
-
-DENSE_CONV_TYPE = "DENSE_CONV"
 
 
 class BaseDenseConvolutionDown(BaseConvolution):
@@ -17,13 +16,17 @@ class BaseDenseConvolutionDown(BaseConvolution):
             neighbour_finder -- Multiscale strategy for finding neighbours
     """
 
+    CONV_TYPE = ConvolutionFormat.DENSE.value[-1]
+
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
 
-        self.CONV_TYPE = DENSE_CONV_TYPE
-
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
+
+        assert self.CONV_TYPE == kwargs.get(
+            "conv_type", None
+        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
@@ -62,14 +65,19 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
 
 class BaseDenseConvolutionUp(BaseConvolution):
+
+    CONV_TYPE = ConvolutionFormat.DENSE.value[-1]
+
     def __init__(self, neighbour_finder, *args, **kwargs):
         super(BaseDenseConvolutionUp, self).__init__(None, neighbour_finder, *args, **kwargs)
-
-        self.CONV_TYPE = DENSE_CONV_TYPE
 
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
+
+        assert self.CONV_TYPE == kwargs.get(
+            "conv_type", None
+        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
 
     def conv(self, pos, pos_skip, x):
         raise NotImplementedError

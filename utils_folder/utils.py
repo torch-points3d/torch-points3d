@@ -9,7 +9,7 @@ from omegaconf import OmegaConf
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 
-from utils_folder.enums import CONVOLUTION_FORMAT
+from utils_folder.enums import ConvolutionFormat
 
 
 def model_fn_decorator(criterion):
@@ -34,11 +34,11 @@ def model_fn_decorator(criterion):
 
 def set_format(model_config, cfg_training):
     conv_type = getattr(model_config, "conv_type", None)
-    if conv_type not in [d.name for d in CONVOLUTION_FORMAT]:
-        raise Exception("The format type should be defined within {}".format([d.name for d in CONVOLUTION_FORMAT]))
+    if conv_type not in [d.name for d in ConvolutionFormat]:
+        raise Exception("The format type should be defined within {}".format([d.name for d in ConvolutionFormat]))
     else:
         format_conf = OmegaConf.create(
-            {"conv_type": conv_type, "use_torch_loader": CONVOLUTION_FORMAT[conv_type].value[1]}
+            {"conv_type": conv_type.lower(), "use_torch_loader": ConvolutionFormat[conv_type].value[1]}
         )
         return OmegaConf.merge(cfg_training, format_conf)
 

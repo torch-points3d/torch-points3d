@@ -26,7 +26,7 @@ from torch_geometric.nn.inits import reset
 from datasets.base_dataset import BaseDataset
 from .base_model import BaseModel
 
-SPECIAL_NAMES = ["radius"]
+SPECIAL_NAMES = ["radius", "max_num_neighbors"]
 
 
 class BaseFactory:

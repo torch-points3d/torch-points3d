@@ -4,9 +4,10 @@ from torch import nn
 # Kernel Point Convolution in Pytorch
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
 from .kernel_utils import kernel_point_optimization_debug
-from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
-from models.partial_dense_modules import BasePartialDenseConvolutionDown, UnaryConv
+from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler, GridSampler
+from models.partial_dense_modules import BasePartialDenseConvolutionDown
 from .kernels import PointKernelPartialDense
+from models.core_modules import UnaryConv
 
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 
@@ -20,13 +21,19 @@ class BaseKPConvPartialDense(BasePartialDenseConvolutionDown):
         kp_points=16,
         nb_feature=0,
         is_strided=True,
-        KP_EXTENT=None,
-        DENSITY_PARAMETER=None,
+        kp_extent=None,
+        density_parameter=None,
         *args,
         **kwargs
     ):
+        subsampling_param = (kwargs.get("index") + 1) * kwargs.get("first_subsampling")
         super(BaseKPConvPartialDense, self).__init__(
-            FPSSampler(ratio), RadiusNeighbourFinder(radius, conv_type=kwargs.get("conv_type")), *args, **kwargs
+            GridSampler(subsampling_param=subsampling_param),
+            RadiusNeighbourFinder(
+                radius, max_num_neighbors=kwargs.get("max_num_neighbors", 64), conv_type=self.CONV_TYPE
+            ),
+            *args,
+            **kwargs
         )
 
         self.ratio = ratio
@@ -50,8 +57,8 @@ class BaseKPConvPartialDense(BasePartialDenseConvolutionDown):
         self.kp_points = kp_points
 
         # Dataset ~ Model parameters
-        self.KP_EXTENT = KP_EXTENT
-        self.DENSITY_PARAMETER = DENSITY_PARAMETER
+        self.kp_extent = kp_extent
+        self.density_parameter = density_parameter
 
         # PARAMTERS IMPORTANT FOR SHADOWING
         self.shadow_features_fill = 0.0
@@ -68,8 +75,8 @@ class KPConvPartialDense(BaseKPConvPartialDense):
             self.out_features,
             radius=self.radius,
             is_strided=self.is_strided,
-            KP_EXTENT=self.KP_EXTENT,
-            DENSITY_PARAMETER=self.DENSITY_PARAMETER,
+            kp_extent=self.kp_extent,
+            density_parameter=self.density_parameter,
         )
         self.activation = kwargs.get("act", nn.LeakyReLU(0.2))
 
@@ -87,8 +94,8 @@ class ResnetPartialDense(BaseKPConvPartialDense):
             self.intermediate_features,
             radius=self.radius,
             is_strided=False,
-            KP_EXTENT=self.KP_EXTENT,
-            DENSITY_PARAMETER=self.DENSITY_PARAMETER,
+            kp_extent=self.kp_extent,
+            density_parameter=self.density_parameter,
         )
 
         self._kp_conv1 = PointKernelPartialDense(
@@ -97,8 +104,8 @@ class ResnetPartialDense(BaseKPConvPartialDense):
             self.out_features,
             radius=self.radius,
             is_strided=self.is_strided,
-            KP_EXTENT=self.KP_EXTENT,
-            DENSITY_PARAMETER=self.DENSITY_PARAMETER,
+            kp_extent=self.kp_extent,
+            density_parameter=self.density_parameter,
         )
 
         if self.out_features != self.intermediate_features:
@@ -128,8 +135,8 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
             self.intermediate_features,
             radius=self.radius,
             is_strided=False,
-            KP_EXTENT=self.KP_EXTENT,
-            DENSITY_PARAMETER=self.DENSITY_PARAMETER,
+            kp_extent=self.kp_extent,
+            density_parameter=self.density_parameter,
         )
 
         self._kp_conv1 = PointKernelPartialDense(
@@ -138,8 +145,8 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
             self.out_features,
             radius=self.radius,
             is_strided=self.is_strided,
-            KP_EXTENT=self.KP_EXTENT,
-            DENSITY_PARAMETER=self.DENSITY_PARAMETER,
+            kp_extent=self.kp_extent,
+            density_parameter=self.density_parameter,
         )
 
         self.uconv_0 = UnaryConv(self.in_features, self.intermediate_features)

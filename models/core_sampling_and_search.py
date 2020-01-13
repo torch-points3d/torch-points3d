@@ -3,9 +3,12 @@ from typing import List, Union
 import math
 from functools import partial
 import torch
-from torch_geometric.nn import fps, radius, knn
+from torch_geometric.nn import fps, radius, knn, voxel_grid
+from torch_geometric.nn.pool.pool import pool_pos
 import torch_points as tp
 from omegaconf import ListConfig
+
+from utils_folder.enums import ConvolutionFormat
 
 
 class BaseSampler(ABC):
@@ -13,16 +16,23 @@ class BaseSampler(ABC):
         num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
     """
 
-    def __init__(self, ratio=None, num_to_sample=None):
+    def __init__(self, ratio=None, num_to_sample=None, subsampling_param=None):
         if num_to_sample is not None:
-            if ratio is not None:
-                raise ValueError("Can only specify ratio or num_to_sample, not both")
+            if (ratio is not None) or (subsampling_param is not None):
+                raise ValueError("Can only specify ratio or num_to_sample or subsampling_param, not several !")
             self._num_to_sample = num_to_sample
-        else:
+
+        elif ratio is not None:
             self._ratio = ratio
 
-    def __call__(self, pos, batch=None):
-        return self.sample(pos, batch=batch)
+        elif subsampling_param is not None:
+            self._subsampling_param = subsampling_param
+
+        else:
+            raise Exception('At least ["ratio, num_to_sample, subsampling_param"] should be defined')
+
+    def __call__(self, pos, x=None, batch=None):
+        return self.sample(pos, batch=batch, x=x)
 
     def _get_num_to_sample(self, batch_size) -> int:
         if hasattr(self, "_num_to_sample"):
@@ -37,7 +47,7 @@ class BaseSampler(ABC):
             return self._num_to_sample / float(batch_size)
 
     @abstractmethod
-    def sample(self, pos, batch=None):
+    def sample(self, pos, x=None, batch=None):
         pass
 
 
@@ -46,10 +56,26 @@ class FPSSampler(BaseSampler):
         num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
     """
 
-    def sample(self, pos, batch):
+    def sample(self, pos, batch, **kwargs):
         if len(pos.shape) != 2:
             raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
         return fps(pos, batch, ratio=self._get_ratio_to_sample(pos.shape[0]))
+
+
+class GridSampler(BaseSampler):
+    """If num_to_sample is provided, sample exactly
+        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+    """
+
+    def sample(self, pos=None, x=None, batch=None):
+        if len(pos.shape) != 2:
+            raise ValueError("This class is for sparse data and expects the pos tensor to be of dimension 2")
+
+        pool = voxel_grid(pos, batch, self._subsampling_param)
+        if x is not None:
+            return pool_pos(pool, x), pool_pos(pool, pos)
+        else:
+            return None, pool_pos(pool, pos)
 
 
 class DenseFPSSampler(BaseSampler):
@@ -76,7 +102,7 @@ class RandomSampler(BaseSampler):
         num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
     """
 
-    def sample(self, pos, batch):
+    def sample(self, pos, batch, **kwargs):
         if len(pos.shape) != 2:
             raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
         idx = torch.randint(0, pos.shape[0], (self._get_num_to_sample(pos.shape[0]),))
@@ -107,16 +133,20 @@ class BaseNeighbourFinder(ABC):
 
 
 class RadiusNeighbourFinder(BaseNeighbourFinder):
-    def __init__(self, radius: float, max_num_neighbors: int = 64, conv_type="MESSAGE_PASSING"):
+    def __init__(
+        self, radius: float, max_num_neighbors: int = 64, conv_type=ConvolutionFormat.MESSAGE_PASSING.value[-1]
+    ):
         self._radius = radius
         self._max_num_neighbors = max_num_neighbors
-        self._conv_type = conv_type
+        self._conv_type = conv_type.lower()
 
-    def find_neighbours(self, x, y, batch_x, batch_y):
-        if self._conv_type == "MESSAGE_PASSING":
+    def find_neighbours(self, x, y, batch_x=None, batch_y=None):
+        if self._conv_type == ConvolutionFormat.MESSAGE_PASSING.value[-1]:
             return radius(x, y, self._radius, batch_x, batch_y, max_num_neighbors=self._max_num_neighbors)
-        elif self._conv_type == "PARTIAL_DENSE" or self._conv_type == "DENSE":
-            return tp.ball_query(self._radius, self._max_num_neighbors, x, y, batch_x, batch_y, mode=self._conv_type)
+        elif self._conv_type == ConvolutionFormat.DENSE.value[-1] or ConvolutionFormat.PARTIAL_DENSE.value[-1]:
+            return tp.ball_query(
+                self._radius, self._max_num_neighbors, x, y, mode=self._conv_type, batch_x=batch_x, batch_y=batch_y
+            )
         else:
             raise NotImplementedError
 
