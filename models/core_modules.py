@@ -5,6 +5,7 @@ from functools import partial
 from typing import Dict, Any
 import torch
 from torch import nn
+from torch.nn.parameter import Parameter
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -36,8 +37,36 @@ def copy_from_to(data, batch):
             setattr(batch, key, getattr(data, key, None))
 
 
+def weight_variable(shape):
+
+    initial = torch.empty(shape, dtype=torch.float)
+    torch.nn.init.xavier_normal_(initial)
+    return initial
+
+
 def MLP(channels, activation=ReLU()):
     return Seq(*[Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i])) for i in range(1, len(channels))])
+
+
+class UnaryConv(torch.nn.Module):
+    def __init__(self, num_inputs, num_outputs):
+        """
+        1x1 convolution on point cloud (we can even call it a mini pointnet)
+        """
+        super(UnaryConv, self).__init__()
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+
+        self.weight = Parameter(weight_variable([self.num_inputs, self.num_outputs]))
+
+    def forward(self, features):
+        """
+        features(Torch Tensor): size N x d d is the size of inputs
+        """
+        return torch.matmul(features, self.weight)
+
+    def __repr__(self):
+        return "UnaryConv({}, {})".format(self.num_inputs, self.num_outputs)
 
 
 class BaseConvolution(ABC, torch.nn.Module):
