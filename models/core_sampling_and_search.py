@@ -4,7 +4,8 @@ import math
 from functools import partial
 import torch
 from torch_geometric.nn import fps, radius, knn, voxel_grid
-from torch_geometric.nn.pool.pool import pool_pos
+from torch_geometric.nn.pool.consecutive import consecutive_cluster
+from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 import torch_points as tp
 from omegaconf import ListConfig
 
@@ -72,10 +73,12 @@ class GridSampler(BaseSampler):
             raise ValueError("This class is for sparse data and expects the pos tensor to be of dimension 2")
 
         pool = voxel_grid(pos, batch, self._subsampling_param)
+        pool, perm = consecutive_cluster(pool)
+        batch = pool_batch(perm, batch)
         if x is not None:
-            return pool_pos(pool, x), pool_pos(pool, pos)
+            return pool_pos(pool, x), pool_pos(pool, pos), batch
         else:
-            return None, pool_pos(pool, pos)
+            return None, pool_pos(pool, pos), batch
 
 
 class DenseFPSSampler(BaseSampler):
