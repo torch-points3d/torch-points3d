@@ -72,10 +72,13 @@ class GridSampler(BaseSampler):
             raise ValueError("This class is for sparse data and expects the pos tensor to be of dimension 2")
 
         pool = voxel_grid(pos, batch, self._subsampling_param)
+        pool_reindexed = torch.zeros_like(pool)  # TODO OPTIMIZE THIS STEP
+        for idx, u in enumerate(torch.unique(pool)):
+            pool_reindexed[u == pool] = idx
         if x is not None:
-            return pool_pos(pool, x), pool_pos(pool, pos)
+            return pool_pos(pool_reindexed, x), pool_pos(pool_reindexed, pos)
         else:
-            return None, pool_pos(pool, pos)
+            return None, pool_pos(pool_reindexed, pos)
 
 
 class DenseFPSSampler(BaseSampler):
