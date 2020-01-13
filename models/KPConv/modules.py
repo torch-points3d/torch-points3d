@@ -72,7 +72,7 @@ class KPConvFactory(BaseFactory):
 
 
 class LightDeformableKPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, kp_points=16, nb_feature=0, *args, **kwargs):
         super(LightDeformableKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
@@ -83,18 +83,16 @@ class LightDeformableKPConv(BaseConvolutionDown):
         # KPCONV arguments
         self.in_features = in_features
         self.out_features = out_features
-        self.num_points = num_points
+        self.kp_points = kp_points
 
-        self._conv = LightDeformablePointKernel(
-            self.num_points, self.in_features, self.out_features, radius=self.radius
-        )
+        self._conv = LightDeformablePointKernel(self.kp_points, self.in_features, self.out_features, radius=self.radius)
 
     def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
 class KPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, kp_points=16, nb_feature=0, *args, **kwargs):
         super(KPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
@@ -105,16 +103,16 @@ class KPConv(BaseConvolutionDown):
         # KPCONV arguments
         self.in_features = in_features
         self.out_features = out_features
-        self.num_points = num_points
+        self.kp_points = kp_points
 
-        self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+        self._conv = PointKernel(self.kp_points, self.in_features, self.out_features, radius=self.radius)
 
     def conv(self, x, pos, edge_index, batch):
         return self._conv(x, pos, edge_index)
 
 
 class ResidualBKPConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, down_conv_nn=None, num_points=16, nb_feature=0, *args, **kwargs):
+    def __init__(self, ratio=None, radius=None, down_conv_nn=None, kp_points=16, nb_feature=0, *args, **kwargs):
         super(ResidualBKPConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self.ratio = ratio
@@ -126,10 +124,10 @@ class ResidualBKPConv(BaseConvolutionDown):
         # KPCONV arguments
         self.in_features = in_features
         self.out_features = out_features
-        self.num_points = num_points
+        self.kp_points = kp_points
 
         self.pre_mlp = nn.Linear(self.in_features, self.in_features // 2)
-        self._conv = PointKernel(self.num_points, self.in_features // 2, self.in_features // 2, radius=self.radius,)
+        self._conv = PointKernel(self.kp_points, self.in_features // 2, self.in_features // 2, radius=self.radius,)
         self.post_mlp = nn.Linear(self.in_features // 2, out_features)
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)
@@ -152,7 +150,7 @@ class ResidualBKPConv(BaseConvolutionDown):
 
 class SimpleUpsampleKPConv(BaseConvolutionUp):
     def __init__(
-        self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs
+        self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, kp_points=16, nb_feature=0, *args, **kwargs
     ):
         super(SimpleUpsampleKPConv, self).__init__(RadiusNeighbourFinder(radius), *args, **kwargs)
 
@@ -162,9 +160,9 @@ class SimpleUpsampleKPConv(BaseConvolutionUp):
         self.radius = radius
         self.in_features = in_features
         self.out_features = out_features
-        self.num_points = num_points
+        self.kp_points = kp_points
 
-        self._conv = PointKernel(self.num_points, self.in_features, self.out_features, radius=self.radius)
+        self._conv = PointKernel(self.kp_points, self.in_features, self.out_features, radius=self.radius)
 
         self.nn = MLP(mlp_nn, activation=LeakyReLU(0.2))
 
@@ -174,7 +172,7 @@ class SimpleUpsampleKPConv(BaseConvolutionUp):
 
 class ResidualUpsampleBKPConv(BaseConvolutionUp):
     def __init__(
-        self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, num_points=16, nb_feature=0, *args, **kwargs
+        self, ratio=None, radius=None, up_conv_nn=None, mlp_nn=None, kp_points=16, nb_feature=0, *args, **kwargs
     ):
         super(ResidualUpsampleBKPConv, self).__init__(RadiusNeighbourFinder(radius))
 
@@ -187,10 +185,10 @@ class ResidualUpsampleBKPConv(BaseConvolutionUp):
         # KPCONV arguments
         self.in_features = in_features
         self.out_features = out_features
-        self.num_points = num_points
+        self.kp_points = kp_points
 
         self.pre_mlp = nn.Linear(self.in_features, self.in_features // 4)
-        self._conv = PointKernel(self.num_points, self.in_features // 4, self.in_features // 4, radius=self.radius,)
+        self._conv = PointKernel(self.kp_points, self.in_features // 4, self.in_features // 4, radius=self.radius,)
         self.post_mlp = nn.Linear(self.in_features // 4, out_features)
 
         self.shortcut_mlp = nn.Linear(self.in_features, self.out_features)

@@ -24,6 +24,7 @@ models:
 
     PointNet:
         type: PointNet
+        conv_type: "DENSE"
         input_stn:
             local_nn: [3, 64, 128, 1024]
             global_nn: [1024, 512, 256]
@@ -37,6 +38,7 @@ models:
 
     pointcnn_small:
         type: PointCNN
+        conv_type: "MESSAGE_PASSING"
         define_constants:
             L1_OUT: 32
             L2_OUT: 32
@@ -70,6 +72,7 @@ models:
 
     pointcnn_shapenet:
         type: PointCNN
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             - module_name: PointCNNConvDown
               inN: 2048
@@ -117,6 +120,7 @@ models:
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:
         type: RandLANet
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandLANetRes
             ratio: [[1, 1], [0.5, 0.5]]
@@ -149,6 +153,7 @@ models:
 
     Randlanet_Conv:
         type: RandLANet
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandlaConv
             ratio: [0.25, 0.25, 0.25]
@@ -178,6 +183,7 @@ models:
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv_2LD:
         type: RSConv
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
             ratios: [0.2, 0.25]
@@ -201,6 +207,7 @@ models:
 
     RSConv_4LD:
         type: RSConv
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
             ratios: [0.5, 0.5, 0.5, 0.5]
@@ -233,6 +240,7 @@ models:
     # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
     SimpleKPConv:
         type: KPConv
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: KPConv
             ratios: [0.2, 0.25]
@@ -275,6 +283,7 @@ models:
 
     ResidualKPConv:
         type: KPConv
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: ResidualBKPConv
             ratios: [0.2, 0.25]
@@ -296,6 +305,7 @@ models:
 
     DeformableResidualKPConv:
         type: KPConv
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: LightDeformableKPConv
             ratios: [0.2, 0.25]
@@ -318,6 +328,7 @@ models:
     # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2:
         type: pointnet2
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
             ratios: [0.2, 0.25]
@@ -344,6 +355,7 @@ models:
 
     pointnet2ms:
         type: pointnet2
+        conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
             ratios: [0.25, 0.25]
@@ -370,6 +382,7 @@ models:
 
     pointnet2_original:
         type: pointnet2_dense
+        conv_type: "DENSE"
         down_conv:
             module_name: PointNetMSGDown
             npoint: [1024, 256, 64, 16]

@@ -105,7 +105,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 class DenseFPModule(BaseDenseConvolutionUp):
     def __init__(self, up_conv_nn, bn=True, **kwargs):
-        super(DenseFPModule, self).__init__(None)
+        super(DenseFPModule, self).__init__(None, **kwargs)
 
         self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
 
