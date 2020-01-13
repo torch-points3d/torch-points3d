@@ -149,6 +149,9 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         else:
             self.shortcut_op = torch.nn.Identity()
 
+        self.norm = nn.BatchNorm1d(self.out_features)
+        self.act = nn.LeakyReLU(0.2)
+
     def conv(self, input, pos, input_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
 
         x = self.uconv_0(input)
@@ -158,4 +161,4 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
         if self.is_strided:
             input = input_neighbour[idx_sampler].max(1)[0]
         x = x + self.shortcut_op(input)
-        return x
+        return self.act(self.norm(x))
