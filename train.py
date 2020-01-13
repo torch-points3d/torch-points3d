@@ -13,7 +13,7 @@ from omegaconf import OmegaConf
 from models.utils import find_model_using_name
 from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
-from metrics.metrics_tracker import get_tracker, BaseTracker
+from metrics.base_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
 from utils.utils import get_log_dir, model_fn_decorator
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
