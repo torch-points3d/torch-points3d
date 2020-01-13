@@ -339,7 +339,7 @@ class PointKernelPartialDense(nn.Module):
         is_strided=True,
         shadow_features_fill=0.0,
         norm=nn.BatchNorm1d,
-        act=nn.ReLU,
+        act=nn.LeakyReLU,
         KP_EXTENT=None,
         DENSITY_PARAMETER=None,
     ):
@@ -355,7 +355,7 @@ class PointKernelPartialDense(nn.Module):
         self.KP_influence = KP_influence
         self.aggregation_mode = aggregation_mode
         self.is_strided = is_strided
-        self.norm = None  # norm(out_features) if norm is not None else None
+        self.norm = norm(out_features) if norm is not None else None
         self.act = act()
 
         # Position of the fill for shadow points
