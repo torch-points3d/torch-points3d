@@ -3,10 +3,14 @@ from torch_geometric.data import Batch
 from .core_modules import BaseConvolution, copy_from_to, UnaryConv
 from .core_sampling_and_search import BaseMSNeighbourFinder
 
+PARTIAL_CONV_TYPE = "PARTIAL_CONV"
+
 
 class BasePartialDenseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         super(BasePartialDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
+
+        self.CONV_TYPE = PARTIAL_CONV_TYPE
 
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)

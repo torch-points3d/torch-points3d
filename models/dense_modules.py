@@ -6,6 +6,8 @@ import etw_pytorch_utils as pt_utils
 from .core_sampling_and_search import BaseMSNeighbourFinder
 from .core_modules import BaseConvolution
 
+DENSE_CONV_TYPE = "DENSE_CONV"
+
 
 class BaseDenseConvolutionDown(BaseConvolution):
     """ Multiscale convolution down (also supports single scale). Convolution kernel is shared accross the scales
@@ -17,6 +19,8 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
+
+        self.CONV_TYPE = DENSE_CONV_TYPE
 
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
@@ -61,6 +65,8 @@ class BaseDenseConvolutionUp(BaseConvolution):
     def __init__(self, neighbour_finder, *args, **kwargs):
         super(BaseDenseConvolutionUp, self).__init__(None, neighbour_finder, *args, **kwargs)
 
+        self.CONV_TYPE = DENSE_CONV_TYPE
+
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
@@ -92,6 +98,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 class DenseFPModule(BaseDenseConvolutionUp):
     def __init__(self, up_conv_nn, bn=True, **kwargs):
         super(DenseFPModule, self).__init__(None)
+
         self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
 
     def conv(self, pos, pos_skip, x):

@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 # Kernel Point Convolution in Pytorch
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
