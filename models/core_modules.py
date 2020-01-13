@@ -44,7 +44,7 @@ def weight_variable(shape):
     return initial
 
 
-def MLP(channels, activation=ReLU()):
+def MLP(channels, activation=nn.LeakyReLU(0.2)):
     return Seq(*[Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i])) for i in range(1, len(channels))])
 
 
@@ -240,14 +240,13 @@ class GlobalPartialDenseBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr="max", *args, **kwargs):
         super(GlobalPartialDenseBaseModule, self).__init__()
 
-        self.nn = pt_utils.SharedMLP(nn)
+        self.nn = MLP(nn)
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
 
     def forward(self, data):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
-
-        x = self.nn(torch.cat([x, pos], dim=1).permute((1, 0)).unsqueeze(0).unsqueeze(-1)).squeeze().permute((1, 0))
+        x = self.nn(torch.cat([x, pos], dim=1))
         x = self.pool(x, batch)
         batch_obj.x = x
         batch_obj.pos = pos.new_zeros((x.size(0), 3))
