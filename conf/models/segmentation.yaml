@@ -345,7 +345,7 @@ models:
             dropout: 0.5
 
     pointnet2_original:
-        type: pointnet2_customkernel
+        type: pointnet2_dense
         down_conv:
             module_name: PointNetMSGDown
             npoint: [1024, 256, 64, 16]

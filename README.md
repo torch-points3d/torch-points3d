@@ -10,7 +10,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ```yaml
   # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2_original:
-        type: pointnet2_customkernel
+        type: pointnet2_dense
         down_conv:
             npoint: [1024, 256, 64, 16]
             radii: [[0.05, 0.1], [0.1, 0.2], [0.2, 0.4], [0.4, 0.8]]
