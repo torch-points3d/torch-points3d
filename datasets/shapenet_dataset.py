@@ -52,10 +52,7 @@ class ShapeNet(InMemoryDataset):
             final dataset. (default: :obj:`None`)
     """
 
-    url = (
-        "https://shapenet.cs.stanford.edu/media/"
-        "shapenetcore_partanno_segmentation_benchmark_v0_normal.zip"
-    )
+    url = "https://shapenet.cs.stanford.edu/media/" "shapenetcore_partanno_segmentation_benchmark_v0_normal.zip"
 
     category_ids = {
         "Airplane": "02691156",
@@ -122,12 +119,7 @@ class ShapeNet(InMemoryDataset):
         elif split == "trainval":
             path = self.processed_paths[3]
         else:
-            raise ValueError(
-                (
-                    f"Split {split} found, but expected either "
-                    "train, val, trainval or test"
-                )
-            )
+            raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
 
         self.data, self.slices = torch.load(path)
         self.data.x = self.data.x if include_normals else None
@@ -143,10 +135,7 @@ class ShapeNet(InMemoryDataset):
     @property
     def processed_file_names(self):
         cats = "_".join([cat[:3].lower() for cat in self.categories])
-        return [
-            os.path.join("{}_{}.pt".format(cats, split))
-            for split in ["train", "val", "test", "trainval"]
-        ]
+        return [os.path.join("{}_{}.pt".format(cats, split)) for split in ["train", "val", "test", "trainval"]]
 
     def download(self):
         path = download_url(self.url, self.root)
@@ -182,13 +171,10 @@ class ShapeNet(InMemoryDataset):
     def process(self):
         trainval = []
         for i, split in enumerate(["train", "val", "test"]):
-            path = osp.join(
-                self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json"
-            )
+            path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
             with open(path, "r") as f:
                 filenames = [
-                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt"
-                    for name in json.load(f)
+                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
                 ]  # Removing first directory.
             data_list = self.process_filenames(filenames)
             if split == "train" or split == "val":
@@ -197,16 +183,17 @@ class ShapeNet(InMemoryDataset):
         torch.save(self.collate(trainval), self.processed_paths[3])
 
     def __repr__(self):
-        return "{}({}, categories={})".format(
-            self.__class__.__name__, len(self), self.categories
-        )
+        return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)
 
 
 class ShapeNetDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "ShapeNet")
-        self._category = dataset_opt.category
+        try:
+            self._category = dataset_opt.category
+        except KeyError:
+            self._category = None
         pre_transform = T.NormalizeScale()
         transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(
@@ -225,5 +212,16 @@ class ShapeNetDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=transform,
         )
-
+        self._categories = train_dataset.categories
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
+
+    @property
+    def class_to_segments(self):
+        classes_to_segment = {}
+        for key in self._categories:
+            classes_to_segment[key] = ShapeNet.seg_classes[key]
+        return classes_to_segment
+
+    @property
+    def is_hierarchical(self):
+        return len(self._categories) > 1
