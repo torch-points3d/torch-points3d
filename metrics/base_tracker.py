@@ -111,4 +111,4 @@ class BaseTracker:
         print("".join(["=" for i in range(50)]))
         for key, value in metrics.items():
             print("    {} = {}".format(key, value))
-        print(["=" for i in range(50)])
+        print("".join(["=" for i in range(50)]))

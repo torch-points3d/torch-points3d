@@ -212,13 +212,16 @@ class ShapeNetDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=transform,
         )
-        self._num_categories = len(train_dataset.categories)
+        self._categories = train_dataset.categories
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
 
     @property
     def class_to_segments(self):
-        return ShapeNet.seg_classes
+        classes_to_segment = {}
+        for key in self._categories:
+            classes_to_segment[key] = ShapeNet.seg_classes[key]
+        return classes_to_segment
 
     @property
     def is_hierarchical(self):
-        return self._num_categories > 1
+        return len(self._categories) > 1
