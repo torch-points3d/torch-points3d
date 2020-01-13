@@ -28,7 +28,7 @@ class BaseKPConvPartialDense(BasePartialDenseConvolutionDown):
     ):
         subsampling_param = (kwargs.get("index") + 1) * kwargs.get("first_subsampling")
         super(BaseKPConvPartialDense, self).__init__(
-            GridSampler(subsampling_param=subsampling_param),
+            FPSSampler(ratio),
             RadiusNeighbourFinder(
                 radius, max_num_neighbors=kwargs.get("max_num_neighbors", 64), conv_type=self.CONV_TYPE
             ),
