@@ -17,9 +17,9 @@ tqdm = "^4.40"
 torchnet = "^0.0.4"
 tensorboard = "^2.1"
 mkdocs = "^1.0"
-torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git"}
 torch = "1.2.0"
 etw-pytorch-utils = {git = "https://github.com/erikwijmans/etw_pytorch_utils.git"}
+torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev = "66aac86"}
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
@@ -29,9 +29,8 @@ rope = "^0.14.0"
 pre-commit = "^1.21.0"
 black = "^19.10b0"
 
+[tool.black]
+line-length = 120
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
-
-[tool.black]
-line-length = 120

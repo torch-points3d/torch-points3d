@@ -82,7 +82,6 @@ class UnetBasedModel(BaseModel):
         same convolution is given for each layer, and arguments are given
         in lists
         """
-
         num_convs = len(opt.down_conv.down_conv_nn)
 
         # Factory for creating up and down modules
@@ -276,7 +275,6 @@ class UnetSkipConnectionBlock(nn.Module):
         else:
             downconv_cls = self.get_from_kwargs(args_down, "down_conv_cls")
             upconv_cls = self.get_from_kwargs(args_up, "up_conv_cls")
-
             downconv = downconv_cls(**args_down)
             upconv = upconv_cls(**args_up)
 

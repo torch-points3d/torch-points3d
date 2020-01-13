@@ -9,8 +9,8 @@ experiment:
 
 # parameters for Weights and Biases
 wandb:
-    project: benchmarking
-    log: False
+    project: s3dis-pn2
+    log: True
 
 # parameters for TensorBoard Visualization
 tensorboard:
@@ -23,7 +23,7 @@ training:
     batch_size: 32
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
-    epochs: 350
+    epochs: 100
     optimizer: Adam
     lr: 0.01
     weight_name: "default" # Used during resume, select with model to load from [metric_name..., default]
