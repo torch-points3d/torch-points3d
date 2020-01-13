@@ -65,27 +65,28 @@ class BaseDenseConvolutionUp(BaseConvolution):
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
 
-    def conv(self, known_pos, uknown_pos, known_feat):
+    def conv(self, pos, pos_skip, x):
         raise NotImplementedError
 
     def forward(self, data):
-        """ Propagates features from known_data to unknown_data
+        """ Propagates features from one layer to the next.
+        data contains information from the down convs in data_skip
 
         Arguments:
-            data -- (known_data, unknown_data)
+            data -- (data, data_skip)
         """
-        known_data, unknown_data = data
-        known_pos, known_feat = known_data.pos, known_data.x
-        unknown_pos, unknown_feat = unknown_data.pos, unknown_data.x
-        new_features = self.conv(known_pos, unknown_pos, known_feat)
-        if unknown_feat is not None:
-            new_features = torch.cat([new_features, unknown_feat], dim=1)  # (B, C2 + C1, n)
+        data, data_skip = data
+        pos, x = data.pos, data.x
+        pos_skip, x_skip = data_skip.pos, data_skip.x
+        new_features = self.conv(pos, pos_skip, x)
+        if x_skip is not None:
+            new_features = torch.cat([new_features, x_skip], dim=1)  # (B, C2 + C1, n)
 
         new_features = new_features.unsqueeze(-1)
         if hasattr(self, "nn"):
             new_features = self.nn(new_features)
 
-        return Data(x=new_features.squeeze(-1), pos=unknown_pos)
+        return Data(x=new_features.squeeze(-1), pos=pos_skip)
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
@@ -93,14 +94,14 @@ class DenseFPModule(BaseDenseConvolutionUp):
         super(DenseFPModule, self).__init__(None)
         self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
 
-    def conv(self, known_pos, unknown_pos, known_feat):
-        assert unknown_pos.shape[2] == 3
-        if known_pos is not None:
-            dist, idx = tp.three_nn(unknown_pos, known_pos)
+    def conv(self, pos, pos_skip, x):
+        assert pos_skip.shape[2] == 3
+        if pos is not None:
+            dist, idx = tp.three_nn(pos_skip, pos)
             dist_recip = 1.0 / (dist + 1e-8)
             norm = torch.sum(dist_recip, dim=2, keepdim=True)
             weight = dist_recip / norm
-            interpolated_feats = tp.three_interpolate(known_feat, idx, weight)
+            interpolated_feats = tp.three_interpolate(x, idx, weight)
         else:
-            interpolated_feats = known_feat.expand(*(known_feat.size()[0:2] + [unknown_pos.size(1)]))
+            interpolated_feats = x.expand(*(x.size()[0:2] + [pos_skip.size(1)]))
         return interpolated_feats
