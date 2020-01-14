@@ -46,16 +46,16 @@ class Checkpoint(object):
         self._objects["models"] = {}
         self._objects["stats"] = {"train": [], "test": [], "val": []}
         self._objects["optimizer"] = None
-        self._objects["lr_scheduler"] = None
+        # self._objects["lr_scheduler"] = None
         self._objects["args"] = None
         self._objects["kwargs"] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, lr_scheduler, **kwargs):
+    def save_objects(self, models_to_save, stage, current_stat, optimizer, **kwargs):
         self._objects["models"] = models_to_save
         self._objects["stats"][stage].append(current_stat)
         self._objects["optimizer"] = optimizer
-        self._objects["lr_scheduler"] = lr_scheduler
+        # self._objects["lr_scheduler"] = lr_scheduler
         # self._objects['kwargs'] = kwargs
         torch.save(self._objects, self._check_path)
 
@@ -190,4 +190,4 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, model.lr_scheduler, **kwargs)
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, **kwargs)

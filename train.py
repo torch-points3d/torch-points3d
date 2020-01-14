@@ -21,12 +21,8 @@ from utils_folder.utils import merges_in_sub, get_log_dir, model_fn_decorator, s
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from datasets.utils import find_dataset_using_name
 
-log = logging.getLogger(__name__)
 
-
-def train(
-    epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint,
-):
+def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.train()
     tracker.reset("train")
     train_loader = dataset.train_dataloader()
@@ -56,7 +52,7 @@ def train(
         checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
-def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.eval()
     tracker.reset("test")
     loader = dataset.test_dataloader()
@@ -75,16 +71,18 @@ def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: Mo
     checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
-def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
-        log.info("EPOCH {} / {}".format(epoch, cfg.training.epochs))
-        train(epoch, model, dataset, device, tracker, checkpoint)
-        test(model, dataset, device, tracker, checkpoint)
+        log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
+        train(epoch, model, dataset, device, tracker, checkpoint, log)
+        test(model, dataset, device, tracker, checkpoint, log)
         log.info()
 
 
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
+    log = logging.getLogger(__name__)
+
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
 
@@ -123,7 +121,7 @@ def main(cfg):
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
-    log.info("Model size = %i" % params)
+    log.info("Model size = %i", params)
 
     # metric tracker
     if cfg.wandb.log:
@@ -137,7 +135,7 @@ def main(cfg):
     checkpoint = get_model_checkpoint(model, log_dir, tested_model_name, exp.resume, cfg_training.weight_name)
 
     # Run training / evaluation
-    run(cfg, model, dataset, device, tracker, checkpoint)
+    run(cfg, model, dataset, device, tracker, checkpoint, log)
 
 
 if __name__ == "__main__":
