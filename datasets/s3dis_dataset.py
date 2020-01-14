@@ -37,6 +37,7 @@ def object_name_to_label(object_class):
     }.get(object_class, 0)
     return object_label
 
+
 def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debug=False):
     """extract data from a room folder"""
     raw_path = osp.join(train_file, '{}.txt'.format(room_name))
@@ -47,9 +48,9 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             row = row[0].split(' ')
             if (len(row) != RECOMMENDED):
                 print("1: {} row {}: {}".format(raw_path, idx, row))
-            
+
             try:
-                for r in row: 
+                for r in row:
                     r = float(r)
             except:
                 print("2: {} row {}: {}".format(raw_path, idx, row))
@@ -86,6 +87,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
 
         return torch.from_numpy(xyz), torch.from_numpy(rgb), \
             torch.from_numpy(room_labels), torch.from_numpy(room_object_indices)
+
 
 class S3DIS(InMemoryDataset):
     r"""The (pre-processed) Stanford Large-Scale 3D Indoor Spaces dataset from
@@ -124,11 +126,13 @@ class S3DIS(InMemoryDataset):
                  train=True,
                  transform=None,
                  pre_transform=None,
+                 pre_collate_transform=None,
                  pre_filter=None,
                  keep_instance=False,
                  verbose=False,
                  debug=False):
         assert test_area >= 1 and test_area <= 6
+        self.pre_collate_transform = pre_collate_transform
         self.test_area = test_area
         self.keep_instance = keep_instance
         self.verbose = verbose
@@ -175,7 +179,7 @@ class S3DIS(InMemoryDataset):
         train_data_list, test_data_list = [], []
 
         for (area, room_name, file_path) in tq(train_files + test_files):
-            
+
             if self.debug:
                 read_s3dis_format(
                     file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
@@ -183,8 +187,7 @@ class S3DIS(InMemoryDataset):
                 xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
                     file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
 
-
-                data = Data(pos=xyz, x=rgb, y=room_labels, num_nodes=xyz.shape[0])
+                data = Data(pos=xyz, x=rgb.float(), y=room_labels)
 
                 if self.keep_instance:
                     data.room_object_indices = room_object_indices
@@ -200,8 +203,38 @@ class S3DIS(InMemoryDataset):
                 else:
                     test_data_list.append(data)
 
+        if self.pre_collate_transform:
+            train_data_list = self.pre_collate_transform.fit_transform(train_data_list)
+            test_data_list = self.pre_collate_transform.transform(test_data_list)
+
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
+
+
+"""
+class NormalizeMeanStd(object):
+
+    def __init__(self, keys):
+        self._keys = keys
+
+    def fit(self, data_list):
+        for key in self._keys:
+            if key in data_list[0]:
+                arr = [getattr(d, key) for d in data_list]
+                arr = torch.cat(arr, dim=0)
+                setattr(self, "{}_mean".format(key), torch.mean(arr, dim=-1))
+                setattr(self, "{}_std".format(key), torch.std(arr, dim=-1))
+
+    def transform(self, data_list):
+        for key in self._keys:
+            if key in data_list[0]:
+                data_list = [setattr((getattr(d, key) - getattr(self, '{}_mean'))/(getattr(d, '{}_std')))
+                             for d in data_list]
+
+    def fit_transform(self, data_list):
+        self.fit(data_list)
+        return self.transform(data_list)
+"""
 
 
 class S3DIS_With_Weights(S3DIS):
@@ -212,6 +245,7 @@ class S3DIS_With_Weights(S3DIS):
         train=True,
         transform=None,
         pre_transform=None,
+        pre_collate_transform=None,
         pre_filter=None,
         class_weight_method=None,
     ):
@@ -221,6 +255,7 @@ class S3DIS_With_Weights(S3DIS):
             train=train,
             transform=transform,
             pre_transform=pre_transform,
+            pre_collate_transform=pre_collate_transform,
             pre_filter=pre_filter,
         )
         inv_class_map = {
@@ -282,6 +317,7 @@ class S3DISDataset(BaseDataset):
                 T.RandomRotate(180, axis=2),
             ]
         )
+
         train_dataset = S3DIS_With_Weights(
             self._data_path,
             test_area=self.dataset_opt.fold,
