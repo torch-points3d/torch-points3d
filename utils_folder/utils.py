@@ -8,8 +8,11 @@ from collections import namedtuple
 from omegaconf import OmegaConf
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
+import logging
 
 from utils_folder.enums import ConvolutionFormat
+
+log = logging.getLogger(__name__)
 
 
 def model_fn_decorator(criterion):
@@ -73,7 +76,7 @@ def get_log_dir(log_dir, experiment_name):
 
 
 def colored_print(color, msg):
-    print(color + msg + "\033[0m")
+    log.info(color + msg + "\033[0m")
 
 
 def save_confusion_matrix(cm, path2save, ordered_names):
