@@ -76,7 +76,6 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
         train(epoch, model, dataset, device, tracker, checkpoint, log)
         test(model, dataset, device, tracker, checkpoint, log)
-        log.info()
 
 
 @hydra.main(config_path="conf/config.yaml")
