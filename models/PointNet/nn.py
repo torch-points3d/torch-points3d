@@ -1,11 +1,14 @@
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import global_max_pool
+import logging
 
 from models.core_modules import *
 from models.PointNet.modules import *
 from models.base_model import BaseModel
 from models.model_building_utils.config_utils import flatten_dict
+
+log = logging.getLogger(__name__)
 
 
 class SegmentationModel(BaseModel):
@@ -16,7 +19,7 @@ class SegmentationModel(BaseModel):
             dataset.has_fixed_points_transform if hasattr(dataset, "has_fixed_points_transform") else False
         )
         self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
-        print(self)
+        log.info(self)
 
     def set_input(self, data):
         self.input = data

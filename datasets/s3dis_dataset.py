@@ -10,6 +10,7 @@ from torch_geometric.data import (InMemoryDataset, Data, download_url,
                                   extract_zip)
 from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
+import logging
 
 from .base_dataset import BaseDataset
 from sklearn.neighbors import NearestNeighbors
@@ -210,6 +211,8 @@ class S3DIS(InMemoryDataset):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
 
+log = logging.getLogger(__name__)
+
 
 """
 class NormalizeMeanStd(object):
@@ -277,9 +280,7 @@ class S3DIS_With_Weights(S3DIS):
             if class_weight_method is None:
                 weights = torch.ones((len(inv_class_map.keys())))
             else:
-                self.idx_classes, weights = torch.unique(
-                    self.data.y, return_counts=True
-                )
+                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
                 weights = weights.float()
                 weights = weights.mean() / weights
                 if class_weight_method == "sqrt":
@@ -289,12 +290,9 @@ class S3DIS_With_Weights(S3DIS):
                     weights = 1 / torch.log(1.1 + weights / weights.sum())
 
                 weights /= torch.sum(weights)
-            print(
+            log.info(
                 "CLASS WEIGHT : {}".format(
-                    {
-                        name: np.round(weights[index].item(), 4)
-                        for index, name in inv_class_map.items()
-                    }
+                    {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
                 )
             )
             self.weight_classes = weights
@@ -311,11 +309,7 @@ class S3DISDataset(BaseDataset):
         pre_transform = T.FixedPoints(dataset_opt.room_points)
 
         transform = T.Compose(
-            [
-                T.FixedPoints(dataset_opt.num_points),
-                T.RandomTranslate(0.01),
-                T.RandomRotate(180, axis=2),
-            ]
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
         )
 
         train_dataset = S3DIS_With_Weights(

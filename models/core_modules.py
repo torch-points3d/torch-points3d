@@ -210,24 +210,6 @@ class GlobalBaseModule(torch.nn.Module):
         return batch_obj
 
 
-class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max", *args, **kwargs):
-        super(GlobalDenseBaseModule, self).__init__()
-        self.nn = pt_utils.SharedMLP(nn)
-
-    def forward(self, data):
-        batch_obj = Batch()
-        x, pos, batch = data.x, data.pos, data.batch
-        pos_flipped = pos.transpose(1, 2).contiguous()
-        x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
-        x = x.squeeze().max(-1)[0]
-        batch_obj.x = x
-        batch_obj.pos = pos.new_zeros((x.size(0), 3, 1))
-        batch_obj.batch = torch.arange(x.size(0), device=x.device)
-        copy_from_to(data, batch_obj)
-        return batch_obj
-
-
 class GlobalPartialDenseBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr="max", *args, **kwargs):
         super(GlobalPartialDenseBaseModule, self).__init__()
