@@ -53,6 +53,11 @@ class BaseModel(torch.nn.Module):
     def optimizer(self):
         return self._optimizer
 
+    @property
+    def learning_rate(self):
+        for param_group in self.optimizer.param_groups:
+            return param_group["lr"]
+
     @abstractmethod
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
