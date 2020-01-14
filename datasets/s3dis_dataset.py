@@ -77,7 +77,7 @@ class S3DISDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
-        pre_transform = cT.GridSampling(dataset_opt.first_subsampling)
+        pre_transform = cT.GridSampling(dataset_opt.first_subsampling, 13)
 
         transform = T.Compose(
             [
