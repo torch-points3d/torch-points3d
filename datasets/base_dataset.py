@@ -91,6 +91,16 @@ class BaseDataset:
         return False
 
     @property
+    def class_to_segments(self):
+        """ Use this property to return the hierarchical map between classes and segment ids, example:
+        {
+            'Airplaine': [0,1,2],
+            'Boat': [3,4,5]
+        } 
+        """
+        return None
+
+    @property
     def num_classes(self):
         return self._num_classes
 
@@ -101,6 +111,10 @@ class BaseDataset:
     @property
     def feature_dimension(self):
         return self._feature_dimension
+
+    @property
+    def batch_size(self):
+        return self.training_opt.batch_size
 
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
