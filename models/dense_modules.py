@@ -120,3 +120,16 @@ class DenseFPModule(BaseDenseConvolutionUp):
         else:
             interpolated_feats = x.expand(*(x.size()[0:2] + [pos_skip.size(1)]))
         return interpolated_feats
+
+
+class GlobalDenseBaseModule(torch.nn.Module):
+    def __init__(self, nn):
+        super(GlobalDenseBaseModule, self).__init__()
+        self.nn = pt_utils.SharedMLP(nn)
+
+    def forward(self, data):
+        x, pos = data.x, data.pos
+        pos_flipped = pos.transpose((2, 1)).contiguous()
+        x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
+        x = x.squeeze().max(-1)[0]
+        return Data(x=x, pos=pos)

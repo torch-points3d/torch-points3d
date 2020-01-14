@@ -11,10 +11,13 @@ from abc import abstractmethod
 import wandb
 from collections import OrderedDict
 from torch.utils.tensorboard import SummaryWriter
+import logging
 
 from metrics.confusion_matrix import ConfusionMatrix
 from metrics.model_checkpoint import ModelCheckpoint
 from models.base_model import BaseModel
+
+log = logging.getLogger(__name__)
 
 
 def get_tracker(
@@ -61,7 +64,7 @@ class BaseTracker:
         self._n_iter = 0
 
         if self._use_tensorboard:
-            print("Access tensorboard with the following command <tensorboard --logdir={}>".format(self._log_dir))
+            log.info("Access tensorboard with the following command <tensorboard --logdir={}>".format(self._log_dir))
             self._writer = SummaryWriter(log_dir=self._log_dir)
 
     @abstractmethod

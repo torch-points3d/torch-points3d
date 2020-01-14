@@ -9,6 +9,7 @@ from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zi
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
+from .transforms import RandomNoise
 from .base_dataset import BaseDataset
 
 
@@ -195,14 +196,15 @@ class ShapeNetDataset(BaseDataset):
         except KeyError:
             self._category = None
         pre_transform = T.NormalizeScale()
-        transform = T.FixedPoints(dataset_opt.num_points)
+        train_transform = T.Compose([T.FixedPoints(dataset_opt.num_points), RandomNoise()])
+        test_transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(
             self._data_path,
             self._category,
             include_normals=dataset_opt.normal,
             split="trainval",
             pre_transform=pre_transform,
-            transform=transform,
+            transform=train_transform,
         )
         test_dataset = ShapeNet(
             self._data_path,
@@ -210,7 +212,7 @@ class ShapeNetDataset(BaseDataset):
             include_normals=dataset_opt.normal,
             split="test",
             pre_transform=pre_transform,
-            transform=transform,
+            transform=test_transform,
         )
         self._categories = train_dataset.categories
         self._create_dataloaders(train_dataset, test_dataset, validation=None)

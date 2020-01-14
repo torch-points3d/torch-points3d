@@ -8,10 +8,13 @@ from torch_geometric.nn import knn_interpolate
 from torch_geometric.nn import radius, global_max_pool
 from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
+import logging
 
 from .modules import *
 from models.dense_modules import DenseFPModule
 from models.unet_base import UnetBasedModel
+
+log = logging.getLogger(__name__)
 
 
 class SegmentationModel(UnetBasedModel):
@@ -35,10 +38,21 @@ class SegmentationModel(UnetBasedModel):
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self._num_classes = dataset.num_classes
         self._weight_classes = dataset.weight_classes
+        self._use_category = option.use_category
+        if self._use_category:
+            if not dataset.class_to_segments:
+                raise ValueError(
+                    "The dataset needs to specify a class_to_segments property when using category information for segmentation"
+                )
+            self._num_categories = len(dataset.class_to_segments.keys())
+            log.info("Using category information for the predictions with %i categories", self._num_categories)
+        else:
+            self._num_categories = 0
 
         # Last MLP
         last_mlp_opt = option.mlp_cls
-        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0])
+
+        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0] + self._num_categories)
         for i in range(1, len(last_mlp_opt.nn)):
             self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
         if last_mlp_opt.dropout:
@@ -58,16 +72,26 @@ class SegmentationModel(UnetBasedModel):
         """
         self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B,N]
+        if self._use_category:
+            self.category = data.category
 
     def forward(self):
         r"""
             Forward pass of the network
             self.data:
                 x -- Features [B, C, N]
-                pos -- Features [B, 3, N]
+                pos -- Features [B, N, 3]
         """
         data = self.model(self.input)
         last_feature = data.x
+        if self._use_category:
+            num_points = data.pos.shape[1]
+            cat_one_hot = (
+                torch.zeros((data.pos.shape[0], self._num_categories, num_points)).float().to(self.category.device)
+            )
+            cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
+            last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
+
         self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
         return self.output
 

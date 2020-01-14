@@ -24,6 +24,9 @@
 # Basic libs
 import numpy as np
 import sys
+import logging
+
+log = logging.getLogger(__name__)
 
 
 # Define PLY types
@@ -239,19 +242,19 @@ def write_ply(filename, field_list, field_names, triangular_faces=None):
         if field.ndim < 2:
             field_list[i] = field.reshape(-1, 1)
         if field.ndim > 2:
-            print("fields have more than 2 dimensions")
+            log.info("fields have more than 2 dimensions")
             return False
 
     # check all fields have the same number of data
     n_points = [field.shape[0] for field in field_list]
     if not np.all(np.equal(n_points, n_points[0])):
-        print("wrong field dimensions")
+        log.info("wrong field dimensions")
         return False
 
     # Check if field_names and field_list have same nb of column
     n_fields = np.sum([field.shape[1] for field in field_list])
     if n_fields != len(field_names):
-        print("wrong number of field names")
+        log.info("wrong number of field names")
         return False
 
     # Add extension if not there

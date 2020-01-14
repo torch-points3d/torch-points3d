@@ -7,6 +7,11 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import functools
 import operator
+import logging
+
+from schedulers.lr_schedulers import get_scheduler
+
+log = logging.getLogger(__name__)
 
 
 class BaseModel(torch.nn.Module):
@@ -35,13 +40,14 @@ class BaseModel(torch.nn.Module):
         self.loss_names = []
         self.output = None
         self._optimizer: Optional[Optimizer] = None
-        self._scheduler: Optimizer[_LRScheduler] = None
+        self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
         self._precompute_multi_scale = opt.precompute_multi_scale if "precompute_multi_scale" in opt else False
+        self._iterations = 0
 
     @property
-    def scheduler(self):
-        return self._scheduler
+    def lr_scheduler(self):
+        return self._lr_scheduler
 
     @property
     def optimizer(self):
@@ -66,12 +72,15 @@ class BaseModel(torch.nn.Module):
     def get_output(self):
         return self.output
 
-    def optimize_parameters(self):
+    def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self._iterations += batch_size
         self.forward()  # first call forward to calculate intermediate results
         self._optimizer.zero_grad()  # clear existing gradients
         self.backward()  # calculate gradients
         self._optimizer.step()  # update parameters
+        if self._lr_scheduler is not None:
+            self._lr_scheduler.step(self._iterations)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -85,9 +94,10 @@ class BaseModel(torch.nn.Module):
                         errors_ret[name] = None
         return errors_ret
 
-    def set_optimizer(self, optimizer_cls: Optimizer, lr=0.001):
-        self._optimizer = optimizer_cls(self.parameters(), lr=lr)
-        print(self._optimizer)
+    def set_optimizer(self, optimizer_cls: Optimizer, lr_params):
+        self._optimizer = optimizer_cls(self.parameters(), lr=lr_params.base_lr)
+        self._lr_scheduler = get_scheduler(lr_params, self._optimizer)
+        log.info(self._optimizer)
 
     def get_named_internal_losses(self):
         """
