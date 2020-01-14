@@ -102,6 +102,10 @@ class BaseDataset:
     def feature_dimension(self):
         return self._feature_dimension
 
+    @property
+    def batch_size(self):
+        return self.training_opt.batch_size
+
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
             if isinstance(attr, DataLoader):

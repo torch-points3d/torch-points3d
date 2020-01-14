@@ -4,8 +4,11 @@ import torch
 from torch_geometric.datasets import S3DIS
 from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
+import logging
 
 from .base_dataset import BaseDataset
+
+log = logging.getLogger(__name__)
 
 
 class S3DIS_With_Weights(S3DIS):
@@ -46,9 +49,7 @@ class S3DIS_With_Weights(S3DIS):
             if class_weight_method is None:
                 weights = torch.ones((len(inv_class_map.keys())))
             else:
-                self.idx_classes, weights = torch.unique(
-                    self.data.y, return_counts=True
-                )
+                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
                 weights = weights.float()
                 weights = weights.mean() / weights
                 if class_weight_method == "sqrt":
@@ -58,12 +59,9 @@ class S3DIS_With_Weights(S3DIS):
                     weights = 1 / torch.log(1.1 + weights / weights.sum())
 
                 weights /= torch.sum(weights)
-            print(
+            log.info(
                 "CLASS WEIGHT : {}".format(
-                    {
-                        name: np.round(weights[index].item(), 4)
-                        for index, name in inv_class_map.items()
-                    }
+                    {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
                 )
             )
             self.weight_classes = weights
@@ -77,11 +75,7 @@ class S3DISDataset(BaseDataset):
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
         transform = T.Compose(
-            [
-                T.FixedPoints(dataset_opt.num_points),
-                T.RandomTranslate(0.01),
-                T.RandomRotate(180, axis=2),
-            ]
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
         )
         train_dataset = S3DIS_With_Weights(
             self._data_path,

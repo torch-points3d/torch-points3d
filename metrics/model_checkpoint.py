@@ -4,10 +4,13 @@ import tempfile
 import warnings
 import sys
 import torch
+import logging
 
 from models.base_model import BaseModel
 from metrics.colored_tqdm import COLORS
 from utils_folder.utils import colored_print
+
+log = logging.getLogger(__name__)
 
 DEFAULT_METRICS_FUNC = {
     "iou": max,
@@ -43,16 +46,16 @@ class Checkpoint(object):
         self._objects["models"] = {}
         self._objects["stats"] = {"train": [], "test": [], "val": []}
         self._objects["optimizer"] = None
-        self._objects["scheduler"] = None
+        self._objects["lr_scheduler"] = None
         self._objects["args"] = None
         self._objects["kwargs"] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, scheduler, **kwargs):
+    def save_objects(self, models_to_save, stage, current_stat, optimizer, lr_scheduler, **kwargs):
         self._objects["models"] = models_to_save
         self._objects["stats"][stage].append(current_stat)
         self._objects["optimizer"] = optimizer
-        self._objects["scheduler"] = scheduler
+        self._objects["lr_scheduler"] = lr_scheduler
         # self._objects['kwargs'] = kwargs
         torch.save(self._objects, self._check_path)
 
@@ -89,12 +92,12 @@ class Checkpoint(object):
                 try:
                     key_name = "best_{}".format(weight_name)
                     model = models[key_name]
-                    print("Model loaded from {}:{}".format(self._check_path, key_name))
+                    log.info("Model loaded from {}:{}".format(self._check_path, key_name))
                     return model
                 except:
                     key_name = "default"
                     model = models["default"]
-                    print("Model loaded from {}:{}".format(self._check_path, key_name))
+                    log.info("Model loaded from {}:{}".format(self._check_path, key_name))
                     return model
             except:
                 raise Exception("This weight name isn't within the checkpoint ")
@@ -187,4 +190,4 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, model.scheduler, **kwargs)
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, model.lr_scheduler, **kwargs)

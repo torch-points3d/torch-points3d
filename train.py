@@ -9,22 +9,27 @@ from tqdm import tqdm as tq
 import time
 import wandb
 from omegaconf import OmegaConf
+import logging
 
 from models.utils import find_model_using_name
 from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
+from datasets.base_dataset import BaseDataset
 from metrics.base_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
 from utils_folder.utils import merges_in_sub, get_log_dir, model_fn_decorator, set_format, merges
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from datasets.utils import find_dataset_using_name
 
+log = logging.getLogger(__name__)
+
 
 def train(
-    epoch, model: BaseModel, train_loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint,
+    epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint,
 ):
     model.train()
     tracker.reset("train")
+    train_loader = dataset.train_dataloader()
 
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
@@ -34,7 +39,7 @@ def train(
             t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()
-            model.optimize_parameters()
+            model.optimize_parameters(dataset.batch_size)
 
             if i % 10 == 0:
                 tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
@@ -51,10 +56,10 @@ def train(
         checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
-def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     model.eval()
     tracker.reset("test")
-
+    loader = dataset.test_dataloader()
     with Ctq(loader) as tq_test_loader:
         for data in tq_test_loader:
             data = data.to(device)
@@ -70,14 +75,12 @@ def test(model: BaseModel, loader, device, tracker: BaseTracker, checkpoint: Mod
     checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
-def run(cfg, model, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
-    train_loader = dataset.train_dataloader()
-    test_loader = dataset.test_dataloader()
+def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
-        print("EPOCH {} / {}".format(epoch, cfg.training.epochs))
-        train(epoch, model, train_loader, device, tracker, checkpoint)
-        test(model, test_loader, device, tracker, checkpoint)
-        print()
+        log.info("EPOCH {} / {}".format(epoch, cfg.training.epochs))
+        train(epoch, model, dataset, device, tracker, checkpoint)
+        test(model, dataset, device, tracker, checkpoint)
+        log.info()
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -109,7 +112,10 @@ def main(cfg):
     resolve_model(model_config, dataset, tested_task)
     model_config = merges_in_sub(model_config, [cfg_training, dataset_config])
     model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
-    model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), lr=cfg_training.lr)
+
+    # Optimizer
+    lr_params = cfg_training.learning_rate
+    model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), lr_params=lr_params)
 
     # Set sampling / search strategies
     dataset.set_strategies(model, precompute_multi_scale=cfg_training.precompute_multi_scale)
@@ -117,7 +123,7 @@ def main(cfg):
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
-    print("Model size = %i" % params)
+    log.info("Model size = %i" % params)
 
     # metric tracker
     if cfg.wandb.log:
