@@ -111,7 +111,7 @@ class BaseTracker:
 
     def print_summary(self):
         metrics = self.get_metrics(verbose=True)
-        log.info("".join(["=" for i in range(50)]))
+        print("".join(["=" for i in range(50)]))
         for key, value in metrics.items():
-            log.info("    {} = {}".format(key, value))
-        log.info("".join(["=" for i in range(50)]))
+            print("    {} = {}".format(key, value))
+        print("".join(["=" for i in range(50)]))
