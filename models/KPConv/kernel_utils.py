@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os import makedirs
 from os.path import join, exists
+import logging
 
 from .plyutils import read_ply, write_ply
 
@@ -37,6 +38,7 @@ from .plyutils import read_ply, write_ply
 #       \***************/
 #
 #
+log = logging.getLogger(__name__)
 
 
 def kernel_point_optimization_debug(
@@ -157,7 +159,7 @@ def kernel_point_optimization_debug(
         kernel_points -= np.expand_dims(moving_dists, -1) * gradients / np.expand_dims(gradients_norms + 1e-6, -1)
 
         if verbose:
-            print("iter {:5d} / max grad = {:f}".format(iter, np.max(gradients_norms[:, 3:])))
+            log.info("iter {:5d} / max grad = {:f}".format(iter, np.max(gradients_norms[:, 3:])))
         if verbose > 1:
             plt.clf()
             plt.plot(kernel_points[0, :, 0], kernel_points[0, :, 1], ".")
@@ -169,7 +171,7 @@ def kernel_point_optimization_debug(
             plt.draw()
             plt.pause(0.001)
             plt.show(block=False)
-            print(moving_factor)
+            log.info(moving_factor)
 
         # moving factor decay
         moving_factor *= continuous_moving_decay

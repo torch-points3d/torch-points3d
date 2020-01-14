@@ -7,7 +7,9 @@ import subprocess
 import sys
 import os
 from collections import namedtuple
+import logging
 
+log = logging.getLogger(__name__)
 try:
     import torch
 
@@ -377,9 +379,9 @@ def get_pretty_env_info():
 
 
 def main():
-    print("Collecting environment information...")
+    log.info("Collecting environment information...")
     output = get_pretty_env_info()
-    print(output)
+    log.info(output)
 
 
 if __name__ == "__main__":

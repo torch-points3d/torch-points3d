@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    model_name: pointnet2_original
+    model_name: pointnet2_onehot
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
@@ -9,8 +9,8 @@ experiment:
 
 # parameters for Weights and Biases
 wandb:
-    project: s3dis-pn2
-    log: False
+    project: shapenet-pn2
+    log: True
 
 # parameters for TensorBoard Visualization
 tensorboard:
@@ -20,14 +20,18 @@ tensorboard:
 training:
     shuffle: True
     num_workers: 2
-    batch_size: 8
     batch_size: 32
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
     epochs: 100
     optimizer: Adam
-    lr : 0.01
-    weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
+    learning_rate:
+        scheduler_type: "step_decay"
+        base_lr: 0.001
+        lr_decay: 0.5
+        decay_step: 200000
+        lr_clip: 1e-5
+    weight_name: "default" # Used during resume, select with model to load from [metric_name..., default]
     enable_cudnn: True
 
 # Those arguments defines the available datasets
@@ -49,7 +53,7 @@ data:
         name: s3dis
         dataroot: data
         fold: 5
-        class_weight_method: 'sqrt'
+        class_weight_method: "sqrt"
         num_points: 1024
         first_subsampling: 0.04
         density_parameter: 5.0
@@ -58,3 +62,4 @@ data:
 defaults:
     - models: segmentation
     - sota # Contains current SOTA results on different datasets (extracted from papers !).
+    - hydra/job_logging: custom

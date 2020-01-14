@@ -22,9 +22,12 @@ from omegaconf.dictconfig import DictConfig
 from collections import defaultdict
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
+import logging
 
 from datasets.base_dataset import BaseDataset
 from .base_model import BaseModel
+
+log = logging.getLogger(__name__)
 
 SPECIAL_NAMES = ["radius", "max_num_neighbors"]
 
@@ -122,7 +125,7 @@ class UnetBasedModel(BaseModel):
             args_up=args_up, args_down=args_down, submodule=unet_block, outermost=True
         )  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
-        print(self)
+        log.info(self)
 
     def _init_from_layer_list_format(self, opt, model_type, dataset, modules_lib):
         """Create a unetbasedmodel from the layer list options format - where
@@ -172,7 +175,7 @@ class UnetBasedModel(BaseModel):
 
         self._save_sampling_and_search(self.model, index)
 
-        print(self)
+        log.info(self)
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
