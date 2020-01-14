@@ -14,6 +14,7 @@ import torch_geometric.transforms as T
 from .base_dataset import BaseDataset
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm as tq
+import csv
 
 
 def object_name_to_label(object_class):
@@ -36,42 +37,55 @@ def object_name_to_label(object_class):
     }.get(object_class, 0)
     return object_label
 
-
-def read_s3dis_format(train_file, room_name, label_out=True, verbose=False):
+def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debug=False):
     """extract data from a room folder"""
-
     raw_path = osp.join(train_file, '{}.txt'.format(room_name))
-    room_ver = pd.read_csv(raw_path, sep=' ', header=None).values
-    xyz = np.ascontiguousarray(room_ver[:, 0:3], dtype='float32')
-    try:
-        rgb = np.ascontiguousarray(room_ver[:, 3:6], dtype='uint8')
-    except ValueError:
-        rgb = np.zeros((room_ver.shape[0], 3), dtype='uint8')
-        print('WARN - corrupted rgb data for file %s' % raw_path)
-    if not label_out:
-        return xyz, rgb
-    n_ver = len(room_ver)
-    del room_ver
-    nn = NearestNeighbors(1, algorithm='kd_tree').fit(xyz)
-    room_labels = np.zeros((n_ver,), dtype='int64')
-    room_object_indices = np.zeros((n_ver,), dtype='int64')
-    objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
-    i_object = 1
-    for single_object in objects:
-        object_name = os.path.splitext(os.path.basename(single_object))[0]
-        if verbose:
-            print("adding object " + str(i_object) + " : " + object_name)
-        object_class = object_name.split('_')[0]
-        object_label = object_name_to_label(object_class)
-        obj_ver = pd.read_csv(single_object, sep=' ', header=None).values
-        _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
-        room_labels[obj_ind] = object_label
-        room_object_indices[obj_ind] = i_object
-        i_object = i_object + 1
+    if debug:
+        reader = pd.read_csv(raw_path, delimiter='\n')
+        RECOMMENDED = 6
+        for idx, row in enumerate(reader.values):
+            row = row[0].split(' ')
+            if (len(row) != RECOMMENDED):
+                print("1: {} row {}: {}".format(raw_path, idx, row))
+            
+            try:
+                for r in row: 
+                    r = float(r)
+            except:
+                print("2: {} row {}: {}".format(raw_path, idx, row))
 
-    return torch.from_numpy(xyz), torch.from_numpy(rgb), \
-        torch.from_numpy(room_labels), torch.from_numpy(room_object_indices)
+        return True
+    else:
+        room_ver = pd.read_csv(raw_path, sep=' ', header=None).values
+        xyz = np.ascontiguousarray(room_ver[:, 0:3], dtype='float32')
+        try:
+            rgb = np.ascontiguousarray(room_ver[:, 3:6], dtype='uint8')
+        except ValueError:
+            rgb = np.zeros((room_ver.shape[0], 3), dtype='uint8')
+            print('WARN - corrupted rgb data for file %s' % raw_path)
+        if not label_out:
+            return xyz, rgb
+        n_ver = len(room_ver)
+        del room_ver
+        nn = NearestNeighbors(1, algorithm='kd_tree').fit(xyz)
+        room_labels = np.zeros((n_ver,), dtype='int64')
+        room_object_indices = np.zeros((n_ver,), dtype='int64')
+        objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
+        i_object = 1
+        for single_object in objects:
+            object_name = os.path.splitext(os.path.basename(single_object))[0]
+            if verbose:
+                print("adding object " + str(i_object) + " : " + object_name)
+            object_class = object_name.split('_')[0]
+            object_label = object_name_to_label(object_class)
+            obj_ver = pd.read_csv(single_object, sep=' ', header=None).values
+            _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
+            room_labels[obj_ind] = object_label
+            room_object_indices[obj_ind] = i_object
+            i_object = i_object + 1
 
+        return torch.from_numpy(xyz), torch.from_numpy(rgb), \
+            torch.from_numpy(room_labels), torch.from_numpy(room_object_indices)
 
 class S3DIS(InMemoryDataset):
     r"""The (pre-processed) Stanford Large-Scale 3D Indoor Spaces dataset from
@@ -112,11 +126,13 @@ class S3DIS(InMemoryDataset):
                  pre_transform=None,
                  pre_filter=None,
                  keep_instance=False,
-                 verbose=False):
+                 verbose=False,
+                 debug=False):
         assert test_area >= 1 and test_area <= 6
         self.test_area = test_area
         self.keep_instance = keep_instance
         self.verbose = verbose
+        self.debug = debug
         super(S3DIS, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
@@ -159,25 +175,30 @@ class S3DIS(InMemoryDataset):
         train_data_list, test_data_list = [], []
 
         for (area, room_name, file_path) in tq(train_files + test_files):
-
-            xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
-                file_path, room_name, label_out=True, verbose=self.verbose)
-
-            data = Data(pos=xyz, x=rgb, y=room_labels, num_nodes=xyz.shape[0])
-
-            if self.keep_instance:
-                data.room_object_indices = room_object_indices
-
-            if self.pre_filter is not None and not self.pre_filter(data):
-                continue
-
-            if self.pre_transform is not None:
-                data = self.pre_transform(data)
-
-            if (area, room_name, file_path) in train_files:
-                train_data_list.append(data)
+            
+            if self.debug:
+                read_s3dis_format(
+                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
             else:
-                test_data_list.append(data)
+                xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
+                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+
+
+                data = Data(pos=xyz, x=rgb, y=room_labels, num_nodes=xyz.shape[0])
+
+                if self.keep_instance:
+                    data.room_object_indices = room_object_indices
+
+                if self.pre_filter is not None and not self.pre_filter(data):
+                    continue
+
+                if self.pre_transform is not None:
+                    data = self.pre_transform(data)
+
+                if (area, room_name, file_path) in train_files:
+                    train_data_list.append(data)
+                else:
+                    test_data_list.append(data)
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
