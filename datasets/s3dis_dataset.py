@@ -1,11 +1,181 @@
 import os
+import os.path as osp
 import numpy as np
+import pandas as pd
 import torch
-from torch_geometric.datasets import S3DIS
+import h5py
+import torch
+import glob
+from torch_geometric.data import (InMemoryDataset, Data, download_url,
+                                  extract_zip)
 from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
 
 from .base_dataset import BaseDataset
+from sklearn.neighbors import NearestNeighbors
+
+
+def object_name_to_label(object_class):
+    """convert from object name in S3DIS to an int"""
+    object_label = {
+        'ceiling': 1,
+        'floor': 2,
+        'wall': 3,
+        'column': 4,
+        'beam': 5,
+        'window': 6,
+        'door': 7,
+        'table': 8,
+        'chair': 9,
+        'bookcase': 10,
+        'sofa': 11,
+        'board': 12,
+        'clutter': 13,
+        'stairs': 0,
+    }.get(object_class, 0)
+    return object_label
+
+
+def read_s3dis_format(train_file, room_name, label_out=True):
+    """extract data from a room folder"""
+
+    raw_path = osp.join(train_file, '{}.txt'.format(room_name))
+    room_ver = pd.read_csv(raw_path, sep=' ', header=None).values
+    xyz = np.ascontiguousarray(room_ver[:, 0:3], dtype='float32')
+    try:
+        rgb = np.ascontiguousarray(room_ver[:, 3:6], dtype='uint8')
+    except ValueError:
+        rgb = np.zeros((room_ver.shape[0], 3), dtype='uint8')
+        print('WARN - corrupted rgb data for file %s' % raw_path)
+    if not label_out:
+        return xyz, rgb
+    n_ver = len(room_ver)
+    del room_ver
+    nn = NearestNeighbors(1, algorithm='kd_tree').fit(xyz)
+    room_labels = np.zeros((n_ver,), dtype='uint8')
+    room_object_indices = np.zeros((n_ver,), dtype='uint32')
+    objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
+    i_object = 1
+    for single_object in objects:
+        object_name = os.path.splitext(os.path.basename(single_object))[0]
+        print("adding object " + str(i_object) + " : " + object_name)
+        object_class = object_name.split('_')[0]
+        object_label = object_name_to_label(object_class)
+        # obj_ver = genfromtxt(single_object, delimiter=' ')
+        obj_ver = pd.read_csv(single_object, sep=' ', header=None).values
+        _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
+        room_labels[obj_ind] = object_label
+        room_object_indices[obj_ind] = i_object
+        i_object = i_object + 1
+
+    return xyz, rgb, room_labels, room_object_indices
+
+
+class S3DIS(InMemoryDataset):
+    r"""The (pre-processed) Stanford Large-Scale 3D Indoor Spaces dataset from
+    the `"3D Semantic Parsing of Large-Scale Indoor Spaces"
+    <http://buildingparser.stanford.edu/images/3D_Semantic_Parsing.pdf>`_
+    paper, containing point clouds of six large-scale indoor parts in three
+    buildings with 12 semantic elements (and one clutter class).
+
+    Args:
+        root (string): Root directory where the dataset should be saved.
+        test_area (int, optional): Which area to use for testing (1-6).
+            (default: :obj:`6`)
+        train (bool, optional): If :obj:`True`, loads the training dataset,
+            otherwise the test dataset. (default: :obj:`True`)
+        transform (callable, optional): A function/transform that takes in an
+            :obj:`torch_geometric.data.Data` object and returns a transformed
+            version. The data object will be transformed before every access.
+            (default: :obj:`None`)
+        pre_transform (callable, optional): A function/transform that takes in
+            an :obj:`torch_geometric.data.Data` object and returns a
+            transformed version. The data object will be transformed before
+            being saved to disk. (default: :obj:`None`)
+        pre_filter (callable, optional): A function that takes in an
+            :obj:`torch_geometric.data.Data` object and returns a boolean
+            value, indicating whether the data object should be included in the
+            final dataset. (default: :obj:`None`)
+    """
+
+    url = ("https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1")
+    zip_name = "Stanford3dDataset_v1.2_Aligned_Version.zip"
+    folders = ["Area_{}".format(i) for i in range(1, 7)]
+
+    def __init__(self,
+                 root,
+                 test_area=6,
+                 train=True,
+                 transform=None,
+                 pre_transform=None,
+                 pre_filter=None,
+                 keep_instance=False):
+        assert test_area >= 1 and test_area <= 6
+        self.test_area = test_area
+        self.keep_instance = keep_instance
+        super(S3DIS, self).__init__(root, transform, pre_transform, pre_filter)
+        path = self.processed_paths[0] if train else self.processed_paths[1]
+        self.data, self.slices = torch.load(path)
+
+    @property
+    def raw_file_names(self):
+        return self.folders
+
+    @property
+    def processed_file_names(self):
+        test_area = self.test_area
+        return ['{}_{}.pt'.format(s, test_area) for s in ['train', 'test']]
+
+    def download(self):
+        raw_folders = os.listdir(self.raw_dir)
+        if len(raw_folders) == 0:
+            raise RuntimeError(
+                'Dataset not found. Please download {} from {} and move it to {} with {}'.
+                format(self.zip_name, self.url, self.raw_dir, self.folders))
+        else:
+            intersection = len(set(self.folders).intersection(set(raw_folders)))
+            if intersection == 0:
+                print('The data seems properly downloaded')
+            else:
+                raise RuntimeError(
+                    'Dataset not found. Please download {} from {} and move it to {} with {}'.
+                    format(self.zip_name, self.url, self.raw_dir, self.folders))
+
+    def process(self):
+
+        train_areas = [f for f in self.folders if str(self.test_area) not in f]
+        test_areas = [f for f in self.folders if str(self.test_area) in f]
+
+        train_files = [(f, room_name, osp.join(self.raw_dir, f, room_name)) for f in train_areas
+                       for room_name in os.listdir(osp.join(self.raw_dir, f)) if '.DS_Store' != room_name]
+
+        test_files = [(f, room_name, osp.join(self.raw_dir, f, room_name)) for f in test_areas
+                      for room_name in os.listdir(osp.join(self.raw_dir, f)) if '.DS_Store' != room_name]
+
+        train_data_list, test_data_list = [], []
+
+        for (area, room_name, file_path) in train_files + test_files:
+
+            xyz, rgb, room_labels, room_object_indices = read_s3dis_format(file_path, room_name, label_out=True)
+
+            data = Data(pos=xyz, x=rgb, y=room_labels)
+
+            if self.keep_instance:
+                data.room_object_indices = room_object_indices
+
+            if self.pre_filter is not None and not self.pre_filter(data):
+                continue
+
+            if self.pre_transform is not None:
+                data = self.pre_transform(data)
+
+            if (area, room_name, file_path) in train_files:
+                train_data_list.append(data)
+            else:
+                test_data_list.append(data)
+
+        torch.save(self.collate(train_data_list), self.processed_paths[0])
+        torch.save(self.collate(test_data_list), self.processed_paths[1])
 
 
 class S3DIS_With_Weights(S3DIS):
