@@ -75,12 +75,12 @@ class BaseModel(torch.nn.Module):
     def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self._iterations += batch_size
-        if self._lr_scheduler is not None:
-            self._lr_scheduler.step(self._iterations)
         self.forward()  # first call forward to calculate intermediate results
         self._optimizer.zero_grad()  # clear existing gradients
         self.backward()  # calculate gradients
         self._optimizer.step()  # update parameters
+        if self._lr_scheduler is not None:
+            self._lr_scheduler.step(self._iterations)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""

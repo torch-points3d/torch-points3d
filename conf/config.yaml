@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    model_name: pointnet2_original
+    model_name: pointnet2_onehot
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
@@ -30,7 +30,7 @@ training:
         scheduler_type: "step_decay"
         base_lr: 0.001
         lr_decay: 0.5
-        decay_step: 10
+        decay_step: 20000
         lr_clip: 1e-5
     weight_name: 'default' # Used during resume, select with model to load from [metric_name..., default]
     enable_cudnn: True
