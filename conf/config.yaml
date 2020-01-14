@@ -29,7 +29,7 @@ training:
         scheduler_type: "step_decay"
         base_lr: 0.001
         lr_decay: 0.5
-        decay_step: 20000
+        decay_step: 200000
         lr_clip: 1e-5
     weight_name: "default" # Used during resume, select with model to load from [metric_name..., default]
     enable_cudnn: True

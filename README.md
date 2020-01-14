@@ -59,9 +59,8 @@ And you should see something like that
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
 | [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3,026,829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11
 
-## Shapenet
-
-
+## Shapenet part segmentation
+The data reported below correspond to the part segmentation problem for Shapenet for all categories. The mean values reported are the mean of each per category metric.
 | Model Name | Use Normals | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
 | [```pointnet2_original```](/benchmark/shapenet/pointnet2_original.md)| 3,026,829 | 05:15 / 00:33 | 0.089 | 93.40 | 90.81 | 87.90
