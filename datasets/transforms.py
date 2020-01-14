@@ -6,6 +6,45 @@ from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors
 from torch_geometric.data import Data
 from functools import partial
+from torch_geometric.nn import fps, radius, knn, voxel_grid
+from torch_geometric.nn.pool.consecutive import consecutive_cluster
+from torch_geometric.nn.pool.pool import pool_pos, pool_batch
+
+
+class GridSampling(object):
+    r"""Samples a fixed number of :obj:`num` points and features from a point
+    cloud.
+
+    Args:
+        num (int): The number of points to sample.
+        replace (bool, optional): If set to :obj:`False`, samples fixed
+            points without replacement. In case :obj:`num` is greater than
+            the number of points, duplicated points are kept to a
+            minimum. (default: :obj:`True`)
+    """
+
+    def __init__(self, subsampling_param):
+        self._subsampling_param = subsampling_param
+
+    def __call__(self, data):
+        num_nodes = data.num_nodes
+
+        pos = data.pos
+        batch = torch.zeros(pos.shape[0])
+
+        pool = voxel_grid(pos, batch, self._subsampling_param)
+        pool, _ = consecutive_cluster(pool)
+
+        for key, item in data:
+            if bool(re.search('edge', key)):
+                continue
+            if torch.is_tensor(item) and item.size(0) == num_nodes:
+                data[key] = pool_pos(pool, item).to(item.dtype)
+
+        return data
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self._subsampling_param)
 
 
 class Center(object):
