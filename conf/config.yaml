@@ -48,13 +48,24 @@ data:
         dataroot: data
         number: 10
 
-    # This dataset can be used only for classification
+    s3dis1x1:
+        name: s3dis1x1
+        dataroot: data
+        fold: 5
+        class_weight_method: 'sqrt'
+        num_points: 1024
+        first_subsampling: 0.04
+        density_parameter: 5.0
+        kp_extent: 1.0
+
+    # Doesn't seem to be very efficient
     s3dis:
         name: s3dis
         dataroot: data
         fold: 5
-        class_weight_method: "sqrt"
-        num_points: 1024
+        class_weight_method: 'sqrt'
+        room_points: 32768
+        num_points: 4096
         first_subsampling: 0.04
         density_parameter: 5.0
         kp_extent: 1.0
