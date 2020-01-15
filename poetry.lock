@@ -1136,10 +1136,13 @@ description = ""
 name = "torch_points"
 optional = false
 python-versions = "*"
-version = "0.1.3"
+version = "0.1.6"
+
+[package.dependencies]
+torch = ">=1.1.0"
 
 [package.source]
-reference = "66aac8601fc28d4149690a1622b92d6f72ba71d2"
+reference = "031a2253ccbfd921cd42c10f500fb8bf5f957643"
 type = "git"
 url = "https://github.com/nicolas-chaulet/torch-points.git"
 [[package]]
@@ -1356,7 +1359,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pathlib2", "contextlib2", "unittest2"]
 
 [metadata]
-content-hash = "c77739960ced7f2aa3906283527c85c47aaa4aeeb725e55751fb87860622621b"
+content-hash = "924e12e1fe6259f55803406f39e032bb7f101da12079d40dc8158be8c11e5896"
 python-versions = "^3.6"
 
 [metadata.files]
