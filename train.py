@@ -31,6 +31,7 @@ def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, c
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
             data = data.to(device)  # This takes time
+
             model.set_input(data)
             t_data = time.time() - iter_data_time
 

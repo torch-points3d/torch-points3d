@@ -20,6 +20,19 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
 
     def conv(self, x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
+        """ Generic down convolution for partial dense data
+
+        Arguments:
+            x [N, C] -- features
+            pos [N, 3] -- positions
+            x_neighbour [N, n_neighbours, C] -- features of the neighbours of each point in x
+            pos_centered_neighbour [N, n_neighbours, 3]  -- position of the neighbours of x_i centred on x_i
+            idx_neighbour [N, n_neighbours] -- indices of the neighbours of each point in pos
+            idx_sampler [n]  -- points to keep for the output
+
+        Raises:
+            NotImplementedError: [description]
+        """
         raise NotImplementedError
 
     def forward(self, data):
