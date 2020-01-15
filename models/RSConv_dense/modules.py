@@ -37,13 +37,12 @@ class RSConvMapper(nn.Module):
 
     def forward(self, features, h_xi_xj):
 
-        print(features.shape, h_xi_xj.shape, self._first_layer)
-
         # Transform msg
         h_xi_xj = self.mlp_msg(h_xi_xj)
 
         # If first_layer, augment features_size
-        self._first_layer: features = self.features_nn(features)
+        if self._first_layer:
+            features = self.features_nn(features)
 
         return self.mlp_out(features * h_xi_xj)
 
