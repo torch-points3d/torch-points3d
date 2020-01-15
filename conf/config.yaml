@@ -1,6 +1,6 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    model_name: pointnet2_onehot
+    model_name: pointnet2_charlesmsg
     experiment_name: "" # Wether to use hydra naming convention for the experiment
     log_dir: "" # Wether to use hydra automatic path generation for saving training
     resume: True
@@ -20,7 +20,7 @@ tensorboard:
 training:
     shuffle: True
     num_workers: 2
-    batch_size: 32
+    batch_size: 16
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
     epochs: 100
@@ -48,13 +48,24 @@ data:
         dataroot: data
         number: 10
 
-    # This dataset can be used only for classification
+    s3dis1x1:
+        name: s3dis1x1
+        dataroot: data
+        fold: 5
+        class_weight_method: 'sqrt'
+        num_points: 1024
+        first_subsampling: 0.04
+        density_parameter: 5.0
+        kp_extent: 1.0
+
+    # Doesn't seem to be very efficient
     s3dis:
         name: s3dis
         dataroot: data
         fold: 5
-        class_weight_method: "sqrt"
-        num_points: 1024
+        class_weight_method: 'sqrt'
+        room_points: 32768
+        num_points: 4096
         first_subsampling: 0.04
         density_parameter: 5.0
         kp_extent: 1.0
