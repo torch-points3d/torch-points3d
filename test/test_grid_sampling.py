@@ -17,7 +17,6 @@ import datasets.transforms as cT
 
 class TestGridSampling(unittest.TestCase):
     def setUp(self):
-
         num_classes = 2
         self.sampler = cT.GridSampling(0.04, num_classes=num_classes)
 
@@ -37,7 +36,9 @@ class TestGridSampling(unittest.TestCase):
         self.data = Data(pos=pos, batch=batch, y=y)
 
     def test_simple(self):
-
+        """
+        This test verifies that the class output is correct and corresponds to the maximun vote from sub_part
+        """
         out = self.sampler(self.data)
 
         y = out.y.detach().cpu().numpy()
