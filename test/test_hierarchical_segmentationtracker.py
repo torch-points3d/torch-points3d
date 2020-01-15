@@ -27,6 +27,7 @@ class MockModel:
             np.asarray([[0, 0, 1, 0]]),
         ]
         self.labels = [np.asarray([1, 1]), np.asarray([2, 2]), np.asarray([3])]
+        self.batch_idx = [np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0])]
 
     def get_output(self):
         return self.outputs[self.iter]
@@ -36,6 +37,9 @@ class MockModel:
 
     def get_current_losses(self):
         return self.losses[self.iter]
+
+    def get_batch_idx(self):
+        return self.batch_idx[self.iter]
 
 
 class TestSegmentationTracker(unittest.TestCase):
@@ -59,7 +63,7 @@ class TestSegmentationTracker(unittest.TestCase):
         self.assertEqual(metrics["train_macc_per_class"]["class2"], 50)
         self.assertEqual(int(metrics["train_acc_per_class"]["class2"]), 66)
         self.assertEqual(int(metrics["train_miou_per_class"]["class2"]), 33)
-        self.assertEqual(int(metrics["train_miou"]), int((100 + 33) / 2))
+        self.assertEqual(int(metrics["train_Cmiou"]), int((100 + 33) / 2))
 
 
 if __name__ == "__main__":

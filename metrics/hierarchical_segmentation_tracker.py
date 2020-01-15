@@ -1,7 +1,6 @@
 from typing import Dict
 import torchnet as tnt
 import numpy as np
-import json
 
 from .confusion_matrix import ConfusionMatrix
 from .base_tracker import meter_value
@@ -69,7 +68,7 @@ class HierarchicalSegmentationTracker(SegmentationTracker):
             metrics["{}_Cacc".format(self._stage)] = self._Cacc
             metrics["{}_Cmacc".format(self._stage)] = self._Cmacc
             metrics["{}_Cmiou".format(self._stage)] = self._Cmiou
-            metrics["{}_acc_per_class".format(self._stage)] = json.dumps(self._acc_per_class, indent=2)
-            metrics["{}_macc_per_class".format(self._stage)] = json.dumps(self._macc_per_class, indent=2)
-            metrics["{}_miou_per_class".format(self._stage)] = json.dumps(self._miou_per_class, indent=2)
+            metrics["{}_acc_per_class".format(self._stage)] = self._acc_per_class
+            metrics["{}_macc_per_class".format(self._stage)] = self._macc_per_class
+            metrics["{}_miou_per_class".format(self._stage)] = self._miou_per_class
         return metrics
