@@ -43,15 +43,14 @@ class SegmentationTracker(BaseTracker):
         else:
             return x
 
-    def track(self, losses: Dict[str, float], outputs, targets):
+    def track(self, model):
         """ Add current model predictions (usually the result of a batch) to the tracking
-
-        Arguments:
-            losses Dict[str,float] -- main loss
-            outputs -- model predictions (NxK) where K is the number of labels
-            targets -- class labels  - size N
         """
+        losses = model.get_current_losses()
+        outputs = model.get_output()
+        targets = model.get_labels()
         assert outputs.shape[0] == len(targets)
+
         for key, loss in losses.items():
             if loss is None:
                 continue
