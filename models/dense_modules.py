@@ -49,9 +49,6 @@ class BaseDenseConvolutionDown(BaseConvolution):
             pos -- Previous positions [B, N, 3]
         """
         x, pos = data.x, data.pos
-        import pdb
-
-        pdb.set_trace()
         idx = self.sampler(pos)
         pos_flipped = pos.transpose(1, 2).contiguous()
         new_pos = tp.gather_operation(pos_flipped, idx).transpose(1, 2).contiguous()
