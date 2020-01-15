@@ -25,7 +25,7 @@ class TestGridSampling(unittest.TestCase):
 
         pos = torch.from_numpy(np.array([[0, 0, 0.01], [0.01, 0, 0], [0, 0.01, 0], [0, 0.01, 0], [0.01, 0, 0.01]]))
 
-        batch = torch.from_numpy(np.zeros(num_points))
+        batch = torch.from_numpy(np.zeros(num_points)).long()
 
         y = np.asarray(np.random.randint(0, 1, 5))
         self._uniq, _ = np.unique(y, return_counts=True)

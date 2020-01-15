@@ -32,10 +32,11 @@ class GridSampling(object):
         num_nodes = data.num_nodes
 
         pos = data.pos
-        batch = torch.zeros(pos.shape[0])
+        batch = data.batch
 
         pool = voxel_grid(pos, batch, self._subsampling_param)
-        pool, _ = consecutive_cluster(pool)
+        pool, perm = consecutive_cluster(pool)
+        data.batch = batch[perm]
 
         for key, item in data:
             if bool(re.search('edge', key)):
