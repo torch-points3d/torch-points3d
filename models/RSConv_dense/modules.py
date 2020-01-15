@@ -59,14 +59,15 @@ class SharedRSConv(nn.Module):
 
         self._mapper = mapper
 
-    def forward(self, input):
-
-        new_features, centroids = input  # [B, 3 + 3 + C, num_points, nsamples], [B, 3, num_points, 1]
-
+    def forward(self, aggr_features, centroids):
+        """
+        aggr_features  -- [B, 3 + 3 + C, num_points, nsamples]
+        centroids  -- [B, 3, num_points, 1]
+        """
         # Extract information to create message
-        abs_coord = new_features[:, :3]  # absolute coordinates
-        delta_x = new_features[:, 3:6]  # normalized coordinates
-        features = new_features[:, 6:]
+        abs_coord = aggr_features[:, :3]  # absolute coordinates
+        delta_x = aggr_features[:, 3:6]  # normalized coordinates
+        features = aggr_features[:, 6:]
 
         nsample = abs_coord.shape[-1]
         coord_xi = centroids.repeat(1, 1, 1, nsample)  # (B, 3, npoint, nsample) centroid points
@@ -129,7 +130,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
             assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
             new_features = grouped_pos_absolute
 
-        return (new_features, centroids)
+        return new_features, centroids
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
@@ -146,8 +147,8 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
             new_x -- Features after passing trhough the MLP [B, mlp[-1], npoints]
         """
         assert scale_idx < len(self.mlps)
-        new_features = self._prepare_features(x, pos, new_pos, radius_idx)
-        new_features = self.mlps[scale_idx](new_features)  # (B, mlp[-1], npoint, nsample)
+        aggr_features, centroids = self._prepare_features(x, pos, new_pos, radius_idx)
+        new_features = self.mlps[scale_idx](aggr_features, centroids)  # (B, mlp[-1], npoint, nsample)
         new_features = F.max_pool2d(new_features, kernel_size=[1, new_features.size(3)])  # (B, mlp[-1], npoint, 1)
         new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
         return new_features
