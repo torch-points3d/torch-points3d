@@ -3,6 +3,7 @@ import torchnet as tnt
 import torch
 import numpy as np
 
+from models.base_model import BaseModel
 from .confusion_matrix import ConfusionMatrix
 from .base_tracker import BaseTracker, meter_value
 
@@ -43,12 +44,14 @@ class SegmentationTracker(BaseTracker):
         else:
             return x
 
-    def track(self, model):
-        """ Add current model predictions (usually the result of a batch) to the tracking
+    def _ingest_data(self, model: BaseModel):
+        """ Internal method for extracting the metrics from the model and adding those
+        to the loss tracker and confusion matrix
         """
         losses = model.get_current_losses()
         outputs = model.get_output()
         targets = model.get_labels()
+        batch_idx = model.get_batch_idx()
         assert outputs.shape[0] == len(targets)
 
         for key, loss in losses.items():
@@ -64,6 +67,9 @@ class SegmentationTracker(BaseTracker):
 
         self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
 
+    def track(self, model: BaseModel):
+        """ Add current model predictions (usually the result of a batch) to the tracking
+        """
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()

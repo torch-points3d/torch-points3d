@@ -27,22 +27,7 @@ class HierarchicalSegmentationTracker(SegmentationTracker):
     def track(self, model):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
-        losses = model.get_current_losses()
-        outputs = model.get_output()
-        targets = model.get_labels()
-        assert outputs.shape[0] == len(targets)
-
-        for key, loss in losses.items():
-            if loss is None:
-                continue
-            loss_key = "%s_%s" % (self._stage, key)
-            if loss_key not in self._loss_meters:
-                self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
-            self._loss_meters[loss_key].add(loss)
-
-        outputs = self._convert(outputs)
-        targets = self._convert(targets)
-        self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
+        self._ingest_data(model)
 
         self._acc_per_class, self._macc_per_class, self._miou_per_class = self._get_metrics_per_class()
 
