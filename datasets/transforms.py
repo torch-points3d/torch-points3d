@@ -12,16 +12,19 @@ from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add
 
 
+import torch
+from torch_geometric.nn import voxel_grid
+from torch_geometric.nn.pool.consecutive import consecutive_cluster
+from torch_geometric.nn.pool.pool import pool_pos, pool_batch
+from torch_scatter import scatter_add
+
+
 class GridSampling(object):
-    r"""Samples a fixed number of :obj:`num` points and features from a point
-    cloud.
+    r"""Samples points depending on :obj:`subsampling_param`.
 
     Args:
-        num (int): The number of points to sample.
-        replace (bool, optional): If set to :obj:`False`, samples fixed
-            points without replacement. In case :obj:`num` is greater than
-            the number of points, duplicated points are kept to a
-            minimum. (default: :obj:`True`)
+        subsampling_param (int): The subsampling parameters used to map the pointcloud on voxel_grid.
+        num_classes (int): If the data contains labels, within key `y`, then it will be used to create label grid pooling. 
     """
 
     def __init__(self, subsampling_param, num_classes):
