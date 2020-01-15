@@ -1,6 +1,7 @@
 from typing import Dict
 import torchnet as tnt
 import numpy as np
+import json
 
 from .confusion_matrix import ConfusionMatrix
 from .base_tracker import meter_value
@@ -27,13 +28,13 @@ class HierarchicalSegmentationTracker(SegmentationTracker):
     def track(self, model):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
-        self._ingest_data(model)
+        super().track(model)
 
         self._acc_per_class, self._macc_per_class, self._miou_per_class = self._get_metrics_per_class()
 
-        self._acc = self._mean_overall(self._acc_per_class.values())
-        self._macc = self._mean_overall(self._macc_per_class.values())
-        self._miou = self._mean_overall(self._miou_per_class.values())
+        self._Cacc = self._mean_overall(self._acc_per_class.values())
+        self._Cmacc = self._mean_overall(self._macc_per_class.values())
+        self._Cmiou = self._mean_overall(self._miou_per_class.values())
 
     def _get_metrics_per_class(self):
         acc = {}
@@ -62,16 +63,13 @@ class HierarchicalSegmentationTracker(SegmentationTracker):
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
-        metrics = {}
-        for key, loss_meter in self._loss_meters.items():
-            metrics[key] = meter_value(loss_meter, dim=0)
-
-        metrics["{}_acc".format(self._stage)] = self._acc
-        metrics["{}_macc".format(self._stage)] = self._macc
-        metrics["{}_miou".format(self._stage)] = self._miou
+        metrics = super().get_metrics(verbose)
 
         if verbose:
-            metrics["{}_acc_per_class".format(self._stage)] = self._acc_per_class
-            metrics["{}_macc_per_class".format(self._stage)] = self._macc_per_class
-            metrics["{}_miou_per_class".format(self._stage)] = self._miou_per_class
+            metrics["{}_Cacc".format(self._stage)] = self._Cacc
+            metrics["{}_Cmacc".format(self._stage)] = self._Cmacc
+            metrics["{}_Cmiou".format(self._stage)] = self._Cmiou
+            metrics["{}_acc_per_class".format(self._stage)] = json.dumps(self._acc_per_class, indent=2)
+            metrics["{}_macc_per_class".format(self._stage)] = json.dumps(self._macc_per_class, indent=2)
+            metrics["{}_miou_per_class".format(self._stage)] = json.dumps(self._miou_per_class, indent=2)
         return metrics

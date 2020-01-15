@@ -32,6 +32,9 @@ class SegmentationTracker(BaseTracker):
 
         self._loss_meters = {}
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
+        self._Iacc = tnt.meter.AverageValueMeter()
+        self._Imacc = tnt.meter.AverageValueMeter()
+        self._Imiou = tnt.meter.AverageValueMeter()
 
     @property
     def confusion_matrix(self):
@@ -44,15 +47,25 @@ class SegmentationTracker(BaseTracker):
         else:
             return x
 
-    def _ingest_data(self, model: BaseModel):
-        """ Internal method for extracting the metrics from the model and adding those
-        to the loss tracker and confusion matrix
+    def track(self, model: BaseModel):
+        """ Add current model predictions (usually the result of a batch) to the tracking
         """
         losses = model.get_current_losses()
-        outputs = model.get_output()
-        targets = model.get_labels()
-        batch_idx = model.get_batch_idx()
+        outputs = self._convert(model.get_output())
+        targets = self._convert(model.get_labels())
+        batch_idx = self._convert(model.get_batch_idx())
         assert outputs.shape[0] == len(targets)
+
+        if batch_idx is not None:
+            assert len(batch_idx) == len(targets)
+            nb_batch = batch_idx.max() + 1
+            for b in range(nb_batch):
+                mask = batch_idx == b
+                confusion = ConfusionMatrix(self._num_classes)
+                confusion.count_predicted_batch(targets[mask], np.argmax(outputs[mask, :], 1))
+                self._Iacc.add(100 * confusion.get_overall_accuracy())
+                self._Imacc.add(100 * confusion.get_mean_class_accuracy())
+                self._Imiou.add(100 * confusion.get_average_intersection_union())
 
         for key, loss in losses.items():
             if loss is None:
@@ -62,14 +75,8 @@ class SegmentationTracker(BaseTracker):
                 self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
             self._loss_meters[loss_key].add(loss)
 
-        outputs = self._convert(outputs)
-        targets = self._convert(targets)
-
         self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
 
-    def track(self, model: BaseModel):
-        """ Add current model predictions (usually the result of a batch) to the tracking
-        """
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
@@ -84,5 +91,10 @@ class SegmentationTracker(BaseTracker):
         metrics["{}_acc".format(self._stage)] = self._acc
         metrics["{}_macc".format(self._stage)] = self._macc
         metrics["{}_miou".format(self._stage)] = self._miou
+
+        if verbose:
+            metrics["{}_Iacc".format(self._stage)] = meter_value(self._Iacc, dim=0)
+            metrics["{}_Imacc".format(self._stage)] = meter_value(self._Imacc, dim=0)
+            metrics["{}_Imiou".format(self._stage)] = meter_value(self._Imiou, dim=0)
 
         return metrics
