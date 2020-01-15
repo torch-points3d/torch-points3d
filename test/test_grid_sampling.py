@@ -28,8 +28,9 @@ class TestGridSampling(unittest.TestCase):
         batch = torch.from_numpy(np.zeros(num_points)).long()
 
         y = np.asarray(np.random.randint(0, 2, 5))
-        print(y)
-        self._uniq, _ = np.unique(y, return_counts=True)
+        uniq, counts = np.unique(y, return_counts=True)
+
+        self.answer = uniq[np.argmax(counts)]
 
         y = torch.from_numpy(y)
 
@@ -41,7 +42,7 @@ class TestGridSampling(unittest.TestCase):
 
         y = out.y.detach().cpu().numpy()
 
-        npt.assert_array_almost_equal(self._uniq[0], y)
+        npt.assert_array_almost_equal(self.answer, y)
 
 
 if __name__ == "__main__":
