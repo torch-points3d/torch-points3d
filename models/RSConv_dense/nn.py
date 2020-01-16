@@ -1,17 +1,18 @@
 from typing import Any
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
 from models.unet_base import UnetBasedModel
+from models.unwrapped_unet_base import UnwrappedUnetBasedModel
 import logging
-
 import etw_pytorch_utils as pt_utils
-
+import queue
 
 log = logging.getLogger(__name__)
 
 
-class SegmentationModel(UnetBasedModel):
+class SegmentationModel(UnwrappedUnetBasedModel):
     r"""
         RSConv Segmentation Model with / without multi-scale grouping
         Semantic segmentation network that uses feature propogation layers
@@ -28,8 +29,8 @@ class SegmentationModel(UnetBasedModel):
     """
 
     def __init__(self, option, model_type, dataset, modules):
-        # call the initialization method of UnetBasedModel
-        UnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        # call the initialization method of UnwrappedUnetBasedModel
+        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self._num_classes = dataset.num_classes
         self._weight_classes = dataset.weight_classes
         self._use_category = option.use_category
@@ -76,7 +77,23 @@ class SegmentationModel(UnetBasedModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, N, 3]
         """
-        data = self.model(self.input)
+        stack_down = []
+        queue_up = queue.Queue()
+
+        data = self.input
+        stack_down.append(data)
+
+        for i in range(len(self.down_modules)):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+
+        data_inner = self.inner_modules[0](data)
+        queue_up.put(data_inner)
+
+        for i in range(len(self.up_modules)):
+            data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
+            queue_up.put(data)
+
         last_feature = data.x
         if self._use_category:
             num_points = data.pos.shape[1]

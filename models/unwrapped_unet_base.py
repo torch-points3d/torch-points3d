@@ -150,6 +150,9 @@ class UnwrappedUnetBasedModel(BaseModel):
         self.down_modules.append(down_module)
         self.up_modules.append(up_module)
         self._save_sampling_and_search(down_module, index)
+
+        self.down_modules = self.down_modules[::-1]
+
         log.info(self)
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
