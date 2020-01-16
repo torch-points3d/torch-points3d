@@ -13,10 +13,12 @@ import torch_geometric.transforms as T
 import logging
 
 from .base_dataset import BaseDataset
+import datasets.transforms as cT
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm as tq
 import csv
 
+log = logging.getLogger(__name__)
 
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
@@ -211,9 +213,6 @@ class S3DIS(InMemoryDataset):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
 
-log = logging.getLogger(__name__)
-
-
 """
 class NormalizeMeanStd(object):
 
@@ -305,8 +304,10 @@ class S3DISDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
+
+        pre_transform = cT.GridSampling(dataset_opt.first_subsampling, 13)
         # Select only 2^15 points from the room
-        pre_transform = T.FixedPoints(dataset_opt.room_points)
+        # pre_transform = T.FixedPoints(dataset_opt.room_points)
 
         transform = T.Compose(
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]

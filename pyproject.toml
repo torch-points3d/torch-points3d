@@ -19,7 +19,7 @@ tensorboard = "^2.1"
 mkdocs = "^1.0"
 torch = "1.2.0"
 etw-pytorch-utils = {git = "https://github.com/erikwijmans/etw_pytorch_utils.git"}
-torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev = "66aac86"}
+torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev = "v0.1.6"}
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
