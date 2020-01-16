@@ -39,20 +39,25 @@ class RSConvMapper(nn.Module):
 
         self.mlp_out = nn.Conv1d(f_out, channel_raising_nn[-1], kernel_size=(1, 1))
 
-    def forward(self, features, h_xi_xj):
+    def forward(self, features, msg):
         """
         features  -- [B, C, num_points, nsamples]
-        h_xi_xj  -- [B, 10, num_points, nsamples]
+        msg  -- [B, 10, num_points, nsamples]
+
+        The 10 features comes from [distance: 1,
+                                    coord_origin:3,
+                                    coord_target:3,
+                                    delta_origin_target:3]
         """
 
         # Transform msg
-        h_xi_xj = self.mlp_msg(h_xi_xj)
+        msg = self.mlp_msg(msg)
 
         # If first_layer, augment features_size
         if self._first_layer:
             features = self.features_nn(features)
 
-        return self.mlp_out(features * h_xi_xj)
+        return self.mlp_out(features * msg)
 
 
 class SharedRSConv(nn.Module):
