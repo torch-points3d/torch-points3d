@@ -35,49 +35,6 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         pass
 
-    def set_input(self, data):
-        pass
-
-    def forward(self):
-        r"""
-            Forward pass of the network
-            self.data:
-                x -- Features [B, C, N]
-                pos -- Features [B, N, 3]
-        """
-        stack_down = []
-        queue_up = queue.Queue()
-
-        data = self.input
-        stack_down.append(data)
-
-        for i in range(len(self.down_modules)):
-            data = self.down_modules[i](data)
-            stack_down.append(data)
-
-        data_inner = self.inner_modules[0](data)
-        queue_up.put(data_inner)
-
-        for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
-            queue_up.put(data)
-
-        last_feature = torch.cat([data.x, data_inner.x.repeat(1, 1, data.x.shape[-1])], dim=1)
-
-        if self._use_category:
-            num_points = data.pos.shape[1]
-            cat_one_hot = (
-                torch.zeros((data.pos.shape[0], self._num_categories, num_points)).float().to(self.category.device)
-            )
-            cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
-            last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
-
-        self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
-        return self.output
-
-    def backward(self):
-        pass
-
 
 class MockDataset(torch.utils.data.Dataset):
     def __init__(self, feature_size=6):
@@ -128,6 +85,8 @@ class TestModelDefinitionResolver(unittest.TestCase):
 
             assert len(model.down_modules) == len(model_conf.down_conv.down_conv_nn)
             assert len(model.up_modules) == len(model_conf.up_conv.up_conv_nn)
+
+            # innermost is not tested yet
 
 
 if __name__ == "__main__":
