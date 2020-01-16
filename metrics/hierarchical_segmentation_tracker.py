@@ -24,32 +24,16 @@ class HierarchicalSegmentationTracker(SegmentationTracker):
         super(HierarchicalSegmentationTracker, self).__init__(dataset, stage, wandb_log, use_tensorboard, log_dir)
         self._class_seg_map = dataset.class_to_segments
 
-    def track(self, losses: Dict[str, float], outputs, targets):
+    def track(self, model):
         """ Add current model predictions (usually the result of a batch) to the tracking
-
-        Arguments:
-            losses Dict[str,float] -- main loss
-            outputs -- model predictions (NxK) where K is the number of labels
-            targets -- class labels  - size N
         """
-        assert outputs.shape[0] == len(targets)
-        for key, loss in losses.items():
-            if loss is None:
-                continue
-            loss_key = "%s_%s" % (self._stage, key)
-            if loss_key not in self._loss_meters:
-                self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
-            self._loss_meters[loss_key].add(loss)
-
-        outputs = self._convert(outputs)
-        targets = self._convert(targets)
-        self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
+        super().track(model)
 
         self._acc_per_class, self._macc_per_class, self._miou_per_class = self._get_metrics_per_class()
 
-        self._acc = self._mean_overall(self._acc_per_class.values())
-        self._macc = self._mean_overall(self._macc_per_class.values())
-        self._miou = self._mean_overall(self._miou_per_class.values())
+        self._Cacc = self._mean_overall(self._acc_per_class.values())
+        self._Cmacc = self._mean_overall(self._macc_per_class.values())
+        self._Cmiou = self._mean_overall(self._miou_per_class.values())
 
     def _get_metrics_per_class(self):
         acc = {}
@@ -78,15 +62,12 @@ class HierarchicalSegmentationTracker(SegmentationTracker):
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
-        metrics = {}
-        for key, loss_meter in self._loss_meters.items():
-            metrics[key] = meter_value(loss_meter, dim=0)
-
-        metrics["{}_acc".format(self._stage)] = self._acc
-        metrics["{}_macc".format(self._stage)] = self._macc
-        metrics["{}_miou".format(self._stage)] = self._miou
+        metrics = super().get_metrics(verbose)
 
         if verbose:
+            metrics["{}_Cacc".format(self._stage)] = self._Cacc
+            metrics["{}_Cmacc".format(self._stage)] = self._Cmacc
+            metrics["{}_Cmiou".format(self._stage)] = self._Cmiou
             metrics["{}_acc_per_class".format(self._stage)] = self._acc_per_class
             metrics["{}_macc_per_class".format(self._stage)] = self._macc_per_class
             metrics["{}_miou_per_class".format(self._stage)] = self._miou_per_class

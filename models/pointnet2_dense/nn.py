@@ -66,21 +66,23 @@ class SegmentationModel(UnetBasedModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         Sets:
-            self.data:
+            self.input:
                 x -- Features [B, C, N]
-                pos -- Features [B, 3, N]
+                pos -- Points [B, N, 3]
         """
+        assert len(data.pos.shape) == 3
         self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
-        self.labels = torch.flatten(data.y).long()  # [B,N]
+        self.labels = torch.flatten(data.y).long()  # [B * N]
+        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
 
     def forward(self):
         r"""
             Forward pass of the network
-            self.data:
+            self.input:
                 x -- Features [B, C, N]
-                pos -- Features [B, N, 3]
+                pos -- Points [B, N, 3]
         """
         data = self.model(self.input)
         last_feature = data.x
