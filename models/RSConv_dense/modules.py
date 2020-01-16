@@ -15,6 +15,10 @@ log = logging.getLogger(__name__)
 
 
 class RSConvMapper(nn.Module):
+    """[This class handles the special mechanism between the msg
+        and the features of RSConv]
+    """
+
     def __init__(self, down_conv_nn, channel_raising_nn, use_xyz, bn=True, *args, **kwargs):
         super(RSConvMapper, self).__init__()
 
@@ -36,6 +40,10 @@ class RSConvMapper(nn.Module):
         self.mlp_out = nn.Conv1d(f_out, channel_raising_nn[-1], kernel_size=(1, 1))
 
     def forward(self, features, h_xi_xj):
+        """
+        features  -- [B, C, num_points, nsamples]
+        h_xi_xj  -- [B, 10, num_points, nsamples]
+        """
 
         # Transform msg
         h_xi_xj = self.mlp_msg(h_xi_xj)
@@ -82,7 +90,7 @@ class SharedRSConv(nn.Module):
         return "{}({})".format(self.__class__.__name__, self._mapper.__repr__())
 
 
-class PointNetMSGDown(BaseDenseConvolutionDown):
+class RSConvMSGDown(BaseDenseConvolutionDown):
     def __init__(
         self,
         npoint=None,
@@ -97,7 +105,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         assert len(radii) == len(nsample)
         if len(radii) != len(down_conv_nn):
             log.warn("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
-        super(PointNetMSGDown, self).__init__(
+        super(RSConvMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
 

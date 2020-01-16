@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 class SegmentationModel(UnetBasedModel):
     r"""
-        PointNet2 with multi-scale grouping
+        RSConv Segmentation Model with / without multi-scale grouping
         Semantic segmentation network that uses feature propogation layers
 
         Parameters

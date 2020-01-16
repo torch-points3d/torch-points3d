@@ -240,7 +240,7 @@ models:
         conv_type: "DENSE"
         use_category: True
         down_conv:
-            module_name: PointNetMSGDown
+            module_name: RSConvMSGDown
             npoint: [1024, 256, 64, 16]
             radii: [[0.075, 0.1, 0.125], [0.1, 0.15, 0.2], [0.2, 0.3, 0.4], [0.4, 0.6, 0.8]]
             nsamples: [[16, 32, 48], [16, 48, 64], [16, 32, 48], [16, 24, 32]]
