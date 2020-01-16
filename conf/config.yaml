@@ -9,7 +9,7 @@ experiment:
 
 # parameters for Weights and Biases
 wandb:
-    project: shapenet-pn2
+    project: rsconv-pn2
     log: True
 
 # parameters for TensorBoard Visualization
