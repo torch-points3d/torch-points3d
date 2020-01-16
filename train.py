@@ -126,10 +126,9 @@ def main(cfg):
 
     # metric tracker
     if cfg.wandb.log:
-        wandb.init(project=cfg.wandb.project)
-        # wandb.watch(model)
+        import wandb
 
-    log_dir = get_log_dir(exp.log_dir, exp.experiment_name)
+        wandb.init(project=cfg.wandb.project)
 
     tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, log_dir)
 
