@@ -482,3 +482,29 @@ models:
         mlp_cls:
             nn: [128, 128]
             dropout: 0.5
+
+    pointnet2_charlesssg:
+        type: pointnet2_dense
+        conv_type: "DENSE"
+        use_category: True
+        down_conv:
+            module_name: PointNetMSGDown
+            npoint: [512, 128]
+            radii: [[0.2], [0.4]]
+            nsamples: [[64], [64]]
+            down_conv_nn: [[[FEAT, 64, 64, 128]], [[128, 128, 128, 256]]]
+        innermost:
+            module_name: GlobalDenseBaseModule
+            nn: [256 + 3, 256, 512, 1024]
+        up_conv:
+            module_name: DenseFPModule
+            up_conv_nn:
+                [
+                    [1024 + 256, 256, 256],
+                    [256 + 128, 256, 128],
+                    [128 + FEAT, 128, 128, 128],
+                ]
+            skip: True
+        mlp_cls:
+            nn: [128, 128]
+            dropout: 0.5
