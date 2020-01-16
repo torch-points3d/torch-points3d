@@ -65,7 +65,7 @@ class SegmentationModel(UnwrappedUnetBasedModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, 3, N]
         """
-        self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
+        self.input = Data(x=data.x.transpose(1, 2).contiguous() if data.x is not None else None, pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B,N]
         if self._use_category:
             self.category = data.category
@@ -94,7 +94,8 @@ class SegmentationModel(UnwrappedUnetBasedModel):
             data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
             queue_up.put(data)
 
-        last_feature = data.x
+        last_feature = torch.cat([data.x, data_inner.x.repeat(1, 1, data.x.shape[-1])], dim=1)
+
         if self._use_category:
             num_points = data.pos.shape[1]
             cat_one_hot = (
