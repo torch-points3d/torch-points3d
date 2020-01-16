@@ -93,10 +93,12 @@ class BaseDenseConvolutionUp(BaseConvolution):
         pos, x = data.pos, data.x
         pos_skip, x_skip = data_skip.pos, data_skip.x
         new_features = self.conv(pos, pos_skip, x)
+
         if x_skip is not None:
             new_features = torch.cat([new_features, x_skip], dim=1)  # (B, C2 + C1, n)
 
         new_features = new_features.unsqueeze(-1)
+
         if hasattr(self, "nn"):
             new_features = self.nn(new_features)
 
@@ -111,6 +113,7 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
     def conv(self, pos, pos_skip, x):
         assert pos_skip.shape[2] == 3
+
         if pos is not None:
             dist, idx = tp.three_nn(pos_skip, pos)
             dist_recip = 1.0 / (dist + 1e-8)
@@ -133,6 +136,6 @@ class GlobalDenseBaseModule(torch.nn.Module):
         pos_flipped = pos.transpose(1, 2).contiguous()
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
         x = x.squeeze().max(-1)[0]
-        pos = None
+        pos = None  # pos.mean(1).unsqueeze(1)
         x = x.unsqueeze(-1)
         return Data(x=x, pos=pos)
