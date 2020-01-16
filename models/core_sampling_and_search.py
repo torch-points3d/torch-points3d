@@ -261,7 +261,20 @@ class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
     def find_neighbours(self, x, y, scale_idx=0):
         if scale_idx >= self.num_scales:
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
-        return tp.ball_query(self._radius[scale_idx], self._max_num_neighbors[scale_idx], x, y)
+        num_neighbours = self._max_num_neighbors[scale_idx]
+        neighbours = tp.ball_query(self._radius[scale_idx], num_neighbours, x, y)
+        # mean_count = (
+        #     (neighbours[0, :, :] != neighbours[0, :, 0].view((-1, 1)).repeat(1, num_neighbours)).sum(1).float().mean()
+        # )
+        # for i in range(1, neighbours.shape[0]):
+        #     start = neighbours[i, :, 0]
+        #     valid_neighbours = (neighbours[i, :, :] != start.view((-1, 1)).repeat(1, num_neighbours)).sum(1)
+        #     mean_count += valid_neighbours.float().mean()
+        # mean_count = mean_count / neighbours.shape[0]
+        # print(
+        #     "Radius: %f, Num_neighbours %i, actual, %f" % (self._radius[scale_idx], num_neighbours, mean_count.item())
+        # )
+        return neighbours
 
     def __call__(self, x, y, scale_idx=0, **kwargs):
         """ Dense interface of the neighboorhood finder

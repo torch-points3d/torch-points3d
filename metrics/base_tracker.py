@@ -76,7 +76,7 @@ class BaseTracker:
         pass
 
     @abstractmethod
-    def track(self, loss, outputs, targets):
+    def track(self, model):
         pass
 
     def publish_to_tensorboard(self, metrics):
