@@ -31,6 +31,7 @@ def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, c
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
             data = data.to(device)  # This takes time
+
             model.set_input(data)
             t_data = time.time() - iter_data_time
 
@@ -38,7 +39,7 @@ def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, c
             model.optimize_parameters(dataset.batch_size)
 
             if i % 10 == 0:
-                tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
+                tracker.track(model)
 
             tq_train_loader.set_postfix(
                 **tracker.get_metrics(),
@@ -64,7 +65,7 @@ def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: Mo
                 model.set_input(data)
                 model.forward()
 
-            tracker.track(model.get_current_losses(), model.get_output(), model.get_labels())
+            tracker.track(model)
             tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
     metrics = tracker.publish()

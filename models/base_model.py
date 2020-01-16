@@ -67,15 +67,25 @@ class BaseModel(torch.nn.Module):
         pass
 
     def get_labels(self):
+        """ returns a trensor of size [N_points] where each value is the label of a point
+        """
         return getattr(self, "labels", None)
+
+    def get_batch_idx(self):
+        """ returns a trensor of size [N_points] where each value is the batch index of a point
+        """
+        return getattr(self, "batch_idx", None)
+
+    def get_output(self):
+        """ returns a trensor of size [N_points,...] where each value is the output
+        of the network for a point (output of the last layer in general)
+        """
+        return self.output
 
     @abstractmethod
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         pass
-
-    def get_output(self):
-        return self.output
 
     def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
