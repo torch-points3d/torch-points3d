@@ -17,7 +17,7 @@ from models.base_model import BaseModel
 from datasets.base_dataset import BaseDataset
 from metrics.base_tracker import get_tracker, BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
-from utils_folder.utils import merges_in_sub, get_log_dir, model_fn_decorator, set_format, merges
+from utils_folder.utils import merges_in_sub, model_fn_decorator, set_format
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from datasets.utils import find_dataset_using_name
 
@@ -133,7 +133,9 @@ def main(cfg):
 
     tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, log_dir)
 
-    checkpoint = get_model_checkpoint(model, log_dir, tested_model_name, exp.resume, cfg_training.weight_name)
+    checkpoint = get_model_checkpoint(
+        model, exp.checkpoint_dir, tested_model_name, exp.resume, cfg_training.weight_name
+    )
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker, checkpoint, log)

@@ -1,8 +1,7 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    model_name: pointnet2_charlesssg
-    experiment_name: "" # Wether to use hydra naming convention for the experiment
-    log_dir: "" # Wether to use hydra automatic path generation for saving training
+    model_name: pointnet2_charlesmsg
+    checkpoint_dir: "/home/nicolas/deeppointcloud-benchmarks/outputs/2020-01-14/22-56-10"
     resume: True
     task: segmentation
     dataset: shapenet
@@ -10,7 +9,7 @@ experiment:
 # parameters for Weights and Biases
 wandb:
     project: shapenet-pn2
-    log: True
+    log: False
 
 # parameters for TensorBoard Visualization
 tensorboard:
@@ -23,7 +22,7 @@ training:
     batch_size: 32
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
-    epochs: 100
+    epochs: -1
     optimizer: Adam
     learning_rate:
         scheduler_type: "step_decay"
@@ -31,7 +30,7 @@ training:
         lr_decay: 0.5
         decay_step: 200000
         lr_clip: 1e-5
-    weight_name: "default" # Used during resume, select with model to load from [metric_name..., default]
+    weight_name: "miou" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
 
 # Those arguments defines the available datasets
