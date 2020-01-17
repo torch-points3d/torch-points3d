@@ -26,6 +26,7 @@ import logging
 
 from datasets.base_dataset import BaseDataset
 from .base_model import BaseModel, SPECIAL_NAMES, BaseFactory
+from .core_modules import Identity
 from utils import is_omegaconf_list
 
 log = logging.getLogger(__name__)
