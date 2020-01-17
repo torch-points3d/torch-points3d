@@ -135,7 +135,7 @@ class BaseDataset:
         transform = MultiScaleTransform(strategies, precompute_multi_scale)
         self._set_multiscale_transform(transform)
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
         pass
