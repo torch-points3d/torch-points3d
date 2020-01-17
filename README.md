@@ -40,7 +40,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ### Requirements:
 * CUDA > 10
 * Python 3 + headers (python-dev)
-* [Poetry](https://poetry.eustace.io/) (Optional bu highly recommended)
+* [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
 
 ### Setup repo
 Clone the repo to your local machine then run the following command from the root of the repo
