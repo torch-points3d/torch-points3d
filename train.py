@@ -50,7 +50,7 @@ def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, c
 
     metrics = tracker.publish()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
-    print("Learning rate = %f" % model.learning_rate)
+    log.info("Learning rate = %f" % model.learning_rate)
 
 
 def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
