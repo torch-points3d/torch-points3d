@@ -3,33 +3,18 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
 from models.unet_base import UnetBasedModel
+from models.unet_base import UnwrappedUnetBasedModel
 import logging
-
 import etw_pytorch_utils as pt_utils
-
+import queue
 
 log = logging.getLogger(__name__)
 
 
-class SegmentationModel(UnetBasedModel):
-    r"""
-        RSConv Segmentation Model with / without multi-scale grouping
-        Semantic segmentation network that uses feature propogation layers
-
-        Parameters
-        ----------
-        num_classes: int
-            Number of semantics classes to predict over -- size of softmax classifier that run for each point
-        input_channels: int = 6
-            Number of input channels in the feature descriptor for each point.  If the point cloud is Nx9, this
-            value should be 6 as in an Nx9 point cloud, 3 of the channels are xyz, and 6 are feature descriptors
-        use_xyz: bool = True
-            Whether or not to use the xyz position of a point as a feature
-    """
-
+class SegmentationModel(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
-        # call the initialization method of UnetBasedModel
-        UnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        # call the initialization method of UnwrappedUnetBasedModel
+        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self._num_classes = dataset.num_classes
         self._weight_classes = dataset.weight_classes
         self._use_category = option.use_category
@@ -64,8 +49,9 @@ class SegmentationModel(UnetBasedModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, 3, N]
         """
-        self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
+        self.input = Data(x=data.x.transpose(1, 2).contiguous() if data.x is not None else None, pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B,N]
+        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
 
@@ -76,8 +62,25 @@ class SegmentationModel(UnetBasedModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, N, 3]
         """
-        data = self.model(self.input)
-        last_feature = data.x
+        stack_down = []
+        queue_up = queue.Queue()
+
+        data = self.input
+        stack_down.append(data)
+
+        for i in range(len(self.down_modules)):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+
+        data_inner = self.inner_modules[0](data)
+        queue_up.put(data_inner)
+
+        for i in range(len(self.up_modules)):
+            data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
+            queue_up.put(data)
+
+        last_feature = torch.cat([data.x, data_inner.x.repeat(1, 1, data.x.shape[-1])], dim=1)
+
         if self._use_category:
             num_points = data.pos.shape[1]
             cat_one_hot = (

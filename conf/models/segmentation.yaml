@@ -263,11 +263,11 @@ models:
                     [256 * 3 + 256, 256, 128],
                     [128 * 3 + 128, 128, 64],
                     [64 * 3 + 64, 64, 64],
-                    [64 + 3, 64]
+                    [64, 64]
                 ]
             skip: True
         mlp_cls:
-            nn: [64, 64, 64, 64]
+            nn: [512 + 64, 256, 256, 256]
             dropout: 0.5
 
     # KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
