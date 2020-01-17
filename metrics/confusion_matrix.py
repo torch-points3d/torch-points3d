@@ -1,4 +1,5 @@
 import numpy as np
+import sklearn.metrics as sk
 
 
 class ConfusionMatrix:
@@ -7,7 +8,7 @@ class ConfusionMatrix:
 
     def __init__(self, number_of_labels=2):
         self.number_of_labels = number_of_labels
-        self.confusion_matrix = np.zeros(shape=(self.number_of_labels, self.number_of_labels))
+        self.confusion_matrix = None
 
     @staticmethod
     def create_from_matrix(confusion_matrix):
@@ -16,13 +17,13 @@ class ConfusionMatrix:
         matrix.confusion_matrix = confusion_matrix
         return matrix
 
-    def count_predicted(self, ground_truth, predicted, number_of_added_elements=1):
-        self.confusion_matrix[ground_truth][predicted] += number_of_added_elements
-
     def count_predicted_batch(self, ground_truth_vec, predicted):
         assert np.max(predicted) < self.number_of_labels
-        for i in range(ground_truth_vec.shape[0]):
-            self.confusion_matrix[ground_truth_vec[i], predicted[i]] += 1
+        batch_confusion = sk.confusion_matrix(ground_truth_vec, predicted, labels=range(self.number_of_labels))
+        if self.confusion_matrix is None:
+            self.confusion_matrix = batch_confusion
+        else:
+            self.confusion_matrix += batch_confusion
 
     def get_count(self, ground_truth, predicted):
         """labels are integers from 0 to number_of_labels-1"""
