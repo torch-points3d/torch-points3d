@@ -330,3 +330,11 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         batch_obj.batch = data.batch
         copy_from_to(data, batch_obj)
         return batch_obj
+
+
+class Identity(nn.Module):
+    def __init__(self):
+        super(Identity, self).__init__()
+
+    def forward(self, data):
+        return data
