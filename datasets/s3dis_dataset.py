@@ -6,12 +6,12 @@ import torch
 import h5py
 import torch
 import glob
-from torch_geometric.data import (InMemoryDataset, Data, download_url,
-                                  extract_zip)
+from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip
 from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
 import logging
 
+from metrics.segmentation_tracker import SegmentationTracker
 from .base_dataset import BaseDataset
 import datasets.transforms as cT
 from sklearn.neighbors import NearestNeighbors
@@ -20,36 +20,37 @@ import csv
 
 log = logging.getLogger(__name__)
 
+
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
     object_label = {
-        'ceiling': 1,
-        'floor': 2,
-        'wall': 3,
-        'column': 4,
-        'beam': 5,
-        'window': 6,
-        'door': 7,
-        'table': 8,
-        'chair': 9,
-        'bookcase': 10,
-        'sofa': 11,
-        'board': 12,
-        'clutter': 13,
-        'stairs': 0,
+        "ceiling": 1,
+        "floor": 2,
+        "wall": 3,
+        "column": 4,
+        "beam": 5,
+        "window": 6,
+        "door": 7,
+        "table": 8,
+        "chair": 9,
+        "bookcase": 10,
+        "sofa": 11,
+        "board": 12,
+        "clutter": 13,
+        "stairs": 0,
     }.get(object_class, 0)
     return object_label
 
 
 def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debug=False):
     """extract data from a room folder"""
-    raw_path = osp.join(train_file, '{}.txt'.format(room_name))
+    raw_path = osp.join(train_file, "{}.txt".format(room_name))
     if debug:
-        reader = pd.read_csv(raw_path, delimiter='\n')
+        reader = pd.read_csv(raw_path, delimiter="\n")
         RECOMMENDED = 6
         for idx, row in enumerate(reader.values):
-            row = row[0].split(' ')
-            if (len(row) != RECOMMENDED):
+            row = row[0].split(" ")
+            if len(row) != RECOMMENDED:
                 print("1: {} row {}: {}".format(raw_path, idx, row))
 
             try:
@@ -60,36 +61,40 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
 
         return True
     else:
-        room_ver = pd.read_csv(raw_path, sep=' ', header=None).values
-        xyz = np.ascontiguousarray(room_ver[:, 0:3], dtype='float32')
+        room_ver = pd.read_csv(raw_path, sep=" ", header=None).values
+        xyz = np.ascontiguousarray(room_ver[:, 0:3], dtype="float32")
         try:
-            rgb = np.ascontiguousarray(room_ver[:, 3:6], dtype='uint8')
+            rgb = np.ascontiguousarray(room_ver[:, 3:6], dtype="uint8")
         except ValueError:
-            rgb = np.zeros((room_ver.shape[0], 3), dtype='uint8')
-            print('WARN - corrupted rgb data for file %s' % raw_path)
+            rgb = np.zeros((room_ver.shape[0], 3), dtype="uint8")
+            print("WARN - corrupted rgb data for file %s" % raw_path)
         if not label_out:
             return xyz, rgb
         n_ver = len(room_ver)
         del room_ver
-        nn = NearestNeighbors(1, algorithm='kd_tree').fit(xyz)
-        room_labels = np.zeros((n_ver,), dtype='int64')
-        room_object_indices = np.zeros((n_ver,), dtype='int64')
+        nn = NearestNeighbors(1, algorithm="kd_tree").fit(xyz)
+        room_labels = np.zeros((n_ver,), dtype="int64")
+        room_object_indices = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
         i_object = 1
         for single_object in objects:
             object_name = os.path.splitext(os.path.basename(single_object))[0]
             if verbose:
                 print("adding object " + str(i_object) + " : " + object_name)
-            object_class = object_name.split('_')[0]
+            object_class = object_name.split("_")[0]
             object_label = object_name_to_label(object_class)
-            obj_ver = pd.read_csv(single_object, sep=' ', header=None).values
+            obj_ver = pd.read_csv(single_object, sep=" ", header=None).values
             _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
             room_labels[obj_ind] = object_label
             room_object_indices[obj_ind] = i_object
             i_object = i_object + 1
 
-        return torch.from_numpy(xyz), torch.from_numpy(rgb), \
-            torch.from_numpy(room_labels), torch.from_numpy(room_object_indices)
+        return (
+            torch.from_numpy(xyz),
+            torch.from_numpy(rgb),
+            torch.from_numpy(room_labels),
+            torch.from_numpy(room_object_indices),
+        )
 
 
 class S3DIS(InMemoryDataset):
@@ -119,21 +124,23 @@ class S3DIS(InMemoryDataset):
             final dataset. (default: :obj:`None`)
     """
 
-    url = ("https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1")
+    url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
     zip_name = "Stanford3dDataset_v1.2_Aligned_Version.zip"
     folders = ["Area_{}".format(i) for i in range(1, 7)]
 
-    def __init__(self,
-                 root,
-                 test_area=6,
-                 train=True,
-                 transform=None,
-                 pre_transform=None,
-                 pre_collate_transform=None,
-                 pre_filter=None,
-                 keep_instance=False,
-                 verbose=False,
-                 debug=False):
+    def __init__(
+        self,
+        root,
+        test_area=6,
+        train=True,
+        transform=None,
+        pre_transform=None,
+        pre_collate_transform=None,
+        pre_filter=None,
+        keep_instance=False,
+        verbose=False,
+        debug=False,
+    ):
         assert test_area >= 1 and test_area <= 6
         self.pre_collate_transform = pre_collate_transform
         self.test_area = test_area
@@ -151,44 +158,56 @@ class S3DIS(InMemoryDataset):
     @property
     def processed_file_names(self):
         test_area = self.test_area
-        return ['{}_{}.pt'.format(s, test_area) for s in ['train', 'test']]
+        return ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
 
     def download(self):
         raw_folders = os.listdir(self.raw_dir)
         if len(raw_folders) == 0:
             raise RuntimeError(
-                'Dataset not found. Please download {} from {} and move it to {} with {}'.
-                format(self.zip_name, self.url, self.raw_dir, self.folders))
+                "Dataset not found. Please download {} from {} and move it to {} with {}".format(
+                    self.zip_name, self.url, self.raw_dir, self.folders
+                )
+            )
         else:
             intersection = len(set(self.folders).intersection(set(raw_folders)))
             if intersection == 0:
-                print('The data seems properly downloaded')
+                print("The data seems properly downloaded")
             else:
                 raise RuntimeError(
-                    'Dataset not found. Please download {} from {} and move it to {} with {}'.
-                    format(self.zip_name, self.url, self.raw_dir, self.folders))
+                    "Dataset not found. Please download {} from {} and move it to {} with {}".format(
+                        self.zip_name, self.url, self.raw_dir, self.folders
+                    )
+                )
 
     def process(self):
 
         train_areas = [f for f in self.folders if str(self.test_area) not in f]
         test_areas = [f for f in self.folders if str(self.test_area) in f]
 
-        train_files = [(f, room_name, osp.join(self.raw_dir, f, room_name)) for f in train_areas
-                       for room_name in os.listdir(osp.join(self.raw_dir, f)) if '.DS_Store' != room_name]
+        train_files = [
+            (f, room_name, osp.join(self.raw_dir, f, room_name))
+            for f in train_areas
+            for room_name in os.listdir(osp.join(self.raw_dir, f))
+            if ".DS_Store" != room_name
+        ]
 
-        test_files = [(f, room_name, osp.join(self.raw_dir, f, room_name)) for f in test_areas
-                      for room_name in os.listdir(osp.join(self.raw_dir, f)) if '.DS_Store' != room_name]
+        test_files = [
+            (f, room_name, osp.join(self.raw_dir, f, room_name))
+            for f in test_areas
+            for room_name in os.listdir(osp.join(self.raw_dir, f))
+            if ".DS_Store" != room_name
+        ]
 
         train_data_list, test_data_list = [], []
 
         for (area, room_name, file_path) in tq(train_files + test_files):
 
             if self.debug:
-                read_s3dis_format(
-                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+                read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
             else:
                 xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
-                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
+                )
 
                 data = Data(pos=xyz, x=rgb.float(), y=room_labels)
 
@@ -212,6 +231,7 @@ class S3DIS(InMemoryDataset):
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
+
 
 """
 class NormalizeMeanStd(object):
@@ -304,7 +324,6 @@ class S3DISDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
-
         pre_transform = cT.GridSampling(dataset_opt.first_subsampling, 13)
         # Select only 2^15 points from the room
         # pre_transform = T.FixedPoints(dataset_opt.room_points)
@@ -330,3 +349,16 @@ class S3DISDataset(BaseDataset):
         )
 
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
+
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)

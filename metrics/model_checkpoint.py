@@ -9,6 +9,7 @@ import logging
 from models.base_model import BaseModel
 from metrics.colored_tqdm import COLORS
 from utils_folder.utils import colored_print
+from schedulers.lr_schedulers import build_basic_params
 
 log = logging.getLogger(__name__)
 
@@ -20,10 +21,11 @@ DEFAULT_METRICS_FUNC = {
 
 
 def get_model_checkpoint(
-    model: BaseModel, log_dir: str = None, check_name: str = None, resume: bool = True, weight_name: str = None,
+    model: BaseModel, load_dir: str, check_name: str, resume: bool = True, weight_name: str = None,
 ):
-
-    model_checkpoint: ModelCheckpoint = ModelCheckpoint(log_dir, check_name, resume)
+    """ Loads a model from a checkpoint or creates a new one.
+    """
+    model_checkpoint: ModelCheckpoint = ModelCheckpoint(load_dir, check_name, resume)
 
     if resume:
         model_checkpoint.initialize_model(model, weight_name)
@@ -31,40 +33,45 @@ def get_model_checkpoint(
 
 
 class Checkpoint(object):
-    def __init__(self, to_save: str = None, check_name: str = None, save_every_iter: bool = True):
-        if not os.path.exists(to_save):
-            os.makedirs(to_save)
+    _LATEST = "latest"
 
-        self._to_save = to_save
-        self._check_name = check_name
-        self._check_path = os.path.join(to_save, "{}.pt".format(check_name))
+    def __init__(self, check_name: str, save_every_iter: bool = True):
+        """ Checkpoint manager. Saves to working directory with check_name
+
+        Arguments
+            check_name {str} -- name of the checkpoint
+            save_every_iter {bool} -- [description] (default: {True})
+        """
+        self._check_path = "{}.pt".format(check_name)
         self._initialize_objects()
-        self._load_objects()
 
     def _initialize_objects(self):
         self._objects = {}
         self._objects["models"] = {}
         self._objects["stats"] = {"train": [], "test": [], "val": []}
         self._objects["optimizer"] = None
-        # self._objects["lr_scheduler"] = None
-        self._objects["args"] = None
-        self._objects["kwargs"] = None
+        self._objects["lr_params"] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, **kwargs):
+    def save_objects(self, models_to_save, stage, current_stat, optimizer, lr_params, **kwargs):
         self._objects["models"] = models_to_save
         self._objects["stats"][stage].append(current_stat)
         self._objects["optimizer"] = optimizer
-        # self._objects["lr_scheduler"] = lr_scheduler
-        # self._objects['kwargs'] = kwargs
+        self._objects["lr_params"] = lr_params
         torch.save(self._objects, self._check_path)
 
-    def _load_objects(self):
-        try:
-            self._objects = torch.load(self._check_path)
-            self._filled = True
-        except:
-            pass
+    @staticmethod
+    def load(checkpoint_dir: str, checkpoint_name: str):
+        """ Creates a new checpoint object in the current working directory by loading the
+        checkpoint located at [checkpointdir]/[checkpoint_name].pt
+        """
+        checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
+        ckp = Checkpoint(checkpoint_name)
+        if not os.path.exists(checkpoint_file):
+            return ckp
+        ckp._objects = torch.load(checkpoint_file)
+        ckp._filled = True
+        return ckp
 
     @property
     def models_to_save(self):
@@ -83,7 +90,20 @@ class Checkpoint(object):
             try:
                 return self._objects["optimizer"]
             except:
-                raise Exception("The checkpoint doesn t contain an optimizer")
+                raise KeyError("The checkpoint doesn t contain an optimizer")
+
+    def get_lr_params(self):
+        if not self.is_empty:
+            try:
+                return self._objects["lr_params"]
+            except:
+                params = build_basic_params()
+                log.warning(
+                    "Could not find learning rate parameters in teyh checkpoint, takes the default ones {}".format(
+                        params
+                    )
+                )
+                return params
 
     def get_state_dict(self, weight_name):
         if not self.is_empty:
@@ -95,21 +115,17 @@ class Checkpoint(object):
                     log.info("Model loaded from {}:{}".format(self._check_path, key_name))
                     return model
                 except:
-                    key_name = "default"
-                    model = models["default"]
+                    key_name = Checkpoint._LATEST
+                    model = models[Checkpoint._LATEST]
                     log.info("Model loaded from {}:{}".format(self._check_path, key_name))
                     return model
             except:
                 raise Exception("This weight name isn't within the checkpoint ")
 
-    @staticmethod
-    def load_objects(to_save: str = None, check_name: str = None):
-        return Checkpoint(to_save, check_name)
-
 
 class ModelCheckpoint(object):
-    def __init__(self, to_save: str = None, check_name: str = None, resume: bool = True):
-        self._checkpoint = Checkpoint.load_objects(to_save, check_name)
+    def __init__(self, load_dir: str = None, check_name: str = None, resume: bool = True):
+        self._checkpoint = Checkpoint.load(load_dir, check_name)
         self._resume = resume
 
     @property
@@ -127,7 +143,8 @@ class ModelCheckpoint(object):
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
             optimizer = self._checkpoint.get_optimizer()
-            model.set_optimizer(optimizer.__class__, lr=optimizer.defaults["lr"])
+            lr_params = self._checkpoint.get_lr_params()
+            model.set_optimizer(optimizer.__class__, lr_params=lr_params)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -151,7 +168,6 @@ class ModelCheckpoint(object):
 
         stats = self._checkpoint.stats
         state_dict = model.state_dict()
-        optimizer = model.optimizer
 
         current_stat = {}
         current_stat["epoch"] = epoch
@@ -159,7 +175,7 @@ class ModelCheckpoint(object):
         models_to_save = self._checkpoint.models_to_save
 
         if stage == "train":
-            models_to_save["default"] = state_dict
+            models_to_save[Checkpoint._LATEST] = state_dict
 
         if len(stats[stage]) > 0:
             latest_stats = stats[stage][-1]
@@ -190,4 +206,4 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, optimizer, **kwargs)
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.lr_params, **kwargs)
