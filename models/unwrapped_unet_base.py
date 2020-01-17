@@ -25,36 +25,15 @@ from torch_geometric.nn.inits import reset
 import logging
 
 from datasets.base_dataset import BaseDataset
-from .base_model import BaseModel
+from .base_model import BaseModel, SPECIAL_NAMES, BaseFactory
+from .utils import is_omegaconf_list
+from .core_modules import Identity
 
 log = logging.getLogger(__name__)
 
-SPECIAL_NAMES = ["radius", "max_num_neighbors"]
-
-
-class BaseFactory:
-    def __init__(self, module_name_down, module_name_up, modules_lib):
-        self.module_name_down = module_name_down
-        self.module_name_up = module_name_up
-        self.modules_lib = modules_lib
-
-    def get_module(self, index, flow):
-        if flow.upper() == "UP":
-            return getattr(self.modules_lib, self.module_name_up, None)
-        else:
-            return getattr(self.modules_lib, self.module_name_down, None)
-
-
-class Identity(nn.Module):
-    def __init__(self):
-        super(Identity, self).__init__()
-
-    def forward(self, data):
-        return data
-
 
 class UnwrappedUnetBasedModel(BaseModel):
-    """Create a Unet-based generator"""
+    """Create a Unet unwrapped generator"""
 
     def _save_sampling_and_search(self, down_conv, index):
         self._sampling_and_search_dict[index] = [
@@ -63,36 +42,51 @@ class UnwrappedUnetBasedModel(BaseModel):
         ]
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
-        """Construct a Unet generator
+        """Construct a Unet unwrapped generator
+
+        The layers will be appended within lists with the following names
+        * down_modules : Contains all the down module
+        * inner_modules : Contain one or more inner modules
+        * up_modules: Contains all the up module
+
         Parameters:
             opt - options for the network generation
             model_type - type of the model to be generated
             num_class - output of the network
             modules_lib - all modules that can be used in the UNet
-        We construct the U-Net from the innermost layer to the outermost layer.
-        It is a recursive process.
+
+        For a recursive implementation. See UnetBaseModel.
+
+        opt is expected to contains the following keys:
+        * down_conv
+        * up_conv
+        * OPTIONAL: innermost
+
         """
         super(UnwrappedUnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
-        if type(opt.down_conv) is ListConfig or "down_conv_nn" not in opt.down_conv:
+
+        opt
+
+        if is_omegaconf_list(opt.down_conv) or "down_conv_nn" not in opt.down_conv:
             raise NotImplementedError
         else:
             self._init_from_compact_format(opt, model_type, dataset, modules_lib)
 
-    def get_from_kwargs(self, kwargs, name):
+    def _get_from_kwargs(self, kwargs, name):
         module = kwargs[name]
         kwargs.pop(name)
         return module
 
-    def create_down_and_up_modules(self, args_down, args_up, modules_lib):
-        downconv_cls = self.get_from_kwargs(args_down, "down_conv_cls")
-        upconv_cls = self.get_from_kwargs(args_up, "up_conv_cls")
+    def _create_down_and_up_modules(self, args_down, args_up, modules_lib):
+        downconv_cls = self._get_from_kwargs(args_down, "down_conv_cls")
+        upconv_cls = self._get_from_kwargs(args_up, "up_conv_cls")
         return downconv_cls(**args_down), upconv_cls(**args_up)
 
-    def create_inner_modules(self, args_innermost, args_up, modules_lib):
-        module_name = self.get_from_kwargs(args_innermost, "module_name")
+    def _create_inner_modules(self, args_innermost, args_up, modules_lib):
+        module_name = self._get_from_kwargs(args_innermost, "module_name")
         inner_module_cls = getattr(modules_lib, module_name)
-        upconv_cls = self.get_from_kwargs(args_up, "up_conv_cls")
+        upconv_cls = self._get_from_kwargs(args_up, "up_conv_cls")
         return inner_module_cls(**args_innermost), upconv_cls(**args_up)
 
     def _init_from_compact_format(self, opt, model_type, dataset, modules_lib):
@@ -123,7 +117,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
             args_up["up_conv_cls"] = self._factory_module.get_module(0, "UP")
 
-            inner, up = self.create_inner_modules(opt.innermost, args_up, modules_lib)
+            inner, up = self._create_inner_modules(opt.innermost, args_up, modules_lib)
             self.inner_modules.append(inner)
             self.up_modules.append(up)
 
@@ -134,7 +128,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             for index in range(num_convs - 1, 0, -1):
                 args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
 
-                down_module, up_module = self.create_down_and_up_modules(args_down, args_up, modules_lib)
+                down_module, up_module = self._create_down_and_up_modules(args_down, args_up, modules_lib)
                 self.down_modules.append(down_module)
                 self.up_modules.append(up_module)
                 self._save_sampling_and_search(down_module, index)
@@ -146,7 +140,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         args_down["nb_feature"] = dataset.feature_dimension
         args_up["nb_feature"] = dataset.feature_dimension
 
-        down_module, up_module = self.create_down_and_up_modules(args_down, args_up, modules_lib)
+        down_module, up_module = self._create_down_and_up_modules(args_down, args_up, modules_lib)
         self.down_modules.append(down_module)
         self.up_modules.append(up_module)
         self._save_sampling_and_search(down_module, index)
@@ -168,15 +162,15 @@ class UnwrappedUnetBasedModel(BaseModel):
         args = {}
         for o, v in opt.items():
             name = str(o)
-            if isinstance(getattr(opt, o), ListConfig) and len(getattr(opt, o)) > 0:
+            if is_omegaconf_list(v) and len(getattr(opt, o)) > 0:
                 if name[-1] == "s" and name not in SPECIAL_NAMES:
                     name = name[:-1]
                 v_index = v[index]
-                if isinstance(v_index, ListConfig):
+                if is_omegaconf_list(v_index):
                     v_index = list(v_index)
                 args[name] = v_index
             else:
-                if isinstance(v, ListConfig):
+                if is_omegaconf_list(v):
                     v = list(v)
                 args[name] = v
         args["precompute_multi_scale"] = self._precompute_multi_scale

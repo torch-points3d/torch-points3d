@@ -2,6 +2,16 @@ import os
 import importlib
 from .base_model import BaseModel
 from datasets.base_dataset import BaseDataset
+from omegaconf.listconfig import ListConfig
+from omegaconf.dictconfig import DictConfig
+
+
+def is_omegaconf_list(opt):
+    return isinstance(opt, ListConfig)
+
+
+def is_omegaconf_dict(opt):
+    return isinstance(opt, DictConfig)
 
 
 def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> BaseModel:

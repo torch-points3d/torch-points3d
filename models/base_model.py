@@ -13,6 +13,21 @@ from schedulers.lr_schedulers import get_scheduler
 
 log = logging.getLogger(__name__)
 
+SPECIAL_NAMES = ["radius", "max_num_neighbors"]
+
+
+class BaseFactory:
+    def __init__(self, module_name_down, module_name_up, modules_lib):
+        self.module_name_down = module_name_down
+        self.module_name_up = module_name_up
+        self.modules_lib = modules_lib
+
+    def get_module(self, index, flow):
+        if flow.upper() == "UP":
+            return getattr(self.modules_lib, self.module_name_up, None)
+        else:
+            return getattr(self.modules_lib, self.module_name_down, None)
+
 
 class BaseModel(torch.nn.Module):
     """This class is an abstract base class (ABC) for models.

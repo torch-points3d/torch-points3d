@@ -13,6 +13,8 @@ from models.model_building_utils.model_definition_resolver import resolve_model
 from models.unwrapped_unet_base import UnwrappedUnetBasedModel
 from utils_folder.utils import merges_in_sub, set_format
 
+from test.mockdatasets import MockDataset
+
 
 class SegmentationModel(UnwrappedUnetBasedModel):
     r"""
@@ -34,24 +36,6 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         # call the initialization method of UnwrappedUnetBasedModel
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         pass
-
-
-class MockDataset(torch.utils.data.Dataset):
-    def __init__(self, feature_size=6):
-        self.feature_dimension = feature_size
-        self.num_classes = 10
-        self.weight_classes = None
-        nb_points = 100
-        self._pos = torch.randn((nb_points, 3))
-        if feature_size > 0:
-            self._feature = torch.tensor([range(feature_size) for i in range(self._pos.shape[0])], dtype=torch.float,)
-        else:
-            self._feature = None
-        self._y = torch.tensor([range(10) for i in range(self._pos.shape[0])], dtype=torch.float)
-        self._batch = torch.tensor([0 for i in range(self._pos.shape[0])])
-
-    def __getitem__(self, index):
-        return Batch(pos=self._pos, x=self._feature, y=self._y, batch=self._batch)
 
 
 class TestModelDefinitionResolver(unittest.TestCase):

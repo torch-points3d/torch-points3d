@@ -25,32 +25,10 @@ from torch_geometric.nn.inits import reset
 import logging
 
 from datasets.base_dataset import BaseDataset
-from .base_model import BaseModel
+from .base_model import BaseModel, SPECIAL_NAMES, BaseFactory
+from utils import is_omegaconf_list
 
 log = logging.getLogger(__name__)
-
-SPECIAL_NAMES = ["radius", "max_num_neighbors"]
-
-
-class BaseFactory:
-    def __init__(self, module_name_down, module_name_up, modules_lib):
-        self.module_name_down = module_name_down
-        self.module_name_up = module_name_up
-        self.modules_lib = modules_lib
-
-    def get_module(self, index, flow):
-        if flow.upper() == "UP":
-            return getattr(self.modules_lib, self.module_name_up, None)
-        else:
-            return getattr(self.modules_lib, self.module_name_down, None)
-
-
-class Identity(nn.Module):
-    def __init__(self):
-        super(Identity, self).__init__()
-
-    def forward(self, data):
-        return data
 
 
 class UnetBasedModel(BaseModel):
@@ -72,6 +50,11 @@ class UnetBasedModel(BaseModel):
             modules_lib - all modules that can be used in the UNet
         We construct the U-Net from the innermost layer to the outermost layer.
         It is a recursive process.
+
+        opt is expected to contains the following keys:
+        * down_conv
+        * up_conv
+        * OPTIONAL: innermost
         """
         super(UnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
@@ -190,15 +173,15 @@ class UnetBasedModel(BaseModel):
         args = {}
         for o, v in opt.items():
             name = str(o)
-            if isinstance(getattr(opt, o), ListConfig) and len(getattr(opt, o)) > 0:
+            if is_omegaconf_list(v) and len(getattr(opt, o)) > 0:
                 if name[-1] == "s" and name not in SPECIAL_NAMES:
                     name = name[:-1]
                 v_index = v[index]
-                if isinstance(v_index, ListConfig):
+                if is_omegaconf_list(v_index):
                     v_index = list(v_index)
                 args[name] = v_index
             else:
-                if isinstance(v, ListConfig):
+                if is_omegaconf_list(v):
                     v = list(v)
                 args[name] = v
         args["precompute_multi_scale"] = self._precompute_multi_scale
