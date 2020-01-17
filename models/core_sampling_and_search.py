@@ -7,8 +7,7 @@ from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 import torch_points as tp
-from omegaconf import ListConfig
-
+from .utils import is_list
 from utils_folder.enums import ConvolutionFormat
 
 
@@ -195,10 +194,6 @@ class BaseMSNeighbourFinder(ABC):
     @abstractmethod
     def num_scales(self):
         pass
-
-
-def is_list(entity):
-    return isinstance(entity, list) or isinstance(entity, ListConfig)
 
 
 class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):

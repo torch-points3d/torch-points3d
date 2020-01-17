@@ -140,7 +140,9 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
                 new_features = grouped_features
         else:
             assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
-            new_features = grouped_pos_absolute
+            new_features = torch.cat(
+                [grouped_pos_absolute, grouped_pos_normalized, grouped_pos_absolute], dim=1
+            )  # (B, 3 + 3 + 3, npoint, nsample)
 
         return new_features, centroids
 
