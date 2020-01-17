@@ -1,9 +1,10 @@
 import logging
 
 import torch
+from torch.nn import Sequential as Seq
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import BatchNorm1d, BatchNorm2d
+from torch.nn import BatchNorm1d, BatchNorm2d, Conv1d
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 from typing import Tuple, List
@@ -19,25 +20,32 @@ class RSConvMapper(nn.Module):
         and the features of RSConv]
     """
 
-    def __init__(self, down_conv_nn, channel_raising_nn, use_xyz, bn=True, *args, **kwargs):
+    def __init__(self, down_conv_nn, use_xyz, bn=True, activation=nn.ReLU(), *args, **kwargs):
         super(RSConvMapper, self).__init__()
 
         self._down_conv_nn = down_conv_nn
-        self._channel_raising_nn = channel_raising_nn
         self._use_xyz = use_xyz
+
+        self.nn = nn.ModuleDict()
 
         if len(self._down_conv_nn) == 2:  # First layer
             self._first_layer = True
             f_in, f_intermediate, f_out = self._down_conv_nn[0]
-            self.features_nn = pt_utils.SharedMLP(self._down_conv_nn[1], bn=bn)
+            self.nn["features_nn"] = pt_utils.SharedMLP(self._down_conv_nn[1], bn=bn)
 
         else:
             self._first_layer = False
             f_in, f_intermediate, f_out = self._down_conv_nn
 
-        self.mlp_msg = pt_utils.SharedMLP([f_in, f_intermediate, f_out], bn=bn)
+        self.nn["mlp_msg"] = pt_utils.SharedMLP([f_in, f_intermediate, f_out], bn=bn)
 
-        self.mlp_out = nn.Conv1d(f_out, channel_raising_nn[-1], kernel_size=(1, 1))
+        self.nn["norm"] = Seq(*[nn.BatchNorm2d(f_out), activation])
+
+        self._f_out = f_out
+
+    @property
+    def f_out(self):
+        return self._f_out
 
     def forward(self, features, msg):
         """
@@ -51,13 +59,13 @@ class RSConvMapper(nn.Module):
         """
 
         # Transform msg
-        msg = self.mlp_msg(msg)
+        msg = self.nn["mlp_msg"](msg)
 
         # If first_layer, augment features_size
         if self._first_layer:
-            features = self.features_nn(features)
+            features = self.nn["features_nn"](features)
 
-        return self.mlp_out(features * msg)
+        return self.nn["norm"](torch.mul(features, msg))
 
 
 class SharedRSConv(nn.Module):
@@ -66,10 +74,11 @@ class SharedRSConv(nn.Module):
     Output shape: (B, C_out, npoint)
     """
 
-    def __init__(self, mapper: RSConvMapper):
+    def __init__(self, mapper: RSConvMapper, radius):
         super(SharedRSConv, self).__init__()
 
         self._mapper = mapper
+        self._radius = radius
 
     def forward(self, aggr_features, centroids):
         """
@@ -92,7 +101,7 @@ class SharedRSConv(nn.Module):
         return self._mapper(features, h_xi_xj)
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, self._mapper.__repr__())
+        return "{}(radius={})".format(self.__class__.__name__, self._radius)
 
 
 class RSConvMSGDown(BaseDenseConvolutionDown):
@@ -105,6 +114,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         channel_raising_nn=None,
         bn=True,
         use_xyz=True,
+        activation=nn.ReLU(),
         **kwargs
     ):
         assert len(radii) == len(nsample)
@@ -119,10 +129,18 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         self.mlps = nn.ModuleList()
 
         # https://github.com/Yochengliu/Relation-Shape-CNN/blob/6464eb8bb4efc686adec9da437112ef888e55684/utils/pointnet2_modules.py#L106
-        mapper = RSConvMapper(down_conv_nn, channel_raising_nn, use_xyz=self.use_xyz)
+        self._mapper = RSConvMapper(down_conv_nn, activation=activation, use_xyz=self.use_xyz)
 
-        for _ in range(len(radii)):
-            self.mlps.append(SharedRSConv(mapper))
+        self.mlp_out = Seq(
+            *[
+                Conv1d(channel_raising_nn[0], channel_raising_nn[-1], kernel_size=1, stride=1),
+                nn.BatchNorm1d(channel_raising_nn[-1]),
+                activation,
+            ]
+        )
+
+        for i in range(len(radii)):
+            self.mlps.append(SharedRSConv(self._mapper, radii[i]))
 
     def _prepare_features(self, x, pos, new_pos, idx):
         new_pos_trans = pos.transpose(1, 2).contiguous()
@@ -134,7 +152,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
             grouped_features = tp.grouping_operation(x, idx)
             if self.use_xyz:
                 new_features = torch.cat(
-                    [grouped_pos_absolute, grouped_pos_normalized, grouped_features], dim=1
+                    [grouped_pos_absolute, grouped_pos_normalized, grouped_features, grouped_pos_absolute], dim=1
                 )  # (B, 3 + 3 + C, npoint, nsample)
             else:
                 new_features = grouped_features
@@ -164,5 +182,8 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         aggr_features, centroids = self._prepare_features(x, pos, new_pos, radius_idx)
         new_features = self.mlps[scale_idx](aggr_features, centroids)  # (B, mlp[-1], npoint, nsample)
         new_features = F.max_pool2d(new_features, kernel_size=[1, new_features.size(3)])  # (B, mlp[-1], npoint, 1)
-        new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)
+        new_features = self.mlp_out(new_features.squeeze(-1))  # (B, mlp[-1], npoint)
         return new_features
+
+    def __repr__(self):
+        return "{}({}, shared: {})".format(self.__class__.__name__, self.mlps.__repr__(), self._mapper.__repr__())
