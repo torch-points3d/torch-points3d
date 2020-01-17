@@ -11,6 +11,7 @@ import torch_geometric.transforms as T
 
 from .transforms import RandomNoise
 from .base_dataset import BaseDataset
+from metrics.shapenet_part_tracker import ShapenetPartTracker
 
 
 class ShapeNet(InMemoryDataset):
@@ -227,3 +228,17 @@ class ShapeNetDataset(BaseDataset):
     @property
     def is_hierarchical(self):
         return len(self._categories) > 1
+
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return ShapenetPartTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+

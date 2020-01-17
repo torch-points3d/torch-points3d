@@ -1,10 +1,9 @@
 from typing import Any
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
 from models.unet_base import UnetBasedModel
-from models.unwrapped_unet_base import UnwrappedUnetBasedModel
+from models.unet_base import UnwrappedUnetBasedModel
 import logging
 import etw_pytorch_utils as pt_utils
 import queue
@@ -13,21 +12,6 @@ log = logging.getLogger(__name__)
 
 
 class SegmentationModel(UnwrappedUnetBasedModel):
-    r"""
-        RSConv Segmentation Model with / without multi-scale grouping
-        Semantic segmentation network that uses feature propogation layers
-
-        Parameters
-        ----------
-        num_classes: int
-            Number of semantics classes to predict over -- size of softmax classifier that run for each point
-        input_channels: int = 6
-            Number of input channels in the feature descriptor for each point.  If the point cloud is Nx9, this
-            value should be 6 as in an Nx9 point cloud, 3 of the channels are xyz, and 6 are feature descriptors
-        use_xyz: bool = True
-            Whether or not to use the xyz position of a point as a feature
-    """
-
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnwrappedUnetBasedModel
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
@@ -69,6 +53,7 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         """
         self.input = Data(x=data.x.transpose(1, 2).contiguous() if data.x is not None else None, pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B,N]
+        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
 

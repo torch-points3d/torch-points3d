@@ -1,4 +1,9 @@
 from torch.optim.lr_scheduler import LambdaLR
+from omegaconf.dictconfig import DictConfig
+
+
+def build_basic_params():
+    return DictConfig({"base_lr": 0.001})
 
 
 def get_scheduler(learning_rate_params, optimizer):
