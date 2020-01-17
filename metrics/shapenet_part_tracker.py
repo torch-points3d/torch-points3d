@@ -91,5 +91,5 @@ class ShapenetPartTracker(BaseTracker):
         metrics["{}_Cmiou".format(self._stage)] = self._Cmiou * 100
         metrics["{}_Imiou".format(self._stage)] = self._Imiou * 100
         if verbose:
-            metrics["{}_miou_per_class".format(self._stage)] = self._miou_per_class
+            metrics["{}_Imiou_per_class".format(self._stage)] = self._miou_per_class
         return metrics
