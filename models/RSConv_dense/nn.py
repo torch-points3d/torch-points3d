@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
 from models.unet_base import UnetBasedModel
-from models.unwrapped_unet_base import UnwrappedUnetBasedModel
+from models.unet_base import UnwrappedUnetBasedModel
 import logging
 import etw_pytorch_utils as pt_utils
 import queue
@@ -51,6 +51,7 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         """
         self.input = Data(x=data.x.transpose(1, 2).contiguous() if data.x is not None else None, pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B,N]
+        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
 

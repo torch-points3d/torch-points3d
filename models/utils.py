@@ -6,12 +6,12 @@ from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 
 
-def is_omegaconf_list(opt):
-    return isinstance(opt, ListConfig)
+def is_list(entity):
+    return isinstance(entity, list) or isinstance(entity, ListConfig)
 
 
-def is_omegaconf_dict(opt):
-    return isinstance(opt, DictConfig)
+def is_dict(entity):
+    return isinstance(entity, dict) or isinstance(entity, DictConfig)
 
 
 def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> BaseModel:
