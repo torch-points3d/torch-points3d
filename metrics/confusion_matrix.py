@@ -2,7 +2,8 @@ import numpy as np
 
 
 class ConfusionMatrix:
-    """Streaming interface to allow for any source of predictions. Initialize it, count predictions one by one, then print confusion matrix and intersection-union score"""
+    """Streaming interface to allow for any source of predictions. 
+    Initialize it, count predictions one by one, then print confusion matrix and intersection-union score"""
 
     def __init__(self, number_of_labels=2):
         self.number_of_labels = number_of_labels
@@ -23,10 +24,6 @@ class ConfusionMatrix:
         for i in range(ground_truth_vec.shape[0]):
             self.confusion_matrix[ground_truth_vec[i], predicted[i]] += 1
 
-    def count_predicted_batch_hard(self, ground_truth_vec, predicted):  # added
-        for i in range(ground_truth_vec.shape[0]):
-            self.confusion_matrix[ground_truth_vec[i], predicted[i]] += 1
-
     def get_count(self, ground_truth, predicted):
         """labels are integers from 0 to number_of_labels-1"""
         return self.confusion_matrix[ground_truth][predicted]
@@ -37,26 +34,18 @@ class ConfusionMatrix:
         return self.confusion_matrix
 
     def get_intersection_union_per_class(self):
-        """returns list of 64-bit floats"""
-        matrix_diagonal = [self.confusion_matrix[i][i] for i in range(self.number_of_labels)]
-        errors_summed_by_row = [0] * self.number_of_labels
-        for row in range(self.number_of_labels):
-            for column in range(self.number_of_labels):
-                if row != column:
-                    errors_summed_by_row[row] += self.confusion_matrix[row][column]
-        errors_summed_by_column = [0] * self.number_of_labels
-        for column in range(self.number_of_labels):
-            for row in range(self.number_of_labels):
-                if row != column:
-                    errors_summed_by_column[column] += self.confusion_matrix[row][column]
-
-        divisor = [0] * self.number_of_labels
-        for i in range(self.number_of_labels):
-            divisor[i] = matrix_diagonal[i] + errors_summed_by_row[i] + errors_summed_by_column[i]
-            if matrix_diagonal[i] == 0:
-                divisor[i] = 1
-
-        return [float(matrix_diagonal[i]) / divisor[i] for i in range(self.number_of_labels)]
+        """ Computes the intersection over union of each class in the 
+        confusion matrix
+        Return:
+            (iou, missing_class_mask) - iou for class as well as a mask highlighting existing classes
+        """
+        TP_plus_FN = np.sum(self.confusion_matrix, axis=0)
+        TP_plus_FP = np.sum(self.confusion_matrix, axis=1)
+        TP = np.diagonal(self.confusion_matrix)
+        union = TP_plus_FN + TP_plus_FP - TP
+        iou = 1e-8 + TP / (union + 1e-8)
+        existing_class_mask = union != 0
+        return iou, existing_class_mask
 
     def get_overall_accuracy(self):
         """returns 64-bit float"""
@@ -72,15 +61,17 @@ class ConfusionMatrix:
             all_values = 1
         return float(matrix_diagonal) / all_values
 
-    def no_interest_indexes(self, ignored_indexes):
-        self.ignored_indexes = np.array(ignored_indexes)
-
-    def get_average_intersection_union(self,):
-        values = self.get_intersection_union_per_class()
-        class_seen = ((self.confusion_matrix.sum(1) + self.confusion_matrix.sum(0)) != 0).sum()
-        if class_seen == 0:
+    def get_average_intersection_union(self, missing_as_one=False):
+        """ Get the mIoU metric by ignoring missing labels. 
+        If missing_as_one is True then treats missing classes in the IoU as 1
+        """
+        values, existing_classes_mask = self.get_intersection_union_per_class()
+        if np.sum(existing_classes_mask) == 0:
             return 0
-        return sum(values) / class_seen
+        if missing_as_one:
+            values[~existing_classes_mask] = 1
+            existing_classes_mask[:] = True
+        return np.sum(values[existing_classes_mask]) / np.sum(existing_classes_mask)
 
     def get_mean_class_accuracy(self):  # added
         re = 0
