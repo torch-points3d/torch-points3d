@@ -78,7 +78,7 @@ And you should see something like that
 The data reported below correspond to the part segmentation problem for Shapenet for all categories. We report against mean instance IoU and mean class IoU (average of the mean instance IoU per class)
 | Model Name | Use Normals | Size | Speed Train / Test | Cross Entropy | CmIoU | ImIoU |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md)| Yes | 1,733,946 | 15:07 / 01:20 | 0.089 | 82.1 | 85.1
+| [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md)| Yes | 1,733,946 | 15:07 / 01:20 | 0.089 | 82.1 | 85.1 |
 
 ## Contributing
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
