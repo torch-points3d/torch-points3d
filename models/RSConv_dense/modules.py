@@ -188,6 +188,11 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def __repr__(self):
-        return "{}({}, shared: {} {} \033[0m)".format(
-            self.__class__.__name__, self.mlps.__repr__(), COLORS.Cyan, self._mapper.__repr__(), COLORS.END_TOKEN
+        return "{}({}, shared: {} {}, {} \033[0m)".format(
+            self.__class__.__name__,
+            self.mlps.__repr__(),
+            COLORS.Cyan,
+            self.mlp_out.__repr__(),
+            self._mapper.__repr__(),
+            COLORS.END_TOKEN,
         )

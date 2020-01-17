@@ -322,4 +322,4 @@ RSCNN_MSN(
     )
   )
 )
-Model size = %i 3488705
+Model size = %i 3,488,705

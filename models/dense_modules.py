@@ -137,8 +137,8 @@ class GlobalDenseBaseModule(torch.nn.Module):
     def forward(self, data):
         x, pos = data.x, data.pos
         pos_flipped = pos.transpose(1, 2).contiguous()
-        x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
 
+        x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
         if self._aggr == "max":
             x = x.squeeze().max(-1)[0]
         else:
