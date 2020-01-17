@@ -130,7 +130,7 @@ def main(cfg):
 
         wandb.init(project=cfg.wandb.project)
 
-    tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, log_dir)
+    tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, "")
 
     checkpoint = get_model_checkpoint(
         model, exp.checkpoint_dir, tested_model_name, exp.resume, cfg_training.weight_name
