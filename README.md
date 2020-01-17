@@ -78,7 +78,7 @@ And you should see something like that
 
 | Model Name | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3,026,829<!-- .element: style="text-align:center;" --> | 04:29 / 01:07<!-- .element: style="text-align:center;" --> | 0.0512<!-- .element: style="text-align:center;" --> | 85.26<!-- .element: style="text-align:center;" --> | 45.58<!-- .element: style="text-align:center;" --> | 73.11 <!-- .element: style="text-align:center;" --> |
+| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)|3,026,829<!-- .element: style="text-align:center;" -->|04:29 / 01:07<!-- .element: style="text-align:center;" -->|0.0512<!-- .element: style="text-align:center;" -->|85.26<!-- .element: style="text-align:center;" -->|45.58<!-- .element: style="text-align:center;" -->|73.11 <!-- .element: style="text-align:center;" -->|
 
 
 ## Shapenet part segmentation
