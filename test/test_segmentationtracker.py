@@ -52,32 +52,23 @@ class TestSegmentationTracker(unittest.TestCase):
         model = MockModel()
         tracker.track(model)
         metrics = tracker.get_metrics()
-        for k in ["train_acc", "train_miou", "train_macc", "train_acc"]:
-            self.assertEqual(metrics[k], 100)
+        for k in ["train_acc", "train_miou", "train_macc"]:
+            self.assertAlmostEqual(metrics[k], 100, 5)
 
         model.iter += 1
         tracker.track(model)
         metrics = tracker.get_metrics()
-        for k in ["train_acc", "train_macc", "train_acc"]:
+        for k in ["train_acc", "train_macc"]:
             self.assertEqual(metrics[k], 50)
-        self.assertEqual(metrics["train_miou"], 25)
+        self.assertAlmostEqual(metrics["train_miou"], 25, 5)
         self.assertEqual(metrics["train_loss_1"], 1.5)
 
         tracker.reset("test")
         model.iter += 1
         tracker.track(model)
         metrics = tracker.get_metrics()
-        for k in ["test_acc", "test_miou", "test_macc", "test_acc"]:
-            self.assertEqual(metrics[k], 0)
-
-    def test_instance(self):
-        tracker = SegmentationTracker(MockDataset())
-        model = MockModel()
-        model.iter = 3
-        tracker.track(model)
-        metrics = tracker.get_metrics(verbose=True)
-        for k in ["train_Iacc", "train_Imiou", "train_Imacc"]:
-            self.assertEqual(metrics[k], 50)
+        for k in ["test_acc", "test_miou", "test_macc"]:
+            self.assertAlmostEqual(metrics[k], 0, 5)
 
 
 if __name__ == "__main__":

@@ -37,15 +37,30 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ```
 
 ## Getting started
-You will first need to install [poetry](https://poetry.eustace.io/) in order to setup a virtual environments and install the relevant packages, then run
+### Requirements:
+* CUDA > 10
+* Python 3 + headers (python-dev)
+* [Poetry](https://poetry.eustace.io/) (Optional bu highly recommended)
+
+### Setup repo
+Clone the repo to your local machine then run the following command from the root of the repo
 ```
 poetry install
 ```
 This will install all required dependencies in a new virtual environment.
 
-## Train pointnet++ on Segmentation task for dataset shapenet
+Activate it
 ```
-poetry run python train.py experiment.name=pointnet2 experiment.data=shapenet
+poetry shell
+```
+You can check that the install has been successful by running
+```
+python -m unittest
+```
+
+## Train pointnet++ on part segmentation task for dataset shapenet
+```
+poetry run python train.py experiment.model_name=pointnet2_charlesssg wandb.log=False experiment.data=shapenet
 ```
 And you should see something like that
 
@@ -60,10 +75,10 @@ And you should see something like that
 | [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)| 3,026,829 | 04:29 / 01:07 | 0.0512 | 85.26 | 45.58 | 73.11
 
 ## Shapenet part segmentation
-The data reported below correspond to the part segmentation problem for Shapenet for all categories. The mean values reported are the mean of each per category metric.
-| Model Name | Use Normals | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
+The data reported below correspond to the part segmentation problem for Shapenet for all categories. We report against mean instance IoU and mean class IoU (average of the mean instance IoU per class)
+| Model Name | Use Normals | Size | Speed Train / Test | Cross Entropy | CmIoU | ImIoU |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_original```](/benchmark/shapenet/pointnet2_original.md)| Yes | 3,026,829 | 05:15 / 00:33 | 0.089 | 93.40 | 90.81 | 87.90
+| [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md)| Yes | 1,733,946 | 15:07 / 01:20 | 0.089 | 82.1 | 85.1
 
 ## Contributing
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
