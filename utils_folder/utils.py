@@ -36,6 +36,9 @@ def model_fn_decorator(criterion):
 
 
 def set_format(model_config, cfg_training):
+    """ Adds the type of convolution (DENSE, PARTIAL_DENSE, MESSAGE_PASSING)
+    to the training configuration
+    """
     conv_type = getattr(model_config, "conv_type", None)
     if conv_type not in [d.name for d in ConvolutionFormat]:
         raise Exception("The format type should be defined within {}".format([d.name for d in ConvolutionFormat]))
@@ -44,12 +47,6 @@ def set_format(model_config, cfg_training):
             {"conv_type": conv_type.lower(), "use_torch_loader": ConvolutionFormat[conv_type].value[1]}
         )
         return OmegaConf.merge(cfg_training, format_conf)
-
-
-def merges(x, list_conf: List):
-    for c in list_conf:
-        x = OmegaConf.merge(x, c)
-    return x
 
 
 def merges_in_sub(x, list_conf: List):
@@ -63,16 +60,6 @@ def merges_in_sub(x, list_conf: List):
         else:
             dict_[name] = v
     return OmegaConf.create(dict_)
-
-
-def get_log_dir(log_dir, experiment_name):
-    hydra_generated_dir = os.getcwd()
-    splits = hydra_generated_dir.split("/")
-    if log_dir == "":
-        parent_log_dir = "/".join(splits[:-1])
-    else:
-        parent_log_dir = log_dir
-    return osp.join(parent_log_dir, experiment_name if experiment_name != "" else splits[-1])
 
 
 def colored_print(color, msg):

@@ -2,6 +2,7 @@ import os
 from collections import OrderedDict, ChainMap
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
+import copy
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -12,6 +13,21 @@ import logging
 from schedulers.lr_schedulers import get_scheduler
 
 log = logging.getLogger(__name__)
+
+SPECIAL_NAMES = ["radius", "max_num_neighbors"]
+
+
+class BaseFactory:
+    def __init__(self, module_name_down, module_name_up, modules_lib):
+        self.module_name_down = module_name_down
+        self.module_name_up = module_name_up
+        self.modules_lib = modules_lib
+
+    def get_module(self, index, flow):
+        if flow.upper() == "UP":
+            return getattr(self.modules_lib, self.module_name_up, None)
+        else:
+            return getattr(self.modules_lib, self.module_name_down, None)
 
 
 class BaseModel(torch.nn.Module):
@@ -44,10 +60,16 @@ class BaseModel(torch.nn.Module):
         self._sampling_and_search_dict: Dict = {}
         self._precompute_multi_scale = opt.precompute_multi_scale if "precompute_multi_scale" in opt else False
         self._iterations = 0
+        self._lr_params = None
 
     @property
-    def lr_scheduler(self):
-        return self._lr_scheduler
+    def lr_params(self):
+        try:
+            params = copy.deepcopy(self._lr_params)
+            params.lr_base = self.learning_rate
+            return params
+        except:
+            return None
 
     @property
     def optimizer(self):
@@ -112,6 +134,7 @@ class BaseModel(torch.nn.Module):
     def set_optimizer(self, optimizer_cls: Optimizer, lr_params):
         self._optimizer = optimizer_cls(self.parameters(), lr=lr_params.base_lr)
         self._lr_scheduler = get_scheduler(lr_params, self._optimizer)
+        self._lr_params = lr_params
         log.info(self._optimizer)
 
     def get_named_internal_losses(self):
