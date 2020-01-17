@@ -14,6 +14,8 @@ from models.core_sampling_and_search import DenseFPSSampler, DenseRadiusNeighbou
 
 log = logging.getLogger(__name__)
 
+from metrics.colored_tqdm import COLORS
+
 
 class RSConvMapper(nn.Module):
     """[This class handles the special mechanism between the msg
@@ -186,4 +188,6 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def __repr__(self):
-        return "{}({}, shared: {})".format(self.__class__.__name__, self.mlps.__repr__(), self._mapper.__repr__())
+        return "{}({}, shared: {} {} \033[0m)".format(
+            self.__class__.__name__, self.mlps.__repr__(), COLORS.Cyan, self._mapper.__repr__(), COLORS.END_TOKEN
+        )

@@ -90,10 +90,19 @@ class UnwrappedUnetBasedModel(BaseModel):
         return downconv_cls(**args_down), upconv_cls(**args_up)
 
     def create_inner_modules(self, args_innermost, args_up, modules_lib):
-        module_name = self.get_from_kwargs(args_innermost, "module_name")
-        inner_module_cls = getattr(modules_lib, module_name)
+        inners = []
+        if isinstance(args_innermost, ListConfig):
+            for inner_opt in args_innermost:
+                module_name = self.get_from_kwargs(inner_opt, "module_name")
+                inner_module_cls = getattr(modules_lib, module_name)
+                inners.append(inner_module_cls(**inner_opt))
+        else:
+            module_name = self.get_from_kwargs(args_innermost, "module_name")
+            inner_module_cls = getattr(modules_lib, module_name)
+            inners.append(inner_module_cls(**args_innermost))
+
         upconv_cls = self.get_from_kwargs(args_up, "up_conv_cls")
-        return inner_module_cls(**args_innermost), upconv_cls(**args_up)
+        return inners, upconv_cls(**args_up)
 
     def _init_from_compact_format(self, opt, model_type, dataset, modules_lib):
         """Create a unetbasedmodel from the compact options format - where the
@@ -123,8 +132,9 @@ class UnwrappedUnetBasedModel(BaseModel):
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
             args_up["up_conv_cls"] = self._factory_module.get_module(0, "UP")
 
-            inner, up = self.create_inner_modules(opt.innermost, args_up, modules_lib)
-            self.inner_modules.append(inner)
+            inners, up = self.create_inner_modules(opt.innermost, args_up, modules_lib)
+            for inner in inners:
+                self.inner_modules.append(inner)
             self.up_modules.append(up)
 
         else:
@@ -152,8 +162,6 @@ class UnwrappedUnetBasedModel(BaseModel):
         self._save_sampling_and_search(down_module, index)
 
         self.down_modules = self.down_modules[::-1]
-
-        log.info(self)
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)

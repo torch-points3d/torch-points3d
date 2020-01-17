@@ -127,15 +127,25 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, **kwargs):
+    def __init__(self, nn, aggr="max", bn=True, **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
-        self.nn = pt_utils.SharedMLP(nn)
+        self.nn = pt_utils.SharedMLP(nn, bn=bn)
+        if aggr.lower() not in ["mean", "max"]:
+            raise Exception("The aggregation provided is unrecognized {}".format(aggr))
+        self._aggr = aggr.lower()
 
     def forward(self, data):
         x, pos = data.x, data.pos
         pos_flipped = pos.transpose(1, 2).contiguous()
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
-        x = x.squeeze().max(-1)[0]
+
+        if self._aggr == "max":
+            x = x.squeeze().max(-1)[0]
+        else:
+            x = x.squeeze().mean(-1)
         pos = None  # pos.mean(1).unsqueeze(1)
         x = x.unsqueeze(-1)
         return Data(x=x, pos=pos)
+
+    def __repr__(self):
+        return "{}(aggr={}, {})".format(self.__class__.__name__, self._aggr, self.nn)

@@ -56,6 +56,8 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
 
+        log.info(self)
+
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -88,13 +90,17 @@ class SegmentationModel(UnwrappedUnetBasedModel):
             stack_down.append(data)
 
         data_inner = self.inner_modules[0](data)
+        data_inner_2 = self.inner_modules[-1](stack_down[3])
+
         queue_up.put(data_inner)
 
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
             queue_up.put(data)
 
-        last_feature = torch.cat([data.x, data_inner.x.repeat(1, 1, data.x.shape[-1])], dim=1)
+        last_feature = torch.cat(
+            [data.x, data_inner.x.repeat(1, 1, data.x.shape[-1]), data_inner_2.x.repeat(1, 1, data.x.shape[-1])], dim=1
+        )
 
         if self._use_category:
             num_points = data.pos.shape[1]

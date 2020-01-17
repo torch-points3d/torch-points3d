@@ -253,21 +253,25 @@ models:
                 ]
             channel_raising_nn: [[16, 64], [64 * 3  + 3, 128], [128 * 3  + 3, 256], [256 * 3  + 3, 512]]
         innermost:
-            module_name: GlobalDenseBaseModule
-            nn: [512 * 3 + 3, 512]
+            - module_name: GlobalDenseBaseModule
+              nn: [512 * 3 + 3, 128]
+              aggr: "mean"
+            - module_name: GlobalDenseBaseModule
+              nn: [256 * 3 + 3, 128]
+              aggr: "mean"
         up_conv:
             module_name: DenseFPModule
             up_conv_nn:
                 [
-                    [512 * 3 + 512, 512, 256],
-                    [256 * 3 + 256, 256, 128],
-                    [128 * 3 + 128, 128, 64],
-                    [64 * 3 + 64, 64, 64],
-                    [64, 64]
+                    [512 * 3 + 128, 512, 512],
+                    [256 * 3 + 512, 256, 256],
+                    [128 * 3 + 256, 128, 128],
+                    [64 * 3 + 128, 128, 128],
+                    [128, 128]
                 ]
             skip: True
         mlp_cls:
-            nn: [512 + 64, 256, 256, 256]
+            nn: [128 * 2 + 2 * 64, 128]
             dropout: 0.5
 
     # KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
