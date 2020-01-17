@@ -6,6 +6,7 @@ from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
 
 from .base_dataset import BaseDataset
+from metrics.segmentation_tracker import SegmentationTracker
 
 
 class S3DIS_With_Weights(S3DIS):
@@ -46,9 +47,7 @@ class S3DIS_With_Weights(S3DIS):
             if class_weight_method is None:
                 weights = torch.ones((len(inv_class_map.keys())))
             else:
-                self.idx_classes, weights = torch.unique(
-                    self.data.y, return_counts=True
-                )
+                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
                 weights = weights.float()
                 weights = weights.mean() / weights
                 if class_weight_method == "sqrt":
@@ -60,10 +59,7 @@ class S3DIS_With_Weights(S3DIS):
                 weights /= torch.sum(weights)
             print(
                 "CLASS WEIGHT : {}".format(
-                    {
-                        name: np.round(weights[index].item(), 4)
-                        for index, name in inv_class_map.items()
-                    }
+                    {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
                 )
             )
             self.weight_classes = weights
@@ -77,11 +73,7 @@ class S3DIS1x1Dataset(BaseDataset):
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS1x1")
 
         transform = T.Compose(
-            [
-                T.FixedPoints(dataset_opt.num_points),
-                T.RandomTranslate(0.01),
-                T.RandomRotate(180, axis=2),
-            ]
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
         )
         train_dataset = S3DIS_With_Weights(
             self._data_path,
@@ -98,3 +90,16 @@ class S3DIS1x1Dataset(BaseDataset):
         )
 
         self._create_dataloaders(train_dataset, test_dataset, validation=None)
+
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)

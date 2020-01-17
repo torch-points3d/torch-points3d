@@ -7,7 +7,6 @@ import torch.nn.functional as F
 import hydra
 from tqdm import tqdm as tq
 import time
-import wandb
 from omegaconf import OmegaConf
 import logging
 
@@ -15,7 +14,7 @@ from models.utils import find_model_using_name
 from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from datasets.base_dataset import BaseDataset
-from metrics.base_tracker import get_tracker, BaseTracker
+from metrics.base_tracker import BaseTracker
 from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
 from utils_folder.utils import merges_in_sub, model_fn_decorator, set_format
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
@@ -79,6 +78,10 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
         train(epoch, model, dataset, device, tracker, checkpoint, log)
         test(model, dataset, device, tracker, checkpoint, log)
 
+    # Single test evaluation in resume case
+    if checkpoint.start_epoch > cfg.training.epochs:
+        test(model, dataset, device, tracker, checkpoint, log)
+
 
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
@@ -129,8 +132,9 @@ def main(cfg):
         import wandb
 
         wandb.init(project=cfg.wandb.project)
+        # wandb.watch(model)
 
-    tracker: BaseTracker = get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard, "")
+    tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
     checkpoint = get_model_checkpoint(
         model, exp.checkpoint_dir, tested_model_name, exp.resume, cfg_training.weight_name

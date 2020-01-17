@@ -20,64 +20,52 @@ from models.base_model import BaseModel
 log = logging.getLogger(__name__)
 
 
-def get_tracker(
-    model: BaseModel, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool, log_dir: str,
-):
-    """Factory method for the tracker
-
-    Arguments:
-        task {str} -- task description
-        dataset {[type]}
-        wandb_log - Log using weight and biases
-    Returns:
-        [BaseTracker] -- tracker
-    """
-    tracker_name = task + "_tracker"
-    if dataset.is_hierarchical:
-        tracker_name = "hierarchical_" + tracker_name
-    tracker_filename = ".".join(["metrics", tracker_name])
-    trackerlib = importlib.import_module(tracker_filename)
-    cls_name = "".join(tracker_name.split("_"))
-
-    tracker = None
-    for name, cls in trackerlib.__dict__.items():
-        if name.lower() == cls_name.lower():
-            tracker = cls
-
-    if tracker is None:
-        raise NotImplementedError("No tracker for %s task" % task)
-
-    return tracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log, log_dir=log_dir)
-
-
 def meter_value(meter, dim=0):
     return float(meter.value()[dim]) if meter.n > 0 else 0.0
 
 
 class BaseTracker:
-    def __init__(self, wandb_log: bool, use_tensorboard: bool, log_dir: str):
+    def __init__(self, stage: str, wandb_log: bool, use_tensorboard: bool):
         self._wandb = wandb_log
         self._use_tensorboard = use_tensorboard
-        self._log_dir = os.path.join(log_dir, "tensorboard")
-
-        self._stage = None
+        self._tensorboard_dir = os.path.join(os.getcwd(), "tensorboard")
         self._n_iter = 0
 
         if self._use_tensorboard:
-            log.info("Access tensorboard with the following command <tensorboard --logdir={}>".format(self._log_dir))
-            self._writer = SummaryWriter(log_dir=self._log_dir)
+            log.info(
+                "Access tensorboard with the following command <tensorboard --logdir={}>".format(self._tensorboard_dir)
+            )
+            self._writer = SummaryWriter(log_dir=self._tensorboard_dir)
 
-    @abstractmethod
     def reset(self, stage="train"):
-        pass
+        self._stage = stage
+        self._loss_meters = {}
 
-    @abstractmethod
     def get_metrics(self, verbose=False) -> Dict[str, float]:
-        pass
+        metrics = {}
+        for key, loss_meter in self._loss_meters.items():
+            metrics[key] = meter_value(loss_meter, dim=0)
+        return metrics
 
-    @abstractmethod
     def track(self, model):
-        pass
+        losses = self._convert(model.get_current_losses())
+        self._append_losses(losses)
+
+    def _append_losses(self, losses):
+        for key, loss in losses.items():
+            if loss is None:
+                continue
+            loss_key = "%s_%s" % (self._stage, key)
+            if loss_key not in self._loss_meters:
+                self._loss_meters[loss_key] = tnt.meter.AverageValueMeter()
+            self._loss_meters[loss_key].add(loss)
+
+    @staticmethod
+    def _convert(x):
+        if torch.is_tensor(x):
+            return x.detach().cpu().numpy()
+        else:
+            return x
 
     def publish_to_tensorboard(self, metrics):
         for metric_name, metric_value in metrics.items():

@@ -1,7 +1,7 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
     model_name: pointnet2_charlesmsg
-    checkpoint_dir: "/home/nicolas/deeppointcloud-benchmarks/outputs/2020-01-14/22-56-10"
+    checkpoint_dir: ""
     resume: True
     task: segmentation
     dataset: shapenet
@@ -19,10 +19,10 @@ tensorboard:
 training:
     shuffle: True
     num_workers: 2
-    batch_size: 32
+    batch_size: 16
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
-    epochs: -1
+    epochs: 100
     optimizer: Adam
     learning_rate:
         scheduler_type: "step_decay"
