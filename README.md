@@ -86,7 +86,7 @@ The data reported below correspond to the part segmentation problem for Shapenet
 
 | Model Name | Use Normals | Size | Speed Train / Test | Cross Entropy | OAcc | mIou |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_charlesmsg```](/benchmark/s3dis_fold5/Pointnet2_original.md) | Yes<!-- .element: style="text-align:center;" --> | 1,733,946<!-- .element: style="text-align:center;" --> | 15:07 / 01:20<!-- .element: style="text-align:center;" --> | 0.089 | 82.1<!-- .element: style="text-align:center;" --> | 85.1<!-- .element: style="text-align:center;" --> |
+| [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes<!-- .element: style="text-align:center;" --> | 1,733,946<!-- .element: style="text-align:center;" --> | 15:07 / 01:20<!-- .element: style="text-align:center;" --> | 0.089 | 82.1<!-- .element: style="text-align:center;" --> | 85.1<!-- .element: style="text-align:center;" --> |
 
 ## Contributing
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
