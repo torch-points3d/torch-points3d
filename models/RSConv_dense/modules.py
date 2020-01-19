@@ -210,6 +210,8 @@ class OriginalRSConv(nn.Module):
     def __init__(self, mapping=None, first_layer = False, radius=None, activation=nn.ReLU(inplace=True)):
         super(OriginalRSConv, self).__init__()
         
+        self.nn = nn.ModuleList()
+        
         self._radius = radius
 
         self.mapping_func1 = mapping[0]
@@ -221,14 +223,17 @@ class OriginalRSConv(nn.Module):
         if first_layer:
             self.xyz_raising = mapping[3]
             self.bn_xyz_raising = nn.BatchNorm2d(self.xyz_raising.out_channels)
+            self.nn.append(self.bn_xyz_raising)
 
+        self.bn_mapping = nn.BatchNorm2d(self.mapping_func1.out_channels)
         self.bn_rsconv = nn.BatchNorm2d(self.cr_mapping.in_channels)
         self.bn_channel_raising = nn.BatchNorm1d(self.cr_mapping.out_channels)
-        
-        self.bn_mapping = nn.BatchNorm2d(self.mapping_func1.out_channels)
+
+        self.nn.append(self.bn_mapping)
+        self.nn.append(self.bn_rsconv)
+        self.nn.append(self.bn_channel_raising)
        
         self.activation = activation
-
 
     def forward(self, input): # input: (B, 3 + 3 + C_in, npoint, centroid + nsample)
         
@@ -248,6 +253,9 @@ class OriginalRSConv(nn.Module):
         x = F.max_pool2d(self.activation(self.bn_rsconv(torch.mul(h_xi_xj, x))), kernel_size = (1, nsample)).squeeze(3)   # (B, C_in, npoint)
         x = self.activation(self.bn_channel_raising(self.cr_mapping(x)))
         return x
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self.nn.__repr__()) 
 
 class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
     def __init__(
@@ -272,6 +280,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
 
         self.use_xyz = use_xyz
         self.mlps = nn.ModuleList()
+        self.mappings = nn.ModuleList()
 
         self._first_layer = True if len(down_conv_nn) == 2 else False
 
@@ -327,6 +336,9 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             mapping = [mapping_func1, mapping_func2, cr_mapping, xyz_raising]
         elif npoint is not None:
             mapping = [mapping_func1, mapping_func2, cr_mapping]
+
+        for m in mapping:
+            self.mappings.append(m)
 
         for radius in radii:
             self.mlps.append(
@@ -400,9 +412,10 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def __repr__(self):
-        return "{}({})".format(
+        return "{}({}, shared: {})".format(
             self.__class__.__name__,
             self.mlps.__repr__(),
+            self.mappings.__repr__()
         )
 
 class RSConvMSGDown(BaseDenseConvolutionDown):
