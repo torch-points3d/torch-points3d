@@ -135,7 +135,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
 
         self.mlp_out = Seq(
             *[
-                Conv1d(channel_raising_nn[0], channel_raising_nn[-1], kernel_size=1, stride=1),
+                Conv1d(channel_raising_nn[0], channel_raising_nn[-1], kernel_size=1, stride=1, bias=True),
                 nn.BatchNorm1d(channel_raising_nn[-1]),
                 activation,
             ]

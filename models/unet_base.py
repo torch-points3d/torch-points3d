@@ -428,8 +428,6 @@ class UnwrappedUnetBasedModel(BaseModel):
 
         self.down_modules = self.down_modules[::-1]
 
-        log.info(self)
-
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
         if factory_module_cls is None:

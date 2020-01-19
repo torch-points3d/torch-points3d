@@ -33,14 +33,14 @@ class SegmentationModel(UnwrappedUnetBasedModel):
 
         self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0] + self._num_categories)
         for i in range(1, len(last_mlp_opt.nn)):
-            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
+            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True, bias=False)
         if last_mlp_opt.dropout:
             self.FC_layer.dropout(p=last_mlp_opt.dropout)
 
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
 
-        # log.info(self)
+        log.info(self)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.

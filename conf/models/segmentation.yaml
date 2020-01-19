@@ -260,6 +260,8 @@ models:
               nn: [256 * 3 + 3, 128]
               aggr: "mean"
         up_conv:
+            bn: True
+            bias: False
             module_name: DenseFPModule
             up_conv_nn:
                 [

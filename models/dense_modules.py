@@ -107,10 +107,10 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, bn=True, **kwargs):
+    def __init__(self, up_conv_nn, bn=True, bias=False, **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
 
-        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
+        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn, bias=bias)
 
     def conv(self, pos, pos_skip, x):
         assert pos_skip.shape[2] == 3
