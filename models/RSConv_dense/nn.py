@@ -40,7 +40,7 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
 
-        log.info(self)
+        # log.info(self)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -70,16 +70,17 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         data = self.input
         stack_down.append(data)
 
-        for i in range(len(self.down_modules)):
+        for i in range(len(self.down_modules) - 1):
             data = self.down_modules[i](data)
             stack_down.append(data)
+
+        data = self.down_modules[-1](data)
+        queue_up.put(data)
 
         data_inner = self.inner_modules[0](data)
         data_inner_2 = self.inner_modules[-1](stack_down[3])
 
-        queue_up.put(data_inner)
-
-        for i in range(len(self.up_modules)):
+        for i in range(len(self.up_modules) - 1):
             data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
             queue_up.put(data)
 

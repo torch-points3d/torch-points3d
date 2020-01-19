@@ -323,3 +323,70 @@ RSCNN_MSN(
   )
 )
 Model size = %i 3,488,705
+
+###########################################################################
+
+-1 -3 -2
+torch.Size([12, 64, 3]) torch.Size([12, 16, 3]) torch.Size([12, 768, 64]) torch.Size([12, 1536, 16]) SharedMLP(
+  (layer0): Conv2d(
+    (conv): Conv2d(2304, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(
+      (bn): BatchNorm2d(512, eps=1e-05, momentum=1.8, affine=True, track_running_stats=True)
+    )
+    (activation): ReLU(inplace)
+  )
+  (layer1): Conv2d(
+    (conv): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(
+      (bn): BatchNorm2d(512, eps=1e-05, momentum=1.8, affine=True, track_running_stats=True)
+    )
+    (activation): ReLU(inplace)
+  )
+)
+torch.Size([12, 512, 64, 1])
+
+
+
+-2 -4 -3
+torch.Size([12, 256, 3]) torch.Size([12, 64, 3]) torch.Size([12, 384, 256]) torch.Size([12, 512, 64]) SharedMLP(
+  (layer0): Conv2d(
+    (conv): Conv2d(896, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(
+      (bn): BatchNorm2d(512, eps=1e-05, momentum=1.8, affine=True, track_running_stats=True)
+    )
+    (activation): ReLU(inplace)
+  )
+  (layer1): Conv2d(
+    (conv): Conv2d(512, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(
+      (bn): BatchNorm2d(512, eps=1e-05, momentum=1.8, affine=True, track_running_stats=True)
+    )
+    (activation): ReLU(inplace)
+  )
+)
+torch.Size([12, 512, 256, 1])
+
+
+
+-3 -5 -4
+torch.Size([12, 1024, 3]) torch.Size([12, 256, 3]) torch.Size([12, 192, 1024]) torch.Size([12, 512, 256]) SharedMLP(
+  (layer0): Conv2d(
+    (conv): Conv2d(704, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(
+      (bn): BatchNorm2d(256, eps=1e-05, momentum=1.8, affine=True, track_running_stats=True)
+    )
+    (activation): ReLU(inplace)
+  )
+  (layer1): Conv2d(
+    (conv): Conv2d(256, 256, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(
+      (bn): BatchNorm2d(256, eps=1e-05, momentum=1.8, affine=True, track_running_stats=True)
+    )
+    (activation): ReLU(inplace)
+  )
+)
+torch.Size([12, 256, 1024, 1])
+
+
+
+-4 -6 -5

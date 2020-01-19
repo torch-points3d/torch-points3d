@@ -392,7 +392,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         # construct unet structure
         contains_global = hasattr(opt, "innermost") and opt.innermost is not None
         if contains_global:
-            assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
+            # assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
             args_up["up_conv_cls"] = self._factory_module.get_module(0, "UP")

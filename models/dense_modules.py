@@ -92,6 +92,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
         data, data_skip = data
         pos, x = data.pos, data.x
         pos_skip, x_skip = data_skip.pos, data_skip.x
+
         new_features = self.conv(pos, pos_skip, x)
 
         if x_skip is not None:
