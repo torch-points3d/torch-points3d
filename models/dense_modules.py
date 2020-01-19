@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch_points as tp
 from torch_geometric.data import Data
@@ -126,6 +127,14 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
         return interpolated_feats
 
+    def __repr__(self):
+        return "{}: {} ({})".format(
+            self.__class__.__name__, 
+            self.params,
+            self.nn
+            )
+
+
 
 class GlobalDenseBaseModule(torch.nn.Module):
     def __init__(self, nn, aggr="max", bn=True, **kwargs):
@@ -134,6 +143,13 @@ class GlobalDenseBaseModule(torch.nn.Module):
         if aggr.lower() not in ["mean", "max"]:
             raise Exception("The aggregation provided is unrecognized {}".format(aggr))
         self._aggr = aggr.lower()
+
+    @property
+    def params(self):
+        if not hasattr(self, "_params"):
+            model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+            self._params = sum([np.prod(p.size()) for p in model_parameters])
+        return self._params
 
     def forward(self, data):
         x, pos = data.x, data.pos
@@ -149,4 +165,9 @@ class GlobalDenseBaseModule(torch.nn.Module):
         return Data(x=x, pos=pos)
 
     def __repr__(self):
-        return "{}(aggr={}, {})".format(self.__class__.__name__, self._aggr, self.nn)
+        return "{}: {} (aggr={}, {})".format(
+            self.__class__.__name__, 
+            self.params,
+            self._aggr, 
+            self.nn
+            )

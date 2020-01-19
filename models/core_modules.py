@@ -3,6 +3,7 @@ from typing import *
 import math
 from functools import partial
 from typing import Dict, Any
+import numpy as np
 import torch
 from torch import nn
 from torch.nn.parameter import Parameter
@@ -75,6 +76,13 @@ class BaseConvolution(ABC, torch.nn.Module):
 
         self.sampler = sampler
         self.neighbour_finder = neighbour_finder
+
+    @property
+    def params(self):
+        if not hasattr(self, "_params"):
+            model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+            self._params = sum([np.prod(p.size()) for p in model_parameters])
+        return self._params
 
 
 class BaseConvolutionDown(BaseConvolution):
