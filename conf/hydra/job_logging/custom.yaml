@@ -17,3 +17,4 @@ hydra:
                 formatter: simple
                 class: logging.FileHandler
                 filename: train.log
+        disable_existing_loggers: False
