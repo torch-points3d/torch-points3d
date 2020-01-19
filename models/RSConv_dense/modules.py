@@ -90,7 +90,7 @@ class SharedRSConv(nn.Module):
         # Extract information to create message
         abs_coord = aggr_features[:, :3]  # absolute coordinates
         delta_x = aggr_features[:, 3:6]  # normalized coordinates
-        features = aggr_features[:, 6:]
+        features = aggr_features[:, 3:]
 
         nsample = abs_coord.shape[-1]
         coord_xi = centroids.repeat(1, 1, 1, nsample)  # (B, 3, npoint, nsample) centroid points
@@ -106,7 +106,7 @@ class SharedRSConv(nn.Module):
         return "{}(radius={})".format(self.__class__.__name__, self._radius)
 
 
-class RSConvMSGDown(BaseDenseConvolutionDown):
+class RSConvSharedMSGDown(BaseDenseConvolutionDown):
     def __init__(
         self,
         npoint=None,
@@ -122,7 +122,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         assert len(radii) == len(nsample)
         if len(radii) != len(down_conv_nn):
             log.warn("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
-        super(RSConvMSGDown, self).__init__(
+        super(RSConvSharedMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
 
@@ -163,6 +163,99 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
             new_features = torch.cat(
                 [grouped_pos_absolute, grouped_pos_normalized, grouped_pos_absolute], dim=1
             )  # (B, 3 + 3 + 3, npoint, nsample)
+
+        return new_features, centroids
+
+    def conv(self, x, pos, new_pos, radius_idx, scale_idx):
+        """ Implements a Dense convolution where radius_idx represents
+        the indexes of the points in x and pos to be agragated into the new feature
+        for each point in new_pos
+
+        Arguments:
+            x -- Previous features [B, N, C]
+            pos -- Previous positions [B, N, 3]
+            new_pos  -- Sampled positions [B, npoints, 3]
+            radius_idx -- Indexes to group [B, npoints, nsample]
+            scale_idx -- Scale index in multiscale convolutional layers
+        Returns:
+            new_x -- Features after passing trhough the MLP [B, mlp[-1], npoints]
+        """
+        assert scale_idx < len(self.mlps)
+        aggr_features, centroids = self._prepare_features(x, pos, new_pos, radius_idx)
+        new_features = self.mlps[scale_idx](aggr_features, centroids)  # (B, mlp[-1], npoint, nsample)
+        new_features = F.max_pool2d(new_features, kernel_size=[1, new_features.size(3)])  # (B, mlp[-1], npoint, 1)
+        new_features = self.mlp_out(new_features.squeeze(-1))  # (B, mlp[-1], npoint)
+        return new_features
+
+    def __repr__(self):
+        return "{}({}, shared: {} {}, {} \033[0m)".format(
+            self.__class__.__name__,
+            self.mlps.__repr__(),
+            COLORS.Cyan,
+            self.mlp_out.__repr__(),
+            self._mapper.__repr__(),
+            COLORS.END_TOKEN,
+        )
+
+class RSConvMSGDown(BaseDenseConvolutionDown):
+    def __init__(
+        self,
+        npoint=None,
+        radii=None,
+        nsample=None,
+        down_conv_nn=None,
+        channel_raising_nn=None,
+        bn=True,
+        use_xyz=True,
+        activation=nn.ReLU(),
+        **kwargs
+    ):
+        assert len(radii) == len(nsample)
+        if len(radii) != len(down_conv_nn):
+            log.warn("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
+        super(RSConvMSGDown, self).__init__(
+            DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
+        )
+
+        self.use_xyz = use_xyz
+        self.npoint = npoint
+        self.mlps = nn.ModuleList()
+
+        # https://github.com/Yochengliu/Relation-Shape-CNN/blob/6464eb8bb4efc686adec9da437112ef888e55684/utils/pointnet2_modules.py#L106
+
+        self.mlp_out = Seq(
+            *[
+                Conv1d(channel_raising_nn[0], channel_raising_nn[-1], kernel_size=1, stride=1, bias=True),
+                nn.BatchNorm1d(channel_raising_nn[-1]),
+                activation,
+            ]
+        )
+
+        for i in range(len(radii)):
+            mapper = RSConvMapper(down_conv_nn, activation=activation, use_xyz=self.use_xyz)
+            self.mlps.append(SharedRSConv(mapper, radii[i]))
+
+        self._mapper = mapper
+
+    def _prepare_features(self, x, pos, new_pos, idx):
+        new_pos_trans = pos.transpose(1, 2).contiguous()
+        grouped_pos_absolute = tp.grouping_operation(new_pos_trans, idx)  # (B, 3, npoint, nsample)
+        centroids = new_pos.transpose(1, 2).unsqueeze(-1)
+        grouped_pos_normalized = grouped_pos_absolute - centroids
+
+        if x is not None:
+            grouped_features = tp.grouping_operation(x, idx)
+            if self.use_xyz:
+                new_features = torch.cat(
+                    [grouped_pos_absolute, grouped_pos_normalized, grouped_features], dim=1
+                )  # (B, 3 + 3 + C, npoint, nsample)
+            else:
+                new_features = grouped_features
+        else:
+            assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
+            new_features = torch.cat(
+                [grouped_pos_absolute, grouped_pos_normalized], dim=1
+            )  # (B, 3 + 3 npoint, nsample)
 
         return new_features, centroids
 
