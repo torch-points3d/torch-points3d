@@ -160,12 +160,14 @@ class GlobalDenseBaseModule(torch.nn.Module):
         pos_flipped = pos.transpose(1, 2).contiguous()
 
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
+        
         if self._aggr == "max":
             x = x.squeeze().max(-1)[0]
         elif self._aggr == "mean":
             x = x.squeeze().mean(-1)
         else:
             raise NotImplementedError('The following aggregation {} is not recognized'.format(self._aggr))
+        
         pos = None  # pos.mean(1).unsqueeze(1)
         x = x.unsqueeze(-1)
         return Data(x=x, pos=pos)
