@@ -78,7 +78,7 @@ And you should see something like that
 
 | Model Name | Size | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)|3,026,829<!-- .element: style="text-align:center;" -->|04:29 / 01:07<!-- .element: style="text-align:center;" -->|0.0512<!-- .element: style="text-align:center;" -->|85.26<!-- .element: style="text-align:center;" -->|45.58<!-- .element: style="text-align:center;" -->|73.11 <!-- .element: style="text-align:center;" -->|
+| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)|3,026,829|04:29 / 01:07|0.0512|85.26|45.58|73.11 |
 
 
 ## Shapenet part segmentation
@@ -86,7 +86,8 @@ The data reported below correspond to the part segmentation problem for Shapenet
 
 | Model Name | Use Normals | Size | Speed Train / Test | Cross Entropy | OAcc | mIou |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes<!-- .element: style="text-align:center;" --> | 1,733,946<!-- .element: style="text-align:center;" --> | 15:07 / 01:20<!-- .element: style="text-align:center;" --> | 0.089 | 82.1<!-- .element: style="text-align:center;" --> | 85.1<!-- .element: style="text-align:center;" --> |
+| [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes | 1,733,946 | 15:07 / 01:20 | 0.089 | 82.1 | 85.1 |
+| [```RSCNN_MSG```](/benchmark/shapenet/rscnn_original.md) | No | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04 | 82.811 | 85.3 |
 
 ## Contributing
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
