@@ -9,9 +9,9 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from models.model_building_utils.model_definition_resolver import resolve_model
-from models.unet_base import UnwrappedUnetBasedModel
-from utils_folder.utils import merges_in_sub, set_format
+from src.utils.model_building_utils.model_definition_resolver import resolve_model
+from src.architectures.unet_base import UnwrappedUnetBasedModel
+from src.utils.config import merges_in_sub, set_format
 
 from test.mockdatasets import MockDataset
 
@@ -59,7 +59,7 @@ class TestModelDefinitionResolver(unittest.TestCase):
 
             print(model_name)
             model_type = model_conf.type
-            module_filename = ".".join(["models", model_type, "modules"])
+            module_filename = ".".join(["src.modules", model_type, "modules"])
             modules_lib = importlib.import_module(module_filename)
 
             cfg_training = set_format(model_conf, cfg_training)

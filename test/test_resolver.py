@@ -9,7 +9,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from models.model_building_utils.model_definition_resolver import resolve_model
+from src.utils.model_building_utils.model_definition_resolver import resolve_model
 
 
 class MockDataset(torch.utils.data.Dataset):

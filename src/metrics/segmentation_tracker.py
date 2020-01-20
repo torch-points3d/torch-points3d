@@ -3,9 +3,9 @@ import torchnet as tnt
 import torch
 import numpy as np
 
-from models.base_model import BaseModel
-from .confusion_matrix import ConfusionMatrix
-from .base_tracker import BaseTracker, meter_value
+from src.architectures.base_model import BaseModel
+from src.metrics.confusion_matrix import ConfusionMatrix
+from src.metrics.base_tracker import BaseTracker, meter_value
 
 
 class SegmentationTracker(BaseTracker):

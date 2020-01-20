@@ -33,10 +33,12 @@ from .kernel_utils import load_kernels as create_kernel_points
 from .convolution_ops import KPConv_deform_ops
 from .kernels import PointKernel, LightDeformablePointKernel
 from .kernel_utils import kernel_point_optimization_debug
-from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
-from models.core_modules import *
-from models.unet_base import BaseFactory
-from .partial_dense_modules import *
+
+from src.core.sampling import FPSSampler
+from src.core.neighbourfinder import RadiusNeighbourFinder
+
+from src.core import *
+from src.architectures.unet_base import BaseFactory
 
 
 class KPConvModels(Enum):

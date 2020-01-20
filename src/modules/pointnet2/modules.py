@@ -1,6 +1,11 @@
 from torch_geometric.nn import PointConv
-from models.core_modules import *
-from models.core_sampling_and_search import MultiscaleRadiusNeighbourFinder, FPSSampler
+
+from src.core.base_conv.base_conv import *
+from src.core.base_conv.message_passing import *
+from src.core.common_modules.base_modules import *
+
+from src.core.sampling import FPSSampler
+from src.core.neighbourfinder import MultiscaleRadiusNeighbourFinder
 
 
 class SAModule(BaseMSConvolutionDown):

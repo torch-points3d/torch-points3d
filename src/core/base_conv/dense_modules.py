@@ -23,7 +23,7 @@ from torch_geometric.nn import (
     global_mean_pool,
     knn,
 )
-from torch_geometric.data import Batch
+from torch_geometric.data import Batch, Data
 from torch_geometric.utils import scatter_
 import torch_points as tp
 import etw_pytorch_utils as pt_utils

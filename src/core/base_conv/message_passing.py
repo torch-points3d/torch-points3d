@@ -28,9 +28,10 @@ from torch_geometric.utils import scatter_
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
-from models.core_sampling_and_search import BaseMSNeighbourFinder
-from .base_conv import BaseConvolution
-from common_modules.base_modules import MLP
+from src.core.base_conv.base_conv import *
+from src.core.common_modules.base_modules import *
+from src.core.sampling import *
+from src.core.neighbourfinder import *
 
 def copy_from_to(data, batch):
     for key in data.keys:

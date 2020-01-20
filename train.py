@@ -95,6 +95,7 @@ def main(cfg):
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
+    print("DEVICE : {}".format(device))
 
     # Get task and model_name
     exp = cfg.experiment

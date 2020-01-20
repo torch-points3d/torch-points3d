@@ -2,9 +2,9 @@ import torch
 from torch.nn import Linear
 from torch_geometric.nn import global_max_pool
 
-from models.core_modules import *
-from models.core_transforms import BaseLinearTransformSTNkD
-from models.base_model import BaseInternalLossModule
+from src.core.common_modules.base_modules import *
+from src.core.common_modules.spatial_transform import BaseLinearTransformSTNkD
+from src.architectures.base_model import BaseInternalLossModule
 
 
 class MiniPointNet(torch.nn.Module):

@@ -6,7 +6,7 @@ authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-torch-scatter = "^1.4"
+torch-scatter = "^1.3"
 torch-sparse = "^0.4.3"
 torch-cluster = "^1.4"
 torch-geometric = "^1.3"
