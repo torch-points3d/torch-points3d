@@ -1,12 +1,38 @@
+from abc import ABC, abstractmethod
+from typing import *
+import math
+from functools import partial
+from typing import Dict, Any
 import numpy as np
 import torch
+from torch import nn
+from torch.nn.parameter import Parameter
+from torch.nn import (
+    Sequential as Seq,
+    Linear as Lin,
+    ReLU,
+    LeakyReLU,
+    BatchNorm1d as BN,
+    Dropout,
+)
+from torch_geometric.nn import (
+    knn_interpolate,
+    fps,
+    radius,
+    global_max_pool,
+    global_mean_pool,
+    knn,
+)
+from torch_geometric.data import Batch
+from torch_geometric.utils import scatter_
 import torch_points as tp
-from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
 
-from utils_folder.enums import ConvolutionFormat
-from .core_sampling_and_search import BaseMSNeighbourFinder
-from .core_modules import BaseConvolution
+from models.core_sampling_and_search import BaseMSNeighbourFinder
+from .base_conv import BaseConvolution
+from common_modules.base_modules import MLP
+
+#################### THOSE MODULES IMPLEMENTS THE BASE DENSE CONV API ############################
 
 
 class BaseDenseConvolutionDown(BaseConvolution):

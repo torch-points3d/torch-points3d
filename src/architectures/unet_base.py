@@ -24,10 +24,10 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.inits import reset
 import logging
 
-from datasets.base_dataset import BaseDataset
+from src.datasets.base_dataset import BaseDataset
 from .base_model import BaseModel
-from .core_modules import Identity
-from .utils import is_list
+from core.common_modules.base_modules import Identity
+from utils.config import is_list
 
 log = logging.getLogger(__name__)
 

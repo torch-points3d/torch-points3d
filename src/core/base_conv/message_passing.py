@@ -28,66 +28,16 @@ from torch_geometric.utils import scatter_
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
-import models.utils as utils
 from models.core_sampling_and_search import BaseMSNeighbourFinder
-
+from .base_conv import BaseConvolution
+from common_modules.base_modules import MLP
 
 def copy_from_to(data, batch):
     for key in data.keys:
         if key not in batch.keys:
             setattr(batch, key, getattr(data, key, None))
-
-
-def weight_variable(shape):
-
-    initial = torch.empty(shape, dtype=torch.float)
-    torch.nn.init.xavier_normal_(initial)
-    return initial
-
-
-def MLP(channels, activation=nn.LeakyReLU(0.2)):
-    return Seq(*[Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i])) for i in range(1, len(channels))])
-
-
-class UnaryConv(torch.nn.Module):
-    def __init__(self, num_inputs, num_outputs):
-        """
-        1x1 convolution on point cloud (we can even call it a mini pointnet)
-        """
-        super(UnaryConv, self).__init__()
-        self.num_inputs = num_inputs
-        self.num_outputs = num_outputs
-
-        self.weight = Parameter(weight_variable([self.num_inputs, self.num_outputs]))
-
-    def forward(self, features):
-        """
-        features(Torch Tensor): size N x d d is the size of inputs
-        """
-        return torch.matmul(features, self.weight)
-
-    def __repr__(self):
-        return "UnaryConv({}, {})".format(self.num_inputs, self.num_outputs)
-
-
-class BaseConvolution(ABC, torch.nn.Module):
-    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
-        torch.nn.Module.__init__(self)
-
-        self.sampler = sampler
-        self.neighbour_finder = neighbour_finder
-
-    @property
-    def nb_params(self):
-        """[This property is used to return the number of trainable parameters for a given layer]
-        It is useful for debugging and reproducibility.
-        Returns:
-            [type] -- [description]
-        """
-        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
-        return self._nb_params
-
+            
+#################### THOSE MODULES IMPLEMENTS THE BASE MESSAGE_PASSING CONV API ############################
 
 class BaseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
@@ -222,24 +172,6 @@ class GlobalBaseModule(torch.nn.Module):
         return batch_obj
 
 
-class GlobalPartialDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max", *args, **kwargs):
-        super(GlobalPartialDenseBaseModule, self).__init__()
-
-        self.nn = MLP(nn)
-        self.pool = global_max_pool if aggr == "max" else global_mean_pool
-
-    def forward(self, data):
-        batch_obj = Batch()
-        x, pos, batch = data.x, data.pos, data.batch
-        x = self.nn(torch.cat([x, pos], dim=1))
-        x = self.pool(x, batch)
-        batch_obj.x = x
-        batch_obj.pos = pos.new_zeros((x.size(0), 3))
-        batch_obj.batch = torch.arange(x.size(0), device=x.device)
-        copy_from_to(data, batch_obj)
-        return batch_obj
-
 
 #################### COMMON MODULE ########################
 
@@ -342,11 +274,3 @@ class BaseResnetBlock(ABC, torch.nn.Module):
         batch_obj.batch = data.batch
         copy_from_to(data, batch_obj)
         return batch_obj
-
-
-class Identity(nn.Module):
-    def __init__(self):
-        super(Identity, self).__init__()
-
-    def forward(self, data):
-        return data

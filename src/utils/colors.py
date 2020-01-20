@@ -1,3 +1,13 @@
+
+import logging
+
+log = logging.getLogger(__name__)
+
+def colored_print(color, msg):
+    log.info(color + msg + "\033[0m")
+
+
+
 class COLORS:
     """[This class is used to color the bash shell by using {} {} {} with 'COLORS.{}, text, COLORS.END_TOKEN']
     """

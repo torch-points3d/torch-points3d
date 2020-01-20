@@ -1,18 +1,4 @@
-import os
 import importlib
-from .base_model import BaseModel
-from datasets.base_dataset import BaseDataset
-from omegaconf.listconfig import ListConfig
-from omegaconf.dictconfig import DictConfig
-
-
-def is_list(entity):
-    return isinstance(entity, list) or isinstance(entity, ListConfig)
-
-
-def is_dict(entity):
-    return isinstance(entity, dict) or isinstance(entity, DictConfig)
-
 
 def find_model_using_name(model_type, task, option, dataset: BaseDataset) -> BaseModel:
 

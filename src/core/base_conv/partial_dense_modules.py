@@ -1,8 +1,40 @@
+from abc import ABC, abstractmethod
+from typing import *
+import math
+from functools import partial
+from typing import Dict, Any
+import numpy as np
 import torch
+from torch import nn
+from torch.nn.parameter import Parameter
+from torch.nn import (
+    Sequential as Seq,
+    Linear as Lin,
+    ReLU,
+    LeakyReLU,
+    BatchNorm1d as BN,
+    Dropout,
+)
+from torch_geometric.nn import (
+    knn_interpolate,
+    fps,
+    radius,
+    global_max_pool,
+    global_mean_pool,
+    knn,
+)
 from torch_geometric.data import Batch
-from .core_modules import BaseConvolution, copy_from_to
-from .core_sampling_and_search import BaseMSNeighbourFinder
-from utils_folder.enums import ConvolutionFormat
+from torch_geometric.utils import scatter_
+import torch_points as tp
+import etw_pytorch_utils as pt_utils
+
+import models.utils as utils
+from models.core_sampling_and_search import BaseMSNeighbourFinder
+from .base_conv import BaseConvolution
+from common_modules.base_modules import MLP
+
+
+#################### THOSE MODULES IMPLEMENTS THE BASE PARTIAL_DENSE CONV API ############################
 
 
 class BasePartialDenseConvolutionDown(BaseConvolution):
@@ -55,5 +87,24 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
 
         batch_obj.pos = pos[idx_sampler]
         batch_obj.batch = batch[idx_sampler]
+        copy_from_to(data, batch_obj)
+        return batch_obj
+
+
+class GlobalPartialDenseBaseModule(torch.nn.Module):
+    def __init__(self, nn, aggr="max", *args, **kwargs):
+        super(GlobalPartialDenseBaseModule, self).__init__()
+
+        self.nn = MLP(nn)
+        self.pool = global_max_pool if aggr == "max" else global_mean_pool
+
+    def forward(self, data):
+        batch_obj = Batch()
+        x, pos, batch = data.x, data.pos, data.batch
+        x = self.nn(torch.cat([x, pos], dim=1))
+        x = self.pool(x, batch)
+        batch_obj.x = x
+        batch_obj.pos = pos.new_zeros((x.size(0), 3))
+        batch_obj.batch = torch.arange(x.size(0), device=x.device)
         copy_from_to(data, batch_obj)
         return batch_obj
