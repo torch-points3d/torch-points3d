@@ -28,7 +28,6 @@ from torch_geometric.utils import scatter_
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
-import models.utils as utils
 from models.core_sampling_and_search import BaseMSNeighbourFinder
 from .base_conv import BaseConvolution
 from common_modules.base_modules import MLP
