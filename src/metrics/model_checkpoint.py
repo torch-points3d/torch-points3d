@@ -6,10 +6,9 @@ import sys
 import torch
 import logging
 
-from models.base_model import BaseModel
-from utils_folder.colors import COLORS
-from utils_folder.utils import colored_print
-from schedulers.lr_schedulers import build_basic_params
+from src.architectures.base_model import BaseModel
+from src.utils.colors import COLORS, colored_print
+from src.core.schedulers.lr_schedulers import build_basic_params
 
 log = logging.getLogger(__name__)
 

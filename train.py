@@ -114,12 +114,12 @@ def main(cfg):
     # Find and create associated dataset
     dataset_config = getattr(cfg.data, tested_dataset_name, None)
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_name)(dataset_config, cfg_training)
+    dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_config = merges_in_sub(model_config, [cfg_training, dataset_config])
-    model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
+    model = find_model_using_name(model_config.model_logic, model_config.type, tested_task, model_config, dataset)
 
     # Optimizer
     lr_params = cfg_training.learning_rate

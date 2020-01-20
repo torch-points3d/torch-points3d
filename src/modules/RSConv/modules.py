@@ -1,7 +1,9 @@
 import torch
 from torch.nn import ReLU
 from torch_geometric.nn import MessagePassing
-from models.core_modules import *
+
+
+from src.core.base_modules import *
 from models.core_sampling_and_search import FPSSampler, RadiusNeighbourFinder
 import models.utils as utils
 

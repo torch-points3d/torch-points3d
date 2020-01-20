@@ -10,12 +10,12 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 from typing import Tuple, List
 
-from models.dense_modules import *
-from models.core_sampling_and_search import DenseFPSSampler, DenseRadiusNeighbourFinder
+from src.core.base_conv.dense_modules import *
+from src.core.sampling import DenseFPSSampler
+from src.core.neighbourfinder import DenseRadiusNeighbourFinder
+from src.utils.colors import COLORS
 
 log = logging.getLogger(__name__)
-
-from utils_folder.colors import COLORS
 
 
 class RSConvMapper(nn.Module):

@@ -10,7 +10,7 @@ import functools
 import operator
 import logging
 
-from schedulers.lr_schedulers import get_scheduler
+from src.core.schedulers.lr_schedulers import get_scheduler
 
 log = logging.getLogger(__name__)
 

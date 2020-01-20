@@ -1,17 +1,18 @@
 from typing import Any
+import logging
+import queue
+
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
-from models.unet_base import UnetBasedModel
-from models.unet_base import UnwrappedUnetBasedModel
-import logging
 import etw_pytorch_utils as pt_utils
-import queue
+
+from src.architectures.unet_base import UnwrappedUnetBasedModel
 
 log = logging.getLogger(__name__)
 
 
-class SegmentationModel(UnwrappedUnetBasedModel):
+class RSConvLogicModel(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnwrappedUnetBasedModel
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)

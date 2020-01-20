@@ -10,6 +10,8 @@ from omegaconf import OmegaConf
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 
+from .enums import ConvolutionFormat
+
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)
 

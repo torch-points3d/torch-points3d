@@ -9,9 +9,10 @@ from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zi
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
-from .transforms import RandomNoise
-from .base_dataset import BaseDataset
-from metrics.shapenet_part_tracker import ShapenetPartTracker
+from src.metrics.shapenet_part_tracker import ShapenetPartTracker
+from src.core.data_transform.transforms import RandomNoise
+
+from src.datasets.base_dataset import BaseDataset
 
 
 class ShapeNet(InMemoryDataset):

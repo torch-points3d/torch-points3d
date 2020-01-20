@@ -1,7 +1,8 @@
 from tqdm import tqdm, std
 from collections import OrderedDict
 import numpy as np
-from utils_folder.colors import COLORS
+
+from src.utils.colors import COLORS
 
 class Coloredtqdm(tqdm):
     def set_postfix(self, ordered_dict=None, refresh=True, color=None, round=4, **kwargs):

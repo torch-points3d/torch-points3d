@@ -236,6 +236,9 @@ models:
             dropout: 0.1
 
     RSConv_MSN:
+        model_logic:
+            file_name: "rsconv"
+            class_name: RSConvLogicModel
         type: RSConv_dense
         conv_type: "DENSE"
         use_category: True

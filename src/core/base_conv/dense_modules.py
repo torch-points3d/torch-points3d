@@ -28,9 +28,11 @@ from torch_geometric.utils import scatter_
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
-from models.core_sampling_and_search import BaseMSNeighbourFinder
-from .base_conv import BaseConvolution
-from common_modules.base_modules import MLP
+from src.core.neighbourfinder import BaseMSNeighbourFinder
+from src.core.base_conv import BaseConvolution
+from src.core.common_modules.base_modules import MLP
+
+from src.utils.enums import ConvolutionFormat
 
 #################### THOSE MODULES IMPLEMENTS THE BASE DENSE CONV API ############################
 

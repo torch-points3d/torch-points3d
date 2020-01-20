@@ -7,8 +7,9 @@ from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 import torch_points as tp
-from .utils import is_list
-from utils_folder.enums import ConvolutionFormat
+
+from src.utils.config import is_list
+from src.utils.enums import ConvolutionFormat
 
 class BaseNeighbourFinder(ABC):
     def __call__(self, x, y, batch_x, batch_y):

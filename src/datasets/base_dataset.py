@@ -8,8 +8,8 @@ import torch_geometric.transforms as T
 from torch_geometric.transforms import Compose, FixedPoints
 from torch_geometric.data import Batch, DataLoader, Dataset
 
-from datasets.transforms import MultiScaleTransform
-from datasets.batch import SimpleBatch
+from src.core.data_transform.transforms import MultiScaleTransform
+from src.datasets.batch import SimpleBatch
 
 
 # A logger for this file

@@ -25,9 +25,9 @@ from torch_geometric.nn.inits import reset
 import logging
 
 from src.datasets.base_dataset import BaseDataset
-from .base_model import BaseModel
-from core.common_modules.base_modules import Identity
-from utils.config import is_list
+from src.architectures.base_model import BaseModel
+from src.core.common_modules.base_modules import Identity
+from src.utils.config import is_list
 
 log = logging.getLogger(__name__)
 
@@ -336,8 +336,6 @@ class UnwrappedUnetBasedModel(BaseModel):
         super(UnwrappedUnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
 
-        opt
-
         if is_list(opt.down_conv) or "down_conv_nn" not in opt.down_conv:
             raise NotImplementedError
         else:
@@ -374,7 +372,6 @@ class UnwrappedUnetBasedModel(BaseModel):
         same convolution is given for each layer, and arguments are given
         in lists
         """
-
         self.down_modules = nn.ModuleList()
         self.inner_modules = nn.ModuleList()
         self.up_modules = nn.ModuleList()
