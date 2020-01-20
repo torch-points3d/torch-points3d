@@ -1,6 +1,7 @@
 from typing import Dict
 import torchnet as tnt
 import torch
+import torch.nn.functional as F
 import numpy as np
 
 from models.base_model import BaseModel
@@ -8,7 +9,7 @@ from .base_tracker import BaseTracker
 
 
 class RegressionTracker(BaseTracker):
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, eps=10e-8):
         """ This is a generic tracker for regression tasks.
         Use the tracker to track an epoch.
         You can use the reset function before you start a new epoch
@@ -21,6 +22,7 @@ class RegressionTracker(BaseTracker):
         """
         super(RegressionTracker, self).__init__(stage, wandb_log, use_tensorboard)
         self.reset(stage)
+        self._eps = eps
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
@@ -33,12 +35,16 @@ class RegressionTracker(BaseTracker):
         outputs = self._convert(model.get_output())
         targets = self._convert(model.get_labels())
 
-        er = torch.sqrt(((outputs - targets) / targets) ** 2)
-        self._mer = torch.mean(er).item()
+        erp = torch.sqrt(((outputs - targets) / (targets + self._eps)) ** 2)
+        self._merp = torch.mean(erp).item()
+
+        self._mer  = (torch.mean(F.normalize(outputs - targets, p=2, dim=-1)) /\
+            torch.mean((F.normalize(targets, p=2, dim=-1) + self._eps))).item()
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
+        metrics["{}_merp".format(self._stage)] = self._merp
         metrics["{}_mer".format(self._stage)] = self._mer
         return metrics
