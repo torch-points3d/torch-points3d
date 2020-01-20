@@ -69,6 +69,11 @@ data:
         density_parameter: 5.0
         kp_extent: 1.0
 
+    bar_fujitsu:
+        name: bar_fujitsu
+        dataroot: /home/thomas/FUJI/bar_dataset
+        num_points: 4096
+
 defaults:
     - models: segmentation
     - sota # Contains current SOTA results on different datasets (extracted from papers !).
