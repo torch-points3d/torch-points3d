@@ -33,12 +33,14 @@ class SegmentationModel(UnwrappedUnetBasedModel):
 
         self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0] + self._num_categories)
         for i in range(1, len(last_mlp_opt.nn)):
-            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
+            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True, bias=False)
         if last_mlp_opt.dropout:
             self.FC_layer.dropout(p=last_mlp_opt.dropout)
 
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
+
+        log.info(self)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -68,18 +70,24 @@ class SegmentationModel(UnwrappedUnetBasedModel):
         data = self.input
         stack_down.append(data)
 
-        for i in range(len(self.down_modules)):
+        for i in range(len(self.down_modules) - 1):
             data = self.down_modules[i](data)
             stack_down.append(data)
 
-        data_inner = self.inner_modules[0](data)
-        queue_up.put(data_inner)
+        data = self.down_modules[-1](data)
+        queue_up.put(data)
 
-        for i in range(len(self.up_modules)):
+        assert len(self.inner_modules) == 2, "For this segmentation model, we except 2 distinct inner"
+        data_inner = self.inner_modules[0](data)
+        data_inner_2 = self.inner_modules[1](stack_down[3])
+
+        for i in range(len(self.up_modules) - 1):
             data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
             queue_up.put(data)
 
-        last_feature = torch.cat([data.x, data_inner.x.repeat(1, 1, data.x.shape[-1])], dim=1)
+        last_feature = torch.cat(
+            [data.x, data_inner.x.repeat(1, 1, data.x.shape[-1]), data_inner_2.x.repeat(1, 1, data.x.shape[-1])], dim=1
+        )
 
         if self._use_category:
             num_points = data.pos.shape[1]

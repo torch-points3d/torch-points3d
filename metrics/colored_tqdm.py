@@ -1,14 +1,7 @@
 from tqdm import tqdm, std
 from collections import OrderedDict
 import numpy as np
-
-
-class COLORS:
-    TRAIN_COLOR = "\033[0;92m"
-    VAL_COLOR = "\033[0;94m"
-    TEST_COLOR = "\033[0;93m"
-    BEST_COLOR = "\033[0;92m"
-
+from utils_folder.colors import COLORS
 
 class Coloredtqdm(tqdm):
     def set_postfix(self, ordered_dict=None, refresh=True, color=None, round=4, **kwargs):
@@ -32,7 +25,7 @@ class Coloredtqdm(tqdm):
 
         self.postfix += ", ".join(key + "=" + postfix[key] for key in postfix.keys())
         if color is not None:
-            self.postfix += "\033[0m"
+            self.postfix += COLORS.END_TOKEN
 
         if refresh:
             self.refresh()

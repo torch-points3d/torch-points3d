@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch_points as tp
 from torch_geometric.data import Data
@@ -92,6 +93,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
         data, data_skip = data
         pos, x = data.pos, data.x
         pos_skip, x_skip = data_skip.pos, data_skip.x
+
         new_features = self.conv(pos, pos_skip, x)
 
         if x_skip is not None:
@@ -106,7 +108,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, bn=True, **kwargs):
+    def __init__(self, up_conv_nn, bn=True, bias=False, **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
 
         self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
@@ -125,17 +127,55 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
         return interpolated_feats
 
+    def __repr__(self):
+        return "{}: {} ({})".format(
+            self.__class__.__name__, 
+            self.nb_params,
+            self.nn
+            )
+
+
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, **kwargs):
+    def __init__(self, nn, aggr="max", bn=True, **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
-        self.nn = pt_utils.SharedMLP(nn)
+        self.nn = pt_utils.SharedMLP(nn, bn=bn)
+        if aggr.lower() not in ["mean", "max"]:
+            raise Exception("The aggregation provided is unrecognized {}".format(aggr))
+        self._aggr = aggr.lower()
+
+    @property
+    def nb_params(self):
+        """[This property is used to return the number of trainable parameters for a given layer]
+        It is useful for debugging and reproducibility.
+        Returns:
+            [type] -- [description]
+        """
+        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
+        return self._nb_params
 
     def forward(self, data):
         x, pos = data.x, data.pos
         pos_flipped = pos.transpose(1, 2).contiguous()
+
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
-        x = x.squeeze().max(-1)[0]
+        
+        if self._aggr == "max":
+            x = x.squeeze().max(-1)[0]
+        elif self._aggr == "mean":
+            x = x.squeeze().mean(-1)
+        else:
+            raise NotImplementedError('The following aggregation {} is not recognized'.format(self._aggr))
+        
         pos = None  # pos.mean(1).unsqueeze(1)
         x = x.unsqueeze(-1)
         return Data(x=x, pos=pos)
+
+    def __repr__(self):
+        return "{}: {} (aggr={}, {})".format(
+            self.__class__.__name__, 
+            self.nb_params,
+            self._aggr, 
+            self.nn
+            )
