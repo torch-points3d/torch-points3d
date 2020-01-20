@@ -18,18 +18,6 @@ from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add
 
-class CenterAndNormalize:
-
-    def __call__(self, data):
-        centroid = data.pos.mean(0)
-        data.pos = data.pos - centroid
-        diam = torch.max(torch.sqrt(torch.sum(data.pos ** 2, dim=1)))
-        data.pos = data.pos / diam
-        return data
-
-    def __repr__(self):
-        return "CenterAndNormalize"
-
 
 class GridSampling(object):
     r"""Samples points depending on :obj:`subsampling_param`.

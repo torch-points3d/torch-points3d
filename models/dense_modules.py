@@ -130,7 +130,7 @@ class DenseFPModule(BaseDenseConvolutionUp):
     def __repr__(self):
         return "{}: {} ({})".format(
             self.__class__.__name__, 
-            self.params,
+            self.nb_params,
             self.nn
             )
 
@@ -145,11 +145,15 @@ class GlobalDenseBaseModule(torch.nn.Module):
         self._aggr = aggr.lower()
 
     @property
-    def params(self):
-        if not hasattr(self, "_params"):
-            model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-            self._params = sum([np.prod(p.size()) for p in model_parameters])
-        return self._params
+    def nb_params(self):
+        """[This property is used to return the number of trainable parameters for a given layer]
+        It is useful for debugging and reproducibility.
+        Returns:
+            [type] -- [description]
+        """
+        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
+        return self._nb_params
 
     def forward(self, data):
         x, pos = data.x, data.pos
@@ -158,8 +162,10 @@ class GlobalDenseBaseModule(torch.nn.Module):
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
         if self._aggr == "max":
             x = x.squeeze().max(-1)[0]
-        else:
+        elif self._aggr == "mean":
             x = x.squeeze().mean(-1)
+        else:
+            raise NotImplementedError('The following aggregation {} is not recognized'.format(self._aggr))
         pos = None  # pos.mean(1).unsqueeze(1)
         x = x.unsqueeze(-1)
         return Data(x=x, pos=pos)
@@ -167,7 +173,7 @@ class GlobalDenseBaseModule(torch.nn.Module):
     def __repr__(self):
         return "{}: {} (aggr={}, {})".format(
             self.__class__.__name__, 
-            self.params,
+            self.nb_params,
             self._aggr, 
             self.nn
             )

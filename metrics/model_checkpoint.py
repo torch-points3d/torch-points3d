@@ -7,7 +7,7 @@ import torch
 import logging
 
 from models.base_model import BaseModel
-from metrics.colored_tqdm import COLORS
+from utils_folder.colors import COLORS
 from utils_folder.utils import colored_print
 from schedulers.lr_schedulers import build_basic_params
 

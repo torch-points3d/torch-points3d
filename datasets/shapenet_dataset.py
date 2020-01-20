@@ -9,7 +9,7 @@ from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zi
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
-from .transforms import RandomNoise, CenterAndNormalize
+from .transforms import RandomNoise
 from .base_dataset import BaseDataset
 from metrics.shapenet_part_tracker import ShapenetPartTracker
 
@@ -196,7 +196,7 @@ class ShapeNetDataset(BaseDataset):
             self._category = dataset_opt.category
         except KeyError:
             self._category = None
-        pre_transform = CenterAndNormalize()
+        pre_transform = T.NormalizeScale()
         train_transform = T.Compose([T.FixedPoints(dataset_opt.num_points), RandomNoise()])
         test_transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(

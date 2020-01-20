@@ -78,11 +78,15 @@ class BaseConvolution(ABC, torch.nn.Module):
         self.neighbour_finder = neighbour_finder
 
     @property
-    def params(self):
-        if not hasattr(self, "_params"):
-            model_parameters = filter(lambda p: p.requires_grad, self.parameters())
-            self._params = sum([np.prod(p.size()) for p in model_parameters])
-        return self._params
+    def nb_params(self):
+        """[This property is used to return the number of trainable parameters for a given layer]
+        It is useful for debugging and reproducibility.
+        Returns:
+            [type] -- [description]
+        """
+        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
+        return self._nb_params
 
 
 class BaseConvolutionDown(BaseConvolution):

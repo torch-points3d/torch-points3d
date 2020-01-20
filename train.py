@@ -15,7 +15,8 @@ from models.model_building_utils.model_definition_resolver import resolve_model
 from models.base_model import BaseModel
 from datasets.base_dataset import BaseDataset
 from metrics.base_tracker import BaseTracker
-from metrics.colored_tqdm import Coloredtqdm as Ctq, COLORS
+from metrics.colored_tqdm import Coloredtqdm as Ctq
+from utils_folder.colors import COLORS
 from utils_folder.utils import merges_in_sub, model_fn_decorator, set_format
 from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from datasets.utils import find_dataset_using_name

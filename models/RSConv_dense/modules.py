@@ -15,7 +15,7 @@ from models.core_sampling_and_search import DenseFPSSampler, DenseRadiusNeighbou
 
 log = logging.getLogger(__name__)
 
-from metrics.colored_tqdm import COLORS
+from utils_folder.colors import COLORS
 
 
 class RSConvMapper(nn.Module):
@@ -414,7 +414,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
     def __repr__(self):
         return "{}: {} ({}, shared: {} {} {})".format(
             self.__class__.__name__,
-            self.params,
+            self.nb_params,
             self.mlps.__repr__(),
             COLORS.Cyan,
             self.mappings.__repr__(),
