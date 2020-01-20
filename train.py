@@ -10,17 +10,22 @@ import time
 from omegaconf import OmegaConf
 import logging
 
-from models.utils import find_model_using_name
-from models.model_building_utils.model_definition_resolver import resolve_model
-from models.base_model import BaseModel
-from datasets.base_dataset import BaseDataset
-from metrics.base_tracker import BaseTracker
-from metrics.colored_tqdm import Coloredtqdm as Ctq
-from utils_folder.colors import COLORS
-from utils_folder.utils import merges_in_sub, model_fn_decorator, set_format
-from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
-from datasets.utils import find_dataset_using_name
+# Import building function for model and dataset
+from src import find_model_using_name, find_dataset_using_name
 
+#Import BaseModel / BaseDataset for type checking
+from src.architectures.base_model import BaseModel
+from src.datasets.base_dataset import BaseDataset
+
+# Import from metrics
+from src.metrics.base_tracker import BaseTracker
+from src.metrics.colored_tqdm import Coloredtqdm as Ctq
+from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+
+# Utils import
+from src.utils.model_building_utils.model_definition_resolver import resolve_model
+from src.utils.colors import COLORS
+from src.utils.config import merges_in_sub, set_format
 
 def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.train()
