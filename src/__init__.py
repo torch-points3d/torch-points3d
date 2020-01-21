@@ -54,6 +54,6 @@ def find_model_using_name(model_logic, model_type, task, option, dataset: BaseDa
             % (model_type, task)
         )
 
-    # module_filename = ".".join(["src.modules", model_type, "modules"])
-    # modules_lib = importlib.import_module(module_filename)
-    return model(option, model_type, dataset, modellib)
+    module_filename = ".".join(["src.modules", model_type, "modules"])
+    modules_lib = importlib.import_module(module_filename)
+    return model(option, model_type, dataset, modules_lib)

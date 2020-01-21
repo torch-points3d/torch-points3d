@@ -277,7 +277,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
     ):
         assert len(radii) == len(nsample)
         if len(radii) != len(down_conv_nn):
-            log.warn("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
+            log.warning("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
         super(RSConvOriginalMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
@@ -416,7 +416,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
     ):
         assert len(radii) == len(nsample)
         if len(radii) != len(down_conv_nn):
-            log.warn("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
+            log.warning("The down_conv_nn has a different size as radii. Make sure to have sharedMLP")
         super(RSConvMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
