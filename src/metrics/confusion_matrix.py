@@ -1,5 +1,6 @@
 import numpy as np
 import sklearn.metrics as sk
+import os
 
 
 class ConfusionMatrix:
@@ -88,6 +89,7 @@ class ConfusionMatrix:
 
     def count_gt(self, ground_truth):
         return self.confusion_matrix[ground_truth, :].sum()
+
 
 def save_confusion_matrix(cm, path2save, ordered_names):
     import seaborn as sns
