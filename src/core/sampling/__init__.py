@@ -1,1 +1,1 @@
-from src.core.sampling.sampling import *
+from .sampling import *

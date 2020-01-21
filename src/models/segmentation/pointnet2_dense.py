@@ -11,7 +11,7 @@ import etw_pytorch_utils as pt_utils
 import logging
 
 from src.modules.pointnet2_dense.modules import *
-from src.core.base_conv.dense_modules import DenseFPModule
+from src.core.base_conv.dense import DenseFPModule
 from src.architectures.unet_base import UnetBasedModel
 
 log = logging.getLogger(__name__)

@@ -3,14 +3,13 @@ from math import ceil
 import torch
 from torch.nn import Sequential as S, Linear as L, BatchNorm1d as BN
 from torch.nn import ELU, Conv1d
-from models.core_sampling_and_search import (
-    DilatedKNNNeighbourFinder,
-    RandomSampler,
-    FPSSampler,
-)
-from models.core_modules import BaseConvolutionDown, BaseConvolutionUp
 from torch_geometric.nn import Reshape
 from torch_geometric.nn.inits import reset
+
+from src.core.sampling import RandomSampler, FPSSampler
+from src.core.neighbourfinder import DilatedKNNNeighbourFinder
+from src.core.base_conv.message_passing import *
+
 
 # XConv from torch geometric, modified for this framework
 # https://github.com/rusty1s/pytorch_geometric/blob/master/torch_geometric/nn/conv/x_conv.py

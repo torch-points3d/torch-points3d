@@ -11,7 +11,7 @@ import etw_pytorch_utils as pt_utils
 import logging
 
 from .modules import *
-from models.dense_modules import DenseFPModule
+from models.dense import DenseFPModule
 from models.unet_base import UnetBasedModel
 
 log = logging.getLogger(__name__)

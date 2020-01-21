@@ -12,6 +12,7 @@ from src.utils.model_building_utils.resolver_utils import flatten_dict
 
 log = logging.getLogger(__name__)
 
+
 class SegmentationModel(BaseModel):
     def __init__(self, opt, type, dataset, modules_lib):
         super().__init__(opt)

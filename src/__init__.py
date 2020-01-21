@@ -2,6 +2,7 @@ import importlib
 from src.datasets.base_dataset import BaseDataset
 from src.architectures.base_model import BaseModel
 
+
 def contains_key(opt, key):
     try:
         _ = opt[key]
@@ -16,7 +17,7 @@ def find_dataset_using_name(dataset_name, tested_task):
     be instantiated. It has to be a subclass of BaseDataset,
     and it is case-insensitive.
     """
-    
+
     dataset_filename = "src.datasets.{}.{}_dataset".format(tested_task, dataset_name)
     datasetlib = importlib.import_module(dataset_filename)
 
@@ -53,6 +54,6 @@ def find_model_using_name(model_logic, model_type, task, option, dataset: BaseDa
             % (model_type, task)
         )
 
-    module_filename = ".".join(["src.modules", model_type, "modules"])
-    modules_lib = importlib.import_module(module_filename)
-    return model(option, model_type, dataset, modules_lib)
+    # module_filename = ".".join(["src.modules", model_type, "modules"])
+    # modules_lib = importlib.import_module(module_filename)
+    return model(option, model_type, dataset, modellib)

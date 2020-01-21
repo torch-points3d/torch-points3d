@@ -5,7 +5,7 @@ from torch import nn
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
 from .kernel_utils import kernel_point_optimization_debug
 from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler, GridSampler
-from models.partial_dense_modules import BasePartialDenseConvolutionDown
+from models.partial_dense import BasePartialDenseConvolutionDown
 from .kernels import PointKernelPartialDense
 from models.core_modules import UnaryConv
 

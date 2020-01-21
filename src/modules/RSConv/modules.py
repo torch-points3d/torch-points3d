@@ -3,9 +3,9 @@ from torch.nn import ReLU
 from torch_geometric.nn import MessagePassing
 
 
-from src.core.base_modules import *
-from models.core_sampling_and_search import FPSSampler, RadiusNeighbourFinder
-import models.utils as utils
+from src.core.base_conv.message_passing import *
+from src.core.sampling import *
+from src.core.neighbourfinder import *
 
 
 class Convolution(MessagePassing):

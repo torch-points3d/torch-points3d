@@ -1,1 +1,1 @@
-from src.core.neighbourfinder.neighbour_finder import *
+from .neighbour_finder import *

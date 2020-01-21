@@ -6,8 +6,9 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 from typing import Tuple, List
 
-from models.dense_modules import *
-from models.core_sampling_and_search import DenseFPSSampler, DenseRadiusNeighbourFinder
+from src.core.base_conv.dense import *
+from src.core.neighbourfinder import DenseRadiusNeighbourFinder
+from src.core.sampling import DenseFPSSampler
 
 
 class PointNetMSGDown(BaseDenseConvolutionDown):

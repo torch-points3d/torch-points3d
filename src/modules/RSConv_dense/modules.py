@@ -10,7 +10,7 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 from typing import Tuple, List
 
-from src.core.base_conv.dense_modules import *
+from src.core.base_conv.dense import *
 from src.core.sampling import DenseFPSSampler
 from src.core.neighbourfinder import DenseRadiusNeighbourFinder
 from src.utils.colors import COLORS
@@ -201,17 +201,18 @@ class RSConvSharedMSGDown(BaseDenseConvolutionDown):
 
 ######################################################################
 
+
 class OriginalRSConv(nn.Module):
     """
     Input shape: (B, C_in, npoint, nsample)
     Output shape: (B, C_out, npoint)
     """
 
-    def __init__(self, mapping=None, first_layer = False, radius=None, activation=nn.ReLU(inplace=True)):
+    def __init__(self, mapping=None, first_layer=False, radius=None, activation=nn.ReLU(inplace=True)):
         super(OriginalRSConv, self).__init__()
-        
+
         self.nn = nn.ModuleList()
-        
+
         self._radius = radius
 
         self.mapping_func1 = mapping[0]
@@ -219,7 +220,7 @@ class OriginalRSConv(nn.Module):
         self.cr_mapping = mapping[2]
 
         self.first_layer = first_layer
-        
+
         if first_layer:
             self.xyz_raising = mapping[3]
             self.bn_xyz_raising = nn.BatchNorm2d(self.xyz_raising.out_channels)
@@ -232,30 +233,33 @@ class OriginalRSConv(nn.Module):
         self.nn.append(self.bn_mapping)
         self.nn.append(self.bn_rsconv)
         self.nn.append(self.bn_channel_raising)
-       
+
         self.activation = activation
 
-    def forward(self, input): # input: (B, 3 + 3 + C_in, npoint, centroid + nsample)
-        
-        x = input[:, 3:, :, :]           # (B, C_in, npoint, nsample+1), input features
+    def forward(self, input):  # input: (B, 3 + 3 + C_in, npoint, centroid + nsample)
+
+        x = input[:, 3:, :, :]  # (B, C_in, npoint, nsample+1), input features
         nsample = x.size()[3]
         abs_coord = input[:, 0:3, :, :]  # (B, 3, npoint, nsample+1), absolute coordinates
-        delta_x = input[:, 3:6, :, :]    # (B, 3, npoint, nsample+1), normalized coordinates
-            
-        coord_xi = abs_coord[:, :, :, 0:1].repeat(1, 1, 1, nsample)   # (B, 3, npoint, nsample),  centroid point
-        h_xi_xj = torch.norm(delta_x, p = 2, dim = 1).unsqueeze(1)
-        h_xi_xj = torch.cat((h_xi_xj, coord_xi, abs_coord, delta_x), dim = 1)
+        delta_x = input[:, 3:6, :, :]  # (B, 3, npoint, nsample+1), normalized coordinates
+
+        coord_xi = abs_coord[:, :, :, 0:1].repeat(1, 1, 1, nsample)  # (B, 3, npoint, nsample),  centroid point
+        h_xi_xj = torch.norm(delta_x, p=2, dim=1).unsqueeze(1)
+        h_xi_xj = torch.cat((h_xi_xj, coord_xi, abs_coord, delta_x), dim=1)
 
         h_xi_xj = self.mapping_func2(self.activation(self.bn_mapping(self.mapping_func1(h_xi_xj))))
 
         if self.first_layer:
             x = self.activation(self.bn_xyz_raising(self.xyz_raising(x)))
-        x = F.max_pool2d(self.activation(self.bn_rsconv(torch.mul(h_xi_xj, x))), kernel_size = (1, nsample)).squeeze(3)   # (B, C_in, npoint)
+        x = F.max_pool2d(self.activation(self.bn_rsconv(torch.mul(h_xi_xj, x))), kernel_size=(1, nsample)).squeeze(
+            3
+        )  # (B, C_in, npoint)
         x = self.activation(self.bn_channel_raising(self.cr_mapping(x)))
         return x
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, self.nn.__repr__()) 
+        return "{}({})".format(self.__class__.__name__, self.nn.__repr__())
+
 
 class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
     def __init__(
@@ -288,11 +292,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             C_in, C_intermediate, C_out = down_conv_nn[0]
             feat_in, f_out = down_conv_nn[-1]
             xyz_raising = nn.Conv2d(
-                in_channels=feat_in,
-                out_channels=f_out,
-                kernel_size=(1, 1),
-                stride=(1, 1),
-                bias=bias,
+                in_channels=feat_in, out_channels=f_out, kernel_size=(1, 1), stride=(1, 1), bias=bias,
             )
             nn.init.kaiming_normal_(xyz_raising.weight)
             if bias:
@@ -301,18 +301,10 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             C_in, C_intermediate, C_out = down_conv_nn
 
         mapping_func1 = nn.Conv2d(
-            in_channels=C_in,
-            out_channels=C_intermediate,
-            kernel_size=(1, 1),
-            stride=(1, 1),
-            bias=bias,
+            in_channels=C_in, out_channels=C_intermediate, kernel_size=(1, 1), stride=(1, 1), bias=bias,
         )
         mapping_func2 = nn.Conv2d(
-            in_channels=C_intermediate,
-            out_channels=C_out,
-            kernel_size=(1, 1),
-            stride=(1, 1),
-            bias=bias,
+            in_channels=C_intermediate, out_channels=C_out, kernel_size=(1, 1), stride=(1, 1), bias=bias,
         )
 
         nn.init.kaiming_normal_(mapping_func1.weight)
@@ -323,11 +315,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
 
         # channel raising mapping
         cr_mapping = nn.Conv1d(
-            in_channels=channel_raising_nn[0],
-            out_channels=channel_raising_nn[1],
-            kernel_size=1,
-            stride=1,
-            bias=bias,
+            in_channels=channel_raising_nn[0], out_channels=channel_raising_nn[1], kernel_size=1, stride=1, bias=bias,
         )
         nn.init.kaiming_normal_(cr_mapping.weight)
         nn.init.constant_(cr_mapping.bias, 0)
@@ -341,20 +329,10 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             self.mappings.append(m)
 
         for radius in radii:
-            self.mlps.append(
-                OriginalRSConv(
-                    mapping=mapping,
-                    first_layer=self._first_layer,
-                    radius=radius
-                )
-            )
+            self.mlps.append(OriginalRSConv(mapping=mapping, first_layer=self._first_layer, radius=radius))
 
-    def _prepare_features(        
-        self,
-        xyz: torch.Tensor,
-        new_xyz: torch.Tensor,
-        features: torch.Tensor = None,
-        idx: torch.Tensor = None
+    def _prepare_features(
+        self, xyz: torch.Tensor, new_xyz: torch.Tensor, features: torch.Tensor = None, idx: torch.Tensor = None
     ) -> Tuple[torch.Tensor]:
         """
         Parameters
@@ -385,9 +363,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             else:
                 new_features = grouped_features
         else:
-            assert (
-                self.use_xyz
-            ), "Cannot have not features and not use xyz as a feature!"
+            assert self.use_xyz, "Cannot have not features and not use xyz as a feature!"
             new_features = torch.cat([raw_grouped_xyz, grouped_xyz], dim=1)
 
         return new_features
@@ -408,7 +384,9 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
         """
         assert scale_idx < len(self.mlps)
         aggr_features = self._prepare_features(pos, new_pos, x, radius_idx)
-        new_features = self.mlps[scale_idx](aggr_features)  # (B, 3 + 3 + C, npoint, nsample) -> (B, mlp[-1], npoint, nsample)
+        new_features = self.mlps[scale_idx](
+            aggr_features
+        )  # (B, 3 + 3 + C, npoint, nsample) -> (B, mlp[-1], npoint, nsample)
         return new_features
 
     def __repr__(self):
@@ -420,6 +398,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             self.mappings.__repr__(),
             COLORS.END_TOKEN,
         )
+
 
 class RSConvMSGDown(BaseDenseConvolutionDown):
     def __init__(

@@ -156,12 +156,7 @@ class DenseFPModule(BaseDenseConvolutionUp):
         return interpolated_feats
 
     def __repr__(self):
-        return "{}: {} ({})".format(
-            self.__class__.__name__, 
-            self.nb_params,
-            self.nn
-            )
-
+        return "{}: {} ({})".format(self.__class__.__name__, self.nb_params, self.nn)
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
@@ -188,22 +183,17 @@ class GlobalDenseBaseModule(torch.nn.Module):
         pos_flipped = pos.transpose(1, 2).contiguous()
 
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
-        
+
         if self._aggr == "max":
             x = x.squeeze().max(-1)[0]
         elif self._aggr == "mean":
             x = x.squeeze().mean(-1)
         else:
-            raise NotImplementedError('The following aggregation {} is not recognized'.format(self._aggr))
-        
+            raise NotImplementedError("The following aggregation {} is not recognized".format(self._aggr))
+
         pos = None  # pos.mean(1).unsqueeze(1)
         x = x.unsqueeze(-1)
         return Data(x=x, pos=pos)
 
     def __repr__(self):
-        return "{}: {} (aggr={}, {})".format(
-            self.__class__.__name__, 
-            self.nb_params,
-            self._aggr, 
-            self.nn
-            )
+        return "{}: {} (aggr={}, {})".format(self.__class__.__name__, self.nb_params, self._aggr, self.nn)

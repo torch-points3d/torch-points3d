@@ -1,9 +1,11 @@
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, knn
-from models.core_modules import *
-from models.core_sampling_and_search import *
 import math
+
+from src.core.sampling import *
+from src.core.neighbourfinder import *
+from src.core.base_conv.message_passing import *
 
 
 class RandlaKernel(MessagePassing):

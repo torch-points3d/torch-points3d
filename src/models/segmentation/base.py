@@ -3,6 +3,7 @@ import torch.nn.functional as F
 from typing import Any
 from src.architectures.unet_base import UnetBasedModel
 
+
 class SegmentationModel(UnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         """Initialize this model class.

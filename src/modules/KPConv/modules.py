@@ -21,7 +21,8 @@ from torch_geometric.data import DataLoader
 from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
 from torch.nn.parameter import Parameter
 from torch_geometric.utils import scatter_
-from models.core_sampling_and_search import RadiusNeighbourFinder, FPSSampler
+from src.core.sampling import FPSSampler
+from src.core.neighbourfinder import RadiusNeighbourFinder
 from .kernels import PointKernel, LightDeformablePointKernel, PointKernelPartialDense
 from torch_geometric.nn import global_mean_pool
 from torch_scatter import scatter_max
@@ -36,8 +37,7 @@ from .kernel_utils import kernel_point_optimization_debug
 
 from src.core.sampling import FPSSampler
 from src.core.neighbourfinder import RadiusNeighbourFinder
-
-from src.core import *
+from src.core.base_conv.message_passing import *
 from src.architectures.unet_base import BaseFactory
 
 
