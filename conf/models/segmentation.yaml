@@ -23,7 +23,7 @@ models:
             dropout: 0.5
 
     PointNet:
-        type: PointNet
+        architecture: pointnet.PointNet
         conv_type: "DENSE"
         input_stn:
             local_nn: [3, 64, 128, 1024]
@@ -37,7 +37,7 @@ models:
         seg_nn: [1024 + 64, 512, 256, 128, N_CLS]
 
     pointcnn_small:
-        type: PointCNN
+        architecture: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"
         define_constants:
             L1_OUT: 32
@@ -67,11 +67,11 @@ models:
             C1: [INNER_OUT, 32 + L2_OUT, 32 + L1_OUT]
             C2: [32, 32, 32]
         mlp_cls:
-            nn: [32, 32, 32, 32]
+            nn: [32, 32, 32, 32, 32]
             dropout: 0.5
 
     pointcnn_shapenet:
-        type: PointCNN
+        architecture: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             - module_name: PointCNNConvDown
@@ -119,7 +119,7 @@ models:
 
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:
-        type: RandLANet
+        architecture: randlanet.RandLANetSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandLANetRes
@@ -152,7 +152,7 @@ models:
             dropout: 0.5
 
     Randlanet_Conv:
-        type: RandLANet
+        architecture: randlanet.RandLANetSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandlaConv
@@ -182,7 +182,7 @@ models:
 
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv_2LD:
-        type: RSConv
+        architecture: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
@@ -202,11 +202,11 @@ models:
             up_k: [1, 3, 3]
             skip: True
         mlp_cls:
-            nn: [64, 64, 64, 64]
+            nn: [64, 64, 64, 64, 64]
             dropout: 0.5
 
     RSConv_4LD:
-        type: RSConv
+        architecture: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
@@ -232,26 +232,38 @@ models:
             up_k: [1, 3, 3, 3, 3]
             skip: True
         mlp_cls:
-            nn: [64, 64, 64, 64]
+            nn: [64, 64, 64, 64, 64]
             dropout: 0.1
 
     RSConv_MSN:
-        type: RSConv_dense
+        architecture: rsconv.RSConvLogicModel
         conv_type: "DENSE"
         use_category: True
         down_conv:
             module_name: RSConvOriginalMSGDown
             npoint: [1024, 256, 64, 16]
-            radii: [[0.075, 0.1, 0.125], [0.1, 0.15, 0.2], [0.2, 0.3, 0.4], [0.4, 0.6, 0.8]]
+            radii:
+                [
+                    [0.075, 0.1, 0.125],
+                    [0.1, 0.15, 0.2],
+                    [0.2, 0.3, 0.4],
+                    [0.4, 0.6, 0.8],
+                ]
             nsamples: [[16, 32, 48], [16, 48, 64], [16, 32, 48], [16, 24, 32]]
             down_conv_nn:
                 [
-                    [[10, 64//2, 16], [FEAT, 16]], 
-                    [10, 128//4, 64 * 3 + 3], 
-                    [10, 256//4, 128 * 3  + 3], 
-                    [10, 512//4, 256 * 3  + 3]
+                    [[10, 64//2, 16], [FEAT, 16]],
+                    [10, 128//4, 64 * 3 + 3],
+                    [10, 256//4, 128 * 3  + 3],
+                    [10, 512//4, 256 * 3  + 3],
                 ]
-            channel_raising_nn: [[16, 64], [64 * 3  + 3, 128], [128 * 3  + 3, 256], [256 * 3  + 3, 512]]
+            channel_raising_nn:
+                [
+                    [16, 64],
+                    [64 * 3  + 3, 128],
+                    [128 * 3  + 3, 256],
+                    [256 * 3  + 3, 512],
+                ]
         innermost:
             - module_name: GlobalDenseBaseModule
               nn: [512 * 3 + 3, 128]
@@ -269,7 +281,7 @@ models:
                     [128 * 3 + 512, 512, 512],
                     [64 * 3 + 512, 256, 256],
                     [256, 128, 128],
-                    []
+                    [],
                 ]
             skip: True
         mlp_cls:
@@ -280,7 +292,7 @@ models:
 
     # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
     SimpleKPConv:
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: KPConv
@@ -301,7 +313,7 @@ models:
             dropout: 0.5
 
     Resnet_BK_PD_KPConv:
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
             module_name: ResnetBottleNeckPartialDense
@@ -330,7 +342,7 @@ models:
             dropout: 0.5
 
     ResidualKPConv:
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: ResidualBKPConv
@@ -352,7 +364,7 @@ models:
             dropout: 0.5
 
     DeformableResidualKPConv:
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: LightDeformableKPConv
@@ -375,7 +387,7 @@ models:
 
     # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2:
-        type: pointnet2
+        architecture: pointnet2.PointNet2_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
@@ -398,11 +410,11 @@ models:
             aggr: max
             nn: [256 + 3, 256, 512, 1024]
         mlp_cls:
-            nn: [128, 128, 128]
+            nn: [128, 128, 128, 128, 128]
             dropout: 0.5
 
     pointnet2ms:
-        type: pointnet2
+        architecture: pointnet2.PointNet2_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
@@ -425,11 +437,11 @@ models:
             aggr: max
             nn: [256* 2 + 3, 256, 512, 1024]
         mlp_cls:
-            nn: [128, 128, 128]
+            nn: [128, 128, 128, 128, 128]
             dropout: 0.5
 
     pointnet2_original:
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         down_conv:
             module_name: PointNetMSGDown
@@ -458,7 +470,7 @@ models:
             dropout: 0.5
 
     pointnet2_onehot:
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -488,7 +500,7 @@ models:
             dropout: 0.5
 
     pointnet2_charlesmsg:
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -525,7 +537,7 @@ models:
             dropout: 0.5
 
     pointnet2_charlesssg:
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:

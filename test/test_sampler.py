@@ -2,9 +2,11 @@ import os
 import unittest
 import torch
 
-from models.core_sampling_and_search import (
+from src.core.sampling import (
     FPSSampler,
     RandomSampler,
+)
+from src.core.neighbourfinder import (
     RadiusNeighbourFinder,
     MultiscaleRadiusNeighbourFinder,
 )
