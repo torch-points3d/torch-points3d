@@ -23,10 +23,7 @@ models:
             dropout: 0.5
 
     PointNet:
-        model_logic:
-            file_name: "pointnet"
-            class_name: SegmentationModel
-        type: PointNet
+        architecture: pointnet.PointNet
         conv_type: "DENSE"
         input_stn:
             local_nn: [3, 64, 128, 1024]
@@ -40,10 +37,7 @@ models:
         seg_nn: [1024 + 64, 512, 256, 128, N_CLS]
 
     pointcnn_small:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: PointCNN
+        architecture: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"
         define_constants:
             L1_OUT: 32
@@ -77,10 +71,7 @@ models:
             dropout: 0.5
 
     pointcnn_shapenet:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: PointCNN
+        architecture: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             - module_name: PointCNNConvDown
@@ -128,10 +119,7 @@ models:
 
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: RandLANet
+        architecture: randlanet.RandLANetSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandLANetRes
@@ -164,10 +152,7 @@ models:
             dropout: 0.5
 
     Randlanet_Conv:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: RandLANet
+        architecture: randlanet.RandLANetSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandlaConv
@@ -197,10 +182,7 @@ models:
 
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv_2LD:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: RSConv
+        architecture: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
@@ -224,10 +206,7 @@ models:
             dropout: 0.5
 
     RSConv_4LD:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: RSConv
+        architecture: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
@@ -257,10 +236,7 @@ models:
             dropout: 0.1
 
     RSConv_MSN:
-        model_logic:
-            file_name: "rsconv"
-            class_name: RSConvLogicModel
-        type: RSConv_dense
+        architecture: rsconv.RSConvLogicModel
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -316,10 +292,7 @@ models:
 
     # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
     SimpleKPConv:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: KPConv
@@ -340,10 +313,7 @@ models:
             dropout: 0.5
 
     Resnet_BK_PD_KPConv:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
             module_name: ResnetBottleNeckPartialDense
@@ -372,10 +342,7 @@ models:
             dropout: 0.5
 
     ResidualKPConv:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: ResidualBKPConv
@@ -397,10 +364,7 @@ models:
             dropout: 0.5
 
     DeformableResidualKPConv:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: KPConv
+        architecture: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: LightDeformableKPConv
@@ -423,10 +387,7 @@ models:
 
     # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: pointnet2
+        architecture: pointnet2.PointNet2_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
@@ -453,10 +414,7 @@ models:
             dropout: 0.5
 
     pointnet2ms:
-        model_logic:
-            file_name: "base"
-            class_name: SegmentationModel
-        type: pointnet2
+        architecture: pointnet2.PointNet2_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
@@ -483,10 +441,7 @@ models:
             dropout: 0.5
 
     pointnet2_original:
-        model_logic:
-            file_name: "pointnet2_dense"
-            class_name: PoinNet2SegmentationModel
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         down_conv:
             module_name: PointNetMSGDown
@@ -515,10 +470,7 @@ models:
             dropout: 0.5
 
     pointnet2_onehot:
-        model_logic:
-            file_name: "pointnet2_dense"
-            class_name: PoinNet2SegmentationModel
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -548,10 +500,7 @@ models:
             dropout: 0.5
 
     pointnet2_charlesmsg:
-        model_logic:
-            file_name: "pointnet2_dense"
-            class_name: PoinNet2SegmentationModel
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -588,10 +537,7 @@ models:
             dropout: 0.5
 
     pointnet2_charlesssg:
-        model_logic:
-            file_name: "pointnet2_dense"
-            class_name: PoinNet2SegmentationModel
-        type: pointnet2_dense
+        architecture: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:

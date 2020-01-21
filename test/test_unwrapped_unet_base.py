@@ -10,28 +10,13 @@ ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.architectures.unet_base import UnwrappedUnetBasedModel
+from src.models.base_architectures import UnwrappedUnetBasedModel
 from src.utils.config import merges_in_sub, set_format
 
 from test.mockdatasets import MockDataset
 
 
 class SegmentationModel(UnwrappedUnetBasedModel):
-    r"""
-        RSConv Segmentation Model with / without multi-scale grouping
-        Semantic segmentation network that uses feature propogation layers
-
-        Parameters
-        ----------
-        num_classes: int
-            Number of semantics classes to predict over -- size of softmax classifier that run for each point
-        input_channels: int = 6
-            Number of input channels in the feature descriptor for each point.  If the point cloud is Nx9, this
-            value should be 6 as in an Nx9 point cloud, 3 of the channels are xyz, and 6 are feature descriptors
-        use_xyz: bool = True
-            Whether or not to use the xyz position of a point as a feature
-    """
-
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnwrappedUnetBasedModel
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
@@ -55,17 +40,13 @@ class TestModelDefinitionResolver(unittest.TestCase):
 
         resolve_model(models_conf, dataset, tested_task)
 
-        for model_name, model_conf in models_conf.items():
-
-            print(model_name)
-            model_type = model_conf.type
-            module_filename = ".".join(["src.modules", model_type, "modules"])
-            modules_lib = importlib.import_module(module_filename)
-
-            cfg_training = set_format(model_conf, cfg_training)
-            model_conf = merges_in_sub(model_conf, [cfg_training, cfg_dataset])
-
-            model = SegmentationModel(model_conf, model_type, dataset, modules_lib)
+        for _, model_conf in models_conf.items():
+            model_class = model_conf.architecture
+            model_paths = model_class.split(".")
+            module = ".".join(model_paths[:-1])
+            model_module = ".".join(["src.models", tested_task, module])
+            modellib = importlib.import_module(model_module)
+            model = SegmentationModel(model_conf, "", dataset, modellib)
 
             assert len(model.down_modules) == len(model_conf.down_conv.down_conv_nn)
             assert len(model.up_modules) == len(model_conf.up_conv.up_conv_nn)

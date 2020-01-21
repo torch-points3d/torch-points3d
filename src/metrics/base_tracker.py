@@ -15,7 +15,7 @@ import logging
 
 from src.metrics.confusion_matrix import ConfusionMatrix
 from src.metrics.model_checkpoint import ModelCheckpoint
-from src.architectures.base_model import BaseModel
+from src.models.base_model import BaseModel
 
 log = logging.getLogger(__name__)
 

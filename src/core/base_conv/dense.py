@@ -30,7 +30,7 @@ import etw_pytorch_utils as pt_utils
 
 from src.core.neighbourfinder import BaseMSNeighbourFinder
 from src.core.base_conv import BaseConvolution
-from src.core.common_modules.base_modules import MLP
+from src.core.common_modules import MLP
 
 from src.utils.enums import ConvolutionFormat
 

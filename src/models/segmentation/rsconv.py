@@ -7,7 +7,9 @@ import torch.nn.functional as F
 from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
 
-from src.architectures.unet_base import UnwrappedUnetBasedModel
+from src.models.base_architectures import UnwrappedUnetBasedModel
+from src.modules.RSConv import *
+from .base import Segmentation_MP
 
 log = logging.getLogger(__name__)
 
@@ -109,3 +111,7 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
             self._weight_classes = self._weight_classes.to(self.output.device)
         self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
         self.loss_seg.backward()
+
+
+class RSConv_MP(Segmentation_MP):
+    """ Message passing version of RSConv"""

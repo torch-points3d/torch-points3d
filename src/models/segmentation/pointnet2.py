@@ -10,14 +10,15 @@ from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
 import logging
 
-from src.modules.pointnet2_dense.modules import *
+from src.modules.pointnet2 import *
 from src.core.base_conv.dense import DenseFPModule
-from src.architectures.unet_base import UnetBasedModel
+from src.models.base_architectures import UnetBasedModel
+from .base import Segmentation_MP
 
 log = logging.getLogger(__name__)
 
 
-class PoinNet2SegmentationModel(UnetBasedModel):
+class PointNet2_D(UnetBasedModel):
     r"""
         PointNet2 with multi-scale grouping
         Semantic segmentation network that uses feature propogation layers
@@ -105,3 +106,7 @@ class PoinNet2SegmentationModel(UnetBasedModel):
             self._weight_classes = self._weight_classes.to(self.output.device)
         self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
         self.loss_seg.backward()
+
+
+class PointNet2_MP(Segmentation_MP):
+    """ Message passing version of PN2"""

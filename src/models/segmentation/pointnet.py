@@ -6,14 +6,14 @@ import logging
 from src.core.base_conv.base_conv import *
 from src.core.common_modules.base_modules import *
 
-from src.modules.PointNet.modules import *
-from src.architectures.base_model import BaseModel
+from src.modules.PointNet import *
+from src.models.base_model import BaseModel
 from src.utils.model_building_utils.resolver_utils import flatten_dict
 
 log = logging.getLogger(__name__)
 
 
-class SegmentationModel(BaseModel):
+class PointNet(BaseModel):
     def __init__(self, opt, type, dataset, modules_lib):
         super().__init__(opt)
 

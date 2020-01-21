@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from models.base_model import BaseModel
+from src.models.base_model import BaseModel
 from .base_tracker import BaseTracker
 
 
@@ -38,8 +38,10 @@ class RegressionTracker(BaseTracker):
         erp = torch.sqrt(((outputs - targets) / (targets + self._eps)) ** 2)
         self._merp = torch.mean(erp).item()
 
-        self._mer  = (torch.mean(F.normalize(outputs - targets, p=2, dim=-1)) /\
-            torch.mean((F.normalize(targets, p=2, dim=-1) + self._eps))).item()
+        self._mer = (
+            torch.mean(F.normalize(outputs - targets, p=2, dim=-1))
+            / torch.mean((F.normalize(targets, p=2, dim=-1) + self._eps))
+        ).item()
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked

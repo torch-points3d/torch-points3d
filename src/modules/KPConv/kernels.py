@@ -10,7 +10,7 @@ from torch_geometric.nn import MessagePassing
 
 from .kernel_utils import kernel_point_optimization_debug
 from .convolution_ops import *
-from src.architectures.base_model import BaseInternalLossModule
+from src.models.base_model import BaseInternalLossModule
 
 
 def KPconv_op(self, x_j, pos_i, pos_j):

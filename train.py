@@ -13,8 +13,8 @@ import logging
 # Import building function for model and dataset
 from src import find_model_using_name, find_dataset_using_name
 
-#Import BaseModel / BaseDataset for type checking
-from src.architectures.base_model import BaseModel
+# Import BaseModel / BaseDataset for type checking
+from src.models.base_model import BaseModel
 from src.datasets.base_dataset import BaseDataset
 
 # Import from metrics
@@ -26,6 +26,7 @@ from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
 from src.utils.config import merges_in_sub, set_format
+
 
 def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.train()
@@ -120,7 +121,7 @@ def main(cfg):
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_config = merges_in_sub(model_config, [cfg_training, dataset_config])
-    model = find_model_using_name(model_config.model_logic, model_config.type, tested_task, model_config, dataset)
+    model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
 
     # Optimizer
     lr_params = cfg_training.learning_rate

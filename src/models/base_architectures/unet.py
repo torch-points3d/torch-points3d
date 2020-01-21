@@ -25,7 +25,7 @@ from torch_geometric.nn.inits import reset
 import logging
 
 from src.datasets.base_dataset import BaseDataset
-from src.architectures.base_model import BaseModel
+from src.models.base_model import BaseModel
 from src.core.common_modules.base_modules import Identity
 from src.utils.config import is_list
 

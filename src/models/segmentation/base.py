@@ -1,10 +1,10 @@
 import torch
 import torch.nn.functional as F
 from typing import Any
-from src.architectures.unet_base import UnetBasedModel
+from src.models.base_architectures import UnetBasedModel
 
 
-class SegmentationModel(UnetBasedModel):
+class Segmentation_MP(UnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         """Initialize this model class.
         Parameters:

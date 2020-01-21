@@ -6,7 +6,7 @@ import sys
 import torch
 import logging
 
-from src.architectures.base_model import BaseModel
+from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
 from src.core.schedulers.lr_schedulers import build_basic_params
 

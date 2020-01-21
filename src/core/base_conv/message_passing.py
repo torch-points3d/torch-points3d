@@ -29,16 +29,19 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
 from src.core.base_conv.base_conv import *
-from src.core.common_modules.base_modules import *
+from src.core.common_modules import *
 from src.core.sampling import *
 from src.core.neighbourfinder import *
+
 
 def copy_from_to(data, batch):
     for key in data.keys:
         if key not in batch.keys:
             setattr(batch, key, getattr(data, key, None))
-            
+
+
 #################### THOSE MODULES IMPLEMENTS THE BASE MESSAGE_PASSING CONV API ############################
+
 
 class BaseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
@@ -171,7 +174,6 @@ class GlobalBaseModule(torch.nn.Module):
         batch_obj.batch = torch.arange(x.size(0), device=batch.device)
         copy_from_to(data, batch_obj)
         return batch_obj
-
 
 
 #################### COMMON MODULE ########################

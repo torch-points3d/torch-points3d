@@ -3,7 +3,7 @@ import torchnet as tnt
 import torch
 import numpy as np
 
-from src.architectures.base_model import BaseModel
+from src.models.base_model import BaseModel
 from src.metrics.confusion_matrix import ConfusionMatrix
 from src.metrics.base_tracker import BaseTracker, meter_value
 

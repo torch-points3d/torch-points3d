@@ -8,8 +8,9 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.architectures.base_model import BaseModel, BaseInternalLossModule
+from src.models.base_model import BaseModel, BaseInternalLossModule
 from src.modules.PointNet.modules import PointNetSTN3D
+
 
 class TestPointnetModules(unittest.TestCase):
 
