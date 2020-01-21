@@ -1,10 +1,10 @@
 models:
     RSConv_MSN:
-        architecture: rsconv.RSConv_D
+        architecture: MockModel
         conv_type: "DENSE"
         use_category: True
         down_conv:
-            module_name: RSConvMSGDown
+            module_name: ConvMock
             npoint: [1024, 256, 64, 16]
             radii:
                 [
@@ -24,10 +24,10 @@ models:
             channel_raising_nn:
                 [[16, 64], [64 * 3, 128], [128 * 3, 256], [256 * 3, 512]]
         innermost:
-            module_name: GlobalDenseBaseModule
+            module_name: ConvMock
             nn: [512 * 3 + 3, 512]
         up_conv:
-            module_name: DenseFPModule
+            module_name: ConvMock
             up_conv_nn:
                 [
                     [512 * 3 + 512, 512, 256],
