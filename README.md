@@ -66,7 +66,7 @@ python -m unittest
 
 ## Train pointnet++ on part segmentation task for dataset shapenet
 ```
-poetry run python train.py experiment.model_name=pointnet2_charlesssg wandb.log=False experiment.data=shapenet
+poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
 ```
 And you should see something like that
 
