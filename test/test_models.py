@@ -7,20 +7,21 @@ import torch
 from torch_geometric.data import Data, Batch
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-sys.path.append(ROOT)
+sys.path.insert(0, ROOT)
 
-from models.utils import find_model_using_name
-from models.pointnet2.nn import SegmentationModel
-from models.model_building_utils.model_definition_resolver import resolve_model
 from test.mockdatasets import MockDatasetGeometric, MockDataset
-from utils_folder.utils import set_format, merges_in_sub
+
+
+from src import find_model_using_name
+from src.utils.model_building_utils.model_definition_resolver import resolve_model
+from src.utils.config import set_format, merges_in_sub
 
 # calls resolve_model, then find_model_using_name
 
 
-def _find_model_using_name(model_type, task, model_config, dataset):
+def _find_model_using_name(model_class, task, model_config, dataset):
     resolve_model(model_config, dataset, task)
-    return find_model_using_name(model_type, task, model_config, dataset)
+    return find_model_using_name(model_class, task, model_config, dataset)
 
 
 def _find_random_dataset(datasets):
@@ -46,29 +47,26 @@ class TestModelUtils(unittest.TestCase):
                 cfg_training = set_format(model_config, self.config_file.training)
                 model_config = merges_in_sub(model_config, [cfg_training, _find_random_dataset(self.config_file.data)])
 
-                _find_model_using_name(model_config.type, "segmentation", model_config, MockDatasetGeometric(6))
+                _find_model_using_name(model_config.architecture, "segmentation", model_config, MockDatasetGeometric(6))
 
     def test_pointnet2(self):
-        model_type = "pointnet2"
-        params = self.config["models"][model_type]
+        params = self.config["models"]["pointnet2"]
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_type, "segmentation", params, dataset)
+        model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
 
     def test_kpconv(self):
-        model_type = "KPConv"
         params = self.config["models"]["SimpleKPConv"]
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_type, "segmentation", params, dataset)
+        model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
 
     def test_pointnet2ms(self):
-        model_type = "pointnet2"
         params = self.config["models"]["pointnet2ms"]
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_type, "segmentation", params, dataset)
+        model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
 

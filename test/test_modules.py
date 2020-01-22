@@ -1,6 +1,3 @@
-from models.base_model import BaseModel, BaseInternalLossModule
-from models.PointNet.modules import PointNetSTN3D
-from models.base_model import BaseModel
 import unittest
 import numpy as np
 import numpy.testing as npt
@@ -10,6 +7,9 @@ import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
+
+from src.models.base_model import BaseModel, BaseInternalLossModule
+from src.modules.PointNet.modules import PointNetSTN3D
 
 
 class TestPointnetModules(unittest.TestCase):

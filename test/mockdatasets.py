@@ -1,7 +1,7 @@
 import torch
 from torch_geometric.data import Data, Batch
 
-from datasets.batch import SimpleBatch
+from src.datasets.batch import SimpleBatch
 
 
 class MockDataset(torch.utils.data.Dataset):

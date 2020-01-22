@@ -4,9 +4,10 @@ import numpy as np
 import numpy.testing as npt
 import torch
 from torch_geometric.data import Data
-from datasets.transforms import MeshToNormal
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+
+from src.core.data_transform.transforms import MeshToNormal
 
 
 class TestModelUtils(unittest.TestCase):

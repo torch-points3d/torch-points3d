@@ -10,16 +10,22 @@ import time
 from omegaconf import OmegaConf
 import logging
 
-from models.utils import find_model_using_name
-from models.model_building_utils.model_definition_resolver import resolve_model
-from models.base_model import BaseModel
-from datasets.base_dataset import BaseDataset
-from metrics.base_tracker import BaseTracker
-from metrics.colored_tqdm import Coloredtqdm as Ctq
-from utils_folder.colors import COLORS
-from utils_folder.utils import merges_in_sub, model_fn_decorator, set_format
-from metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
-from datasets.utils import find_dataset_using_name
+# Import building function for model and dataset
+from src import find_model_using_name, find_dataset_using_name
+
+# Import BaseModel / BaseDataset for type checking
+from src.models.base_model import BaseModel
+from src.datasets.base_dataset import BaseDataset
+
+# Import from metrics
+from src.metrics.base_tracker import BaseTracker
+from src.metrics.colored_tqdm import Coloredtqdm as Ctq
+from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+
+# Utils import
+from src.utils.model_building_utils.model_definition_resolver import resolve_model
+from src.utils.colors import COLORS
+from src.utils.config import merges_in_sub, set_format
 
 
 def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
@@ -90,6 +96,7 @@ def main(cfg):
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
+    print("DEVICE : {}".format(device))
 
     # Get task and model_name
     exp = cfg.experiment
@@ -109,12 +116,12 @@ def main(cfg):
     # Find and create associated dataset
     dataset_config = getattr(cfg.data, tested_dataset_name, None)
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_name)(dataset_config, cfg_training)
+    dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_config = merges_in_sub(model_config, [cfg_training, dataset_config])
-    model = find_model_using_name(model_config.type, tested_task, model_config, dataset)
+    model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
 
     # Optimizer
     lr_params = cfg_training.learning_rate
