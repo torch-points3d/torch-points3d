@@ -23,7 +23,7 @@ class BaseDataset:
         self.strategies = {}
         self._torch_loader = training_opt.use_torch_loader
 
-    def _create_dataloaders(self, train_dataset, test_dataset, validation=None):
+    def _create_dataloaders(self, train_dataset, test_dataset, val_dataset=None):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
         self._num_classes = train_dataset.num_classes
@@ -49,6 +49,18 @@ class BaseDataset:
             shuffle=False,
             num_workers=self.training_opt.num_workers,
         )
+
+        if val_dataset:
+            self._val_loader = dataloader(
+                val_dataset,
+                batch_size=self.training_opt.batch_size,
+                shuffle=False,
+                num_workers=self.training_opt.num_workers,
+            )            
+
+
+    def val_dataloader(self):
+        return self._val_loader
 
     def test_dataloader(self):
         return self._test_loader

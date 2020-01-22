@@ -217,7 +217,7 @@ class ShapeNetDataset(BaseDataset):
             transform=test_transform,
         )
         self._categories = train_dataset.categories
-        self._create_dataloaders(train_dataset, test_dataset, validation=None)
+        self._create_dataloaders(train_dataset, test_dataset)
 
     @property
     def class_to_segments(self):
