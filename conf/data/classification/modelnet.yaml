@@ -1,6 +1,5 @@
 data:
-  classification:
-    modelnet:
-        name: modelnet
-        dataroot: data
-        number: 10
+    task: classification
+    name: modelnet
+    dataroot: data
+    number: 10

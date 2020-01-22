@@ -1,26 +1,26 @@
 defaults:
-    - task: segmentation
-      optional: True
-    - model_type: pointnet2
-      optional: True
-    - dataset: s3dis1x1
-      optional: True
+  - task: ??? # Task performed (segmentation, classification etc...)
+    optional: True
+  - model_type: ??? # Type of model to use, e.g. pointnet2, rsconv etc...
+    optional: True
+  - dataset: ???
+    optional: True
 
-    - training
+  - training
 
-    - models: ${defaults.0.task}/${defaults.1.model_type}
-    - data: ${defaults.0.task}/${defaults.2.dataset}
-    - sota # Contains current SOTA results on different datasets (extracted from papers !).
-    - hydra/job_logging: custom
+  - models: ${defaults.0.task}/${defaults.1.model_type}
+  - data: ${defaults.0.task}/${defaults.2.dataset}
+  - sota # Contains current SOTA results on different datasets (extracted from papers !).
+  - hydra/job_logging: custom
 
-model_name: pointnet2
+model_name: ??? # Name of the specific model to load
 
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    project: shapenet-pn2
-    log: False
+  project: shapenet-pn2
+  log: False
 
 # parameters for TensorBoard Visualization
 tensorboard:
-    log: True
+  log: True
