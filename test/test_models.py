@@ -30,14 +30,16 @@ def _find_random_dataset(datasets):
     return getattr(datasets, list(dataset_names)[idx])
 
 
+def load_model_config(task, model_type, training):
+    models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
+    config = OmegaConf.load(models_conf)
+    config = OmegaConf.merge(config, training)
+    return getattr(config.models, task)
+
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
-        models_conf = os.path.join(ROOT, "conf/models/segmentation.yaml")
-        self.config_file = OmegaConf.load(os.path.join(ROOT, "conf/config.yaml"))
-
-        self.config = OmegaConf.load(models_conf)
-        self.config = OmegaConf.merge(self.config, self.config_file.training)
-
+        self.cfg_training = OmegaConf.load(os.path.join(ROOT, "conf/training.yaml"))
+    """
     def test_createall(self):
         for model_name in self.config["models"].keys():
             print(model_name)
@@ -48,23 +50,24 @@ class TestModelUtils(unittest.TestCase):
                 model_config = merges_in_sub(model_config, [cfg_training, _find_random_dataset(self.config_file.data)])
 
                 _find_model_using_name(model_config.architecture, "segmentation", model_config, MockDatasetGeometric(6))
-
+    """
+    
     def test_pointnet2(self):
-        params = self.config["models"]["pointnet2"]
+        params = load_model_config("segmentation", "pointnet2", self.cfg_training)['pointnet2']
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
 
     def test_kpconv(self):
-        params = self.config["models"]["SimpleKPConv"]
+        params = load_model_config("segmentation", "kpconv", self.cfg_training)['SimpleKPConv']
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
 
     def test_pointnet2ms(self):
-        params = self.config["models"]["pointnet2ms"]
+        params = load_model_config("segmentation", "pointnet2", self.cfg_training)['pointnet2ms']
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
