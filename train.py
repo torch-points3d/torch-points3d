@@ -99,13 +99,12 @@ def main(cfg):
     print("DEVICE : {}".format(device))
 
     # Get task and model_name
-    exp = cfg.experiment
-    tested_task = exp.task
-    tested_model_name = exp.model_name
-    tested_dataset_name = exp.dataset
+    tested_task = [k for k in cfg.data.keys()][0]
+    tested_model_name = cfg.model_name
+    tested_dataset_name = [k for k in getattr(cfg.data, tested_task).keys()][0]
 
     # Find and create associated model
-    model_config = getattr(cfg.models, tested_model_name, None)
+    model_config = getattr(getattr(cfg.models, tested_task), tested_model_name, None)
 
     # Find which dataloader to use
     cfg_training = set_format(model_config, cfg.training)
@@ -114,7 +113,7 @@ def main(cfg):
     torch.backends.cudnn.enabled = cfg_training.enable_cudnn
 
     # Find and create associated dataset
-    dataset_config = getattr(cfg.data, tested_dataset_name, None)
+    dataset_config = getattr(getattr(cfg.data, tested_task), tested_dataset_name, None)
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
 
@@ -145,7 +144,7 @@ def main(cfg):
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
     checkpoint = get_model_checkpoint(
-        model, exp.checkpoint_dir, tested_model_name, exp.resume, cfg_training.weight_name
+        model, cfg_training.checkpoint_dir, tested_model_name, cfg_training.resume, cfg_training.weight_name
     )
 
     # Run training / evaluation
