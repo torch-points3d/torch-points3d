@@ -1,0 +1,7 @@
+data:
+  segmentation:
+    shapenet:
+        name: shapenet
+        dataroot: data
+        normal: True
+        num_points: 2048
