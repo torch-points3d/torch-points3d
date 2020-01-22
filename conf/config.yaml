@@ -13,8 +13,6 @@ defaults:
     - sota # Contains current SOTA results on different datasets (extracted from papers !).
     - hydra/job_logging: custom
 
-
-
 model_name: ???
 
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
