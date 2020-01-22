@@ -1,79 +1,26 @@
-# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
-experiment:
-    model_name: pointnet2
-    checkpoint_dir: ""
-    resume: True
-    task: segmentation
-    dataset: s3dis1x1
+defaults:
+  - task: ??? # Task performed (segmentation, classification etc...)
+    optional: True
+  - model_type: ??? # Type of model to use, e.g. pointnet2, rsconv etc...
+    optional: True
+  - dataset: ???
+    optional: True
 
+  - training
+
+  - models: ${defaults.0.task}/${defaults.1.model_type}
+  - data: ${defaults.0.task}/${defaults.2.dataset}
+  - sota # Contains current SOTA results on different datasets (extracted from papers !).
+  - hydra/job_logging: custom
+
+model_name: ??? # Name of the specific model to load
+
+# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    project: shapenet-pn2
-    log: False
+  project: shapenet-pn2
+  log: False
 
 # parameters for TensorBoard Visualization
 tensorboard:
-    log: True
-
-# Those arguments defines the training hyper-parameters
-training:
-    shuffle: True
-    num_workers: 2
-    batch_size: 16
-    cuda: 1
-    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
-    epochs: 100
-    optimizer: Adam
-    learning_rate:
-        scheduler_type: "step_decay"
-        base_lr: 0.001
-        lr_decay: 0.5
-        decay_step: 200000
-        lr_clip: 1e-5
-    weight_name: "miou" # Used during resume, select with model to load from [miou, macc, acc..., latest]
-    enable_cudnn: True
-
-# Those arguments defines the available datasets
-data:
-    shapenet:
-        name: shapenet
-        dataroot: data
-        normal: True
-        num_points: 2048
-        category: Airplane
-        first_subsampling: 0.02
-        density_parameter: 5.0
-        kp_extent: 1.0
-
-    # This dataset can be used only for classification
-    modelnet:
-        name: modelnet
-        dataroot: data
-        number: 10
-
-    s3dis1x1:
-        name: s3dis1x1
-        dataroot: data
-        fold: 5
-        class_weight_method: "sqrt"
-        num_points: 1024
-        first_subsampling: 0.04
-        density_parameter: 5.0
-        kp_extent: 1.0
-
-    # Doesn't seem to be very efficient
-    s3dis:
-        name: s3dis
-        dataroot: data
-        fold: 5
-        class_weight_method: "sqrt"
-        room_points: 32768
-        num_points: 4096
-        first_subsampling: 0.04
-        density_parameter: 5.0
-        kp_extent: 1.0
-
-defaults:
-    - models: segmentation
-    - sota # Contains current SOTA results on different datasets (extracted from papers !).
-    - hydra/job_logging: custom
+  log: True

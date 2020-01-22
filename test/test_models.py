@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
+from glob import glob
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
@@ -24,33 +25,31 @@ def _find_model_using_name(model_class, task, model_config, dataset):
     return find_model_using_name(model_class, task, model_config, dataset)
 
 
-def _find_random_dataset(datasets):
-    dataset_names = datasets.keys()
-    idx = np.random.choice(len(dataset_names))
-    return getattr(datasets, list(dataset_names)[idx])
+def load_model_config(task, model_type):
+    models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
+    config = OmegaConf.load(models_conf)
+    return config.models
 
 
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
-        models_conf = os.path.join(ROOT, "conf/models/segmentation.yaml")
-        self.config_file = OmegaConf.load(os.path.join(ROOT, "conf/config.yaml"))
-
-        self.config = OmegaConf.load(models_conf)
-        self.config = OmegaConf.merge(self.config, self.config_file.training)
+        self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
 
     def test_createall(self):
-        for model_name in self.config["models"].keys():
-            print(model_name)
-            if model_name not in ["MyTemplateModel"]:
-                model_config = self.config["models"][model_name]
+        for type_file in self.model_type_files:
 
-                cfg_training = set_format(model_config, self.config_file.training)
-                model_config = merges_in_sub(model_config, [cfg_training, _find_random_dataset(self.config_file.data)])
-
-                _find_model_using_name(model_config.architecture, "segmentation", model_config, MockDatasetGeometric(6))
+            associated_task = type_file.split("/")[-2]
+            models_config = OmegaConf.load(type_file).models
+            for model_name in models_config.keys():
+                print(model_name)
+                if model_name not in ["MyTemplateModel"]:
+                    model_config = models_config[model_name]
+                    _find_model_using_name(
+                        model_config.architecture, associated_task, model_config, MockDatasetGeometric(6)
+                    )
 
     def test_pointnet2(self):
-        params = self.config["models"]["pointnet2"]
+        params = load_model_config("segmentation", "pointnet2")["pointnet2"]
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
@@ -58,7 +57,7 @@ class TestModelUtils(unittest.TestCase):
         model.backward()
 
     def test_kpconv(self):
-        params = self.config["models"]["SimpleKPConv"]
+        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
@@ -66,7 +65,7 @@ class TestModelUtils(unittest.TestCase):
         model.backward()
 
     def test_pointnet2ms(self):
-        params = self.config["models"]["pointnet2ms"]
+        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])

@@ -53,10 +53,6 @@ class BaseDenseConvolutionDown(BaseConvolution):
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
-        assert self.CONV_TYPE == kwargs.get(
-            "conv_type", None
-        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
-
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
         the indexes of the points in x and pos to be agragated into the new feature
@@ -103,10 +99,6 @@ class BaseDenseConvolutionUp(BaseConvolution):
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
-
-        assert self.CONV_TYPE == kwargs.get(
-            "conv_type", None
-        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
 
     def conv(self, pos, pos_skip, x):
         raise NotImplementedError

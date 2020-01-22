@@ -1,0 +1,6 @@
+data:
+    name: shapenet
+    task: segmentation
+    dataroot: data
+    normal: True
+    num_points: 2048
