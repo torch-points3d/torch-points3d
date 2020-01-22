@@ -1,0 +1,17 @@
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/7-scenes-chess.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/7-scenes-heads.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/7-scenes-pumpkin.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/analysis-by-synthesis-apt2-luke.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/analysis-by-synthesis-office2-5a.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/analysis-by-synthesis-office2-5b.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/bundlefusion-apt2.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/bundlefusion-copyroom.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/bundlefusion-office2.zip
+
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/rgbd-scenes-v2-scene_02.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/rgbd-scenes-v2-scene_08.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/sun3d-brown_cs_2-brown_cs2.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/sun3d-harvard_c11-hv_c11_2.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/sun3d-home_bksh-home_bksh_oct_30_2012_scan2_erika.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/sun3d-hotel_nips2012-nips_4.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/sun3d-mit_32_d507-d507_2.zip
