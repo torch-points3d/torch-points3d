@@ -1,0 +1,6 @@
+data:
+  classification:
+    modelnet:
+        name: modelnet
+        dataroot: data
+        number: 10
