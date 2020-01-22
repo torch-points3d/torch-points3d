@@ -46,10 +46,6 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
-        assert self.CONV_TYPE == kwargs.get(
-            "conv_type", None
-        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
-
     def conv(self, x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
         """ Generic down convolution for partial dense data
 

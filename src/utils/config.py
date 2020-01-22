@@ -37,6 +37,9 @@ def merges_in_sub(x, list_conf: List):
     dict_ = {}
     for o, v in x.items():
         name = str(o)
+        if name == 'define_constants':
+            dict_[name] = v
+            continue
         if isinstance(v, DictConfig):
             for c in list_conf:
                 v = OmegaConf.merge(v, c)
