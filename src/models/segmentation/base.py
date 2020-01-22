@@ -1,7 +1,11 @@
+import logging
 import torch
 import torch.nn.functional as F
 from typing import Any
+
 from src.models.base_architectures import UnetBasedModel
+
+log = logging.getLogger(__name__)
 
 
 class Segmentation_MP(UnetBasedModel):
@@ -24,6 +28,7 @@ class Segmentation_MP(UnetBasedModel):
         self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
 
         self.loss_names = ["loss_seg"]
+        log.info(self)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.

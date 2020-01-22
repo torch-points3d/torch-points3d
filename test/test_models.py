@@ -55,6 +55,7 @@ class TestModelUtils(unittest.TestCase):
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
+        model.backward()
 
     def test_kpconv(self):
         params = self.config["models"]["SimpleKPConv"]
@@ -62,6 +63,7 @@ class TestModelUtils(unittest.TestCase):
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
+        model.backward()
 
     def test_pointnet2ms(self):
         params = self.config["models"]["pointnet2ms"]
@@ -69,6 +71,7 @@ class TestModelUtils(unittest.TestCase):
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
+        model.backward()
 
     # def test_pointnet2_customekernel(self):
     #     model_type = 'pointnet2_dense'

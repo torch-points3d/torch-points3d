@@ -1,10 +1,10 @@
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 experiment:
-    model_name: pointnet2_charlesmsg
+    model_name: pointnet2
     checkpoint_dir: ""
     resume: True
     task: segmentation
-    dataset: shapenet
+    dataset: s3dis1x1
 
 # parameters for Weights and Biases
 wandb:
@@ -40,6 +40,10 @@ data:
         dataroot: data
         normal: True
         num_points: 2048
+        category: Airplane
+        first_subsampling: 0.02
+        density_parameter: 5.0
+        kp_extent: 1.0
 
     # This dataset can be used only for classification
     modelnet:
