@@ -78,7 +78,7 @@ And you should see something like that
 
 | Model Name | # params | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)|3,026,829|04:29 / 01:07|0.0512|85.26|45.58|73.11 |
+| [```pointnet2_original```](/benchmark/s3dis_fold5/Pointnet2_original.md)|3,026,829|04:29 / 01:07(RTX 2060)|0.0512|85.26|45.58|73.11 |
 
 
 ## Shapenet part segmentation
