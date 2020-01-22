@@ -1,5 +1,4 @@
 models:
-  segmentation:
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:
         architecture: randlanet.RandLANetSeg

@@ -99,12 +99,11 @@ def main(cfg):
     print("DEVICE : {}".format(device))
 
     # Get task and model_name
-    tested_task = [k for k in cfg.data.keys()][0]
+    tested_task = cfg.data.task
     tested_model_name = cfg.model_name
-    tested_dataset_name = [k for k in getattr(cfg.data, tested_task).keys()][0]
 
     # Find and create associated model
-    model_config = getattr(getattr(cfg.models, tested_task), tested_model_name, None)
+    model_config = getattr(cfg.models, tested_model_name, None)
 
     # Find which dataloader to use
     cfg_training = set_format(model_config, cfg.training)
@@ -113,7 +112,8 @@ def main(cfg):
     torch.backends.cudnn.enabled = cfg_training.enable_cudnn
 
     # Find and create associated dataset
-    dataset_config = getattr(getattr(cfg.data, tested_task), tested_dataset_name, None)
+    dataset_config = cfg.data
+    tested_dataset_name = dataset_config.name
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
 

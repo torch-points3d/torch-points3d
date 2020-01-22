@@ -1,5 +1,4 @@
 models:
-  segmentation:
     # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2:
         architecture: pointnet2.PointNet2_MP

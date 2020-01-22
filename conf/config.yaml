@@ -1,11 +1,11 @@
 defaults:
-    - task: ???
+    - task: segmentation
       optional: True
-    - model_type: ???
+    - model_type: pointnet2
       optional: True
-    - dataset: ???
+    - dataset: s3dis1x1
       optional: True
-      
+
     - training
 
     - models: ${defaults.0.task}/${defaults.1.model_type}
@@ -13,7 +13,7 @@ defaults:
     - sota # Contains current SOTA results on different datasets (extracted from papers !).
     - hydra/job_logging: custom
 
-model_name: ???
+model_name: pointnet2
 
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases

@@ -1,5 +1,4 @@
 models:
-  segmentation:
     pointcnn_small:
         architecture: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"

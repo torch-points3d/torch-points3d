@@ -1,5 +1,4 @@
 models:
-  segmentation:
     PointNet:
         architecture: pointnet.PointNet
         conv_type: "DENSE"

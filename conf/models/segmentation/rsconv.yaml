@@ -1,6 +1,4 @@
 models:
-  segmentation:
-    
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv_2LD:
         architecture: rsconv.RSConv_MP
