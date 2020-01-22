@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
+from glob import glob
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
@@ -39,18 +40,29 @@ def load_model_config(task, model_type, training):
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
         self.cfg_training = OmegaConf.load(os.path.join(ROOT, "conf/training.yaml"))
-    """
+        self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
+
     def test_createall(self):
-        for model_name in self.config["models"].keys():
-            print(model_name)
-            if model_name not in ["MyTemplateModel"]:
-                model_config = self.config["models"][model_name]
+        for type_file in self.model_type_files:
+            
+            associated_task = type_file.split('/')[-2]
+            models_config = OmegaConf.load(type_file)
+            models_config = getattr(models_config.models, associated_task)
+            
+            dataset_paths = glob(os.path.join(ROOT, "conf/data/{}/*".format(associated_task)))
+            
+            for dataset_p in dataset_paths:
+                dataset_conf = getattr(OmegaConf.load(dataset_p).data, associated_task)
+                dataset_conf = getattr(dataset_conf, dataset_p.split('/')[-1].replace('.yaml', ''))
 
-                cfg_training = set_format(model_config, self.config_file.training)
-                model_config = merges_in_sub(model_config, [cfg_training, _find_random_dataset(self.config_file.data)])
+                for model_name in models_config.keys():
+                    print(model_name)
+                    if model_name not in ["MyTemplateModel"]:
+                        model_config = models_config[model_name]
 
-                _find_model_using_name(model_config.architecture, "segmentation", model_config, MockDatasetGeometric(6))
-    """
+                        cfg_training = set_format(model_config, self.cfg_training)
+                        model_config = merges_in_sub(model_config, [cfg_training, dataset_conf])
+                        _find_model_using_name(model_config.architecture, associated_task, model_config, MockDatasetGeometric(6))
     
     def test_pointnet2(self):
         params = load_model_config("segmentation", "pointnet2", self.cfg_training)['pointnet2']
