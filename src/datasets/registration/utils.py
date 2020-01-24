@@ -1,7 +1,9 @@
 import numpy as np
 import os.path as osp
 import torch
+from torch_geometric.data import Data
 import imageio
+from tqdm import tqdm
 
 
 def extract_pcd(depth_image, K):
@@ -20,7 +22,6 @@ def extract_pcd(depth_image, K):
     return pcd
 
 
-
 def rgbd2pcd(path_img, path_intrinsic, path_trans):
 
     # read imageio
@@ -35,18 +36,20 @@ def rgbd2pcd(path_img, path_intrinsic, path_trans):
 def rgbd2fragment(list_path_img,
                   path_intrinsic, list_path_trans,
                   out_path,
-                  num_frame_per_fragment=50):
+                  num_frame_per_fragment=5, pre_transform=None):
 
     one_fragment = []
     ind = 0
-    for i, path_img in enumerate(list_path_img):
+    for i, path_img in tqdm(enumerate(list_path_img), total=len(list_path_img)):
         path_trans = list_path_trans[i]
         pcd = rgbd2pcd(path_img, path_intrinsic, path_trans)
         one_fragment.append(pcd)
-        if i + 1 % num_frame_per_fragment == 0:
+        if (i + 1) % num_frame_per_fragment == 0:
             torch_pcd = torch.from_numpy(np.concatenate(one_fragment, axis=0))
+            if pre_transform is not None:
+                torch_pcd = pre_transform(Data(pos=torch_pcd))
             torch.save(torch_pcd, osp.join(out_path,
-                                           'fragment_{}'.format(ind)))
+                                           'fragment_{:6d}.pt'.format(ind)))
             ind += 1
             one_fragment = []
     # concatenate all fragment
