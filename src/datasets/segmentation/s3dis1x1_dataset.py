@@ -91,7 +91,7 @@ class S3DIS1x1Dataset(BaseDataset):
             transform=T.FixedPoints(dataset_opt.num_points),
         )
 
-        self._create_dataloaders(train_dataset, test_dataset, validation=None)
+        self._create_dataloaders(train_dataset, test_dataset)
 
     @staticmethod
     def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
