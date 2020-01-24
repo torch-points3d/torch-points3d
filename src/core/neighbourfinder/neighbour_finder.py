@@ -11,6 +11,7 @@ import torch_points as tp
 from src.utils.config import is_list
 from src.utils.enums import ConvolutionFormat
 
+
 class BaseNeighbourFinder(ABC):
     def __call__(self, x, y, batch_x, batch_y):
         return self.find_neighbours(x, y, batch_x, batch_y)
@@ -18,6 +19,9 @@ class BaseNeighbourFinder(ABC):
     @abstractmethod
     def find_neighbours(self, x, y, batch_x, batch_y):
         pass
+
+    def __repr__(self):
+        return str(self.__class__.__name__) + " " + str(self.__dict__)
 
 
 class RadiusNeighbourFinder(BaseNeighbourFinder):

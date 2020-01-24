@@ -57,7 +57,7 @@ class TestModelUtils(unittest.TestCase):
         model.backward()
 
     def test_kpconv(self):
-        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
+        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])

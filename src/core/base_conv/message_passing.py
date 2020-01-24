@@ -106,7 +106,6 @@ class BaseMSConvolutionDown(BaseConvolution):
                 edge_index = getattr(data, "edge_index_{}_{}".format(self._index, scale_idx), None)
             else:
                 row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx,)
-                print("Pass1")
                 edge_index = torch.stack([col, row], dim=0)
 
             ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
