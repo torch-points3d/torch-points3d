@@ -11,6 +11,7 @@ import torch_points as tp
 from src.utils.config import is_list
 from src.utils.enums import ConvolutionFormat
 
+
 class BaseSampler(ABC):
     """If num_to_sample is provided, sample exactly
         num_to_sample points. Otherwise sample floor(pos[0] * ratio) points

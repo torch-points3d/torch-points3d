@@ -128,7 +128,6 @@ class UnetBasedModel(BaseModel):
             args_up=args_up, args_down=args_down, submodule=unet_block, outermost=True
         )  # add the outermost layer
         self._save_sampling_and_search(self.model, index)
-        log.info(self)
 
     def _init_from_layer_list_format(self, opt, model_type, dataset, modules_lib):
         """Create a unetbasedmodel from the layer list options format - where

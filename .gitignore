@@ -8,3 +8,4 @@ logs
 results
 site
 *.DS_Store
+kernels/dispositions/*
