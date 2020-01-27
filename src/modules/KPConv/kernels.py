@@ -374,8 +374,8 @@ class KPConvLayer(torch.nn.Module):
         """
         - query_points(torch Tensor): query of size N x 3
         - support_points(torch Tensor): support points of size N0 x 3
-        - neighbors(torch Tensor): neighbors of size N x M
-        - features : feature of size N x d (d is the number of inputs)
+        - neighbors(torch Tensor): neighbors of size N0 x M
+        - features : feature of size N0 x d (d is the number of inputs)
         """
         new_feat = KPConv_ops(
             query_points,
