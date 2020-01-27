@@ -26,10 +26,11 @@ models:
         architecture: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
-            module_name: SimpleBlock
-            grid_size: [0.1, 0.5]
-            radius: [0.2, 0.4]
+            module_name: ResnetBBlock
+            grid_size: [0.2, 4]
+            is_strided: [False, True]
             max_num_neighbors: [16, 16]
+            has_bottleneck: [False, True]
             down_conv_nn: [[FEAT, 32], [32, 64]]
         up_conv:
             module_name: FPModule
