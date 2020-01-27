@@ -37,6 +37,7 @@ class Segmentation_MP(UnetBasedModel):
         """
         self.input = data
         self.labels = data.y
+        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
@@ -53,7 +54,6 @@ class Segmentation_MP(UnetBasedModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
 
         if torch.isnan(self.loss_seg):

@@ -5,3 +5,4 @@ data:
     normal: True
     num_points: 2048
     first_subsampling: 0.02
+    use_category: True

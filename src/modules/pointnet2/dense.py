@@ -9,10 +9,11 @@ from typing import Tuple, List
 from src.core.base_conv.dense import *
 from src.core.neighbourfinder import DenseRadiusNeighbourFinder
 from src.core.sampling import DenseFPSSampler
+from src.utils.model_building_utils.activation_resolver import get_activation
 
 
 class PointNetMSGDown(BaseDenseConvolutionDown):
-    def __init__(self, npoint=None, radii=None, nsample=None, down_conv_nn=None, bn=True, use_xyz=True, **kwargs):
+    def __init__(self, npoint=None, radii=None, nsample=None, down_conv_nn=None, bn=True, activation="LeakyReLU", use_xyz=True, **kwargs):
         assert len(radii) == len(nsample) == len(down_conv_nn)
         super(PointNetMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
@@ -24,7 +25,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
             mlp_spec = down_conv_nn[i]
             if self.use_xyz:
                 mlp_spec[0] += 3
-            self.mlps.append(pt_utils.SharedMLP(down_conv_nn[i], bn=bn))
+            self.mlps.append(pt_utils.SharedMLP(down_conv_nn[i], bn=bn, activation=get_activation(activation)))
 
     def _prepare_features(self, x, pos, new_pos, idx):
         new_pos_trans = pos.transpose(1, 2).contiguous()

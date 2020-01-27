@@ -33,6 +33,7 @@ from src.core.base_conv import BaseConvolution
 from src.core.common_modules import MLP
 
 from src.utils.enums import ConvolutionFormat
+from src.utils.model_building_utils.activation_resolver import get_activation
 
 #################### THOSE MODULES IMPLEMENTS THE BASE DENSE CONV API ############################
 
@@ -126,12 +127,11 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
         return Data(x=new_features.squeeze(-1), pos=pos_skip)
 
-
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, bn=True, bias=False, **kwargs):
+    def __init__(self, up_conv_nn, bn=True, bias=False, activation="LeakyReLU", **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
 
-        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
+        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn, activation=get_activation(activation))
 
     def conv(self, pos, pos_skip, x):
         assert pos_skip.shape[2] == 3
@@ -152,9 +152,9 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max", bn=True, **kwargs):
+    def __init__(self, nn, aggr="max", bn=True, activation="LeakyReLU", **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
-        self.nn = pt_utils.SharedMLP(nn, bn=bn)
+        self.nn = pt_utils.SharedMLP(nn, bn=bn, activation=get_activation(activation))
         if aggr.lower() not in ["mean", "max"]:
             raise Exception("The aggregation provided is unrecognized {}".format(aggr))
         self._aggr = aggr.lower()
