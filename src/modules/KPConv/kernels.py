@@ -391,8 +391,12 @@ class KPConvLayer(torch.nn.Module):
         return new_feat
 
     def __repr__(self):
-        return "KPConvLayer(InF: {}, OutF: {}, kernel_pts: {}, radius: {}, KP_influence: {})".format(
-            self.num_inputs, self.num_outputs, self.n_kernel_points, self.kernel_radius, self.KP_influence
+        return "KPConvLayer(InF: %i, OutF: %i, kernel_pts: %i, radius: %.2f, KP_influence: %s)" % (
+            self.num_inputs,
+            self.num_outputs,
+            self.n_kernel_points,
+            self.kernel_radius,
+            self.KP_influence,
         )
 
 

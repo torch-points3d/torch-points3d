@@ -45,6 +45,8 @@ class SimpleBlock(torch.nn.Module):
         self.neighbour_finder = RadiusNeighbourFinder(radius, max_num_neighbors, conv_type=self.CONV_TYPE)
         if is_strided:
             self.sampler = GridSampling(grid_size)
+        else:
+            self.sampler = None
 
     def forward(self, data):
         if self.sampler:
@@ -53,17 +55,17 @@ class SimpleBlock(torch.nn.Module):
             querry_data = data.clone()
 
         q_pos, q_batch = querry_data.pos, querry_data.batch
-        if data.idx_neighboors and data.idx_neighboors.shape[0] == q_pos.shape[0]:
-            idx_neighbour = data.idx_neighboors
+        if hasattr(data, "idx_neighboors") and data.idx_neighboors.shape[0] == q_pos.shape[0]:
+            idx_neighboors = data.idx_neighboors
         else:
-            idx_neighbour, _ = self.neighbour_finder(q_pos, data.pos, batch_x=q_batch, batch_y=data.batch)
-        x = self.kp_conv(q_pos, data.pos, idx_neighbour, data.x,)
+            idx_neighboors, _ = self.neighbour_finder(q_pos, data.pos, batch_x=q_batch, batch_y=data.batch)
+        x = self.kp_conv(q_pos, data.pos, idx_neighboors, data.x,)
         if self.bn:
             x = self.bn(x)
         x = self.activation(x)
 
         querry_data.x = x
-        querry_data.idx_neighbour = idx_neighbour
+        querry_data.idx_neighboors = idx_neighboors
         return querry_data
 
     def extra_repr(self):
@@ -166,27 +168,24 @@ class ResnetBBlock(torch.nn.Module):
             data: x, pos, batch_idx and idx_neighbour when the neighboors of each point in pos have already been computed
         """
         # Main branch
-        output = data
+        output = data.clone()
         shortcut_x = data.x
         if self.has_bottleneck:
             output.x = self.unary_1(output.x)
         output = self.kp_conv(output)
         if self.has_bottleneck:
-            output.x = self.unary_2(output)
+            output.x = self.unary_2(output.x)
 
         # Shortcut
         if self.is_strided:
             idx_neighboors = output.idx_neighboors
             shortcut_x = torch.cat([shortcut_x, torch.zeros_like(shortcut_x[:1, :])], axis=0)  # Shadow feature
             neighborhood_features = shortcut_x[idx_neighboors]
-            shortcut_x = torch.max(neighborhood_features, dim=1, keepdim=False)
+            shortcut_x = torch.max(neighborhood_features, dim=1, keepdim=False)[0]
 
         shortcut = self.shortcut_op(shortcut_x)
         output.x += shortcut
         return output
-
-    def extra_repr(self):
-        return str(self.sampler) + "," + str(self.neighbour_finder)
 
 
 class KPConvBlock(torch.nn.Module):
