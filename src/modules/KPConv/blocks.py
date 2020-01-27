@@ -1,5 +1,6 @@
 import torch
 from torch_geometric.data import Batch
+import sys
 
 from .kernels import KPConvLayer
 from src.core.common_modules.base_modules import UnaryConv
@@ -19,22 +20,22 @@ class SimpleBlock(torch.nn.Module):
     def __init__(
         self,
         down_conv_nn=None,
-        radius=None,
-        kp_extent=1,
-        density_parameter=1,
+        grid_size=None,
+        is_strided=False,
+        sigma=1.0,
+        density_parameter=2.5,
         max_num_neighbors=64,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         bn_momentum=0.1,
         bn=torch.nn.BatchNorm1d,
-        grid_size=None,
         **kwargs
     ):
         super(SimpleBlock, self).__init__()
         assert len(down_conv_nn) == 2
         num_inputs, num_outputs = down_conv_nn
-        self.kp_conv = KPConvLayer(
-            num_inputs, num_outputs, radius=radius, kp_extent=kp_extent, density_parameter=density_parameter
-        )
+        self.grid_size = grid_size
+        radius = density_parameter * sigma * grid_size
+        self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
         else:
@@ -42,8 +43,7 @@ class SimpleBlock(torch.nn.Module):
         self.activation = activation
 
         self.neighbour_finder = RadiusNeighbourFinder(radius, max_num_neighbors, conv_type=self.CONV_TYPE)
-        if grid_size:
-            self.grid_size = grid_size
+        if is_strided:
             self.sampler = GridSampling(grid_size)
 
     def forward(self, data):
@@ -78,7 +78,7 @@ class ResnetBBlock(torch.nn.Module):
                         sizes of input, intermediate, output.
                         If length == 2 then intermediate =  num_outputs // 4
         radius : radius of the conv kernel
-        kp_extent : extent of the kernel
+        sigma :
         density_parameter : density parameter for the kernel
         max_num_neighbors : maximum number of neighboors for the neighboor search
         activation : activation function
@@ -93,15 +93,15 @@ class ResnetBBlock(torch.nn.Module):
     def __init__(
         self,
         down_conv_nn=None,
-        radius=None,
-        kp_extent=1,
-        density_parameter=1,
-        max_num_neighbors=64,
+        grid_size=None,
+        is_strided=False,
+        sigma=1,
+        density_parameter=2.5,
+        max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
         bn_momentum=0.1,
         bn=torch.nn.BatchNorm1d,
-        grid_size=None,
         **kwargs
     ):
         super(ResnetBBlock, self).__init__()
@@ -111,10 +111,10 @@ class ResnetBBlock(torch.nn.Module):
             d_2 = num_outputs // 4
         else:
             num_inputs, d_2, num_outputs = down_conv_nn
-        self.is_strided = grid_size is not None
+        self.is_strided = is_strided
+        self.grid_size = grid_size
         self.has_bottleneck = has_bottleneck
         if self.is_strided:
-            self.grid_size = grid_size
             self.sampler = GridSampling(grid_size)
 
         # Main branch
@@ -125,14 +125,14 @@ class ResnetBBlock(torch.nn.Module):
 
         self.kp_conv = SimpleBlock(
             down_conv_nn=kp_size,
-            radius=radius,
-            kp_extent=kp_extent,
+            grid_size=grid_size,
+            is_strided=is_strided,
+            sigma=sigma,
             density_parameter=density_parameter,
             max_num_neighbors=max_num_neighbors,
             activation=activation,
             bn_momentum=bn_momentum,
             bn=bn,
-            grid_size=grid_size,
         )
 
         if self.has_bottleneck:
@@ -187,3 +187,12 @@ class ResnetBBlock(torch.nn.Module):
 
     def extra_repr(self):
         return str(self.sampler) + "," + str(self.neighbour_finder)
+
+
+class KPConvBlock(torch.nn.Module):
+    def __init__(self, block_names=None, block_params=None, **kwargs):
+        assert len(block_names) == len(block_params)
+        self.blocks = torch.nn.ModuleList()
+        for class_name in block_names:
+            kpcls = getattr(sys.modules["src.modules.KPConv.blocks"], class_name)
+            self.blocks.append(kpcls(**block_params))

@@ -116,3 +116,16 @@ models:
         mlp_cls:
             nn: [64, 64, 64, 64, 64]
             dropout: 0.5
+
+    ResnetBPaper:
+        architecture: kpconv.KPConvSegPaper
+        conv_type: "PARTIAL_DENSE"
+        down_conv:
+            initial_feature_size: 64
+        up_conv:
+            module_name: FPModule
+            skip: True
+            up_k: [1, 3, 3, 5]
+        mlp_cls:
+            nn: [64, 64]
+            dropout: 0.5
