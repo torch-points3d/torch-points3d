@@ -9,7 +9,7 @@ def get_activation(act_opt, create_cls=True):
         del act_opt["name"]
         args = dict(act_opt)
     else:
-        act = getattr(torch.nn, "act_opt")
+        act = getattr(torch.nn, act_opt)
         args = {}
 
     if create_cls:
