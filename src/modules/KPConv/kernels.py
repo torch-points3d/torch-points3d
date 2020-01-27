@@ -8,7 +8,7 @@ import math
 from torch.nn.parameter import Parameter
 from torch_geometric.nn import MessagePassing
 
-from .kernel_utils import kernel_point_optimization_debug
+from .kernel_utils import kernel_point_optimization_debug, load_kernels
 from .convolution_ops import *
 from src.models.base_model import BaseInternalLossModule
 
@@ -319,6 +319,83 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 
 
+class KPConvLayer(torch.nn.Module):
+    """
+    apply the kernel point convolution on a point cloud
+    NB : it is the original version of KPConv, it is not the message passing version
+    attributes:
+    radius: radius of the kernel
+    num_inputs : dimension of the input feature
+    num_outputs : dimension of the output feature
+    config : YACS class that contains all the important constants
+    and hyperparameters
+    """
+
+    def __init__(
+        self,
+        num_inputs,
+        num_outputs,
+        n_kernel_points=16,
+        radius=1,
+        fixed="center",
+        ratio=1,
+        KP_influence="linear",
+        aggregation_mode="closest",
+        is_strided=True,
+        dimension=3,
+        shadow_features_fill=0.0,
+        norm=nn.BatchNorm1d,
+        act=nn.LeakyReLU,
+        kp_extent=None,
+        density_parameter=None,
+    ):
+        super(KPConvLayer, self).__init__()
+        self.radius = radius
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+        self.extent = kp_extent * self.radius / density_parameter
+        self.KP_influence = KP_influence
+        self.n_kernel_points = n_kernel_points
+        self.aggregation_mode = aggregation_mode
+
+        # Initial kernel extent for this layer
+        self.K_radius = 1.5 * self.extent
+        K_points_numpy = load_kernels(self.K_radius, n_kernel_points, num_kernels=1, dimension=dimension, fixed=fixed,)
+
+        self.K_points = Parameter(
+            torch.from_numpy(K_points_numpy.reshape((n_kernel_points, dimension))).to(torch.float), requires_grad=False,
+        )
+
+        weights = torch.empty([n_kernel_points, num_inputs, num_outputs], dtype=torch.float)
+        torch.nn.init.xavier_normal_(weights)
+        self.weight = Parameter(weights)
+
+    def forward(self, query_points, support_points, neighbors, x):
+        """
+        - query_points(torch Tensor): query of size N x 3
+        - support_points(torch Tensor): support points of size N0 x 3
+        - neighbors(torch Tensor): neighbors of size N x M
+        - features : feature of size N x d (d is the number of inputs)
+        """
+        new_feat = KPConv_ops(
+            query_points,
+            support_points,
+            neighbors,
+            x,
+            self.K_points,
+            self.weight,
+            self.extent,
+            self.KP_influence,
+            self.aggregation_mode,
+        )
+        return new_feat
+
+    def __repr__(self):
+        return "KPConvLayer(InF: {}, OutF: {}, kernel_pts: {}, radius: {}, KP_influence: {})".format(
+            self.num_inputs, self.num_outputs, self.n_kernel_points, self.K_radius, self.KP_influence
+        )
+
+
 class PointKernelPartialDense(nn.Module):
     """
     Implements KPConv: Flexible and Deformable Convolution for Point Clouds from
@@ -418,6 +495,6 @@ class PointKernelPartialDense(nn.Module):
 
     def __repr__(self):
         # PointKernel parameters
-        return "PointKernel({}, {}, {}, {}, {})".format(
-            self.in_features, self.out_features, self.num_points, self.radius, self.KP_influence
+        return "PointKernel(InF: {}, OutF: {}, kernel_pts: {}, radius: {}, KP_influence: {})".format(
+            self.in_features, self.out_features, self.num_points, self.K_radius, self.KP_influence
         )

@@ -54,13 +54,15 @@ class TestModelUtils(unittest.TestCase):
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
+        model.backward()
 
     def test_kpconv(self):
-        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
+        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
+        model.backward()
 
     def test_pointnet2ms(self):
         params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
@@ -68,6 +70,7 @@ class TestModelUtils(unittest.TestCase):
         model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
         model.set_input(dataset[0])
         model.forward()
+        model.backward()
 
     # def test_pointnet2_customekernel(self):
     #     model_type = 'pointnet2_dense'
