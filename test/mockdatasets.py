@@ -15,8 +15,11 @@ class MockDataset(torch.utils.data.Dataset):
             self._feature = torch.tensor([range(feature_size) for i in range(self._pos.shape[0])], dtype=torch.float,)
         else:
             self._feature = None
-        self._y = torch.tensor([range(10) for i in range(self._pos.shape[0])], dtype=torch.float)
-        self._batch = torch.tensor([0 for i in range(self._pos.shape[0])])
+        self._y = torch.tensor([0 for i in range(self._pos.shape[0])], dtype=torch.long)
+        self._batch = torch.tensor(
+            [0 for i in range(self._pos.shape[0] // 2)]
+            + [1 for i in range(self._pos.shape[0] // 2, self._pos.shape[0])]
+        )
 
     def __getitem__(self, index):
         datalist = [Data(pos=self._pos, x=self._feature, y=self._y) for i in range(2)]

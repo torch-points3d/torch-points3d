@@ -36,6 +36,12 @@ from src.core.common_modules import MLP
 #################### THOSE MODULES IMPLEMENTS THE BASE PARTIAL_DENSE CONV API ############################
 
 
+def copy_from_to(data, batch):
+    for key in data.keys:
+        if key not in batch.keys:
+            setattr(batch, key, getattr(data, key, None))
+
+
 class BasePartialDenseConvolutionDown(BaseConvolution):
 
     CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
@@ -76,7 +82,7 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         pos = torch.cat([pos, shadow_points], dim=0)
 
         x_neighbour = x[idx_neighbour]
-        pos_centered_neighbour = pos[idx_neighbour] - pos[:-1].unsqueeze(1)  # Centered the points
+        pos_centered_neighbour = pos[idx_neighbour] - pos[:-1].unsqueeze(1)  # Centered the points, no shadow point
 
         batch_obj.x = self.conv(x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler)
 
