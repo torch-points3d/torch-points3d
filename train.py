@@ -1,13 +1,7 @@
-from os import path as osp
 import torch
-from torch import nn
-from torch import autograd
 import numpy as np
-import torch.nn.functional as F
 import hydra
-from tqdm import tqdm as tq
 import time
-from omegaconf import OmegaConf
 import logging
 
 # Import building function for model and dataset
@@ -28,7 +22,7 @@ from src.utils.colors import COLORS
 from src.utils.config import merges_in_sub, set_format
 
 
-def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.train()
     tracker.reset("train")
     train_loader = dataset.train_dataloader()
@@ -60,7 +54,26 @@ def train(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, c
     log.info("Learning rate = %f" % model.learning_rate)
 
 
-def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+    model.eval()
+    tracker.reset("val")
+    loader = dataset.val_dataloader()
+    with Ctq(loader) as tq_val_loader:
+        for data in tq_val_loader:
+            data = data.to(device)
+            with torch.no_grad():
+                model.set_input(data)
+                model.forward()
+
+            tracker.track(model)
+            tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
+
+    metrics = tracker.publish()
+    tracker.print_summary()
+    checkpoint.save_best_models_under_current_metrics(model, metrics)
+
+
+def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.eval()
     tracker.reset("test")
     loader = dataset.test_dataloader()
@@ -82,12 +95,16 @@ def test(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: Mo
 def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
-        train(epoch, model, dataset, device, tracker, checkpoint, log)
-        test(model, dataset, device, tracker, checkpoint, log)
+        train_epoch(epoch, model, dataset, device, tracker, checkpoint, log)
+
+        if dataset.has_val_loader:
+            eval_epoch(model, dataset, device, tracker, checkpoint, log)
+
+        test_epoch(model, dataset, device, tracker, checkpoint, log)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
-        test(model, dataset, device, tracker, checkpoint, log)
+        test_epoch(model, dataset, device, tracker, checkpoint, log)
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -99,10 +116,8 @@ def main(cfg):
     print("DEVICE : {}".format(device))
 
     # Get task and model_name
-    exp = cfg.experiment
-    tested_task = exp.task
-    tested_model_name = exp.model_name
-    tested_dataset_name = exp.dataset
+    tested_task = cfg.data.task
+    tested_model_name = cfg.model_name
 
     # Find and create associated model
     model_config = getattr(cfg.models, tested_model_name, None)
@@ -114,7 +129,8 @@ def main(cfg):
     torch.backends.cudnn.enabled = cfg_training.enable_cudnn
 
     # Find and create associated dataset
-    dataset_config = getattr(cfg.data, tested_dataset_name, None)
+    dataset_config = cfg.data
+    tested_dataset_name = dataset_config.name
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
 
@@ -145,7 +161,12 @@ def main(cfg):
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
     checkpoint = get_model_checkpoint(
-        model, exp.checkpoint_dir, tested_model_name, exp.resume, cfg_training.weight_name
+        model,
+        cfg_training.checkpoint_dir,
+        tested_model_name,
+        cfg_training.resume,
+        cfg_training.weight_name,
+        "val" if dataset.has_val_loader else "test",
     )
 
     # Run training / evaluation

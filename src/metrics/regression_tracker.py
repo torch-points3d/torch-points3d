@@ -2,7 +2,6 @@ from typing import Dict
 import torchnet as tnt
 import torch
 import torch.nn.functional as F
-import numpy as np
 
 from src.models.base_model import BaseModel
 from .base_tracker import BaseTracker

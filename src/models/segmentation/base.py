@@ -1,7 +1,11 @@
+import logging
 import torch
 import torch.nn.functional as F
 from typing import Any
+
 from src.models.base_architectures import UnetBasedModel
+
+log = logging.getLogger(__name__)
 
 
 class Segmentation_MP(UnetBasedModel):
@@ -24,6 +28,7 @@ class Segmentation_MP(UnetBasedModel):
         self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
 
         self.loss_names = ["loss_seg"]
+        log.info(self)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -32,6 +37,7 @@ class Segmentation_MP(UnetBasedModel):
         """
         self.input = data
         self.labels = data.y
+        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
@@ -48,7 +54,6 @@ class Segmentation_MP(UnetBasedModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-
         self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
 
         if torch.isnan(self.loss_seg):

@@ -1,15 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Union
-import math
-from functools import partial
 import torch
-from torch_geometric.nn import fps, radius, knn, voxel_grid
-from torch_geometric.nn.pool.consecutive import consecutive_cluster
-from torch_geometric.nn.pool.pool import pool_pos, pool_batch
+from torch_geometric.nn import knn, radius
 import torch_points as tp
 
 from src.utils.config import is_list
 from src.utils.enums import ConvolutionFormat
+
 
 class BaseNeighbourFinder(ABC):
     def __call__(self, x, y, batch_x, batch_y):
@@ -18,6 +15,9 @@ class BaseNeighbourFinder(ABC):
     @abstractmethod
     def find_neighbours(self, x, y, batch_x, batch_y):
         pass
+
+    def __repr__(self):
+        return str(self.__class__.__name__) + " " + str(self.__dict__)
 
 
 class RadiusNeighbourFinder(BaseNeighbourFinder):

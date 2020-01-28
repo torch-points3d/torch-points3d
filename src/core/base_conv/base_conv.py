@@ -1,10 +1,7 @@
-from abc import ABC, abstractmethod
-from typing import *
-import math
-from functools import partial
-from typing import Dict, Any
+from abc import ABC
 import numpy as np
 import torch
+
 
 class BaseConvolution(ABC, torch.nn.Module):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):

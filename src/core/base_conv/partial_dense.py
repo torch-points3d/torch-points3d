@@ -1,12 +1,5 @@
-from abc import ABC, abstractmethod
 from typing import *
-import math
-from functools import partial
-from typing import Dict, Any
-import numpy as np
 import torch
-from torch import nn
-from torch.nn.parameter import Parameter
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -24,7 +17,6 @@ from torch_geometric.nn import (
     knn,
 )
 from torch_geometric.data import Batch
-from torch_geometric.utils import scatter_
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
@@ -36,6 +28,12 @@ from src.core.common_modules import MLP
 #################### THOSE MODULES IMPLEMENTS THE BASE PARTIAL_DENSE CONV API ############################
 
 
+def copy_from_to(data, batch):
+    for key in data.keys:
+        if key not in batch.keys:
+            setattr(batch, key, getattr(data, key, None))
+
+
 class BasePartialDenseConvolutionDown(BaseConvolution):
 
     CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
@@ -45,10 +43,6 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
 
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
-
-        assert self.CONV_TYPE == kwargs.get(
-            "conv_type", None
-        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
 
     def conv(self, x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
         """ Generic down convolution for partial dense data
@@ -80,7 +74,7 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         pos = torch.cat([pos, shadow_points], dim=0)
 
         x_neighbour = x[idx_neighbour]
-        pos_centered_neighbour = pos[idx_neighbour] - pos[:-1].unsqueeze(1)  # Centered the points
+        pos_centered_neighbour = pos[idx_neighbour] - pos[:-1].unsqueeze(1)  # Centered the points, no shadow point
 
         batch_obj.x = self.conv(x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler)
 

@@ -45,5 +45,7 @@ def _resolve(obj, constants):
                 except ValueError:
                     # we tried to resolve a string which is also a builtin (e.g. max)
                     pass
+                except Exception as e:
+                    print(e)
 
     return False

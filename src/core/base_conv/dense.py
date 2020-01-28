@@ -1,12 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import *
-import math
-from functools import partial
-from typing import Dict, Any
 import numpy as np
 import torch
-from torch import nn
-from torch.nn.parameter import Parameter
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -23,8 +16,7 @@ from torch_geometric.nn import (
     global_mean_pool,
     knn,
 )
-from torch_geometric.data import Batch, Data
-from torch_geometric.utils import scatter_
+from torch_geometric.data import Data
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
@@ -33,6 +25,7 @@ from src.core.base_conv import BaseConvolution
 from src.core.common_modules import MLP
 
 from src.utils.enums import ConvolutionFormat
+from src.utils.model_building_utils.activation_resolver import get_activation
 
 #################### THOSE MODULES IMPLEMENTS THE BASE DENSE CONV API ############################
 
@@ -52,10 +45,6 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
         self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
-
-        assert self.CONV_TYPE == kwargs.get(
-            "conv_type", None
-        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
@@ -104,10 +93,6 @@ class BaseDenseConvolutionUp(BaseConvolution):
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
 
-        assert self.CONV_TYPE == kwargs.get(
-            "conv_type", None
-        ), "The conv_type shoud be the same as the one used to defined the convolution {}".format(self.CONV_TYPE)
-
     def conv(self, pos, pos_skip, x):
         raise NotImplementedError
 
@@ -136,10 +121,10 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, bn=True, bias=False, **kwargs):
+    def __init__(self, up_conv_nn, bn=True, bias=False, activation="LeakyReLU", **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
 
-        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn)
+        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn, activation=get_activation(activation))
 
     def conv(self, pos, pos_skip, x):
         assert pos_skip.shape[2] == 3
@@ -160,9 +145,9 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max", bn=True, **kwargs):
+    def __init__(self, nn, aggr="max", bn=True, activation="LeakyReLU", **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
-        self.nn = pt_utils.SharedMLP(nn, bn=bn)
+        self.nn = pt_utils.SharedMLP(nn, bn=bn, activation=get_activation(activation))
         if aggr.lower() not in ["mean", "max"]:
             raise Exception("The aggregation provided is unrecognized {}".format(aggr))
         self._aggr = aggr.lower()
@@ -185,9 +170,9 @@ class GlobalDenseBaseModule(torch.nn.Module):
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
 
         if self._aggr == "max":
-            x = x.squeeze().max(-1)[0]
+            x = x.squeeze(-1).max(-1)[0]
         elif self._aggr == "mean":
-            x = x.squeeze().mean(-1)
+            x = x.squeeze(-1).mean(-1)
         else:
             raise NotImplementedError("The following aggregation {} is not recognized".format(self._aggr))
 
