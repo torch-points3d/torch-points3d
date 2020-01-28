@@ -12,6 +12,7 @@ DEFAULT_METRICS_FUNC = {
     "iou": max,
     "acc": max,
     "loss": min,
+    "mer": min,
 }  # Those map subsentences to their optimization functions
 
 
@@ -37,7 +38,6 @@ class Checkpoint(object):
 
     def __init__(self, check_name: str, save_every_iter: bool = True):
         """ Checkpoint manager. Saves to working directory with check_name
-
         Arguments
             check_name {str} -- name of the checkpoint
             save_every_iter {bool} -- [description] (default: {True})
@@ -155,12 +155,13 @@ class ModelCheckpoint(object):
             if token_name in metric_name:
                 return func
         raise Exception(
-            'The metric name doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}'
+            'The metric name {} doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}'.format(
+                token_name
+            )
         )
 
     def save_best_models_under_current_metrics(self, model: BaseModel, metrics_holder: dict, **kwargs):
         """[This function is responsible to save checkpoint under the current metrics and their associated DEFAULT_METRICS_FUNC]
-
         Arguments:
             model {[BaseModel]} -- [Model]
             metrics_holder {[Dict]} -- [Need to contain stage, epoch, current_metrics]
