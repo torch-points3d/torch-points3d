@@ -171,8 +171,6 @@ class UnetBasedModel(BaseModel):
 
         self._save_sampling_and_search(self.model, index)
 
-        log.info(self)
-
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
         if factory_module_cls is None:
