@@ -139,6 +139,8 @@ def main(cfg):
     model_config = merges_in_sub(model_config, [cfg_training, dataset_config])
     model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
 
+    log.info(model)
+
     # Optimizer
     lr_params = cfg_training.learning_rate
     model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), lr_params=lr_params)
