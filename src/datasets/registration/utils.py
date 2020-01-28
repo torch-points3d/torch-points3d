@@ -116,3 +116,27 @@ def compute_overlap_and_matches(list_fragment_path, out_dir,
                               path_target=path2,
                               overlap=overlap)
                 np.save(out_path, output)
+
+
+class PatchExtractor:
+    r"""
+    Extract patches on a point cloud
+    """
+
+    def __init__(self, radius_patch):
+        self.radius = radius_patch
+
+    def __call__(self, data: Data, ind):
+
+        pos = data.pos
+        point = pos[ind].view(1, 3)
+        ind, dist = ball_query(point, pos,
+                               radius=self.radius_patch,
+                               max_num=-1, mode=1)
+
+        row, col = ind.t()
+
+        for key in data.keys:
+            if(torch.is_tensor(data[key])):
+                data[key] = data[key][row]
+        return data

@@ -3,8 +3,10 @@ import os
 import os.path as osp
 import torch
 from src.datasets.registration.general3dmatch_dataset import General3DMatch
+from src.datasets.registration.pair import Pair
 from src.core.data_transform import PatchExtractor
 from torch_geometric.data import Batch
+
 
 class Patch3DMatch(General3DMatch):
 
@@ -12,6 +14,9 @@ class Patch3DMatch(General3DMatch):
                  radius_patch=0.3,
                  num_frame_per_fragment=50,
                  mode='train_small',
+                 min_overlap_ratio=0.3,
+                 max_overlap_ratio=1.0,
+                 max_dist_overlap=0.1,
                  transform=None,
                  pre_transform=None,
                  pre_transform_fragment=None,
@@ -62,9 +67,9 @@ class Patch3DMatch(General3DMatch):
         super(Patch3DMatch, self).__init__(root,
                                            num_frame_per_fragment,
                                            mode,
-                                           min_overlap_ratio=0.3,
-                                           max_overlap_ratio=1.0,
-                                           max_dist_overlap=0.1,
+                                           min_overlap_ratio,
+                                           max_overlap_ratio,
+                                           max_dist_overlap,
                                            transform,
                                            pre_transform,
                                            pre_filter,
@@ -85,3 +90,4 @@ class Patch3DMatch(General3DMatch):
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
+        return Pair.from_pair(data_source, data_target)
