@@ -55,10 +55,10 @@ class SimpleBlock(torch.nn.Module):
             querry_data = data.clone()
 
         q_pos, q_batch = querry_data.pos, querry_data.batch
-        if hasattr(data, "idx_neighboors") and data.idx_neighboors.shape[0] == q_pos.shape[0]:
-            idx_neighboors = data.idx_neighboors
-        else:
-            idx_neighboors, _ = self.neighbour_finder(q_pos, data.pos, batch_x=q_batch, batch_y=data.batch)
+        # if hasattr(data, "idx_neighboors") and data.idx_neighboors.shape[0] == q_pos.shape[0]:
+        #     idx_neighboors = data.idx_neighboors
+        # else:
+        idx_neighboors, _ = self.neighbour_finder(q_pos, data.pos, batch_x=q_batch, batch_y=data.batch)
         x = self.kp_conv(q_pos, data.pos, idx_neighboors, data.x,)
         if self.bn:
             x = self.bn(x)
@@ -99,7 +99,7 @@ class ResnetBBlock(torch.nn.Module):
         is_strided=False,
         sigma=1,
         density_parameter=2.5,
-        max_num_neighbors=16,
+        max_num_neighbors=64,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
         bn_momentum=0.1,
@@ -188,10 +188,25 @@ class ResnetBBlock(torch.nn.Module):
         return output
 
 
-class KPConvBlock(torch.nn.Module):
-    def __init__(self, block_names=None, block_params=None, **kwargs):
-        assert len(block_names) == len(block_params)
+class KPDualBlock(torch.nn.Module):
+    def __init__(
+        self, block_names=None, down_conv_nn=None, grid_size=None, is_strided=None, has_bottleneck=None, **kwargs
+    ):
+        super(KPDualBlock, self).__init__()
+
+        assert len(block_names) == len(down_conv_nn)
         self.blocks = torch.nn.ModuleList()
-        for class_name in block_names:
+        for i, class_name in enumerate(block_names):
             kpcls = getattr(sys.modules["src.modules.KPConv.blocks"], class_name)
-            self.blocks.append(kpcls(**block_params))
+            block = kpcls(
+                down_conv_nn=down_conv_nn[i],
+                grid_size=grid_size[i],
+                is_strided=is_strided[i],
+                has_bottleneck=has_bottleneck[i],
+            )
+            self.blocks.append(block)
+
+    def forward(self, data):
+        for block in self.blocks:
+            data = block(data)
+        return data

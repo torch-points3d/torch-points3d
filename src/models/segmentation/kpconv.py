@@ -1,4 +1,8 @@
 import logging
+import queue
+from omegaconf.dictconfig import DictConfig
+from omegaconf.listconfig import ListConfig
+from torch.nn import Sequential, BatchNorm1d, Dropout, Linear
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *
@@ -10,78 +14,76 @@ log = logging.getLogger(__name__)
 
 class KPConvPaper(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
-        feature_down = self._assemble_down_convs(option)
-        self._assemble_up_convs(feature_down, option)
+        # Extract parameters from the dataset
+        self._num_classes = dataset.num_classes
+        self._weight_classes = dataset.weight_classes
+        self._use_category = option.use_category
+        if self._use_category:
+            if not dataset.class_to_segments:
+                raise ValueError(
+                    "The dataset needs to specify a class_to_segments property when using category information for segmentation"
+                )
+            self._num_categories = len(dataset.class_to_segments.keys())
+            log.info("Using category information for the predictions with %i categories", self._num_categories)
+        else:
+            self._num_categories = 0
 
+        # ASsemble encoder / decoder
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
 
+        # Build final MLP
         last_mlp_opt = option.mlp_cls
-
-        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0] + self._num_categories)
+        in_feat = last_mlp_opt.nn[0] + self._num_categories
+        self.FC_layer = Sequential()
         for i in range(1, len(last_mlp_opt.nn)):
-            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True, bias=False)
+            self.FC_layer.add_module(
+                str(i),
+                Sequential(
+                    *[Linear(in_feat, last_mlp_opt.nn[i], bias=False), LeakyReLU(0.2), BatchNorm1d(last_mlp_opt.nn[i])]
+                ),
+            )
+            in_feat = last_mlp_opt.nn[i]
+
         if last_mlp_opt.dropout:
-            self.FC_layer.dropout(p=last_mlp_opt.dropout)
+            self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
-        self.FC_layer.conv1d(self._num_classes, activation=None)
+        self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
         self.loss_names = ["loss_seg"]
-
-    @staticmethod
-    def _assemble_down_convs(option):
-        subsampling = option.first_subsampling
-        initial_feature_size = option.initial_feature_size
-        block_names = [
-            [SimpleBlock, ResnetBBlock],
-            [ResnetBBlock, ResnetBBlock],
-            [ResnetBBlock, ResnetBBlock],
-            [ResnetBBlock, ResnetBBlock],
-            [ResnetBBlock, ResnetBBlock],
-        ]
-        block_params = [
-            [
-                {"down_conv_nn": [1, initial_feature_size], "grid_size": subsampling, "is_strided": False},
-                {
-                    "down_conv_nn": [initial_feature_size, initial_feature_size],
-                    "grid_size": subsampling,
-                    "is_strided": False,
-                },
-            ]
-        ]
-        feature_sizes = [initial_feature_size]
-        for i in range(1, len(block_names)):
-            subsampling *= 2
-            feature_sizes.append(2 * feature_sizes[-1])
-            new_params = [
-                {"down_conv_nn": [feature_sizes[-2], feature_sizes[-1]], "grid_size": subsampling, "is_strided": True,},
-                {
-                    "down_conv_nn": [feature_sizes[-1], feature_sizes[-1]],
-                    "grid_size": subsampling,
-                    "is_strided": False,
-                },
-            ]
-            block_params.append(new_params)
-        setattr(option.down_conv, "block_names", block_names)
-        setattr(option.down_conv, "block_params", block_params)
-        return feature_sizes
-
-    @staticmethod
-    def _assemble_up_conv(down_features, option):
-        up_conv_nn = []
-        for i in range(1, down_features):
-            up_conv_nn.append([down_features[-i] + down_features[-i - 1], down_features[-i - 1]])
-        setattr(option, "up_conv_nn", up_conv_nn)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
+        if hasattr(data, "x"):
+            data.x = torch.cat([torch.ones(data.x.shape[0], dtype=torch.float).unsqueeze(-1), data.x], dim=-1)
         self.input = data
         self.labels = data.y
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        pass
+        stack_down = []
+
+        data = self.input
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+
+        data = self.down_modules[-1](data)
+        for i in range(len(self.up_modules)):
+            data = self.up_modules[i]((data, stack_down.pop()))
+
+        last_feature = data.x
+        if self._use_category:
+            num_points = data.pos.shape[1]
+            cat_one_hot = (
+                torch.zeros((data.pos.shape[0], self._num_categories, num_points)).float().to(self.category.device)
+            )
+            cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
+            last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
+
+        self.output = self.FC_layer(last_feature)
+        return self.output
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
