@@ -1,4 +1,3 @@
-import os
 from collections import OrderedDict, ChainMap
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
@@ -6,8 +5,6 @@ import copy
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
-import functools
-import operator
 import logging
 
 from src.core.schedulers.lr_schedulers import get_scheduler
@@ -71,7 +68,6 @@ class BaseModel(torch.nn.Module):
         Parameters:
             input (dict): includes the data itself and its metadata information.
         """
-        pass
 
     def get_labels(self):
         """ returns a trensor of size [N_points] where each value is the label of a point
@@ -92,7 +88,6 @@ class BaseModel(torch.nn.Module):
     @abstractmethod
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        pass
 
     def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -156,6 +151,15 @@ class BaseModel(torch.nn.Module):
 
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
+
+    def enable_dropout_in_eval(self):
+        def search_from_key(modules):
+            for _, m in modules.items():
+                if m.__class__.__name__.startswith("Dropout"):
+                    m.train()
+                search_from_key(m._modules)
+
+        search_from_key(self._modules)
 
 
 class BaseInternalLossModule(ABC):

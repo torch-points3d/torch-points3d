@@ -1,4 +1,3 @@
-
 import torch
 from torch import nn
 from torch.nn.parameter import Parameter
@@ -11,11 +10,13 @@ from torch.nn import (
     Dropout,
 )
 
+
 def weight_variable(shape):
 
     initial = torch.empty(shape, dtype=torch.float)
     torch.nn.init.xavier_normal_(initial)
     return initial
+
 
 class Identity(nn.Module):
     def __init__(self):

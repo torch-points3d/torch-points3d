@@ -1,11 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Union
-import math
-from functools import partial
 import torch
-from torch_geometric.nn import fps, radius, knn, voxel_grid
-from torch_geometric.nn.pool.consecutive import consecutive_cluster
-from torch_geometric.nn.pool.pool import pool_pos, pool_batch
+from torch_geometric.nn import knn, radius
 import torch_points as tp
 
 from src.utils.config import is_list
