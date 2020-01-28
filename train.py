@@ -104,7 +104,7 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
-        test(model, dataset, device, tracker, checkpoint, log)
+        test_epoch(model, dataset, device, tracker, checkpoint, log)
 
 
 @hydra.main(config_path="conf/config.yaml")
