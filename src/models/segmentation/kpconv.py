@@ -84,7 +84,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
             last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
 
-        self.output = self.FC_layer(last_feature)
+        last_feature = self.FC_layer(last_feature)
+        self.output = F.log_softmax(last_feature, dim=-1)
         return self.output
 
     def backward(self):
