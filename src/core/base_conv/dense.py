@@ -127,6 +127,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
         return Data(x=new_features.squeeze(-1), pos=pos_skip)
 
+
 class DenseFPModule(BaseDenseConvolutionUp):
     def __init__(self, up_conv_nn, bn=True, bias=False, activation="LeakyReLU", **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
@@ -177,9 +178,9 @@ class GlobalDenseBaseModule(torch.nn.Module):
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
 
         if self._aggr == "max":
-            x = x.squeeze().max(-1)[0]
+            x = x.squeeze(-1).max(-1)[0]
         elif self._aggr == "mean":
-            x = x.squeeze().mean(-1)
+            x = x.squeeze(-1).mean(-1)
         else:
             raise NotImplementedError("The following aggregation {} is not recognized".format(self._aggr))
 

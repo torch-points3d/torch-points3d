@@ -157,6 +157,15 @@ class BaseModel(torch.nn.Module):
     def get_sampling_and_search_strategies(self):
         return self._sampling_and_search_dict
 
+    def enable_dropout_in_eval(self):
+        def search_from_key(modules):
+            for _, m in modules.items():
+                if m.__class__.__name__.startswith("Dropout"):
+                    m.train()
+                search_from_key(m._modules)
+
+        search_from_key(self._modules)
+
 
 class BaseInternalLossModule(ABC):
     """ABC for modules which have internal loss(es)
