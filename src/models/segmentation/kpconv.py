@@ -56,7 +56,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         if hasattr(data, "x"):
-            data.x = torch.cat([torch.ones(data.x.shape[0], dtype=torch.float).unsqueeze(-1), data.x], dim=-1)
+            ones = torch.ones(data.x.shape[0], dtype=torch.float).unsqueeze(-1).to(data.x.device)
+            data.x = torch.cat([ones, data.x], dim=-1)
         self.input = data
         self.labels = data.y
 
