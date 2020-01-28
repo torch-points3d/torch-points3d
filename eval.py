@@ -27,8 +27,14 @@ from src.utils.model_building_utils.model_definition_resolver import resolve_mod
 from src.utils.colors import COLORS
 from src.utils.config import merges_in_sub, set_format
 
-def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+
+def enable_dropout_in_eval(model):
     model.eval()
+    for m in model.modules():
+        if m.__class__.__name__.startswith('Dropout'):
+            m.train()
+
+def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     tracker.reset("val")
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
@@ -44,7 +50,6 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     tracker.print_summary()
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
-    model.eval()
     tracker.reset("test")
     loader = dataset.test_dataloader()
     with Ctq(loader) as tq_test_loader:
@@ -97,6 +102,12 @@ def main(cfg):
     model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
 
     log.info(model)
+
+    # 
+    if cfg_eval.enable_dropout:
+        enable_dropout_in_eval(model)
+    else:
+        model.eval()
 
     # Set sampling / search strategies
     dataset.set_strategies(model, precompute_multi_scale=cfg_eval.precompute_multi_scale)
