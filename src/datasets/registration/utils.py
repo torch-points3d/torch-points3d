@@ -2,6 +2,7 @@ import numpy as np
 import os.path as osp
 import torch
 from torch_geometric.data import Data
+from torch_points.points_cpu import ball_query
 import imageio
 from tqdm import tqdm
 
@@ -86,3 +87,32 @@ def rgbd2fragment(list_path_img,
 
     # create batches
     # save fragments for each batches using a simple batch
+
+
+def compute_overlap_and_matches(list_fragment_path, out_dir,
+                                max_distance_overlap=0.1):
+    ind = 0
+    for path1 in list_fragment_path:
+        data1 = torch.load(path1)
+        for path2 in list_fragment_path:
+            if path1 < path2:
+                out_path = osp.join(out_dir, 'matches{:06d}.npy'.format(ind))
+                ind += 1
+                data2 = torch.load(path2)
+
+                # we can use ball query on cpu because the point are sorted
+                pair, dist = ball_query(data1.pos, data2.pos,
+                                        radius=max_distance_overlap,
+                                        max_num=1, mode=1)
+
+                if(len(pair) > 0):
+                    pair = pair.detach().numpy()[:, ::-1]
+                else:
+                    pair = np.array([])
+                overlap = pair.shape[0] / \
+                    (len(data1.pos) + len(data2.pos) - pair.shape[0])
+                output = dict(pair=pair,
+                              path_source=path1,
+                              path_target=path2,
+                              overlap=overlap)
+                np.save(out_path, output)

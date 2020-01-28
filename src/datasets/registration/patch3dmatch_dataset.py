@@ -1,13 +1,15 @@
+import numpy as np
 import os
 import os.path as osp
 import torch
 from src.datasets.registration.general3dmatch_dataset import General3DMatch
-
+from src.core.data_transform import PatchExtractor
+from torch_geometric.data import Batch
 
 class Patch3DMatch(General3DMatch):
 
     def __init__(self, root,
-                 num_points_per_fragment=200,
+                 radius_patch=0.3,
                  num_frame_per_fragment=50,
                  mode='train_small',
                  transform=None,
@@ -56,15 +58,30 @@ class Patch3DMatch(General3DMatch):
                 value, indicating whether the data object should be included in the
                 final dataset. (default: :obj:`None`)
         """
-        self.num_points_per_fragment = num_points_per_fragment
+        self.radius_patch = radius_patch
         super(Patch3DMatch, self).__init__(root,
                                            num_frame_per_fragment,
                                            mode,
+                                           min_overlap_ratio=0.3,
+                                           max_overlap_ratio=1.0,
+                                           max_dist_overlap=0.1,
                                            transform,
                                            pre_transform,
                                            pre_filter,
                                            verbose,
                                            debug)
 
-    def compute_and_save(self):
-        pass
+    def get(self, idx):
+        match = np.load(osp.join(self.processed_dir, self.mode, 'filtered'))
+        data_source = torch.load(match['path_source'])
+        data_target = torch.load(match['path_target'])
+        p_extractor = PatchExtractor(self.radius_patch)
+        # select a random match on the list of match.
+        # It cannot be 0 because matches are filtered.
+        rand = np.random.randint(0, len(match['pair']))
+        data_source = p_extractor(data_source, match['pair'][rand][0])
+        data_target = p_extractor(data_target, match['pair'][rand][1])
+
+        if(self.transform is not None):
+            data_source = self.transform(data_source)
+            data_target = self.transform(data_target)
