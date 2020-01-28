@@ -1,6 +1,5 @@
 from time import time
 from collections import defaultdict
-import numpy as np
 import functools
 from .running_stats import RunningStats
 

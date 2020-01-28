@@ -1,5 +1,4 @@
 import torch
-from torch.nn import Linear
 from torch_geometric.nn import global_max_pool
 
 from src.core.common_modules.base_modules import *

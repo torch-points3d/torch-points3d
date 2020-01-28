@@ -1,11 +1,10 @@
-
 import logging
 
 log = logging.getLogger(__name__)
 
+
 def colored_print(color, msg):
     log.info(color + msg + "\033[0m")
-
 
 
 class COLORS:

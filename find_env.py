@@ -379,9 +379,9 @@ def get_pretty_env_info():
 
 
 def main():
-    log.info("Collecting environment information...")
+    print("Collecting environment information...")
     output = get_pretty_env_info()
-    log.info(output)
+    print(output)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,4 @@
-import torch
 from torch import nn
-from abc import abstractmethod
-import torch_geometric
 from torch_geometric.nn import (
     global_max_pool,
     global_mean_pool,
@@ -19,9 +16,6 @@ from torch.nn import (
 )
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
-from collections import defaultdict
-from torch_geometric.nn import MessagePassing
-from torch_geometric.nn.inits import reset
 import logging
 
 from src.datasets.base_dataset import BaseDataset
@@ -134,7 +128,7 @@ class UnetBasedModel(BaseModel):
         each layer of the unet is specified separately
         """
 
-        factory_module_cls = self._get_factory(model_type, modules_lib)
+        self._get_factory(model_type, modules_lib)
 
         down_conv_layers = (
             opt.down_conv if type(opt.down_conv) is ListConfig else self._flatten_compact_options(opt.down_conv)

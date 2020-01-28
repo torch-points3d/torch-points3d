@@ -1,13 +1,6 @@
-import inspect
-import sys
-
 from enum import Enum
-import numpy as np
 import torch
 from torch import nn
-import torch.nn.functional as F
-from torch.nn import init
-import math
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -15,16 +8,10 @@ from torch.nn import (
     LeakyReLU,
     BatchNorm1d as BN,
 )
-from torch_geometric.datasets import ModelNet
-import torch_geometric.transforms as T
-from torch_geometric.data import DataLoader
-from torch_geometric.nn import PointConv, fps, radius, global_max_pool, MessagePassing
-from torch.nn.parameter import Parameter
 from torch_geometric.utils import scatter_
 from src.core.sampling import FPSSampler
 from src.core.neighbourfinder import RadiusNeighbourFinder
 from .kernels import PointKernel, LightDeformablePointKernel, PointKernelPartialDense
-from torch_geometric.nn import global_mean_pool
 from torch_scatter import scatter_max
 
 

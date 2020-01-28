@@ -1,6 +1,4 @@
 import torch
-from torch_geometric.data import Batch
-import sys
 
 from .kernels import KPConvLayer
 from src.core.common_modules.base_modules import UnaryConv
