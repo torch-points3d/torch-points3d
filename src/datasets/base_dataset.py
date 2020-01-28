@@ -58,6 +58,13 @@ class BaseDataset:
                 num_workers=self.training_opt.num_workers,
             )            
 
+    @property
+    def has_val_loader(self):
+        try:
+            _ = getattr(self, "_val_loader")
+            return True
+        except:
+            False
 
     def val_dataloader(self):
         return self._val_loader
