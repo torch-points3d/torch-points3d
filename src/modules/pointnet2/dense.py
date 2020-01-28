@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import BatchNorm1d, BatchNorm2d
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
-from typing import Tuple, List
 
 from src.core.base_conv.dense import *
 from src.core.neighbourfinder import DenseRadiusNeighbourFinder
@@ -13,7 +11,17 @@ from src.utils.model_building_utils.activation_resolver import get_activation
 
 
 class PointNetMSGDown(BaseDenseConvolutionDown):
-    def __init__(self, npoint=None, radii=None, nsample=None, down_conv_nn=None, bn=True, activation="LeakyReLU", use_xyz=True, **kwargs):
+    def __init__(
+        self,
+        npoint=None,
+        radii=None,
+        nsample=None,
+        down_conv_nn=None,
+        bn=True,
+        activation="LeakyReLU",
+        use_xyz=True,
+        **kwargs
+    ):
         assert len(radii) == len(nsample) == len(down_conv_nn)
         super(PointNetMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs

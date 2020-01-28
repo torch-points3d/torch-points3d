@@ -1,13 +1,6 @@
-from os import path as osp
 import torch
-from torch import nn
-from torch import autograd
 import numpy as np
-import torch.nn.functional as F
 import hydra
-from tqdm import tqdm as tq
-import time
-from omegaconf import OmegaConf
 import logging
 
 # Import building function for model and dataset
@@ -28,12 +21,6 @@ from src.utils.colors import COLORS
 from src.utils.config import merges_in_sub, set_format
 
 
-def enable_dropout_in_eval(model):
-    model.eval()
-    for m in model.modules():
-        if m.__class__.__name__.startswith('Dropout'):
-            m.train()
-
 def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     tracker.reset("val")
     loader = dataset.val_dataloader()
@@ -48,6 +35,7 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
             tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
     tracker.print_summary()
+
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     tracker.reset("test")
@@ -64,11 +52,13 @@ def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
 
     tracker.print_summary()
 
+
 def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     if dataset.has_val_loader:
         eval_epoch(model, dataset, device, tracker, checkpoint, log)
 
     test_epoch(model, dataset, device, tracker, checkpoint, log)
+
 
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
@@ -103,11 +93,9 @@ def main(cfg):
 
     log.info(model)
 
-    # 
+    model.eval()
     if cfg_eval.enable_dropout:
-        enable_dropout_in_eval(model)
-    else:
-        model.eval()
+        model.enable_dropout_in_eval()
 
     # Set sampling / search strategies
     dataset.set_strategies(model, precompute_multi_scale=cfg_eval.precompute_multi_scale)
@@ -120,12 +108,12 @@ def main(cfg):
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
     checkpoint = get_model_checkpoint(
-        model, cfg_eval.checkpoint_dir, tested_model_name, True, cfg_eval.weight_name,
-        "test"
+        model, cfg_eval.checkpoint_dir, tested_model_name, True, cfg_eval.weight_name, "test"
     )
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker, checkpoint, log)
+
 
 if __name__ == "__main__":
     main()

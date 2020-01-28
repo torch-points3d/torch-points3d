@@ -1,8 +1,4 @@
 import os
-from os import path as osp
-import tempfile
-import warnings
-import sys
 import torch
 import logging
 
@@ -20,7 +16,12 @@ DEFAULT_METRICS_FUNC = {
 
 
 def get_model_checkpoint(
-    model: BaseModel, load_dir: str, check_name: str, resume: bool = True, weight_name: str = None, selection_stage: str = "test"
+    model: BaseModel,
+    load_dir: str,
+    check_name: str,
+    resume: bool = True,
+    weight_name: str = None,
+    selection_stage: str = "test",
 ):
     """ Loads a model from a checkpoint or creates a new one.
     """
@@ -124,7 +125,9 @@ class Checkpoint(object):
 
 
 class ModelCheckpoint(object):
-    def __init__(self, load_dir: str = None, check_name: str = None, resume: bool = True, selection_stage: str = "test"):
+    def __init__(
+        self, load_dir: str = None, check_name: str = None, resume: bool = True, selection_stage: str = "test"
+    ):
         self._checkpoint = Checkpoint.load(load_dir, check_name)
         self._resume = resume
         self._selection_stage = selection_stage
@@ -193,7 +196,9 @@ class ModelCheckpoint(object):
                 current_stat["best_{}".format(metric_name)] = best_value
 
                 # This new value seems to be better under metric_func
-                if (self._selection_stage == stage) and (current_metric_value == best_value):  # Update the model weights
+                if (self._selection_stage == stage) and (
+                    current_metric_value == best_value
+                ):  # Update the model weights
                     models_to_save["best_{}".format(metric_name)] = state_dict
 
                     msg += "{}: {} -> {}, ".format(metric_name, best_metric_from_stats, best_value)

@@ -1,13 +1,7 @@
-from os import path as osp
 import torch
-from torch import nn
-from torch import autograd
 import numpy as np
-import torch.nn.functional as F
 import hydra
-from tqdm import tqdm as tq
 import time
-from omegaconf import OmegaConf
 import logging
 
 # Import building function for model and dataset
@@ -77,6 +71,7 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     metrics = tracker.publish()
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
+
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
     model.eval()
@@ -166,12 +161,17 @@ def main(cfg):
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
     checkpoint = get_model_checkpoint(
-        model, cfg_training.checkpoint_dir, tested_model_name, cfg_training.resume, cfg_training.weight_name,
-        "val" if dataset.has_val_loader else "test"
+        model,
+        cfg_training.checkpoint_dir,
+        tested_model_name,
+        cfg_training.resume,
+        cfg_training.weight_name,
+        "val" if dataset.has_val_loader else "test",
     )
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker, checkpoint, log)
+
 
 if __name__ == "__main__":
     main()

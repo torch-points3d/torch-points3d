@@ -1,8 +1,6 @@
 import unittest
-import importlib
 from omegaconf import OmegaConf
 import torch
-from torch_geometric.data import Data, Batch
 import os
 import sys
 

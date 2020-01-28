@@ -2,6 +2,7 @@ import torch.nn
 
 from src.utils.config import is_dict
 
+
 def get_activation(act_opt, create_cls=True):
     if is_dict(act_opt):
         act_opt = dict(act_opt)

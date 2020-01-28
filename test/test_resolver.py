@@ -2,7 +2,7 @@ import unittest
 
 from omegaconf import OmegaConf
 import torch
-from torch_geometric.data import Data, Batch
+from torch_geometric.data import Batch
 import os
 import sys
 
