@@ -1,0 +1,11 @@
+# Those arguments defines the training hyper-parameters
+eval:
+    shuffle: True
+    num_workers: 2
+    batch_size: 1
+    cuda: 1
+    weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
+    enable_cudnn: True
+    checkpoint_dir: "" # "{your_path}/outputs/2020-01-28/11-04-13" for example
+    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
+    enable_dropout: True

@@ -1,5 +1,4 @@
 import torch
-from torch_geometric.data import Batch
 
 from .kernels import KPConvLayer
 from src.core.neighbourfinder import RadiusNeighbourFinder

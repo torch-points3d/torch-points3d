@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch_geometric.nn import MessagePassing, knn
-import math
+from torch_geometric.nn import MessagePassing
 
 from src.core.sampling import *
 from src.core.neighbourfinder import *

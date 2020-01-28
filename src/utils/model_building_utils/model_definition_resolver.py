@@ -47,6 +47,5 @@ def _resolve(obj, constants):
                     pass
                 except Exception as e:
                     print(e)
-                    pass
 
     return False

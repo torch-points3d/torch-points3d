@@ -1,12 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import *
-import math
-from functools import partial
-from typing import Dict, Any
 import numpy as np
 import torch
-from torch import nn
-from torch.nn.parameter import Parameter
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -23,8 +16,7 @@ from torch_geometric.nn import (
     global_mean_pool,
     knn,
 )
-from torch_geometric.data import Batch, Data
-from torch_geometric.utils import scatter_
+from torch_geometric.data import Data
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
@@ -127,6 +119,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
         return Data(x=new_features.squeeze(-1), pos=pos_skip)
 
+
 class DenseFPModule(BaseDenseConvolutionUp):
     def __init__(self, up_conv_nn, bn=True, bias=False, activation="LeakyReLU", **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
@@ -177,9 +170,9 @@ class GlobalDenseBaseModule(torch.nn.Module):
         x = self.nn(torch.cat([x, pos_flipped], dim=1).unsqueeze(-1))
 
         if self._aggr == "max":
-            x = x.squeeze().max(-1)[0]
+            x = x.squeeze(-1).max(-1)[0]
         elif self._aggr == "mean":
-            x = x.squeeze().mean(-1)
+            x = x.squeeze(-1).mean(-1)
         else:
             raise NotImplementedError("The following aggregation {} is not recognized".format(self._aggr))
 

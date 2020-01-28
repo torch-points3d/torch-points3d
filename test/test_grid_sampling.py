@@ -3,7 +3,6 @@ import sys
 import numpy as np
 import torch
 import unittest
-import tempfile
 import h5py
 import numpy.testing as npt
 import numpy.matlib

@@ -1,4 +1,3 @@
-import numpy as np
 from typing import *
 from collections import OrderedDict
 import torch

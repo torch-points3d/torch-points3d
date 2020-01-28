@@ -1,14 +1,13 @@
 import logging
 
 import torch
-from torch.nn import init
 from torch.nn import Sequential as Seq
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import BatchNorm1d, BatchNorm2d, Conv1d
+from torch.nn import Conv1d
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
-from typing import Tuple, List
+from typing import Tuple
 
 from src.core.base_conv.dense import *
 from src.core.sampling import DenseFPSSampler
