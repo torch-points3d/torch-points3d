@@ -28,7 +28,6 @@ class Segmentation_MP(UnetBasedModel):
         self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
 
         self.loss_names = ["loss_seg"]
-        log.info(self)
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.

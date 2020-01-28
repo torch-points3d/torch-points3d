@@ -19,7 +19,6 @@ class PointNet(BaseModel):
             dataset.has_fixed_points_transform if hasattr(dataset, "has_fixed_points_transform") else False
         )
         self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
-        log.info(self)
 
     def set_input(self, data):
         self.input = data

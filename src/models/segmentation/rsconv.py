@@ -42,8 +42,6 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
 
-        log.info(self)
-
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
