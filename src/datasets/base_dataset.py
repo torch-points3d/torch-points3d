@@ -65,7 +65,7 @@ class BaseDataset:
             return True
         except:
             False
-            
+
     def val_dataloader(self):
         return self._val_loader
 

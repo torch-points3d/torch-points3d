@@ -1,11 +1,6 @@
-from typing import Any
 import torch
 
-from torch import nn
 import torch.nn.functional as F
-from torch.nn import Sequential as Seq, Linear as Lin, ReLU, BatchNorm1d as BN
-from torch_geometric.nn import knn_interpolate
-from torch_geometric.nn import radius, global_max_pool
 from torch_geometric.data import Data
 import etw_pytorch_utils as pt_utils
 import logging

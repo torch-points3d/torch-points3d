@@ -1,6 +1,4 @@
-import torch
 import torch.nn.functional as F
-from torch_geometric.nn import global_max_pool
 import logging
 
 from src.core.base_conv.base_conv import *

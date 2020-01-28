@@ -2,15 +2,12 @@ import unittest
 from omegaconf import OmegaConf
 import os
 import sys
-import numpy as np
-import torch
-from torch_geometric.data import Data, Batch
 from glob import glob
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
 
-from test.mockdatasets import MockDatasetGeometric, MockDataset
+from test.mockdatasets import MockDatasetGeometric
 
 
 from src import find_model_using_name
