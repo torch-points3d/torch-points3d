@@ -1,8 +1,8 @@
 import logging
-import queue
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
 from torch.nn import Sequential, BatchNorm1d, Dropout, Linear
+import torch.nn.functional as F
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *
@@ -60,6 +60,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             data.x = torch.cat([ones, data.x], dim=-1)
         self.input = data
         self.labels = data.y
+        self.batch_idx = data.batch
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""

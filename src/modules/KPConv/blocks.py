@@ -1,4 +1,5 @@
 import torch
+import sys
 
 from .kernels import KPConvLayer
 from src.core.common_modules.base_modules import UnaryConv
@@ -22,7 +23,7 @@ class SimpleBlock(torch.nn.Module):
         is_strided=False,
         sigma=1.0,
         density_parameter=2.5,
-        max_num_neighbors=64,
+        max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         bn_momentum=0.1,
         bn=torch.nn.BatchNorm1d,
@@ -56,7 +57,7 @@ class SimpleBlock(torch.nn.Module):
         # if hasattr(data, "idx_neighboors") and data.idx_neighboors.shape[0] == q_pos.shape[0]:
         #     idx_neighboors = data.idx_neighboors
         # else:
-        idx_neighboors, _ = self.neighbour_finder(q_pos, data.pos, batch_x=q_batch, batch_y=data.batch)
+        idx_neighboors, _ = self.neighbour_finder(data.pos, q_pos, batch_x=data.batch, batch_y=q_batch)
         x = self.kp_conv(q_pos, data.pos, idx_neighboors, data.x,)
         if self.bn:
             x = self.bn(x)
@@ -97,7 +98,7 @@ class ResnetBBlock(torch.nn.Module):
         is_strided=False,
         sigma=1,
         density_parameter=2.5,
-        max_num_neighbors=64,
+        max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
         bn_momentum=0.1,
