@@ -89,6 +89,25 @@ The data reported below correspond to the part segmentation problem for Shapenet
 | [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes | 1,733,946 | 15:07 / 01:20 (K80) | 0.089 | 82.1 | 85.1 |
 | [```RSCNN_MSG```](/benchmark/shapenet/rscnn_original.md) | No | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04 | 82.811 | 85.3 |
 
+## Troubleshooting
+#### Undefined symbol / Updating pytorch
+When we update the version of pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
+```
+... scatter_cpu.cpython-36m-x86_64-linux-gnu.so: undefined symbol: _ZN3c1012CUDATensorIdEv
+```
+This can happen for the following libraries:
+
+* torch-points
+* torch-scatter
+* torch-cluster
+* torch-sparse
+
+An easy way to fix this is to run the following command with the virtualenv activated:
+```
+pip uninstall torch-scatter torch-sparse torch-cluster torch-points
+poetry install
+```
+
 ## Contributing
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
 For styling you can use [pre-commit hooks](https://ljvmiranda921.github.io/notebook/2018/06/21/precommits-using-black-and-flake8/) to help you:
