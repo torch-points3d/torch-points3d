@@ -6,9 +6,6 @@ authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-torch-scatter = "^1.3"
-torch-sparse = "^0.4.3"
-torch-cluster = "^1.4"
 torch-geometric = "^1.3"
 matplotlib = "^3.1"
 hydra-core = "^0.11.2"
@@ -17,9 +14,12 @@ tqdm = "^4.40"
 torchnet = "^0.0.4"
 tensorboard = "^2.1"
 mkdocs = "^1.0"
-torch = "1.2.0"
+torch = "1.3.1"
 etw-pytorch-utils = {git = "https://github.com/erikwijmans/etw_pytorch_utils.git"}
 torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev = "v0.1.6"}
+torch-scatter = "^1.4.0"
+torch-sparse = "^0.4.3"
+torch-cluster = "^1.4.5"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
