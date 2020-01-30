@@ -220,7 +220,6 @@ visdom = "^0.1.8"
 reference = "4a99f9e27f291dce25d16f06aa52eb127f3b68ed"
 type = "git"
 url = "https://github.com/erikwijmans/etw_pytorch_utils.git"
-
 [[package]]
 category = "dev"
 description = "the modular source code checker: pep8, pyflakes and co"
@@ -1145,16 +1144,15 @@ description = ""
 name = "torch_points"
 optional = false
 python-versions = "*"
-version = "0.1.6"
+version = "0.2.3"
 
 [package.dependencies]
 torch = ">=1.1.0"
 
 [package.source]
-reference = "031a2253ccbfd921cd42c10f500fb8bf5f957643"
+reference = "c03fe63cfbd08ff18a08a81d45d7381f01af1484"
 type = "git"
 url = "https://github.com/nicolas-chaulet/torch-points.git"
-
 [[package]]
 category = "main"
 description = "PyTorch Extension Library of Optimized Scatter Operations"
@@ -1368,7 +1366,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "50c824800448111769a3181769ea22151443a5936ae8c623e7b0fc38278d541b"
+content-hash = "2b33994aeec750068d8913f68ba051385e5713395ef1078d02c0fcee9dc54ae7"
 python-versions = "^3.6"
 
 [metadata.files]
