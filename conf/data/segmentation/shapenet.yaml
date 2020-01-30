@@ -3,6 +3,11 @@ data:
     task: segmentation
     dataroot: data
     normal: True
-    num_points: 2048
     first_subsampling: 0.02
+    num_points: 2048
+    pre_transforms:
+        - transform: src.core.data_transform.GridSampling
+          params:
+              size: ${data.first_subsampling}
+        - transform: torch_geometric.transforms.NormaliseScale
     use_category: True

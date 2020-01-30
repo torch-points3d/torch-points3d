@@ -110,6 +110,7 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
     log = logging.getLogger(__name__)
+    print(cfg.pretty())
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
