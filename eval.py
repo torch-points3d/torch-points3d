@@ -89,7 +89,7 @@ def main(cfg):
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
-    model_config = OmegaConf.merge(model_config, cfg_training, dataset_config)
+    model_config = OmegaConf.merge(model_config, dataset_config)
     model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
 
     log.info(model)
