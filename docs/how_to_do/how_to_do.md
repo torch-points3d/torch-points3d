@@ -11,591 +11,496 @@ To make it short, it is [```argparse```](https://docs.python.org/2/library/argpa
 <h2>Configuration architecture</h2>
 
 * config.yaml
-    * models/
-        * segmentation.yaml (architecture of all seg models)
+    * hydra/ # configuration related to hydra
+    * models/ # configuration related to the models
+    * data/ # configuration related to the datasets
+* training.yaml
+* eval.yaml
 
 
-<h4>Experiment</h4>
-
-The experiment conf defines are going to be done.
-
-
-```yaml
-experiment:
-    experiment_name: "" # Wether to use hydra naming convention for the experiment
-    log_dir: "" # Wether to use hydra automatic path generation for saving training
-    resume: True  # Wether to load model
-    name: RSConv_2LD # Name of the model to be created
-    task: segmentation # Task to be benchmarked
-    dataset: shapenet # Dataset to be loaded
-```
-
-<h6> The associated logging </h6>
-
-As experiment is empty, it will use hydra naming convention for the experiment
-As log_dir is empty, it will use hydra naming convention for the log directory
-{path_to_project}/outputs/2019-12-28/12-05-45 (Y-M-D/H-M-S)
-
-The ```name``` is let to the user choose.
-
-<h6>The associated dataset</h6>
-
-```experiment.dataset``` value is used as a key to dynamically choose the associated dataset arguments
-
-
-<h6> The associated visualization </h6>
-
-The framework currently support both [```wandb```](https://www.wandb.com/) and [```tensorboard```](https://www.tensorflow.org/tensorboard)
+<h4>Understanding config.yaml</h4>
 
 ```yaml
+defaults:
+  - task: ??? # Task performed (segmentation, classification etc...)
+    optional: True
+  - model_type: ??? # Type of model to use, e.g. pointnet2, rsconv etc...
+    optional: True
+  - dataset: ???
+    optional: True
+
+  - training
+  - eval
+
+  - models: ${defaults.0.task}/${defaults.1.model_type}
+  - data: ${defaults.0.task}/${defaults.2.dataset}
+  - sota # Contains current SOTA results on different datasets (extracted from papers !).
+  - hydra/job_logging: custom
+
+model_name: ??? # Name of the specific model to load
+
+# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    project: benchmarking
-    log: False
+  project: shapenet-pn2
+  log: False
 
 # parameters for TensorBoard Visualization
 tensorboard:
-    log: True
+  log: True
 ```
+
+Hydra is expecting the followings arguments from the command line:
+
+*  task
+*  model_type
+*  dataset
+*  model_name
+
+The provided task and dataset will be used to load within ```conf/data/{task}/{dataset}.yaml``` file within data
+
+The provided task and dataset will be used to load within ```conf/models/{task}/{dataset}.yaml``` file within models
 
 <h4> Training arguments </h4>
 
 ```yaml
 training:
     shuffle: True
-    num_workers: 8
-    batch_size: 8
+    num_workers: 2
+    batch_size: 16
     cuda: 1
-    epochs: 350
+    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
+    epochs: 100
     optimizer: Adam
-    lr : 0.001
-    weight_name: 'default'
-    precompute_multi_scale: False
+    learning_rate:
+        scheduler_type: "step_decay"
+        base_lr: 0.001
+        lr_decay: 0.5
+        decay_step: 200000
+        lr_clip: 1e-5
+    weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
+    enable_cudnn: True
+    checkpoint_dir: ""
+    resume: True
+
 ```
-
-</br>
-
-* ```weight_name```: Used when ```resume is True```, ```select``` with model to load from ```[metric_name..., default]```
+* ```weight_name```: Used when ```resume is True```, ```select``` with model to load from ```[metric_name..., latest]```
 
 * ```precompute_multi_scale```: Compute multiscate features on cpu for faster
 
-<h4> Architecture of the loaded model </h4>
 
-```experiment.name``` value is used as a key to dynamically choose the associated model architecture
+<h4> Eval arguments </h4>
 
-Here, ```RSConv_2LD``` is a child model from the ```type: RSConv```.
-
-```python
-RSConv_2LD:
-    type: RSConv
-    down_conv:
-        module_name: RSConv
-        ratios: [0.2, 0.25]
-        radius: [0.1, 0.2]
-        local_nn: [[10, 8, FEAT], [10, 32, 64, 64]]
-        down_conv_nn: [[FEAT, 16, 32, 64], [64, 64, 128]]
-    innermost:
-        module_name: GlobalBaseModule
-        aggr: max
-        nn: [128 + FEAT, 128] 
-    up_conv:
-        module_name: FPModule
-        ratios: [1, 0.25, 0.2]
-        radius: [0.2, 0.2, 0.1]
-        up_conv_nn: [[128 + 128, 64], [64 + 64, 64], [64, 64]]
-        up_k: [1, 3, 3]
-        skip: True
-    mlp_cls:
-        nn: [64, 64, 64, 64]
-        dropout: 0.5
+```yaml
+eval:
+    shuffle: True
+    num_workers: 2
+    batch_size: 1
+    cuda: 1
+    weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
+    enable_cudnn: True
+    checkpoint_dir: "" # "{your_path}/outputs/2020-01-28/11-04-13" for example
+    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
+    enable_dropout: True # Could be used from MC dropout sampling
 ```
-
-Model definition will be discussed more in details later on.
 
 
 # Create a new dataset
 
-Create ShapeNet dataset from ```Pytorch Geometric```
+Let's add [```S3DIS```](http://buildingparser.stanford.edu/dataset.html) dataset to the project.
 
-Naming matters as we use them to automatically create the dataset with its given arguments.
+We are going to go through the successive steps to do so:
 
-One need to create a new file in datasets/ with the following name {dataset_name}_dataset.py.
-We create ```shapenet_dataset.py``` file.
+*  Choose the associated task related to your dataset.
 
-One need to create a dataset class with the following name {dataset_name}dataset.py ().
-We create ```ShapeNetDataset.py``` class which inherit from ```BaseDataset``` class.
-The dataset is going to receive automatically the associated dataset_opt, training_opt.
+*  Create a new ```.yaml file``` used for configuring your dataset within ```conf/data/{your_task}/{your_dataset_name}.yaml```
 
-```python
-class ShapeNetDataset(BaseDataset):
-    
-    def __init__(self, dataset_opt, training_opt):
-        super().__init__(dataset_opt, training_opt)
+*  Add your own custom configuration needed to parametrize your dataset
 
-        ...
-        
+*  Create a new file ```src/datasets/{your_task}/{your_dataset}.py```
+
+*  Implement your dataset to inherit from ```BaseDataset```
+
+* Associate a ```metric tracker``` to your dataset.
+
+* Implement your custom ```metric tracker```.
+
+Let's go throught those steps together.
+
+<h4> Choose the associated task for S3DIS </h4>
+
+We are going to focus on semantic segmentation.
+Our data are going to be a colored rgb pointcloud associated where each point has been associated to its own class.
+
+The associated task is ```segmentation```.
+
+<h4> Create a new ```.yaml file``` </h4>
+
+Let's create ```conf/data/segmentation/s3dis.yaml``` file.
+
+<h4> Add our own custom configuration </h4>
+
+```yaml
+data:
+    task: segmentation
+    class: s3dis.S3DISDataset
+    dataroot: data
+    fold: 5
+    class_weight_method: "sqrt"
+    room_points: 32768
+    num_points: 4096
+    first_subsampling: 0.04
+    density_parameter: 5.0
+    kp_extent: 1.0
 ```
 
-In order to implement a working dataset, one should define a train_dataset, test_dataset and (optionally: val_dataset)
-and call the ```create_dataloaders``` function with the created {}_dataset from the parent ```BaseDataset``` class
+Here, one need note some very important parameters !
 
+* ```task``` needs to be specified. Currently, the arguments provided by the command line are lost and therefore we need the extra information.
+
+* ```class``` needs to be specified. It is structured in the following: {dataset_file}/{dataset_class_name}. In order to create this dataset, we will look into 
+```src/datasets/segmentation/s3dis.py``` file and get the ```S3DISDataset``` from it.
+The remaining params will be given to the class along the training params.
+
+<h4> Create a new file ```src/datasets/{your_task}/{your_dataset}.py``` </h4>
+
+Now, create a new file ```src/datasets/segmentation/s3dis.py``` with the class ```S3DISDataset``` inside.
+
+<h4>  Implement your dataset to inherit from ```BaseDataset`` </h4>
+
+Before starting, we strongly advice to read the [```Creating Your Own Datasets```](https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html) from ```Pytorch Geometric```
 
 ```python
-class ShapeNetDataset(BaseDataset):
-    
+class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
-        
-        self._data_path = os.path.join(dataset_opt.dataroot, 'ShapeNet')
-        self._category = dataset_opt.category
-        pre_transform = T.NormalizeScale()
-        train_dataset = ShapeNet(self._data_path, self._category, train=True,
-                                 pre_transform=pre_transform)
-        test_dataset = ShapeNet(self._data_path, self._category, train=False,
-                                pre_transform=pre_transform)
+        self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
-        # The function creates the associated dataset using the training arguments and some dataset_opt
+        pre_transform = cT.GridSampling(dataset_opt.first_subsampling, 13)
+
+        transform = T.Compose(
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
+        )
+
+        train_dataset = S3DIS_With_Weights(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=True,
+            pre_transform=pre_transform,
+            transform=transform,
+            class_weight_method=dataset_opt.class_weight_method,
+        )
+        test_dataset = S3DIS_With_Weights(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=False,
+            pre_transform=pre_transform,
+            transform=T.FixedPoints(dataset_opt.num_points),
+        )
+
         self._create_dataloaders(train_dataset, test_dataset, val_dataset=None)
-```
-
-Here is the implementation of BaseDataset
-
-```python
-class BaseDataset():
-    def __init__(self, dataset_opt, training_opt):
-        self.dataset_opt = dataset_opt
-        self.training_opt = training_opt
-        self.strategies = {}
-
-    def _create_dataloaders(self, train_dataset,  test_dataset, val_dataset=None):
-        """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
-        """
-        self._num_classes = train_dataset.num_classes
-        self._feature_dimension = self.extract_point_dimension(train_dataset)
-        self._train_loader = DataLoader(train_dataset, 
-                                        batch_size=self.training_opt.batch_size, 
-                                        shuffle=self.training_opt.shuffle,
-                                        num_workers=self.training_opt.num_workers)
-
-        self._test_loader = DataLoader(test_dataset, 
-                                       batch_size=self.training_opt.batch_size, 
-                                       shuffle=False,
-                                       num_workers=self.training_opt.num_workers)
-
-    def test_dataloader(self):
-        return self._test_loader
-
-    def train_dataloader(self):
-        return self._train_loader
-
-    @property
-    def num_classes(self):
-        return self._num_classes
-
-    @property
-    def weight_classes(self):
-        return getattr(self._train_loader.dataset, "weight_classes", None)
-
-    @property
-    def feature_dimension(self):
-        return self._feature_dimension
 
     @staticmethod
-    def extract_point_dimension(dataset: Dataset):
-        sample = dataset[0]
-        if sample.x is None:
-            return 3  # (x,y,z)
-        return sample.x.shape[1]
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
 
-    def _set_multiscale_transform(self, batch_transform):
-        for _, attr in self.__dict__.items():
-            if isinstance(attr, DataLoader):
-                def collate_fn(data_list): return BatchWithTransform.from_data_list_with_transform(
-                    data_list, [], batch_transform)
-                setattr(attr, "collate_fn", collate_fn)
-
-    def set_strategies(self, model, precompute_multi_scale=False):
-        strategies = model.get_sampling_and_search_strategies()
-        batch_transform = MultiScaleTransform(strategies, precompute_multi_scale)
-        self._set_multiscale_transform(batch_transform)
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
 ```
+
+Let's explain the code more in details there.
+
+```python
+class S3DISDataset(BaseDataset):
+    def __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+        self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
+```
+
+* We have create a dataset called ```S3DISDataset``` as referenced within our ```s3dis.yaml``` file.
+
+* We can only observe the dataset inherit from ```BaseDataset```. Without it, the new dataset won't be working within the framework !
+
+* ```self._data_path``` will be the place where the data will be saved.
+
+```python
+        pre_transform = cT.GridSampling(dataset_opt.first_subsampling, 13)
+
+        transform = T.Compose(
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
+        )
+
+        train_dataset = S3DIS_With_Weights(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=True,
+            pre_transform=pre_transform,
+            transform=transform,
+            class_weight_method=dataset_opt.class_weight_method,
+        )
+        test_dataset = S3DIS_With_Weights(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=False,
+            pre_transform=pre_transform,
+            transform=T.FixedPoints(dataset_opt.num_points),
+        )
+```
+
+This part creates some transform and train / test dataset.
+
+```python
+self._create_dataloaders(train_dataset, test_dataset, val_dataset=None)
+```
+
+This line is important. It is going to wrap your datasets directly within the correct dataloader. Don't forget to call this function. Also, we can observe it is possible to provide a ```val_dataset```.
+
+<h4> Associate a ```metric tracker``` to your dataset </h4>
+
+```python
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+```
+
+Finally, one needs to implement the ```@staticmethod get_tracker``` method with ```model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool``` as parameters.
+
+<h4> Let's have a look at the SegmentationTracker </h4>
+
+```python
+class SegmentationTracker(BaseTracker):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False):
+        """ This is a generic tracker for segmentation tasks.
+        It uses a confusion matrix in the back-end to track results.
+        Use the tracker to track an epoch.
+        You can use the reset function before you start a new epoch
+
+        Arguments:
+            dataset  -- dataset to track (used for the number of classes)
+
+        Keyword Arguments:
+            stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
+            wandb_log {str} --  Log using weight and biases
+        """
+        super(SegmentationTracker, self).__init__(stage, wandb_log, use_tensorboard)
+        self._num_classes = dataset.num_classes
+        self.reset(stage)
+
+    def reset(self, stage="train"):
+        super().reset(stage=stage)
+        self._confusion_matrix = ConfusionMatrix(self._num_classes)
+
+    @property
+    def confusion_matrix(self):
+        return self._confusion_matrix.confusion_matrix
+
+    def track(self, model: BaseModel):
+        """ Add current model predictions (usually the result of a batch) to the tracking
+        """
+        super().track(model)
+
+        outputs = self._convert(model.get_output())
+        targets = self._convert(model.get_labels())
+        assert outputs.shape[0] == len(targets)
+        self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
+
+        self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
+        self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
+        self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
+
+    def get_metrics(self, verbose=False) -> Dict[str, float]:
+        """ Returns a dictionnary of all metrics and losses being tracked
+        """
+        metrics = super().get_metrics(verbose)
+
+        metrics["{}_acc".format(self._stage)] = self._acc
+        metrics["{}_macc".format(self._stage)] = self._macc
+        metrics["{}_miou".format(self._stage)] = self._miou
+
+        return metrics
+```
+
+The tracker needs to inherit from the ```BaseTracker``` and implements the following methods:
+
+* ```reset```: The tracker need to be reset when switching to a new stage ```["train", "test", "val"]```
+
+* ```track```: This function is responsible to implement your metrics
+
+* ```get_metrics```: This function is responsible to return a dictionnary with all the tracked metrics for your dataset.
+
+
+# Convolution Type Introduction
+
+While developing this project, we discovered there are several ways to implement a convolution.
+
+We denoted 4 different formats and they all have their own advantages and drawbacks using two different collate function.
+The collate function denotes how a list of examples is converted to a batch
+
+* [```torch.utils.data.DataLoader```](https://pytorch.org/docs/stable/_modules/torch/utils/data/dataloader.html)
+    - ```"DENSE"```
+
+* [```torch_geometric.data.DataLoader```](https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/dataset.html#Dataset)
+    - ```"PARTIAL_DENSE"```
+    - ```"MESSAGE_PASSING"```
+    - ```"SPARSE"```
+
+<h4> DENSE ConvType Format with torch.utils.data.DataLoader</h4>
+
+The N tensor of shape (num_points, feat_dim) will be concatenated on a new dimension
+[(num_points, feat_dim), ..., (num_points, feat_dim)] -> (N, num_points, feat_dim)
+
+This format forces each tensor to have exactly the same shape
+
+Advantages
+
+* The format is dense and therefore aggregation operation are fast
+
+Drawbacks
+
+* When ```neighbour finder``` is applied. Each point is going to be forced to have         ```max_num_neighbors: default = 64```. Therefore, they will lot of shadow points to complete the batch_size, creating extra useless memory consumption
+
+<h2> torch_geometric.data.DataLoader TYPE </h2>
+
+![Screenshot](/imgs/pyg_batch.PNG)
+
+The collate function can be found there [```Batch.from_data_list```](https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/batch.html#Batch)
+
+Given ```N tensors``` with their own ```num_points_{i}```, the ```collate function``` does:
+```[(num_points_1, feat_dim), ..., (num_points_n, feat_dim)] -> (num_points_1 + ... + num_points_n, feat_dim)```
+
+It also creates an associated ```batch tensor``` of size ```(num_points_1 + ... + num_points_n)``` with indices of the corresponding batch.
+
+```Example```:
+
+* A with shape (2, 2)
+* B with shape (3, 2)
+
+```C = Batch.from_data_list([A, B])```
+
+C is a tensor of shape ```(5, 2)``` and its associated batch will contain ```[0, 0, 1, 1, 1]```
+
+
+<h4> PARTIAL_DENSE ConvType Format </h4>
+
+This format is used by KPConv original implementation.
+
+
+Same as dense format, it forces each point to have the same number of neighbors.
+It is why we called it partially dense.
+
+<h4> MESSAGE_PASSING ConvType Format </h4>
+
+This ConvType is Pytorch Geometric base format.
+Using [```Message Passing```](https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/nn/conv/message_passing.html#MessagePassing) API class, it deploys the graph created by ```neighbour finder``` using internally the ```torch.index_select``` operator.
+
+Therefore, the ```[PointNet++]``` internal convolution looks like that.
+
+```python
+import torch
+from torch_geometric.nn.conv import MessagePassing
+from torch_geometric.utils import remove_self_loops, add_self_loops
+
+from ..inits import reset
+
+class PointConv(MessagePassing):
+    r"""The PointNet set layer from the `"PointNet: Deep Learning on Point Sets
+    for 3D Classification and Segmentation"
+    <https://arxiv.org/abs/1612.00593>`_ and `"PointNet++: Deep Hierarchical
+    Feature Learning on Point Sets in a Metric Space"
+    <https://arxiv.org/abs/1706.02413>`_ papers
+    """
+
+    def __init__(self, local_nn=None, global_nn=None, **kwargs):
+        super(PointConv, self).__init__(aggr='max', **kwargs)
+
+        self.local_nn = local_nn
+        self.global_nn = global_nn
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        reset(self.local_nn)
+        reset(self.global_nn)
+
+
+    def forward(self, x, pos, edge_index):
+        r"""
+        Args:
+            x (Tensor): The node feature matrix. Allowed to be :obj:`None`.
+            pos (Tensor or tuple): The node position matrix. Either given as
+                tensor for use in general message passing or as tuple for use
+                in message passing in bipartite graphs.
+            edge_index (LongTensor): The edge indices.
+        """
+        if torch.is_tensor(pos):  # Add self-loops for symmetric adjacencies.
+            edge_index, _ = remove_self_loops(edge_index)
+            edge_index, _ = add_self_loops(edge_index, num_nodes=pos.size(0))
+
+        return self.propagate(edge_index, x=x, pos=pos)
+
+
+    def message(self, x_j, pos_i, pos_j):
+        msg = pos_j - pos_i
+        if x_j is not None:
+            msg = torch.cat([x_j, msg], dim=1)
+        if self.local_nn is not None:
+            msg = self.local_nn(msg)
+        return msg
+
+    def update(self, aggr_out):
+        if self.global_nn is not None:
+            aggr_out = self.global_nn(aggr_out)
+        return aggr_out
+
+    def __repr__(self):
+        return '{}(local_nn={}, global_nn={})'.format(
+            self.__class__.__name__, self.local_nn, self.global_nn)
+```
+
+<h4> SPARSE ConvType Format </h4>
+
+
+| Dense Tensor                                                                    | Sparse Tensor                                                                     |
+|:-------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------:|
+| <img src="https://stanfordvl.github.io/MinkowskiEngine/_images/conv_dense.gif"> | <img src="https://stanfordvl.github.io/MinkowskiEngine/_images/conv_sparse.gif" > |
+
+The sparse conv type is used by project like [```SparseConv```](https://github.com/facebookresearch/SparseConvNet) or [```Minkowski Engine```](https://github.com/StanfordVL/MinkowskiEngine)
+
+Therefore, the points have to be converted into indices living within a grid.
 
 # Create a new model
 
-<h3> COMPACT API </h3>
+Let's add [```PointNet++```](https://github.com/charlesq34/pointnet2) model implemented within the "DENSE" format type to the project.
 
-This tutorial will take us through creating the new Relation Shape Convolution architecture with the framework.
+We are going to go through the successive steps to do so:
 
-First, let's have a look at derivative of [```Unet architecture```](https://arxiv.org/abs/1505.04597)
+*  Choose the associated task related to your new model.
+    - ```PointNet++``` modules could be used for different task
+    - ```PointNet++``` models are task related.
 
-![Unet](https://media.springernature.com/original/springer-static/image/chp%3A10.1007%2F978-3-030-26763-6_46/MediaObjects/486210_1_En_46_Fig3_HTML.png)
+*  Create a new ```.yaml file``` used for configuring your dataset within ```conf/models/{your_task}/{your_model_name}.yaml```
 
-This model has been designed from concatenating an encoder + a decoder with possibily skip connection.
+*  Add your own custom configuration needed to parametrize your model
 
-As many created models for segmentation, U-Net architecture is used as a backbone and researchers have been working on improving the different buildings blocks of the U-Net
+*  Create a new file ```src/datasets/{your_task}/{your_dataset}.py```
+    - ```PointNet++``` configuration could be pretty different from other models !
 
-RSConv doesn't make exception and here are screenshot from the paper:
+*  Implement your model to inherit from ```BaseModel```
 
-![RSConv](../imgs/rs_conv_archi.png)
-
-Let's implement this new model
-
-<h6> Create new convolution </h6>
-
-In /models, we need to create a new folder with {convolution_name}. We create RSConv folder.
-
-* models
-    * modules (Those modules will belongs only to RSConv space)
-    * nn (Implement the different RSConv models used for the different tasks)
-
-Here the implementation of the RSConv
-
-```python
-class RSConv(BaseConvolutionDown):
-    def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, nb_feature=None, *args, **kwargs):
-        super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
-        
-        self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
-
-    def conv(self, x, pos, edge_index, batch):
-        return self._conv(x, pos, edge_index)
-
-```
-
-Let's explain how it works.
-
-* RSConv is used in the encoder part the U-Net, and therefore it needs to inherit from ```BaseConvolutionDown``` class.
-
-* The ```arguments``` are defined by the user within the /conf/models/{task}.yaml part.
-```python
-ratio=None, radius=None, local_nn=None, down_conv_nn=None, nb_feature=None
-```
-
-Here is an extract from the model architecture config:
-
-```yaml
-down_conv: # For the encoder part convolution
-    module_name: RSConv # We will be using the RSConv Module
-    
-    # And provide to each convolution, the associated arguments within a list are selected using the convolution index.
-    # For the others, there are just copied for each convolution.
-
-    # First convolution receives ratio=0.2, radius=0.1, local_nn_=[10, 8, 3], down_conv_nn=[3, 16, 32, 64]
-    # Second convolution receives ratio=0.25, radius=0.2, local_nn_=[10, 32, 64, 64], down_conv_nn=[64, 64, 128]
-    ratios: [0.2, 0.25] 
-    radius: [0.1, 0.2]
-    local_nn: [[10, 8, FEAT], [10, 32, 64, 64]]
-    down_conv_nn: [[FEAT, 16, 32, 64], [64, 64, 128]]
-```
-
-* The ```BaseConvolution``` expects to receive a Sampler and a NeighbourFinder
-```python
-super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
-```
-
-Here, the first convolution will be using ```FPS (further point sampling) with a ratio of 0.2``` and ```radius search with a radius of 0.1``` 
-
-* Let's have a look at the ```BaseConvolution``` class for a deeper understanding
-
-```python
-class BaseConvolutionDown(BaseConvolution):
-    def __init__(self, sampler, neighbour_finder, *args, **kwargs):
-        super(BaseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
-
-    def conv(self, x, pos, edge_index, batch):
-        raise NotImplementedError
-
-    def forward(self, data):
-        #Create the holder for giving the data for further computation
-        batch_obj = Batch()
-        x, pos, batch = data.x, data.pos, data.batch
-        
-        # Call sampler using pos and batch
-        idx = self.sampler(pos, batch)
-
-        # Call neighbour_finder using source and target definition
-        row, col = self.neighbour_finder(pos, pos[idx], batch, batch[idx])
-        edge_index = torch.stack([col, row], dim=0)
-        batch_obj.idx = idx
-        batch_obj.edge_index = edge_index
-
-        # Call the user defined convolution
-        batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
-        
-        # Complete batch information and return it
-        batch_obj.pos = pos[idx]
-        batch_obj.batch = batch[idx]
-        copy_from_to(data, batch_obj)
-        return batch_obj
-```
-
-* Now, let's implement ```RSConv core convolution``` in ```RSConv/modules.py```
-
-The Relation Shape Convolution is main contribution of the paper. Here is what we need to implement.
-
-![RSConv](../imgs/rs_conv_conv.png)
-
-```python
-class Convolution(MessagePassing):
-    r"""The Relation Shape Convolution layer from "Relation-Shape Convolutional Neural Network for Point Cloud Analysis" 
-    https://arxiv.org/pdf/1904.07601
-
-    local_nn - an MLP which is applied to the relation vector h_ij between points i and j to determine 
-    the weights applied to each element of the feature for x_j
-
-    global_nn - an optional MPL for channel-raising following the convolution 
-
-    """
-
-    def __init__(self, local_nn, activation=ReLU(), global_nn=None, aggr="max", **kwargs):
-        super(Convolution, self).__init__(aggr=aggr)
-        self.local_nn = MLP(local_nn)
-        self.activation = activation
-        self.global_nn = MLP(global_nn) if global_nn is not None else None
-
-    def forward(self, x, pos, edge_index):
-        return self.propagate(edge_index, x=x, pos=pos)
-
-    def message(self, pos_i, pos_j, x_j):
-
-        if x_j is None:
-            x_j = pos_j
-
-        vij = pos_i - pos_j
-        dij = torch.norm(vij, dim=1).unsqueeze(1)
-
-        # Msg creation
-        hij = torch.cat([
-            dij,
-            vij,
-            pos_i,
-            pos_j,
-        ], dim=1)
-
-        # Transform the msg into x_j dimension
-        M_hij = self.local_nn(hij)
-
-        # Perform element-wise multiplicaiton
-        msg = M_hij * x_j
-        
-        # Return the message to be aggreagated by MessagePassing
-        return msg
-
-    # Update the final embedding with a MLP
-    def update(self, aggr_out):
-        x = self.activation(aggr_out)
-        if self.global_nn is not None:
-            x = self.global_nn(x)
-        return x
-```
-
-* Let's implement the associated logic for the RSConv Segmentation Model.
-
-```python
-...
-from models.unet_base import UnetBasedModel
-
-class SegmentationModel(UnetBasedModel):
-    def __init__(self, option, model_type, dataset, modules):
-        # call the initialization method of UnetBasedModel
-        UnetBasedModel.__init__(self, option, model_type, dataset, modules) # The init function is going to create the U-Net with the indicated Module.
-
-        # MLP classifier definition
-        nn = option.mlp_cls.nn
-        self.dropout = option.mlp_cls.get('dropout')
-        self.lin1 = torch.nn.Linear(nn[0], nn[1])
-        self.lin2 = torch.nn.Linear(nn[2], nn[3])
-        self.lin3 = torch.nn.Linear(nn[3], dataset.num_classes)
-
-        # Loss name
-        self.loss_names = ['loss_seg']
-
-    def set_input(self, data):
-        """Unpack input data from the dataloader and perform necessary pre-processing steps.
-        Parameters:
-            input: a dictionary that contains the data itself and its metadata information.
-        """
-        self.input = data
-        self.labels = data.y
-
-    def forward(self) -> Any:
-        """Standard forward"""
-        data = self.model(self.input)
-        x = F.relu(self.lin1(data.x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lin2(x)
-        x = F.dropout(x, p=self.dropout, training=self.training)
-        x = self.lin3(x)
-        self.output = F.log_softmax(x, dim=-1)
-        return self.output
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss_seg = F.nll_loss(self.output, self.labels)
-        self.loss_seg.backward()
-```
-* Let's implement the new architecture within the configuration file ```/conf/models/segmentation.yaml```
-
-```python
-RSConv_2LD:
-    type: RSConv
-    down_conv:
-        module_name: RSConv
-        ratios: [0.2, 0.25]
-        radius: [0.1, 0.2]
-        local_nn: [[10, 8, FEAT], [10, 32, 64, 64]]
-        down_conv_nn: [[FEAT, 16, 32, 64], [64, 64, 128]]
-    innermost:
-        module_name: GlobalBaseModule
-        aggr: max
-        nn: [128 + FEAT, 128] 
-    up_conv:
-        module_name: FPModule
-        ratios: [1, 0.25, 0.2]
-        radius: [0.2, 0.2, 0.1]
-        up_conv_nn: [[128 + 128, 64], [64 + 64, 64], [64, 64]]
-        up_k: [1, 3, 3]
-        skip: True
-    mlp_cls:
-        nn: [64, 64, 64, 64]
-        dropout: 0.5
-```
-
-- ```RSConv_2LD``` is an arbitrary name used here
-- !!! ```type: RSConv``` is case sensitive and will be used to load the associated ```SegmentationModel``` within ```models/RSConv/nn.py``` file
-- Architecture needed keys:
-    - down_conv
-    - innermost: Optional
-    - up_conv:
-    - mlp_cls: Optional
-
-* Finally, let's trained the newly define model on S3DIS
-
-```bash
-poetry run python train.py experiment.dataset=s3dis experiment.name=RSConv_2LD
-```
-
-Here is the created model
-
-```yaml
-SegmentationModel(
-  (model): UnetSkipConnectionBlock(
-    (down): RSConv(
-      (_conv): Convolution(
-        (local_nn): Sequential(
-          (0): Sequential(
-            (0): Linear(in_features=10, out_features=8, bias=True)
-            (1): ReLU()
-            (2): BatchNorm1d(8, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-          (1): Sequential(
-            (0): Linear(in_features=8, out_features=6, bias=True)
-            (1): ReLU()
-            (2): BatchNorm1d(6, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-        (activation): ReLU()
-        (global_nn): Sequential(
-          (0): Sequential(
-            (0): Linear(in_features=6, out_features=16, bias=True)
-            (1): ReLU()
-            (2): BatchNorm1d(16, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-          (1): Sequential(
-            (0): Linear(in_features=16, out_features=32, bias=True)
-            (1): ReLU()
-            (2): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-          (2): Sequential(
-            (0): Linear(in_features=32, out_features=64, bias=True)
-            (1): ReLU()
-            (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-      )
-    )
-    (submodule): UnetSkipConnectionBlock(
-      (down): RSConv(
-        (_conv): Convolution(
-          (local_nn): Sequential(
-            (0): Sequential(
-              (0): Linear(in_features=10, out_features=32, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-            (1): Sequential(
-              (0): Linear(in_features=32, out_features=64, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-            (2): Sequential(
-              (0): Linear(in_features=64, out_features=64, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-          (activation): ReLU()
-          (global_nn): Sequential(
-            (0): Sequential(
-              (0): Linear(in_features=64, out_features=64, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-            (1): Sequential(
-              (0): Linear(in_features=64, out_features=128, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-        )
-      )
-      (submodule): UnetSkipConnectionBlock(
-        (inner): GlobalBaseModule(
-          (nn): Sequential(
-            (0): Sequential(
-              (0): Linear(in_features=134, out_features=128, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-        )
-        (up): FPModule(
-          (nn): Sequential(
-            (0): Sequential(
-              (0): Linear(in_features=256, out_features=64, bias=True)
-              (1): ReLU()
-              (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-            )
-          )
-        )
-      )
-      (up): FPModule(
-        (nn): Sequential(
-          (0): Sequential(
-            (0): Linear(in_features=128, out_features=64, bias=True)
-            (1): ReLU()
-            (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-          )
-        )
-      )
-    )
-    (up): FPModule(
-      (nn): Sequential(
-        (0): Sequential(
-          (0): Linear(in_features=64, out_features=64, bias=True)
-          (1): ReLU()
-          (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
-        )
-      )
-    )
-  )
-)
-
-
-```
-
-
-
+<h4> MESSAGE_PASSING ConvType Format </h4>
 
