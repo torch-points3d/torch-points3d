@@ -1,30 +1,26 @@
-# Logging
+<h2> Custom logging </h2>
 
-
-<h6> The associated logging </h6>
-
-As experiment is empty, it will use hydra naming convention for the experiment
-As log_dir is empty, it will use hydra naming convention for the log directory
-{path_to_project}/outputs/2019-12-28/12-05-45 (Y-M-D/H-M-S)
-
-The ```name``` is let to the user choose.
-
-<h6>The associated dataset</h6>
-
-```experiment.dataset``` value is used as a key to dynamically choose the associated dataset arguments
-
-
-<h6> The associated visualization </h6>
-
-The framework currently support both [```wandb```](https://www.wandb.com/) and [```tensorboard```](https://www.tensorflow.org/tensorboard)
+We use a custom hydra logging message which you can find wihtin ```/conf/hydra/job_logging/custom.yaml```
 
 ```yaml
-# parameters for Weights and Biases
-wandb:
-    project: benchmarking
-    log: False
-
-# parameters for TensorBoard Visualization
-tensorboard:
-    log: True
+hydra:
+    job_logging:
+        formatters:
+            simple:
+                format: "%(message)s"
+        root:
+            handlers: [debug_console_handler, file_handler]
+        version: 1
+        handlers:
+            debug_console_handler:
+                level: DEBUG
+                formatter: simple
+                class: logging.StreamHandler
+                stream: ext://sys.stdout
+            file_handler:
+                level: DEBUG
+                formatter: simple
+                class: logging.FileHandler
+                filename: train.log
+        disable_existing_loggers: False
 ```
