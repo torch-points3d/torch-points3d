@@ -198,7 +198,7 @@ class ShapeNetDataset(BaseDataset):
             self._category = dataset_opt.category
         except KeyError:
             self._category = None
-        pre_transform = T.NormalizeScale()
+        pre_transform = self._pre_transform
         train_transform = T.Compose([T.FixedPoints(dataset_opt.num_points), RandomNoise()])
         test_transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(
