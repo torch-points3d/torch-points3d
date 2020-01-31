@@ -10,4 +10,3 @@ data:
           params:
               size: ${data.first_subsampling}
         - transform: torch_geometric.transforms.NormaliseScale
-    use_category: True

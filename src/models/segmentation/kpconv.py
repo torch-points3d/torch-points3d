@@ -28,7 +28,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         else:
             self._num_categories = 0
 
-        # ASsemble encoder / decoder
+        # Assemble encoder / decoder
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
 
         # Build final MLP
@@ -61,6 +61,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         self.input = data
         self.labels = data.y
         self.batch_idx = data.batch
+        if self._use_category:
+            self.category = data.category
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
@@ -77,11 +79,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         last_feature = data.x
         if self._use_category:
-            num_points = data.pos.shape[1]
-            cat_one_hot = (
-                torch.zeros((data.pos.shape[0], self._num_categories, num_points)).float().to(self.category.device)
-            )
-            cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
+            cat_one_hot = F.one_hot(self.category, self._num_categories).float()
             last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
 
         last_feature = self.FC_layer(last_feature)
@@ -92,8 +90,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-
-        self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
 
         if torch.isnan(self.loss_seg):
             import pdb
