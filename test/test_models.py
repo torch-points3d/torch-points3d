@@ -12,7 +12,7 @@ from test.mockdatasets import MockDatasetGeometric
 
 from src import find_model_using_name
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.utils.config import set_format, merges_in_sub
+from src.utils.config import set_format
 
 # calls resolve_model, then find_model_using_name
 

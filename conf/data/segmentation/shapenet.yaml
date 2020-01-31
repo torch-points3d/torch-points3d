@@ -6,7 +6,7 @@ data:
     first_subsampling: 0.02
     num_points: 2048
     pre_transforms:
-        - transform: src.core.data_transform.GridSampling
+        - transform: NormalizeScale
+        - transform: GridSampling
           params:
               size: ${data.first_subsampling}
-        - transform: torch_geometric.transforms.NormaliseScale

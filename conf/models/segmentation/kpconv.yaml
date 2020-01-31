@@ -123,7 +123,7 @@ models:
         conv_type: "PARTIAL_DENSE"
         use_category: True
         define_constants:
-            in_grid_size: 0.02
+            in_grid_size: ${data.first_subsampling}
             in_feat: 64
         down_conv:
             down_conv_nn:
