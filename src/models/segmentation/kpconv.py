@@ -61,6 +61,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         self.input = data
         self.labels = data.y
         self.batch_idx = data.batch
+        if self._use_category:
+            self.category = data.category
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
@@ -77,11 +79,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         last_feature = data.x
         if self._use_category:
-            num_points = data.pos.shape[1]
-            cat_one_hot = (
-                torch.zeros((data.pos.shape[0], self._num_categories, num_points)).float().to(self.category.device)
-            )
-            cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
+            cat_one_hot = F.one_hot(self.category, self._num_categories).float()
             last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
 
         last_feature = self.FC_layer(last_feature)

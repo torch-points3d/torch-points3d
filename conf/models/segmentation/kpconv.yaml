@@ -121,6 +121,7 @@ models:
     KPConvPaper:
         architecture: kpconv.KPConvPaper
         conv_type: "PARTIAL_DENSE"
+        use_category: ${data.use_category}
         define_constants:
             in_grid_size: 0.02
             in_feat: 64
@@ -159,7 +160,7 @@ models:
                 ]
             has_bottleneck:
                 [
-                    [False, False],
+                    [False, True],
                     [True, True],
                     [True, True],
                     [True, True],
