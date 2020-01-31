@@ -25,7 +25,6 @@ from .kernel_utils import kernel_point_optimization_debug
 from src.core.sampling import FPSSampler
 from src.core.neighbourfinder import RadiusNeighbourFinder
 from src.core.base_conv.message_passing import *
-from src.models.base_architectures import BaseFactory
 
 
 class KPConvModels(Enum):
@@ -35,26 +34,6 @@ class KPConvModels(Enum):
     LIGHTDEFORMABLEKPCONV = 3
     KPCONVPARTIALDENSE = 4
     RESNETBOTTLENECKPARTIALDENSE = 5
-
-
-class KPConvFactory(BaseFactory):
-    def get_module(self, index, flow=None):
-        if flow is None:
-            raise NotImplementedError
-
-        if flow.upper() == "UP":
-            return getattr(self.modules_lib, self.module_name_up, None)
-
-        if flow.upper() == "DOWN":
-            if self.module_name_down.upper() == str(KPConvModels.RESIDUALBKPCONV.name):
-                if index == 0:
-                    return KPConv
-                else:
-                    return ResidualBKPConv
-            else:
-                return getattr(self.modules_lib, self.module_name_down, None)
-
-        raise NotImplementedError
 
 
 ####################### BUILT WITH BaseConvolutionDown ############################

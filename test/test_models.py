@@ -61,6 +61,14 @@ class TestModelUtils(unittest.TestCase):
         model.forward()
         model.backward()
 
+    def test_largekpconv(self):
+        params = load_model_config("segmentation", "kpconv")["KPConvPaper"]
+        dataset = MockDatasetGeometric(5)
+        model = _find_model_using_name(params.architecture, "segmentation", params, dataset)
+        model.set_input(dataset[0])
+        model.forward()
+        model.backward()
+
     def test_pointnet2ms(self):
         params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
         dataset = MockDatasetGeometric(5)

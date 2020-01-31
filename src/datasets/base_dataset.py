@@ -30,9 +30,7 @@ class BaseDataset:
         self._feature_dimension = train_dataset.num_features
         if self._torch_loader:
             dataloader = partial(
-                torch.utils.data.DataLoader,
-                pin_memory=True,
-                collate_fn=lambda data_list: SimpleBatch.from_data_list(data_list),
+                torch.utils.data.DataLoader, collate_fn=lambda data_list: SimpleBatch.from_data_list(data_list),
             )
         else:
             dataloader = DataLoader
@@ -56,7 +54,7 @@ class BaseDataset:
                 batch_size=self.training_opt.batch_size,
                 shuffle=False,
                 num_workers=self.training_opt.num_workers,
-            )            
+            )
 
     @property
     def has_val_loader(self):
