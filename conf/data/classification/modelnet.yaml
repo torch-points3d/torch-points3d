@@ -1,5 +1,0 @@
-data:
-    task: classification
-    name: modelnet
-    dataroot: data
-    number: 10
