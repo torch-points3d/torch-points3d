@@ -369,7 +369,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             down_conv_cls_name, up_conv_cls_name, modules_lib
         )  # Create the factory object
 
-        # Lobal module
+        # Loal module
         contains_global = hasattr(opt, "innermost") and opt.innermost is not None
         if contains_global:
             inners = self._create_inner_modules(opt.innermost, modules_lib)

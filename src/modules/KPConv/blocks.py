@@ -51,7 +51,7 @@ class SimpleBlock(torch.nn.Module):
         if self.sampler:
             querry_data = self.sampler(data.clone())
         else:
-            querry_data = data.clone()
+            querry_data = data
 
         q_pos, q_batch = querry_data.pos, querry_data.batch
         # if hasattr(data, "idx_neighboors") and data.idx_neighboors.shape[0] == q_pos.shape[0]:
@@ -106,7 +106,7 @@ class ResnetBBlock(torch.nn.Module):
         **kwargs
     ):
         super(ResnetBBlock, self).__init__()
-        assert len(down_conv_nn) == 2 or len(down_conv_nn) == 3
+        assert len(down_conv_nn) == 2 or len(down_conv_nn) == 3, "down_conv_nn should be of size 2 or 3"
         if len(down_conv_nn) == 2:
             num_inputs, num_outputs = down_conv_nn
             d_2 = num_outputs // 4
@@ -196,7 +196,7 @@ class KPDualBlock(torch.nn.Module):
         assert len(block_names) == len(down_conv_nn)
         self.blocks = torch.nn.ModuleList()
         for i, class_name in enumerate(block_names):
-            kpcls = getattr(sys.modules["src.modules.KPConv.blocks"], class_name)
+            kpcls = getattr(sys.modules[__name__], class_name)
             block = kpcls(
                 down_conv_nn=down_conv_nn[i],
                 grid_size=grid_size[i],
