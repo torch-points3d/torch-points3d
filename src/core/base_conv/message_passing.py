@@ -54,7 +54,6 @@ class BaseConvolutionDown(BaseConvolution):
             edge_index = getattr(data, "edge_index_{}".format(self._index), None)
         else:
             idx = self.sampler(pos, batch)
-            import pdb; pdb.set_trace()
             row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx])
             edge_index = torch.stack([col, row], dim=0)
             batch_obj.idx = idx
