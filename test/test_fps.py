@@ -1,0 +1,27 @@
+import torch
+import numpy as np
+from torch_geometric.nn import fps
+import unittest
+import logging
+
+log = logging.getLogger(__name__)
+
+class TestGridSampling(unittest.TestCase):
+
+    def test_simple(self):
+
+        num_points = 2048
+        pos = torch.randn((num_points, 3)).cuda()
+        batch = torch.zeros((num_points)).cuda().long()
+        idx = fps(pos, batch, 0.25)
+
+        idx = idx.detach().cpu().numpy()
+        
+        cnd_1 = np.sum(idx) > 0
+        cnd_2 = np.sum(idx) < num_points * idx.shape[0]
+
+        if not (cnd_1 and cnd_2):
+            log.warn("Your Pytorch Cluster FPS doesn't seem to return the correct value. It shouldn't be used to perform sampling")
+
+if __name__ == "__main__":
+    unittest.main()
