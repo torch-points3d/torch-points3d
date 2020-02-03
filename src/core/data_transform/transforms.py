@@ -11,6 +11,8 @@ from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
 
+from src.datasets.multiscale_data import MultiScaleData
+
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.
@@ -166,12 +168,9 @@ class MultiScaleTransform(object):
     """ Pre-computes a sequence of downsampling / neighboorhood search
     """
 
-    def __init__(self, strategies, precompute_multi_scale=False):
+    def __init__(self, strategies):
         self.strategies = strategies
-        self.precompute_multi_scale = precompute_multi_scale
-        if self.precompute_multi_scale and not bool(strategies):
-            raise Exception("Strategies are empty and precompute_multi_scale is set to True")
-        self.num_layers = len(self.strategies.keys())
+        self.num_layers = len(self.strategies["sampler"])
 
     @staticmethod
     def __inc__wrapper(func, special_params):
@@ -183,34 +182,36 @@ class MultiScaleTransform(object):
 
         return partial(new__inc__, special_params=special_params, func=func)
 
-    def __call__(self, data: Data):
-        if self.precompute_multi_scale:
-            # Compute sequentially multi_scale indexes on cpu
-            special_params = {}
-            pos = data.pos
-            batch = torch.zeros((pos.shape[0],), dtype=torch.long)
-            for index in range(self.num_layers):
-                sampler, neighbour_finder = self.strategies[index]
-                idx = sampler(pos, batch)
-                row, col = neighbour_finder(pos, pos[idx], batch, batch[idx])
-                edge_index = torch.stack([col, row], dim=0)
+    def __call__(self, data: Data) -> MultiScaleData:
+        # Compute sequentially multi_scale indexes on cpu
+        ms_data = MultiScaleData.from_data(data)
+        precomputed = [data]
+        for index in range(self.num_layers):
+            sampler, neighbour_finder = self.strategies["sampler"][index], self.strategies["neighbour_finder"][index]
+            support = precomputed[index]
+            if sampler:
+                querry = sampler(support.clone())
+            else:
+                querry = support.clone()
 
-                index_name = "index_{}".format(index)
-                edge_name = "edge_index_{}".format(index)
+            s_pos, q_pos = support.pos, querry.pos
+            if hasattr(querry, "batch"):
+                s_batch, q_batch = support.batch, querry.batch
+            else:
+                s_batch, q_batch = (
+                    torch.zeros((s_pos.shape[0]), dtype=torch.long),
+                    torch.zeros((q_pos.shape[0]), dtype=torch.long),
+                )
 
-                setattr(data, index_name, idx)
-                setattr(data, edge_name, edge_index)
+            idx_neighboors, _ = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
+            setattr(querry, "idx_neighboors", idx_neighboors)
+            precomputed.append(querry)
+        ms_data.multiscale = precomputed[1:]
+        return ms_data
 
-                num_nodes_for_edge_index = torch.from_numpy(np.array([pos.shape[0], pos[idx].shape[0]])).unsqueeze(-1)
-
-                special_params[index_name] = num_nodes_for_edge_index[0]
-
-                special_params[edge_name] = num_nodes_for_edge_index
-                pos = pos[idx]
-                batch = batch[idx]
-            func_ = self.__inc__wrapper(data.__inc__, special_params)
-            setattr(data, "__inc__", func_)
-        return data
+    @staticmethod
+    def get_tensor_name(index, field):
+        return "precomputed_%i_%s" % (index, field)
 
     def __repr__(self):
         return "{}".format(self.__class__.__name__)

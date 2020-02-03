@@ -147,9 +147,9 @@ class BaseDataset:
                             attr.dataset, "transform", Compose([current_transform, transform]),
                         )
 
-    def set_strategies(self, model, precompute_multi_scale=False):
+    def set_strategies(self, model):
         strategies = model.get_sampling_and_search_strategies()
-        transform = MultiScaleTransform(strategies, precompute_multi_scale)
+        transform = MultiScaleTransform(strategies)
         self._set_multiscale_transform(transform)
 
     @staticmethod

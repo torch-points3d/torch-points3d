@@ -49,11 +49,17 @@ class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
     def _save_sampling_and_search(self, submodule, index):
-        down_conv = submodule.down
-        self._sampling_and_search_dict[index] = [
-            getattr(down_conv, "sampler", None),
-            getattr(down_conv, "neighbour_finder", None),
-        ]
+        sampler = getattr(submodule.down, "sampler", None)
+        if is_list(sampler):
+            self._sampling_and_search_dict["sampler"] += sampler
+        else:
+            self._sampling_and_search_dict["sampler"].append(sampler)
+
+        neighbour_finder = getattr(submodule.down, "neighbour_finder", None)
+        if is_list(neighbour_finder):
+            self._sampling_and_search_dict["neighbour_finder"] += neighbour_finder
+        else:
+            self._sampling_and_search_dict["neighbour_finder"].append(neighbour_finder)
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
@@ -71,6 +77,7 @@ class UnetBasedModel(BaseModel):
         * OPTIONAL: innermost
         """
         super(UnetBasedModel, self).__init__(opt)
+        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
         # detect which options format has been used to define the model
         if type(opt.down_conv) is ListConfig or "down_conv_nn" not in opt.down_conv:
             self._init_from_layer_list_format(opt, model_type, dataset, modules_lib)
@@ -297,10 +304,17 @@ class UnwrappedUnetBasedModel(BaseModel):
     """Create a Unet unwrapped generator"""
 
     def _save_sampling_and_search(self, down_conv, index):
-        self._sampling_and_search_dict[index] = [
-            getattr(down_conv, "sampler", None),
-            getattr(down_conv, "neighbour_finder", None),
-        ]
+        sampler = getattr(down_conv, "sampler", None)
+        if is_list(sampler):
+            self._sampling_and_search_dict["sampler"] += sampler
+        else:
+            self._sampling_and_search_dict["sampler"].append(sampler)
+
+        neighbour_finder = getattr(down_conv, "neighbour_finder", None)
+        if is_list(neighbour_finder):
+            self._sampling_and_search_dict["neighbour_finder"] += neighbour_finder
+        else:
+            self._sampling_and_search_dict["neighbour_finder"].append(neighbour_finder)
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet unwrapped generator
@@ -326,6 +340,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         """
         super(UnwrappedUnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
+        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
 
         if is_list(opt.down_conv) or "down_conv_nn" not in opt.down_conv:
             raise NotImplementedError
