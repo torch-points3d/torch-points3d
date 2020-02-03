@@ -1,0 +1,12 @@
+data:
+    task: segmentation
+    name: s3dis1x1
+    dataroot: data
+    fold: 5
+    class_weight_method: "sqrt"
+    num_points: 1024
+    first_subsampling: 0.04
+    pre_transforms:
+        - transform: GridSampling
+          params:
+              size: ${data.first_subsampling}
