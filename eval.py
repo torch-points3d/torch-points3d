@@ -5,7 +5,7 @@ import logging
 from omegaconf import OmegaConf
 
 # Import building function for model and dataset
-from src import find_model_using_name, find_dataset_using_name
+from src import instantiate_model, instantiate_dataset
 
 # Import BaseModel / BaseDataset for type checking
 from src.models.base_model import BaseModel
@@ -85,12 +85,12 @@ def main(cfg):
     dataset_config = cfg.data
     tested_dataset_name = dataset_config.name
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_eval)
+    dataset = instantiate_dataset(tested_dataset_name, tested_task)(dataset_config, cfg_eval)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_config = OmegaConf.merge(model_config, dataset_config)
-    model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
+    model = instantiate_model(model_config.architecture, tested_task, model_config, dataset)
 
     log.info(model)
 

@@ -11,7 +11,7 @@ sys.path.insert(0, ROOT)
 from test.mockdatasets import MockDatasetGeometric
 
 
-from src import find_model_using_name
+from src import instantiate_model, instantiate_dataset
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.config import set_format
 
@@ -20,7 +20,7 @@ from src.utils.config import set_format
 
 def _find_model_using_name(model_class, task, model_config, dataset):
     resolve_model(model_config, dataset, task)
-    return find_model_using_name(model_class, task, model_config, dataset)
+    return instantiate_model(model_class, task, model_config, dataset)
 
 
 def load_model_config(task, model_type):
