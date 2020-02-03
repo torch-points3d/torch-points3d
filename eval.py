@@ -83,14 +83,14 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config = cfg.data
-    tested_dataset_name = dataset_config.name
+    dataset_class =  getattr(dataset_config, "class")
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(tested_dataset_name, tested_task)(dataset_config, cfg_eval)
+    dataset = instantiate_dataset(dataset_class, tested_task)(dataset_config, cfg_eval)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
-    model_config = OmegaConf.merge(model_config, dataset_config)
-    model = instantiate_model(model_config.architecture, tested_task, model_config, dataset)
+    model_class = getattr(model_config, "class")
+    model = instantiate_model(model_class, tested_task, model_config, dataset)
 
     log.info(model)
 
