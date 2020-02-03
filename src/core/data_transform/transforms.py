@@ -64,51 +64,6 @@ class GridSampling(object):
         return "{}(size={})".format(self.__class__.__name__, self.size)
 
 
-class Center(object):
-    def __call__(self, data):
-        data.pos = data.pos - data.pos.mean(axis=0)
-        return data
-
-    def __repr__(self):
-        return "Center"
-
-
-class RandomTranslate(object):
-    def __init__(self, translate):
-        self.translate = translate
-
-    def __call__(self, data):
-
-        t = 2 * (torch.rand(3) - 0.5) * self.translate
-
-        data.pos = data.pos + t
-        return data
-
-    def __repr__(self):
-        return "Random Translate of translation {}".format(self.translate)
-
-
-class RandomScale(object):
-    def __init__(self, scale_min=1, scale_max=1, is_anisotropic=False):
-        if scale_min > scale_max:
-            raise ValueError("Scale min must be lesser or equal to Scale max")
-        self.scale_min = scale_min
-        self.scale_max = scale_max
-        self.is_anisotropic = is_anisotropic
-
-    def __call__(self, data):
-        scale = self.scale_min + torch.rand(1) * (self.scale_max - self.scale_min)
-        if self.is_anisotropic:
-            ax = torch.randint(0, 3, 1)
-            data.pos[:, ax] = scale * data.pos[:, ax]
-        else:
-            data.pos = scale * data.pos
-        return data
-
-    def __repr__(self):
-        return "Random Scale min={}, max={}".format(self.scale_min, self.scale_max)
-
-
 class RandomSymmetry(object):
     def __init__(self, axis=[False, False, False]):
         self.axis = axis

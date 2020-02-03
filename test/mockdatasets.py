@@ -20,9 +20,10 @@ class MockDataset(torch.utils.data.Dataset):
             [0 for i in range(self._pos.shape[0] // 2)]
             + [1 for i in range(self._pos.shape[0] // 2, self._pos.shape[0])]
         )
+        self._category = torch.ones((nb_points,), dtype=torch.long)
 
     def __getitem__(self, index):
-        datalist = [Data(pos=self._pos, x=self._feature, y=self._y) for i in range(2)]
+        datalist = [Data(pos=self._pos, x=self._feature, y=self._y, category=self._category) for i in range(2)]
         return SimpleBatch.from_data_list(datalist)
 
     @property
@@ -32,4 +33,4 @@ class MockDataset(torch.utils.data.Dataset):
 
 class MockDatasetGeometric(MockDataset):
     def __getitem__(self, index):
-        return Batch(pos=self._pos, x=self._feature, y=self._y, batch=self._batch)
+        return Batch(pos=self._pos, x=self._feature, y=self._y, batch=self._batch, category=self._category)

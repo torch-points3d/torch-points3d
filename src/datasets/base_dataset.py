@@ -4,11 +4,10 @@ from functools import partial
 
 import torch
 import torch_geometric
-import torch_geometric.transforms as T
 from torch_geometric.transforms import Compose, FixedPoints
 from torch_geometric.data import Batch, DataLoader, Dataset
 
-from src.core.data_transform.transforms import MultiScaleTransform
+from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.datasets.batch import SimpleBatch
 
 
@@ -22,6 +21,7 @@ class BaseDataset:
         self.training_opt = training_opt
         self.strategies = {}
         self._torch_loader = training_opt.use_torch_loader
+        self._pre_transform = instantiate_transforms(dataset_opt.pre_transforms)
 
     def _create_dataloaders(self, train_dataset, test_dataset, val_dataset=None):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
@@ -30,9 +30,7 @@ class BaseDataset:
         self._feature_dimension = train_dataset.num_features
         if self._torch_loader:
             dataloader = partial(
-                torch.utils.data.DataLoader,
-                pin_memory=True,
-                collate_fn=lambda data_list: SimpleBatch.from_data_list(data_list),
+                torch.utils.data.DataLoader, collate_fn=lambda data_list: SimpleBatch.from_data_list(data_list),
             )
         else:
             dataloader = DataLoader
@@ -56,7 +54,7 @@ class BaseDataset:
                 batch_size=self.training_opt.batch_size,
                 shuffle=False,
                 num_workers=self.training_opt.num_workers,
-            )            
+            )
 
     @property
     def has_val_loader(self):
@@ -142,11 +140,11 @@ class BaseDataset:
                 if current_transform is None:
                     setattr(attr.dataset, "transform", transform)
                 else:
-                    if isinstance(current_transform, T.Compose):  # The transform contains several transformations
+                    if isinstance(current_transform, Compose):  # The transform contains several transformations
                         current_transform.transforms += [transform]
                     else:
                         setattr(
-                            attr.dataset, "transform", T.Compose([current_transform, transform]),
+                            attr.dataset, "transform", Compose([current_transform, transform]),
                         )
 
     def set_strategies(self, model, precompute_multi_scale=False):

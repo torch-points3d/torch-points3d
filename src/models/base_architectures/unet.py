@@ -26,7 +26,7 @@ from src.utils.config import is_list
 log = logging.getLogger(__name__)
 
 
-SPECIAL_NAMES = ["radius", "max_num_neighbors"]
+SPECIAL_NAMES = ["radius", "max_num_neighbors", "block_names"]
 
 
 class BaseFactory:
@@ -35,7 +35,7 @@ class BaseFactory:
         self.module_name_up = module_name_up
         self.modules_lib = modules_lib
 
-    def get_module(self, index, flow):
+    def get_module(self, flow):
         if flow.upper() == "UP":
             return getattr(self.modules_lib, self.module_name_up, None)
         else:
@@ -98,7 +98,7 @@ class UnetBasedModel(BaseModel):
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 
             args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
-            args_up["up_conv_cls"] = self._factory_module.get_module(0, "UP")
+            args_up["up_conv_cls"] = self._factory_module.get_module("UP")
 
             unet_block = UnetSkipConnectionBlock(
                 args_up=args_up, args_innermost=opt.innermost, modules_lib=modules_lib, submodule=None, innermost=True,
@@ -202,13 +202,13 @@ class UnetBasedModel(BaseModel):
         # Defines down arguments
         args_down = self._fetch_arguments_from_list(opt.down_conv, index)
         args_down["index"] = index
-        args_down["down_conv_cls"] = self._factory_module.get_module(index, "DOWN")
+        args_down["down_conv_cls"] = self._factory_module.get_module("DOWN")
 
         # Defines up arguments
         idx = len(getattr(opt.up_conv, "up_conv_nn")) - index - 1
         args_up = self._fetch_arguments_from_list(opt.up_conv, idx)
         args_up["index"] = index
-        args_up["up_conv_cls"] = self._factory_module.get_module(index, "UP")
+        args_up["up_conv_cls"] = self._factory_module.get_module("UP")
         return args_up, args_down
 
     def _flatten_compact_options(self, opt):
@@ -337,12 +337,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         kwargs.pop(name)
         return module
 
-    def _create_down_and_up_modules(self, args_down, args_up, modules_lib):
-        downconv_cls = self._get_from_kwargs(args_down, "down_conv_cls")
-        upconv_cls = self._get_from_kwargs(args_up, "up_conv_cls")
-        return downconv_cls(**args_down), upconv_cls(**args_up)
-
-    def _create_inner_modules(self, args_innermost, args_up, modules_lib):
+    def _create_inner_modules(self, args_innermost, modules_lib):
         inners = []
         if is_list(args_innermost):
             for inner_opt in args_innermost:
@@ -355,8 +350,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             inner_module_cls = getattr(modules_lib, module_name)
             inners.append(inner_module_cls(**args_innermost))
 
-        upconv_cls = self._get_from_kwargs(args_up, "up_conv_cls")
-        return inners, upconv_cls(**args_up)
+        return inners
 
     def _init_from_compact_format(self, opt, model_type, dataset, modules_lib):
         """Create a unetbasedmodel from the compact options format - where the
@@ -367,8 +361,6 @@ class UnwrappedUnetBasedModel(BaseModel):
         self.inner_modules = nn.ModuleList()
         self.up_modules = nn.ModuleList()
 
-        num_convs = len(opt.down_conv.down_conv_nn)
-
         # Factory for creating up and down modules
         factory_module_cls = self._get_factory(model_type, modules_lib)
         down_conv_cls_name = opt.down_conv.module_name
@@ -377,44 +369,28 @@ class UnwrappedUnetBasedModel(BaseModel):
             down_conv_cls_name, up_conv_cls_name, modules_lib
         )  # Create the factory object
 
-        # construct unet structure
+        # Loal module
         contains_global = hasattr(opt, "innermost") and opt.innermost is not None
         if contains_global:
-            # assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
-
-            args_up = self._fetch_arguments_from_list(opt.up_conv, 0)
-            args_up["up_conv_cls"] = self._factory_module.get_module(0, "UP")
-
-            inners, up = self._create_inner_modules(opt.innermost, args_up, modules_lib)
+            inners = self._create_inner_modules(opt.innermost, modules_lib)
             for inner in inners:
                 self.inner_modules.append(inner)
-            self.up_modules.append(up)
-
         else:
             self.inner_modules.append(Identity())
 
-        if num_convs > 1:
-            for index in range(num_convs - 1, 0, -1):
-                args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
+        # Down modules
+        for i in range(len(opt.down_conv.down_conv_nn)):
+            args = self._fetch_arguments(opt.down_conv, i, "DOWN")
+            conv_cls = self._get_from_kwargs(args, "conv_cls")
+            down_module = conv_cls(**args)
+            self._save_sampling_and_search(down_module, i)
+            self.down_modules.append(down_module)
 
-                down_module, up_module = self._create_down_and_up_modules(args_down, args_up, modules_lib)
-                self.down_modules.append(down_module)
-                self.up_modules.append(up_module)
-                self._save_sampling_and_search(down_module, index)
-        else:
-            index = num_convs
-
-        index -= 1
-        args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
-        args_down["nb_feature"] = dataset.feature_dimension
-        args_up["nb_feature"] = dataset.feature_dimension
-
-        down_module, up_module = self._create_down_and_up_modules(args_down, args_up, modules_lib)
-        self.down_modules.append(down_module)
-        self.up_modules.append(up_module)
-        self._save_sampling_and_search(down_module, index)
-
-        self.down_modules = self.down_modules[::-1]
+        # Up modules
+        for i in range(len(opt.up_conv.up_conv_nn)):
+            args = self._fetch_arguments(opt.up_conv, i, "UP")
+            conv_cls = self._get_from_kwargs(args, "conv_cls")
+            self.up_modules.append(conv_cls(**args))
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
@@ -443,18 +419,18 @@ class UnwrappedUnetBasedModel(BaseModel):
         args["precompute_multi_scale"] = self._precompute_multi_scale
         return args
 
-    def _fetch_arguments_up_and_down(self, opt, index):
-        # Defines down arguments
-        args_down = self._fetch_arguments_from_list(opt.down_conv, index)
-        args_down["index"] = index
-        args_down["down_conv_cls"] = self._factory_module.get_module(index, "DOWN")
+    def _fetch_arguments(self, conv_opt, index, flow):
+        """ Fetches arguments for building a convolution (up or down)
 
-        # Defines up arguments
-        idx = len(getattr(opt.up_conv, "up_conv_nn")) - index - 1
-        args_up = self._fetch_arguments_from_list(opt.up_conv, idx)
-        args_up["index"] = index
-        args_up["up_conv_cls"] = self._factory_module.get_module(index, "UP")
-        return args_up, args_down
+        Arguments:
+            conv_opt
+            index in sequential order (as they come in the config)
+            flow "UP" or "DOWN"
+        """
+        args = self._fetch_arguments_from_list(conv_opt, index)
+        args["conv_cls"] = self._factory_module.get_module(flow)
+        args["index"] = index
+        return args
 
     def _flatten_compact_options(self, opt):
         """Converts from a dict of lists, to a list of dicts
