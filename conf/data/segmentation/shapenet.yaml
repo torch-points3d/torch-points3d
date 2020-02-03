@@ -1,5 +1,5 @@
 data:
-    name: shapenet
+    class: shapenet.ShapeNet
     task: segmentation
     dataroot: data
     normal: True

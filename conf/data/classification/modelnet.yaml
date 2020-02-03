@@ -1,5 +1,6 @@
 data:
     task: classification
+    class: modelnet.ModelNetDataset
     name: modelnet
     dataroot: data
     number: 10

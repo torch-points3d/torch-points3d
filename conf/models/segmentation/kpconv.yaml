@@ -2,7 +2,7 @@ models:
     # KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
     # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
     SimpleKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: KPConv
@@ -23,7 +23,7 @@ models:
             dropout: 0.5
 
     PDSimpleKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
             module_name: ResnetBBlock
@@ -46,7 +46,7 @@ models:
             dropout: 0.5
 
     Resnet_BK_PD_KPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
             module_name: ResnetBottleNeckPartialDense
@@ -75,7 +75,7 @@ models:
             dropout: 0.5
 
     ResidualKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: ResidualBKPConv
@@ -97,7 +97,7 @@ models:
             dropout: 0.5
 
     DeformableResidualKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: LightDeformableKPConv
@@ -119,7 +119,7 @@ models:
             dropout: 0.5
 
     KPConvPaper:
-        architecture: kpconv.KPConvPaper
+        class: kpconv.KPConvPaper
         conv_type: "PARTIAL_DENSE"
         use_category: True
         define_constants:

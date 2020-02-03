@@ -1,6 +1,6 @@
 models:
     pointcnn_small:
-        architecture: pointcnn.PointCNNSeg
+        class: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"
         define_constants:
             L1_OUT: 32
@@ -34,7 +34,7 @@ models:
             dropout: 0.5
 
     pointcnn_shapenet:
-        architecture: pointcnn.PointCNNSeg
+        class: pointcnn.PointCNNSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             - module_name: PointCNNConvDown
