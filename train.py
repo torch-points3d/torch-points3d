@@ -134,14 +134,15 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config = cfg.data
-    tested_dataset_file_class_pointer = dataset_config.file_class_pointer
+    tested_dataset_class = getattr(dataset_config, "class")
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_file_class_pointer, tested_task)(dataset_config, cfg_training)
+    dataset = find_dataset_using_name(tested_dataset_class, tested_task)(dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
-    model_config = OmegaConf.merge(model_config, cfg_training, dataset_config)
-    model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
+    model_class = getattr(model_config, "class")
+    model_config = OmegaConf.merge(model_config, cfg_training)
+    model = find_model_using_name(model_class, tested_task, model_config, dataset)
 
     log.info(model)
 

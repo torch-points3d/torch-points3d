@@ -1,6 +1,6 @@
 data:
     task: segmentation
-    file_class_pointer: s3dis.S3DIS1x1Dataset
+    class: s3dis.S3DIS1x1Dataset
     dataroot: data
     fold: 5
     class_weight_method: "sqrt"

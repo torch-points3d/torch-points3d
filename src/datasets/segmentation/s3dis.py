@@ -8,7 +8,7 @@ import torch
 import glob
 from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip
 from torch_geometric.data import DataLoader
-from torch_geometric.datasets import S3DIS as S3DIS_pyg
+from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors
@@ -23,6 +23,9 @@ from src.datasets.base_dataset import BaseDataset
 
 log = logging.getLogger(__name__)
 
+S3DIS_NUM_CLASSES = 13
+
+################################### UTILS #######################################
 
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
@@ -99,38 +102,55 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             torch.from_numpy(room_object_indices),
         )
 
+def add_weights(dataset, train, class_weight_method):
+    inv_class_map = {
+        0: "ceiling",
+        1: "floor",
+        2: "wall",
+        3: "column",
+        4: "beam",
+        5: "window",
+        6: "door",
+        7: "table",
+        8: "chair",
+        9: "bookcase",
+        10: "sofa",
+        11: "board",
+        12: "clutter",
+    }
+    if train:
+        if class_weight_method is None:
+            weights = torch.ones((len(inv_class_map.keys())))
+        else:
+            dataset.idx_classes, weights = torch.unique(dataset.data.y, return_counts=True)
+            weights = weights.float()
+            weights = weights.mean() / weights
+            if class_weight_method == "sqrt":
+                weights = torch.sqrt(weights)
+            elif str(class_weight_method).startswith("log"):
+                w = float(class_weight_method.replace("log", ""))
+                weights = 1 / torch.log(1.1 + weights / weights.sum())
+
+            weights /= torch.sum(weights)
+        log.info(
+            "CLASS WEIGHT : {}".format(
+                {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
+            )
+        )
+        setattr(dataset, "weight_classes", weights)
+    else:
+        setattr(dataset, "weight_classes", torch.ones((len(inv_class_map.keys()))))
+
+    return dataset
+
+################################### DATASETS ###################################
 
 class S3DISOriginal(InMemoryDataset):
-    r"""The (pre-processed) Stanford Large-Scale 3D Indoor Spaces dataset from
-    the `"3D Semantic Parsing of Large-Scale Indoor Spaces"
-    <http://buildingparser.stanford.edu/images/3D_Semantic_Parsing.pdf>`_
-    paper, containing point clouds of six large-scale indoor parts in three
-    buildings with 12 semantic elements (and one clutter class).
-
-    Args:
-        root (string): Root directory where the dataset should be saved.
-        test_area (int, optional): Which area to use for testing (1-6).
-            (default: :obj:`6`)
-        train (bool, optional): If :obj:`True`, loads the training dataset,
-            otherwise the test dataset. (default: :obj:`True`)
-        transform (callable, optional): A function/transform that takes in an
-            :obj:`torch_geometric.data.Data` object and returns a transformed
-            version. The data object will be transformed before every access.
-            (default: :obj:`None`)
-        pre_transform (callable, optional): A function/transform that takes in
-            an :obj:`torch_geometric.data.Data` object and returns a
-            transformed version. The data object will be transformed before
-            being saved to disk. (default: :obj:`None`)
-        pre_filter (callable, optional): A function that takes in an
-            :obj:`torch_geometric.data.Data` object and returns a boolean
-            value, indicating whether the data object should be included in the
-            final dataset. (default: :obj:`None`)
-    """
 
     url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
     zip_name = "Stanford3dDataset_v1.2_Aligned_Version.zip"
     folders = ["Area_{}".format(i) for i in range(1, 7)]
-
+    num_classes = S3DIS_NUM_CLASSES
     def __init__(
         self,
         root,
@@ -235,70 +255,10 @@ class S3DISOriginal(InMemoryDataset):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
 
-class S3DISOriginal_With_Weights(S3DISOriginal):
-    def __init__(
-        self,
-        root,
-        test_area=6,
-        train=True,
-        transform=None,
-        pre_transform=None,
-        pre_collate_transform=None,
-        pre_filter=None,
-        class_weight_method=None,
-    ):
-        super(S3DISOriginal_With_Weights, self).__init__(
-            root,
-            test_area=test_area,
-            train=train,
-            transform=transform,
-            pre_transform=pre_transform,
-            pre_collate_transform=pre_collate_transform,
-            pre_filter=pre_filter,
-        )
-        inv_class_map = {
-            0: "ceiling",
-            1: "floor",
-            2: "wall",
-            3: "column",
-            4: "beam",
-            5: "window",
-            6: "door",
-            7: "table",
-            8: "chair",
-            9: "bookcase",
-            10: "sofa",
-            11: "board",
-            12: "clutter",
-        }
-        if train:
-            if class_weight_method is None:
-                weights = torch.ones((len(inv_class_map.keys())))
-            else:
-                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
-                weights = weights.float()
-                weights = weights.mean() / weights
-                if class_weight_method == "sqrt":
-                    weights = torch.sqrt(weights)
-                elif str(class_weight_method).startswith("log"):
-                    w = float(class_weight_method.replace("log", ""))
-                    weights = 1 / torch.log(1.1 + weights / weights.sum())
-
-                weights /= torch.sum(weights)
-            log.info(
-                "CLASS WEIGHT : {}".format(
-                    {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
-                )
-            )
-            self.weight_classes = weights
-        else:
-            self.weight_classes = torch.ones((len(inv_class_map.keys())))
-
 
 class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
-        self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
         pre_transform = self._pre_transform
 
@@ -306,21 +266,22 @@ class S3DISDataset(BaseDataset):
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
         )
 
-        train_dataset = S3DISOriginal_With_Weights(
+        train_dataset = S3DISOriginal(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
             pre_transform=pre_transform,
             transform=transform,
-            class_weight_method=dataset_opt.class_weight_method,
         )
-        test_dataset = S3DISOriginal_With_Weights(
+        test_dataset = S3DISOriginal(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_transform=pre_transform,
             transform=T.FixedPoints(dataset_opt.num_points),
         )
+
+        train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
 
         self._create_dataloaders(train_dataset, test_dataset)
 
@@ -338,68 +299,9 @@ class S3DISDataset(BaseDataset):
         return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
 
 
-class S3DIS_pyg_With_Weights(S3DIS_pyg):
-    def __init__(
-        self,
-        root,
-        test_area=6,
-        train=True,
-        transform=None,
-        pre_transform=None,
-        pre_filter=None,
-        class_weight_method=None,
-    ):
-        super(S3DIS_pyg_With_Weights, self).__init__(
-            root,
-            test_area=test_area,
-            train=train,
-            transform=transform,
-            pre_transform=pre_transform,
-            pre_filter=pre_filter,
-        )
-        inv_class_map = {
-            0: "ceiling",
-            1: "floor",
-            2: "wall",
-            3: "column",
-            4: "beam",
-            5: "window",
-            6: "door",
-            7: "table",
-            8: "chair",
-            9: "bookcase",
-            10: "sofa",
-            11: "board",
-            12: "clutter",
-        }
-        if train:
-            if class_weight_method is None:
-                weights = torch.ones((len(inv_class_map.keys())))
-            else:
-                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
-                weights = weights.float()
-                weights = weights.mean() / weights
-                if class_weight_method == "sqrt":
-                    weights = torch.sqrt(weights)
-                elif str(class_weight_method).startswith("log"):
-                    w = float(class_weight_method.replace("log", ""))
-                    weights = 1 / torch.log(1.1 + weights / weights.sum())
-
-                weights /= torch.sum(weights)
-            print(
-                "CLASS WEIGHT : {}".format(
-                    {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
-                )
-            )
-            self.weight_classes = weights
-        else:
-            self.weight_classes = torch.ones((len(inv_class_map.keys())))
-
-
 class S3DIS1x1Dataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
-        self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS1x1")
 
         pre_transform = self._pre_transform
 
@@ -407,21 +309,22 @@ class S3DIS1x1Dataset(BaseDataset):
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
         )
 
-        train_dataset = S3DIS_pyg_With_Weights(
+        train_dataset = S3DIS1x1(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
             pre_transform=pre_transform,
             transform=transform,
-            class_weight_method=dataset_opt.class_weight_method,
         )
-        test_dataset = S3DIS_pyg_With_Weights(
+        test_dataset = S3DIS1x1(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_transform=pre_transform,
             transform=T.FixedPoints(dataset_opt.num_points),
         )
+
+        train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
 
         self._create_dataloaders(train_dataset, test_dataset)
 

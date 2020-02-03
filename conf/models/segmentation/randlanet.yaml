@@ -1,7 +1,7 @@
 models:
     # RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds (https://arxiv.org/pdf/1911.11236.pdf)
     Randlanet_Res:
-        architecture: randlanet.RandLANetSeg
+        class: randlanet.RandLANetSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandLANetRes
@@ -34,7 +34,7 @@ models:
             dropout: 0.5
 
     Randlanet_Conv:
-        architecture: randlanet.RandLANetSeg
+        class: randlanet.RandLANetSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RandlaConv
