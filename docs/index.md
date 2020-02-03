@@ -11,9 +11,18 @@ We aim at building a tool for both benchmarking SOTA models and to efficiently p
 <h2>Core features</h2>
 
 * ```Task driven``` implementation with dynamic model and dataset resolution from arguments
-* ```Unet base``` implementation for simplying new model creation [more unet base are coming]
-* ```Base Convolution``` to simplify new convolution implementation
-* ```Base sampler / neigbours finder``` collections
+* ```Core``` implementation for simplying new model creation 
+    * [```Core Architectures``` as Unet]
+    * [```Core Modules``` as ResBlock]
+    * [```Core Transforms``` as GridSampling, Rotation, Scale]
+    * [```Core Sampling``` as FPS]
+    * [```Core Neighbour Finder``` as Radius Search]
+* ```4 Base Convolution``` to simplify new convolution implementation
+    * [```DENSE``` (B, num_points, C)]
+    * [```PARTIAL DENSE``` (B * num_points, C)]
+    * [```MESSAGE PASSING``` (B * num_points, C)]
+    * [```SPARSE``` (B * num_points, C)]
+
 * ```2 API``` to write models ```(compact / sequential)``` to ease reproducibility
 * Several visualiation tool ```(tensorboard, wandb)``` and ```dynamic metric-based model checkpointing``` for one to customize
 * ```Dynamic customized placeholder resolution``` for smart model definition
@@ -25,6 +34,7 @@ We aim at building a tool for both benchmarking SOTA models and to efficiently p
 * [```KPConv```: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1904.08889)
 * [```PointCNN```: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791)
 * [```PointNet++```: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
+* [```Submanifold sparse convolutional networks```](https://arxiv.org/pdf/1711.10275.pdf)
 
 and much more to come ...
 
@@ -33,6 +43,10 @@ and much more to come ...
 
 * Segmentation
 * Classification
+
+## Ressources
+
+* [Pytorch Geometric Slides](http://rusty1s.github.io/pyg_slides.pdf)
 
 
 ![Screenshot](https://uploads-ssl.webflow.com/5a9058c8f7462d00014ad4ff/5a988ceadc6c9b0001cb2511_point%20cloud.JPG)

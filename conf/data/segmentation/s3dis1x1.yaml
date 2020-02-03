@@ -6,5 +6,7 @@ data:
     class_weight_method: "sqrt"
     num_points: 1024
     first_subsampling: 0.04
-    density_parameter: 5.0
-    kp_extent: 1.0
+    pre_transforms:
+        - transform: GridSampling
+          params:
+              size: ${data.first_subsampling}
