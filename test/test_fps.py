@@ -4,10 +4,13 @@ from torch_geometric.nn import fps
 import unittest
 import logging
 
+from . import run_if_cuda
+
 log = logging.getLogger(__name__)
 
 class TestPytorchClusterFPS(unittest.TestCase):
 
+    @run_if_cuda
     def test_simple(self):
 
         num_points = 2048
