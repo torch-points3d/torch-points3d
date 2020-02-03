@@ -1,5 +1,6 @@
 data:
     task: classification
+    file_class_pointer: modelnet.ModelNetDataset
     name: modelnet
     dataroot: data
     number: 10

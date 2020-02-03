@@ -11,18 +11,19 @@ def contains_key(opt, key):
         return False
 
 
-def find_dataset_using_name(dataset_name, tested_task):
-    """Import the module "data/[dataset_name]_dataset.py".
-    In the file, the class called DatasetNameDataset() will
+def find_dataset_using_name(tested_dataset_file_class_pointer, tested_task):
+    """Import the module "data/[dataset_file_name].py".
+    In the file, the class called {dataset_class_name}() will
     be instantiated. It has to be a subclass of BaseDataset,
     and it is case-insensitive.
     """
+    dataset_file_name, dataset_class_name = tested_dataset_file_class_pointer.split('.')
 
-    dataset_filename = "src.datasets.{}.{}_dataset".format(tested_task, dataset_name)
+    dataset_filename = "src.datasets.{}.{}".format(tested_task, dataset_file_name)
     datasetlib = importlib.import_module(dataset_filename)
 
     dataset = None
-    target_dataset_name = dataset_name.replace("_", "") + "dataset"
+    target_dataset_name = dataset_class_name
     for name, cls in datasetlib.__dict__.items():
         if name.lower() == target_dataset_name.lower() and issubclass(cls, BaseDataset):
             dataset = cls

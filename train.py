@@ -111,7 +111,9 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
     log = logging.getLogger(__name__)
-    print(cfg.pretty())
+    
+    if cfg.pretty_print:
+        print(cfg.pretty())
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
@@ -132,9 +134,9 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config = cfg.data
-    tested_dataset_name = dataset_config.name
+    tested_dataset_file_class_pointer = dataset_config.file_class_pointer
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
+    dataset = find_dataset_using_name(tested_dataset_file_class_pointer, tested_task)(dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)

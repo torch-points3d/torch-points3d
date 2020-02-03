@@ -8,6 +8,7 @@ import torch
 import glob
 from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip
 from torch_geometric.data import DataLoader
+from torch_geometric.datasets import S3DIS as S3DIS_pyg
 import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors
@@ -99,7 +100,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         )
 
 
-class S3DIS(InMemoryDataset):
+class S3DISOriginal(InMemoryDataset):
     r"""The (pre-processed) Stanford Large-Scale 3D Indoor Spaces dataset from
     the `"3D Semantic Parsing of Large-Scale Indoor Spaces"
     <http://buildingparser.stanford.edu/images/3D_Semantic_Parsing.pdf>`_
@@ -149,7 +150,7 @@ class S3DIS(InMemoryDataset):
         self.keep_instance = keep_instance
         self.verbose = verbose
         self.debug = debug
-        super(S3DIS, self).__init__(root, transform, pre_transform, pre_filter)
+        super(S3DISOriginal, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
 
@@ -234,34 +235,7 @@ class S3DIS(InMemoryDataset):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
 
-
-"""
-class NormalizeMeanStd(object):
-
-    def __init__(self, keys):
-        self._keys = keys
-
-    def fit(self, data_list):
-        for key in self._keys:
-            if key in data_list[0]:
-                arr = [getattr(d, key) for d in data_list]
-                arr = torch.cat(arr, dim=0)
-                setattr(self, "{}_mean".format(key), torch.mean(arr, dim=-1))
-                setattr(self, "{}_std".format(key), torch.std(arr, dim=-1))
-
-    def transform(self, data_list):
-        for key in self._keys:
-            if key in data_list[0]:
-                data_list = [setattr((getattr(d, key) - getattr(self, '{}_mean'))/(getattr(d, '{}_std')))
-                             for d in data_list]
-
-    def fit_transform(self, data_list):
-        self.fit(data_list)
-        return self.transform(data_list)
-"""
-
-
-class S3DIS_With_Weights(S3DIS):
+class S3DISOriginal_With_Weights(S3DISOriginal):
     def __init__(
         self,
         root,
@@ -273,7 +247,7 @@ class S3DIS_With_Weights(S3DIS):
         pre_filter=None,
         class_weight_method=None,
     ):
-        super(S3DIS_With_Weights, self).__init__(
+        super(S3DISOriginal_With_Weights, self).__init__(
             root,
             test_area=test_area,
             train=train,
@@ -332,7 +306,7 @@ class S3DISDataset(BaseDataset):
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
         )
 
-        train_dataset = S3DIS_With_Weights(
+        train_dataset = S3DISOriginal_With_Weights(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
@@ -340,7 +314,108 @@ class S3DISDataset(BaseDataset):
             transform=transform,
             class_weight_method=dataset_opt.class_weight_method,
         )
-        test_dataset = S3DIS_With_Weights(
+        test_dataset = S3DISOriginal_With_Weights(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=False,
+            pre_transform=pre_transform,
+            transform=T.FixedPoints(dataset_opt.num_points),
+        )
+
+        self._create_dataloaders(train_dataset, test_dataset)
+
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+
+
+class S3DIS_pyg_With_Weights(S3DIS_pyg):
+    def __init__(
+        self,
+        root,
+        test_area=6,
+        train=True,
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        class_weight_method=None,
+    ):
+        super(S3DIS_pyg_With_Weights, self).__init__(
+            root,
+            test_area=test_area,
+            train=train,
+            transform=transform,
+            pre_transform=pre_transform,
+            pre_filter=pre_filter,
+        )
+        inv_class_map = {
+            0: "ceiling",
+            1: "floor",
+            2: "wall",
+            3: "column",
+            4: "beam",
+            5: "window",
+            6: "door",
+            7: "table",
+            8: "chair",
+            9: "bookcase",
+            10: "sofa",
+            11: "board",
+            12: "clutter",
+        }
+        if train:
+            if class_weight_method is None:
+                weights = torch.ones((len(inv_class_map.keys())))
+            else:
+                self.idx_classes, weights = torch.unique(self.data.y, return_counts=True)
+                weights = weights.float()
+                weights = weights.mean() / weights
+                if class_weight_method == "sqrt":
+                    weights = torch.sqrt(weights)
+                elif str(class_weight_method).startswith("log"):
+                    w = float(class_weight_method.replace("log", ""))
+                    weights = 1 / torch.log(1.1 + weights / weights.sum())
+
+                weights /= torch.sum(weights)
+            print(
+                "CLASS WEIGHT : {}".format(
+                    {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
+                )
+            )
+            self.weight_classes = weights
+        else:
+            self.weight_classes = torch.ones((len(inv_class_map.keys())))
+
+
+class S3DIS1x1Dataset(BaseDataset):
+    def __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+        self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS1x1")
+
+        pre_transform = self._pre_transform
+
+        transform = T.Compose(
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
+        )
+
+        train_dataset = S3DIS_pyg_With_Weights(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=True,
+            pre_transform=pre_transform,
+            transform=transform,
+            class_weight_method=dataset_opt.class_weight_method,
+        )
+        test_dataset = S3DIS_pyg_With_Weights(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,

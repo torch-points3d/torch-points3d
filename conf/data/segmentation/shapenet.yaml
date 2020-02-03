@@ -1,5 +1,5 @@
 data:
-    name: shapenet
+    file_class_pointer: shapenet.ShapeNet
     task: segmentation
     dataroot: data
     normal: True
