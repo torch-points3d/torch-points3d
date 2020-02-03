@@ -1,0 +1,12 @@
+data:
+    name: shapenet
+    task: segmentation
+    dataroot: data
+    normal: True
+    first_subsampling: 0.02
+    num_points: 2048
+    pre_transforms:
+        - transform: NormalizeScale
+        - transform: GridSampling
+          params:
+              size: ${data.first_subsampling}
