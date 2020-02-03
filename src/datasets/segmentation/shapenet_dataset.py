@@ -162,7 +162,8 @@ class ShapeNet(InMemoryDataset):
             pos = data[:, :3]
             x = data[:, 3:6]
             y = data[:, -1].type(torch.long)
-            data = Data(pos=pos, x=x, y=y, category=cat_idx[cat])
+            category = torch.ones(x.shape[0], dtype=torch.long) * cat_idx[cat]
+            data = Data(pos=pos, x=x, y=y, category=category)
             if self.pre_filter is not None and not self.pre_filter(data):
                 continue
             if self.pre_transform is not None:
@@ -197,7 +198,7 @@ class ShapeNetDataset(BaseDataset):
             self._category = dataset_opt.category
         except KeyError:
             self._category = None
-        pre_transform = T.NormalizeScale()
+        pre_transform = self._pre_transform
         train_transform = T.Compose([T.FixedPoints(dataset_opt.num_points), RandomNoise()])
         test_transform = T.FixedPoints(dataset_opt.num_points)
         train_dataset = ShapeNet(

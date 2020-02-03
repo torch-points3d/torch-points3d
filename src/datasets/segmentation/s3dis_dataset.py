@@ -326,9 +326,7 @@ class S3DISDataset(BaseDataset):
         super().__init__(dataset_opt, training_opt)
         self._data_path = os.path.join(dataset_opt.dataroot, "S3DIS")
 
-        pre_transform = cT.GridSampling(dataset_opt.first_subsampling, 13)
-        # Select only 2^15 points from the room
-        # pre_transform = T.FixedPoints(dataset_opt.room_points)
+        pre_transform = self._pre_transform
 
         transform = T.Compose(
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]

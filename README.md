@@ -104,7 +104,8 @@ This can happen for the following libraries:
 
 An easy way to fix this is to run the following command with the virtualenv activated:
 ```
-pip uninstall torch-scatter torch-sparse torch-cluster torch-points
+pip uninstall torch-scatter torch-sparse torch-cluster torch-points -y
+rm -rf ~/.cache/pip
 poetry install
 ```
 
