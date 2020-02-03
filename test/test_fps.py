@@ -6,7 +6,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-class TestGridSampling(unittest.TestCase):
+class TestPytorchClusterFPS(unittest.TestCase):
 
     def test_simple(self):
 
