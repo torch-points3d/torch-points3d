@@ -11,7 +11,7 @@ def contains_key(opt, key):
         return False
 
 
-def find_dataset_using_name(dataset_class, task):
+def instantiate_dataset(dataset_class, task):
     """Import the module "data/[module].py".
     In the file, the class called {class_name}() will
     be instantiated. It has to be a subclass of BaseDataset,
@@ -38,7 +38,7 @@ def find_dataset_using_name(dataset_class, task):
     return dataset
 
 
-def find_model_using_name(model_class, task, option, dataset: BaseDataset) -> BaseModel:
+def instantiate_model(model_class, task, option, dataset: BaseDataset) -> BaseModel:
     model_paths = model_class.split(".")
     module = ".".join(model_paths[:-1])
     class_name = model_paths[-1]
