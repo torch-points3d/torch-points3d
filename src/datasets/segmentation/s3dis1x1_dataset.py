@@ -4,11 +4,14 @@ import torch
 from torch_geometric.datasets import S3DIS
 from torch_geometric.data import DataLoader
 import torch_geometric.transforms as T
+import logging
 
 from src.metrics.segmentation_tracker import SegmentationTracker
 import src.core.data_transform.transforms as cT
 
 from src.datasets.base_dataset import BaseDataset
+
+log = logging.getLogger(__name__)
 
 
 class S3DIS_With_Weights(S3DIS):
@@ -59,7 +62,7 @@ class S3DIS_With_Weights(S3DIS):
                     weights = 1 / torch.log(1.1 + weights / weights.sum())
 
                 weights /= torch.sum(weights)
-            print(
+            log.info(
                 "CLASS WEIGHT : {}".format(
                     {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
                 )
