@@ -11,7 +11,7 @@ def contains_key(opt, key):
         return False
 
 
-def find_dataset_using_name(dataset_name, tested_task):
+def find_dataset_using_name(dataset_name, tested_task) -> BaseDataset:
     """Import the module "data/[dataset_name]_dataset.py".
     In the file, the class called DatasetNameDataset() will
     be instantiated. It has to be a subclass of BaseDataset,

@@ -66,6 +66,16 @@ class TestModelUtils(unittest.TestCase):
         model.forward()
         model.backward()
 
+    def test_kpconvpretransform(self):
+        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
+        model_config = OmegaConf.merge(params, self.data_config)
+        dataset = MockDatasetGeometric(5)
+        model = _find_model_using_name(params.architecture, "segmentation", model_config, dataset)
+        dataset.set_strategies(model)
+        model.set_input(dataset[0])
+        model.forward()
+        model.backward()
+
     def test_largekpconv(self):
         params = load_model_config("segmentation", "kpconv")["KPConvPaper"]
         model_config = OmegaConf.merge(params, self.data_config)

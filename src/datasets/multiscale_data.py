@@ -27,15 +27,6 @@ class MultiScaleData(Data):
             self.multiscale[scale] = self.multiscale[scale].apply(func)
         return self
 
-    def clone(self):
-        copied = {}
-        for k, v in self.__dict__.items():
-            if torch.is_tensor(v) or isinstance(v, Data):
-                copied[k] = v.clone()
-            else:
-                copied[k] = copy.deepcopy(v)
-        return copied
-
     @property
     def num_scales(self):
         """ Number of scales in the multiscale array
@@ -58,6 +49,12 @@ class MultiScaleBatch(MultiScaleData):
         The assignment vector :obj:`batch` is created on the fly.
         Additionally, creates assignment batch vectors for each key in
         :obj:`follow_batch`."""
+        for data in data_list:
+            assert isinstance(data, MultiScaleData)
+        num_scales = data_list[0].num_scales
+        for data_entry in data_list:
+            assert data_entry.num_scales == num_scales, "All data objects should contain the same number of scales"
+
         keys = [set(data.keys) for data in data_list]
         keys = list(set.union(*keys))
         assert "batch" not in keys
@@ -77,7 +74,7 @@ class MultiScaleBatch(MultiScaleData):
         for i, data in enumerate(data_list):
             for key in data.keys:
                 if key == "multiscale":
-                    pass
+                    continue
                 item = data[key]
                 if torch.is_tensor(item) and item.dtype != torch.bool:
                     item = item + cumsum[key]
@@ -102,23 +99,21 @@ class MultiScaleBatch(MultiScaleData):
             batch.batch = None
 
         for key in batch.keys:
+            if key == "multiscale":
+                continue
             item = batch[key][0]
             if torch.is_tensor(item):
                 batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, item))
             elif isinstance(item, int) or isinstance(item, float):
                 batch[key] = torch.tensor(batch[key])
-            elif key != "multiscale":
+            else:
                 raise ValueError("Unsupported attribute type")
 
         batch.multiscale = []
-        num_scales = data_list[0].num_scales
-        for data_entry in data_list:
-            assert data_entry.num_scales == num_scales, "All data objects should contain the same number of scales"
-
-        for _ in range(num_scales):
+        for scale in range(num_scales):
             ms_scale = []
             for data_entry in data_list:
-                ms_scale.append(data_entry.multiscale[i])
+                ms_scale.append(data_entry.multiscale[scale])
             batch.multiscale.append(Batch.from_data_list(ms_scale))
 
         if torch_geometric.is_debug_enabled():

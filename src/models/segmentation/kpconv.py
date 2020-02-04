@@ -8,6 +8,7 @@ from .base import Segmentation_MP
 from src.modules.KPConv import *
 from src.models.base_model import BaseModel
 from src.models.base_architectures.unet import UnwrappedUnetBasedModel
+from src.datasets.multiscale_data import MultiScaleBatch
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +62,13 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         self.input = data
         self.labels = data.y
         self.batch_idx = data.batch
+
+        if isinstance(data, MultiScaleBatch):
+            self.pre_computed = data.multiscale
+            del data.multiscale
+        else:
+            self.pre_computed = None
+
         if self._use_category:
             self.category = data.category
 
@@ -70,10 +78,10 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         data = self.input
         for i in range(len(self.down_modules) - 1):
-            data = self.down_modules[i](data)
+            data = self.down_modules[i](data, pre_computed=self.pre_computed)
             stack_down.append(data)
 
-        data = self.down_modules[-1](data)
+        data = self.down_modules[-1](data, pre_computed=self.pre_computed)
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((data, stack_down.pop()))
 
@@ -108,3 +116,20 @@ class KPConvSeg(Segmentation_MP):
         self.input = data
         self.batch_idx = data.batch
         self.labels = data.y
+
+        if isinstance(data, MultiScaleBatch):
+            self.pre_computed = data.multiscale
+            del data.multiscale
+        else:
+            self.pre_computed = None
+
+    def forward(self) -> Any:
+        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
+        data = self.model(self.input, precomputed=self.pre_computed)
+        x = F.relu(self.lin1(data.x))
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lin2(x)
+        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lin3(x)
+        self.output = F.log_softmax(x, dim=-1)
+        return self.output

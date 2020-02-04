@@ -5,10 +5,11 @@ from functools import partial
 import torch
 import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
-from torch_geometric.data import Batch, DataLoader, Dataset
 
 from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.datasets.batch import SimpleBatch
+from src.datasets.multiscale_data import MultiScaleBatch
+from src.utils.enums import ConvolutionFormat
 
 
 # A logger for this file
@@ -20,20 +21,33 @@ class BaseDataset:
         self.dataset_opt = dataset_opt
         self.training_opt = training_opt
         self.strategies = {}
-        self._torch_loader = training_opt.use_torch_loader
+        self._batch_collate_function = BaseDataset._get_collate_function(
+            training_opt.conv_type, training_opt.precompute_multi_scale
+        )
         self._pre_transform = instantiate_transforms(dataset_opt.pre_transforms)
+
+    @staticmethod
+    def _get_collate_function(conv_type, is_multiscale):
+        if is_multiscale:
+            if conv_type == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower():
+                return lambda datalist: MultiScaleBatch.from_data_list(datalist)
+            else:
+                raise NotImplementedError()
+
+        if (
+            conv_type == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
+            or conv_type == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
+        ):
+            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
+        elif conv_type == ConvolutionFormat.DENSE.value[-1].lower():
+            return lambda datalist: SimpleBatch.from_data_list(datalist)
 
     def _create_dataloaders(self, train_dataset, test_dataset, val_dataset=None):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
         self._num_classes = train_dataset.num_classes
         self._feature_dimension = train_dataset.num_features
-        if self._torch_loader:
-            dataloader = partial(
-                torch.utils.data.DataLoader, collate_fn=lambda data_list: SimpleBatch.from_data_list(data_list),
-            )
-        else:
-            dataloader = DataLoader
+        dataloader = partial(torch.utils.data.DataLoader, collate_fn=self._batch_collate_function,)
         self._train_loader = dataloader(
             train_dataset,
             batch_size=self.training_opt.batch_size,
@@ -135,7 +149,7 @@ class BaseDataset:
 
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
-            if isinstance(attr, DataLoader):
+            if isinstance(attr, torch.utils.data.DataLoader):
                 current_transform = getattr(attr.dataset, "transform", None)
                 if current_transform is None:
                     setattr(attr.dataset, "transform", transform)

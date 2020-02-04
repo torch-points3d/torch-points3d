@@ -40,7 +40,6 @@ class BaseModel(torch.nn.Module):
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
-        self._precompute_multi_scale = opt.precompute_multi_scale if "precompute_multi_scale" in opt else False
         self._iterations = 0
         self._lr_params = None
 

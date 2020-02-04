@@ -40,7 +40,6 @@ def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTrac
 
             iter_start_time = time.time()
             model.optimize_parameters(dataset.batch_size)
-
             if i % 10 == 0:
                 tracker.track(model)
 
@@ -99,7 +98,6 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
         train_epoch(epoch, model, dataset, device, tracker, checkpoint)
-
         if dataset.has_val_loader:
             eval_epoch(model, dataset, device, tracker, checkpoint)
 
@@ -147,7 +145,8 @@ def main(cfg):
     model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), lr_params=lr_params)
 
     # Set sampling / search strategies
-    dataset.set_strategies(model, precompute_multi_scale=cfg_training.precompute_multi_scale)
+    if cfg_training.precompute_multi_scale:
+        dataset.set_strategies(model)
 
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
