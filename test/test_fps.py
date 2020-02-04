@@ -23,8 +23,7 @@ class TestPytorchClusterFPS(unittest.TestCase):
         cnd_1 = np.sum(idx) > 0
         cnd_2 = np.sum(idx) < num_points * idx.shape[0]
 
-        if not (cnd_1 and cnd_2):
-            log.warn("Your Pytorch Cluster FPS doesn't seem to return the correct value. It shouldn't be used to perform sampling")
+        assert cnd_1 and cnd_2, "Your Pytorch Cluster FPS doesn't seem to return the correct value. It shouldn't be used to perform sampling"
 
 if __name__ == "__main__":
     unittest.main()
