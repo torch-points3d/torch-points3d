@@ -52,29 +52,29 @@ class SimpleBlock(torch.nn.Module):
             setattr(data, "block_idx", 0)
 
         if pre_computed:
-            querry_data = pre_computed[data.block_idx]
+            query_data = pre_computed[data.block_idx]
         else:
             if self.sampler:
-                querry_data = self.sampler(data.clone())
+                query_data = self.sampler(data.clone())
             else:
-                querry_data = data.clone()
+                query_data = data.clone()
 
         if pre_computed:
-            idx_neighboors = querry_data.idx_neighboors
-            q_pos = querry_data.pos
+            idx_neighboors = query_data.idx_neighboors
+            q_pos = query_data.pos
         else:
-            q_pos, q_batch = querry_data.pos, querry_data.batch
+            q_pos, q_batch = query_data.pos, query_data.batch
             idx_neighboors, _ = self.neighbour_finder(data.pos, q_pos, batch_x=data.batch, batch_y=q_batch)
-            querry_data.idx_neighboors = idx_neighboors
+            query_data.idx_neighboors = idx_neighboors
 
         x = self.kp_conv(q_pos, data.pos, idx_neighboors, data.x,)
         if self.bn:
             x = self.bn(x)
         x = self.activation(x)
 
-        querry_data.x = x
-        querry_data.block_idx = data.block_idx + 1
-        return querry_data
+        query_data.x = x
+        query_data.block_idx = data.block_idx + 1
+        return query_data
 
     def extra_repr(self):
         return str(self.sampler) + "," + str(self.neighbour_finder)

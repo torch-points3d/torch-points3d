@@ -59,15 +59,16 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         if hasattr(data, "x"):
             ones = torch.ones(data.x.shape[0], dtype=torch.float).unsqueeze(-1).to(data.x.device)
             data.x = torch.cat([ones, data.x], dim=-1)
-        self.input = data
-        self.labels = data.y
-        self.batch_idx = data.batch
 
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
             del data.multiscale
         else:
             self.pre_computed = None
+
+        self.input = data
+        self.labels = data.y
+        self.batch_idx = data.batch
 
         if self._use_category:
             self.category = data.category
@@ -109,15 +110,15 @@ class KPConvSeg(Segmentation_MP):
     """ Basic implementation of KPConv"""
 
     def set_input(self, data):
-        self.input = data
-        self.batch_idx = data.batch
-        self.labels = data.y
-
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
             del data.multiscale
         else:
             self.pre_computed = None
+
+        self.input = data
+        self.batch_idx = data.batch
+        self.labels = data.y
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""

@@ -190,13 +190,13 @@ class MultiScaleTransform(object):
             sampler, neighbour_finder = self.strategies["sampler"][index], self.strategies["neighbour_finder"][index]
             support = precomputed[index]
             if sampler:
-                querry = sampler(support.clone())
+                query = sampler(support.clone())
             else:
-                querry = support.clone()
+                query = support.clone()
 
-            s_pos, q_pos = support.pos, querry.pos
-            if hasattr(querry, "batch"):
-                s_batch, q_batch = support.batch, querry.batch
+            s_pos, q_pos = support.pos, query.pos
+            if hasattr(query, "batch"):
+                s_batch, q_batch = support.batch, query.batch
             else:
                 s_batch, q_batch = (
                     torch.zeros((s_pos.shape[0]), dtype=torch.long),
@@ -204,8 +204,8 @@ class MultiScaleTransform(object):
                 )
 
             idx_neighboors, _ = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
-            setattr(querry, "idx_neighboors", idx_neighboors)
-            precomputed.append(querry)
+            setattr(query, "idx_neighboors", idx_neighboors)
+            precomputed.append(query)
         ms_data.multiscale = precomputed[1:]
         return ms_data
 
