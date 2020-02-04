@@ -4,7 +4,7 @@ from src.core.base_conv.base_conv import *
 from src.core.base_conv.message_passing import *
 from src.core.common_modules.base_modules import *
 
-from src.core.sampling import FPSSampler
+from src.core.sampling import FPSSampler, RandomSampler
 from src.core.neighbourfinder import MultiscaleRadiusNeighbourFinder
 
 

@@ -56,6 +56,7 @@ class FPSSampler(BaseSampler):
     """
 
     def sample(self, pos, batch, **kwargs):
+        from torch_geometric.nn import fps
         if len(pos.shape) != 2:
             raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
         return fps(pos, batch, ratio=self._get_ratio_to_sample(pos.shape[0]))
