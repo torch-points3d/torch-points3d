@@ -71,7 +71,8 @@ class TestModelUtils(unittest.TestCase):
         params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
         model_config = OmegaConf.merge(params, self.data_config)
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(params.architecture, "segmentation", model_config, dataset)
+        model_class = getattr(params, "class")
+        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
         dataset.set_strategies(model)
         model.set_input(dataset[0])
         model.forward()
