@@ -6,7 +6,7 @@ import logging
 from omegaconf import OmegaConf
 
 # Import building function for model and dataset
-from src import find_model_using_name, find_dataset_using_name
+from src import instantiate_model, instantiate_dataset
 
 # Import BaseModel / BaseDataset for type checking
 from src.models.base_model import BaseModel
@@ -110,6 +110,9 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
 
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
+    if cfg.pretty_print:
+        print(cfg.pretty())
+
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
     log.info("DEVICE : {}".format(device))
@@ -129,14 +132,15 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config = cfg.data
-    tested_dataset_name = dataset_config.name
+    tested_dataset_class = getattr(dataset_config, "class")
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = find_dataset_using_name(tested_dataset_name, tested_task)(dataset_config, cfg_training)
+    dataset = instantiate_dataset(tested_dataset_class, tested_task)(dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
-    model_config = OmegaConf.merge(model_config, cfg_training, dataset_config)
-    model = find_model_using_name(model_config.architecture, tested_task, model_config, dataset)
+    model_class = getattr(model_config, "class")
+    model_config = OmegaConf.merge(model_config, cfg_training)
+    model = instantiate_model(model_class, tested_task, model_config, dataset)
 
     log.info(model)
 

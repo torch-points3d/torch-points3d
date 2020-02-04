@@ -1,10 +1,13 @@
 data:
     task: segmentation
-    name: s3dis1x1
+    class: s3dis.S3DIS1x1Dataset
     dataroot: data
     fold: 5
     class_weight_method: "sqrt"
-    num_points: 1024
+    room_points: 32768
+    num_points: 4096
     first_subsampling: 0.04
-    density_parameter: 5.0
-    kp_extent: 1.0
+    pre_transforms:
+        - transform: GridSampling
+          params:
+              size: ${data.first_subsampling}

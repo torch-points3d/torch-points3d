@@ -102,10 +102,6 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self._weight_classes = self._weight_classes.to(self.output.device)
         self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
 
-        if torch.isnan(self.loss_seg):
-            import pdb
-
-            pdb.set_trace()
         self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
 
 

@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 import logging
 from functools import partial
@@ -19,6 +20,11 @@ log = logging.getLogger(__name__)
 class BaseDataset:
     def __init__(self, dataset_opt, training_opt):
         self.dataset_opt = dataset_opt
+        
+        # Default dataset path
+        class_name = self.__class__.__name__.lower().replace('dataset', '')
+        self._data_path = os.path.join(dataset_opt.dataroot, class_name)
+        
         self.training_opt = training_opt
         self.strategies = {}
         self._batch_collate_function = BaseDataset._get_collate_function(

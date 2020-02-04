@@ -1,6 +1,6 @@
 data:
     task: segmentation
-    name: s3dis
+    class: s3dis.S3DISDataset
     dataroot: data
     fold: 5
     class_weight_method: "sqrt"

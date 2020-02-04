@@ -193,7 +193,6 @@ class ShapeNet(InMemoryDataset):
 class ShapeNetDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
-        self._data_path = os.path.join(dataset_opt.dataroot, "ShapeNet")
         try:
             self._category = dataset_opt.category
         except KeyError:

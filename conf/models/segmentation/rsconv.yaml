@@ -1,7 +1,7 @@
 models:
     # Relation-Shape Convolutional Neural Network for Point Cloud Analysis (https://arxiv.org/abs/1904.07601)
     RSConv_2LD:
-        architecture: rsconv.RSConv_MP
+        class: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
@@ -25,7 +25,7 @@ models:
             dropout: 0.5
 
     RSConv_4LD:
-        architecture: rsconv.RSConv_MP
+        class: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: RSConv
@@ -55,7 +55,7 @@ models:
             dropout: 0.1
 
     RSConv_MSN:
-        architecture: rsconv.RSConvLogicModel
+        class: rsconv.RSConvLogicModel
         conv_type: "DENSE"
         use_category: True
         down_conv:
