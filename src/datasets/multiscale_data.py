@@ -55,68 +55,22 @@ class MultiScaleBatch(MultiScaleData):
         for data_entry in data_list:
             assert data_entry.num_scales == num_scales, "All data objects should contain the same number of scales"
 
-        keys = [set(data.keys) for data in data_list]
-        keys = list(set.union(*keys))
-        assert "batch" not in keys
-
-        batch = MultiScaleBatch()
-        batch.__data_class__ = data_list[0].__class__
-        batch.__slices__ = {key: [0] for key in keys}
-
-        for key in keys:
-            batch[key] = []
-
-        for key in follow_batch:
-            batch["{}_batch".format(key)] = []
-
-        cumsum = {key: 0 for key in keys}
-        batch.batch = []
-        for i, data in enumerate(data_list):
-            for key in data.keys:
-                if key == "multiscale":
-                    continue
-                item = data[key]
-                if torch.is_tensor(item) and item.dtype != torch.bool:
-                    item = item + cumsum[key]
-                if torch.is_tensor(item):
-                    size = item.size(data.__cat_dim__(key, data[key]))
-                else:
-                    size = 1
-                batch.__slices__[key].append(size + batch.__slices__[key][-1])
-                cumsum[key] = cumsum[key] + data.__inc__(key, item)
-                batch[key].append(item)
-
-                if key in follow_batch:
-                    item = torch.full((size,), i, dtype=torch.long)
-                    batch["{}_batch".format(key)].append(item)
-
-            num_nodes = data.num_nodes
-            if num_nodes is not None:
-                item = torch.full((num_nodes,), i, dtype=torch.long)
-                batch.batch.append(item)
-
-        if num_nodes is None:
-            batch.batch = None
-
-        for key in batch.keys:
-            if key == "multiscale":
-                continue
-            item = batch[key][0]
-            if torch.is_tensor(item):
-                batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, item))
-            elif isinstance(item, int) or isinstance(item, float):
-                batch[key] = torch.tensor(batch[key])
-            else:
-                raise ValueError("Unsupported attribute type")
-
-        batch.multiscale = []
+        # Build multiscale batches
+        multiscale = []
         for scale in range(num_scales):
             ms_scale = []
             for data_entry in data_list:
                 ms_scale.append(data_entry.multiscale[scale])
-            batch.multiscale.append(Batch.from_data_list(ms_scale))
+            multiscale.append(Batch.from_data_list(ms_scale))
+
+        # Create batch from non multiscale data
+        for data_entry in data_list:
+            del data_entry.multiscale
+        batch = Batch.from_data_list(data_list)
+        batch = MultiScaleBatch.from_data(batch)
+        batch.multiscale = multiscale
 
         if torch_geometric.is_debug_enabled():
             batch.debug()
 
-        return batch.contiguous()
+        return batch
