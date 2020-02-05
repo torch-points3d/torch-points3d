@@ -239,7 +239,7 @@ class PatchExtractor:
     """
 
     def __init__(self, radius_patch):
-        self.radius = radius_patch
+        self.radius_patch = radius_patch
 
     def __call__(self, data: Data, ind):
 

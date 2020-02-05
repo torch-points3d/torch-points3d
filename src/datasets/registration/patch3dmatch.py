@@ -65,7 +65,7 @@ class Patch3DMatch(General3DMatch):
                 value, indicating whether the data object should be included in the
                 final dataset. (default: :obj:`None`)
         """
-        self.radius_patch = radius_patch
+
         super(Patch3DMatch, self).__init__(root,
                                            num_frame_per_fragment,
                                            mode,
@@ -80,16 +80,23 @@ class Patch3DMatch(General3DMatch):
                                            verbose,
                                            debug)
 
+        self.radius_patch = radius_patch
+
     def get(self, idx):
-        match = np.load(osp.join(self.processed_dir, self.mode, 'filtered'))
+        match = np.load(
+            osp.join(self.processed_dir,
+                     self.mode, 'matches',
+                     'matches{:06d}.npy'.format(idx)),
+            allow_pickle=True).item()
+
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
         p_extractor = PatchExtractor(self.radius_patch)
         # select a random match on the list of match.
         # It cannot be 0 because matches are filtered.
         rand = np.random.randint(0, len(match['pair']))
-        data_source = p_extractor(data_source, match['pair'][rand][0])
-        data_target = p_extractor(data_target, match['pair'][rand][1])
+        data_source = p_extractor(data_source, match['pair'][rand][1])
+        data_target = p_extractor(data_target, match['pair'][rand][0])
 
         if(self.transform is not None):
             data_source = self.transform(data_source)
