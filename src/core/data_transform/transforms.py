@@ -3,16 +3,60 @@ import math
 import re
 import torch
 from torch.nn import functional as F
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KDTree
 from torch_geometric.data import Data
 from functools import partial
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
-
 from src.datasets.multiscale_data import MultiScaleData
 
+
+class SaveKDTree(object):
+    r"""Calculate the KDTree and save it within data
+    Args:
+        leaf_size (float or [float] or Tensor): Depth of the .
+    """
+    def __init__(self, leaf_size):
+        self._leaf_size = leaf_size
+
+    def __call__(self, data):
+        data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self._leaf_size)
+        return data
+
+    def __repr__(self):
+        return "{}(size={})".format(self.__class__.__name__, self.size)
+
+class RandomSphere(object):
+    r"""Randomly select a sphere of points using a given radius
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+    """
+    key = "kd_tree"
+    def __init__(self, radius):
+        self._radius = radius
+
+    def __call__(self, data):
+        if not hasattr(data, self.key):
+            tree = KDTree(np.asarray(data.pos), leaf_size=50)
+        else:
+            tree = getattr(data, self.key)
+            delattr(data, self.key)
+
+        num_points = data.pos.shape[0]
+
+        ranom_center = np.random.randint(0, len(data.pos))
+        ind = tree.query_radius(np.asarray(data.pos[random_center]), r=self._radius)
+
+        for key in set(data.keys):
+            item = data[key][ind]
+            if num_points == item.shape[0]:
+                setattr(data, key, item)
+        return data
+
+    def __repr__(self):
+        return "{}(size={})".format(self.__class__.__name__, self.size)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.

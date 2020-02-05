@@ -11,3 +11,26 @@ data:
         - transform: GridSampling
           params:
               size: ${data.first_subsampling}
+        - transform: SaveKDTree
+          params:
+              leaf_size: 50
+    train_transforms:
+        - transform: RandomSphere
+          params:
+              radius: 50 * ${data.first_subsampling}
+        - transform: RandomTranslate
+          params:
+              translate: 0.01
+        - transform: RandomRotate
+          params:
+              degrees: 180
+              axis: 2
+    val_transforms:
+        - transform: RandomSphere
+          params:
+              radius: 50 * ${data.first_subsampling}
+    test_transforms:
+        - transform: RandomSphere
+          params:
+              radius: 50 * ${data.first_subsampling}
+

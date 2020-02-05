@@ -2,10 +2,15 @@
 
 The dataset contains some bugs which can be found and corrected at those position.
 
+use nano +line {path_to_file}
+
 /S3DIS/raw/Area_2/auditorium_1/auditorium_1.txt row 741099: ['0.577500', '-12.407500', '2.604000', '167.\x1000000', '175.000000', '177.000000']
 
 /S3DIS/raw/Area_3/hallway_2/hallway_2.txt row 926335: ['19.302', '-9.1\x160', '1.785', '146', '137', '106']
 
+and in Area_6/copyRoom_1:  mv copy_Room_1.txt copyRoom_1.txt
+
+git apply {the file undernath}
 
 ```
 diff --git a/Area_3/hallway_2/hallway_2.txt b/Area_3/hallway_2/hallway_2.txt

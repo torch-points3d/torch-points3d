@@ -232,7 +232,7 @@ class S3DISOriginal(InMemoryDataset):
                     file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                 )
 
-                data = Data(pos=xyz, x=rgb.float(), y=room_labels)
+                data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels)
 
                 if self.keep_instance:
                     data.room_object_indices = room_object_indices
@@ -262,23 +262,19 @@ class S3DISDataset(BaseDataset):
 
         pre_transform = self._pre_transform
 
-        transform = T.Compose(
-            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
-        )
-
         train_dataset = S3DISOriginal(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
             pre_transform=pre_transform,
-            transform=transform,
+            transform=self.train_transform,
         )
         test_dataset = S3DISOriginal(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_transform=pre_transform,
-            transform=T.FixedPoints(dataset_opt.num_points),
+            transform=self.test_transform,
         )
 
         train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)

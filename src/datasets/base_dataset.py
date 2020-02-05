@@ -16,8 +16,8 @@ from src.utils.enums import ConvolutionFormat
 # A logger for this file
 log = logging.getLogger(__name__)
 
-
 class BaseDataset:
+    SPLITS = ['train', 'val', 'test']
     def __init__(self, dataset_opt, training_opt):
         self.dataset_opt = dataset_opt
         
@@ -31,6 +31,16 @@ class BaseDataset:
             training_opt.conv_type, training_opt.precompute_multi_scale
         )
         self._pre_transform = instantiate_transforms(dataset_opt.pre_transforms)
+
+        for split_name in self.SPLITS:
+            name_config = "{}_transforms".format(split_name)
+            name_attr = "{}_transform".format(split_name)
+            transform = None
+            try:
+                transform = instantiate_transforms(getattr(dataset_opt, name_config))
+            except:
+                transform = None
+            setattr(self, name_attr, transform)
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
