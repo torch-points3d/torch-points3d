@@ -249,9 +249,9 @@ class PatchExtractor:
                                radius=self.radius_patch,
                                max_num=-1, mode=1)
 
-        row, col = ind.t()
+        row, col = ind[dist[:, 0] > 0].t()
 
         for key in data.keys:
             if(torch.is_tensor(data[key])):
-                data[key] = data[key][row]
+                data[key] = data[key][col]
         return data

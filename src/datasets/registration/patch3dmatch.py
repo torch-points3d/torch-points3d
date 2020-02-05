@@ -89,12 +89,14 @@ class Patch3DMatch(General3DMatch):
                      'matches{:06d}.npy'.format(idx)),
             allow_pickle=True).item()
 
+        print(match['path_source'])
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
         p_extractor = PatchExtractor(self.radius_patch)
         # select a random match on the list of match.
         # It cannot be 0 because matches are filtered.
         rand = np.random.randint(0, len(match['pair']))
+
         data_source = p_extractor(data_source, match['pair'][rand][1])
         data_target = p_extractor(data_target, match['pair'][rand][0])
 
@@ -104,7 +106,8 @@ class Patch3DMatch(General3DMatch):
         batch = Batch.from_data_list([data_source, data_target])
         batch.pair = batch.batch
         batch.batch = None
-        return batch
+
+        return batch.contiguous()
 
 class Patch3DMatchDataset(BaseDataset):
 
