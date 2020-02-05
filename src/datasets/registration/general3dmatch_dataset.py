@@ -8,7 +8,8 @@ import os.path as osp
 import torch
 
 from torch_geometric.data import Dataset, download_url, extract_zip
-from src.datasets.registration.utils import rgbd2fragment
+from src.datasets.registration.utils import rgbd2fragment_rough
+from src.datasets.registration.utils import rgbd2fragment_fine
 from src.datasets.registration.utils import compute_overlap_and_matches
 
 log = logging.getLogger(__name__)
@@ -68,7 +69,9 @@ class General3DMatch(Dataset):
                  mode='train_small',
                  min_overlap_ratio=0.3,
                  max_overlap_ratio=1.0,
-                 max_dist_overlap=0.1,
+                 max_dist_overlap=0.01,
+                 tsdf_voxel_size=0.01,
+                 is_fine=True,
                  transform=None,
                  pre_transform=None,
                  pre_filter=None,
@@ -117,12 +120,14 @@ class General3DMatch(Dataset):
 
         self.verbose = verbose
         self.debug = debug
-
+        self.is_fine = is_fine
         self.num_frame_per_fragment = num_frame_per_fragment
+        self.tsdf_voxel_size = tsdf_voxel_size
 
         self.mode = mode
         # constant to compute overlap
         self.min_overlap_ratio = min_overlap_ratio
+        self.max_overlap_ratio = max_overlap_ratio
         self.max_dist_overlap = max_dist_overlap
         if mode not in self.dict_urls.keys():
             raise RuntimeError('this mode {} does '
@@ -142,7 +147,8 @@ class General3DMatch(Dataset):
 
     @property
     def processed_file_names(self):
-        return [self.mode]
+        return [osp.join(self.mode, 'fragment'),
+                osp.join(self.mode, 'matches')]
 
     def download(self):
 
@@ -161,11 +167,9 @@ class General3DMatch(Dataset):
         """
 
         print("Create fragment from RGBD frames...")
-
-        if files_exist(osp.join(self.processed_dir, mod)):  # pragma: no cover
-            print("the mode {} already exists".format(mod))
+        if files_exist([osp.join(self.processed_dir, mod, 'fragment')]):  # pragma: no cover
+            print("the fragments on mode {} already exists".format(mod))
             return
-        makedirs(osp.join(self.processed_dir, mod))
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
             # TODO list the right sequences.
             list_seq = [f for f in os.listdir(osp.join(self.raw_dir, mod,
@@ -190,11 +194,22 @@ class General3DMatch(Dataset):
                                           for f in os.listdir(frames_dir)
                                           if 'pose' in f and 'txt' in f])
                 # compute each fragment and save it
-                rgbd2fragment(list_path_frames, path_intrinsic,
-                              list_path_trans, out_dir,
-                              self.num_frame_per_fragment,
-                              pre_transform=self.pre_transform,
-                              list_path_color=list_path_color)
+                if(not self.is_fine):
+                    rgbd2fragment_rough(list_path_frames, path_intrinsic,
+                                        list_path_trans, out_dir,
+                                        self.num_frame_per_fragment,
+                                        pre_transform=self.pre_transform,
+                                        list_path_color=list_path_color)
+                else:
+                    assert list_path_color is not None
+                    rgbd2fragment_fine(list_path_frames, path_intrinsic,
+                                       list_path_trans, list_path_color,
+                                       out_dir, self.num_frame_per_fragment,
+                                       voxel_size=self.tsdf_voxel_size,
+                                       pre_transform=self.pre_transform)
+
+
+
 
     def _compute_matches_between_fragments(self, mod):
 
@@ -203,43 +218,43 @@ class General3DMatch(Dataset):
         if files_exist([out_dir]):  # pragma: no cover
             return
         makedirs(out_dir)
+
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
-            list_seq = [f for f in os.listdir(osp.join(self.raw_dir, mod,
-                                                       scene_path)) if 'seq' in f]
+
+            list_seq = sorted([f for f in os.listdir(osp.join(self.raw_dir, mod,
+                                                              scene_path)) if 'seq' in f])
             for seq in list_seq:
+                print(seq)
                 fragment_dir = osp.join(self.processed_dir,
                                         mod, 'fragment',
                                         scene_path, seq)
                 list_fragment_path = sorted([osp.join(fragment_dir, f)
                                              for f in os.listdir(fragment_dir)
                                              if 'fragment' in f])
-                compute_overlap_and_matches(list_fragment_path, out_dir,
-                                            self.max_dist_overlap)
+                print("compute_overlap_and_matches")
+                ind = 0
+                for path1 in list_fragment_path:
+                    for path2 in list_fragment_path:
+                        if path1 < path2:
+                            out_path = osp.join(out_dir,
+                                                'matches{:06d}.npy'.format(ind))
 
-    def _filter_matches(self, mod):
-        out_dir = osp.join(self.processed_dir,
-                           mod, 'filtered')
-        if files_exist([out_dir]):  # pragma: no cover
-            return
-        makedirs(out_dir)
-        matches_dir = osp.join(self.processed_dir,
-                               mod, 'matches')
-        list_matches = sorted([osp.join(matches_dir, f)
-                               for f in os.listdir(matches_dir)
-                               if 'matches' in f])
-        ind = 0
-        for i in range(len(list_matches)):
-            match = np.load(list_matches[i])
-            if(match['overlap'] > self.min_overlap_ratio and
-               match['overlap'] < self.max_overlap_ratio):
-                out_path = osp.join(out_dir, 'matches{:06d}.npy'.format(ind))
-                np.save(out_path, match)
-                ind += 1
+                            match = compute_overlap_and_matches(
+                                path1, path2, self.max_dist_overlap)
+                            if(self.verbose):
+                                print(match['path_source'],
+                                      match['path_target'],
+                                      'overlap={}'.format(match['overlap']))
+                            if(np.max(match['overlap']) > self.min_overlap_ratio and
+                               np.max(match['overlap']) < self.max_overlap_ratio):
+                                np.save(out_path, match)
+                                ind += 1
 
     def process(self):
+        print("create fragments")
         self._create_fragment(self.mode)
+        print("compute matches")
         self._compute_matches_between_fragments(self.mode)
-        self._filter_matches(self.mode)
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")

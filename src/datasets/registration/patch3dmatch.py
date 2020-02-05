@@ -2,6 +2,7 @@ import numpy as np
 import os
 import os.path as osp
 import torch
+from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.general3dmatch_dataset import General3DMatch
 from src.datasets.registration.pair import Pair
 from src.datasets.registration.utils import PatchExtractor
@@ -94,4 +95,40 @@ class Patch3DMatch(General3DMatch):
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
-        return Pair.from_pair(data_source, data_target)
+        batch = Batch.from_data_list([data_source, data_target])
+        batch.pair = batch.batch
+        batch.batch = None
+        return batch
+
+    class Patch3DMatchDataset(BaseDataset):
+
+        def __init__(self, dataset_opt, training_opt):
+            super().__init__(dataset_opt, training_opt)
+            pre_transform = self._pre_transform
+
+            train_transform = None
+            test_transform = None
+
+            train_dataset = Patch3DMatch(
+                root=self._data_path,
+                mode='train',
+                radius_patch=dataset_opt.radius_patch,
+                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                pre_transform=pre_transform,
+                transform=train_transform)
+
+            test_dataset = Patch3DMatch(
+                root=self._data_path,
+                mode='val',
+                radius_patch=dataset_opt.radius_patch,
+                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                pre_transform=pre_transform,
+                transform=test_transform)
+
+            self._create_dataloaders(train_dataset, test_dataset)
