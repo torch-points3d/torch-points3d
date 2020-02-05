@@ -4,7 +4,6 @@ import os.path as osp
 import torch
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.general3dmatch_dataset import General3DMatch
-from src.datasets.registration.pair import Pair
 from src.datasets.registration.utils import PatchExtractor
 from torch_geometric.data import Batch
 
