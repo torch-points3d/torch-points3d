@@ -13,7 +13,7 @@ from torch_scatter import scatter_add, scatter_mean
 from src.datasets.multiscale_data import MultiScaleData
 
 
-class SaveKDTree(object):
+class ComputeKDTree(object):
     r"""Calculate the KDTree and save it within data
     Args:
         leaf_size (float or [float] or Tensor): Depth of the .
@@ -26,7 +26,7 @@ class SaveKDTree(object):
         return data
 
     def __repr__(self):
-        return "{}(size={})".format(self.__class__.__name__, self.size)
+        return "{}(leaf_size={})".format(self.__class__.__name__, self.leaf_size)
 
 class RandomSphere(object):
     r"""Randomly select a sphere of points using a given radius
@@ -35,7 +35,7 @@ class RandomSphere(object):
     """
     key = "kd_tree"
     def __init__(self, radius):
-        self._radius = radius
+        self._radius = eval(radius)
 
     def __call__(self, data):
         if not hasattr(data, self.key):
@@ -45,18 +45,18 @@ class RandomSphere(object):
             delattr(data, self.key)
 
         num_points = data.pos.shape[0]
+        random_center = np.random.randint(0, len(data.pos))
 
-        ranom_center = np.random.randint(0, len(data.pos))
-        ind = tree.query_radius(np.asarray(data.pos[random_center]), r=self._radius)
-
+        pts = np.asarray(data.pos[random_center])[np.newaxis]
+        ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
         for key in set(data.keys):
-            item = data[key][ind]
+            item = data[key]
             if num_points == item.shape[0]:
-                setattr(data, key, item)
+                setattr(data, key, item[ind])
         return data
 
     def __repr__(self):
-        return "{}(size={})".format(self.__class__.__name__, self.size)
+        return "{}(radius={})".format(self.__class__.__name__, self._radius)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.

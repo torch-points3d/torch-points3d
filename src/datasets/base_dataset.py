@@ -35,7 +35,6 @@ class BaseDataset:
         for split_name in self.SPLITS:
             name_config = "{}_transforms".format(split_name)
             name_attr = "{}_transform".format(split_name)
-            transform = None
             try:
                 transform = instantiate_transforms(getattr(dataset_opt, name_config))
             except:

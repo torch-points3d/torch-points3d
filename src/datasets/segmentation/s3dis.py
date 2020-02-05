@@ -1,5 +1,6 @@
 import os
 import os.path as osp
+from itertools import repeat, product
 import numpy as np
 import pandas as pd
 import torch
@@ -17,9 +18,8 @@ import csv
 
 from src.metrics.segmentation_tracker import SegmentationTracker
 import src.core.data_transform.transforms as cT
-
 from src.datasets.base_dataset import BaseDataset
-
+import pickle
 
 log = logging.getLogger(__name__)
 
@@ -165,6 +165,7 @@ class S3DISOriginal(InMemoryDataset):
         debug=False,
     ):
         assert test_area >= 1 and test_area <= 6
+        self.transform = transform
         self.pre_collate_transform = pre_collate_transform
         self.test_area = test_area
         self.keep_instance = keep_instance
@@ -173,6 +174,21 @@ class S3DISOriginal(InMemoryDataset):
         super(S3DISOriginal, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
+        self.kd_trees = self.load_kd_trees("train" if train else "test")
+
+    def __getitem__(self, idx):
+        r"""Gets the data object at index :obj:`idx` and transforms it (in case
+        a :obj:`self.transform` is given).
+        In case :obj:`idx` is a slicing object, *e.g.*, :obj:`[2:5]`, a list, a
+        tuple, a  LongTensor or a BoolTensor, will return a subset of the
+        dataset at the specified indices."""
+        if isinstance(idx, int):
+            data = self.get(idx)
+            data.kd_tree = self.kd_trees[idx]
+            data = data if self.transform is None else self.transform(data)
+            return data
+        else:
+            return self.index_select(idx)
 
     @property
     def raw_file_names(self):
@@ -202,6 +218,27 @@ class S3DISOriginal(InMemoryDataset):
                     )
                 )
 
+    def extract_kd_trees(self, data_list):
+        kd_trees = []
+        for data in data_list:
+            if hasattr(data, "kd_tree"):
+                kd_trees.append(getattr(data, "kd_tree"))
+                delattr(data, "kd_tree")
+        return kd_trees
+
+    def save_kd_trees(self, split_name, kd_trees):
+        name = "{}_kd_trees.p".format(split_name)
+        pickle_out = open(os.path.join(self.processed_dir, name),"wb")
+        pickle.dump(kd_trees, pickle_out)
+        pickle_out.close()
+
+    def load_kd_trees(self, split_name):
+        name = "{}_kd_trees.p".format(split_name)
+        pickle_out = open(os.path.join(self.processed_dir, name),"rb")
+        kd_trees = pickle.load(pickle_out)
+        pickle_out.close()
+        return kd_trees
+
     def process(self):
 
         train_areas = [f for f in self.folders if str(self.test_area) not in f]
@@ -223,7 +260,7 @@ class S3DISOriginal(InMemoryDataset):
 
         train_data_list, test_data_list = [], []
 
-        for (area, room_name, file_path) in tq(train_files + test_files):
+        for (area, room_name, file_path) in tq(train_files[:2] + test_files[:2]):
 
             if self.debug:
                 read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
@@ -251,6 +288,12 @@ class S3DISOriginal(InMemoryDataset):
         if self.pre_collate_transform:
             train_data_list = self.pre_collate_transform.fit_transform(train_data_list)
             test_data_list = self.pre_collate_transform.transform(test_data_list)
+
+        train_kd_trees = self.extract_kd_trees(train_data_list)
+        self.save_kd_trees("train", train_kd_trees)
+        
+        test_kd_trees = self.extract_kd_trees(test_data_list)
+        self.save_kd_trees("test", train_kd_trees)
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])

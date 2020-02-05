@@ -4,14 +4,12 @@ data:
     dataroot: data
     fold: 5
     class_weight_method: "sqrt"
-    room_points: 32768
-    num_points: 4096
     first_subsampling: 0.04
     pre_transforms:
         - transform: GridSampling
           params:
               size: ${data.first_subsampling}
-        - transform: SaveKDTree
+        - transform: ComputeKDTree
           params:
               leaf_size: 50
     train_transforms:
