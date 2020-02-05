@@ -204,7 +204,14 @@ class ResnetBBlock(torch.nn.Module):
 
 class KPDualBlock(torch.nn.Module):
     def __init__(
-        self, block_names=None, down_conv_nn=None, grid_size=None, is_strided=None, has_bottleneck=None, **kwargs
+        self,
+        block_names=None,
+        down_conv_nn=None,
+        grid_size=None,
+        is_strided=None,
+        has_bottleneck=None,
+        max_num_neighbors=None,
+        **kwargs
     ):
         super(KPDualBlock, self).__init__()
 
@@ -217,6 +224,7 @@ class KPDualBlock(torch.nn.Module):
                 grid_size=grid_size[i],
                 is_strided=is_strided[i],
                 has_bottleneck=has_bottleneck[i],
+                max_num_neighbors=max_num_neighbors[i],
             )
             self.blocks.append(block)
 

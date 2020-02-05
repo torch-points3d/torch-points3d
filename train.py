@@ -145,8 +145,7 @@ def main(cfg):
     log.info(model)
 
     # Optimizer
-    lr_params = cfg_training.learning_rate
-    model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), lr_params=lr_params)
+    model.set_optimizer(getattr(torch.optim, cfg_training.optimizer, None), cfg_training)
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:
