@@ -184,6 +184,7 @@ class MultiScaleTransform(object):
 
     def __call__(self, data: Data) -> MultiScaleData:
         # Compute sequentially multi_scale indexes on cpu
+        data.contiguous()
         ms_data = MultiScaleData.from_data(data)
         precomputed = [data]
         for index in range(self.num_layers):
@@ -194,6 +195,7 @@ class MultiScaleTransform(object):
             else:
                 query = support.clone()
 
+            query.contiguous()
             s_pos, q_pos = support.pos, query.pos
             if hasattr(query, "batch"):
                 s_batch, q_batch = support.batch, query.batch
@@ -204,7 +206,9 @@ class MultiScaleTransform(object):
                 )
 
             idx_neighboors, _ = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
+            special_params = {"idx_neighboors": s_pos.shape[0]}
             setattr(query, "idx_neighboors", idx_neighboors)
+            setattr(query, "__inc__", self.__inc__wrapper(query.__inc__, special_params))
             precomputed.append(query)
         ms_data.multiscale = precomputed[1:]
         return ms_data

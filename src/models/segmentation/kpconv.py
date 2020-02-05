@@ -122,7 +122,7 @@ class KPConvSeg(Segmentation_MP):
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        data = self.model(self.input, precomputed=self.pre_computed)
+        data = self.model(self.input, pre_computed=self.pre_computed)
         x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
