@@ -99,35 +99,35 @@ class Patch3DMatch(General3DMatch):
         batch.batch = None
         return batch
 
-    class Patch3DMatchDataset(BaseDataset):
+class Patch3DMatchDataset(BaseDataset):
 
-        def __init__(self, dataset_opt, training_opt):
-            super().__init__(dataset_opt, training_opt)
-            pre_transform = self._pre_transform
+    def __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+        pre_transform = self._pre_transform
 
-            train_transform = None
-            test_transform = None
+        train_transform = None
+        test_transform = None
 
-            train_dataset = Patch3DMatch(
-                root=self._data_path,
-                mode='train',
-                radius_patch=dataset_opt.radius_patch,
-                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
-                max_dist_overlap=dataset_opt.max_dist_overlap,
-                min_overlap_ratio=dataset_opt.min_overlap_ratio,
-                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
-                pre_transform=pre_transform,
-                transform=train_transform)
+        train_dataset = Patch3DMatch(
+            root=self._data_path,
+            mode='train',
+            radius_patch=dataset_opt.radius_patch,
+            num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+            max_dist_overlap=dataset_opt.max_dist_overlap,
+            min_overlap_ratio=dataset_opt.min_overlap_ratio,
+            tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+            pre_transform=pre_transform,
+            transform=train_transform)
 
-            test_dataset = Patch3DMatch(
-                root=self._data_path,
-                mode='val',
-                radius_patch=dataset_opt.radius_patch,
-                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
-                max_dist_overlap=dataset_opt.max_dist_overlap,
-                min_overlap_ratio=dataset_opt.min_overlap_ratio,
-                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
-                pre_transform=pre_transform,
-                transform=test_transform)
+        test_dataset = Patch3DMatch(
+            root=self._data_path,
+            mode='val',
+            radius_patch=dataset_opt.radius_patch,
+            num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+            max_dist_overlap=dataset_opt.max_dist_overlap,
+            min_overlap_ratio=dataset_opt.min_overlap_ratio,
+            tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+            pre_transform=pre_transform,
+            transform=test_transform)
 
-            self._create_dataloaders(train_dataset, test_dataset)
+        self._create_dataloaders(train_dataset, test_dataset)
