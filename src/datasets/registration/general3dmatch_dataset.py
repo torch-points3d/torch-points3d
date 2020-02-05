@@ -1,5 +1,3 @@
-import collections
-import errno
 import logging
 import numpy as np
 import os
@@ -11,43 +9,14 @@ from torch_geometric.data import Dataset, download_url, extract_zip
 from src.datasets.registration.utils import rgbd2fragment_rough
 from src.datasets.registration.utils import rgbd2fragment_fine
 from src.datasets.registration.utils import compute_overlap_and_matches
+from src.datasets.registration.utils import to_list
+from src.datasets.registration.utils import files_exist
+from src.datasets.registration.utils import makedirs
+from src.datasets.registration.utils import get_urls
+
+
 
 log = logging.getLogger(__name__)
-
-
-def to_list(x):
-    """
-    taken from https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/dataset.html#Dataset
-    """
-    if not isinstance(x, collections.Iterable) or isinstance(x, str):
-        x = [x]
-    return x
-
-
-def files_exist(files):
-    """
-    taken from https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/dataset.html#Dataset
-    """
-
-    return all([osp.exists(f) for f in files])
-
-
-def makedirs(path):
-    """
-    taken from https://github.com/rusty1s/pytorch_geometric/blob/master/torch_geometric/data/makedirs.py
-    """
-    try:
-        os.makedirs(osp.expanduser(osp.normpath(path)))
-    except OSError as e:
-        if e.errno != errno.EEXIST and osp.isdir(path):
-            raise e
-
-
-def get_urls(filename):
-    res = []
-    with open(filename, 'r') as f:
-        res = f.readlines()
-    return res
 
 
 class General3DMatch(Dataset):
