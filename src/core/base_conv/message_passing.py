@@ -40,24 +40,19 @@ class BaseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         super(BaseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
 
-        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
     def conv(self, x, pos, edge_index, batch):
         raise NotImplementedError
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
-        if self._precompute_multi_scale:
-            idx = getattr(data, "index_{}".format(self._index), None)
-            edge_index = getattr(data, "edge_index_{}".format(self._index), None)
-        else:
-            idx = self.sampler(pos, batch)
-            row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx])
-            edge_index = torch.stack([col, row], dim=0)
-            batch_obj.idx = idx
-            batch_obj.edge_index = edge_index
+        idx = self.sampler(pos, batch)
+        row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx])
+        edge_index = torch.stack([col, row], dim=0)
+        batch_obj.idx = idx
+        batch_obj.edge_index = edge_index
 
         batch_obj.x = self.conv(x, (pos[idx], pos), edge_index, batch)
 
@@ -78,28 +73,21 @@ class BaseMSConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseMSConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
 
-        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
     def conv(self, x, pos, edge_index, batch):
         raise NotImplementedError
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
-        if self._precompute_multi_scale:
-            idx = getattr(data, "idx_{}".format(self._index), None)
-        else:
-            idx = self.sampler(pos, batch)
-            batch_obj.idx = idx
+        idx = self.sampler(pos, batch)
+        batch_obj.idx = idx
 
         ms_x = []
         for scale_idx in range(self.neighbour_finder.num_scales):
-            if self._precompute_multi_scale:
-                edge_index = getattr(data, "edge_index_{}_{}".format(self._index, scale_idx), None)
-            else:
-                row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx,)
-                edge_index = torch.stack([col, row], dim=0)
+            row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx,)
+            edge_index = torch.stack([col, row], dim=0)
 
             ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
 
@@ -114,27 +102,21 @@ class BaseConvolutionUp(BaseConvolution):
     def __init__(self, neighbour_finder, *args, **kwargs):
         super(BaseConvolutionUp, self).__init__(None, neighbour_finder, *args, **kwargs)
 
-        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
 
     def conv(self, x, pos, pos_skip, batch, batch_skip, edge_index):
         raise NotImplementedError
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         data, data_skip = data
         x, pos, batch = data.x, data.pos, data.batch
         x_skip, pos_skip, batch_skip = data_skip.x, data_skip.pos, data_skip.batch
 
         if self.neighbour_finder is not None:
-            if self._precompute_multi_scale:  # TODO For now, it uses the one calculated during down steps
-                edge_index = getattr(data_skip, "edge_index_{}".format(self._index), None)
-                col, row = edge_index
-                edge_index = torch.stack([row, col], dim=0)
-            else:
-                row, col = self.neighbour_finder(pos, pos_skip, batch, batch_skip)
-                edge_index = torch.stack([col, row], dim=0)
+            row, col = self.neighbour_finder(pos, pos_skip, batch, batch_skip)
+            edge_index = torch.stack([col, row], dim=0)
         else:
             edge_index = None
 
@@ -157,7 +139,7 @@ class GlobalBaseModule(torch.nn.Module):
         self.nn = MLP(nn)
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         x = self.nn(torch.cat([x, pos], dim=1))
@@ -251,7 +233,7 @@ class BaseResnetBlock(ABC, torch.nn.Module):
     def convs(self):
         pass
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         x = data.x  # (N, indim)
         shortcut = x  # (N, indim)

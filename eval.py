@@ -21,8 +21,10 @@ from src.utils.model_building_utils.model_definition_resolver import resolve_mod
 from src.utils.colors import COLORS
 from src.utils.config import set_format
 
+log = logging.getLogger(__name__)
 
-def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+
+def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     tracker.reset("val")
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
@@ -38,7 +40,7 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     tracker.print_summary()
 
 
-def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     tracker.reset("test")
     loader = dataset.test_dataloader()
     with Ctq(loader) as tq_test_loader:
@@ -54,20 +56,18 @@ def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     tracker.print_summary()
 
 
-def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, log):
+def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     if dataset.has_val_loader:
-        eval_epoch(model, dataset, device, tracker, checkpoint, log)
+        eval_epoch(model, dataset, device, tracker, checkpoint)
 
-    test_epoch(model, dataset, device, tracker, checkpoint, log)
+    test_epoch(model, dataset, device, tracker, checkpoint)
 
 
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
-    log = logging.getLogger(__name__)
-
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.eval.cuda) else "cpu")
-    print("DEVICE : {}".format(device))
+    log.info("DEVICE : {}".format(device))
 
     # Get task and model_name
     tested_task = cfg.data.task
@@ -83,7 +83,7 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config = cfg.data
-    dataset_class =  getattr(dataset_config, "class")
+    dataset_class = getattr(dataset_config, "class")
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = instantiate_dataset(dataset_class, tested_task)(dataset_config, cfg_eval)
 
@@ -113,7 +113,7 @@ def main(cfg):
     )
 
     # Run training / evaluation
-    run(cfg, model, dataset, device, tracker, checkpoint, log)
+    run(cfg, model, dataset, device, tracker, checkpoint)
 
 
 if __name__ == "__main__":

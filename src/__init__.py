@@ -32,7 +32,7 @@ def instantiate_dataset(dataset_class, task):
     if dataset is None:
         raise NotImplementedError(
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
-            % (module, class_name, target_dataset_name)
+            % (module, class_name)
         )
 
     return dataset

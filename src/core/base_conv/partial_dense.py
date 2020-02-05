@@ -41,7 +41,6 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder, *args, **kwargs):
         super(BasePartialDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
 
-        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
     def conv(self, x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
@@ -60,7 +59,7 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         """
         raise NotImplementedError
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         idx_sampler = self.sampler(pos=pos, x=x, batch=batch)
@@ -91,7 +90,7 @@ class GlobalPartialDenseBaseModule(torch.nn.Module):
         self.nn = MLP(nn)
         self.pool = global_max_pool if aggr == "max" else global_mean_pool
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         batch_obj = Batch()
         x, pos, batch = data.x, data.pos, data.batch
         x = self.nn(torch.cat([x, pos], dim=1))

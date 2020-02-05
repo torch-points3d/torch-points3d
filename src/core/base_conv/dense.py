@@ -42,8 +42,6 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
-
-        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
@@ -60,7 +58,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
         """
         raise NotImplementedError
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         """
         Arguments:
             x -- Previous features [B, C, N]
@@ -73,10 +71,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
         ms_x = []
         for scale_idx in range(self.neighbour_finder.num_scales):
-            if self._precompute_multi_scale:
-                raise NotImplementedError()
-            else:
-                radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
+            radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
             ms_x.append(self.conv(x, pos, new_pos, radius_idx, scale_idx))
         new_x = torch.cat(ms_x, 1)
         return Data(pos=new_pos, x=new_x)
@@ -88,15 +83,13 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
     def __init__(self, neighbour_finder, *args, **kwargs):
         super(BaseDenseConvolutionUp, self).__init__(None, neighbour_finder, *args, **kwargs)
-
-        self._precompute_multi_scale = kwargs.get("precompute_multi_scale", None)
         self._index = kwargs.get("index", None)
         self._skip = kwargs.get("skip", True)
 
     def conv(self, pos, pos_skip, x):
         raise NotImplementedError
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         """ Propagates features from one layer to the next.
         data contains information from the down convs in data_skip
 
@@ -163,7 +156,7 @@ class GlobalDenseBaseModule(torch.nn.Module):
         self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
         return self._nb_params
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         x, pos = data.x, data.pos
         pos_flipped = pos.transpose(1, 2).contiguous()
 

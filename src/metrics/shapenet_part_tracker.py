@@ -48,18 +48,13 @@ class ShapenetPartTracker(BaseTracker):
             raise ValueError("Your model need to set the batch_idx variable in its set_input function.")
 
         nb_batches = batch_idx.max() + 1
-        batch_size = np.sum(batch_idx == 0)
 
-        pred_val = np.zeros((nb_batches, batch_size))
         # pred to the groundtruth classes (selected by seg_classes[cat])
         for b in range(nb_batches):
             t = targets[batch_idx == b]
             cat = self._seg_to_class[t[0]]
             logits = outputs[batch_idx == b, :]  # (num_points, num_classes)
-            pred_val[b, :] = logits[:, self._class_seg_map[cat]].argmax(1) + self._class_seg_map[cat][0]
-
-        for b in range(nb_batches):
-            segp = pred_val[b, :]
+            segp = logits[:, self._class_seg_map[cat]].argmax(1) + self._class_seg_map[cat][0]
             segl = targets[batch_idx == b]
             cat = self._seg_to_class[segl[0]]
             part_ious = np.zeros(len(self._class_seg_map[cat]))
