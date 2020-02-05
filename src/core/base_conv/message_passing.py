@@ -59,7 +59,7 @@ class BaseConvolutionDown(BaseConvolution):
             batch_obj.idx = idx
             batch_obj.edge_index = edge_index
 
-        batch_obj.x = self.conv(x, (pos, pos[idx]), edge_index, batch)
+        batch_obj.x = self.conv(x, (pos[idx], pos), edge_index, batch)
 
         batch_obj.pos = pos[idx]
         batch_obj.batch = batch[idx]

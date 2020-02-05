@@ -1,13 +1,12 @@
 data:
+    name: shapenet
     task: segmentation
-    class: s3dis.S3DIS1x1Dataset
     dataroot: data
-    fold: 5
-    class_weight_method: "sqrt"
-    room_points: 32768
-    num_points: 4096
-    first_subsampling: 0.04
+    normal: True
+    first_subsampling: 0.02
+    num_points: 2048
     pre_transforms:
+        - transform: NormalizeScale
         - transform: GridSampling
           params:
               size: ${data.first_subsampling}

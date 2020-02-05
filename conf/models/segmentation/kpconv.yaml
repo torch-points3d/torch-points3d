@@ -2,7 +2,7 @@ models:
     # KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
     # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
     SimpleKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: KPConv
@@ -23,13 +23,14 @@ models:
             dropout: 0.5
 
     PDSimpleKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
-            module_name: SimpleBlock
-            grid_size: [0.1, 0.5]
-            radius: [0.2, 0.4]
+            module_name: ResnetBBlock
+            grid_size: [0.2, 4]
+            is_strided: [False, True]
             max_num_neighbors: [16, 16]
+            has_bottleneck: [False, True]
             down_conv_nn: [[FEAT, 32], [32, 64]]
         up_conv:
             module_name: FPModule
@@ -45,7 +46,7 @@ models:
             dropout: 0.5
 
     Resnet_BK_PD_KPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "PARTIAL_DENSE"
         down_conv:
             module_name: ResnetBottleNeckPartialDense
@@ -74,7 +75,7 @@ models:
             dropout: 0.5
 
     ResidualKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: ResidualBKPConv
@@ -96,7 +97,7 @@ models:
             dropout: 0.5
 
     DeformableResidualKPConv:
-        architecture: kpconv.KPConvSeg
+        class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: LightDeformableKPConv
@@ -115,4 +116,68 @@ models:
             nn: [67, 128]
         mlp_cls:
             nn: [64, 64, 64, 64, 64]
+            dropout: 0.5
+
+    KPConvPaper:
+        class: kpconv.KPConvPaper
+        conv_type: "PARTIAL_DENSE"
+        use_category: True
+        define_constants:
+            in_grid_size: ${data.first_subsampling}
+            in_feat: 64
+        down_conv:
+            down_conv_nn:
+                [
+                    [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
+                    [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
+                    [[4*in_feat, 4*in_feat], [4*in_feat, 8*in_feat]],
+                    [[8*in_feat, 8*in_feat], [8*in_feat, 16*in_feat]],
+                    [[16*in_feat, 16*in_feat], [16*in_feat, 32*in_feat]],
+                ]
+            grid_size:
+                [
+                    [in_grid_size, in_grid_size],
+                    [2*in_grid_size, 2*in_grid_size],
+                    [4*in_grid_size, 4*in_grid_size],
+                    [8*in_grid_size, 8*in_grid_size],
+                    [16*in_grid_size, 16*in_grid_size],
+                ]
+            is_strided:
+                [
+                    [False, False],
+                    [True, False],
+                    [True, False],
+                    [True, False],
+                    [True, False],
+                ]
+            block_names:
+                [
+                    ["SimpleBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                ]
+            has_bottleneck:
+                [
+                    [False, True],
+                    [True, True],
+                    [True, True],
+                    [True, True],
+                    [True, True],
+                ]
+            module_name: KPDualBlock
+        up_conv:
+            module_name: FPModule
+            up_conv_nn:
+                [
+                    [32*in_feat + 16*in_feat, 8*in_feat],
+                    [8*in_feat + 8*in_feat, 4*in_feat],
+                    [4*in_feat + 4*in_feat, 2*in_feat],
+                    [2*in_feat + 2*in_feat, in_feat],
+                ]
+            skip: True
+            up_k: [1, 1, 1, 1]
+        mlp_cls:
+            nn: [in_feat, in_feat]
             dropout: 0.5

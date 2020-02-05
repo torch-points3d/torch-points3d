@@ -83,11 +83,7 @@ class PointNet2_D(UnetBasedModel):
         data = self.model(self.input)
         last_feature = data.x
         if self._use_category:
-            num_points = data.pos.shape[1]
-            cat_one_hot = (
-                torch.zeros((data.pos.shape[0], self._num_categories, num_points)).float().to(self.category.device)
-            )
-            cat_one_hot.scatter_(1, self.category.repeat(1, num_points).unsqueeze(1), 1)
+            cat_one_hot = F.one_hot(self.category, self._num_categories).float().transpose(1, 2)
             last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
 
         self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))

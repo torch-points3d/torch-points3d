@@ -1,7 +1,7 @@
 models:
     # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
     pointnet2:
-        architecture: pointnet2.PointNet2_MP
+        class: pointnet2.PointNet2_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
@@ -28,7 +28,7 @@ models:
             dropout: 0.5
 
     pointnet2ms:
-        architecture: pointnet2.PointNet2_MP
+        class: pointnet2.PointNet2_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
             module_name: SAModule
@@ -55,7 +55,7 @@ models:
             dropout: 0.5
 
     pointnet2_original:
-        architecture: pointnet2.PointNet2_D
+        class: pointnet2.PointNet2_D
         conv_type: "DENSE"
         down_conv:
             module_name: PointNetMSGDown
@@ -84,7 +84,7 @@ models:
             dropout: 0.5
 
     pointnet2_onehot:
-        architecture: pointnet2.PointNet2_D
+        class: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -114,7 +114,7 @@ models:
             dropout: 0.5
 
     pointnet2_charlesmsg:
-        architecture: pointnet2.PointNet2_D
+        class: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: True
         down_conv:
@@ -151,9 +151,9 @@ models:
             dropout: 0.5
 
     pointnet2_charlesssg:
-        architecture: pointnet2.PointNet2_D
+        class: pointnet2.PointNet2_D
         conv_type: "DENSE"
-        use_category: True
+        use_category: False
         down_conv:
             module_name: PointNetMSGDown
             npoint: [512, 128]
