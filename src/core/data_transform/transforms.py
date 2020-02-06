@@ -36,7 +36,7 @@ class RandomSphere(object):
     key = "kd_tree"
     STRATEGIES = ["RANDOM", "FREQ_CLASS_BASED"]
     def __init__(self, radius, strategy="RANDOM", class_weight_method="sqrt"):
-        self._radius = eval(radius)
+        self._radius = eval(radius) if isinstance(radius, str) else float(radius)
         if strategy in self.STRATEGIES:
             self._strategy = strategy
         else:
