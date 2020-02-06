@@ -279,7 +279,7 @@ class S3DISOriginal(InMemoryDataset):
         self.save_kd_trees("train", train_kd_trees)
         
         test_kd_trees = self.extract_kd_trees(test_data_list)
-        self.save_kd_trees("test", train_kd_trees)
+        self.save_kd_trees("test", test_kd_trees)
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
