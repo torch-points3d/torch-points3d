@@ -125,7 +125,7 @@ def add_weights(dataset, train, class_weight_method):
         )
         setattr(dataset, "weight_classes", weights)
     else:
-        setattr(dataset, "weight_classes", torch.ones((len(inv_class_map.keys()))))
+        setattr(dataset, "weight_classes", torch.ones((len(INV_OBJECT_LABEL.keys()))))
 
     return dataset
 
