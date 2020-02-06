@@ -125,6 +125,7 @@ models:
         define_constants:
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
+            bn_momentum: 0.02
         down_conv:
             down_conv_nn:
                 [
@@ -180,6 +181,15 @@ models:
                 ]
             skip: True
             up_k: [1, 1, 1, 1]
+            bn_momentum:
+                [
+                    bn_momentum,
+                    bn_momentum,
+                    bn_momentum,
+                    bn_momentum,
+                    bn_momentum,
+                ]
         mlp_cls:
             nn: [in_feat, in_feat]
             dropout: 0.5
+            bn_momentum: bn_momentum

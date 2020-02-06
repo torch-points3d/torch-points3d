@@ -26,8 +26,13 @@ class Identity(nn.Module):
         return data
 
 
-def MLP(channels, activation=nn.LeakyReLU(0.2)):
-    return Seq(*[Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i])) for i in range(1, len(channels))])
+def MLP(channels, activation=nn.LeakyReLU(0.2), bn_momentum=0.1):
+    return Seq(
+        *[
+            Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i], momentum=bn_momentum))
+            for i in range(1, len(channels))
+        ]
+    )
 
 
 class UnaryConv(torch.nn.Module):
