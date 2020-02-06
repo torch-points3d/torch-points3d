@@ -4,13 +4,18 @@ training:
     num_workers: 6
     batch_size: 16
     cuda: 1
-    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
+    precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     epochs: 100
-    optimizer: Adam
-    weight_decay: 1e-3
+    grad_clip: 100
+    optimizer:
+        class: SGD
+        params:
+            momentum: 0.98
+            weight_decay: 1e-3
+            lr: 0.01
     learning_rate:
         scheduler_type: "step_decay"
-        base_lr: 0.001
+        base_lr: ${optimizer.params.lr}
         lr_decay: 0.5
         decay_step: 200000
         lr_clip: 1e-5

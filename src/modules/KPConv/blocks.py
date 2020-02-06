@@ -25,7 +25,7 @@ class SimpleBlock(torch.nn.Module):
         density_parameter=2.5,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
-        bn_momentum=0.1,
+        bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
         **kwargs
     ):
@@ -110,7 +110,7 @@ class ResnetBBlock(torch.nn.Module):
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
-        bn_momentum=0.1,
+        bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
         **kwargs
     ):
