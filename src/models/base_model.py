@@ -42,7 +42,7 @@ class BaseModel(torch.nn.Module):
         self._sampling_and_search_dict: Dict = {}
         self._iterations = 0
         self._lr_params = None
-        self._grad_clip = opt.grad_clip
+        self._grad_clip = getattr(opt, "grad_clip", 0)
 
     @property
     def lr_params(self):
