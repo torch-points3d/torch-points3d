@@ -15,7 +15,6 @@ jobs:
       - name: Install dependencies
         run: |
           curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-          $HOME/.poetry/bin/poetry run python -m pip install --upgrade pip
           $HOME/.poetry/bin/poetry install
       - name: Lint with flake8
         run: |
