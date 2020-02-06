@@ -26,7 +26,7 @@ class ComputeKDTree(object):
         return data
 
     def __repr__(self):
-        return "{}(leaf_size={})".format(self.__class__.__name__, self.leaf_size)
+        return "{}(leaf_size={})".format(self.__class__.__name__, self._leaf_size)
 
 class RandomSphere(object):
     r"""Randomly select a sphere of points using a given radius

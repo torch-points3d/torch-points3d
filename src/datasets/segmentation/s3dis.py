@@ -25,26 +25,27 @@ log = logging.getLogger(__name__)
 
 S3DIS_NUM_CLASSES = 13
 
+INV_OBJECT_LABEL =  {0: 'ceiling',
+                1: 'floor',
+                2: 'wall',
+                3: 'beam',
+                4: 'column',
+                5: 'window',
+                6: 'door',
+                7: 'chair',
+                8: 'table',
+                9: 'bookcase',
+                10: 'sofa',
+                11: 'board',
+                12: 'clutter'}
+
+OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
+
 ################################### UTILS #######################################
 
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
-    object_label = {
-        "ceiling": 1,
-        "floor": 2,
-        "wall": 3,
-        "column": 4,
-        "beam": 5,
-        "window": 6,
-        "door": 7,
-        "table": 8,
-        "chair": 9,
-        "bookcase": 10,
-        "sofa": 11,
-        "board": 12,
-        "clutter": 13,
-        "stairs": 0,
-    }.get(object_class, 0)
+    object_label = OBJECT_LABEL.get(object_class, 0)
     return object_label
 
 
@@ -103,24 +104,9 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         )
 
 def add_weights(dataset, train, class_weight_method):
-    inv_class_map = {
-        0: "ceiling",
-        1: "floor",
-        2: "wall",
-        3: "column",
-        4: "beam",
-        5: "window",
-        6: "door",
-        7: "table",
-        8: "chair",
-        9: "bookcase",
-        10: "sofa",
-        11: "board",
-        12: "clutter",
-    }
     if train:
         if class_weight_method is None:
-            weights = torch.ones((len(inv_class_map.keys())))
+            weights = torch.ones((len(INV_OBJECT_LABEL.keys())))
         else:
             dataset.idx_classes, weights = torch.unique(dataset.data.y, return_counts=True)
             weights = weights.float()
@@ -134,7 +120,7 @@ def add_weights(dataset, train, class_weight_method):
             weights /= torch.sum(weights)
         log.info(
             "CLASS WEIGHT : {}".format(
-                {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
+                {name: np.round(weights[index].item(), 4) for index, name in INV_OBJECT_LABEL.items()}
             )
         )
         setattr(dataset, "weight_classes", weights)
@@ -260,7 +246,7 @@ class S3DISOriginal(InMemoryDataset):
 
         train_data_list, test_data_list = [], []
 
-        for (area, room_name, file_path) in tq(train_files[:2] + test_files[:2]):
+        for (area, room_name, file_path) in tq(train_files + test_files):
 
             if self.debug:
                 read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
