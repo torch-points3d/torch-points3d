@@ -17,6 +17,7 @@ class COLORS:
     BEST_COLOR = "\033[0;92m"
 
     END_TOKEN = "\033[0m)"
+    END_NO_TOKEN = "\033[0m"
 
     Black = "\033[0;30m"  # Black
     Red = "\033[0;31m"  # Red

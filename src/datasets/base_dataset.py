@@ -11,7 +11,7 @@ from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
-
+from src.utils.colors import COLORS
 
 # A logger for this file
 log = logging.getLogger(__name__)
@@ -32,14 +32,16 @@ class BaseDataset:
         )
         self._pre_transform = instantiate_transforms(dataset_opt.pre_transforms)
 
-        for split_name in self.SPLITS:
-            name_config = "{}_transforms".format(split_name)
-            name_attr = "{}_transform".format(split_name)
-            try:
-                transform = instantiate_transforms(getattr(dataset_opt, name_config))
-            except:
-                transform = None
-            setattr(self, name_attr, transform)
+        for key_name in dataset_opt.keys():
+            if "transform" in key_name:
+                new_name = key_name.replace("transforms", "transform")
+                try:
+                    transform = instantiate_transforms(getattr(dataset_opt, key_name))
+                    log.warn("Set attr:{} {} {}for dataset with following transform {}".format(COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform))
+                except Exception as e:
+                    log.warn("Error trying to create {} {}".format(new_name, e))
+                    continue
+                setattr(self, new_name, transform)
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):

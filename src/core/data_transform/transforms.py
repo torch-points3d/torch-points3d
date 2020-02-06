@@ -34,8 +34,14 @@ class RandomSphere(object):
         radius (float or [float] or Tensor): Radius of the sphere to be sampled.
     """
     key = "kd_tree"
-    def __init__(self, radius):
+    STRATEGIES = ["RANDOM", "FREQ_CLASS_BASED"]
+    def __init__(self, radius, strategy="RANDOM", class_weight_method="sqrt"):
         self._radius = eval(radius)
+        if strategy in self.STRATEGIES:
+            self._strategy = strategy
+        else:
+            raise NotImplementedError('Only the followings strategy are implemented {}'.format(self.STRATEGIES))
+        self._class_weight_method = "sqrt" if class_weight_method.lower() == "sqrt" else "None"
 
     def __call__(self, data):
         if not hasattr(data, self.key):
@@ -45,7 +51,21 @@ class RandomSphere(object):
             delattr(data, self.key)
 
         num_points = data.pos.shape[0]
-        random_center = np.random.randint(0, len(data.pos))
+
+        if self._strategy == "RANDOM":
+            random_center = np.random.randint(0, len(data.pos))
+        
+        elif self._strategy == "FREQ_CLASS_BASED": 
+            labels = np.asarray(data.y)
+            uni, uni_counts = np.unique(np.asarray(data.y), return_counts=True)
+            uni_counts = uni_counts.mean() / uni_counts
+            if self._class_weight_method == "sqrt":
+                uni_counts = np.sqrt(uni_counts)
+            uni_counts /= np.sum(uni_counts)
+            chosen_label = np.random.choice(uni, p= uni_counts)
+            random_center = np.random.choice(np.argwhere(labels == chosen_label).flatten())
+        else:
+            raise NotImplementedError
 
         pts = np.asarray(data.pos[random_center])[np.newaxis]
         ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
@@ -56,7 +76,7 @@ class RandomSphere(object):
         return data
 
     def __repr__(self):
-        return "{}(radius={})".format(self.__class__.__name__, self._radius)
+        return "{}(radius={}, strategy={}, class_weight_method={})".format(self.__class__.__name__, self._radius, self._strategy, self._class_weight_method)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.

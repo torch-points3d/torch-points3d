@@ -16,6 +16,7 @@ data:
         - transform: RandomSphere
           params:
               radius: 50 * ${data.first_subsampling}
+              strategy: "FREQ_CLASS_BASED"
         - transform: RandomTranslate
           params:
               translate: 0.01
