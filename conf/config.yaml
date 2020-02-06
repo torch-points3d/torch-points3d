@@ -20,7 +20,7 @@ model_name: ??? # Name of the specific model to load
 # parameters for Weights and Biases
 wandb:
   project: s3dis
-  log: True
+  log: False
 
 # parameters for TensorBoard Visualization
 tensorboard:

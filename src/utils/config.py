@@ -28,7 +28,5 @@ def set_format(model_config, cfg_training):
     if conv_type not in [d.name for d in ConvolutionFormat]:
         raise Exception("The format type should be defined within {}".format([d.name for d in ConvolutionFormat]))
     else:
-        format_conf = OmegaConf.create(
-            {"conv_type": conv_type.lower(), "use_torch_loader": ConvolutionFormat[conv_type].value[1]}
-        )
+        format_conf = OmegaConf.create({"conv_type": conv_type.lower()})
         return OmegaConf.merge(cfg_training, format_conf)

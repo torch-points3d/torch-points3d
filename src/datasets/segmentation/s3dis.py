@@ -57,13 +57,13 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         for idx, row in enumerate(reader.values):
             row = row[0].split(" ")
             if len(row) != RECOMMENDED:
-                print("1: {} row {}: {}".format(raw_path, idx, row))
+                log.info("1: {} row {}: {}".format(raw_path, idx, row))
 
             try:
                 for r in row:
                     r = float(r)
             except:
-                print("2: {} row {}: {}".format(raw_path, idx, row))
+                log.info("2: {} row {}: {}".format(raw_path, idx, row))
 
         return True
     else:
@@ -73,7 +73,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             rgb = np.ascontiguousarray(room_ver[:, 3:6], dtype="uint8")
         except ValueError:
             rgb = np.zeros((room_ver.shape[0], 3), dtype="uint8")
-            print("WARN - corrupted rgb data for file %s" % raw_path)
+            log.warning("WARN - corrupted rgb data for file %s" % raw_path)
         if not label_out:
             return xyz, rgb
         n_ver = len(room_ver)
@@ -86,7 +86,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         for single_object in objects:
             object_name = os.path.splitext(os.path.basename(single_object))[0]
             if verbose:
-                print("adding object " + str(i_object) + " : " + object_name)
+                log.debug("adding object " + str(i_object) + " : " + object_name)
             object_class = object_name.split("_")[0]
             object_label = object_name_to_label(object_class)
             obj_ver = pd.read_csv(single_object, sep=" ", header=None).values

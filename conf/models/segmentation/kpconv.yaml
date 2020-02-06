@@ -166,6 +166,8 @@ models:
                     [True, True],
                     [True, True],
                 ]
+            max_num_neighbors:
+                [[12, 12], [16, 16], [20, 20], [24, 24], [30, 30]]
             module_name: KPDualBlock
         up_conv:
             module_name: FPModule

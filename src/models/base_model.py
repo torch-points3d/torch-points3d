@@ -40,7 +40,6 @@ class BaseModel(torch.nn.Module):
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._sampling_and_search_dict: Dict = {}
-        self._precompute_multi_scale = opt.precompute_multi_scale if "precompute_multi_scale" in opt else False
         self._iterations = 0
         self._lr_params = None
 
@@ -111,8 +110,9 @@ class BaseModel(torch.nn.Module):
                         errors_ret[name] = None
         return errors_ret
 
-    def set_optimizer(self, optimizer_cls: Optimizer, lr_params):
-        self._optimizer = optimizer_cls(self.parameters(), lr=lr_params.base_lr)
+    def set_optimizer(self, optimizer_cls: Optimizer, config):
+        lr_params = config.learning_rate
+        self._optimizer = optimizer_cls(self.parameters(), lr=lr_params.base_lr, weight_decay=config.weight_decay)
         self._lr_scheduler = get_scheduler(lr_params, self._optimizer)
         self._lr_params = lr_params
         log.info(self._optimizer)

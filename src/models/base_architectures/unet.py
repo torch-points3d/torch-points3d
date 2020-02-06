@@ -48,12 +48,22 @@ class BaseFactory:
 class UnetBasedModel(BaseModel):
     """Create a Unet-based generator"""
 
-    def _save_sampling_and_search(self, submodule, index):
-        down_conv = submodule.down
-        self._sampling_and_search_dict[index] = [
-            getattr(down_conv, "sampler", None),
-            getattr(down_conv, "neighbour_finder", None),
-        ]
+    def _save_sampling_and_search(self, submodule):
+        sampler = getattr(submodule.down, "sampler", None)
+        if is_list(sampler):
+            self._sampling_and_search_dict["sampler"] = sampler + self._sampling_and_search_dict["sampler"]
+        else:
+            self._sampling_and_search_dict["sampler"] = [sampler] + self._sampling_and_search_dict["sampler"]
+
+        neighbour_finder = getattr(submodule.down, "neighbour_finder", None)
+        if is_list(neighbour_finder):
+            self._sampling_and_search_dict["neighbour_finder"] = (
+                neighbour_finder + self._sampling_and_search_dict["neighbour_finder"]
+            )
+        else:
+            self._sampling_and_search_dict["neighbour_finder"] = [neighbour_finder] + self._sampling_and_search_dict[
+                "neighbour_finder"
+            ]
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
@@ -71,6 +81,7 @@ class UnetBasedModel(BaseModel):
         * OPTIONAL: innermost
         """
         super(UnetBasedModel, self).__init__(opt)
+        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
         # detect which options format has been used to define the model
         if type(opt.down_conv) is ListConfig or "down_conv_nn" not in opt.down_conv:
             self._init_from_layer_list_format(opt, model_type, dataset, modules_lib)
@@ -110,7 +121,7 @@ class UnetBasedModel(BaseModel):
             for index in range(num_convs - 1, 0, -1):
                 args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
                 unet_block = UnetSkipConnectionBlock(args_up=args_up, args_down=args_down, submodule=unet_block)
-                self._save_sampling_and_search(unet_block, index)
+                self._save_sampling_and_search(unet_block)
         else:
             index = num_convs
 
@@ -121,7 +132,7 @@ class UnetBasedModel(BaseModel):
         self.model = UnetSkipConnectionBlock(
             args_up=args_up, args_down=args_down, submodule=unet_block, outermost=True
         )  # add the outermost layer
-        self._save_sampling_and_search(self.model, index)
+        self._save_sampling_and_search(self.model)
 
     def _init_from_layer_list_format(self, opt, model_type, dataset, modules_lib):
         """Create a unetbasedmodel from the layer list options format - where
@@ -169,7 +180,7 @@ class UnetBasedModel(BaseModel):
             args_up=up_layer, args_down=down_layer, submodule=unet_block, outermost=True
         )
 
-        self._save_sampling_and_search(self.model, index)
+        self._save_sampling_and_search(self.model)
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
@@ -195,7 +206,6 @@ class UnetBasedModel(BaseModel):
                 if is_list(v):
                     v = list(v)
                 args[name] = v
-        args["precompute_multi_scale"] = self._precompute_multi_scale
         return args
 
     def _fetch_arguments_up_and_down(self, opt, index):
@@ -278,16 +288,16 @@ class UnetSkipConnectionBlock(nn.Module):
             self.submodule = submodule
             self.up = upconv
 
-    def forward(self, data):
+    def forward(self, data, **kwargs):
         if self.innermost:
-            data_out = self.inner(data)
+            data_out = self.inner(data, **kwargs)
             data = (data_out, data)
-            return self.up(data)
+            return self.up(data, **kwargs)
         else:
-            data_out = self.down(data)
-            data_out2 = self.submodule(data_out)
+            data_out = self.down(data, **kwargs)
+            data_out2 = self.submodule(data_out, **kwargs)
             data = (data_out2, data)
-            return self.up(data)
+            return self.up(data, **kwargs)
 
 
 ############################# UNWRAPPED UNET BASE ###################################
@@ -296,11 +306,18 @@ class UnetSkipConnectionBlock(nn.Module):
 class UnwrappedUnetBasedModel(BaseModel):
     """Create a Unet unwrapped generator"""
 
-    def _save_sampling_and_search(self, down_conv, index):
-        self._sampling_and_search_dict[index] = [
-            getattr(down_conv, "sampler", None),
-            getattr(down_conv, "neighbour_finder", None),
-        ]
+    def _save_sampling_and_search(self, down_conv):
+        sampler = getattr(down_conv, "sampler", None)
+        if is_list(sampler):
+            self._sampling_and_search_dict["sampler"] += sampler
+        else:
+            self._sampling_and_search_dict["sampler"].append(sampler)
+
+        neighbour_finder = getattr(down_conv, "neighbour_finder", None)
+        if is_list(neighbour_finder):
+            self._sampling_and_search_dict["neighbour_finder"] += neighbour_finder
+        else:
+            self._sampling_and_search_dict["neighbour_finder"].append(neighbour_finder)
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet unwrapped generator
@@ -326,6 +343,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         """
         super(UnwrappedUnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
+        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
 
         if is_list(opt.down_conv) or "down_conv_nn" not in opt.down_conv:
             raise NotImplementedError
@@ -383,7 +401,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             args = self._fetch_arguments(opt.down_conv, i, "DOWN")
             conv_cls = self._get_from_kwargs(args, "conv_cls")
             down_module = conv_cls(**args)
-            self._save_sampling_and_search(down_module, i)
+            self._save_sampling_and_search(down_module)
             self.down_modules.append(down_module)
 
         # Up modules
@@ -416,7 +434,6 @@ class UnwrappedUnetBasedModel(BaseModel):
                 if is_list(v):
                     v = list(v)
                 args[name] = v
-        args["precompute_multi_scale"] = self._precompute_multi_scale
         return args
 
     def _fetch_arguments(self, conv_opt, index, flow):
