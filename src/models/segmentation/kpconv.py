@@ -49,7 +49,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
         self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
-        self.loss_names = ["loss_seg"]
+        self.loss_names = ["loss_seg", "loss_reg"]
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -101,8 +101,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         # calculate loss given the input and intermediate results
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
 
+        self.loss_reg = self.get_internal_loss()
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.loss_reg
         self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
