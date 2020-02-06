@@ -26,7 +26,7 @@ class SimpleBlock(torch.nn.Module):
         sigma=1.0,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
-        bn_momentum=0.1,
+        bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
         deformable=False,
         **kwargs,
@@ -37,10 +37,10 @@ class SimpleBlock(torch.nn.Module):
         self.grid_size = grid_size
         if deformable:
             density_parameter = self.DEFORMABLE_DENSITY
-            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
         else:
             density_parameter = self.NORMAL_DENSITY
-            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
 
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
@@ -117,7 +117,7 @@ class ResnetBBlock(torch.nn.Module):
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
-        bn_momentum=0.1,
+        bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
         deformable=False,
         **kwargs,

@@ -333,7 +333,7 @@ class LightDeformablePointKernel(MessagePassing, BaseInternalLossModule):
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 
 
-class KPConvLayer(torch.nn.Module, BaseInternalLossModule):
+class KPConvLayer(torch.nn.Module):
     """
     apply the kernel point convolution on a point cloud
     NB : it is the original version of KPConv, it is not the message passing version
@@ -412,9 +412,6 @@ class KPConvLayer(torch.nn.Module, BaseInternalLossModule):
             self.kernel_radius,
             self.KP_influence,
         )
-
-    def get_internal_losses(self):
-        return {}
 
 
 class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):

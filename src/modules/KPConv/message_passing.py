@@ -11,7 +11,7 @@ from torch.nn import (
 from torch_geometric.utils import scatter_
 from src.core.sampling import FPSSampler
 from src.core.neighbourfinder import RadiusNeighbourFinder
-from .kernels import PointKernel, LightDeformablePointKernel, PointKernelPartialDense
+from .kernels import PointKernel, LightDeformablePointKernel
 from torch_scatter import scatter_max
 
 
