@@ -2,13 +2,13 @@ import torch
 import sys
 
 from .kernels import KPConvLayer
-from src.core.common_modules.base_modules import UnaryConv
+from src.core.common_modules.base_modules import UnaryConv, BaseModule
 from src.core.neighbourfinder import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
 
 
-class SimpleBlock(torch.nn.Module):
+class SimpleBlock(BaseModule):
     """
     simple layer with KPConv convolution -> activation -> BN
     we can perform a stride version (just change the query and the neighbors)
@@ -77,10 +77,10 @@ class SimpleBlock(torch.nn.Module):
         return query_data
 
     def extra_repr(self):
-        return str(self.sampler) + "," + str(self.neighbour_finder)
+        return "Nb parameters: %i, %s, %s" % (self.nb_params, str(self.sampler), str(self.neighbour_finder))
 
 
-class ResnetBBlock(torch.nn.Module):
+class ResnetBBlock(BaseModule):
     """ Resnet block with optional bottleneck activated by default
 
     Arguments:
@@ -158,11 +158,11 @@ class ResnetBBlock(torch.nn.Module):
         # Shortcut
         if num_inputs != num_outputs:
             if bn:
-                self.shortcut_op = UnaryConv(num_inputs, num_outputs)
-            else:
                 self.shortcut_op = torch.nn.Sequential(
                     UnaryConv(num_inputs, num_outputs), bn(num_outputs, momentum=bn_momentum)
                 )
+            else:
+                self.shortcut_op = UnaryConv(num_inputs, num_outputs)
         else:
             self.shortcut_op = torch.nn.Identity()
 
@@ -201,8 +201,11 @@ class ResnetBBlock(torch.nn.Module):
     def neighbour_finder(self):
         return self.kp_conv.neighbour_finder
 
+    def extra_repr(self):
+        return "Nb parameters: %i, %s, %s" % (self.nb_params, str(self.sampler), str(self.neighbour_finder))
 
-class KPDualBlock(torch.nn.Module):
+
+class KPDualBlock(BaseModule):
     def __init__(
         self,
         block_names=None,
@@ -240,3 +243,6 @@ class KPDualBlock(torch.nn.Module):
     @property
     def neighbour_finder(self):
         return [b.neighbour_finder for b in self.blocks]
+
+    def extra_repr(self):
+        return "Nb parameters: %i" % self.nb_params

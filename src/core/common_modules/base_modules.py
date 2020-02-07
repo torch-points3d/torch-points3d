@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.nn.parameter import Parameter
@@ -11,6 +12,20 @@ from torch.nn import (
 )
 
 
+class BaseModule(torch.nn.Module):
+    """ Base module class with some basic additions to the pytorch Module class
+    """
+
+    @property
+    def nb_params(self):
+        """This property is used to return the number of trainable parameters for a given layer
+        It is useful for debugging and reproducibility.
+        """
+        model_parameters = filter(lambda p: p.requires_grad, self.parameters())
+        self._nb_params = sum([np.prod(p.size()) for p in model_parameters])
+        return self._nb_params
+
+
 def weight_variable(shape):
 
     initial = torch.empty(shape, dtype=torch.float)
@@ -18,7 +33,7 @@ def weight_variable(shape):
     return initial
 
 
-class Identity(nn.Module):
+class Identity(BaseModule):
     def __init__(self):
         super(Identity, self).__init__()
 
@@ -29,13 +44,13 @@ class Identity(nn.Module):
 def MLP(channels, activation=nn.LeakyReLU(0.2), bn_momentum=0.1, bias=True):
     return Seq(
         *[
-            Seq(Lin(channels[i - 1], channels[i], bias=bias), activation, BN(channels[i], momentum=bn_momentum))
+            Seq(Lin(channels[i - 1], channels[i], bias=bias), BN(channels[i], momentum=bn_momentum), activation)
             for i in range(1, len(channels))
         ]
     )
 
 
-class UnaryConv(torch.nn.Module):
+class UnaryConv(BaseModule):
     def __init__(self, num_inputs, num_outputs):
         """
         1x1 convolution on point cloud (we can even call it a mini pointnet)

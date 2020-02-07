@@ -175,6 +175,9 @@ class FPModule(BaseConvolutionUp):
     def conv(self, x, pos, pos_skip, batch, batch_skip, *args):
         return knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
 
+    def extra_repr(self):
+        return "Nb parameters: %i" % self.nb_params
+
 
 ########################## BASE RESIDUAL DOWN #####################
 
