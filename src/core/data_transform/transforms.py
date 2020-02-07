@@ -52,7 +52,7 @@ class RandomSphere(object):
             
         # The kdtree has bee attached to data for optimization reason.
         # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
-        if self._delattr_kd_tree:
+        if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
             delattr(data, self.KDTREE_KEY)
 
         # apply sampling strategy
