@@ -165,7 +165,7 @@ class S3DISOriginal(InMemoryDataset):
     def __getitem__(self, idx):
         if isinstance(idx, int):
             super_class = super(S3DISOriginal, self)
-            if hasattr(dir(super_class), "indices"):
+            if hasattr(super_class, "indices"):
                 data = self.get(super_class.indices()[idx])
             else:
                 data = self.get(idx)
