@@ -5,6 +5,7 @@ data:
     fold: 5
     class_weight_method: "sqrt"
     first_subsampling: 0.04
+    use_category: False
     pre_transforms:
         - transform: GridSampling
           params:

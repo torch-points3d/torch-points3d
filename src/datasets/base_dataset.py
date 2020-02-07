@@ -17,7 +17,6 @@ from src.utils.colors import COLORS
 log = logging.getLogger(__name__)
 
 class BaseDataset:
-    SPLITS = ['train', 'val', 'test']
     def __init__(self, dataset_opt, training_opt):
         self.dataset_opt = dataset_opt
         
@@ -37,7 +36,7 @@ class BaseDataset:
                 new_name = key_name.replace("transforms", "transform")
                 try:
                     transform = instantiate_transforms(getattr(dataset_opt, key_name))
-                    log.warn("Set attr:{} {} {}for dataset with following transform {}".format(COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform))
+                    log.info("Set attr:{} {} {}for dataset with following transform {}".format(COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform))
                 except Exception as e:
                     log.warn("Error trying to create {} {}".format(new_name, e))
                     continue

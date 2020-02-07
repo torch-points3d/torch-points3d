@@ -7,7 +7,7 @@ import torch
 import h5py
 import torch
 import glob
-from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip
+from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip, Dataset
 from torch_geometric.data import DataLoader
 from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
@@ -163,14 +163,13 @@ class S3DISOriginal(InMemoryDataset):
         self.kd_trees = self.load_kd_trees("train" if train else "test")
 
     def __getitem__(self, idx):
-        r"""Gets the data object at index :obj:`idx` and transforms it (in case
-        a :obj:`self.transform` is given).
-        In case :obj:`idx` is a slicing object, *e.g.*, :obj:`[2:5]`, a list, a
-        tuple, a  LongTensor or a BoolTensor, will return a subset of the
-        dataset at the specified indices."""
         if isinstance(idx, int):
-            data = self.get(idx)
-            data.kd_tree = self.kd_trees[idx]
+            super_class = super(S3DISOriginal, self)
+            if hasattr(dir(super_class), "indices"):
+                data = self.get(super_class.indices()[idx])
+            else:
+                data = self.get(idx)
+            data.kd_tree = self.kd_trees[str(np.asarray(data.id))]
             data = data if self.transform is None else self.transform(data)
             return data
         else:
@@ -205,10 +204,10 @@ class S3DISOriginal(InMemoryDataset):
                 )
 
     def extract_kd_trees(self, data_list):
-        kd_trees = []
+        kd_trees = {}
         for data in data_list:
             if hasattr(data, "kd_tree"):
-                kd_trees.append(getattr(data, "kd_tree"))
+                kd_trees[str(np.asarray(data.id))]= getattr(data, "kd_tree")
                 delattr(data, "kd_tree")
         return kd_trees
 
@@ -245,8 +244,9 @@ class S3DISOriginal(InMemoryDataset):
         ]
 
         train_data_list, test_data_list = [], []
-
-        for (area, room_name, file_path) in tq(train_files + test_files):
+        
+        data_count = 0
+        for (area, room_name, file_path) in tq(train_files[:40] + test_files[:2]):
 
             if self.debug:
                 read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
@@ -255,7 +255,7 @@ class S3DISOriginal(InMemoryDataset):
                     file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                 )
 
-                data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels)
+                data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels, id=torch.ones(1).int() * data_count)
 
                 if self.keep_instance:
                     data.room_object_indices = room_object_indices
@@ -270,6 +270,8 @@ class S3DISOriginal(InMemoryDataset):
                     train_data_list.append(data)
                 else:
                     test_data_list.append(data)
+            
+            data_count += 1
 
         if self.pre_collate_transform:
             train_data_list = self.pre_collate_transform.fit_transform(train_data_list)

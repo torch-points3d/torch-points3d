@@ -11,7 +11,7 @@ from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
 from src.datasets.multiscale_data import MultiScaleData
-
+from src.utils.transform_utils import SamplingStrategy
 
 class ComputeKDTree(object):
     r"""Calculate the KDTree and save it within data
@@ -28,44 +28,35 @@ class ComputeKDTree(object):
     def __repr__(self):
         return "{}(leaf_size={})".format(self.__class__.__name__, self._leaf_size)
 
+
 class RandomSphere(object):
     r"""Randomly select a sphere of points using a given radius
     Args:
         radius (float or [float] or Tensor): Radius of the sphere to be sampled.
     """
-    key = "kd_tree"
-    STRATEGIES = ["RANDOM", "FREQ_CLASS_BASED"]
-    def __init__(self, radius, strategy="RANDOM", class_weight_method="sqrt"):
+    KDTREE_KEY = "kd_tree"
+    def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
-        if strategy in self.STRATEGIES:
-            self._strategy = strategy
-        else:
-            raise NotImplementedError('Only the followings strategy are implemented {}'.format(self.STRATEGIES))
-        self._class_weight_method = "sqrt" if class_weight_method.lower() == "sqrt" else "None"
+
+        self._sampling_strategy = SamplingStrategy(strategy=strategy, class_weight_method=class_weight_method)
+
+        self._delattr_kd_tree = delattr_kd_tree
 
     def __call__(self, data):
-        if not hasattr(data, self.key):
+        num_points = data.pos.shape[0]
+        
+        if not hasattr(data, self.KDTREE_KEY):
             tree = KDTree(np.asarray(data.pos), leaf_size=50)
         else:
-            tree = getattr(data, self.key)
-            delattr(data, self.key)
+            tree = getattr(data, self.KDTREE_KEY)
+            
+        # The kdtree has bee attached to data for optimization reason.
+        # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
+        if self._delattr_kd_tree:
+            delattr(data, self.KDTREE_KEY)
 
-        num_points = data.pos.shape[0]
-
-        if self._strategy == "RANDOM":
-            random_center = np.random.randint(0, len(data.pos))
-        
-        elif self._strategy == "FREQ_CLASS_BASED": 
-            labels = np.asarray(data.y)
-            uni, uni_counts = np.unique(np.asarray(data.y), return_counts=True)
-            uni_counts = uni_counts.mean() / uni_counts
-            if self._class_weight_method == "sqrt":
-                uni_counts = np.sqrt(uni_counts)
-            uni_counts /= np.sum(uni_counts)
-            chosen_label = np.random.choice(uni, p= uni_counts)
-            random_center = np.random.choice(np.argwhere(labels == chosen_label).flatten())
-        else:
-            raise NotImplementedError
+        # apply sampling strategy
+        random_center = self._sampling_strategy(data)
 
         pts = np.asarray(data.pos[random_center])[np.newaxis]
         ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
@@ -76,7 +67,7 @@ class RandomSphere(object):
         return data
 
     def __repr__(self):
-        return "{}(radius={}, strategy={}, class_weight_method={})".format(self.__class__.__name__, self._radius, self._strategy, self._class_weight_method)
+        return "{}(radius={}, sampling_strategy={})".format(self.__class__.__name__, self._radius, self._sampling_strategy)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.
