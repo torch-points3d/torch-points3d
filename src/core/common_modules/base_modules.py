@@ -26,10 +26,10 @@ class Identity(nn.Module):
         return data
 
 
-def MLP(channels, activation=nn.LeakyReLU(0.2), bn_momentum=0.1):
+def MLP(channels, activation=nn.LeakyReLU(0.2), bn_momentum=0.1, bias=True):
     return Seq(
         *[
-            Seq(Lin(channels[i - 1], channels[i]), activation, BN(channels[i], momentum=bn_momentum))
+            Seq(Lin(channels[i - 1], channels[i], bias=bias), activation, BN(channels[i], momentum=bn_momentum))
             for i in range(1, len(channels))
         ]
     )
