@@ -246,7 +246,7 @@ class S3DISOriginal(InMemoryDataset):
         train_data_list, test_data_list = [], []
         
         data_count = 0
-        for (area, room_name, file_path) in tq(train_files[:40] + test_files[:2]):
+        for (area, room_name, file_path) in tq(train_files + test_files):
 
             if self.debug:
                 read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
