@@ -5,6 +5,7 @@ data:
     normal: True
     first_subsampling: 0.02
     num_points: 2048
+    use_category: True
     pre_transforms:
         - transform: NormalizeScale
         - transform: GridSampling

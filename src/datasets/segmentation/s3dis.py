@@ -1,12 +1,13 @@
 import os
 import os.path as osp
+from itertools import repeat, product
 import numpy as np
 import pandas as pd
 import torch
 import h5py
 import torch
 import glob
-from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip
+from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip, Dataset
 from torch_geometric.data import DataLoader
 from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
@@ -17,34 +18,34 @@ import csv
 
 from src.metrics.segmentation_tracker import SegmentationTracker
 import src.core.data_transform.transforms as cT
-
 from src.datasets.base_dataset import BaseDataset
-
+import pickle
 
 log = logging.getLogger(__name__)
 
 S3DIS_NUM_CLASSES = 13
 
+INV_OBJECT_LABEL =  {0: 'ceiling',
+                1: 'floor',
+                2: 'wall',
+                3: 'beam',
+                4: 'column',
+                5: 'window',
+                6: 'door',
+                7: 'chair',
+                8: 'table',
+                9: 'bookcase',
+                10: 'sofa',
+                11: 'board',
+                12: 'clutter'}
+
+OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
+
 ################################### UTILS #######################################
 
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
-    object_label = {
-        "ceiling": 1,
-        "floor": 2,
-        "wall": 3,
-        "column": 4,
-        "beam": 5,
-        "window": 6,
-        "door": 7,
-        "table": 8,
-        "chair": 9,
-        "bookcase": 10,
-        "sofa": 11,
-        "board": 12,
-        "clutter": 13,
-        "stairs": 0,
-    }.get(object_class, 0)
+    object_label = OBJECT_LABEL.get(object_class, 0)
     return object_label
 
 
@@ -103,24 +104,9 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         )
 
 def add_weights(dataset, train, class_weight_method):
-    inv_class_map = {
-        0: "ceiling",
-        1: "floor",
-        2: "wall",
-        3: "column",
-        4: "beam",
-        5: "window",
-        6: "door",
-        7: "table",
-        8: "chair",
-        9: "bookcase",
-        10: "sofa",
-        11: "board",
-        12: "clutter",
-    }
     if train:
         if class_weight_method is None:
-            weights = torch.ones((len(inv_class_map.keys())))
+            weights = torch.ones((len(INV_OBJECT_LABEL.keys())))
         else:
             dataset.idx_classes, weights = torch.unique(dataset.data.y, return_counts=True)
             weights = weights.float()
@@ -134,12 +120,12 @@ def add_weights(dataset, train, class_weight_method):
             weights /= torch.sum(weights)
         log.info(
             "CLASS WEIGHT : {}".format(
-                {name: np.round(weights[index].item(), 4) for index, name in inv_class_map.items()}
+                {name: np.round(weights[index].item(), 4) for index, name in INV_OBJECT_LABEL.items()}
             )
         )
         setattr(dataset, "weight_classes", weights)
     else:
-        setattr(dataset, "weight_classes", torch.ones((len(inv_class_map.keys()))))
+        setattr(dataset, "weight_classes", torch.ones((len(INV_OBJECT_LABEL.keys()))))
 
     return dataset
 
@@ -165,6 +151,7 @@ class S3DISOriginal(InMemoryDataset):
         debug=False,
     ):
         assert test_area >= 1 and test_area <= 6
+        self.transform = transform
         self.pre_collate_transform = pre_collate_transform
         self.test_area = test_area
         self.keep_instance = keep_instance
@@ -173,6 +160,20 @@ class S3DISOriginal(InMemoryDataset):
         super(S3DISOriginal, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
+        self.kd_trees = self.load_kd_trees("train" if train else "test")
+
+    def __getitem__(self, idx):
+        if isinstance(idx, int):
+            super_class = super(S3DISOriginal, self)
+            if hasattr(super_class, "indices"):
+                data = self.get(super_class.indices()[idx])
+            else:
+                data = self.get(idx)
+            data.kd_tree = self.kd_trees[str(np.asarray(data.id))]
+            data = data if self.transform is None else self.transform(data)
+            return data
+        else:
+            return self.index_select(idx)
 
     @property
     def raw_file_names(self):
@@ -202,6 +203,27 @@ class S3DISOriginal(InMemoryDataset):
                     )
                 )
 
+    def extract_kd_trees(self, data_list):
+        kd_trees = {}
+        for data in data_list:
+            if hasattr(data, "kd_tree"):
+                kd_trees[str(np.asarray(data.id))]= getattr(data, "kd_tree")
+                delattr(data, "kd_tree")
+        return kd_trees
+
+    def save_kd_trees(self, split_name, kd_trees):
+        name = "{}_kd_trees.p".format(split_name)
+        pickle_out = open(os.path.join(self.processed_dir, name),"wb")
+        pickle.dump(kd_trees, pickle_out)
+        pickle_out.close()
+
+    def load_kd_trees(self, split_name):
+        name = "{}_kd_trees.p".format(split_name)
+        pickle_out = open(os.path.join(self.processed_dir, name),"rb")
+        kd_trees = pickle.load(pickle_out)
+        pickle_out.close()
+        return kd_trees
+
     def process(self):
 
         train_areas = [f for f in self.folders if str(self.test_area) not in f]
@@ -222,7 +244,8 @@ class S3DISOriginal(InMemoryDataset):
         ]
 
         train_data_list, test_data_list = [], []
-
+        
+        data_count = 0
         for (area, room_name, file_path) in tq(train_files + test_files):
 
             if self.debug:
@@ -232,7 +255,7 @@ class S3DISOriginal(InMemoryDataset):
                     file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                 )
 
-                data = Data(pos=xyz, x=rgb.float(), y=room_labels)
+                data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels, id=torch.ones(1).int() * data_count)
 
                 if self.keep_instance:
                     data.room_object_indices = room_object_indices
@@ -247,10 +270,18 @@ class S3DISOriginal(InMemoryDataset):
                     train_data_list.append(data)
                 else:
                     test_data_list.append(data)
+            
+            data_count += 1
 
         if self.pre_collate_transform:
             train_data_list = self.pre_collate_transform.fit_transform(train_data_list)
             test_data_list = self.pre_collate_transform.transform(test_data_list)
+
+        train_kd_trees = self.extract_kd_trees(train_data_list)
+        self.save_kd_trees("train", train_kd_trees)
+        
+        test_kd_trees = self.extract_kd_trees(test_data_list)
+        self.save_kd_trees("test", test_kd_trees)
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
@@ -262,23 +293,19 @@ class S3DISDataset(BaseDataset):
 
         pre_transform = self._pre_transform
 
-        transform = T.Compose(
-            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
-        )
-
         train_dataset = S3DISOriginal(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
             pre_transform=pre_transform,
-            transform=transform,
+            transform=self.train_transform,
         )
         test_dataset = S3DISOriginal(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_transform=pre_transform,
-            transform=T.FixedPoints(dataset_opt.num_points),
+            transform=self.test_transform,
         )
 
         train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
