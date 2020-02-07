@@ -15,7 +15,7 @@ import logging
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm as tq
 import csv
-
+import pandas as pd 
 from src.metrics.segmentation_tracker import SegmentationTracker
 import src.core.data_transform.transforms as cT
 from src.datasets.base_dataset import BaseDataset
@@ -130,6 +130,52 @@ def add_weights(dataset, train, class_weight_method):
     return dataset
 
 ################################### DATASETS ###################################
+
+################################### 1m cylinder s3dis ###################################
+
+class S3DIS1x1Dataset(BaseDataset):
+    def __init__(self, dataset_opt, training_opt):
+        super().__init__(dataset_opt, training_opt)
+
+        pre_transform = self._pre_transform
+
+        transform = T.Compose(
+            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
+        )
+
+        train_dataset = S3DIS1x1(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=True,
+            pre_transform=pre_transform,
+            transform=transform,
+        )
+        test_dataset = S3DIS1x1(
+            self._data_path,
+            test_area=self.dataset_opt.fold,
+            train=False,
+            pre_transform=pre_transform,
+            transform=T.FixedPoints(dataset_opt.num_points),
+        )
+
+        train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
+
+        self._create_dataloaders(train_dataset, test_dataset)
+
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+
+################################### Used for s3dis radius sphere ###################################
 
 class S3DISOriginal(InMemoryDataset):
 
@@ -287,6 +333,7 @@ class S3DISOriginal(InMemoryDataset):
         torch.save(self.collate(test_data_list), self.processed_paths[1])
 
 
+
 class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
@@ -326,29 +373,136 @@ class S3DISDataset(BaseDataset):
         return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
 
 
-class S3DIS1x1Dataset(BaseDataset):
+################################### Used for fused s3dis radius sphere ###################################
+
+class S3DISOriginalFused(InMemoryDataset):
+
+    url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
+    zip_name = "Stanford3dDataset_v1.2_Aligned_Version.zip"
+    folders = ["Area_{}".format(i) for i in range(1, 7)]
+    num_classes = S3DIS_NUM_CLASSES
+    def __init__(
+        self,
+        root,
+        test_area=6,
+        train=True,
+        transform=None,
+        pre_transform=None,
+        pre_collate_transform=None,
+        pre_filter=None,
+        keep_instance=False,
+        verbose=False,
+        debug=False,
+    ):
+        assert test_area >= 1 and test_area <= 6
+        self.transform = transform
+        self.pre_collate_transform = pre_collate_transform
+        self.test_area = test_area
+        self.keep_instance = keep_instance
+        self.verbose = verbose
+        self.debug = debug
+        super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
+        path = self.processed_paths[0] if train else self.processed_paths[1]
+        self.data, self.slices = torch.load(path)
+
+    @property
+    def raw_file_names(self):
+        return self.folders
+
+    @property
+    def processed_file_names(self):
+        test_area = self.test_area
+        return ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
+
+    def download(self):
+        raw_folders = os.listdir(self.raw_dir)
+        if len(raw_folders) == 0:
+            raise RuntimeError(
+                "Dataset not found. Please download {} from {} and move it to {} with {}".format(
+                    self.zip_name, self.url, self.raw_dir, self.folders
+                )
+            )
+        else:
+            intersection = len(set(self.folders).intersection(set(raw_folders)))
+            if intersection == 0:
+                print("The data seems properly downloaded")
+            else:
+                raise RuntimeError(
+                    "Dataset not found. Please download {} from {} and move it to {} with {}".format(
+                        self.zip_name, self.url, self.raw_dir, self.folders
+                    )
+                )
+
+    def process(self):
+
+        train_areas = [f for f in self.folders if str(self.test_area) not in f]
+        test_areas = [f for f in self.folders if str(self.test_area) in f]
+
+        train_files = [
+            (f, room_name, osp.join(self.raw_dir, f, room_name))
+            for f in train_areas
+            for room_name in os.listdir(osp.join(self.raw_dir, f))
+            if ".DS_Store" != room_name
+        ]
+
+        test_files = [
+            (f, room_name, osp.join(self.raw_dir, f, room_name))
+            for f in test_areas
+            for room_name in os.listdir(osp.join(self.raw_dir, f))
+            if ".DS_Store" != room_name
+        ]
+
+        train_data_list, test_data_list = [], []
+        
+        for (area, room_name, file_path) in tq(train_files + test_files):
+
+            if self.debug:
+                read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+            else:
+                xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
+                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
+                )
+
+                data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels)
+
+                if self.keep_instance:
+                    data.room_object_indices = room_object_indices
+
+                if self.pre_filter is not None and not self.pre_filter(data):
+                    continue
+
+                if self.pre_transform is not None:
+                    data = self.pre_transform(data)
+
+                if (area, room_name, file_path) in train_files:
+                    train_data_list.append(data)
+                else:
+                    test_data_list.append(data)
+            
+        if self.pre_collate_transform:
+            print('pre_collate_transform ...')
+            train_data_list = self.pre_collate_transform(train_data_list)
+            test_data_list = self.pre_collate_transform(test_data_list)
+
+        torch.save(self.collate(train_data_list), self.processed_paths[0])
+        torch.save(self.collate(test_data_list), self.processed_paths[1])
+
+class S3DISFusedDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
 
-        pre_transform = self._pre_transform
-
-        transform = T.Compose(
-            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
-        )
-
-        train_dataset = S3DIS1x1(
+        train_dataset = S3DISOriginalFused(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
-            pre_transform=pre_transform,
-            transform=transform,
+            pre_collate_transform=self.pre_collate_transform,
+            transform=self.train_transform,
         )
-        test_dataset = S3DIS1x1(
+        test_dataset = S3DISOriginalFused(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
-            pre_transform=pre_transform,
-            transform=T.FixedPoints(dataset_opt.num_points),
+            pre_collate_transform=self.pre_collate_transform,
         )
 
         train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)

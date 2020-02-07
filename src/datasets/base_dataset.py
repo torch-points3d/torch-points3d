@@ -29,7 +29,6 @@ class BaseDataset:
         self._batch_collate_function = BaseDataset._get_collate_function(
             training_opt.conv_type, training_opt.precompute_multi_scale
         )
-        self._pre_transform = instantiate_transforms(dataset_opt.pre_transforms)
 
         for key_name in dataset_opt.keys():
             if "transform" in key_name:

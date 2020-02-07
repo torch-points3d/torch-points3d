@@ -1,3 +1,5 @@
+from typing import List
+import itertools
 import numpy as np
 import math
 import re
@@ -13,6 +15,77 @@ from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
+from src.utils.config import is_list
+from torch_geometric.data import Data, Batch
+from tqdm import tqdm as tq
+
+class PointCloudFusion(object):
+
+    def __call__(self, data_list: List[Data]):
+        if len(data_list) == 0:
+            raise Exception('A list of data should be provided')
+        elif len(data_list) == 1:
+            return data_list[0]
+        else:
+            data = Batch.from_data_list(data_list)
+            delattr(data, "batch")
+            return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)
+
+class GridSphereSampling(object):
+    r"""Fit the point cloud to a grid and for each point in this grid, 
+    create a sphere with a radius r
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+    """
+    KDTREE_KEY = "kd_tree"
+    def __init__(self, radius, delattr_kd_tree=True):
+        self._radius = eval(radius) if isinstance(radius, str) else float(radius)
+
+        self._grid_sampling = GridSampling(size=self._radius // 2)
+        self._delattr_kd_tree = delattr_kd_tree
+
+    def _process(self, data):
+        num_points = data.pos.shape[0]
+        
+        if not hasattr(data, self.KDTREE_KEY):
+            tree = KDTree(np.asarray(data.pos), leaf_size=50)
+        else:
+            tree = getattr(data, self.KDTREE_KEY)
+            
+        # The kdtree has bee attached to data for optimization reason.
+        # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
+        if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
+            delattr(data, self.KDTREE_KEY)
+
+        # apply grid sampling
+        grid_data = self._grid_sampling(data.clone())
+
+        datas = []
+        for grid_center in np.asarray(grid_data.pos):
+            pts = np.asarray(grid_center)[np.newaxis]
+            ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+            new_data = Data()
+            for key in set(data.keys):
+                item = data[key].clone()
+                if num_points == item.shape[0]:
+                    setattr(new_data, key, item[ind])
+            datas.append(new_data)
+        return datas       
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data)) # 2d list needs to be flatten
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(radius={})".format(self.__class__.__name__, self._radius)
+
 
 class ComputeKDTree(object):
     r"""Calculate the KDTree and save it within data
@@ -22,8 +95,15 @@ class ComputeKDTree(object):
     def __init__(self, leaf_size):
         self._leaf_size = leaf_size
 
-    def __call__(self, data):
+    def _process(self, data):
         data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self._leaf_size)
+        return data
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
         return data
 
     def __repr__(self):
@@ -176,7 +256,7 @@ class RandomScaleAnisotropic:
     """
 
     def __init__(self, scales, anisotropic=True):
-        assert isinstance(scales, (tuple, list)) and len(scales) == 2
+        assert (is_list(scales) or isinstance(scales, tuple)) and len(scales) == 2
         assert scales[0] <= scales[1]
         self.scales = scales
 
