@@ -6,7 +6,7 @@ defaults:
   - dataset: ???
     optional: True
 
-  - training
+  - training: default
   - eval
 
   - models: ${defaults.0.task}/${defaults.1.model_type}
@@ -15,15 +15,5 @@ defaults:
   - hydra/job_logging: custom
 
 model_name: ??? # Name of the specific model to load
-
-# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
-# parameters for Weights and Biases
-wandb:
-  project: s3dis
-  log: False
-
-# parameters for TensorBoard Visualization
-tensorboard:
-  log: True
 
 pretty_print: False

@@ -2,6 +2,7 @@ import numpy as np
 import math
 import re
 import torch
+import random
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
 from torch_geometric.data import Data
@@ -153,6 +154,39 @@ class RandomNoise(object):
 
     def __repr__(self):
         return "Random noise of sigma={}".format(self.sigma)
+
+
+class RandomScaleAnisotropic:
+    r"""Scales node positions by a randomly sampled factor :math:`s1, s2, s3` within a
+    given interval, *e.g.*, resulting in the transformation matrix
+
+    .. math::
+        \begin{bmatrix}
+            s1 & 0 & 0 \\
+            0 & s2 & 0 \\
+            0 & 0 & s3 \\
+        \end{bmatrix}
+
+    for three-dimensional positions.
+
+    Args:
+        scales (tuple): scaling factor interval, e.g. :obj:`(a, b)`, then scale
+            is randomly sampled from the range
+            :math:`a \leq \mathrm{scale} \leq b`.
+    """
+
+    def __init__(self, scales, anisotropic=True):
+        assert isinstance(scales, (tuple, list)) and len(scales) == 2
+        assert scales[0] <= scales[1]
+        self.scales = scales
+
+    def __call__(self, data):
+        scale = self.scales[0] + torch.rand((3,)) * (self.scales[1] - self.scales[0])
+        data.pos = data.pos * scale
+        return data
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self.scales)
 
 
 def euler_angles_to_rotation_matrix(theta):

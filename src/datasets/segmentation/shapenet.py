@@ -10,7 +10,7 @@ from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
 from src.metrics.shapenet_part_tracker import ShapenetPartTracker
-from src.core.data_transform.transforms import RandomNoise
+from src.core.data_transform.transforms import RandomNoise, RandomScaleAnisotropic
 
 from src.datasets.base_dataset import BaseDataset
 
@@ -198,7 +198,7 @@ class ShapeNetDataset(BaseDataset):
         except KeyError:
             self._category = None
         pre_transform = self._pre_transform
-        train_transform = T.Compose([RandomNoise()])
+        train_transform = T.Compose([RandomNoise(sigma=0.001, clip=0.005), RandomScaleAnisotropic((0.8, 1.2))])
         train_dataset = ShapeNet(
             self._data_path,
             self._category,

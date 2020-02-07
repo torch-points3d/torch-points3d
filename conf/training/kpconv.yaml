@@ -14,12 +14,22 @@ training:
             weight_decay: 1e-3
             lr: 0.01
     learning_rate:
-        scheduler_type: "step_decay"
+        scheduler_type: "exponential_decay"
         base_lr: ${optimizer.params.lr}
-        lr_decay: 0.5
-        decay_step: 200000
+        gamma: 0.9716 # Divide learning by 10 every 80 epochs
+        decay_step: 14016
         lr_clip: 1e-5
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""
     resume: True
+
+# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
+# parameters for Weights and Biases
+wandb:
+    project: shapenet-pn2
+    log: True
+
+# parameters for TensorBoard Visualization
+tensorboard:
+    log: True
