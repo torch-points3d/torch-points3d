@@ -6,6 +6,7 @@ data:
     first_subsampling: 0.02
     num_points: 2048
     train_size: 14016 # Number of shapes in the whole training set
+    use_category: True
     pre_transforms:
         - transform: NormalizeScale
         - transform: GridSampling

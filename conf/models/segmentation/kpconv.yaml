@@ -121,8 +121,8 @@ models:
     KPConvPaper:
         class: kpconv.KPConvPaper
         conv_type: "PARTIAL_DENSE"
-        use_category: True
         define_constants:
+            use_category: ${data.use_category}
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
             bn_momentum: 0.02
