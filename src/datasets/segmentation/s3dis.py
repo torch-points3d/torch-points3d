@@ -105,11 +105,15 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         )
 
 def add_weights(dataset, train, class_weight_method):
+    L = len(INV_OBJECT_LABEL.keys())
     if train:
-        if class_weight_method is None:
-            weights = torch.ones((len(INV_OBJECT_LABEL.keys())))
-        else:
-            dataset.idx_classes, weights = torch.unique(dataset.data.y, return_counts=True)
+        weights = torch.ones(L)
+        if class_weight_method is not None:
+            
+            idx_classes, counts = torch.unique(dataset.data.y, return_counts=True)
+
+            dataset.idx_classes = torch.arange(L).long()
+            weights[idx_classes] = counts.float()
             weights = weights.float()
             weights = weights.mean() / weights
             if class_weight_method == "sqrt":
@@ -334,7 +338,6 @@ class S3DISOriginal(InMemoryDataset):
         torch.save(self.collate(test_data_list), self.processed_paths[1])
 
 
-
 class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
@@ -440,6 +443,27 @@ class S3DISOriginalFused(InMemoryDataset):
                     )
                 )
 
+    def extract_center_labels(self, data_list):
+        extract_center_labels = []
+        for data in data_list:
+            if hasattr(data, "center_label"):
+                extract_center_labels.append(getattr(data, "center_label"))
+                delattr(data, "center_label")
+        return extract_center_labels
+
+    def save_center_labels(self, split_name, center_labels):
+        name = "{}_center_labels.p".format(split_name)
+        pickle_out = open(os.path.join(self.processed_dir, name),"wb")
+        pickle.dump(center_labels, pickle_out)
+        pickle_out.close()
+
+    def load_center_labels(self, split_name):
+        name = "{}_center_labels.p".format(split_name)
+        pickle_out = open(os.path.join(self.processed_dir, name),"rb")
+        center_labels = pickle.load(pickle_out)
+        pickle_out.close()
+        return center_labels
+
     def process(self):
 
         if not files_exist(self.pre_processed_paths):
@@ -451,19 +475,19 @@ class S3DISOriginalFused(InMemoryDataset):
                 (f, room_name, osp.join(self.raw_dir, f, room_name))
                 for f in train_areas
                 for room_name in os.listdir(osp.join(self.raw_dir, f))
-                if ".DS_Store" != room_name
+                if (".DS_Store" != room_name) and ('.txt' not in room_name)
             ]
 
             test_files = [
                 (f, room_name, osp.join(self.raw_dir, f, room_name))
                 for f in test_areas
                 for room_name in os.listdir(osp.join(self.raw_dir, f))
-                if ".DS_Store" != room_name
+                if (".DS_Store" != room_name) and ('.txt' not in room_name)
             ]
 
             train_data_list, test_data_list = [], []
             
-            for (area, room_name, file_path) in tq(train_files[:50] + test_files[:50]):
+            for (area, room_name, file_path) in tq(train_files + test_files):
 
                 if self.debug:
                     read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
@@ -472,7 +496,7 @@ class S3DISOriginalFused(InMemoryDataset):
                         file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                     )
 
-                    data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels)
+                    data = Data(pos=xyz, x=rgb.float() / 255., y=room_labels)
 
                     if self.keep_instance:
                         data.room_object_indices = room_object_indices
@@ -488,9 +512,8 @@ class S3DISOriginalFused(InMemoryDataset):
                     else:
                         test_data_list.append(data)
                 
-            torch.save(self.collate(train_data_list), self.pre_processed_paths[0])
-            torch.save(self.collate(test_data_list), self.pre_processed_paths[1])
-            
+            torch.save(train_data_list, self.pre_processed_paths[0])
+            torch.save(test_data_list, self.pre_processed_paths[1])
         else:
             train_data_list = torch.load(self.pre_processed_paths[0])
             test_data_list = torch.load(self.pre_processed_paths[1])
@@ -499,6 +522,14 @@ class S3DISOriginalFused(InMemoryDataset):
             print('pre_collate_transform ...')
             train_data_list = self.pre_collate_transform(train_data_list)
             test_data_list = self.pre_collate_transform(test_data_list)
+
+        import pdb; pdb.set_trace()
+
+        train_center_labels = self.extract_center_labels(train_data_list)
+        self.save_center_labels("train", train_center_labels)
+
+        test_center_labels = self.extract_center_labels(test_data_list)
+        self.save_center_labels("test", test_center_labels)
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
