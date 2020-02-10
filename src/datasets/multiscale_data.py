@@ -7,8 +7,16 @@ from torch_geometric.data import Batch
 
 
 class MultiScaleData(Data):
-    def __init__(self, x=None, y=None, pos=None, multiscale: Optional[List[Data]] = None, **kwargs):
-        super().__init__(x=x, pos=pos, multiscale=multiscale, **kwargs)
+    def __init__(
+        self,
+        x=None,
+        y=None,
+        pos=None,
+        multiscale: Optional[List[Data]] = None,
+        upsample: Optional[List[Data]] = None,
+        **kwargs,
+    ):
+        super().__init__(x=x, pos=pos, multiscale=multiscale, upsample=upsample, **kwargs)
 
     def apply(self, func, *keys):
         r"""Applies the function :obj:`func` to all tensor and Data attributes
@@ -20,6 +28,9 @@ class MultiScaleData(Data):
                 self[key] = func(item)
         for scale in range(self.num_scales):
             self.multiscale[scale] = self.multiscale[scale].apply(func)
+
+        for up in range(self.num_upsample):
+            self.upsample[up] = self.upsample[up].apply(func)
         return self
 
     @property
@@ -27,6 +38,12 @@ class MultiScaleData(Data):
         """ Number of scales in the multiscale array
         """
         return len(self.multiscale) if self.multiscale else 0
+
+    @property
+    def num_upsample(self):
+        """ Number of upsample operations
+        """
+        return len(self.upsample) if self.upsample else 0
 
     @classmethod
     def from_data(cls, data):
@@ -49,6 +66,9 @@ class MultiScaleBatch(MultiScaleData):
         num_scales = data_list[0].num_scales
         for data_entry in data_list:
             assert data_entry.num_scales == num_scales, "All data objects should contain the same number of scales"
+        num_upsample = data_list[0].num_upsample
+        for data_entry in data_list:
+            assert data_entry.num_upsample == num_upsample, "All data objects should contain the same number of scales"
 
         # Build multiscale batches
         multiscale = []
@@ -58,12 +78,22 @@ class MultiScaleBatch(MultiScaleData):
                 ms_scale.append(data_entry.multiscale[scale])
             multiscale.append(from_data_list_token(ms_scale))
 
+        # Build upsample batches
+        upsample = []
+        for scale in range(num_upsample):
+            upsample_scale = []
+            for data_entry in data_list:
+                upsample_scale.append(data_entry.upsample[scale])
+            upsample.append(from_data_list_token(upsample_scale))
+
         # Create batch from non multiscale data
         for data_entry in data_list:
             del data_entry.multiscale
+            del data_entry.upsample
         batch = Batch.from_data_list(data_list)
         batch = MultiScaleBatch.from_data(batch)
         batch.multiscale = multiscale
+        batch.upsample = upsample
 
         if torch_geometric.is_debug_enabled():
             batch.debug()

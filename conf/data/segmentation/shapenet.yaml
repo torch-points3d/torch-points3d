@@ -4,16 +4,16 @@ data:
     dataroot: data
     normal: True
     first_subsampling: 0.02
-    num_points: 2048
     train_size: 14016 # Number of shapes in the whole training set
-    use_category: False
-    category: Airplane
+    use_category: True
     pre_transforms:
         - transform: NormalizeScale
         - transform: GridSampling
           params:
               size: ${data.first_subsampling}
     train_transforms:
+        - transform: FixedPoints
+          lparams: [2048]
         - transform: RandomNoise
           params:
             sigma: 0.01
