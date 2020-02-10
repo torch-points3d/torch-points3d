@@ -93,20 +93,23 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         last_feature = data.x
         if self._use_category:
             cat_one_hot = F.one_hot(self.category, self._num_categories).float()
-            last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
+            last_feature = torch.cat((last_feature, cat_one_hot), dim=-1)
 
         last_feature = self.FC_layer(last_feature)
         self.output = F.log_softmax(last_feature, dim=-1)
+
+        self.compute_loss()
         return self.output
+
+    def compute_loss(self):
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        if self._weight_classes is not None:
-            self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
-
         self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
@@ -133,4 +136,5 @@ class KPConvSeg(Segmentation_MP):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
+        self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
         return self.output
