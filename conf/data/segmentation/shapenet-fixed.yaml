@@ -1,0 +1,17 @@
+data:
+    class: shapenet.ShapeNetDataset
+    task: segmentation
+    dataroot: data
+    normal: True
+    train_size: 14016 # Number of shapes in the whole training set
+    use_category: True
+    train_transforms:
+        - transform: FixedPoints
+          lparams: [2048]
+        - transform: RandomNoise
+          params:
+            sigma: 0.01
+            clip: 0.05
+    test_transforms:
+      - transform: FixedPoints
+        lparams: [2048]
