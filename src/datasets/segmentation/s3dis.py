@@ -558,6 +558,7 @@ class S3DISFusedDataset(BaseDataset):
             test_area=self.dataset_opt.fold,
             train=False,
             pre_collate_transform=self.pre_collate_transform,
+            transform=self.test_transform,
         )
 
         train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)

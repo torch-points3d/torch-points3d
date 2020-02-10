@@ -86,7 +86,8 @@ models:
     pointnet2_onehot:
         class: pointnet2.PointNet2_D
         conv_type: "DENSE"
-        use_category: True
+        define_constants:
+            use_category: ${data.use_category}
         down_conv:
             module_name: PointNetMSGDown
             npoint: [1024, 256, 64, 16]
@@ -116,7 +117,8 @@ models:
     pointnet2_charlesmsg:
         class: pointnet2.PointNet2_D
         conv_type: "DENSE"
-        use_category: True
+        define_constants:
+            use_category: ${data.use_category}
         down_conv:
             module_name: PointNetMSGDown
             npoint: [512, 128]
@@ -153,7 +155,8 @@ models:
     pointnet2_charlesssg:
         class: pointnet2.PointNet2_D
         conv_type: "DENSE"
-        use_category: False
+        define_constants:
+            use_category: ${data.use_category}
         down_conv:
             module_name: PointNetMSGDown
             npoint: [512, 128]
