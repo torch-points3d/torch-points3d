@@ -1,31 +1,30 @@
 ![Screenshot](logo.png)
 
 
-This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark datasets. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro) thanks for the great work!
+_Deep Point Cloud Benchmark_ is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark datasets. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro) thanks for the great work!
 
-Here is the link toward the [```Github```](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks) project.
+Here is the link to the [```Github```](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks) project.
 
-We aim at building a tool for both benchmarking SOTA models and to efficiently pursue research for point cloud analysis with hope to bring them into real-life applications.
-
+We aim to build a tool which can be used for benchmarking SOTA models, while also allowing users to efficiently pursue research into point cloud analysis,  with the end-goal of building models which can be applied to real-life applications.
 
 <h2>Core features</h2>
 
-* ```Task driven``` implementation with dynamic model and dataset resolution from arguments
-* ```Core``` implementation for simplying new model creation 
-    * [```Core Architectures``` as Unet]
-    * [```Core Modules``` as ResBlock]
-    * [```Core Transforms``` as GridSampling, Rotation, Scale]
-    * [```Core Sampling``` as FPS]
-    * [```Core Neighbour Finder``` as Radius Search]
-* ```4 Base Convolution``` to simplify new convolution implementation
-    * [```DENSE``` (B, num_points, C)]
-    * [```PARTIAL DENSE``` (B * num_points, C)]
-    * [```MESSAGE PASSING``` (B * num_points, C)]
-    * [```SPARSE``` (B * num_points, C)]
+* ```Task``` driven implementation with dynamic model and dataset resolution from arguments.
+* ```Core``` implementation of common components for point cloud deep learning - greatly simplying the creation of new models:
+    * ```Core Architectures``` - Unet
+    * ```Core Modules``` - Residual Block, Down-sampling and Up-sampling convolutions
+    * ```Core Transforms``` - Grid Sampling, Rotation, Scaling
+    * ```Core Sampling``` - FPS, Random Sampling
+    * ```Core Neighbour Finder``` - Radius Search, KNN
+* 4 ```Base Convolution``` base classes to simplify the implementation of new convolutions. Each base class supports a different data format (B = number of batches, C = number of features):
+    * ```DENSE``` (B, num_points, C)
+    * ```PARTIAL DENSE``` (B * num_points, C)
+    * ```MESSAGE PASSING``` (B * num_points, C)
+    * ```SPARSE``` (B * num_points, C)
 
-* ```2 API``` to write models ```(compact / sequential)``` to ease reproducibility
-* Several visualiation tool ```(tensorboard, wandb)``` and ```dynamic metric-based model checkpointing``` for one to customize
-* ```Dynamic customized placeholder resolution``` for smart model definition
+* Models can be completely specified using a YAML file, greatly easing reproducability. 
+* Several visualiation tools ```(tensorboard, wandb)``` and _dynamic metric-based model checkpointing_, which is easily customizable. 
+* _Dynamic customized placeholder resolution_ for smart model definition.
 
 <h2>Current supported models</h2>
 
