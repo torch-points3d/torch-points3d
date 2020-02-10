@@ -4,6 +4,7 @@ data:
     dataroot: data
     fold: 5
     class_weight_method: "sqrt"
+    use_category: False
     room_points: 32768
     num_points: 4096
     first_subsampling: 0.04

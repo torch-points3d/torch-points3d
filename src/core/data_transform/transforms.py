@@ -2,17 +2,73 @@ import numpy as np
 import math
 import re
 import torch
+import random
 from torch.nn import functional as F
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KDTree
 from torch_geometric.data import Data
 from functools import partial
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
-
 from src.datasets.multiscale_data import MultiScaleData
+from src.utils.transform_utils import SamplingStrategy
 
+class ComputeKDTree(object):
+    r"""Calculate the KDTree and save it within data
+    Args:
+        leaf_size (float or [float] or Tensor): Depth of the .
+    """
+    def __init__(self, leaf_size):
+        self._leaf_size = leaf_size
+
+    def __call__(self, data):
+        data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self._leaf_size)
+        return data
+
+    def __repr__(self):
+        return "{}(leaf_size={})".format(self.__class__.__name__, self._leaf_size)
+
+
+class RandomSphere(object):
+    r"""Randomly select a sphere of points using a given radius
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+    """
+    KDTREE_KEY = "kd_tree"
+    def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True):
+        self._radius = eval(radius) if isinstance(radius, str) else float(radius)
+
+        self._sampling_strategy = SamplingStrategy(strategy=strategy, class_weight_method=class_weight_method)
+
+        self._delattr_kd_tree = delattr_kd_tree
+
+    def __call__(self, data):
+        num_points = data.pos.shape[0]
+        
+        if not hasattr(data, self.KDTREE_KEY):
+            tree = KDTree(np.asarray(data.pos), leaf_size=50)
+        else:
+            tree = getattr(data, self.KDTREE_KEY)
+            
+        # The kdtree has bee attached to data for optimization reason.
+        # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
+        if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
+            delattr(data, self.KDTREE_KEY)
+
+        # apply sampling strategy
+        random_center = self._sampling_strategy(data)
+
+        pts = np.asarray(data.pos[random_center])[np.newaxis]
+        ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+        for key in set(data.keys):
+            item = data[key]
+            if num_points == item.shape[0]:
+                setattr(data, key, item[ind])
+        return data
+
+    def __repr__(self):
+        return "{}(radius={}, sampling_strategy={})".format(self.__class__.__name__, self._radius, self._sampling_strategy)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.
@@ -98,6 +154,39 @@ class RandomNoise(object):
 
     def __repr__(self):
         return "Random noise of sigma={}".format(self.sigma)
+
+
+class RandomScaleAnisotropic:
+    r"""Scales node positions by a randomly sampled factor :math:`s1, s2, s3` within a
+    given interval, *e.g.*, resulting in the transformation matrix
+
+    .. math::
+        \begin{bmatrix}
+            s1 & 0 & 0 \\
+            0 & s2 & 0 \\
+            0 & 0 & s3 \\
+        \end{bmatrix}
+
+    for three-dimensional positions.
+
+    Args:
+        scales (tuple): scaling factor interval, e.g. :obj:`(a, b)`, then scale
+            is randomly sampled from the range
+            :math:`a \leq \mathrm{scale} \leq b`.
+    """
+
+    def __init__(self, scales, anisotropic=True):
+        assert isinstance(scales, (tuple, list)) and len(scales) == 2
+        assert scales[0] <= scales[1]
+        self.scales = scales
+
+    def __call__(self, data):
+        scale = self.scales[0] + torch.rand((3,)) * (self.scales[1] - self.scales[0])
+        data.pos = data.pos * scale
+        return data
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self.scales)
 
 
 def euler_angles_to_rotation_matrix(theta):
