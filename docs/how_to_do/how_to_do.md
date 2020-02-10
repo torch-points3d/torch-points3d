@@ -729,8 +729,8 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
 from src.core.base_conv.dense import *
-from src.core.neighbourfinder import DenseRadiusNeighbourFinder
-from src.core.sampling import DenseFPSSampler
+from src.core.spatial_ops import DenseRadiusNeighbourFinder
+from src.core.spatial_ops import DenseFPSSampler
 from src.utils.model_building_utils.activation_resolver import get_activation
 
 
@@ -1579,8 +1579,8 @@ import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
 from src.core.base_conv.dense import *
-from src.core.neighbourfinder import DenseRadiusNeighbourFinder
-from src.core.sampling import DenseFPSSampler
+from src.core.spatial_ops import DenseRadiusNeighbourFinder
+from src.core.spatial_ops import DenseFPSSampler
 from src.utils.model_building_utils.activation_resolver import get_activation
 
 

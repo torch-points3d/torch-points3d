@@ -14,7 +14,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
 from src.core.data_transform import instantiate_transform, instantiate_transforms, GridSampling, MultiScaleTransform
-from src.core.neighbourfinder import RadiusNeighbourFinder
+from src.core.spatial_ops import RadiusNeighbourFinder
 from src.utils.enums import ConvolutionFormat
 from src.datasets.multiscale_data import MultiScaleBatch
 
