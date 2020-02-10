@@ -91,7 +91,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         data = self.down_modules[-1](data, pre_computed=self.pre_computed)
         for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.pre_up)
+            data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.upsample)
 
         last_feature = data.x
         if self._use_category:
