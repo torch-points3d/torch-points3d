@@ -34,14 +34,19 @@ class BaseDataset:
         self.test_sampler = None
         self.val_sampler = None
 
+        self.pre_transform = None
+        self.test_transform = None
+        self.train_transform = None
+        self.val_transform = None
+        
         for key_name in dataset_opt.keys():
             if "transform" in key_name:
                 new_name = key_name.replace("transforms", "transform")
                 try:
                     transform = instantiate_transforms(getattr(dataset_opt, key_name))
                     log.info("Set attr:{} {} {}for dataset with following transform {}".format(COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform))
-                except Exception as e:
-                    log.warn("Error trying to create {} {}".format(new_name, e))
+                except Exception:
+                    log.exception("Error trying to create {}".format(new_name))
                     continue
                 setattr(self, new_name, transform)
 

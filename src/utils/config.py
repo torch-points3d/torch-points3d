@@ -15,6 +15,8 @@ from .enums import ConvolutionFormat
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)
 
+def is_iterable(entity):
+    return isinstance(entity, list) or isinstance(entity, ListConfig) or isinstance(entity, tuple)
 
 def is_dict(entity):
     return isinstance(entity, dict) or isinstance(entity, DictConfig)
