@@ -379,10 +379,11 @@ class S3DISDataset(BaseDataset):
 
 ################################### Used for fused s3dis radius sphere ###################################
 
+
 class S3DISOriginalFused(InMemoryDataset):
 
     url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
-    zip_name = "Stanford3dDataset_v1.2_Aligned_Version.zip"
+    zip_name = "Stanford3dDataset_v1.2_Version.zip"
     folders = ["Area_{}".format(i) for i in range(1, 7)]
     num_classes = S3DIS_NUM_CLASSES
     def __init__(

@@ -13,11 +13,13 @@ from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
+
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
+from src.utils import is_iterable
 
 class PointCloudFusion(object):
 
@@ -91,7 +93,6 @@ class GridSphereSampling(object):
 
     def __repr__(self):
         return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
-
 
 class ComputeKDTree(object):
     r"""Calculate the KDTree and save it within data
@@ -265,9 +266,8 @@ class RandomScaleAnisotropic:
             is randomly sampled from the range
             :math:`a \leq \mathrm{scale} \leq b`.
     """
-
-    def __init__(self, scales, anisotropic=True):
-        assert (is_list(scales) or isinstance(scales, tuple)) and len(scales) == 2
+    def __init__(self, scales=None, anisotropic=True):
+        assert is_iterable(scales) and len(scales) == 2
         assert scales[0] <= scales[1]
         self.scales = scales
 
