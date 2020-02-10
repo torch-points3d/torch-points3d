@@ -30,6 +30,10 @@ class BaseDataset:
             training_opt.conv_type, training_opt.precompute_multi_scale
         )
 
+        self.train_sampler = None
+        self.test_sampler = None
+        self.val_sampler = None
+
         for key_name in dataset_opt.keys():
             if "transform" in key_name:
                 new_name = key_name.replace("transforms", "transform")
@@ -68,6 +72,7 @@ class BaseDataset:
             batch_size=self.training_opt.batch_size,
             shuffle=self.training_opt.shuffle,
             num_workers=self.training_opt.num_workers,
+            sampler=self.train_sampler,
         )
 
         self._test_loader = dataloader(
@@ -75,6 +80,7 @@ class BaseDataset:
             batch_size=self.training_opt.batch_size,
             shuffle=False,
             num_workers=self.training_opt.num_workers,
+            sampler=self.test_sampler,
         )
 
         if val_dataset:
@@ -83,6 +89,7 @@ class BaseDataset:
                 batch_size=self.training_opt.batch_size,
                 shuffle=False,
                 num_workers=self.training_opt.num_workers,
+                sampler=self.val_sampler,
             )
 
     @property

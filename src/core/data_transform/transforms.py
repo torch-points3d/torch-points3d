@@ -51,7 +51,7 @@ class GridSphereSampling(object):
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
 
-        self._grid_sampling = GridSampling(size=grid_size if grid_size else self._radius / float(2))
+        self._grid_sampling = GridSampling(size=grid_size if grid_size else self._radius)
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 

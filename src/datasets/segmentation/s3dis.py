@@ -18,6 +18,7 @@ from tqdm import tqdm as tq
 import csv
 import pandas as pd 
 from src.metrics.segmentation_tracker import SegmentationTracker
+from src.datasets.samplers import BalancedRandomSampler
 import src.core.data_transform.transforms as cT
 from src.datasets.base_dataset import BaseDataset
 import pickle
@@ -409,6 +410,15 @@ class S3DISOriginalFused(InMemoryDataset):
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
 
+        if train:
+            self._center_labels = self.load_center_labels("train")
+        else:
+            self._center_labels = None
+    
+    @property
+    def center_labels(self):
+        return self._center_labels
+
     @property
     def raw_file_names(self):
         return self.folders
@@ -521,8 +531,6 @@ class S3DISOriginalFused(InMemoryDataset):
             train_data_list = self.pre_collate_transform(train_data_list)
             test_data_list = self.pre_collate_transform(test_data_list)
 
-        import pdb; pdb.set_trace()
-
         train_center_labels = self.extract_center_labels(train_data_list)
         self.save_center_labels("train", train_center_labels)
 
@@ -552,6 +560,8 @@ class S3DISFusedDataset(BaseDataset):
         )
 
         train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
+
+        self.train_sampler = BalancedRandomSampler(train_dataset.center_labels)
 
         self._create_dataloaders(train_dataset, test_dataset)
 
