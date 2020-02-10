@@ -41,11 +41,12 @@ class GridSphereSampling(object):
         radius (float or [float] or Tensor): Radius of the sphere to be sampled.
     """
     KDTREE_KEY = "kd_tree"
-    def __init__(self, radius, delattr_kd_tree=True):
+    def __init__(self, radius, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
 
         self._grid_sampling = GridSampling(size=self._radius // 2)
         self._delattr_kd_tree = delattr_kd_tree
+        self._center = center
 
     def _process(self, data):
         num_points = data.pos.shape[0]
@@ -66,16 +67,21 @@ class GridSphereSampling(object):
         datas = []
         for grid_center in np.asarray(grid_data.pos):
             pts = np.asarray(grid_center)[np.newaxis]
+            t_center = torch.FloatTensor(grid_center)
             ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
             new_data = Data()
             for key in set(data.keys):
                 item = data[key].clone()
                 if num_points == item.shape[0]:
-                    setattr(new_data, key, item[ind])
+                    item = item[ind]
+                    if self._center and key == 'pos': # Center the sphere.
+                        item -= t_center
+                    setattr(new_data, key, item)
             datas.append(new_data)
         return datas       
 
     def __call__(self, data):
+        import pdb; pdb.set_trace()
         if isinstance(data, list):
             data = [self._process(d) for d in tq(data)]
             data = list(itertools.chain(*data)) # 2d list needs to be flatten
@@ -84,7 +90,7 @@ class GridSphereSampling(object):
         return data
 
     def __repr__(self):
-        return "{}(radius={})".format(self.__class__.__name__, self._radius)
+        return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
 
 
 class ComputeKDTree(object):
@@ -116,12 +122,13 @@ class RandomSphere(object):
         radius (float or [float] or Tensor): Radius of the sphere to be sampled.
     """
     KDTREE_KEY = "kd_tree"
-    def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True):
+    def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
 
         self._sampling_strategy = SamplingStrategy(strategy=strategy, class_weight_method=class_weight_method)
 
         self._delattr_kd_tree = delattr_kd_tree
+        self._center = center
 
     def __call__(self, data):
         num_points = data.pos.shape[0]
@@ -139,16 +146,20 @@ class RandomSphere(object):
         # apply sampling strategy
         random_center = self._sampling_strategy(data)
 
-        pts = np.asarray(data.pos[random_center])[np.newaxis]
-        ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+        center = np.asarray(data.pos[random_center])[np.newaxis]
+        t_center = torch.FloatTensor(center)
+        ind = torch.LongTensor(tree.query_radius(center, r=self._radius)[0])
         for key in set(data.keys):
             item = data[key]
             if num_points == item.shape[0]:
-                setattr(data, key, item[ind])
+                item = item[ind]
+                if self._center and key == 'pos': # Center the sphere.
+                    item -= t_center
+                setattr(data, key, item)
         return data
 
     def __repr__(self):
-        return "{}(radius={}, sampling_strategy={})".format(self.__class__.__name__, self._radius, self._sampling_strategy)
+        return "{}(radius={}, center={}, sampling_strategy={})".format(self.__class__.__name__, self._radius, self._center, self._sampling_strategy)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.

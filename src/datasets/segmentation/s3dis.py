@@ -8,6 +8,7 @@ import h5py
 import torch
 import glob
 from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip, Dataset
+from torch_geometric.data.dataset import files_exist
 from torch_geometric.data import DataLoader
 from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
@@ -338,7 +339,7 @@ class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
 
-        pre_transform = self._pre_transform
+        pre_transform = self.pre_transform
 
         train_dataset = S3DISOriginal(
             self._data_path,
@@ -410,6 +411,12 @@ class S3DISOriginalFused(InMemoryDataset):
         return self.folders
 
     @property
+    def pre_processed_paths(self):
+        test_area = self.test_area
+        pre_processed_file_names = ["pre_{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
+        return [os.path.join(self.processed_dir, f) for f in pre_processed_file_names]
+
+    @property
     def processed_file_names(self):
         test_area = self.test_area
         return ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
@@ -435,50 +442,59 @@ class S3DISOriginalFused(InMemoryDataset):
 
     def process(self):
 
-        train_areas = [f for f in self.folders if str(self.test_area) not in f]
-        test_areas = [f for f in self.folders if str(self.test_area) in f]
+        if not files_exist(self.pre_processed_paths):
 
-        train_files = [
-            (f, room_name, osp.join(self.raw_dir, f, room_name))
-            for f in train_areas
-            for room_name in os.listdir(osp.join(self.raw_dir, f))
-            if ".DS_Store" != room_name
-        ]
+            train_areas = [f for f in self.folders if str(self.test_area) not in f]
+            test_areas = [f for f in self.folders if str(self.test_area) in f]
 
-        test_files = [
-            (f, room_name, osp.join(self.raw_dir, f, room_name))
-            for f in test_areas
-            for room_name in os.listdir(osp.join(self.raw_dir, f))
-            if ".DS_Store" != room_name
-        ]
+            train_files = [
+                (f, room_name, osp.join(self.raw_dir, f, room_name))
+                for f in train_areas
+                for room_name in os.listdir(osp.join(self.raw_dir, f))
+                if ".DS_Store" != room_name
+            ]
 
-        train_data_list, test_data_list = [], []
-        
-        for (area, room_name, file_path) in tq(train_files + test_files):
+            test_files = [
+                (f, room_name, osp.join(self.raw_dir, f, room_name))
+                for f in test_areas
+                for room_name in os.listdir(osp.join(self.raw_dir, f))
+                if ".DS_Store" != room_name
+            ]
 
-            if self.debug:
-                read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
-            else:
-                xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
-                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
-                )
-
-                data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels)
-
-                if self.keep_instance:
-                    data.room_object_indices = room_object_indices
-
-                if self.pre_filter is not None and not self.pre_filter(data):
-                    continue
-
-                if self.pre_transform is not None:
-                    data = self.pre_transform(data)
-
-                if (area, room_name, file_path) in train_files:
-                    train_data_list.append(data)
-                else:
-                    test_data_list.append(data)
+            train_data_list, test_data_list = [], []
             
+            for (area, room_name, file_path) in tq(train_files[:50] + test_files[:50]):
+
+                if self.debug:
+                    read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+                else:
+                    xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
+                        file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
+                    )
+
+                    data = Data(pos=xyz, x=rgb.float() / 255. , y=room_labels)
+
+                    if self.keep_instance:
+                        data.room_object_indices = room_object_indices
+
+                    if self.pre_filter is not None and not self.pre_filter(data):
+                        continue
+
+                    if self.pre_transform is not None:
+                        data = self.pre_transform(data)
+
+                    if (area, room_name, file_path) in train_files:
+                        train_data_list.append(data)
+                    else:
+                        test_data_list.append(data)
+                
+            torch.save(self.collate(train_data_list), self.pre_processed_paths[0])
+            torch.save(self.collate(test_data_list), self.pre_processed_paths[1])
+            
+        else:
+            train_data_list = torch.load(self.pre_processed_paths[0])
+            test_data_list = torch.load(self.pre_processed_paths[1])
+
         if self.pre_collate_transform:
             print('pre_collate_transform ...')
             train_data_list = self.pre_collate_transform(train_data_list)
@@ -486,6 +502,7 @@ class S3DISOriginalFused(InMemoryDataset):
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
+
 
 class S3DISFusedDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
