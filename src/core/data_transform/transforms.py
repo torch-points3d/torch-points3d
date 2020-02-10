@@ -21,15 +21,22 @@ from tqdm import tqdm as tq
 
 class PointCloudFusion(object):
 
+    def _process(self, data_list):
+        data = Batch.from_data_list(data_list)
+        delattr(data, "batch")
+        return data
+
     def __call__(self, data_list: List[Data]):
         if len(data_list) == 0:
             raise Exception('A list of data should be provided')
         elif len(data_list) == 1:
             return data_list[0]
         else:
-            data = Batch.from_data_list(data_list)
-            delattr(data, "batch")
-            return data
+            if isinstance(data_list[0], list):
+                data = [self._process(d) for d in data_list]
+            else:
+                data = self._process(data_list)
+        return data
 
     def __repr__(self):
         return "{}()".format(self.__class__.__name__)
@@ -130,7 +137,7 @@ class RandomSphere(object):
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 
-    def __call__(self, data):
+    def _process(self, data):
         num_points = data.pos.shape[0]
         
         if not hasattr(data, self.KDTREE_KEY):
@@ -158,6 +165,13 @@ class RandomSphere(object):
                 setattr(data, key, item)
         return data
 
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
+        return data
+
     def __repr__(self):
         return "{}(radius={}, center={}, sampling_strategy={})".format(self.__class__.__name__, self._radius, self._center, self._sampling_strategy)
 
@@ -182,7 +196,7 @@ class GridSampling(object):
         self.end = end
         self.num_classes = num_classes
 
-    def __call__(self, data):
+    def _process(self, data):
         num_nodes = data.num_nodes
 
         if "batch" not in data:
@@ -205,8 +219,14 @@ class GridSampling(object):
                 elif key == "batch":
                     data[key] = item[perm]
                 else:
-                    data[key] = scatter_mean(item, cluster, dim=0)
+                    data[key] = scatter_mean(item, cluster, dim=0)        
+        return data
 
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
         return data
 
     def __repr__(self):

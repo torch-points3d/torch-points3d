@@ -414,10 +414,10 @@ class S3DISOriginalFused(InMemoryDataset):
         return self.folders
 
     @property
-    def pre_processed_paths(self):
+    def pre_processed_path(self):
         test_area = self.test_area
-        pre_processed_file_names = ["pre_{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
-        return [os.path.join(self.processed_dir, f) for f in pre_processed_file_names]
+        pre_processed_file_names = "pre_{}.pt".format(test_area)
+        return os.path.join(self.processed_dir, pre_processed_file_names)
 
     @property
     def processed_file_names(self):
@@ -466,7 +466,7 @@ class S3DISOriginalFused(InMemoryDataset):
 
     def process(self):
 
-        if not files_exist(self.pre_processed_paths):
+        if not os.path.exists(self.pre_processed_path):
 
             train_areas = [f for f in self.folders if str(self.test_area) not in f]
             test_areas = [f for f in self.folders if str(self.test_area) in f]
@@ -485,10 +485,10 @@ class S3DISOriginalFused(InMemoryDataset):
                 if (".DS_Store" != room_name) and ('.txt' not in room_name)
             ]
 
-            train_data_list, test_data_list = [], []
-            
+            data_list = [[] for _ in range(6)]
             for (area, room_name, file_path) in tq(train_files + test_files):
 
+                area_num = int(area[-1]) - 1
                 if self.debug:
                     read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
                 else:
@@ -507,16 +507,14 @@ class S3DISOriginalFused(InMemoryDataset):
                     if self.pre_transform is not None:
                         data = self.pre_transform(data)
 
-                    if (area, room_name, file_path) in train_files:
-                        train_data_list.append(data)
-                    else:
-                        test_data_list.append(data)
-                
-            torch.save(train_data_list, self.pre_processed_paths[0])
-            torch.save(test_data_list, self.pre_processed_paths[1])
+                    data_list[area_num].append(data)
+               
+            torch.save(data_list, self.pre_processed_path)
         else:
-            train_data_list = torch.load(self.pre_processed_paths[0])
-            test_data_list = torch.load(self.pre_processed_paths[1])
+            data_list = torch.load(self.pre_processed_path)
+
+        train_data_list = [data_list[i] for i in range(6) if i != self.test_area - 1]
+        test_data_list = data_list[self.test_area - 1]
 
         if self.pre_collate_transform:
             print('pre_collate_transform ...')
