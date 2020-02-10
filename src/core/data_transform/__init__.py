@@ -27,6 +27,10 @@ def instantiate_transform(transform_option):
         tr_params = transform_option.params
     except KeyError:
         tr_params = None
+    try:
+        lparams = transform_option.lparams
+    except KeyError:
+        lparams = None
 
     cls = getattr(_custom_transforms, tr_name, None)
     if not cls:
@@ -34,10 +38,16 @@ def instantiate_transform(transform_option):
         if not cls:
             raise ValueError("Transform %s is nowhere to be found" % tr_name)
 
+    if tr_params and lparams:
+        return cls(*lparams, **tr_params)
+    
     if tr_params:
         return cls(**tr_params)
-    else:
-        return cls()
+    
+    if lparams:
+        return cls(*lparams)
+
+    return cls()
 
 
 def instantiate_transforms(transform_options):

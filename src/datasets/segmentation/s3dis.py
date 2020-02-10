@@ -291,7 +291,7 @@ class S3DISDataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
 
-        pre_transform = self._pre_transform
+        pre_transform = self.pre_transform
 
         train_dataset = S3DISOriginal(
             self._data_path,
@@ -330,7 +330,7 @@ class S3DIS1x1Dataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
 
-        pre_transform = self._pre_transform
+        pre_transform = self.pre_transform
 
         transform = T.Compose(
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
