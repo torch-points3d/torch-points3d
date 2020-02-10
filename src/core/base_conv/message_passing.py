@@ -169,10 +169,14 @@ class FPModule(BaseConvolutionUp):
         super(FPModule, self).__init__(None)
 
         self.k = up_k
-        self.nn = MLP(up_conv_nn)
+        bn_momentum = kwargs.get("bn_momentum", 0.1)
+        self.nn = MLP(up_conv_nn, bn_momentum=bn_momentum, bias=False)
 
     def conv(self, x, pos, pos_skip, batch, batch_skip, *args):
         return knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
+
+    def extra_repr(self):
+        return "Nb parameters: %i" % self.nb_params
 
 
 ########################## BASE RESIDUAL DOWN #####################
