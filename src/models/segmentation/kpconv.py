@@ -66,7 +66,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
-            self.pre_up = data.upsample
+            self.upsample = data.upsample
             del data.upsample
             del data.multiscale
         else:
@@ -122,7 +122,7 @@ class KPConvSeg(Segmentation_MP):
     def set_input(self, data):
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
-            self.pre_up = data.upsample
+            self.upsample = data.upsample
             del data.upsample
             del data.multiscale
         else:
