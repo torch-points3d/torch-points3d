@@ -305,34 +305,14 @@ class TSDFVolume:
     def get_volume(self):
         if self.gpu_mode:
             cuda.memcpy_dtoh(self._tsdf_vol_cpu, self._tsdf_vol_gpu)
+            cuda.memcpy_dtoh(self._weight_vol_cpu, self._weight_vol_gpu)
             cuda.memcpy_dtoh(self._color_vol_cpu, self._color_vol_gpu)
-        return self._tsdf_vol_cpu, self._color_vol_cpu
-
-    def get_point_cloud(self):
-        """Extract a point cloud from the voxel volume.
-        """
-        tsdf_vol, color_vol = self.get_volume()
-
-        # Marching cubes
-        verts = measure.marching_cubes_lewiner(tsdf_vol, level=0)[0]
-        verts_ind = np.round(verts).astype(int)
-        verts = verts*self._voxel_size + self._vol_origin
-
-        # Get vertex colors
-        rgb_vals = color_vol[verts_ind[:, 0], verts_ind[:, 1], verts_ind[:, 2]]
-        colors_b = np.floor(rgb_vals / self._color_const)
-        colors_g = np.floor((rgb_vals - colors_b*self._color_const) / 256)
-        colors_r = rgb_vals - colors_b*self._color_const - colors_g*256
-        colors = np.floor(np.asarray([colors_r, colors_g, colors_b])).T
-        colors = colors.astype(np.uint8)
-
-        pc = np.hstack([verts, colors])
-        return pc
+        return self._tsdf_vol_cpu, self._color_vol_cpu, self._weight_vol_cpu
 
     def get_mesh(self):
         """Compute a mesh from the voxel volume using marching cubes.
         """
-        tsdf_vol, color_vol = self.get_volume()
+        tsdf_vol, color_vol, _ = self.get_volume()
 
         # Marching cubes
         verts, faces, norms, vals = measure.marching_cubes_lewiner(tsdf_vol,
@@ -349,6 +329,40 @@ class TSDFVolume:
         colors = np.floor(np.asarray([colors_r, colors_g, colors_b])).T
         colors = colors.astype(np.uint8)
         return verts, faces, norms, colors
+
+    def get_point_cloud(self, tsdf_thresh, weight_thresh):
+        """
+        compute the surface pointcloud from the voxel volume
+        """
+        tsdf_vol, color_vol, weight_vol = self.get_volume()
+
+        mask = np.logical_and(np.abs(tsdf_vol) < tsdf_thresh,
+                              weight_vol > weight_thresh)
+
+        xv, yv, zv = np.meshgrid(
+            range(self._vol_dim[0]),
+            range(self._vol_dim[1]),
+            range(self._vol_dim[2]),
+            indexing='ij'
+        )
+        xv = xv[mask]
+        yv = yv[mask]
+        zv = zv[mask]
+        pcd_ind = np.concatenate([
+            xv.reshape(1, -1),
+            yv.reshape(1, -1),
+            zv.reshape(1, -1)
+        ], axis=0).astype(int).T
+
+        pcd = pcd_ind.astype(float) * self._voxel_size+self._vol_origin
+        pcd_ind = pcd_ind.astype(int)
+        rgb_vals = color_vol[pcd_ind[:, 0], pcd_ind[:, 1], pcd_ind[:, 2]]
+        colors_b = np.floor(rgb_vals/self._color_const)
+        colors_g = np.floor((rgb_vals-colors_b*self._color_const)/256)
+        colors_r = rgb_vals-colors_b*self._color_const-colors_g*256
+        colors = np.floor(np.asarray([colors_r, colors_g, colors_b])).T
+        colors = colors.astype(np.uint8)
+        return pcd, colors
 
 
 def rigid_transform(xyz, transform):

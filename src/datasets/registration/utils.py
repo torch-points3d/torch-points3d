@@ -180,7 +180,8 @@ def rgbd2fragment_fine(list_path_img,
                        num_frame_per_fragment=5,
                        voxel_size=0.01,
                        pre_transform=None,
-                       depth_thresh=6):
+                       depth_thresh=6,
+                       save_pc=True):
     """
     fuse rgbd frame with a tsdf volume and get the mesh using marching cube.
     """
@@ -206,10 +207,16 @@ def rgbd2fragment_fine(list_path_img,
                            intrinsic, pose,
                            obs_weight=1.)
         if((i+1) % num_frame_per_fragment == 0):
-            verts, faces, norms, colors = tsdf_vol.get_mesh()
-            torch_data = Data(pos=torch.from_numpy(verts.copy()),
-                              color=torch.from_numpy(colors),
-                              norm=torch.from_numpy(norms.copy()))
+
+            if(save_pc):
+                pcd, color = tsdf_vol.get_point_cloud(0.2, 1)
+                torch_data = Data(pos=torch.from_numpy(pcd.copy()),
+                                  color=torch.from_numpy(color.copy()))
+            else:
+                verts, faces, norms, colors = tsdf_vol.get_mesh()
+                torch_data = Data(pos=torch.from_numpy(verts.copy()),
+                                  color=torch.from_numpy(colors),
+                                  norm=torch.from_numpy(norms.copy()))
             if pre_transform is not None:
                 torch_data = pre_transform(torch_data)
             torch.save(torch_data, osp.join(out_path,
