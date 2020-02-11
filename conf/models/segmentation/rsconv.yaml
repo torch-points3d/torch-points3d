@@ -57,6 +57,7 @@ models:
     RSConv_MSN:
         class: rsconv.RSConvLogicModel
         conv_type: "DENSE"
+        use_category: ${data.use_category}
         define_constants:
             use_category: ${data.use_category}
         down_conv:
