@@ -9,8 +9,6 @@ from torch.nn import (
     BatchNorm1d as BN,
 )
 from torch_geometric.utils import scatter_
-from src.core.sampling import FPSSampler
-from src.core.neighbourfinder import RadiusNeighbourFinder
 from .kernels import PointKernel, LightDeformablePointKernel, PointKernelPartialDense
 from torch_scatter import scatter_max
 
@@ -22,8 +20,8 @@ from .convolution_ops import KPConv_deform_ops
 from .kernels import PointKernel, LightDeformablePointKernel
 from .kernel_utils import kernel_point_optimization_debug
 
-from src.core.sampling import FPSSampler
-from src.core.neighbourfinder import RadiusNeighbourFinder
+from src.core.spatial_ops import FPSSampler
+from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.base_conv.message_passing import *
 
 

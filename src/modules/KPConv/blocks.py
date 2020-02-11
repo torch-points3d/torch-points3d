@@ -3,7 +3,7 @@ import sys
 
 from .kernels import KPConvLayer
 from src.core.common_modules.base_modules import UnaryConv, BaseModule
-from src.core.neighbourfinder import RadiusNeighbourFinder
+from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
 

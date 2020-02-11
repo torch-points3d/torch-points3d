@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import math
 import torch
-from torch_geometric.nn import fps, voxel_grid
+from torch_geometric.nn import voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 import torch_points as tp
@@ -57,6 +57,7 @@ class FPSSampler(BaseSampler):
 
     def sample(self, pos, batch, **kwargs):
         from torch_geometric.nn import fps
+
         if len(pos.shape) != 2:
             raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
         return fps(pos, batch, ratio=self._get_ratio_to_sample(pos.shape[0]))

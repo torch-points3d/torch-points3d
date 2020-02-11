@@ -66,8 +66,11 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
+            self.upsample = data.upsample
+            del data.upsample
             del data.multiscale
         else:
+            self.upsample = None
             self.pre_computed = None
 
         self.input = data
@@ -88,7 +91,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         data = self.down_modules[-1](data, pre_computed=self.pre_computed)
         for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((data, stack_down.pop()))
+            data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.upsample)
 
         last_feature = data.x
         if self._use_category:
@@ -119,8 +122,11 @@ class KPConvSeg(Segmentation_MP):
     def set_input(self, data):
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
+            self.upsample = data.upsample
+            del data.upsample
             del data.multiscale
         else:
+            self.upsample = None
             self.pre_computed = None
 
         self.input = data
@@ -129,7 +135,7 @@ class KPConvSeg(Segmentation_MP):
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        data = self.model(self.input, pre_computed=self.pre_computed)
+        data = self.model(self.input, pre_computed=self.pre_computed, precomputed_up=self.upsample)
         x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)

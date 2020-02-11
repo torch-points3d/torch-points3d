@@ -2,8 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing
 
-from src.core.sampling import *
-from src.core.neighbourfinder import *
+from src.core.spatial_ops import *
 from src.core.base_conv.message_passing import *
 
 

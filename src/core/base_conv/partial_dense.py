@@ -20,8 +20,9 @@ from torch_geometric.data import Batch
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
-from src.core.neighbourfinder import *
+from src.core.spatial_ops import *
 from .base_conv import BaseConvolution
+from src.core.common_modules.base_modules import BaseModule
 from src.core.common_modules import MLP
 
 
@@ -100,3 +101,43 @@ class GlobalPartialDenseBaseModule(torch.nn.Module):
         batch_obj.batch = torch.arange(x.size(0), device=x.device)
         copy_from_to(data, batch_obj)
         return batch_obj
+
+
+class FPModule_PD(BaseModule):
+    """ Upsampling module from PointNet++
+    Arguments:
+        k [int] -- number of nearest neighboors used for the interpolation
+        up_conv_nn [List[int]] -- list of feature sizes for the uplconv mlp
+    """
+
+    def __init__(self, up_k, up_conv_nn, *args, **kwargs):
+        super(FPModule_PD, self).__init__()
+        self.upsample_op = KNNInterpolate(up_k)
+        bn_momentum = kwargs.get("bn_momentum", 0.1)
+        self.nn = MLP(up_conv_nn, bn_momentum=bn_momentum, bias=False)
+
+    def forward(self, data, precomputed_up=None, **kwargs):
+        data, data_skip = data
+        batch_out = data_skip.clone()
+        x_skip = data_skip.x
+
+        if precomputed_up:
+            if not hasattr(data, "up_idx"):
+                setattr(batch_out, "up_idx", 0)
+            else:
+                setattr(batch_out, "up_idx", data.up_idx)
+
+            pre_data = precomputed_up[batch_out.up_idx]
+            batch_out.up_idx = batch_out.up_idx + 1
+        else:
+            pre_data = None
+
+        x = self.upsample_op(data, data_skip, precomputed=pre_data)
+        if x_skip is not None:
+            x = torch.cat([x, x_skip], dim=1)
+
+        if hasattr(self, "nn"):
+            batch_out.x = self.nn(x)
+        else:
+            batch_out.x = x
+        return batch_out
