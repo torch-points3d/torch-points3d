@@ -20,7 +20,7 @@ from torch_geometric.data import Data
 import torch_points as tp
 import etw_pytorch_utils as pt_utils
 
-from src.core.neighbourfinder import BaseMSNeighbourFinder
+from src.core.spatial_ops import BaseMSNeighbourFinder
 from src.core.base_conv import BaseConvolution
 from src.core.common_modules import MLP
 

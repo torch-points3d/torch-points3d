@@ -14,7 +14,7 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
 from src.core.data_transform import instantiate_transform, instantiate_transforms, GridSampling, MultiScaleTransform
-from src.core.neighbourfinder import RadiusNeighbourFinder
+from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
 from src.datasets.multiscale_data import MultiScaleBatch
 
@@ -42,6 +42,7 @@ class Testhelpers(unittest.TestCase):
             RadiusNeighbourFinder(0.5, 15, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
             RadiusNeighbourFinder(1, 20, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
         ]
+        upsampler = [KNNInterpolate(1), KNNInterpolate(1)]
 
         N = 10
         x = np.linspace(0, 1, N)
@@ -51,7 +52,7 @@ class Testhelpers(unittest.TestCase):
         pos = torch.tensor([xv.flatten(), yv.flatten(), np.zeros(N * N)]).T
         x = torch.ones_like(pos)
         d = Data(pos=pos, x=x).contiguous()
-        ms_transform = MultiScaleTransform({"sampler": samplers, "neighbour_finder": search})
+        ms_transform = MultiScaleTransform({"sampler": samplers, "neighbour_finder": search, "upsample_op": upsampler})
 
         transformed = ms_transform(d.clone())
         npt.assert_almost_equal(transformed.x.numpy(), x.numpy())
@@ -72,6 +73,14 @@ class Testhelpers(unittest.TestCase):
         torch.testing.assert_allclose(ms[0].idx_neighboors, idx)
         self.assertEqual(ms[1].idx_neighboors.shape[1], 15)
         self.assertEqual(ms[2].idx_neighboors.shape[1], 20)
+
+        upsample = transformed.upsample
+        self.assertEqual(upsample[0].num_nodes, ms[1].num_nodes)
+        self.assertEqual(upsample[1].num_nodes, pos.shape[0])
+        self.assertEqual(upsample[1].x_idx.max(), ms[0].num_nodes - 1)
+        self.assertEqual(upsample[1].y_idx.max(), pos.shape[0] - 1)
+        self.assertEqual(upsample[1].__inc__("x_idx", 0), ms[0].num_nodes)
+        self.assertEqual(upsample[1].__inc__("y_idx", 0), pos.shape[0])
 
 
 if __name__ == "__main__":

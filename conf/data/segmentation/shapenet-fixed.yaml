@@ -3,14 +3,14 @@ data:
     task: segmentation
     dataroot: data
     normal: True
-    first_subsampling: 0.02
     train_size: 14016 # Number of shapes in the whole training set
     use_category: True
+    first_subsampling: 0.02
     pre_transforms:
-        - transform: NormalizeScale
-        - transform: GridSampling
-          params:
-              size: ${data.first_subsampling}
+      - transform: NormalizeScale
+      - transform: GridSampling
+        params:
+            size: ${data.first_subsampling}
     train_transforms:
         - transform: FixedPoints
           lparams: [2048]
@@ -18,6 +18,6 @@ data:
           params:
             sigma: 0.01
             clip: 0.05
-        - transform: RandomScaleAnisotropic
-          params:
-            scales: [0.8,1.2]
+    test_transforms:
+      - transform: FixedPoints
+        lparams: [2048]

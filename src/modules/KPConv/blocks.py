@@ -1,22 +1,20 @@
 import torch
 import sys
 
-from .kernels import KPConvLayer, KPConvDeformableLayer
-from src.core.common_modules.base_modules import UnaryConv
-from src.core.neighbourfinder import RadiusNeighbourFinder
+from .kernels import KPConvLayer
+from src.core.common_modules.base_modules import UnaryConv, BaseModule
+from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
 
 
-class SimpleBlock(torch.nn.Module):
+class SimpleBlock(BaseModule):
     """
     simple layer with KPConv convolution -> activation -> BN
     we can perform a stride version (just change the query and the neighbors)
     """
 
     CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
-    DEFORMABLE_DENSITY = 5.0
-    NORMAL_DENSITY = 2.5
 
     def __init__(
         self,
@@ -24,31 +22,25 @@ class SimpleBlock(torch.nn.Module):
         grid_size=None,
         is_strided=False,
         sigma=1.0,
+        density_parameter=2.5,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
-        deformable=False,
-        **kwargs,
+        **kwargs
     ):
         super(SimpleBlock, self).__init__()
         assert len(down_conv_nn) == 2
         num_inputs, num_outputs = down_conv_nn
         self.grid_size = grid_size
-        if deformable:
-            density_parameter = self.DEFORMABLE_DENSITY
-            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
-        else:
-            density_parameter = self.NORMAL_DENSITY
-            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
-
+        radius = density_parameter * sigma * grid_size
+        self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
         else:
             self.bn = None
         self.activation = activation
 
-        radius = density_parameter * sigma * grid_size
         self.neighbour_finder = RadiusNeighbourFinder(radius, max_num_neighbors, conv_type=self.CONV_TYPE)
         if is_strided:
             self.sampler = GridSampling(grid_size)
@@ -85,10 +77,10 @@ class SimpleBlock(torch.nn.Module):
         return query_data
 
     def extra_repr(self):
-        return str(self.sampler) + "," + str(self.neighbour_finder)
+        return "Nb parameters: %i, %s, %s" % (self.nb_params, str(self.sampler), str(self.neighbour_finder))
 
 
-class ResnetBBlock(torch.nn.Module):
+class ResnetBBlock(BaseModule):
     """ Resnet block with optional bottleneck activated by default
 
     Arguments:
@@ -114,13 +106,13 @@ class ResnetBBlock(torch.nn.Module):
         grid_size=None,
         is_strided=False,
         sigma=1,
+        density_parameter=2.5,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
         bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
-        deformable=False,
-        **kwargs,
+        **kwargs
     ):
         super(ResnetBBlock, self).__init__()
         assert len(down_conv_nn) == 2 or len(down_conv_nn) == 3, "down_conv_nn should be of size 2 or 3"
@@ -144,11 +136,11 @@ class ResnetBBlock(torch.nn.Module):
             grid_size=grid_size,
             is_strided=is_strided,
             sigma=sigma,
+            density_parameter=density_parameter,
             max_num_neighbors=max_num_neighbors,
             activation=activation,
             bn_momentum=bn_momentum,
             bn=bn,
-            deformable=deformable,
         )
 
         if self.has_bottleneck:
@@ -166,11 +158,11 @@ class ResnetBBlock(torch.nn.Module):
         # Shortcut
         if num_inputs != num_outputs:
             if bn:
-                self.shortcut_op = UnaryConv(num_inputs, num_outputs)
-            else:
                 self.shortcut_op = torch.nn.Sequential(
                     UnaryConv(num_inputs, num_outputs), bn(num_outputs, momentum=bn_momentum)
                 )
+            else:
+                self.shortcut_op = UnaryConv(num_inputs, num_outputs)
         else:
             self.shortcut_op = torch.nn.Identity()
 
@@ -209,8 +201,11 @@ class ResnetBBlock(torch.nn.Module):
     def neighbour_finder(self):
         return self.kp_conv.neighbour_finder
 
+    def extra_repr(self):
+        return "Nb parameters: %i, %s, %s" % (self.nb_params, str(self.sampler), str(self.neighbour_finder))
 
-class KPDualBlock(torch.nn.Module):
+
+class KPDualBlock(BaseModule):
     def __init__(
         self,
         block_names=None,
@@ -219,8 +214,7 @@ class KPDualBlock(torch.nn.Module):
         is_strided=None,
         has_bottleneck=None,
         max_num_neighbors=None,
-        deformable=False,
-        **kwargs,
+        **kwargs
     ):
         super(KPDualBlock, self).__init__()
 
@@ -234,7 +228,6 @@ class KPDualBlock(torch.nn.Module):
                 is_strided=is_strided[i],
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
-                deformable=deformable,
             )
             self.blocks.append(block)
 
@@ -250,3 +243,6 @@ class KPDualBlock(torch.nn.Module):
     @property
     def neighbour_finder(self):
         return [b.neighbour_finder for b in self.blocks]
+
+    def extra_repr(self):
+        return "Nb parameters: %i" % self.nb_params

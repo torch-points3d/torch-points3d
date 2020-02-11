@@ -1,5 +1,9 @@
 from torch.optim.lr_scheduler import LambdaLR
 from omegaconf.dictconfig import DictConfig
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 def build_basic_params():
@@ -18,6 +22,7 @@ def get_scheduler(learning_rate_params, optimizer):
     """
     scheduler_builder = _LR_REGISTER.get(learning_rate_params.scheduler_type, None)
     if scheduler_builder is None:
+        log.warning("Scheduler could %s not be instantiated", learning_rate_params.scheduler_type)
         return None
     return scheduler_builder(learning_rate_params, optimizer)
 
@@ -30,4 +35,12 @@ def _build_step_decay(learning_rate_params, optimizer):
     return LambdaLR(optimizer, lr_lbmd)
 
 
-_LR_REGISTER = {"step_decay": _build_step_decay}
+def _build_exponential_decay(learning_rate_params, optimizer):
+    lr_lbmd = lambda e: max(
+        learning_rate_params.gamma ** (e / learning_rate_params.decay_step),
+        learning_rate_params.lr_clip / learning_rate_params.base_lr,
+    )
+    return LambdaLR(optimizer, lr_lbmd)
+
+
+_LR_REGISTER = {"step_decay": _build_step_decay, "exponential_decay": _build_exponential_decay}

@@ -23,8 +23,7 @@ import etw_pytorch_utils as pt_utils
 
 from src.core.base_conv.base_conv import *
 from src.core.common_modules import *
-from src.core.sampling import *
-from src.core.neighbourfinder import *
+from src.core.spatial_ops import *
 
 
 def copy_from_to(data, batch):
@@ -160,9 +159,6 @@ class FPModule(BaseConvolutionUp):
     Arguments:
         k [int] -- number of nearest neighboors used for the interpolation
         up_conv_nn [List[int]] -- list of feature sizes for the uplconv mlp
-
-    Returns:
-        [type] -- [description]
     """
 
     def __init__(self, up_k, up_conv_nn, nb_feature=None, *args, **kwargs):
@@ -170,10 +166,13 @@ class FPModule(BaseConvolutionUp):
 
         self.k = up_k
         bn_momentum = kwargs.get("bn_momentum", 0.1)
-        self.nn = MLP(up_conv_nn, bn_momentum=bn_momentum)
+        self.nn = MLP(up_conv_nn, bn_momentum=bn_momentum, bias=False)
 
     def conv(self, x, pos, pos_skip, batch, batch_skip, *args):
         return knn_interpolate(x, pos, pos_skip, batch, batch_skip, k=self.k)
+
+    def extra_repr(self):
+        return "Nb parameters: %i" % self.nb_params
 
 
 ########################## BASE RESIDUAL DOWN #####################
