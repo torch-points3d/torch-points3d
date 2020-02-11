@@ -179,7 +179,8 @@ def rgbd2fragment_fine(list_path_img,
                        out_path,
                        num_frame_per_fragment=5,
                        voxel_size=0.01,
-                       pre_transform=None):
+                       pre_transform=None,
+                       depth_thresh=6):
     """
     fuse rgbd frame with a tsdf volume and get the mesh using marching cube.
     """
@@ -196,7 +197,7 @@ def rgbd2fragment_fine(list_path_img,
     for i, path_img in tqdm(enumerate(list_path_img), total=len(list_path_img)):
 
         depth = imageio.imread(path_img).astype(float) / 1000.0
-        depth[depth > 6] = 0
+        depth[depth > depth_thresh] = 0
         depth[depth <= 0] = 0
         intrinsic = np.loadtxt(path_intrinsic)
         color_image = imageio.imread(list_path_color[i])

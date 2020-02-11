@@ -40,6 +40,7 @@ class General3DMatch(Dataset):
                  max_overlap_ratio=1.0,
                  max_dist_overlap=0.01,
                  tsdf_voxel_size=0.01,
+                 depth_thresh=6,
                  is_fine=True,
                  transform=None,
                  pre_transform=None,
@@ -92,7 +93,7 @@ class General3DMatch(Dataset):
         self.is_fine = is_fine
         self.num_frame_per_fragment = num_frame_per_fragment
         self.tsdf_voxel_size = tsdf_voxel_size
-
+        self.depth_thresh = depth_thresh
         self.mode = mode
         # constant to compute overlap
         self.min_overlap_ratio = min_overlap_ratio
@@ -175,7 +176,8 @@ class General3DMatch(Dataset):
                                        list_path_trans, list_path_color,
                                        out_dir, self.num_frame_per_fragment,
                                        voxel_size=self.tsdf_voxel_size,
-                                       pre_transform=self.pre_transform)
+                                       pre_transform=self.pre_transform,
+                                       depth_thresh=self.depth_thresh)
 
 
 

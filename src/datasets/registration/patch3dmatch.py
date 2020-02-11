@@ -18,6 +18,7 @@ class Patch3DMatch(General3DMatch):
                  max_overlap_ratio=1.0,
                  max_dist_overlap=0.01,
                  tsdf_voxel_size=0.02,
+                 depth_thresh=6,
                  is_fine=True,
                  transform=None,
                  pre_transform=None,
@@ -74,6 +75,7 @@ class Patch3DMatch(General3DMatch):
                                            max_overlap_ratio,
                                            max_dist_overlap,
                                            tsdf_voxel_size,
+                                           depth_thresh,
                                            is_fine,
                                            transform,
                                            pre_transform,
@@ -128,6 +130,7 @@ class Patch3DMatchDataset(BaseDataset):
             max_dist_overlap=dataset_opt.max_dist_overlap,
             min_overlap_ratio=dataset_opt.min_overlap_ratio,
             tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+            depth_thresh=dataset_opt.depth_thresh,
             pre_transform=pre_transform,
             transform=train_transform)
 
@@ -139,6 +142,7 @@ class Patch3DMatchDataset(BaseDataset):
             max_dist_overlap=dataset_opt.max_dist_overlap,
             min_overlap_ratio=dataset_opt.min_overlap_ratio,
             tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+            depth_thresh=dataset_opt.depth_thresh,
             pre_transform=pre_transform,
             transform=test_transform)
 
