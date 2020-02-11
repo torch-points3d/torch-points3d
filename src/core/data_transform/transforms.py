@@ -74,10 +74,18 @@ class GridSphereSampling(object):
         grid_data = self._grid_sampling(data.clone())
 
         datas = []
-        for grid_center, grid_label in zip(np.asarray(grid_data.pos), np.asarray(grid_data.y)):
+        for grid_center in np.asarray(grid_data.pos):
             pts = np.asarray(grid_center)[np.newaxis]
+            
+            # Find closest point within the original data
+            ind = torch.LongTensor(tree.query(pts, k=1)[1][0])
+            grid_label = data.y[ind]
+            
+            # Find neighbours within the original data
             t_center = torch.FloatTensor(grid_center)
             ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+            
+            # Create a new data holder.
             new_data = Data()
             for key in set(data.keys):
                 item = data[key].clone()
@@ -87,6 +95,7 @@ class GridSphereSampling(object):
                         item -= t_center
                     setattr(new_data, key, item)
             new_data.center_label = grid_label
+            
             datas.append(new_data)
         return datas       
 
