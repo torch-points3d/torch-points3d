@@ -33,7 +33,7 @@ models:
             has_bottleneck: [False, True]
             down_conv_nn: [[FEAT, 32], [32, 64]]
         up_conv:
-            module_name: FPModule
+            module_name: FPModule_PD
             up_conv_nn: [[128 + 64, 64], [64 + 32, 64], [64 + FEAT, 64]]
             up_k: [1, 3, 3]
             skip: True
@@ -121,6 +121,7 @@ models:
     KPConvPaper:
         class: kpconv.KPConvPaper
         conv_type: "PARTIAL_DENSE"
+        use_category: use_category
         define_constants:
             use_category: ${data.use_category}
             in_grid_size: ${data.first_subsampling}
@@ -171,7 +172,7 @@ models:
                 [[12, 12], [25, 25], [38, 38], [36, 36], [32, 32]]
             module_name: KPDualBlock
         up_conv:
-            module_name: FPModule
+            module_name: FPModule_PD
             up_conv_nn:
                 [
                     [32*in_feat + 16*in_feat, 8*in_feat],
@@ -190,6 +191,6 @@ models:
                     bn_momentum,
                 ]
         mlp_cls:
-            nn: [in_feat, 2*in_feat, 4* in_feat]
+            nn: [in_feat, in_feat]
             dropout: 0.5
             bn_momentum: bn_momentum

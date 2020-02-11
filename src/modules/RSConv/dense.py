@@ -10,8 +10,7 @@ import etw_pytorch_utils as pt_utils
 from typing import Tuple
 
 from src.core.base_conv.dense import *
-from src.core.sampling import DenseFPSSampler
-from src.core.neighbourfinder import DenseRadiusNeighbourFinder
+from src.core.spatial_ops import DenseFPSSampler, DenseRadiusNeighbourFinder
 from src.utils.colors import COLORS
 
 log = logging.getLogger(__name__)

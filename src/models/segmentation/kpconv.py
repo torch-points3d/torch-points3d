@@ -66,8 +66,11 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
+            self.upsample = data.upsample
+            del data.upsample
             del data.multiscale
         else:
+            self.upsample = None
             self.pre_computed = None
 
         self.input = data
@@ -88,25 +91,28 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         data = self.down_modules[-1](data, pre_computed=self.pre_computed)
         for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((data, stack_down.pop()))
+            data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.upsample)
 
         last_feature = data.x
         if self._use_category:
             cat_one_hot = F.one_hot(self.category, self._num_categories).float()
-            last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
+            last_feature = torch.cat((last_feature, cat_one_hot), dim=-1)
 
         last_feature = self.FC_layer(last_feature)
         self.output = F.log_softmax(last_feature, dim=-1)
+
+        self.compute_loss()
         return self.output
+
+    def compute_loss(self):
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        if self._weight_classes is not None:
-            self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
-
         self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
@@ -116,8 +122,11 @@ class KPConvSeg(Segmentation_MP):
     def set_input(self, data):
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
+            self.upsample = data.upsample
+            del data.upsample
             del data.multiscale
         else:
+            self.upsample = None
             self.pre_computed = None
 
         self.input = data
@@ -126,11 +135,12 @@ class KPConvSeg(Segmentation_MP):
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        data = self.model(self.input, pre_computed=self.pre_computed)
+        data = self.model(self.input, pre_computed=self.pre_computed, precomputed_up=self.upsample)
         x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin2(x)
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
+        self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
         return self.output
