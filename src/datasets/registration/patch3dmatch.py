@@ -3,7 +3,7 @@ import os
 import os.path as osp
 import torch
 from src.datasets.base_dataset import BaseDataset
-from src.datasets.registration.general3dmatch_dataset import General3DMatch
+from src.datasets.registration.general3dmatch import General3DMatch
 from src.datasets.registration.utils import PatchExtractor
 from torch_geometric.data import Batch
 
@@ -36,7 +36,8 @@ class Patch3DMatch(General3DMatch):
         "<https://www.microsoft.com/en-us/research/publication/scene-coordinate-regression-forests-for-camera-relocalization-in-rgb-d-images/>`
         `"Unsupervised Feature Learning for 3D Scene Labeling
         "<http://rgbd-dataset.cs.washington.edu/dataset/rgbd-scenes-v2/>`
-        `"BundleFusion: Real-time Globally Consistent 3D Reconstruction using Online Surface Re-integration
+        `"BundleFusion: Real-time Globally Consistent 3D Reconstruction using Online
+        Surface Re-integration
         "<http://graphics.stanford.edu/projects/bundlefusion/>`
         `"Learning to Navigate the Energy Landscape
         "<http://graphics.stanford.edu/projects/reloc/>`
@@ -108,6 +109,7 @@ class Patch3DMatch(General3DMatch):
         batch.batch = None
 
         return batch.contiguous()
+
 
 class Patch3DMatchDataset(BaseDataset):
 
