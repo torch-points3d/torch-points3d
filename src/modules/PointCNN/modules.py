@@ -6,8 +6,7 @@ from torch.nn import ELU, Conv1d
 from torch_geometric.nn import Reshape
 from torch_geometric.nn.inits import reset
 
-from src.core.sampling import RandomSampler, FPSSampler
-from src.core.neighbourfinder import DilatedKNNNeighbourFinder
+from src.core.spatial_ops import RandomSampler, FPSSampler, DilatedKNNNeighbourFinder
 from src.core.base_conv.message_passing import *
 
 

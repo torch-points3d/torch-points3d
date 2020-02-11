@@ -39,7 +39,7 @@ class BaseModel(torch.nn.Module):
         self.output = None
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
-        self._sampling_and_search_dict: Dict = {}
+        self._spatial_ops_dict: Dict = {}
         self._iterations = 0
         self._lr_params = None
         self._grad_clip = getattr(opt, "grad_clip", 0)
@@ -151,8 +151,8 @@ class BaseModel(torch.nn.Module):
         else:
             return 0.0
 
-    def get_sampling_and_search_strategies(self):
-        return self._sampling_and_search_dict
+    def get_spatial_ops(self):
+        return self._spatial_ops_dict
 
     def enable_dropout_in_eval(self):
         def search_from_key(modules):

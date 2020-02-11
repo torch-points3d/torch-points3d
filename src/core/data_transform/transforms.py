@@ -21,6 +21,7 @@ from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
 from src.utils import is_iterable
 
+
 class PointCloudFusion(object):
     r"""This transform is responsible to perform a point cloud fusion from a list of data
     If a list of data is provided -> Create one Batch object with all data
@@ -124,6 +125,7 @@ class ComputeKDTree(object):
     Args:
         leaf_size (float or [float] or Tensor): Depth of the .
     """
+
     def __init__(self, leaf_size):
         self._leaf_size = leaf_size
 
@@ -158,12 +160,12 @@ class RandomSphere(object):
 
     def _process(self, data):
         num_points = data.pos.shape[0]
-        
+
         if not hasattr(data, self.KDTREE_KEY):
             tree = KDTree(np.asarray(data.pos), leaf_size=50)
         else:
             tree = getattr(data, self.KDTREE_KEY)
-            
+
         # The kdtree has bee attached to data for optimization reason.
         # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
         if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
@@ -405,15 +407,30 @@ class MultiScaleTransform(object):
         data.contiguous()
         ms_data = MultiScaleData.from_data(data)
         precomputed = [data]
+        upsample = []
+        upsample_index = 0
         for index in range(self.num_layers):
             sampler, neighbour_finder = self.strategies["sampler"][index], self.strategies["neighbour_finder"][index]
             support = precomputed[index]
             if sampler:
                 query = sampler(support.clone())
+                query.contiguous()
+
+                if len(self.strategies["upsample_op"]):
+                    if upsample_index >= len(self.strategies["upsample_op"]):
+                        raise ValueError("You are missing some upsample blocks in your network")
+
+                    upsampler = self.strategies["upsample_op"][upsample_index]
+                    upsample_index += 1
+                    pre_up = upsampler.precompute(query, support)
+                    upsample.append(pre_up)
+                    special_params = {}
+                    special_params["x_idx"] = query.num_nodes
+                    special_params["y_idx"] = support.num_nodes
+                    setattr(pre_up, "__inc__", self.__inc__wrapper(pre_up.__inc__, special_params))
             else:
                 query = support.clone()
 
-            query.contiguous()
             s_pos, q_pos = support.pos, query.pos
             if hasattr(query, "batch"):
                 s_batch, q_batch = support.batch, query.batch
@@ -424,16 +441,15 @@ class MultiScaleTransform(object):
                 )
 
             idx_neighboors, _ = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
-            special_params = {"idx_neighboors": s_pos.shape[0]}
+            special_params = {}
+            special_params["idx_neighboors"] = s_pos.shape[0]
             setattr(query, "idx_neighboors", idx_neighboors)
             setattr(query, "__inc__", self.__inc__wrapper(query.__inc__, special_params))
             precomputed.append(query)
         ms_data.multiscale = precomputed[1:]
+        upsample.reverse()  # Switch to inner layer first
+        ms_data.upsample = upsample
         return ms_data
-
-    @staticmethod
-    def get_tensor_name(index, field):
-        return "precomputed_%i_%s" % (index, field)
 
     def __repr__(self):
         return "{}".format(self.__class__.__name__)

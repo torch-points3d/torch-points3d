@@ -10,7 +10,6 @@ training:
     optimizer:
         class: Adam
         params:
-            weight_decay: 1e-3
             lr: 0.001
     learning_rate:
         scheduler_type: "exponential_decay"
@@ -27,7 +26,7 @@ training:
 # parameters for Weights and Biases
 wandb:
     project: shapenet-pn2
-    log: False
+    log: True
 
 # parameters for TensorBoard Visualization
 tensorboard:
