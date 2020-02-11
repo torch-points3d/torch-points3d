@@ -53,7 +53,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
         self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
-        self.loss_names = ["loss_seg"]
+        self.loss_names = ["loss_seg", "loss_reg"]
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -107,7 +107,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
     def compute_loss(self):
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
+
+        self.loss_reg = self.get_internal_loss()
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.loss_reg
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -142,5 +144,12 @@ class KPConvSeg(Segmentation_MP):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
+        self.compute_loss()
         return self.output
+
+    def compute_loss(self):
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+
+        self.loss_reg = self.get_internal_loss()
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.loss_reg
