@@ -22,7 +22,12 @@ from tqdm import tqdm as tq
 from src.utils import is_iterable
 
 class PointCloudFusion(object):
-
+    r"""This transform is responsible to perform a point cloud fusion from a list of data
+    If a list of data is provided -> Create one Batch object with all data
+    If a list of list of data is provided -> Create a list of fused point cloud
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+    """
     def _process(self, data_list):
         data = Batch.from_data_list(data_list)
         delattr(data, "batch")
@@ -48,6 +53,10 @@ class GridSphereSampling(object):
     create a sphere with a radius r
     Args:
         radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+        grid_size (float or [float] or Tensor): Grid_size to be used with GridSampling to select spheres center.
+            If None, radius will be used
+        delattr_kd_tree (bool): If True, KDTREE_KEY should be deleted as an attribute if it exists
+        center: (bool) If True, the sphere will be centered.
     """
     KDTREE_KEY = "kd_tree"
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):

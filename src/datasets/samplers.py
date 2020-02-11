@@ -3,6 +3,9 @@ import numpy as np
 from torch.utils.data import Sampler
 
 class BalancedRandomSampler(Sampler):
+    r"""This sampler is responsible for creating balanced batch based on the class distribution.
+    It is implementing a replacement=True strategy for indices selection
+    """
     def __init__(self, labels, replacement=True):
 
         self.num_samples = len(labels)

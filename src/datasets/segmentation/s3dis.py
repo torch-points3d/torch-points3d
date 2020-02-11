@@ -143,7 +143,7 @@ class S3DIS1x1Dataset(BaseDataset):
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
 
-        pre_transform = self._pre_transform
+        pre_transform = self.pre_transform
 
         transform = T.Compose(
             [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
@@ -153,15 +153,15 @@ class S3DIS1x1Dataset(BaseDataset):
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=True,
-            pre_transform=pre_transform,
-            transform=transform,
+            pre_transform=self.pre_transform,
+            transform=self.train_transform,
         )
         test_dataset = S3DIS1x1(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_transform=pre_transform,
-            transform=T.FixedPoints(dataset_opt.num_points),
+            transform=self.test_transform,
         )
 
         train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
@@ -247,7 +247,7 @@ class S3DISOriginal(InMemoryDataset):
         else:
             intersection = len(set(self.folders).intersection(set(raw_folders)))
             if intersection == 0:
-                print("The data seems properly downloaded")
+                log.info("The data seems properly downloaded")
             else:
                 raise RuntimeError(
                     "Dataset not found. Please download {} from {} and move it to {} with {}".format(
@@ -264,13 +264,13 @@ class S3DISOriginal(InMemoryDataset):
         return kd_trees
 
     def save_kd_trees(self, split_name, kd_trees):
-        name = "{}_kd_trees.p".format(split_name)
+        name = "{}_kd_trees.pt".format(split_name)
         pickle_out = open(os.path.join(self.processed_dir, name),"wb")
         pickle.dump(kd_trees, pickle_out)
         pickle_out.close()
 
     def load_kd_trees(self, split_name):
-        name = "{}_kd_trees.p".format(split_name)
+        name = "{}_kd_trees.pt".format(split_name)
         pickle_out = open(os.path.join(self.processed_dir, name),"rb")
         kd_trees = pickle.load(pickle_out)
         pickle_out.close()
@@ -446,7 +446,7 @@ class S3DISOriginalFused(InMemoryDataset):
         else:
             intersection = len(set(self.folders).intersection(set(raw_folders)))
             if intersection == 0:
-                print("The data seems properly downloaded")
+                log.info("The data seems properly downloaded")
             else:
                 raise RuntimeError(
                     "Dataset not found. Please download {} from {} and move it to {} with {}".format(
@@ -463,13 +463,13 @@ class S3DISOriginalFused(InMemoryDataset):
         return extract_center_labels
 
     def save_center_labels(self, split_name, center_labels):
-        name = "{}_center_labels.p".format(split_name)
+        name = "{}_center_labels.pt".format(split_name)
         pickle_out = open(os.path.join(self.processed_dir, name),"wb")
         pickle.dump(center_labels, pickle_out)
         pickle_out.close()
 
     def load_center_labels(self, split_name):
-        name = "{}_center_labels.p".format(split_name)
+        name = "{}_center_labels.pt".format(split_name)
         pickle_out = open(os.path.join(self.processed_dir, name),"rb")
         center_labels = pickle.load(pickle_out)
         pickle_out.close()
@@ -528,7 +528,7 @@ class S3DISOriginalFused(InMemoryDataset):
         test_data_list = data_list[self.test_area - 1]
 
         if self.pre_collate_transform:
-            print('pre_collate_transform ...')
+            log.info('pre_collate_transform ...')
             train_data_list = self.pre_collate_transform(train_data_list)
             test_data_list = self.pre_collate_transform(test_data_list)
 
