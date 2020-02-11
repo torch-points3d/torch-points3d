@@ -16,14 +16,15 @@ from src.utils.colors import COLORS
 # A logger for this file
 log = logging.getLogger(__name__)
 
+
 class BaseDataset:
     def __init__(self, dataset_opt, training_opt):
         self.dataset_opt = dataset_opt
-        
+
         # Default dataset path
-        class_name = self.__class__.__name__.lower().replace('dataset', '')
+        class_name = self.__class__.__name__.lower().replace("dataset", "")
         self._data_path = os.path.join(dataset_opt.dataroot, class_name)
-        
+
         self.training_opt = training_opt
         self.strategies = {}
         self._batch_collate_function = BaseDataset._get_collate_function(
@@ -44,7 +45,11 @@ class BaseDataset:
                 new_name = key_name.replace("transforms", "transform")
                 try:
                     transform = instantiate_transforms(getattr(dataset_opt, key_name))
-                    log.info("Set attr:{} {} {}for dataset with following transform {}".format(COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform))
+                    log.info(
+                        "Set attr:{} {} {}for dataset with following transform {}".format(
+                            COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform
+                        )
+                    )
                 except Exception:
                     log.exception("Error trying to create {}".format(new_name))
                     continue
@@ -193,7 +198,8 @@ class BaseDataset:
                         )
 
     def set_strategies(self, model):
-        strategies = model.get_sampling_and_search_strategies()
+        strategies = model.get_spatial_ops()
+
         transform = MultiScaleTransform(strategies)
         self._set_multiscale_transform(transform)
 

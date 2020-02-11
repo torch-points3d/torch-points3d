@@ -51,19 +51,19 @@ class UnetBasedModel(BaseModel):
     def _save_sampling_and_search(self, submodule):
         sampler = getattr(submodule.down, "sampler", None)
         if is_list(sampler):
-            self._sampling_and_search_dict["sampler"] = sampler + self._sampling_and_search_dict["sampler"]
+            self._spatial_ops_dict["sampler"] = sampler + self._spatial_ops_dict["sampler"]
         else:
-            self._sampling_and_search_dict["sampler"] = [sampler] + self._sampling_and_search_dict["sampler"]
+            self._spatial_ops_dict["sampler"] = [sampler] + self._spatial_ops_dict["sampler"]
 
         neighbour_finder = getattr(submodule.down, "neighbour_finder", None)
         if is_list(neighbour_finder):
-            self._sampling_and_search_dict["neighbour_finder"] = (
-                neighbour_finder + self._sampling_and_search_dict["neighbour_finder"]
-            )
+            self._spatial_ops_dict["neighbour_finder"] = neighbour_finder + self._spatial_ops_dict["neighbour_finder"]
         else:
-            self._sampling_and_search_dict["neighbour_finder"] = [neighbour_finder] + self._sampling_and_search_dict[
-                "neighbour_finder"
-            ]
+            self._spatial_ops_dict["neighbour_finder"] = [neighbour_finder] + self._spatial_ops_dict["neighbour_finder"]
+
+        upsample_op = getattr(submodule.up, "upsample_op", None)
+        if upsample_op:
+            self._spatial_ops_dict["upsample_op"].append(upsample_op)
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet generator
@@ -81,7 +81,7 @@ class UnetBasedModel(BaseModel):
         * OPTIONAL: innermost
         """
         super(UnetBasedModel, self).__init__(opt)
-        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
+        self._spatial_ops_dict = {"neighbour_finder": [], "sampler": [], "upsample_op": []}
         # detect which options format has been used to define the model
         if type(opt.down_conv) is ListConfig or "down_conv_nn" not in opt.down_conv:
             self._init_from_layer_list_format(opt, model_type, dataset, modules_lib)
@@ -309,15 +309,20 @@ class UnwrappedUnetBasedModel(BaseModel):
     def _save_sampling_and_search(self, down_conv):
         sampler = getattr(down_conv, "sampler", None)
         if is_list(sampler):
-            self._sampling_and_search_dict["sampler"] += sampler
+            self._spatial_ops_dict["sampler"] += sampler
         else:
-            self._sampling_and_search_dict["sampler"].append(sampler)
+            self._spatial_ops_dict["sampler"].append(sampler)
 
         neighbour_finder = getattr(down_conv, "neighbour_finder", None)
         if is_list(neighbour_finder):
-            self._sampling_and_search_dict["neighbour_finder"] += neighbour_finder
+            self._spatial_ops_dict["neighbour_finder"] += neighbour_finder
         else:
-            self._sampling_and_search_dict["neighbour_finder"].append(neighbour_finder)
+            self._spatial_ops_dict["neighbour_finder"].append(neighbour_finder)
+
+    def _save_upsample(self, up_conv):
+        upsample_op = getattr(up_conv, "upsample_op", None)
+        if upsample_op:
+            self._spatial_ops_dict["upsample_op"].append(upsample_op)
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
         """Construct a Unet unwrapped generator
@@ -343,7 +348,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         """
         super(UnwrappedUnetBasedModel, self).__init__(opt)
         # detect which options format has been used to define the model
-        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
+        self._spatial_ops_dict = {"neighbour_finder": [], "sampler": [], "upsample_op": []}
 
         if is_list(opt.down_conv) or "down_conv_nn" not in opt.down_conv:
             raise NotImplementedError
@@ -408,7 +413,9 @@ class UnwrappedUnetBasedModel(BaseModel):
         for i in range(len(opt.up_conv.up_conv_nn)):
             args = self._fetch_arguments(opt.up_conv, i, "UP")
             conv_cls = self._get_from_kwargs(args, "conv_cls")
-            self.up_modules.append(conv_cls(**args))
+            up_module = conv_cls(**args)
+            self._save_upsample(up_module)
+            self.up_modules.append(up_module)
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)

@@ -33,7 +33,7 @@ models:
             has_bottleneck: [False, True]
             down_conv_nn: [[FEAT, 32], [32, 64]]
         up_conv:
-            module_name: FPModule
+            module_name: FPModule_PD
             up_conv_nn: [[128 + 64, 64], [64 + 32, 64], [64 + FEAT, 64]]
             up_k: [1, 3, 3]
             skip: True
@@ -172,7 +172,7 @@ models:
                 [[12, 12], [25, 25], [38, 38], [36, 36], [32, 32]]
             module_name: KPDualBlock
         up_conv:
-            module_name: FPModule
+            module_name: FPModule_PD
             up_conv_nn:
                 [
                     [32*in_feat + 16*in_feat, 8*in_feat],

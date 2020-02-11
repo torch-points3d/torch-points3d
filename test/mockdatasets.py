@@ -41,7 +41,7 @@ class MockDataset(torch.utils.data.Dataset):
         return {"class1": [0, 1, 2, 3, 4, 5], "class2": [6, 7, 8, 9]}
 
     def set_strategies(self, model):
-        strategies = model.get_sampling_and_search_strategies()
+        strategies = model.get_spatial_ops()
         transform = MultiScaleTransform(strategies)
         self._transform = transform
 
