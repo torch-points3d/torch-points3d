@@ -328,9 +328,5 @@ class MultiScaleTransform(object):
         ms_data.upsample = upsample
         return ms_data
 
-    @staticmethod
-    def get_tensor_name(index, field):
-        return "precomputed_%i_%s" % (index, field)
-
     def __repr__(self):
         return "{}".format(self.__class__.__name__)

@@ -29,7 +29,7 @@ class KNNInterpolate:
             weights = 1.0 / torch.clamp(squared_distance, min=1e-16)
         normalisation = scatter_add(weights, y_idx, dim=0, dim_size=pos_y.size(0))
 
-        return Data(pos=support.pos, x_idx=x_idx, y_idx=y_idx, weights=weights, normalisation=normalisation)
+        return Data(num_nodes=support.num_nodes, x_idx=x_idx, y_idx=y_idx, weights=weights, normalisation=normalisation)
 
     def __call__(self, query, support, precomputed: Data = None):
         """ Computes a new set of features going from the query resolution position to the support
