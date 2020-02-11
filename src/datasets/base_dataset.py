@@ -31,10 +31,15 @@ class BaseDataset:
             training_opt.conv_type, training_opt.precompute_multi_scale
         )
 
+        self.train_sampler = None
+        self.test_sampler = None
+        self.val_sampler = None
+
         self.pre_transform = None
         self.test_transform = None
         self.train_transform = None
         self.val_transform = None
+
         for key_name in dataset_opt.keys():
             if "transform" in key_name:
                 new_name = key_name.replace("transforms", "transform")
@@ -72,11 +77,16 @@ class BaseDataset:
         self._num_classes = train_dataset.num_classes
         self._feature_dimension = train_dataset.num_features
         dataloader = partial(torch.utils.data.DataLoader, collate_fn=self._batch_collate_function,)
+        
+        if self.train_sampler:
+            print(self.train_sampler)
+        
         self._train_loader = dataloader(
             train_dataset,
             batch_size=self.training_opt.batch_size,
-            shuffle=self.training_opt.shuffle,
+            shuffle=self.training_opt.shuffle and not self.train_sampler,
             num_workers=self.training_opt.num_workers,
+            sampler=self.train_sampler,
         )
 
         self._test_loader = dataloader(
@@ -84,6 +94,7 @@ class BaseDataset:
             batch_size=self.training_opt.batch_size,
             shuffle=False,
             num_workers=self.training_opt.num_workers,
+            sampler=self.test_sampler,
         )
 
         if val_dataset:
@@ -92,6 +103,7 @@ class BaseDataset:
                 batch_size=self.training_opt.batch_size,
                 shuffle=False,
                 num_workers=self.training_opt.num_workers,
+                sampler=self.val_sampler,
             )
 
     @property
