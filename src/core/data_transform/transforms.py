@@ -1,3 +1,5 @@
+from typing import List
+import itertools
 import numpy as np
 import math
 import re
@@ -14,8 +16,109 @@ from torch_scatter import scatter_add, scatter_mean
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
+from src.utils.config import is_list
+from torch_geometric.data import Data, Batch
+from tqdm import tqdm as tq
 from src.utils import is_iterable
 
+
+class PointCloudFusion(object):
+    r"""This transform is responsible to perform a point cloud fusion from a list of data
+    If a list of data is provided -> Create one Batch object with all data
+    If a list of list of data is provided -> Create a list of fused point cloud
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+    """
+    def _process(self, data_list):
+        data = Batch.from_data_list(data_list)
+        delattr(data, "batch")
+        return data
+
+    def __call__(self, data_list: List[Data]):
+        if len(data_list) == 0:
+            raise Exception('A list of data should be provided')
+        elif len(data_list) == 1:
+            return data_list[0]
+        else:
+            if isinstance(data_list[0], list):
+                data = [self._process(d) for d in data_list]
+            else:
+                data = self._process(data_list)
+        return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)
+
+class GridSphereSampling(object):
+    r"""Fit the point cloud to a grid and for each point in this grid, 
+    create a sphere with a radius r
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+        grid_size (float or [float] or Tensor): Grid_size to be used with GridSampling to select spheres center.
+            If None, radius will be used
+        delattr_kd_tree (bool): If True, KDTREE_KEY should be deleted as an attribute if it exists
+        center: (bool) If True, the sphere will be centered.
+    """
+    KDTREE_KEY = "kd_tree"
+    def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
+        self._radius = eval(radius) if isinstance(radius, str) else float(radius)
+
+        self._grid_sampling = GridSampling(size=grid_size if grid_size else self._radius)
+        self._delattr_kd_tree = delattr_kd_tree
+        self._center = center
+
+    def _process(self, data):
+        num_points = data.pos.shape[0]
+        
+        if not hasattr(data, self.KDTREE_KEY):
+            tree = KDTree(np.asarray(data.pos), leaf_size=50)
+        else:
+            tree = getattr(data, self.KDTREE_KEY)
+            
+        # The kdtree has bee attached to data for optimization reason.
+        # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
+        if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
+            delattr(data, self.KDTREE_KEY)
+
+        # apply grid sampling
+        grid_data = self._grid_sampling(data.clone())
+
+        datas = []
+        for grid_center in np.asarray(grid_data.pos):
+            pts = np.asarray(grid_center)[np.newaxis]
+            
+            # Find closest point within the original data
+            ind = torch.LongTensor(tree.query(pts, k=1)[1][0])
+            grid_label = data.y[ind]
+            
+            # Find neighbours within the original data
+            t_center = torch.FloatTensor(grid_center)
+            ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+            
+            # Create a new data holder.
+            new_data = Data()
+            for key in set(data.keys):
+                item = data[key].clone()
+                if num_points == item.shape[0]:
+                    item = item[ind]
+                    if self._center and key == 'pos': # Center the sphere.
+                        item -= t_center
+                    setattr(new_data, key, item)
+            new_data.center_label = grid_label
+            
+            datas.append(new_data)
+        return datas       
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data)) # 2d list needs to be flatten
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
 
 class ComputeKDTree(object):
     r"""Calculate the KDTree and save it within data
@@ -26,8 +129,15 @@ class ComputeKDTree(object):
     def __init__(self, leaf_size):
         self._leaf_size = leaf_size
 
-    def __call__(self, data):
+    def _process(self, data):
         data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self._leaf_size)
+        return data
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
         return data
 
     def __repr__(self):
@@ -40,15 +150,15 @@ class RandomSphere(object):
         radius (float or [float] or Tensor): Radius of the sphere to be sampled.
     """
     KDTREE_KEY = "kd_tree"
-
-    def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True):
+    def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
 
         self._sampling_strategy = SamplingStrategy(strategy=strategy, class_weight_method=class_weight_method)
 
         self._delattr_kd_tree = delattr_kd_tree
+        self._center = center
 
-    def __call__(self, data):
+    def _process(self, data):
         num_points = data.pos.shape[0]
 
         if not hasattr(data, self.KDTREE_KEY):
@@ -64,19 +174,27 @@ class RandomSphere(object):
         # apply sampling strategy
         random_center = self._sampling_strategy(data)
 
-        pts = np.asarray(data.pos[random_center])[np.newaxis]
-        ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+        center = np.asarray(data.pos[random_center])[np.newaxis]
+        t_center = torch.FloatTensor(center)
+        ind = torch.LongTensor(tree.query_radius(center, r=self._radius)[0])
         for key in set(data.keys):
             item = data[key]
             if num_points == item.shape[0]:
-                setattr(data, key, item[ind])
+                item = item[ind]
+                if self._center and key == 'pos': # Center the sphere.
+                    item -= t_center
+                setattr(data, key, item)
+        return data
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
         return data
 
     def __repr__(self):
-        return "{}(radius={}, sampling_strategy={})".format(
-            self.__class__.__name__, self._radius, self._sampling_strategy
-        )
-
+        return "{}(radius={}, center={}, sampling_strategy={})".format(self.__class__.__name__, self._radius, self._center, self._sampling_strategy)
 
 class GridSampling(object):
     r"""Clusters points into voxels with size :attr:`size`.
@@ -99,7 +217,7 @@ class GridSampling(object):
         self.end = end
         self.num_classes = num_classes
 
-    def __call__(self, data):
+    def _process(self, data):
         num_nodes = data.num_nodes
 
         if "batch" not in data:
@@ -122,8 +240,14 @@ class GridSampling(object):
                 elif key == "batch":
                     data[key] = item[perm]
                 else:
-                    data[key] = scatter_mean(item, cluster, dim=0)
+                    data[key] = scatter_mean(item, cluster, dim=0)        
+        return data
 
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
         return data
 
     def __repr__(self):
@@ -182,7 +306,6 @@ class RandomScaleAnisotropic:
             is randomly sampled from the range
             :math:`a \leq \mathrm{scale} \leq b`.
     """
-
     def __init__(self, scales=None, anisotropic=True):
         assert is_iterable(scales) and len(scales) == 2
         assert scales[0] <= scales[1]
