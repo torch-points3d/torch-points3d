@@ -87,7 +87,7 @@ class PointNet2_D(UnetBasedModel):
             last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
 
         self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
-        
+
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
         self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)

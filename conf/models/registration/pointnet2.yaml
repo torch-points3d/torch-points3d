@@ -1,0 +1,16 @@
+models:
+  minipointnet2:
+    class: pointnet2.SiamesePointNet2_D
+    conv_type: "DENSE"
+    down_conv:
+      module_name: PointNetMSGDown
+      npoint: [1024, 256]
+      radii: [[0.2, 0.4], [0.4, 0.8]]
+      nsamples: [[16, 32], [16, 32]]
+      down_conv_nn:
+        [
+            [[FEAT, 16, 16, 32], [FEAT, 32, 32, 64]],
+            [[32 + 64, 64, 64, 128], [32 + 64, 64, 64, 128]]
+        ]
+    loss:
+      loss_name: "BatchHard"

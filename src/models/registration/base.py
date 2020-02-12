@@ -12,6 +12,7 @@ def create_batch_siamese(pair, batch):
     """
     create a batch with siamese input
     """
+    return 2 * batch + pair
 
 
 class PatchSiamese(BackboneBasedModel):
@@ -44,8 +45,6 @@ class PatchSiamese(BackboneBasedModel):
         self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0])
         for i in range(1, len(last_mlp_opt.nn)):
             self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
-        if last_mlp_opt.dropout:
-            self.FC_layer.dropout(p=last_mlp_opt.dropout)
 
     def set_loss(self):
         raise NotImplementedError("Choose a loss for the metric learning")

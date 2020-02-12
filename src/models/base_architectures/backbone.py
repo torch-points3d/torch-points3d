@@ -36,6 +36,7 @@ SPECIAL_NAMES = ["radius", "max_num_neighbors", "block_names"]
 class BackboneBasedModel(BaseModel):
     """
     create a backbone-based generator:
+    This is simply an encoder
     (can be used in classification, regression, metric learning and so one)
     """
 
@@ -54,7 +55,7 @@ class BackboneBasedModel(BaseModel):
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
 
-        """Construct a backbone generator (It is the down module of Unet)
+        """Construct a backbone generator (It is a simple down module)
         Parameters:
             opt - options for the network generation
             model_type - type of the model to be generated
@@ -96,6 +97,10 @@ class BackboneBasedModel(BaseModel):
             down_module = conv_cls(**args)
             self._save_sampling_and_search(down_module)
             self.down_modules.append(down_module)
+
+        self.loss_module, self.miner_module = self.get_loss(
+            getattr(opt, "loss", None), getattr(opt, "miner", None), modules_lib
+        )
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
@@ -148,3 +153,25 @@ class BackboneBasedModel(BaseModel):
                 break
 
         return flattenedOpts
+
+    def _fetch_loss_argument(self, opt_loss):
+        args = {}
+        for o, v in opt_loss.items():
+            if "name" not in o:
+                args[str(o)] = v
+        return args
+
+    def get_loss(self, opt_loss, opt_miner, modules_lib):
+        loss = None
+        miner = None
+        if opt_loss is not None:
+            Loss = getattr(modules_lib, opt_loss.loss_name)
+            args_loss = self._fetch_loss_argument(opt_loss)
+            loss = Loss(**args_loss)
+
+        if opt_loss is not None:
+            Miner = getattr(modules_lib, opt_miner.miner_name)
+            args_miner = self._fetch_miner_argument(opt_miner)
+            miner = Miner(**args_miner)
+
+        return loss, miner
