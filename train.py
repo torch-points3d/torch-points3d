@@ -113,6 +113,12 @@ def main(cfg):
     if cfg.pretty_print:
         print(cfg.pretty())
 
+    # wandb
+    if cfg.wandb.log:
+        import wandb
+
+        wandb.init(project=cfg.wandb.project)
+
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
     log.info("DEVICE : {}".format(device))
@@ -154,17 +160,9 @@ def main(cfg):
     if cfg_training.precompute_multi_scale:
         dataset.set_strategies(model)
 
-    model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     log.info("Model size = %i", params)
-
-    # metric tracker
-    if cfg.wandb.log:
-        import wandb
-
-        wandb.init(project=cfg.wandb.project)
-        # wandb.watch(model)
 
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
@@ -178,6 +176,7 @@ def main(cfg):
     )
 
     # Run training / evaluation
+    model = model.to(device)
     run(cfg, model, dataset, device, tracker, checkpoint)
 
 

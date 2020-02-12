@@ -37,7 +37,7 @@ def _build_step_decay(learning_rate_params, optimizer):
 
 def _build_exponential_decay(learning_rate_params, optimizer):
     lr_lbmd = lambda e: max(
-        learning_rate_params.gamma ** (e / learning_rate_params.decay_step),
+        eval(learning_rate_params.gamma) ** (e / learning_rate_params.decay_step),
         learning_rate_params.lr_clip / learning_rate_params.base_lr,
     )
     return LambdaLR(optimizer, lr_lbmd)

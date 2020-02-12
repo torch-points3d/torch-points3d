@@ -51,12 +51,10 @@ class ShapenetPartTracker(BaseTracker):
 
         # pred to the groundtruth classes (selected by seg_classes[cat])
         for b in range(nb_batches):
-            t = targets[batch_idx == b]
-            cat = self._seg_to_class[t[0]]
-            logits = outputs[batch_idx == b, :]  # (num_points, num_classes)
-            segp = logits[:, self._class_seg_map[cat]].argmax(1) + self._class_seg_map[cat][0]
             segl = targets[batch_idx == b]
             cat = self._seg_to_class[segl[0]]
+            logits = outputs[batch_idx == b, :]  # (num_points, num_classes)
+            segp = logits[:, self._class_seg_map[cat]].argmax(1) + self._class_seg_map[cat][0]
             part_ious = np.zeros(len(self._class_seg_map[cat]))
             for l in self._class_seg_map[cat]:
                 if np.sum((segl == l) | (segp == l)) == 0:
