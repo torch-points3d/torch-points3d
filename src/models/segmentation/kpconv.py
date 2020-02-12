@@ -108,9 +108,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
 
-        # Collect internal losses
-        self.internal_losses = self.collect_internal_loss()
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.internal_losses
+        # Collect internal losses and set them with self and them to self for later tracking
+        self.internal_losses = self.collect_internal_losses()
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + 0.005 * self.internal_losses
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""

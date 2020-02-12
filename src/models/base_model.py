@@ -140,7 +140,7 @@ class BaseModel(torch.nn.Module):
         search_from_key(self._modules, losses_global)
         return losses_global
 
-    def collect_internal_loss(self, reduction='sum'):
+    def collect_internal_losses(self, reduction='sum'):
         """
             Collect internal loss of all child modules with
             internal losses and set the losses
