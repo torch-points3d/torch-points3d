@@ -3,7 +3,7 @@ import etw_pytorch_utils as pt_utils
 from torch_geometric.data import Data
 import logging
 
-# from src.core.losses import *
+from src.core.losses import *
 from src.modules.pointnet2 import *
 from src.core.base_conv.dense import DenseFPModule
 from src.models.base_architectures import BackboneBasedModel
