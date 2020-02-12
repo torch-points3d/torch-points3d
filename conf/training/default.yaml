@@ -27,6 +27,8 @@ training:
 wandb:
     project: default
     log: False
+    notes:
+    name:
 
     # parameters for TensorBoard Visualization
 tensorboard:
