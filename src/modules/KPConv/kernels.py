@@ -139,25 +139,23 @@ class LossKPConvEnum(Enum):
     FITTING = 1
     REPULSION = 2
 
-
 def fitting_loss(sq_distance, radius):
-    kpmin = sq_distance.min(dim=1)
+    kpmin = sq_distance.min(dim=1)[0]
     normalised_kpmin = kpmin / (radius ** 2)
     return torch.mean(normalised_kpmin)
 
 
 def repulsion_loss(deformed_kpoints, radius):
     deformed_kpoints / float(radius)
-    n_points = deformed_kpoints.shape[0]
+    n_points = deformed_kpoints.shape[1]
     repulsive_loss = 0
     for i in range(n_points):
         with torch.no_grad():
             other_points = torch.cat([deformed_kpoints[:, :i, :], deformed_kpoints[:, i + 1 :, :]], dim=1)
         distances = torch.sqrt(torch.sum((other_points - deformed_kpoints[:, i : i + 1, :]) ** 2, dim=-1))
-        repulsion_force = torch.sum(torch.square(torch.max(0, 1.5 - distances)), dim=1)
+        repulsion_force = torch.sum(torch.pow(torch.relu(1.5 - distances), 2), dim=1)
         repulsive_loss += torch.mean(repulsion_force)
     return repulsive_loss
-
 
 def permissive_loss(deformed_kpoints, radius):
     """This loss is responsible to penalize deformed_kpoints to
@@ -165,7 +163,6 @@ def permissive_loss(deformed_kpoints, radius):
     """
     norm_deformed_normalized = F.normalize(deformed_kpoints) / float(radius)
     return torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
-
 
 # Implements the Light Deformable KPConv
 # https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503

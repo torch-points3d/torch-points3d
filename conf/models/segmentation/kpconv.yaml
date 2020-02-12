@@ -98,6 +98,7 @@ models:
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
             bn_momentum: 0.02
+        deformable: True
         down_conv:
             down_conv_nn:
                 [
@@ -134,6 +135,101 @@ models:
             has_bottleneck:
                 [
                     [False, True],
+                    [True, True],
+                    [True, True],
+                    [True, True],
+                    [True, True],
+                ]
+            deformable:
+                [
+                    [False, False],
+                    [False, False],
+                    [False, False],
+                    [False, False],
+                    [False, False],
+                ]
+            max_num_neighbors:
+                [[12, 12], [25, 25], [38, 38], [36, 36], [32, 32]]
+            module_name: KPDualBlock
+        up_conv:
+            module_name: FPModule_PD
+            up_conv_nn:
+                [
+                    [32*in_feat + 16*in_feat, 8*in_feat],
+                    [8*in_feat + 8*in_feat, 4*in_feat],
+                    [4*in_feat + 4*in_feat, 2*in_feat],
+                    [2*in_feat + 2*in_feat, in_feat],
+                ]
+            skip: True
+            up_k: [1, 1, 1, 1]
+            bn_momentum:
+                [
+                    bn_momentum,
+                    bn_momentum,
+                    bn_momentum,
+                    bn_momentum,
+                    bn_momentum,
+                ]
+        mlp_cls:
+            nn: [in_feat, in_feat]
+            dropout: 0.5
+            bn_momentum: bn_momentum
+
+            
+    KPConvDeformablePaper:
+        class: kpconv.KPConvPaper
+        conv_type: "PARTIAL_DENSE"
+        use_category: use_category
+        define_constants:
+            use_category: ${data.use_category}
+            in_grid_size: ${data.first_subsampling}
+            in_feat: 64
+            bn_momentum: 0.02
+        deformable: True
+        down_conv:
+            down_conv_nn:
+                [
+                    [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
+                    [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
+                    [[4*in_feat, 4*in_feat], [4*in_feat, 8*in_feat]],
+                    [[8*in_feat, 8*in_feat], [8*in_feat, 16*in_feat]],
+                    [[16*in_feat, 16*in_feat], [16*in_feat, 32*in_feat]],
+                ]
+            grid_size:
+                [
+                    [in_grid_size, in_grid_size],
+                    [2*in_grid_size, 2*in_grid_size],
+                    [4*in_grid_size, 4*in_grid_size],
+                    [8*in_grid_size, 8*in_grid_size],
+                    [16*in_grid_size, 16*in_grid_size],
+                ]
+            is_strided:
+                [
+                    [False, False],
+                    [True, False],
+                    [True, False],
+                    [True, False],
+                    [True, False],
+                ]
+            block_names:
+                [
+                    ["SimpleBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                    ["ResnetBBlock", "ResnetBBlock"],
+                ]
+            has_bottleneck:
+                [
+                    [False, True],
+                    [True, True],
+                    [True, True],
+                    [True, True],
+                    [True, True],
+                ]
+            deformable:
+                [
+                    [True, True],
                     [True, True],
                     [True, True],
                     [True, True],

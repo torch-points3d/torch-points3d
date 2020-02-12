@@ -173,10 +173,11 @@ def KPConv_deform_ops(
     new_neighb_bool, new_neighb_inds = torch.topk(in_range, k=new_max_neighb)
 
     # Gather new neighbor indices [n_points, new_max_neighb]
-    new_neighbors_indices = neighbors_indices[:, new_neighb_inds]
+    new_neighbors_indices = neighbors_indices.gather(1, new_neighb_inds)
 
     # Gather new distances to KP [n_points, new_max_neighb, n_kpoints]
-    new_sq_distances = sq_distances[:, :, new_neighb_inds]
+    new_neighb_inds_sq = new_neighb_inds.unsqueeze(-1)
+    new_sq_distances = sq_distances.gather(1, new_neighb_inds_sq.repeat((1, 1, sq_distances.shape[-1])))
 
     # New shadow neighbors have to point to the last shadow point
     new_neighbors_indices *= new_neighb_bool
