@@ -6,7 +6,7 @@ import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import logging
-
+from collections import defaultdict
 from src.core.schedulers.lr_schedulers import get_scheduler
 
 log = logging.getLogger(__name__)
@@ -127,27 +127,50 @@ class BaseModel(torch.nn.Module):
             and returns this merged dict
         """
 
-        losses_global = []
+        losses_global = defaultdict(list)
 
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
-                    losses_global.append(module.get_internal_losses())
+                    losses = module.get_internal_losses()
+                    for loss_name, loss_value in losses.items():
+                        losses_global[loss_name].append(loss_value)
                 search_from_key(module._modules, losses_global)
 
         search_from_key(self._modules, losses_global)
+        return losses_global
 
-        return dict(ChainMap(*losses_global))
+    def collect_internal_loss(self, reduction='sum'):
+        """
+            Collect internal loss of all child modules with
+            internal losses and set the losses
+        """
+        if reduction == "sum":
+            aggr_func = torch.sum
+
+        elif reduction == "mean":
+            aggr_func = torch.mean
+        else:
+            raise NotImplementedError        
+        
+        loss_out = 0
+        losses = self.get_named_internal_losses()
+        for loss_name, loss_values in losses.items():
+            if loss_name not in self.loss_names:
+                self.loss_names.append(loss_name)
+            item_loss = aggr_func(torch.stack(loss_values))
+            loss_out += item_loss
+            setattr(self, loss_name, item_loss.item())
+        return item_loss
 
     def get_internal_loss(self):
         """
             Returns the average internal loss of all child modules with
             internal losses
         """
-
-        losses = tuple(self.get_named_internal_losses().values())
-        if len(losses) > 0:
-            return torch.mean(torch.stack(losses))
+        loss = 0
+        for loss_name, loss_values in losses.items():
+            loss += torch.mean(loss_values)
         else:
             return 0.0
 
