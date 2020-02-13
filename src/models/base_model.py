@@ -8,6 +8,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 import logging
 from collections import defaultdict
 from src.core.schedulers.lr_schedulers import get_scheduler
+from src.core.regularizer import *
 
 log = logging.getLogger(__name__)
 
@@ -119,6 +120,12 @@ class BaseModel(torch.nn.Module):
         self._lr_params = lr_params
         log.info(self._optimizer)
 
+    def get_regularization_loss(self, regularizer_type="L2", **kwargs):
+        loss = 0
+        regularizer_cls = RegularizerTypes[regularizer_type.upper()].value
+        regularizer = regularizer_cls(self, **kwargs)
+        return regularizer.regularized_all_param(loss)
+
     def get_named_internal_losses(self):
         """
             Modules which have internal losses return a dict of the form
@@ -137,7 +144,7 @@ class BaseModel(torch.nn.Module):
         search_from_key(self._modules, losses_global)
         return losses_global
 
-    def collect_internal_losses(self, reduction='sum'):
+    def collect_internal_losses(self, lambda_weight=1, reduction='sum'):
         """
             Collect internal loss of all child modules with
             internal losses and set the losses
@@ -155,10 +162,10 @@ class BaseModel(torch.nn.Module):
         for loss_name, loss_values in losses.items():
             if loss_name not in self.loss_names:
                 self.loss_names.append(loss_name)
-            item_loss = aggr_func(torch.stack(loss_values))
+            item_loss = lambda_weight * aggr_func(torch.stack(loss_values))
             loss_out += item_loss
             setattr(self, loss_name, item_loss.item())
-        return item_loss
+        return loss_out
 
     def get_internal_loss(self):
         """
