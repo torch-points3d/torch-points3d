@@ -161,8 +161,9 @@ def permissive_loss(deformed_kpoints, radius):
     """This loss is responsible to penalize deformed_kpoints to
     move outside from the radius defined for the convolution
     """
-    norm_deformed_normalized = F.normalize(deformed_kpoints) / float(radius)
-    return torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
+    norm_deformed_normalized = torch.norm(deformed_kpoints, p=2, dim=-1) / float(radius)
+    permissive_loss = torch.mean(norm_deformed_normalized[norm_deformed_normalized > 1.0])
+    return permissive_loss
 
 # Implements the Light Deformable KPConv
 # https://github.com/HuguesTHOMAS/KPConv/blob/master/kernels/convolution_ops.py#L503
@@ -441,7 +442,7 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
         aggregation_mode="sum",
         dimension=3,
         modulated=False,
-        loss_mode="fitting",
+        loss_mode="permissive",
         loss_decay=0.1,
     ):
         super(KPConvDeformableLayer, self).__init__()
@@ -534,11 +535,11 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
 
         if self.loss_mode == "fitting":
             self.internal_losses[self.OFFSET_LOSS_KEY] = self.loss_decay * (
-                fitting_loss(sq_distances, self.kernel_radius) + repulsion_loss(K_points_deformed, self.kernel_radius)
+                fitting_loss(sq_distances, self.kernel_radius) + repulsion_loss(K_points_deformed, self.point_influence)
             )
         elif self.loss_mode == "permissive":
             self.internal_losses[self.OFFSET_LOSS_KEY] = self.loss_decay * permissive_loss(
-                K_points_deformed, self.radius
+                K_points_deformed, self.kernel_radius
             )
         else:
             raise NotImplementedError(

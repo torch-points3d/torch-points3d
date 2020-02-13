@@ -114,25 +114,26 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
 
-        self.loss_seg = 0
+        self.loss = 0
 
         # Get regularization on weights
         if self.lambda_reg:
             self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
-            self.loss_seg += self.loss_reg
+            self.loss += self.loss_reg
         
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
-            self.loss_seg += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+            self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
 
         # Final cross entrop loss
-        self.loss_seg += F.nll_loss(self.output, self.labels, weight=self._weight_classes)
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes)
+        self.loss += self.loss_seg
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
+        self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
 class KPConvSeg(Segmentation_MP):

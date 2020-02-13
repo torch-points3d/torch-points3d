@@ -168,6 +168,7 @@ def KPConv_deform_ops(
 
     # New value of max neighbors
     new_max_neighb = torch.max(torch.sum(in_range, axis=1))
+    #print(new_max_neighb)
 
     # For each row of neighbors, indices of the ones that are in range [n_points, new_max_neighb]
     new_neighb_bool, new_neighb_inds = torch.topk(in_range, k=new_max_neighb)
@@ -216,6 +217,7 @@ def KPConv_deform_ops(
     neighborhood_features = features[new_neighbors_indices]
 
     # Apply distance weights [n_points, n_kpoints, in_fdim]
+    #print(all_weights.shape, neighborhood_features.shape)
     weighted_features = torch.matmul(all_weights, neighborhood_features)
 
     # Apply modulations

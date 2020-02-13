@@ -237,7 +237,7 @@ class KPDualBlock(BaseModule):
                 is_strided=is_strided[i],
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
-                deformable=deformable,
+                deformable=deformable[i],
             )
             self.blocks.append(block)
 
