@@ -173,10 +173,15 @@ class BaseModel(torch.nn.Module):
             internal losses
         """
         loss = 0
+        c = 0
+        losses = self.get_named_internal_losses()
         for loss_name, loss_values in losses.items():
-            loss += torch.mean(loss_values)
+            loss += torch.mean(torch.stack(loss_values))
+            c += 1
+        if c == 0:
+            return loss
         else:
-            return 0.0
+            return loss / c
 
     def get_spatial_ops(self):
         return self._spatial_ops_dict

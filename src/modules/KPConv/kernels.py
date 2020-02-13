@@ -457,7 +457,7 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
         self.n_kernel_points = n_kernel_points
         self.aggregation_mode = aggregation_mode
         self.modulated = modulated
-        self.internal_losses = {self.OFFSET_LOSS_KEY: 0}
+        self.internal_losses = {self.PERMISSIVE_LOSS_KEY: 0, self.FITTING_LOSS_KEY: 0, self.REPULSION_LOSS_KEY: 0}
         self.loss_mode = loss_mode
         self.loss_decay = loss_decay
 
