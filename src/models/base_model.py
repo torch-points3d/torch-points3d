@@ -190,6 +190,23 @@ class BaseModel(torch.nn.Module):
 
         search_from_key(self._modules)
 
+    def get_from_opt(self, opt, keys=[]):
+        if len(keys) == 0:
+            raise Exception("Keys should not be empty")
+        
+        value_out = None
+        def search_with_keys(args, keys, value_out):
+            if len(keys) == 0:
+                value_out = args
+                return value_out
+            value = args[keys[0]]
+            return search_with_keys(value, keys[1:], value_out)
+        try:
+            value_out = search_with_keys(opt, keys, value_out)
+        except Exception as e:
+            print(e)
+            value_out = None
+        return value_out
 
 class BaseInternalLossModule(ABC):
     """ABC for modules which have internal loss(es)
