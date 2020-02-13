@@ -113,39 +113,47 @@ def main(cfg):
     if cfg.pretty_print:
         print(cfg.pretty())
 
-    # Get device
-    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
-    log.info("DEVICE : {}".format(device))
-
     # Get task and model_name
     tested_task = cfg.data.task
     tested_model_name = cfg.model_name
 
-    # Find and create associated model
+    # Find configs
     model_config = getattr(cfg.models, tested_model_name, None)
-
-    # Find which dataloader to use
+    dataset_config = cfg.data
     cfg_training = set_format(model_config, cfg.training)
+    model_class = getattr(model_config, "class")
+    tested_dataset_class = getattr(dataset_config, "class")
+    otimizer_class = getattr(cfg_training.optimizer, "class")
+
+    # wandb
+    if cfg.wandb.log:
+        import wandb
+
+        wandb.init(
+            project=cfg.wandb.project,
+            tags=[tested_model_name, model_class.split(".")[0], tested_dataset_class, otimizer_class],
+            notes=cfg.wandb.notes,
+            name=cfg.wandb.name,
+        )
+
+    # Get device
+    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
+    log.info("DEVICE : {}".format(device))
 
     # Enable CUDNN BACKEND
     torch.backends.cudnn.enabled = cfg_training.enable_cudnn
 
     # Find and create associated dataset
-    dataset_config = cfg.data
-    tested_dataset_class = getattr(dataset_config, "class")
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = instantiate_dataset(tested_dataset_class, tested_task)(dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
-    model_class = getattr(model_config, "class")
     model_config = OmegaConf.merge(model_config, cfg_training)
     model = instantiate_model(model_class, tested_task, model_config, dataset)
-
     log.info(model)
 
     # Optimizer
-    otimizer_class = getattr(cfg_training.optimizer, "class")
     model.set_optimizer(
         getattr(torch.optim, otimizer_class, None), cfg_training.optimizer.params, cfg_training.learning_rate
     )
@@ -154,17 +162,9 @@ def main(cfg):
     if cfg_training.precompute_multi_scale:
         dataset.set_strategies(model)
 
-    model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
     params = sum([np.prod(p.size()) for p in model_parameters])
     log.info("Model size = %i", params)
-
-    # metric tracker
-    if cfg.wandb.log:
-        import wandb
-
-        wandb.init(project=cfg.wandb.project)
-        # wandb.watch(model)
 
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
@@ -178,6 +178,7 @@ def main(cfg):
     )
 
     # Run training / evaluation
+    model = model.to(device)
     run(cfg, model, dataset, device, tracker, checkpoint)
 
 

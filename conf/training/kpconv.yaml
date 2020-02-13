@@ -1,7 +1,7 @@
 # Those arguments defines the training hyper-parameters
 training:
     shuffle: True
-    num_workers: 6
+    num_workers: 4
     batch_size: 16
     cuda: 1
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
@@ -10,13 +10,13 @@ training:
     optimizer:
         class: Adam
         params:
-            lr: 0.001
+            lr: 1e-4
     learning_rate:
         scheduler_type: "exponential_decay"
         base_lr: ${optimizer.params.lr}
-        gamma: 0.9716 # Divide learning by 10 every 80 epochs
-        decay_step: 14016
-        lr_clip: 1e-5
+        gamma: 0.5 ** (1.0/10.0) # Divide learning by 10 every 10 epochs
+        decay_step: 20000
+        lr_clip: 1e-6
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""
@@ -27,6 +27,8 @@ training:
 wandb:
     project: shapenet-pn2
     log: True
+    notes: "Large MLP + lower LR"
+    name: "kpconv-largemlp-lowerlr"
 
 # parameters for TensorBoard Visualization
 tensorboard:
