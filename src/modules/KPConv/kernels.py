@@ -427,8 +427,10 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
     dimension=3
     modulated = False :   If deformable conv should be modulated
     """
+    PERMISSIVE_LOSS_KEY = "permissive_loss"
+    FITTING_LOSS_KEY = "fitting_loss"
+    REPULSION_LOSS_KEY = "repulsion_loss"
 
-    OFFSET_LOSS_KEY = "offset_loss"
     _INFLUENCE_TO_RADIUS = 1.5
 
     def __init__(
@@ -443,7 +445,7 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
         dimension=3,
         modulated=False,
         loss_mode="permissive",
-        loss_decay=0.1,
+        loss_decay=0.1
     ):
         super(KPConvDeformableLayer, self).__init__()
         self.kernel_radius = self._INFLUENCE_TO_RADIUS * point_influence
@@ -534,18 +536,16 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
         )
 
         if self.loss_mode == "fitting":
-            self.internal_losses[self.OFFSET_LOSS_KEY] = self.loss_decay * (
-                fitting_loss(sq_distances, self.kernel_radius) + repulsion_loss(K_points_deformed, self.point_influence)
-            )
+            self.internal_losses[self.FITTING_LOSS_KEY] = self.loss_decay * fitting_loss(sq_distances, self.kernel_radius) 
+            self.internal_losses[self.REPULSION_LOSS_KEY] = self.loss_decay * repulsion_loss(K_points_deformed, self.point_influence)
         elif self.loss_mode == "permissive":
-            self.internal_losses[self.OFFSET_LOSS_KEY] = self.loss_decay * permissive_loss(
+            self.internal_losses[self.PERMISSIVE_LOSS_KEY] = self.loss_decay * permissive_loss(
                 K_points_deformed, self.kernel_radius
             )
         else:
             raise NotImplementedError(
                 "Loss mode %s not recognised. Only permissive and fitting are valid" % self.loss_mode
             )
-
         return new_feat
 
     def get_internal_losses(self):

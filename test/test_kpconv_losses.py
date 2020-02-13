@@ -13,23 +13,32 @@ from src.modules.KPConv.kernels import repulsion_loss, fitting_loss, permissive_
 
 
 class TestKPConvLosses(unittest.TestCase):
-    def setUp(self):
 
-        pos = np.array(
-            [[1, 0, 0], [0, 1, 0], [0, 0, 0], [0, 0, 1], [1, 1, 1], [0, 1, 1]]
-        ) 
-        labels = np.array([0, 0, 0, 0, 0, 0])
+    def test_permissive_loss(self):
+        pos_n = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]]).astype(np.float)
+        pos_t = torch.from_numpy(pos_n)
+        loss = permissive_loss(pos_t, 1).item()
+        assert loss == np.sqrt(2)
 
-        self.data = Data(pos=torch.from_numpy(pos).float(), labels=torch.from_numpy(labels))
+    def test_fitting_loss(self):
+        pos_n = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]]).astype(np.float)
+        target = np.asarray([[.5, .5, 0]])
+        K_points = torch.from_numpy(pos_n)
+        neighbors = torch.from_numpy(target)
+        neighbors = neighbors
+        neighbors = neighbors.repeat([4, 1])
+        differences = neighbors - K_points
+        sq_distances = torch.sum(differences ** 2, dim=-1).unsqueeze(0)
+        loss = fitting_loss(sq_distances, 1).item()
+        assert loss == 0.5
 
-    def test_neighbour_found_under_random_sampling(self):
-        random_sphere = RandomSphere(0.1, strategy="RANDOM")
-        data = random_sphere(self.data.clone())
-        assert data.labels.shape[0] == 1
-
-        random_sphere = RandomSphere(3, strategy="RANDOM")
-        data = random_sphere(self.data.clone())
-        assert data.labels.shape[0] == 6
+    def test_repulsion_loss(self):
+        pos_n = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]]).astype(np.float64)
+        K_points = torch.from_numpy(pos_n)
+        loss =  repulsion_loss(K_points.unsqueeze(0), 1).item()
+        arr_ = np.asarray([0.25, 0.25, 0.0074]).astype(np.float64)
+        # Pytorch losses precision from decimal 4
+        npt.assert_almost_equal(loss, 4 * np.sum(arr_), decimal=3)
 
 if __name__ == "__main__":
     unittest.main()
