@@ -126,9 +126,7 @@ class BaseModel(torch.nn.Module):
             This method merges the dicts of all child modules with internal loss
             and returns this merged dict
         """
-
         losses_global = defaultdict(list)
-
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
@@ -136,7 +134,6 @@ class BaseModel(torch.nn.Module):
                     for loss_name, loss_value in losses.items():
                         losses_global[loss_name].append(loss_value)
                 search_from_key(module._modules, losses_global)
-
         search_from_key(self._modules, losses_global)
         return losses_global
 

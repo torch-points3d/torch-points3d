@@ -229,14 +229,14 @@ models:
                 ]
             deformable:
                 [
-                    [True, True],
-                    [True, True],
-                    [True, True],
+                    [False, False],
+                    [False, False],
+                    [False, True],
                     [True, True],
                     [True, True],
                 ]
             max_num_neighbors:
-                [[12, 12], [25, 25], [38, 38], [36, 36], [32, 32]]
+                [[26, 26], [30, 30], [37, 37], [41, 41], [39, 39]]
             module_name: KPDualBlock
         up_conv:
             module_name: FPModule_PD
