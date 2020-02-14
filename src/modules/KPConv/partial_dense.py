@@ -7,7 +7,6 @@ from .kernel_utils import kernel_point_optimization_debug
 from src.core.spatial_ops import FPSSampler, RadiusNeighbourFinder
 from src.core.base_conv.partial_dense import *
 from .kernels import PointKernelPartialDense
-from src.core.common_modules import UnaryConv
 
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 
@@ -108,7 +107,7 @@ class ResnetPartialDense(BaseKPConvPartialDense):
         )
 
         if self.out_features != self.intermediate_features:
-            self.shortcut_op = UnaryConv(self.intermediate_features, self.out_features)
+            self.shortcut_op = nn.Linear(self.intermediate_features, self.out_features, bias=False)
         else:
             self.shortcut_op = torch.nn.Identity()
 
@@ -148,10 +147,10 @@ class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
             density_parameter=self.density_parameter,
         )
 
-        self.uconv_0 = UnaryConv(self.in_features, self.intermediate_features)
+        self.uconv_0 = nn.Linear(self.in_features, self.intermediate_features, bias=False)
 
         if self.out_features != self.intermediate_features:
-            self.shortcut_op = UnaryConv(self.in_features, self.out_features)
+            self.shortcut_op = nn.Linear(self.in_features, self.out_features, bias=False)
         else:
             self.shortcut_op = torch.nn.Identity()
 

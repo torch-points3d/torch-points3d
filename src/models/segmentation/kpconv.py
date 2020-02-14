@@ -6,6 +6,7 @@ import torch.nn.functional as F
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *
+from src.core.common_modules import MultiHeadClassifier
 from src.models.base_model import BaseModel
 from src.models.base_architectures.unet import UnwrappedUnetBasedModel
 from src.datasets.multiscale_data import MultiScaleBatch
@@ -24,7 +25,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
                 raise ValueError(
                     "The dataset needs to specify a class_to_segments property when using category information for segmentation"
                 )
-            self._num_categories = len(dataset.class_to_segments.keys())
+            self._class_to_seg = dataset.class_to_segments
+            self._num_categories = len(self._class_to_seg)
             log.info("Using category information for the predictions with %i categories", self._num_categories)
         else:
             self._num_categories = 0
@@ -34,25 +36,34 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         # Build final MLP
         last_mlp_opt = option.mlp_cls
-        in_feat = last_mlp_opt.nn[0] + self._num_categories
-        self.FC_layer = Sequential()
-        for i in range(1, len(last_mlp_opt.nn)):
-            self.FC_layer.add_module(
-                str(i),
-                Sequential(
-                    *[
-                        Linear(in_feat, last_mlp_opt.nn[i], bias=False),
-                        BatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
-                        LeakyReLU(0.2),
-                    ]
-                ),
+        if self._use_category:
+            self.FC_layer = MultiHeadClassifier(
+                last_mlp_opt.nn[0],
+                self._class_to_seg,
+                dropout_proba=last_mlp_opt.dropout,
+                bn_momentum=last_mlp_opt.bn_momentum,
             )
-            in_feat = last_mlp_opt.nn[i]
+        else:
+            in_feat = last_mlp_opt.nn[0] + self._num_categories
+            self.FC_layer = Sequential()
+            for i in range(1, len(last_mlp_opt.nn)):
+                self.FC_layer.add_module(
+                    str(i),
+                    Sequential(
+                        *[
+                            Linear(in_feat, last_mlp_opt.nn[i], bias=False),
+                            BatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
+                            LeakyReLU(0.2),
+                        ]
+                    ),
+                )
+                in_feat = last_mlp_opt.nn[i]
 
-        if last_mlp_opt.dropout:
-            self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+            if last_mlp_opt.dropout:
+                self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
-        self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
+            self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
+            self.FC_layer.add_module("Softmax", nn.LogSoftmax(self._num_classes))
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data):
@@ -95,12 +106,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         last_feature = data.x
         if self._use_category:
-            cat_one_hot = F.one_hot(self.category, self._num_categories).float()
-            last_feature = torch.cat((last_feature, cat_one_hot), dim=-1)
-
-        last_feature = self.FC_layer(last_feature)
-        self.output = F.log_softmax(last_feature, dim=-1)
-
+            self.output = self.FC_layer(last_feature, self.category)
+        else:
+            self.output = self.FC_layer(last_feature)
         self.compute_loss()
         return self.output
 
