@@ -398,6 +398,7 @@ class S3DISOriginalFused(InMemoryDataset):
         pre_filter=None,
         keep_instance=False,
         verbose=False,
+        elevation=True,
         debug=False,
     ):
         assert test_area >= 1 and test_area <= 6
@@ -406,6 +407,7 @@ class S3DISOriginalFused(InMemoryDataset):
         self.test_area = test_area
         self.keep_instance = keep_instance
         self.verbose = verbose
+        self.elevation = elevation
         self.debug = debug
         super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
@@ -509,8 +511,11 @@ class S3DISOriginalFused(InMemoryDataset):
                     )
 
                     rgb_norm = rgb.float() / 255.
-                    elevation = xyz[:, -1].unsqueeze(-1)
-                    feats = torch.cat([rgb_norm, elevation], -1)
+                    if self.elevation:
+                        elevation = xyz[:, -1].unsqueeze(-1)
+                        feats = torch.cat([rgb_norm, elevation], -1)
+                    else:
+                        feats = rgb_norm
                     data = Data(pos=xyz, x=feats, y=room_labels)
 
                     if self.keep_instance:

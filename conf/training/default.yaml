@@ -10,7 +10,7 @@ training:
     optimizer:
         class: Adam
         params:
-            lr: 0.01
+            lr: 0.001
     learning_rate:
         scheduler_type: "step_decay"
         base_lr: ${optimizer.params.lr}

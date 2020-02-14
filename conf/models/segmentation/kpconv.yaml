@@ -149,7 +149,7 @@ models:
                     [False, False],
                 ]
             max_num_neighbors:
-                [[26, 26], [30, 30], [37, 37], [41, 41], [39, 39]]
+                [[12, 12], [25, 25], [38, 38], [36, 36], [32, 32]]
             module_name: KPDualBlock
         up_conv:
             module_name: FPModule_PD
@@ -185,7 +185,6 @@ models:
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
             bn_momentum: 0.02
-        deformable: True
         down_conv:
             down_conv_nn:
                 [
