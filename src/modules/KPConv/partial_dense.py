@@ -1,12 +1,9 @@
-import torch
-from torch import nn
-
 # Kernel Point Convolution in Pytorch
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
 from .kernel_utils import kernel_point_optimization_debug
 from src.core.spatial_ops import FPSSampler, RadiusNeighbourFinder
 from src.core.base_conv.partial_dense import *
-from .kernels import PointKernelPartialDense
+from src.core.common_modules import UnaryConv
 
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 

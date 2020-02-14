@@ -6,8 +6,9 @@ import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import logging
-
+from collections import defaultdict
 from src.core.schedulers.lr_schedulers import get_scheduler
+from src.core.regularizer import *
 
 log = logging.getLogger(__name__)
 
@@ -119,6 +120,12 @@ class BaseModel(torch.nn.Module):
         self._lr_params = lr_params
         log.info(self._optimizer)
 
+    def get_regularization_loss(self, regularizer_type="L2", **kwargs):
+        loss = 0
+        regularizer_cls = RegularizerTypes[regularizer_type.upper()].value
+        regularizer = regularizer_cls(self, **kwargs)
+        return regularizer.regularized_all_param(loss)
+
     def get_named_internal_losses(self):
         """
             Modules which have internal losses return a dict of the form
@@ -126,30 +133,55 @@ class BaseModel(torch.nn.Module):
             This method merges the dicts of all child modules with internal loss
             and returns this merged dict
         """
-
-        losses_global = []
-
+        losses_global = defaultdict(list)
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
-                    losses_global.append(module.get_internal_losses())
+                    losses = module.get_internal_losses()
+                    for loss_name, loss_value in losses.items():
+                        losses_global[loss_name].append(loss_value)
                 search_from_key(module._modules, losses_global)
-
         search_from_key(self._modules, losses_global)
+        return losses_global
 
-        return dict(ChainMap(*losses_global))
+    def collect_internal_losses(self, lambda_weight=1, reduction='sum'):
+        """
+            Collect internal loss of all child modules with
+            internal losses and set the losses
+        """
+        if reduction == "sum":
+            aggr_func = torch.sum
+
+        elif reduction == "mean":
+            aggr_func = torch.mean
+        else:
+            raise NotImplementedError        
+        
+        loss_out = 0
+        losses = self.get_named_internal_losses()
+        for loss_name, loss_values in losses.items():
+            if loss_name not in self.loss_names:
+                self.loss_names.append(loss_name)
+            item_loss = lambda_weight * aggr_func(torch.stack(loss_values))
+            loss_out += item_loss
+            setattr(self, loss_name, item_loss.item())
+        return loss_out
 
     def get_internal_loss(self):
         """
             Returns the average internal loss of all child modules with
             internal losses
         """
-
-        losses = tuple(self.get_named_internal_losses().values())
-        if len(losses) > 0:
-            return torch.mean(torch.stack(losses))
+        loss = 0
+        c = 0
+        losses = self.get_named_internal_losses()
+        for loss_name, loss_values in losses.items():
+            loss += torch.mean(torch.stack(loss_values))
+            c += 1
+        if c == 0:
+            return loss
         else:
-            return 0.0
+            return loss / c
 
     def get_spatial_ops(self):
         return self._spatial_ops_dict
@@ -163,6 +195,23 @@ class BaseModel(torch.nn.Module):
 
         search_from_key(self._modules)
 
+    def get_from_opt(self, opt, keys=[]):
+        if len(keys) == 0:
+            raise Exception("Keys should not be empty")
+        
+        value_out = None
+        def search_with_keys(args, keys, value_out):
+            if len(keys) == 0:
+                value_out = args
+                return value_out
+            value = args[keys[0]]
+            return search_with_keys(value, keys[1:], value_out)
+        try:
+            value_out = search_with_keys(opt, keys, value_out)
+        except Exception as e:
+            print(e)
+            value_out = None
+        return value_out
 
 class BaseInternalLossModule(ABC):
     """ABC for modules which have internal loss(es)
