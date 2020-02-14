@@ -9,7 +9,7 @@ from torch.nn import (
     BatchNorm1d as BN,
 )
 from torch_geometric.utils import scatter_
-from .kernels import PointKernel, LightDeformablePointKernel, PointKernelPartialDense
+from .kernels import PointKernel, LightDeformablePointKernel
 from torch_scatter import scatter_max
 
 

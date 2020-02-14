@@ -1,7 +1,7 @@
 import torch
 import sys
 
-from .kernels import KPConvLayer
+from .kernels import KPConvLayer, KPConvDeformableLayer
 from src.core.common_modules.base_modules import UnaryConv, BaseModule
 from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
@@ -15,6 +15,8 @@ class SimpleBlock(BaseModule):
     """
 
     CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
+    DEFORMABLE_DENSITY = 5.0
+    RIGID_DENSITY = 2.5
 
     def __init__(
         self,
@@ -22,25 +24,31 @@ class SimpleBlock(BaseModule):
         grid_size=None,
         is_strided=False,
         sigma=1.0,
-        density_parameter=2.5,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
-        **kwargs
+        deformable=False,
+        **kwargs,
     ):
         super(SimpleBlock, self).__init__()
         assert len(down_conv_nn) == 2
         num_inputs, num_outputs = down_conv_nn
         self.grid_size = grid_size
-        radius = density_parameter * sigma * grid_size
-        self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+        if deformable:
+            density_parameter = self.DEFORMABLE_DENSITY
+            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+        else:
+            density_parameter = self.RIGID_DENSITY
+            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
         else:
             self.bn = None
         self.activation = activation
 
+        radius = density_parameter * sigma * grid_size
         self.neighbour_finder = RadiusNeighbourFinder(radius, max_num_neighbors, conv_type=self.CONV_TYPE)
         if is_strided:
             self.sampler = GridSampling(grid_size)
@@ -77,7 +85,7 @@ class SimpleBlock(BaseModule):
         return query_data
 
     def extra_repr(self):
-        return "Nb parameters: %i, %s, %s" % (self.nb_params, str(self.sampler), str(self.neighbour_finder))
+        return "Nb parameters: %i" % self.nb_params
 
 
 class ResnetBBlock(BaseModule):
@@ -106,13 +114,13 @@ class ResnetBBlock(BaseModule):
         grid_size=None,
         is_strided=False,
         sigma=1,
-        density_parameter=2.5,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
         has_bottleneck=True,
         bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
-        **kwargs
+        deformable=False,
+        **kwargs,
     ):
         super(ResnetBBlock, self).__init__()
         assert len(down_conv_nn) == 2 or len(down_conv_nn) == 3, "down_conv_nn should be of size 2 or 3"
@@ -136,11 +144,11 @@ class ResnetBBlock(BaseModule):
             grid_size=grid_size,
             is_strided=is_strided,
             sigma=sigma,
-            density_parameter=density_parameter,
             max_num_neighbors=max_num_neighbors,
             activation=activation,
             bn_momentum=bn_momentum,
             bn=bn,
+            deformable=deformable,
         )
 
         if self.has_bottleneck:
@@ -202,7 +210,7 @@ class ResnetBBlock(BaseModule):
         return self.kp_conv.neighbour_finder
 
     def extra_repr(self):
-        return "Nb parameters: %i, %s, %s" % (self.nb_params, str(self.sampler), str(self.neighbour_finder))
+        return "Nb parameters: %i" % self.nb_params
 
 
 class KPDualBlock(BaseModule):
@@ -214,7 +222,8 @@ class KPDualBlock(BaseModule):
         is_strided=None,
         has_bottleneck=None,
         max_num_neighbors=None,
-        **kwargs
+        deformable=False,
+        **kwargs,
     ):
         super(KPDualBlock, self).__init__()
 
@@ -228,6 +237,7 @@ class KPDualBlock(BaseModule):
                 is_strided=is_strided[i],
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
+                deformable=deformable[i],
             )
             self.blocks.append(block)
 
