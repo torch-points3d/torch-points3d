@@ -1,12 +1,8 @@
-import torch
-from torch import nn
-
 # Kernel Point Convolution in Pytorch
 # Adaption from https://github.com/humanpose1/KPConvTorch/blob/master/models/layers.py
 from .kernel_utils import kernel_point_optimization_debug
 from src.core.spatial_ops import FPSSampler, RadiusNeighbourFinder
 from src.core.base_conv.partial_dense import *
-from .kernels import PointKernelPartialDense
 
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 
@@ -61,109 +57,3 @@ class BaseKPConvPartialDense(BasePartialDenseConvolutionDown):
         # PARAMTERS IMPORTANT FOR SHADOWING
         self.shadow_features_fill = 0.0
         self.shadow_points_fill_ = float(10e6)
-
-
-class KPConvPartialDense(BaseKPConvPartialDense):
-    def __init__(self, *args, **kwargs):
-        super(KPConvPartialDense, self).__init__(*args, **kwargs)
-
-        self._conv = PointKernelPartialDense(
-            self.kp_points,
-            self.in_features,
-            self.out_features,
-            radius=self.radius,
-            is_strided=self.is_strided,
-            kp_extent=self.kp_extent,
-            density_parameter=self.density_parameter,
-        )
-        self.activation = kwargs.get("act", nn.LeakyReLU(0.2))
-
-    def conv(self, input, pos, input_neighbour, pos_neighbour, idx_neighbour, idx_sampler):
-        return self._conv(input_neighbour, pos_neighbour, idx_sampler)
-
-
-class ResnetPartialDense(BaseKPConvPartialDense):
-    def __init__(self, *args, **kwargs):
-        super(ResnetPartialDense, self).__init__(*args, **kwargs)
-
-        self._kp_conv0 = PointKernelPartialDense(
-            self.kp_points,
-            self.in_features,
-            self.intermediate_features,
-            radius=self.radius,
-            is_strided=False,
-            kp_extent=self.kp_extent,
-            density_parameter=self.density_parameter,
-        )
-
-        self._kp_conv1 = PointKernelPartialDense(
-            self.kp_points,
-            self.intermediate_features,
-            self.out_features,
-            radius=self.radius,
-            is_strided=self.is_strided,
-            kp_extent=self.kp_extent,
-            density_parameter=self.density_parameter,
-        )
-
-        if self.out_features != self.intermediate_features:
-            self.shortcut_op = nn.Linear(self.intermediate_features, self.out_features, bias=False)
-        else:
-            self.shortcut_op = torch.nn.Identity()
-
-    def conv(self, input, pos, input_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
-
-        x = self._kp_conv0(input, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
-        x = self._kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler=idx_sampler)
-
-        if self.is_strided:
-            input = input_neighbour[idx_sampler].max(1)[0]
-        x = x + self.shortcut_op(input)
-
-        return x
-
-
-class ResnetBottleNeckPartialDense(BaseKPConvPartialDense):
-    def __init__(self, *args, **kwargs):
-        super(ResnetBottleNeckPartialDense, self).__init__(*args, **kwargs)
-
-        self._kp_conv0 = PointKernelPartialDense(
-            self.kp_points,
-            self.intermediate_features,
-            self.intermediate_features,
-            radius=self.radius,
-            is_strided=False,
-            kp_extent=self.kp_extent,
-            density_parameter=self.density_parameter,
-        )
-
-        self._kp_conv1 = PointKernelPartialDense(
-            self.kp_points,
-            self.intermediate_features,
-            self.out_features,
-            radius=self.radius,
-            is_strided=self.is_strided,
-            kp_extent=self.kp_extent,
-            density_parameter=self.density_parameter,
-        )
-
-        self.uconv_0 = nn.Linear(self.in_features, self.intermediate_features, bias=False)
-
-        if self.out_features != self.intermediate_features:
-            self.shortcut_op = nn.Linear(self.in_features, self.out_features, bias=False)
-        else:
-            self.shortcut_op = torch.nn.Identity()
-
-        self.norm = nn.BatchNorm1d(self.out_features)
-        self.act = nn.LeakyReLU(0.2)
-
-    def conv(self, input, pos, input_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
-
-        x = self.uconv_0(input)
-        x = self._kp_conv0(x, idx_neighbour, pos_centered_neighbour, idx_sampler=None)
-        x = self._kp_conv1(x, idx_neighbour, pos_centered_neighbour, idx_sampler=idx_sampler)
-
-        if self.is_strided:
-            input = input_neighbour[idx_sampler].max(1)[0]
-        x = x + self.shortcut_op(input)
-        return self.act(self.norm(x))

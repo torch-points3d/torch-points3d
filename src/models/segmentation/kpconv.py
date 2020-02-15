@@ -66,6 +66,12 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.FC_layer.add_module("Softmax", nn.LogSoftmax(self._num_classes))
         self.loss_names = ["loss_seg"]
 
+        self.lambda_reg = self.get_from_opt(option, ['loss_weights', 'lambda_reg'])
+        if self.lambda_reg:
+            self.loss_names += ["loss_reg"] 
+        
+        self.lambda_internal_losses = self.get_from_opt(option, ['loss_weights', 'lambda_internal_losses'])
+
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -115,13 +121,27 @@ class KPConvPaper(UnwrappedUnetBasedModel):
     def compute_loss(self):
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.get_internal_loss()
+
+        self.loss = 0
+
+        # Get regularization on weights
+        if self.lambda_reg:
+            self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
+            self.loss += self.loss_reg
+        
+        # Collect internal losses and set them with self and them to self for later tracking
+        if self.lambda_internal_losses:
+            self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+
+        # Final cross entrop loss
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes)
+        self.loss += self.loss_seg
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
+        self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
 class KPConvSeg(Segmentation_MP):
@@ -150,5 +170,12 @@ class KPConvSeg(Segmentation_MP):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels) + self.get_internal_loss()
+        self.compute_loss()
         return self.output
+
+    def compute_loss(self):
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+
+        self.loss_reg = self.get_internal_loss()
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.loss_reg

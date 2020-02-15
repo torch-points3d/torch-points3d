@@ -398,6 +398,7 @@ class S3DISOriginalFused(InMemoryDataset):
         pre_filter=None,
         keep_instance=False,
         verbose=False,
+        elevation=True,
         debug=False,
     ):
         assert test_area >= 1 and test_area <= 6
@@ -406,6 +407,7 @@ class S3DISOriginalFused(InMemoryDataset):
         self.test_area = test_area
         self.keep_instance = keep_instance
         self.verbose = verbose
+        self.elevation = elevation
         self.debug = debug
         super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
@@ -502,12 +504,19 @@ class S3DISOriginalFused(InMemoryDataset):
                 area_num = int(area[-1]) - 1
                 if self.debug:
                     read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+                    continue
                 else:
                     xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
                         file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                     )
 
-                    data = Data(pos=xyz, x=rgb.float() / 255., y=room_labels)
+                    rgb_norm = rgb.float() / 255.
+                    if self.elevation:
+                        elevation = xyz[:, -1].unsqueeze(-1)
+                        feats = torch.cat([rgb_norm, elevation], -1)
+                    else:
+                        feats = rgb_norm
+                    data = Data(pos=xyz, x=feats, y=room_labels)
 
                     if self.keep_instance:
                         data.room_object_indices = room_object_indices
@@ -523,6 +532,9 @@ class S3DISOriginalFused(InMemoryDataset):
             torch.save(data_list, self.pre_processed_path)
         else:
             data_list = torch.load(self.pre_processed_path)
+
+        if self.debug:
+            return
 
         train_data_list = [data_list[i] for i in range(6) if i != self.test_area - 1]
         test_data_list = data_list[self.test_area - 1]

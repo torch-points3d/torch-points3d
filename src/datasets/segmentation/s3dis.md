@@ -45,3 +45,9 @@ rename from Area_6/copyRoom_1/copy_Room_1.txt
 rename to Area_6/copyRoom_1/copyRoom_1.txt
 
 ```
+
+For s3dis_aligned
+
+/raw/Area_1/WC_1/WC_1.txt row 429611: ['-15.993000', '42.862000', '0.302000', '123.000000', '95.000000', '56.00\x10000']
+
+/raw/Area_6/hallway_2/hallway_2.txt row 842731: ['-5.712000', '18.497000', '2.717000', '226.000000', '219.000000', '2\x111.000000']
