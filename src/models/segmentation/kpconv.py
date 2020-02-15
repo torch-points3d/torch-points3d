@@ -66,11 +66,11 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.FC_layer.add_module("Softmax", nn.LogSoftmax(self._num_classes))
         self.loss_names = ["loss_seg"]
 
-        self.lambda_reg = self.get_from_opt(option, ['loss_weights', 'lambda_reg'])
+        self.lambda_reg = self.get_from_opt(option, ["loss_weights", "lambda_reg"])
         if self.lambda_reg:
-            self.loss_names += ["loss_reg"] 
-        
-        self.lambda_internal_losses = self.get_from_opt(option, ['loss_weights', 'lambda_internal_losses'])
+            self.loss_names += ["loss_reg"]
+
+        self.lambda_internal_losses = self.get_from_opt(option, ["loss_weights", "lambda_internal_losses"])
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -128,7 +128,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         if self.lambda_reg:
             self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
             self.loss += self.loss_reg
-        
+
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
             self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)

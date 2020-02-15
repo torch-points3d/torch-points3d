@@ -98,7 +98,6 @@ models:
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
             bn_momentum: 0.02
-        deformable: True
         down_conv:
             down_conv_nn:
                 [
@@ -172,7 +171,7 @@ models:
                 ]
         mlp_cls:
             nn: [in_feat, in_feat]
-            dropout: 0.5
+            dropout: 0.
             bn_momentum: bn_momentum
         loss_weights:
             lambda_reg: 1e-5
