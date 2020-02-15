@@ -3,7 +3,6 @@
 from .kernel_utils import kernel_point_optimization_debug
 from src.core.spatial_ops import FPSSampler, RadiusNeighbourFinder
 from src.core.base_conv.partial_dense import *
-from src.core.common_modules import UnaryConv
 
 ####################### BUILT WITH PARTIAL DENSE FORMAT ############################
 
