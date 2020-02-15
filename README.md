@@ -73,7 +73,7 @@ And you should see something like that
 ![logging](/docs/imgs/logging.png)
 
 # Benchmark
-## S3DIS
+## S3DIS 1x1
 
 
 | Model Name | # params | Speed Train / Test | Cross Entropy | OAcc | mIou | mAcc |
