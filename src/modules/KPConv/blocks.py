@@ -1,8 +1,9 @@
 import torch
 import sys
+from torch.nn import Linear as Lin
 
 from .kernels import KPConvLayer, KPConvDeformableLayer
-from src.core.common_modules.base_modules import UnaryConv, BaseModule
+from src.core.common_modules.base_modules import BaseModule
 from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
@@ -154,23 +155,23 @@ class ResnetBBlock(BaseModule):
         if self.has_bottleneck:
             if bn:
                 self.unary_1 = torch.nn.Sequential(
-                    UnaryConv(num_inputs, d_2), bn(d_2, momentum=bn_momentum), activation
+                    Lin(num_inputs, d_2, bias=False), bn(d_2, momentum=bn_momentum), activation
                 )
                 self.unary_2 = torch.nn.Sequential(
-                    UnaryConv(d_2, num_outputs), bn(num_outputs, momentum=bn_momentum), activation
+                    Lin(d_2, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum), activation
                 )
             else:
-                self.unary_1 = torch.nn.Sequential(UnaryConv(num_inputs, d_2), activation)
-                self.unary_2 = torch.nn.Sequential(UnaryConv(d_2, num_outputs), activation)
+                self.unary_1 = torch.nn.Sequential(Lin(num_inputs, d_2, bias=False), activation)
+                self.unary_2 = torch.nn.Sequential(Lin(d_2, num_outputs, bias=False), activation)
 
         # Shortcut
         if num_inputs != num_outputs:
             if bn:
                 self.shortcut_op = torch.nn.Sequential(
-                    UnaryConv(num_inputs, num_outputs), bn(num_outputs, momentum=bn_momentum)
+                    Lin(num_inputs, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum)
                 )
             else:
-                self.shortcut_op = UnaryConv(num_inputs, num_outputs)
+                self.shortcut_op = Lin(num_inputs, num_outputs, bias=False)
         else:
             self.shortcut_op = torch.nn.Identity()
 
