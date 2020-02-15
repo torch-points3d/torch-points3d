@@ -4,7 +4,6 @@ import logging
 
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
-from src.core.schedulers.lr_schedulers import build_basic_params
 
 log = logging.getLogger(__name__)
 
@@ -55,11 +54,11 @@ class Checkpoint(object):
         self._objects["lr_params"] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, lr_params, **kwargs):
+    def save_objects(self, models_to_save, stage, current_stat, optimizer, schedulers, **kwargs):
         self._objects["models"] = models_to_save
         self._objects["stats"][stage].append(current_stat)
         self._objects["optimizer"] = optimizer
-        self._objects["lr_params"] = lr_params
+        self._objects["schedulers"] = schedulers
         torch.save(self._objects, self._check_path)
 
     @staticmethod
@@ -95,6 +94,14 @@ class Checkpoint(object):
             except:
                 raise KeyError("The checkpoint doesn t contain an optimizer")
 
+    def get_schedulers(self):
+        if not self.is_empty:
+            try:
+                return self._objects["schedulers"]
+            except:
+                log.warn("The checkpoint doesn t contain schedulers")
+                return None
+
     def get_lr_params(self):
         if not self.is_empty:
             try:
@@ -102,7 +109,7 @@ class Checkpoint(object):
             except:
                 params = build_basic_params()
                 log.warning(
-                    "Could not find learning rate parameters in teyh checkpoint, takes the default ones {}".format(
+                    "Could not find learning rate parameters in this checkpoint, takes the default ones {}".format(
                         params
                     )
                 )
@@ -148,9 +155,8 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
-            optimizer = self._checkpoint.get_optimizer()
-            lr_params = self._checkpoint.get_lr_params()
-            model.set_optimizer(optimizer.__class__, lr_params=lr_params)
+            model.optimizer = self._checkpoint.get_optimizer()
+            model.schedulers = self._checkpoint.get_schedulers()
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -216,4 +222,4 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.lr_params, **kwargs)
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)

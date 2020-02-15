@@ -2,6 +2,7 @@ from torch.optim import lr_scheduler
 from functools import partial
 from omegaconf.dictconfig import DictConfig
 import logging
+from src.utils.config import merge_omega_conf
 
 
 log = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def instantiate_scheduler(optimizer, scheduler_opt):
     
     elif scheduler_opt.lr_policy == 'plateau':
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, **learning_rate_params)
-        learning_rate_params['metric_name'] = scheduler_opt.metric_name
+        learning_rate_params = merge_omega_conf(learning_rate_params, {"metric_name": scheduler_opt.metric_name})
         setattr(scheduler, "metric_name", scheduler_opt.metric_name)
 
     elif scheduler_opt.lr_policy == 'cosine':

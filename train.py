@@ -160,10 +160,7 @@ def main(cfg):
     model = instantiate_model(model_class, tested_task, model_config, dataset)
     log.info(model)
 
-    # Optimizer
-    #model.set_optimizer(
-    #    getattr(torch.optim, otimizer_class, None), cfg_training.optimizer.params, cfg_training.learning_rate
-    #)
+    # Initialize optimizer, schedulers
     model.instantiate_optim(cfg)
 
     # Set sampling / search strategies

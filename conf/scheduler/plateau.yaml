@@ -1,5 +1,5 @@
 scheduler:
     lr_policy: "plateau"
-    metric_name: 'Imiou'
+    metric_name: "Imiou"
     params: 
       mode: "max"

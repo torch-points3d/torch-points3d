@@ -51,6 +51,7 @@ class BaseModel(torch.nn.Module):
         self._latest_stage = None
         self._latest_epoch = None
         self._selection_stage = None
+        self._schedulers = {}
 
     @property
     def lr_params(self):
@@ -62,8 +63,23 @@ class BaseModel(torch.nn.Module):
             return None
 
     @property
+    def schedulers(self):
+        return self._schedulers
+
+    @schedulers.setter
+    def schedulers(self, schedulers):
+        if schedulers:
+            self._schedulers = schedulers
+            for scheduler_name, scheduler in schedulers.items():
+                setattr(self, "_{}".format(scheduler_name), scheduler)
+
+    @property
     def optimizer(self):
         return self._optimizer
+
+    @optimizer.setter
+    def optimizer(self, optimizer):
+        self._optimizer = optimizer
 
     @property
     def learning_rate(self):
@@ -122,6 +138,7 @@ class BaseModel(torch.nn.Module):
                         metric_value = get_from_metric(self._latest_metrics, metric_name, self._set_selection_stage)
                         if metric_value is None:
                             raise Exception("The provided metric_name in scheduler didn t match any metric_name")
+                        print("Update lr using metric_value".format(metric_value))
                         self._lr_scheduler.step(metric_value)
             else:
                 self._lr_scheduler.step(self._iterations)
@@ -142,7 +159,6 @@ class BaseModel(torch.nn.Module):
         optimizer_opt = self.get_from_opt(create_new_omega_conf(config.training), \
             ['optim', 'optimizer'], \
             msg_err="optimizer needs to be defined within the training config")
-        import pdb; pdb.set_trace()
 
         optmizer_cls_name = optimizer_opt.get("class")
         optimizer_cls = getattr(torch.optim, optmizer_cls_name)
@@ -155,6 +171,7 @@ class BaseModel(torch.nn.Module):
         scheduler_opt = self.get_from_opt(config, ['training', 'optim', 'scheduler'])     
         if scheduler_opt:
             self._lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
+            self._schedulers['lr_scheduler'] = self._lr_scheduler
             colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):

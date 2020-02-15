@@ -15,6 +15,10 @@ def create_new_omega_conf(opt):
     empty_opt = OmegaConf.create({})
     return OmegaConf.merge(opt, empty_opt)
 
+def merge_omega_conf(opt, d):
+    new_opt = OmegaConf.create(d)
+    return OmegaConf.merge(opt, new_opt)
+
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)
 
@@ -23,7 +27,6 @@ def is_iterable(entity):
 
 def is_dict(entity):
     return isinstance(entity, dict) or isinstance(entity, DictConfig)
-
 
 def set_format(model_config, cfg_training):
     """ Adds the type of convolution (DENSE, PARTIAL_DENSE, MESSAGE_PASSING)
