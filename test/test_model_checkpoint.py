@@ -40,7 +40,7 @@ class TestModelCheckpoint(unittest.TestCase):
        # new_opt = OmegaConf.create({"training":training_config})
         self.config = OmegaConf.merge(training_config, scheduler_config)
 
-    def test_pointnet2ms(self, ):
+    def test_model_ckpt_using_pointnet2ms(self, ):
         params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
         model_class = getattr(params, "class")
         model_config = OmegaConf.merge(params, self.data_config)
@@ -65,6 +65,10 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint = ModelCheckpoint(ckpt_dir, name)
         model_checkpoint.initialize_model(model2, weight_name="acc")
         shutil.rmtree(ckpt_dir)
+
+        assert str(model.optimizer.__class__.__name__) == str(model2.optimizer.__class__.__name__)
+        assert model.optimizer.defaults == model2.optimizer.defaults
+        assert model.schedulers['lr_scheduler'].state_dict() == model2.schedulers['lr_scheduler'].state_dict()
 
 if __name__ == "__main__":
     unittest.main()
