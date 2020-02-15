@@ -20,12 +20,21 @@ class SchedulerWrapper():
     def scheduler(self):
         return self._scheduler
 
+    @property
+    def scheduler_opt(self):
+        return  self._scheduler._scheduler_opt
+
     def __repr__(self):
         return "{}({})".format(self._scheduler.__class__.__name__, self._scheduler_params)
 
     def step(self, *args, **kwargs):
         self._scheduler.step(*args, **kwargs)
 
+    def state_dict(self):
+        return self._scheduler.state_dict()
+
+    def load_state_dict(self, state_dict):
+        self._scheduler.load_state_dict(state_dict)
 
 def instantiate_scheduler(optimizer, scheduler_opt):
     """Return a learning rate scheduler
@@ -66,4 +75,7 @@ def instantiate_scheduler(optimizer, scheduler_opt):
     else:
         return NotImplementedError('learning rate policy [%s] is not implemented', opt.lr_policy)
     
+    # used to re_create the scheduler
+    setattr(scheduler, "_scheduler_opt", scheduler_opt)
+
     return SchedulerWrapper(scheduler, scheduler_params)

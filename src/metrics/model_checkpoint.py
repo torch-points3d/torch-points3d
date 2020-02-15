@@ -4,6 +4,7 @@ import logging
 
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
+from src.core.schedulers.lr_schedulers import instantiate_scheduler
 
 log = logging.getLogger(__name__)
 
@@ -37,13 +38,13 @@ def get_model_checkpoint(
 class Checkpoint(object):
     _LATEST = "latest"
 
-    def __init__(self, check_name: str, save_every_iter: bool = True):
+    def __init__(self, checkpoint_file: str, save_every_iter: bool = True):
         """ Checkpoint manager. Saves to working directory with check_name
         Arguments
-            check_name {str} -- name of the checkpoint
+            checkpoint_file {str} -- Path to the checkpoint
             save_every_iter {bool} -- [description] (default: {True})
         """
-        self._check_path = "{}.pt".format(check_name)
+        self._check_path = checkpoint_file
         self._initialize_objects()
 
     def _initialize_objects(self):
@@ -57,8 +58,11 @@ class Checkpoint(object):
     def save_objects(self, models_to_save, stage, current_stat, optimizer, schedulers, **kwargs):
         self._objects["models"] = models_to_save
         self._objects["stats"][stage].append(current_stat)
-        self._objects["optimizer"] = optimizer
-        self._objects["schedulers"] = schedulers
+        self._objects["optimizer"] = [optimizer.__class__.__name__, optimizer.state_dict()]
+        schedulers_saved = {scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
+                for scheduler_name, scheduler in schedulers.items()}
+        self._objects["schedulers"] = schedulers_saved
+        colored_print(COLORS.Green, "Saving checkpoint at {}".format(self._check_path))
         torch.save(self._objects, self._check_path)
 
     @staticmethod
@@ -67,7 +71,7 @@ class Checkpoint(object):
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
-        ckp = Checkpoint(checkpoint_name)
+        ckp = Checkpoint(checkpoint_file)
         if not os.path.exists(checkpoint_file):
             log.warn("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
             return ckp
@@ -87,17 +91,30 @@ class Checkpoint(object):
     def is_empty(self):
         return not self._filled
 
-    def get_optimizer(self):
+    def get_optimizer(self, params):
         if not self.is_empty:
             try:
-                return self._objects["optimizer"]
+                optimizer_config = self._objects["optimizer"]
+                optimizer_cls = getattr(torch.optim, optimizer_config[0])
+                optimizer = optimizer_cls(params)
+                optimizer.load_state_dict(optimizer_config[1])
+                return optimizer
             except:
                 raise KeyError("The checkpoint doesn t contain an optimizer")
 
-    def get_schedulers(self):
+    def get_schedulers(self, optimizer):
         if not self.is_empty:
             try:
-                return self._objects["schedulers"]
+                schedulers_out = {}
+                schedulers_config = self._objects["schedulers"]
+                for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
+                    if scheduler_type == "lr_scheduler":
+                        scheduler = instantiate_scheduler(optimizer, scheduler_opt)
+                        scheduler.load_state_dict(scheduler_state)
+                        schedulers_out["lr_scheduler"] = scheduler
+                    else:
+                        raise NotImplementedError
+                return schedulers_out
             except:
                 log.warn("The checkpoint doesn t contain schedulers")
                 return None
@@ -119,6 +136,8 @@ class Checkpoint(object):
         if not self.is_empty:
             try:
                 models = self._objects["models"]
+                keys = [key.replace("best_", "") for key in models.keys()]
+                log.info("Available weights : {}".format(keys))
                 try:
                     key_name = "best_{}".format(weight_name)
                     model = models[key_name]
@@ -155,8 +174,8 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
-            model.optimizer = self._checkpoint.get_optimizer()
-            model.schedulers = self._checkpoint.get_schedulers()
+            model.optimizer = self._checkpoint.get_optimizer(model.parameters())
+            model.schedulers = self._checkpoint.get_schedulers(model.optimizer)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
