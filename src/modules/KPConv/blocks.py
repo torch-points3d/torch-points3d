@@ -3,7 +3,7 @@ import sys
 from torch.nn import Linear as Lin
 
 from .kernels import KPConvLayer, KPConvDeformableLayer
-from src.core.common_modules.base_modules import UnaryConv, BaseModule
+from src.core.common_modules.base_modules import BaseModule
 from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
