@@ -1,46 +1,67 @@
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim import lr_scheduler
+from functools import partial
 from omegaconf.dictconfig import DictConfig
 import logging
 
 
 log = logging.getLogger(__name__)
 
+def repr(self, learning_rate_params={}):
+    return "{}({})".format(self.__class__.__name__, learning_rate_params)
 
-def build_basic_params():
-    return DictConfig({"base_lr": 0.001})
+class SchedulerWrapper():
+
+    def __init__(self, scheduler, learning_rate_params):
+        self._scheduler = scheduler
+        self._learning_rate_params = learning_rate_params
+
+    @property
+    def scheduler(self):
+        return self._scheduler
+
+    def __repr__(self):
+        return "{}({})".format(self._scheduler.__class__.__name__, self._learning_rate_params)
+
+    def step(self, *args, **kwargs):
+        self._scheduler.step(*args, **kwargs)
 
 
-def get_scheduler(learning_rate_params, optimizer):
-    """ Builds and sets a learning rate scheduler on a given optimizer
-
-    Arguments:
-        learning_rate_params -- all parameters required for setting the learning rate
-        optimizer -- Optimizer affected by the scheduler
-
-    Returns:
-        LRScheduler
+def instantiate_scheduler(optimizer, scheduler_opt):
+    """Return a learning rate scheduler
+    Parameters:
+        optimizer          -- the optimizer of the network
+        scheduler_opt (option class) -- stores all the experiment flags; needs to be a subclass of BaseOptions．　
+                              opt.lr_policy is the name of learning rate policy: linear | step | plateau | cosine
+    See https://pytorch.org/docs/stable/optim.html for more details.
     """
-    scheduler_builder = _LR_REGISTER.get(learning_rate_params.scheduler_type, None)
-    if scheduler_builder is None:
-        log.warning("Scheduler could %s not be instantiated", learning_rate_params.scheduler_type)
-        return None
-    return scheduler_builder(learning_rate_params, optimizer)
+    base_lr = optimizer.defaults['lr']
+    learning_rate_params = scheduler_opt.params
+    if scheduler_opt.lr_policy == 'lambda_rule':
+        if scheduler_opt.rule == "step_decay":
+            lr_lambda = lambda e: max(
+                learning_rate_params.lr_decay ** (e // learning_rate_params.decay_step),
+                learning_rate_params.lr_clip / base_lr,
+            )
+        elif scheduler_opt.rule == "exponential_decay":
+            lr_lambda = lambda e: max(
+                eval(learning_rate_params.gamma) ** (e / learning_rate_params.decay_step),
+                learning_rate_params.lr_clip / base_lr,
+            )            
+        else:
+            raise NotImplementedError
+        scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+    
+    elif scheduler_opt.lr_policy == 'step':
+        scheduler = lr_scheduler.StepLR(optimizer, **learning_rate_params)
+    
+    elif scheduler_opt.lr_policy == 'plateau':
+        scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, **learning_rate_params)
+        learning_rate_params['metric_name'] = scheduler_opt.metric_name
+        setattr(scheduler, "metric_name", scheduler_opt.metric_name)
 
-
-def _build_step_decay(learning_rate_params, optimizer):
-    lr_lbmd = lambda e: max(
-        learning_rate_params.lr_decay ** (e // learning_rate_params.decay_step),
-        learning_rate_params.lr_clip / learning_rate_params.base_lr,
-    )
-    return LambdaLR(optimizer, lr_lbmd)
-
-
-def _build_exponential_decay(learning_rate_params, optimizer):
-    lr_lbmd = lambda e: max(
-        eval(learning_rate_params.gamma) ** (e / learning_rate_params.decay_step),
-        learning_rate_params.lr_clip / learning_rate_params.base_lr,
-    )
-    return LambdaLR(optimizer, lr_lbmd)
-
-
-_LR_REGISTER = {"step_decay": _build_step_decay, "exponential_decay": _build_exponential_decay}
+    elif scheduler_opt.lr_policy == 'cosine':
+        scheduler = lr_scheduler.CosineAnnealingLR(optimizer, **learning_rate_params)
+    else:
+        return NotImplementedError('learning rate policy [%s] is not implemented', opt.lr_policy)
+    
+    return SchedulerWrapper(scheduler, learning_rate_params)

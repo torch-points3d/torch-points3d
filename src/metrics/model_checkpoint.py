@@ -26,6 +26,8 @@ def get_model_checkpoint(
 ):
     """ Loads a model from a checkpoint or creates a new one.
     """
+    model.set_selection_stage(selection_stage)
+
     model_checkpoint: ModelCheckpoint = ModelCheckpoint(load_dir, check_name, resume, selection_stage)
 
     if resume:
@@ -166,10 +168,11 @@ class ModelCheckpoint(object):
             model {[BaseModel]} -- [Model]
             metrics_holder {[Dict]} -- [Need to contain stage, epoch, current_metrics]
         """
-
         metrics = metrics_holder["current_metrics"]
         stage = metrics_holder["stage"]
         epoch = metrics_holder["epoch"]
+
+        model.set_metrics(metrics, stage, epoch)
 
         stats = self._checkpoint.stats
         state_dict = model.state_dict()

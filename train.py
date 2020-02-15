@@ -125,7 +125,6 @@ def main(cfg):
     cfg_training = set_format(model_config, cfg.training)
     model_class = getattr(model_config, "class")
     tested_dataset_class = getattr(dataset_config, "class")
-    otimizer_class = getattr(cfg_training.optimizer, "class")
 
     # wandb
     if cfg.wandb.log:
@@ -162,17 +161,17 @@ def main(cfg):
     log.info(model)
 
     # Optimizer
-    model.set_optimizer(
-        getattr(torch.optim, otimizer_class, None), cfg_training.optimizer.params, cfg_training.learning_rate
-    )
+    #model.set_optimizer(
+    #    getattr(torch.optim, otimizer_class, None), cfg_training.optimizer.params, cfg_training.learning_rate
+    #)
+    model.instantiate_optim(cfg)
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:
         dataset.set_strategies(model)
 
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-    log.info("Model size = %i", params)
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() \
+        if param.requires_grad))
 
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 

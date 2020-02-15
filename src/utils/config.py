@@ -11,6 +11,9 @@ from omegaconf.dictconfig import DictConfig
 
 from .enums import ConvolutionFormat
 
+def create_new_omega_conf(opt):
+    empty_opt = OmegaConf.create({})
+    return OmegaConf.merge(opt, empty_opt)
 
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)

@@ -7,8 +7,11 @@ from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import logging
 from collections import defaultdict
-from src.core.schedulers.lr_schedulers import get_scheduler
+from src.core.schedulers.lr_schedulers import instantiate_scheduler
 from src.core.regularizer import *
+from src.utils.config import is_dict, create_new_omega_conf
+from src.utils.metrics_utils import get_from_metric
+from src.utils.colors import colored_print, COLORS
 
 log = logging.getLogger(__name__)
 
@@ -44,6 +47,10 @@ class BaseModel(torch.nn.Module):
         self._iterations = 0
         self._lr_params = None
         self._grad_clip = getattr(opt, "grad_clip", 0)
+        self._latest_metrics = None
+        self._latest_stage = None
+        self._latest_epoch = None
+        self._selection_stage = None
 
     @property
     def lr_params(self):
@@ -90,6 +97,14 @@ class BaseModel(torch.nn.Module):
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
 
+    def set_selection_stage(self, set_selection_stage):
+        self._set_selection_stage = set_selection_stage
+
+    def set_metrics(self, metrics, stage, epoch):
+        self._latest_metrics = metrics
+        self._latest_stage = stage
+        self._latest_epoch = epoch
+
     def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self._iterations += batch_size
@@ -100,7 +115,16 @@ class BaseModel(torch.nn.Module):
             torch.nn.utils.clip_grad_norm_(self.parameters(), self._grad_clip)
         self._optimizer.step()  # update parameters
         if self._lr_scheduler is not None:
-            self._lr_scheduler.step(self._iterations)
+            if hasattr(self._lr_scheduler, "metric_name"):
+                metric_name = self._lr_scheduler
+                if hasattr(self, "_metrics"):
+                    if self._latest_stage == self._set_selection_stage:
+                        metric_value = get_from_metric(self._latest_metrics, metric_name, self._set_selection_stage)
+                        if metric_value is None:
+                            raise Exception("The provided metric_name in scheduler didn t match any metric_name")
+                        self._lr_scheduler.step(metric_value)
+            else:
+                self._lr_scheduler.step(self._iterations)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -114,11 +138,24 @@ class BaseModel(torch.nn.Module):
                         errors_ret[name] = None
         return errors_ret
 
-    def set_optimizer(self, optimizer_cls: Optimizer, opt_config, lr_params):
-        self._optimizer = optimizer_cls(self.parameters(), **opt_config)
-        self._lr_scheduler = get_scheduler(lr_params, self._optimizer)
-        self._lr_params = lr_params
-        log.info(self._optimizer)
+    def instantiate_optim(self, config):
+        optimizer_opt = self.get_from_opt(create_new_omega_conf(config.training), \
+            ['optim', 'optimizer'], \
+            msg_err="optimizer needs to be defined within the training config")
+        import pdb; pdb.set_trace()
+
+        optmizer_cls_name = optimizer_opt.get("class")
+        optimizer_cls = getattr(torch.optim, optmizer_cls_name)
+        optimizer_params = {}
+        if hasattr(optimizer_opt, "params"):
+            optimizer_params = optimizer_opt.params
+        self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
+        colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
+
+        scheduler_opt = self.get_from_opt(config, ['training', 'optim', 'scheduler'])     
+        if scheduler_opt:
+            self._lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
+            colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
         loss = 0
@@ -195,7 +232,7 @@ class BaseModel(torch.nn.Module):
 
         search_from_key(self._modules)
 
-    def get_from_opt(self, opt, keys=[]):
+    def get_from_opt(self, opt, keys=[], msg_err=None):
         if len(keys) == 0:
             raise Exception("Keys should not be empty")
         
@@ -209,7 +246,10 @@ class BaseModel(torch.nn.Module):
         try:
             value_out = search_with_keys(opt, keys, value_out)
         except Exception as e:
-            print(e)
+            if msg_err:
+                raise Exception(str(msg_err))
+            else:
+                print(e)
             value_out = None
         return value_out
 

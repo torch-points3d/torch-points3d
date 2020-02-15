@@ -6,6 +6,7 @@ defaults:
   - dataset: ???
     optional: True
 
+  - scheduler: lambda_rule
   - training: default
   - eval
 
