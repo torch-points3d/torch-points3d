@@ -1,7 +1,6 @@
 import os
 import shutil
 import torch
-import numpy as np
 import hydra
 import time
 import logging
@@ -125,6 +124,7 @@ def main(cfg):
     cfg_training = set_format(model_config, cfg.training)
     model_class = getattr(model_config, "class")
     tested_dataset_class = getattr(dataset_config, "class")
+    otimizer_class = getattr(cfg.training.training.optimizer, "class")
 
     # wandb
     if cfg.wandb.log:
@@ -167,8 +167,7 @@ def main(cfg):
     if cfg_training.precompute_multi_scale:
         dataset.set_strategies(model)
 
-    log.info("Model size = %i", sum(param.numel() for param in model.parameters() \
-        if param.requires_grad))
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
