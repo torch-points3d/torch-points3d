@@ -20,7 +20,7 @@ class MockDataset(torch.utils.data.Dataset):
         self._y = torch.tensor([0 for i in range(self.num_points)], dtype=torch.long)
         self._category = torch.ones((self.num_points,), dtype=torch.long)
         self._transform = None
-        self._dataset_state = None
+        self._dataset_state = {"task":"segmentation"}
 
     @property
     def datalist(self):

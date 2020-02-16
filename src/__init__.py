@@ -1,5 +1,6 @@
 import importlib
 import torch
+import copy
 from omegaconf import OmegaConf
 from src.datasets.base_dataset import BaseDataset
 from src.models.base_model import BaseModel
@@ -58,7 +59,11 @@ def instantiate_model(model_class, task, option, dataset: BaseDataset) -> BaseMo
             % (model_module, class_name)
         )
 
-    model_state = {'model_class':model_class, "option": OmegaConf.to_container(option), "dataset_state":dataset.dataset_state, "model_module":model_module}
+
+    option_container = OmegaConf.to_container(option)
     model = model_cls(option, "dummy", dataset, modellib)
+    
+    # dataset.dataset_state should contain an extra field with needed arguments used with model init function
+    model_state = {'model_class':model_class, "option": option_container, "dataset_state":dataset.dataset_state, "model_module":model_module}
     model.model_state = model_state
     return model

@@ -98,7 +98,9 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
 
-        model = model_checkpoint.create_model_from_checkpoint()
+        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
+        model = model_checkpoint.create_model_from_checkpoint(dataset)
+        print(model)
         shutil.rmtree(ckpt_dir)
 
 if __name__ == "__main__":

@@ -1,10 +1,11 @@
 import os
 import torch
 import logging
-
+from omegaconf import OmegaConf
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
 from src.core.schedulers.lr_schedulers import instantiate_scheduler
+from src import instantiate_model
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ class Checkpoint(object):
         if not os.path.exists(checkpoint_file):
             log.warn("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
             return ckp
+        log.info("Loading checkpoint from {}".format(checkpoint_file))
         ckp._objects = torch.load(checkpoint_file)
         ckp._filled = True
         return ckp
@@ -169,8 +171,20 @@ class ModelCheckpoint(object):
         self._resume = resume
         self._selection_stage = selection_stage
 
-    def create_model_from_checkpoint(self):
-        pass
+    def create_model_from_checkpoint(self, dataset, weight_name=None):
+        if not self._checkpoint.is_empty:
+            model_state = self._checkpoint.get_model_state()
+            model_class = model_state["model_class"]
+            option = OmegaConf.create(model_state["option"])
+            import pdb; pdb.set_trace()
+            task = model_state["dataset_state"]["task"]
+            model = instantiate_model(model_class, task, \
+                option, dataset)
+            
+            if weight_name:
+                self.initialize_model(model)
+
+            return model
 
     @property
     def start_epoch(self):
