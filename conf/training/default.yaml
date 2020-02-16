@@ -15,13 +15,12 @@ training:
                 lr: ${base_lr} # The path is cut from training
         scheduler: ${scheduler}
         bn_scheduler:
-            class: BNMomentumScheduler
-            bn_lambda: "step_decay"
-            bn_momentum: 0.9
+            bn_policy: "step_decay"
             params:
+                bn_momentum: 0.9
                 bn_decay: 0.5
                 decay_step : 200000
-                bnm_clip : 1e-2
+                bn_clip : 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""

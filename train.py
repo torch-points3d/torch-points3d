@@ -124,7 +124,7 @@ def main(cfg):
     cfg_training = set_format(model_config, cfg.training)
     model_class = getattr(model_config, "class")
     tested_dataset_class = getattr(dataset_config, "class")
-    otimizer_class = getattr(cfg.training.training.optimizer, "class")
+    otimizer_class = getattr(cfg.training.optim.optimizer, "class")
 
     # wandb
     if cfg.wandb.log:

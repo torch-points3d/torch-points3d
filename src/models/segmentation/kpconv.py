@@ -63,7 +63,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
                 self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
             self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
-            self.FC_layer.add_module("Softmax", nn.LogSoftmax(self._num_classes))
+            self.FC_layer.add_module("Softmax", nn.LogSoftmax(-1))
         self.loss_names = ["loss_seg"]
 
         self.lambda_reg = self.get_from_opt(option, ["loss_weights", "lambda_reg"])

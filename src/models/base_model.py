@@ -1,4 +1,4 @@
-from collections import OrderedDict, ChainMap
+from collections import OrderedDict
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import copy
@@ -8,6 +8,8 @@ from torch.optim.lr_scheduler import _LRScheduler
 import logging
 from collections import defaultdict
 from src.core.schedulers.lr_schedulers import instantiate_scheduler
+from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
+
 from src.core.regularizer import *
 from src.utils.config import is_dict, create_new_omega_conf
 from src.utils.metrics_utils import get_from_metric
@@ -60,7 +62,7 @@ class BaseModel(torch.nn.Module):
 
     @model_state.setter
     def model_state(self, model_state):
-        self._model_state = model_state   
+        self._model_state = model_state
 
     @property
     def lr_params(self):
@@ -147,10 +149,13 @@ class BaseModel(torch.nn.Module):
                         metric_value = get_from_metric(self._latest_metrics, metric_name, self._set_selection_stage)
                         if metric_value is None:
                             raise Exception("The provided metric_name in scheduler didn t match any metric_name")
-                        print("Update lr using metric_value".format(metric_value))
+                        log.info("Update lr using metric_value".format(metric_value))
                         self._lr_scheduler.step(metric_value)
             else:
                 self._lr_scheduler.step(self._iterations)
+
+        if self._bn_scheduler:
+            self._bn_scheduler.step(self._iterations)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -165,9 +170,11 @@ class BaseModel(torch.nn.Module):
         return errors_ret
 
     def instantiate_optim(self, config):
-        optimizer_opt = self.get_from_opt(create_new_omega_conf(config.training), \
-            ['optim', 'optimizer'], \
-            msg_err="optimizer needs to be defined within the training config")
+        optimizer_opt = self.get_from_opt(
+            create_new_omega_conf(config.training),
+            ["optim", "optimizer"],
+            msg_err="optimizer needs to be defined within the training config",
+        )
 
         optmizer_cls_name = optimizer_opt.get("class")
         optimizer_cls = getattr(torch.optim, optmizer_cls_name)
@@ -177,11 +184,17 @@ class BaseModel(torch.nn.Module):
         self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
         colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
 
-        scheduler_opt = self.get_from_opt(config, ['training', 'optim', 'scheduler'])     
+        scheduler_opt = self.get_from_opt(config, ["training", "optim", "scheduler"])
         if scheduler_opt:
             self._lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
-            self._schedulers['lr_scheduler'] = self._lr_scheduler
+            self._schedulers["lr_scheduler"] = self._lr_scheduler
             colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
+
+        bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
+        if bn_scheduler_opt:
+            self._bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt, config.training.batch_size)
+            # self._schedulers['bn_scheduler'] = self._bn_scheduler
+            colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
         loss = 0
@@ -197,6 +210,7 @@ class BaseModel(torch.nn.Module):
             and returns this merged dict
         """
         losses_global = defaultdict(list)
+
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
@@ -204,10 +218,11 @@ class BaseModel(torch.nn.Module):
                     for loss_name, loss_value in losses.items():
                         losses_global[loss_name].append(loss_value)
                 search_from_key(module._modules, losses_global)
+
         search_from_key(self._modules, losses_global)
         return losses_global
 
-    def collect_internal_losses(self, lambda_weight=1, reduction='sum'):
+    def collect_internal_losses(self, lambda_weight=1, reduction="sum"):
         """
             Collect internal loss of all child modules with
             internal losses and set the losses
@@ -218,8 +233,8 @@ class BaseModel(torch.nn.Module):
         elif reduction == "mean":
             aggr_func = torch.mean
         else:
-            raise NotImplementedError        
-        
+            raise NotImplementedError
+
         loss_out = 0
         losses = self.get_named_internal_losses()
         for loss_name, loss_values in losses.items():
@@ -261,14 +276,16 @@ class BaseModel(torch.nn.Module):
     def get_from_opt(self, opt, keys=[], msg_err=None):
         if len(keys) == 0:
             raise Exception("Keys should not be empty")
-        
+
         value_out = None
+
         def search_with_keys(args, keys, value_out):
             if len(keys) == 0:
                 value_out = args
                 return value_out
             value = args[keys[0]]
             return search_with_keys(value, keys[1:], value_out)
+
         try:
             value_out = search_with_keys(opt, keys, value_out)
         except Exception as e:
@@ -278,6 +295,7 @@ class BaseModel(torch.nn.Module):
                 print(e)
             value_out = None
         return value_out
+
 
 class BaseInternalLossModule(ABC):
     """ABC for modules which have internal loss(es)
