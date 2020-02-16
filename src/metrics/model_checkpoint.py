@@ -50,13 +50,15 @@ class Checkpoint(object):
     def _initialize_objects(self):
         self._objects = {}
         self._objects["models"] = {}
+        self._objects["model_state"] = None
         self._objects["stats"] = {"train": [], "test": [], "val": []}
         self._objects["optimizer"] = None
         self._objects["lr_params"] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, schedulers, **kwargs):
+    def save_objects(self, models_to_save, model_state, stage, current_stat, optimizer, schedulers, **kwargs):
         self._objects["models"] = models_to_save
+        self._objects["model_state"] = model_state
         self._objects["stats"][stage].append(current_stat)
         self._objects["optimizer"] = [optimizer.__class__.__name__, optimizer.state_dict()]
         schedulers_saved = {scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
@@ -90,6 +92,13 @@ class Checkpoint(object):
     @property
     def is_empty(self):
         return not self._filled
+
+    def get_model_state(self):
+        if not self.is_empty:
+            try:
+                return self._objects["model_state"]
+            except:
+                raise KeyError("The checkpoint doesn t contain model_state")
 
     def get_optimizer(self, params):
         if not self.is_empty:
@@ -160,6 +169,9 @@ class ModelCheckpoint(object):
         self._resume = resume
         self._selection_stage = selection_stage
 
+    def create_model_from_checkpoint(self):
+        pass
+
     @property
     def start_epoch(self):
         if self._resume:
@@ -174,6 +186,7 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
+            model.model_state = self._checkpoint.get_model_state()
             model.optimizer = self._checkpoint.get_optimizer(model.parameters())
             model.schedulers = self._checkpoint.get_schedulers(model.optimizer)
 
@@ -241,4 +254,4 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
+        self._checkpoint.save_objects(models_to_save, model.model_state, stage, current_stat, model.optimizer, model.schedulers, **kwargs)

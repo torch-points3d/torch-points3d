@@ -1,7 +1,8 @@
 import importlib
+import torch
+from omegaconf import OmegaConf
 from src.datasets.base_dataset import BaseDataset
 from src.models.base_model import BaseModel
-
 
 def contains_key(opt, key):
     try:
@@ -10,8 +11,7 @@ def contains_key(opt, key):
     except:
         return False
 
-
-def instantiate_dataset(dataset_class, task):
+def instantiate_dataset(dataset_class, task, dataset_config, cfg_training):
     """Import the module "data/[module].py".
     In the file, the class called {class_name}() will
     be instantiated. It has to be a subclass of BaseDataset,
@@ -27,14 +27,17 @@ def instantiate_dataset(dataset_class, task):
     target_dataset_name = class_name
     for name, cls in datasetlib.__dict__.items():
         if name.lower() == target_dataset_name.lower() and issubclass(cls, BaseDataset):
-            dataset = cls
+            dataset_cls = cls
 
-    if dataset is None:
+    if dataset_cls is None:
         raise NotImplementedError(
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
             % (module, class_name)
         )
 
+    dataset_state = {"dataset_class": dataset_class, "task":task, "dataset_config":OmegaConf.to_container(dataset_config), "cfg_training":OmegaConf.to_container(cfg_training)}
+    dataset = dataset_cls(dataset_config, cfg_training)
+    dataset.dataset_state = dataset_state
     return dataset
 
 
@@ -47,11 +50,15 @@ def instantiate_model(model_class, task, option, dataset: BaseDataset) -> BaseMo
 
     for name, cls in modellib.__dict__.items():
         if name.lower() == class_name.lower():
-            model = cls
+            model_cls = cls
 
-    if model is None:
+    if model_cls is None:
         raise NotImplementedError(
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
             % (model_module, class_name)
         )
-    return model(option, "dummy", dataset, modellib)
+
+    model_state = {'model_class':model_class, "option": OmegaConf.to_container(option), "dataset_state":dataset.dataset_state, "model_module":model_module}
+    model = model_cls(option, "dummy", dataset, modellib)
+    model.model_state = model_state
+    return model

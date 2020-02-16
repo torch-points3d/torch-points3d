@@ -152,7 +152,7 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(tested_dataset_class, tested_task)(dataset_config, cfg_training)
+    dataset = instantiate_dataset(tested_dataset_class, tested_task, dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)

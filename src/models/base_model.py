@@ -52,6 +52,15 @@ class BaseModel(torch.nn.Module):
         self._latest_epoch = None
         self._selection_stage = None
         self._schedulers = {}
+        self._model_state = None
+
+    @property
+    def model_state(self):
+        return self._model_state
+
+    @model_state.setter
+    def model_state(self, model_state):
+        self._model_state = model_state   
 
     @property
     def lr_params(self):
