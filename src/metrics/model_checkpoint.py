@@ -5,6 +5,7 @@ from omegaconf import OmegaConf
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
 from src.core.schedulers.lr_schedulers import instantiate_scheduler
+from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 from src import instantiate_model
 
 log = logging.getLogger(__name__)
@@ -62,8 +63,10 @@ class Checkpoint(object):
         self._objects["model_state"] = model_state
         self._objects["stats"][stage].append(current_stat)
         self._objects["optimizer"] = [optimizer.__class__.__name__, optimizer.state_dict()]
-        schedulers_saved = {scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
-                for scheduler_name, scheduler in schedulers.items()}
+        schedulers_saved = {
+            scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
+            for scheduler_name, scheduler in schedulers.items()
+        }
         self._objects["schedulers"] = schedulers_saved
         colored_print(COLORS.Green, "Saving checkpoint at {}".format(self._check_path))
         torch.save(self._objects, self._check_path)
@@ -113,16 +116,21 @@ class Checkpoint(object):
             except:
                 raise KeyError("The checkpoint doesn t contain an optimizer")
 
-    def get_schedulers(self, optimizer):
+    def get_schedulers(self, model):
         if not self.is_empty:
             try:
                 schedulers_out = {}
                 schedulers_config = self._objects["schedulers"]
                 for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
                     if scheduler_type == "lr_scheduler":
+                        optimizer = model.optimizer
                         scheduler = instantiate_scheduler(optimizer, scheduler_opt)
                         scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
+                    elif scheduler_type == "bn_scheduler":
+                        scheduler = instantiate_bn_scheduler(model, scheduler_opt, scheduler_opt.batch_size)
+                        scheduler.load_state_dict(scheduler_state)
+                        schedulers_out["bn_scheduler"] = scheduler
                     else:
                         raise NotImplementedError
                 return schedulers_out
@@ -170,9 +178,8 @@ class ModelCheckpoint(object):
             task = dataset_state["task"]
             if not dataset:
                 dataset = self.create_mock_dateset(dataset_state)
-            model = instantiate_model(model_class, task, \
-                option, dataset)
-            
+            model = instantiate_model(model_class, task, option, dataset)
+
             if weight_name:
                 self.initialize_model(model)
 
@@ -194,7 +201,7 @@ class ModelCheckpoint(object):
             model.load_state_dict(state_dict)
             model.model_state = self._checkpoint.get_model_state()
             model.optimizer = self._checkpoint.get_optimizer(model.parameters())
-            model.schedulers = self._checkpoint.get_schedulers(model.optimizer)
+            model.schedulers = self._checkpoint.get_schedulers(model)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -260,4 +267,6 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
 
-        self._checkpoint.save_objects(models_to_save, model.model_state, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
+        self._checkpoint.save_objects(
+            models_to_save, model.model_state, stage, current_stat, model.optimizer, model.schedulers, **kwargs
+        )

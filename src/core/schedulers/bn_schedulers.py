@@ -20,9 +20,17 @@ class BNMomentumScheduler(object):
         self.model = model
         self.setter = setter
         self.bn_lambda = bn_lambda
-
         self.step(last_epoch + 1)
         self.last_epoch = last_epoch
+        self._scheduler_opt = None
+
+    @property
+    def scheduler_opt(self):
+        return self._scheduler_opt
+
+    @scheduler_opt.setter
+    def scheduler_opt(self, scheduler_opt):
+        self._scheduler_opt = scheduler_opt
 
     def step(self, epoch=None):
 
@@ -43,8 +51,11 @@ class BNMomentumScheduler(object):
         return {
             "current_momemtum": self.bn_lambda(self.last_epoch),
             "last_epoch": self.last_epoch,
-            "bn_lambda": self.bn_lambda,
         }
+
+    def load_state_dict(self, state_dict):
+        self.last_epoch = state_dict["last_epoch"]
+        self.current_momemtum = state_dict["current_momemtum"]
 
     def __repr__(self):
         return "{}(base_momentum: {})".format(self.__class__.__name__, self.bn_lambda(self.last_epoch))
@@ -78,5 +89,5 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, batch_size):
 
     # used to re_create the scheduler
     bn_scheduler_opt.batch_size = batch_size
-    setattr(scheduler, "_scheduler_opt", bn_scheduler_opt)
+    bn_scheduler.scheduler_opt = bn_scheduler_opt
     return bn_scheduler

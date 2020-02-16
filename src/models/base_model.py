@@ -193,7 +193,7 @@ class BaseModel(torch.nn.Module):
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
             self._bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt, config.training.batch_size)
-            # self._schedulers['bn_scheduler'] = self._bn_scheduler
+            self._schedulers["bn_scheduler"] = self._bn_scheduler
             colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
