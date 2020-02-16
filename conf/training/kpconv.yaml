@@ -3,6 +3,7 @@ training:
     shuffle: True
     num_workers: 4
     batch_size: 16
+    accumulated_gradient: 10 # Accumulate gradient accumulated_gradient * batch_size
     cuda: 1
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     epochs: 100

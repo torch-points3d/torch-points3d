@@ -8,6 +8,7 @@ training:
     epochs: 100
     grad_clip: -1
     base_lr: 0.001
+    accumulated_gradient: 10 # Accumulate gradient accumulated_gradient * batch_size
     optim:
         optimizer:
             class: Adam

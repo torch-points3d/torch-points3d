@@ -1,6 +1,8 @@
 from torch import nn
 import logging
 
+from src.utils.config import merge_omega_conf
+
 log = logging.getLogger(__name__)
 
 
@@ -88,6 +90,6 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, batch_size):
     bn_scheduler = BNMomentumScheduler(model, bn_lambda)
 
     # used to re_create the scheduler
-    bn_scheduler_opt.batch_size = batch_size
+    bn_scheduler_opt = merge_omega_conf(bn_scheduler_opt, {"batch_size": batch_size})
     bn_scheduler.scheduler_opt = bn_scheduler_opt
     return bn_scheduler

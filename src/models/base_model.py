@@ -55,6 +55,13 @@ class BaseModel(torch.nn.Module):
         self._selection_stage = None
         self._schedulers = {}
         self._model_state = None
+        self._accumulated_gradient_step = getattr(opt, "accumulated_gradient", None)
+        if self._accumulated_gradient_step:
+            if self._accumulated_gradient_step > 1:
+                self._accumulated_gradient_count = 0
+                colored_print(COLORS.Green, "Accumulated option activated {}".format(self._accumulated_gradient_step))
+            else:
+                raise Exception("accumulated_gradient should be greater than 1")
 
     @property
     def model_state(self):
@@ -132,11 +139,20 @@ class BaseModel(torch.nn.Module):
         self._latest_stage = stage
         self._latest_epoch = epoch
 
+    def manage_optimizer_zero_grad(self):
+        if not self._accumulated_gradient_step:
+            self._optimizer.zero_grad()  # clear existing gradients
+        else:
+            if self._accumulated_gradient_count == self._accumulated_gradient_step:
+                self._accumulated_gradient_count = 0
+                self._optimizer.zero_grad()  # clear existing gradients
+            self._accumulated_gradient_count += 1
+
     def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self._iterations += batch_size
         self.forward()  # first call forward to calculate intermediate results
-        self._optimizer.zero_grad()  # clear existing gradients
+        self.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
         if self._grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(self.parameters(), self._grad_clip)
