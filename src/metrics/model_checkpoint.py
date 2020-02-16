@@ -130,19 +130,6 @@ class Checkpoint(object):
                 log.warn("The checkpoint doesn t contain schedulers")
                 return None
 
-    def get_lr_params(self):
-        if not self.is_empty:
-            try:
-                return self._objects["lr_params"]
-            except:
-                params = build_basic_params()
-                log.warning(
-                    "Could not find learning rate parameters in this checkpoint, takes the default ones {}".format(
-                        params
-                    )
-                )
-                return params
-
     def get_state_dict(self, weight_name):
         if not self.is_empty:
             try:
@@ -171,13 +158,18 @@ class ModelCheckpoint(object):
         self._resume = resume
         self._selection_stage = selection_stage
 
-    def create_model_from_checkpoint(self, dataset, weight_name=None):
+    def create_mock_dateset(self, dataset_state):
+        raise NotImplementedError
+
+    def create_model_from_checkpoint(self, dataset=None, weight_name=None):
         if not self._checkpoint.is_empty:
             model_state = self._checkpoint.get_model_state()
             model_class = model_state["model_class"]
             option = OmegaConf.create(model_state["option"])
-            import pdb; pdb.set_trace()
-            task = model_state["dataset_state"]["task"]
+            dataset_state = model_state["dataset_state"]
+            task = dataset_state["task"]
+            if not dataset:
+                dataset = self.create_mock_dateset(dataset_state)
             model = instantiate_model(model_class, task, \
                 option, dataset)
             

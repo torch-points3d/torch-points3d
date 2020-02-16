@@ -59,7 +59,6 @@ def instantiate_model(model_class, task, option, dataset: BaseDataset) -> BaseMo
             % (model_module, class_name)
         )
 
-
     option_container = OmegaConf.to_container(option)
     model = model_cls(option, "dummy", dataset, modellib)
     
