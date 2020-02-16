@@ -142,21 +142,26 @@ class BaseModel(torch.nn.Module):
     def manage_optimizer_zero_grad(self):
         if not self._accumulated_gradient_step:
             self._optimizer.zero_grad()  # clear existing gradients
+            return True
         else:
             if self._accumulated_gradient_count == self._accumulated_gradient_step:
                 self._accumulated_gradient_count = 0
+                return True
+            if self._accumulated_gradient_count == 0:
                 self._optimizer.zero_grad()  # clear existing gradients
             self._accumulated_gradient_count += 1
+            return False
 
     def optimize_parameters(self, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self._iterations += batch_size
         self.forward()  # first call forward to calculate intermediate results
-        self.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
+        make_optimizer_step = self.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
         if self._grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(self.parameters(), self._grad_clip)
-        self._optimizer.step()  # update parameters
+        if make_optimizer_step:
+            self._optimizer.step()  # update parameters
         if self._lr_scheduler is not None:
             if hasattr(self._lr_scheduler, "metric_name"):
                 metric_name = self._lr_scheduler
