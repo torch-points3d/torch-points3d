@@ -73,7 +73,7 @@ def instantiate_scheduler(optimizer, scheduler_opt):
     elif scheduler_opt.lr_policy == 'cosine':
         scheduler = lr_scheduler.CosineAnnealingLR(optimizer, **scheduler_params)
     else:
-        return NotImplementedError('learning rate policy [%s] is not implemented', opt.lr_policy)
+        return NotImplementedError('learning rate policy [%s] is not implemented', scheduler_opt.lr_policy)
     
     # used to re_create the scheduler
     setattr(scheduler, "_scheduler_opt", scheduler_opt)
