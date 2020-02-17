@@ -1,5 +1,0 @@
-scheduler:
-    lr_policy: "plateau"
-    metric_name: "loss_seg"
-    params: 
-      mode: "min"

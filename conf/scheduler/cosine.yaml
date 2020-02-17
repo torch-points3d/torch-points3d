@@ -1,4 +1,0 @@
-scheduler:
-    lr_policy: "cosine"
-    params: 
-      T_max: 1024

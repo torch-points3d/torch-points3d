@@ -68,7 +68,7 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, batch_size):
     Parameters:
         model          -- the nn network
         bn_scheduler_opt (option class) -- dict containing all the params to build the scheduler　
-                              opt.lr_policy is the name of learning rate policy: lambda_rule | step | plateau | cosine
+                              opt.bn_policy is the name of learning rate policy: lambda_rule | step | plateau | cosine
                               opt.params contains the scheduler_params to construct the scheduler
     See https://pytorch.org/docs/stable/optim.html for more details.
     """
@@ -79,13 +79,15 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, batch_size):
             * bn_scheduler_params.bn_decay ** (int(it * batch_size / bn_scheduler_params.decay_step)),
             bn_scheduler_params.bn_clip,
         )
+
     elif bn_scheduler_opt.bn_policy == "exponential_decay":
         bn_lambda = lambda e: max(
             eval(bn_scheduler_params.gamma) ** (e / bn_scheduler_params.decay_step),
             bn_scheduler_params.bn_clip / bn_scheduler_params.bn_momentum,
         )
+
     else:
-        return NotImplementedError("learning rate policy [%s] is not implemented", bn_scheduler_opt.lr_policy)
+        return NotImplementedError("bn_policy [%s] is not implemented", bn_scheduler_opt.bn_policy)
 
     bn_scheduler = BNMomentumScheduler(model, bn_lambda)
 

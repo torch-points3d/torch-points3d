@@ -47,7 +47,7 @@ class TestModelCheckpoint(unittest.TestCase):
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
         model.set_input(dataset[0])
-        model.instantiate_optim(self.config)
+        model.instantiate_optimizers(self.config)
 
         # Create a checkpt
         ckpt_dir = os.path.join(DIR, "test_model_ckpt/")
@@ -60,7 +60,6 @@ class TestModelCheckpoint(unittest.TestCase):
         name = "test"
         model_checkpoint = ModelCheckpoint(ckpt_dir, name)
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
 
         # Load checkpoint and initialize model
@@ -83,7 +82,7 @@ class TestModelCheckpoint(unittest.TestCase):
         dataset = MockDatasetGeometric(5)
         model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
         model.set_input(dataset[0])
-        model.instantiate_optim(self.config)
+        model.instantiate_optimizers(self.config)
 
         # Create a checkpt
         ckpt_dir = os.path.join(DIR, "test_model_ckpt/")
@@ -97,42 +96,11 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint = ModelCheckpoint(ckpt_dir, name)
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
 
         model_checkpoint = ModelCheckpoint(ckpt_dir, name)
         model = model_checkpoint.create_model_from_checkpoint(dataset)
         print(model)
         shutil.rmtree(ckpt_dir)
-
-    """
-    def test_create_model_from_checkpoint_without_dataset(self):
-        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
-        dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
-        model.set_input(dataset[0])
-        model.instantiate_optim(self.config)
-
-        # Create a checkpt
-        ckpt_dir = os.path.join(DIR, "test_model_ckpt/")
-        try:
-            shutil.rmtree(ckpt_dir)
-        except:
-            pass
-        if not os.path.exists(ckpt_dir):
-            os.makedirs(ckpt_dir)
-        name = "test"
-        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
-        mock_metrics = {"current_metrics":{"acc": 12}, "stage":"test", "epoch":10}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
-
-        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
-        model = model_checkpoint.create_model_from_checkpoint()
-        print(model)
-        shutil.rmtree(ckpt_dir)
-    """
 
 
 if __name__ == "__main__":

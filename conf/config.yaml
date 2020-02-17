@@ -6,7 +6,7 @@ defaults:
   - dataset: ???
     optional: True
 
-  - scheduler: lambda_rule
+  - lr_scheduler: multi_step
   - training: default
   - eval
 
@@ -17,4 +17,5 @@ defaults:
 
 model_name: ??? # Name of the specific model to load
 
+selection_stage: "test"
 pretty_print: False

@@ -12,7 +12,6 @@ from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 
 from src.core.regularizer import *
 from src.utils.config import is_dict, create_new_omega_conf
-from src.utils.metrics_utils import get_from_metric
 from src.utils.colors import colored_print, COLORS
 
 log = logging.getLogger(__name__)
@@ -48,14 +47,14 @@ class BaseModel(torch.nn.Module):
         self._spatial_ops_dict: Dict = {}
         self._iterations = 0
         self._lr_params = None
-        self._grad_clip = getattr(opt, "grad_clip", 0)
+        self._grad_clip = getattr(opt.optim, "grad_clip", 0)
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None
-        self._selection_stage = None
+        self._selection_stage = "test"
         self._schedulers = {}
         self._model_state = None
-        self._accumulated_gradient_step = getattr(opt, "accumulated_gradient", None)
+        self._accumulated_gradient_step = getattr(opt.optim, "accumulated_gradient", None)
         if self._accumulated_gradient_step:
             if self._accumulated_gradient_step > 1:
                 self._accumulated_gradient_count = 0
@@ -100,6 +99,14 @@ class BaseModel(torch.nn.Module):
         self._optimizer = optimizer
 
     @property
+    def selection_stage(self):
+        return self._selection_stage
+
+    @selection_stage.setter
+    def selection_stage(self, selection_stage):
+        self._selection_stage = selection_stage
+
+    @property
     def learning_rate(self):
         for param_group in self.optimizer.param_groups:
             return param_group["lr"]
@@ -131,14 +138,6 @@ class BaseModel(torch.nn.Module):
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
 
-    def set_selection_stage(self, set_selection_stage):
-        self._set_selection_stage = set_selection_stage
-
-    def set_metrics(self, metrics, stage, epoch):
-        self._latest_metrics = metrics
-        self._latest_stage = stage
-        self._latest_epoch = epoch
-
     def manage_optimizer_zero_grad(self):
         if not self._accumulated_gradient_step:
             self._optimizer.zero_grad()  # clear existing gradients
@@ -152,31 +151,25 @@ class BaseModel(torch.nn.Module):
             self._accumulated_gradient_count += 1
             return False
 
-    def optimize_parameters(self, batch_size):
+    def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self._iterations += batch_size
+
         self.forward()  # first call forward to calculate intermediate results
         make_optimizer_step = self.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
+
         if self._grad_clip > 0:
             torch.nn.utils.clip_grad_norm_(self.parameters(), self._grad_clip)
+
         if make_optimizer_step:
             self._optimizer.step()  # update parameters
-        if self._lr_scheduler is not None:
-            if hasattr(self._lr_scheduler, "metric_name"):
-                metric_name = self._lr_scheduler
-                if hasattr(self, "_metrics"):
-                    if self._latest_stage == self._set_selection_stage:
-                        metric_value = get_from_metric(self._latest_metrics, metric_name, self._set_selection_stage)
-                        if metric_value is None:
-                            raise Exception("The provided metric_name in scheduler didn t match any metric_name")
-                        log.info("Update lr using metric_value".format(metric_value))
-                        self._lr_scheduler.step(metric_value)
-            else:
-                self._lr_scheduler.step(self._iterations)
+
+        if self._lr_scheduler:
+            self._lr_scheduler.step(epoch)
 
         if self._bn_scheduler:
-            self._bn_scheduler.step(self._iterations)
+            self._bn_scheduler.step(epoch)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -190,13 +183,12 @@ class BaseModel(torch.nn.Module):
                         errors_ret[name] = None
         return errors_ret
 
-    def instantiate_optim(self, config):
+    def instantiate_optimizers(self, config):
         optimizer_opt = self.get_from_opt(
-            create_new_omega_conf(config.training),
-            ["optim", "optimizer"],
+            config,
+            ["training", "optim", "optimizer"],
             msg_err="optimizer needs to be defined within the training config",
         )
-
         optmizer_cls_name = optimizer_opt.get("class")
         optimizer_cls = getattr(torch.optim, optmizer_cls_name)
         optimizer_params = {}
@@ -313,7 +305,7 @@ class BaseModel(torch.nn.Module):
             if msg_err:
                 raise Exception(str(msg_err))
             else:
-                print(e)
+                log.exception(e)
             value_out = None
         return value_out
 
