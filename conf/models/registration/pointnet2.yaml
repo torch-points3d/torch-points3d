@@ -13,4 +13,9 @@ models:
             [[32 + 64, 64, 64, 128], [32 + 64, 64, 64, 128]]
         ]
     loss:
-      loss_name: "BatchHard"
+      loss_name: "TripletMarginLoss"
+      margin: 0.1
+      smooth_loss: True
+      triplet_per_anchor: 'all'
+    miner:
+      miner_name: "BatchHardMiner"
