@@ -1,4 +1,4 @@
-from collections import OrderedDict, ChainMap
+from collections import OrderedDict
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 import copy
@@ -62,6 +62,10 @@ class BaseModel(torch.nn.Module):
     def learning_rate(self):
         for param_group in self.optimizer.param_groups:
             return param_group["lr"]
+
+    @property
+    def device(self):
+        return next(self.parameters()).device
 
     @abstractmethod
     def set_input(self, input):
@@ -134,29 +138,29 @@ class BaseModel(torch.nn.Module):
             and returns this merged dict
         """
         losses_global = defaultdict(list)
+
         def search_from_key(modules, losses_global):
             for _, module in modules.items():
                 if isinstance(module, BaseInternalLossModule):
                     losses = module.get_internal_losses()
                     for loss_name, loss_value in losses.items():
-                        losses_global[loss_name].append(loss_value)
+                        if isinstance(loss_value, torch.Tensor):
+                            assert loss_value.dim() == 0
+                            losses_global[loss_name].append(loss_value)
+                        elif isinstance(loss_value, float):
+                            losses_global[loss_name].append(torch.tensor(loss_value).to(self.device))
+                        else:
+                            raise ValueError("Unsupported value type for a loss: {}".format(loss_value))
                 search_from_key(module._modules, losses_global)
+
         search_from_key(self._modules, losses_global)
         return losses_global
 
-    def collect_internal_losses(self, lambda_weight=1, reduction='sum'):
+    def collect_internal_losses(self, lambda_weight=1, aggr_func=torch.sum):
         """
             Collect internal loss of all child modules with
             internal losses and set the losses
         """
-        if reduction == "sum":
-            aggr_func = torch.sum
-
-        elif reduction == "mean":
-            aggr_func = torch.mean
-        else:
-            raise NotImplementedError        
-        
         loss_out = 0
         losses = self.get_named_internal_losses()
         for loss_name, loss_values in losses.items():
@@ -198,20 +202,23 @@ class BaseModel(torch.nn.Module):
     def get_from_opt(self, opt, keys=[]):
         if len(keys) == 0:
             raise Exception("Keys should not be empty")
-        
+
         value_out = None
+
         def search_with_keys(args, keys, value_out):
             if len(keys) == 0:
                 value_out = args
                 return value_out
             value = args[keys[0]]
             return search_with_keys(value, keys[1:], value_out)
+
         try:
             value_out = search_with_keys(opt, keys, value_out)
         except Exception as e:
             print(e)
             value_out = None
         return value_out
+
 
 class BaseInternalLossModule(ABC):
     """ABC for modules which have internal loss(es)
