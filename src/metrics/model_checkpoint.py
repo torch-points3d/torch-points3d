@@ -68,7 +68,6 @@ class Checkpoint(object):
             for scheduler_name, scheduler in schedulers.items()
         }
         self._objects["schedulers"] = schedulers_saved
-        colored_print(COLORS.Green, "Saving checkpoint at {}".format(self._check_path))
         torch.save(self._objects, self._check_path)
 
     @staticmethod
