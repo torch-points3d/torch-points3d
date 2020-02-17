@@ -28,8 +28,6 @@ def get_model_checkpoint(
 ):
     """ Loads a model from a checkpoint or creates a new one.
     """
-    model.set_selection_stage(selection_stage)
-
     model_checkpoint: ModelCheckpoint = ModelCheckpoint(load_dir, check_name, resume, selection_stage)
 
     if resume:
@@ -55,7 +53,6 @@ class Checkpoint(object):
         self._objects["model_state"] = None
         self._objects["stats"] = {"train": [], "test": [], "val": []}
         self._objects["optimizer"] = None
-        self._objects["lr_params"] = None
         self._filled = False
 
     def save_objects(self, models_to_save, model_state, stage, current_stat, optimizer, schedulers, **kwargs):

@@ -1,5 +1,3 @@
-import os
-import shutil
 import torch
 import hydra
 import time
@@ -21,7 +19,7 @@ from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 # Utils import
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
-from src.utils.config import set_format
+from src.utils.config import set_format, determine_stage, launch_wandb
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTrac
             t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()
-            model.optimize_parameters(dataset.batch_size)
+            model.optimize_parameters(epoch, dataset.batch_size)
             if i % 10 == 0:
                 tracker.track(model)
 
@@ -125,23 +123,20 @@ def main(cfg):
     model_class = getattr(model_config, "class")
     tested_dataset_class = getattr(dataset_config, "class")
     otimizer_class = getattr(cfg.training.optim.optimizer, "class")
+    scheduler_class = getattr(cfg.lr_scheduler, "class")
+    wandb_public = getattr(cfg.wandb, "public", False)
 
-    # wandb
-    if cfg.wandb.log:
-        import wandb
+    # Define tags for Wandb
+    tags = [
+        tested_model_name,
+        model_class.split(".")[0],
+        tested_dataset_class,
+        otimizer_class,
+        scheduler_class,
+        wandb_public,
+    ]
 
-        wandb.init(
-            project=cfg.wandb.project,
-            tags=[tested_model_name, model_class.split(".")[0], tested_dataset_class, otimizer_class],
-            notes=cfg.wandb.notes,
-            name=cfg.wandb.name,
-            config={"run_path": os.getcwd()},
-        )
-        shutil.copyfile(
-            os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
-        )
-        wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
-        wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
+    launch_wandb(cfg, tags, wandb_public and cfg.wandb.log)
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
@@ -161,7 +156,12 @@ def main(cfg):
     log.info(model)
 
     # Initialize optimizer, schedulers
-    model.instantiate_optim(cfg)
+    model.instantiate_optimizers(cfg)
+
+    # Choose selection stage
+    selection_stage = determine_stage(cfg, dataset.has_val_loader)
+    tags += [selection_stage]
+    model.selection_stage = selection_stage
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:
@@ -177,8 +177,10 @@ def main(cfg):
         tested_model_name,
         cfg_training.resume,
         cfg_training.weight_name,
-        "val" if dataset.has_val_loader else "test",
+        selection_stage,
     )
+
+    launch_wandb(cfg, tags, not wandb_public and cfg.wandb.log)
 
     # Run training / evaluation
     model = model.to(device)
