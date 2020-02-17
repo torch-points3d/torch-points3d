@@ -165,14 +165,12 @@ class ModelCheckpoint(object):
     def create_mock_dateset(self, dataset_state):
         raise NotImplementedError
 
-    def create_model_from_checkpoint(self, dataset=None, weight_name=None):
+    def create_model_from_checkpoint(self, dataset, weight_name=None):
         if not self._checkpoint.is_empty:
             model_state = self._checkpoint.get_model_state()
             model_class = model_state["model_class"]
             option = OmegaConf.create(model_state["option"])
             task = model_state["task"]
-            if not dataset:
-                dataset = self.create_mock_dateset(dataset_state)
             model = instantiate_model(model_class, task, option, dataset)
 
             if weight_name:

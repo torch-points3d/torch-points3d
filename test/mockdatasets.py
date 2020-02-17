@@ -20,7 +20,6 @@ class MockDataset(torch.utils.data.Dataset):
         self._y = torch.tensor([0 for i in range(self.num_points)], dtype=torch.long)
         self._category = torch.ones((self.num_points,), dtype=torch.long)
         self._transform = None
-        self._dataset_state = {"task":"segmentation"}
 
     @property
     def datalist(self):
@@ -45,14 +44,6 @@ class MockDataset(torch.utils.data.Dataset):
         strategies = model.get_spatial_ops()
         transform = MultiScaleTransform(strategies)
         self._transform = transform
-
-    @property
-    def dataset_state(self):
-        return self._dataset_state
-
-    @dataset_state.setter
-    def dataset_state(self, dataset_state):
-        self._dataset_state = dataset_state  
 
 class MockDatasetGeometric(MockDataset):
     def __getitem__(self, index):
