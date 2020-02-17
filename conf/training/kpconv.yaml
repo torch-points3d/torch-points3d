@@ -10,13 +10,13 @@ training:
     optimizer:
         class: Adam
         params:
-            lr: 1e-4
+            lr: 1e-3
     learning_rate:
         scheduler_type: "exponential_decay"
         base_lr: ${optimizer.params.lr}
         gamma: 0.5 ** (1.0/10.0) # Divide learning by 10 every 10 epochs
         decay_step: 20000
-        lr_clip: 1e-6
+        lr_clip: 1e-5
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""
@@ -27,8 +27,8 @@ training:
 wandb:
     project: shapenet-pn2
     log: True
-    notes: "Large MLP + lower LR"
-    name: "kpconv-largemlp-lowerlr"
+    notes: "Multihead"
+    name: "kpconv-multihead"
 
 # parameters for TensorBoard Visualization
 tensorboard:

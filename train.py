@@ -1,3 +1,5 @@
+import os
+import shutil
 import torch
 import numpy as np
 import hydra
@@ -134,7 +136,13 @@ def main(cfg):
             tags=[tested_model_name, model_class.split(".")[0], tested_dataset_class, otimizer_class],
             notes=cfg.wandb.notes,
             name=cfg.wandb.name,
+            config={"run_path": os.getcwd()},
         )
+        shutil.copyfile(
+            os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
+        )
+        wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
+        wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
