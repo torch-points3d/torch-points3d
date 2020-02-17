@@ -55,16 +55,6 @@ class BaseDataset:
                     continue
                 setattr(self, new_name, transform)
 
-        self._dataset_state = None
-
-    @property
-    def dataset_state(self):
-        return self._dataset_state
-
-    @dataset_state.setter
-    def dataset_state(self, dataset_state):
-        self._dataset_state = dataset_state  
-
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:

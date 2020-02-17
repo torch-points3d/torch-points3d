@@ -5,12 +5,14 @@ from omegaconf import OmegaConf
 from src.datasets.base_dataset import BaseDataset
 from src.models.base_model import BaseModel
 
+
 def contains_key(opt, key):
     try:
         _ = opt[key]
         return True
     except:
         return False
+
 
 def instantiate_dataset(dataset_class, task, dataset_config, cfg_training):
     """Import the module "data/[module].py".
@@ -36,9 +38,7 @@ def instantiate_dataset(dataset_class, task, dataset_config, cfg_training):
             % (module, class_name)
         )
 
-    dataset_state = {"dataset_class": dataset_class, "task":task, "dataset_config":OmegaConf.to_container(dataset_config), "cfg_training":OmegaConf.to_container(cfg_training)}
     dataset = dataset_cls(dataset_config, cfg_training)
-    dataset.dataset_state = dataset_state
     return dataset
 
 
@@ -61,8 +61,8 @@ def instantiate_model(model_class, task, option, dataset: BaseDataset) -> BaseMo
 
     option_container = OmegaConf.to_container(option)
     model = model_cls(option, "dummy", dataset, modellib)
-    
+
     # dataset.dataset_state should contain an extra field with needed arguments used with model init function
-    model_state = {'model_class':model_class, "option": option_container, "dataset_state":dataset.dataset_state, "model_module":model_module}
+    model_state = {"model_class": model_class, "option": option_container, "model_module": model_module}
     model.model_state = model_state
     return model
