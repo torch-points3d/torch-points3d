@@ -21,6 +21,8 @@ class Segmentation_MP(UnetBasedModel):
             self, option, model_type, dataset, modules
         )  # call the initialization method of UnetBasedModel
 
+        self._weight_classes = dataset.weight_classes
+
         nn = option.mlp_cls.nn
         self.dropout = option.mlp_cls.get("dropout")
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
