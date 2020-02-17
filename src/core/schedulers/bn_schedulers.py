@@ -63,7 +63,7 @@ class BNMomentumScheduler(object):
         return "{}(base_momentum: {})".format(self.__class__.__name__, self.bn_lambda(self.last_epoch))
 
 
-def instantiate_bn_scheduler(model, bn_scheduler_opt, batch_size):
+def instantiate_bn_scheduler(model, bn_scheduler_opt):
     """Return a batch normalization scheduler
     Parameters:
         model          -- the nn network
@@ -74,24 +74,15 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, batch_size):
     """
     bn_scheduler_params = bn_scheduler_opt.params
     if bn_scheduler_opt.bn_policy == "step_decay":
-        bn_lambda = lambda it: max(
-            bn_scheduler_params.bn_momentum
-            * bn_scheduler_params.bn_decay ** (int(it * batch_size / bn_scheduler_params.decay_step)),
-            bn_scheduler_params.bn_clip,
-        )
-
-    elif bn_scheduler_opt.bn_policy == "exponential_decay":
         bn_lambda = lambda e: max(
-            eval(bn_scheduler_params.gamma) ** (e / bn_scheduler_params.decay_step),
-            bn_scheduler_params.bn_clip / bn_scheduler_params.bn_momentum,
+            bn_scheduler_params.bn_momentum
+            * bn_scheduler_params.bn_decay ** (int(e // bn_scheduler_params.decay_step)),
+            bn_scheduler_params.bn_clip,
         )
 
     else:
         return NotImplementedError("bn_policy [%s] is not implemented", bn_scheduler_opt.bn_policy)
 
     bn_scheduler = BNMomentumScheduler(model, bn_lambda)
-
-    # used to re_create the scheduler
-    bn_scheduler_opt = merge_omega_conf(bn_scheduler_opt, {"batch_size": batch_size})
     bn_scheduler.scheduler_opt = bn_scheduler_opt
     return bn_scheduler

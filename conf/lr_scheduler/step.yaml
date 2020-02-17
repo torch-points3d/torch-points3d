@@ -3,3 +3,4 @@ lr_scheduler:
   params:
     step_size: 10
     gamma: 0.1
+    last_epoch: 200

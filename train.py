@@ -153,6 +153,8 @@ def main(cfg):
     resolve_model(model_config, dataset, tested_task)
     model_config = OmegaConf.merge(model_config, cfg_training)
     model = instantiate_model(model_class, tested_task, model_config, dataset)
+
+    # Log model
     log.info(model)
 
     # Initialize optimizer, schedulers
@@ -161,7 +163,6 @@ def main(cfg):
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)
     tags += [selection_stage]
-    model.selection_stage = selection_stage
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:

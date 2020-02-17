@@ -11,7 +11,7 @@ from src.core.schedulers.lr_schedulers import instantiate_scheduler
 from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 
 from src.core.regularizer import *
-from src.utils.config import is_dict, create_new_omega_conf
+from src.utils.config import is_dict
 from src.utils.colors import colored_print, COLORS
 
 log = logging.getLogger(__name__)
@@ -51,7 +51,6 @@ class BaseModel(torch.nn.Module):
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None
-        self._selection_stage = "test"
         self._schedulers = {}
         self._model_state = None
         self._accumulated_gradient_step = getattr(opt.optim, "accumulated_gradient", None)
@@ -90,6 +89,10 @@ class BaseModel(torch.nn.Module):
             for scheduler_name, scheduler in schedulers.items():
                 setattr(self, "_{}".format(scheduler_name), scheduler)
 
+    def add_scheduler(self, scheduler_name, scheduler):
+        setattr(self, "_{}".format(scheduler_name), scheduler)
+        self._schedulers[scheduler_name] = scheduler
+
     @property
     def optimizer(self):
         return self._optimizer
@@ -97,14 +100,6 @@ class BaseModel(torch.nn.Module):
     @optimizer.setter
     def optimizer(self, optimizer):
         self._optimizer = optimizer
-
-    @property
-    def selection_stage(self):
-        return self._selection_stage
-
-    @selection_stage.setter
-    def selection_stage(self, selection_stage):
-        self._selection_stage = selection_stage
 
     @property
     def learning_rate(self):
@@ -117,6 +112,7 @@ class BaseModel(torch.nn.Module):
         Parameters:
             input (dict): includes the data itself and its metadata information.
         """
+        raise NotImplementedError
 
     def get_labels(self):
         """ returns a trensor of size [N_points] where each value is the label of a point
@@ -199,14 +195,14 @@ class BaseModel(torch.nn.Module):
 
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "scheduler"])
         if scheduler_opt:
-            self._lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
-            self._schedulers["lr_scheduler"] = self._lr_scheduler
+            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
+            self.add_scheduler("lr_scheduler", lr_scheduler)
             colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
 
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
-            self._bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt, config.training.batch_size)
-            self._schedulers["bn_scheduler"] = self._bn_scheduler
+            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt, config.training.batch_size)
+            self.add_scheduler("bn_scheduler", bn_scheduler)
             colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):

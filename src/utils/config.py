@@ -10,7 +10,7 @@ from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 from .enums import ConvolutionFormat
 
-def launch_wandb(cfg, tags, launch):
+def launch_wandb(cfg, tags, launch: bool):
     if launch:
         import wandb
         wandb.init(
