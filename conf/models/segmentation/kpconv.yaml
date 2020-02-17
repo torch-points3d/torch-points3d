@@ -22,29 +22,6 @@ models:
             nn: [64, 64, 64, 64, 64]
             dropout: 0.5
 
-    PDSimpleKPConv:
-        class: kpconv.KPConvSeg
-        conv_type: "PARTIAL_DENSE"
-        down_conv:
-            module_name: ResnetBBlock
-            grid_size: [0.2, 4]
-            is_strided: [False, True]
-            max_num_neighbors: [16, 16]
-            has_bottleneck: [False, True]
-            down_conv_nn: [[FEAT, 32], [32, 64]]
-        up_conv:
-            module_name: FPModule_PD
-            up_conv_nn: [[128 + 64, 64], [64 + 32, 64], [64 + FEAT, 64]]
-            up_k: [1, 3, 3]
-            skip: True
-        innermost:
-            module_name: GlobalPartialDenseBaseModule
-            aggr: max
-            nn: [64 + 3, 128]
-        mlp_cls:
-            nn: [64, 64, 64, 64, 64]
-            dropout: 0.5
-
     ResidualKPConv:
         class: kpconv.KPConvSeg
         conv_type: "MESSAGE_PASSING"

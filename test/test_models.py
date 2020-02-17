@@ -61,36 +61,6 @@ class TestModelUtils(unittest.TestCase):
         model.forward()
         model.backward()
 
-    def test_kpconv(self):
-        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
-        dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
-        model.set_input(dataset[0])
-        model.forward()
-        model.backward()
-
-    def test_kpconvpretransform(self):
-        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
-        model_config = OmegaConf.merge(params, self.data_config)
-        dataset = MockDatasetGeometric(5)
-        model_class = getattr(params, "class")
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
-        model.eval()
-        dataset_transform = MockDatasetGeometric(5)
-        dataset_transform.set_strategies(model)
-        model.set_input(dataset[0])
-        model.forward()
-        model.get_output()
-
-        torch.testing.assert_allclose(dataset_transform[0].pos, dataset[0].pos)
-        # model.set_input(dataset_transform[0])
-        # model.forward()
-        # output_tr = model.get_output()
-        # torch.testing.assert_allclose(output, output_tr)
-        # model.backward()
-
     def test_largekpconv(self):
         params = load_model_config("segmentation", "kpconv")["KPConvPaper"]
         model_class = getattr(params, "class")

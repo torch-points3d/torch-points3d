@@ -47,13 +47,13 @@ class BaseModel(torch.nn.Module):
         self._spatial_ops_dict: Dict = {}
         self._iterations = 0
         self._lr_params = None
-        self._grad_clip = getattr(opt.optim, "grad_clip", 0)
+        self._grad_clip = self.get_from_opt(opt, ["optim", "grad_clip"], default_value=-1)
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None
         self._schedulers = {}
         self._model_state = None
-        self._accumulated_gradient_step = getattr(opt.optim, "accumulated_gradient", None)
+        self._accumulated_gradient_step = self.get_from_opt(opt, ["optim", "accumulated_gradient"])
         if self._accumulated_gradient_step:
             if self._accumulated_gradient_step > 1:
                 self._accumulated_gradient_count = 0
@@ -194,7 +194,7 @@ class BaseModel(torch.nn.Module):
         self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
         colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
 
-        scheduler_opt = self.get_from_opt(config, ["training", "optim", "scheduler"])
+        scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
             lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
             self.add_scheduler("lr_scheduler", lr_scheduler)
@@ -283,11 +283,11 @@ class BaseModel(torch.nn.Module):
 
         search_from_key(self._modules)
 
-    def get_from_opt(self, opt, keys=[], msg_err=None):
+    def get_from_opt(self, opt, keys=[], default_value=None, msg_err=None, silent=True):
         if len(keys) == 0:
             raise Exception("Keys should not be empty")
 
-        value_out = None
+        value_out = default_value
 
         def search_with_keys(args, keys, value_out):
             if len(keys) == 0:
@@ -302,8 +302,9 @@ class BaseModel(torch.nn.Module):
             if msg_err:
                 raise Exception(str(msg_err))
             else:
-                log.exception(e)
-            value_out = None
+                if not silent:
+                    log.exception(e)
+            value_out = default_value
         return value_out
 
 

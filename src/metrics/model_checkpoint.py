@@ -124,7 +124,7 @@ class Checkpoint(object):
                         scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
                     elif scheduler_type == "bn_scheduler":
-                        scheduler = instantiate_bn_scheduler(model, scheduler_opt, scheduler_opt.batch_size)
+                        scheduler = instantiate_bn_scheduler(model, scheduler_opt)
                         scheduler.load_state_dict(scheduler_state)
                         schedulers_out["bn_scheduler"] = scheduler
                     else:
@@ -170,8 +170,7 @@ class ModelCheckpoint(object):
             model_state = self._checkpoint.get_model_state()
             model_class = model_state["model_class"]
             option = OmegaConf.create(model_state["option"])
-            dataset_state = model_state["dataset_state"]
-            task = dataset_state["task"]
+            task = model_state["task"]
             if not dataset:
                 dataset = self.create_mock_dateset(dataset_state)
             model = instantiate_model(model_class, task, option, dataset)
@@ -219,8 +218,6 @@ class ModelCheckpoint(object):
         stage = metrics_holder["stage"]
         epoch = metrics_holder["epoch"]
 
-        model.set_metrics(metrics, stage, epoch)
-
         stats = self._checkpoint.stats
         state_dict = model.state_dict()
 
@@ -262,6 +259,7 @@ class ModelCheckpoint(object):
             for metric_name, metric_value in metrics.items():
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
+                models_to_save["best_{}".format(metric_name)] = state_dict
 
         self._checkpoint.save_objects(
             models_to_save, model.model_state, stage, current_stat, model.optimizer, model.schedulers, **kwargs

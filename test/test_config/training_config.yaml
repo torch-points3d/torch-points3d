@@ -13,6 +13,11 @@ training:
             class: Adam
             params:
                 lr: 0.001
+        lr_scheduler:
+            class: MultiStepLR
+            params:
+                milestones: [10, 25, 50, 75, 100]
+                gamma: 0.1
         bn_scheduler:
             bn_policy: "step_decay"
             params:
