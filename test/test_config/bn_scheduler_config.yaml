@@ -1,0 +1,7 @@
+bn_scheduler:
+    bn_policy: "step_decay"
+    params:
+        bn_momentum: 0.1
+        bn_decay: 0.9
+        decay_step : 10
+        bn_clip : 1e-2
