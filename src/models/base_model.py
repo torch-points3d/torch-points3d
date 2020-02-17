@@ -142,6 +142,7 @@ class BaseModel(torch.nn.Module):
             if self._accumulated_gradient_count == self._accumulated_gradient_step:
                 self._accumulated_gradient_count = 0
                 return True
+
             if self._accumulated_gradient_count == 0:
                 self._optimizer.zero_grad()  # clear existing gradients
             self._accumulated_gradient_count += 1
@@ -201,7 +202,7 @@ class BaseModel(torch.nn.Module):
 
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
-            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt, config.training.batch_size)
+            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
             self.add_scheduler("bn_scheduler", bn_scheduler)
             colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
 

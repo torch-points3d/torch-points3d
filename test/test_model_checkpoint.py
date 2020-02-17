@@ -69,11 +69,15 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint.initialize_model(model2, weight_name="acc")
         shutil.rmtree(ckpt_dir)
 
-        assert str(model.optimizer.__class__.__name__) == str(model2.optimizer.__class__.__name__)
-        assert model.optimizer.defaults == model2.optimizer.defaults
-        assert model.schedulers["lr_scheduler"].state_dict() == model2.schedulers["lr_scheduler"].state_dict()
-        assert model.schedulers["bn_scheduler"].state_dict() == model2.schedulers["bn_scheduler"].state_dict()
-        assert model.model_state == model2.model_state
+        self.assertEqual(str(model.optimizer.__class__.__name__) == str(model2.optimizer.__class__.__name__))
+        self.assertEqual(model.optimizer.defaults == model2.optimizer.defaults)
+        self.assertEqual(
+            model.schedulers["lr_scheduler"].state_dict() == model2.schedulers["lr_scheduler"].state_dict()
+        )
+        self.assertEqual(
+            model.schedulers["bn_scheduler"].state_dict() == model2.schedulers["bn_scheduler"].state_dict()
+        )
+        self.assertEqual(model.model_state == model2.model_state)
 
     def test_create_model_from_checkpoint_with_dataset(self):
         params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
