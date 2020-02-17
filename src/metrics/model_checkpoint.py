@@ -191,8 +191,9 @@ class ModelCheckpoint(object):
     def initialize_model(self, model: BaseModel, weight_name: str = None):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
-            model.load_state_dict(state_dict)
-            model.model_state = self._checkpoint.get_model_state()
+            model_state = self._checkpoint.get_model_state()
+            state = {"model_state": model_state, "state_dict": state_dict}
+            model.set_state(state)
             model.optimizer = self._checkpoint.get_optimizer(model.parameters())
             model.schedulers = self._checkpoint.get_schedulers(model)
 
@@ -217,7 +218,8 @@ class ModelCheckpoint(object):
         epoch = metrics_holder["epoch"]
 
         stats = self._checkpoint.stats
-        state_dict = model.state_dict()
+        state = model.get_state()
+        state_dict = state["state_dict"]
 
         current_stat = {}
         current_stat["epoch"] = epoch
@@ -260,5 +262,5 @@ class ModelCheckpoint(object):
                 models_to_save["best_{}".format(metric_name)] = state_dict
 
         self._checkpoint.save_objects(
-            models_to_save, model.model_state, stage, current_stat, model.optimizer, model.schedulers, **kwargs
+            models_to_save, state["model_state"], stage, current_stat, model.optimizer, model.schedulers, **kwargs
         )
