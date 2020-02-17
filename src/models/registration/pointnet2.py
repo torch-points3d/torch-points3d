@@ -33,9 +33,10 @@ class PatchPointNet2_D(BackboneBasedModel):
             self.FC_layer.add(torch.nn.Relu())
             if i < len(len(last_mlp_opt.nn)) - 1:
                 self.FC_layer.add(torch.nn.Droupout(last_mlp_opt.dropout))
-        self.loss_names = ["loss_patch_desc"]
+        self.loss_names = ["loss_reg", "loss", "internal"]
 
     def set_input(self, data):
+        # Size : B x N x 3
         assert len(data.pos.shape) == 3
         self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
         self.labels = torch.range(0, data.batch[-1]).repeat(2, 1).T.reshape(-1)
@@ -54,10 +55,13 @@ class PatchPointNet2_D(BackboneBasedModel):
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, self.labels)
-        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs) + self.get_internal_loss()
+        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs)
+        self.internal = self.get_internal_loss()
+        self.loss = self.loss_reg + self.internal
+        return self.output
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        self.loss_reg.backward()  # calculate gradients of network G w.r.t. loss_G
+        self.loss.backward()  # calculate gradients of network G w.r.t. loss_G

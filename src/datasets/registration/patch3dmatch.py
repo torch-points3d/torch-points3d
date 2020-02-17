@@ -5,6 +5,7 @@ import torch
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.general3dmatch import General3DMatch
 from src.datasets.registration.utils import PatchExtractor
+from src.metrics.registration_tracker import PatchRegistrationTracker
 from torch_geometric.data import Batch
 
 
@@ -147,3 +148,19 @@ class Patch3DMatchDataset(BaseDataset):
             transform=test_transform)
 
         self._create_dataloaders(train_dataset, test_dataset)
+
+
+    @staticmethod
+    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt:bool):
+        """
+        Factory method for the tracker
+
+        Arguments:
+            task {str} -- task description
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return PatchRegistrationTracker(dataset, task, wandb_opt.log,
+                                        use_tensorboard=tensorboard_opt.log)
