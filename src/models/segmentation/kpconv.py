@@ -1,3 +1,4 @@
+from typing import Any
 import logging
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
