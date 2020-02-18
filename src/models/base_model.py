@@ -237,7 +237,7 @@ class BaseModel(torch.nn.Module):
                 if isinstance(module, BaseInternalLossModule):
                     losses = module.get_internal_losses()
                     for loss_name, loss_value in losses.items():
-                        if isinstance(loss_value, torch.Tensor):
+                        if torch.is_tensor(loss_value):
                             assert loss_value.dim() == 0
                             losses_global[loss_name].append(loss_value)
                         elif isinstance(loss_value, float):
