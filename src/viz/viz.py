@@ -5,6 +5,28 @@ from plyfile import PlyData, PlyElement
 
 
 class Visualizer(object):
+    """Initialize the Visualizer class.
+    Parameters:
+        viz_conf (OmegaConf Dictionnary) -- stores all config for the visualizer
+        num_batches (dict) -- This dictionnary maps stage_name to #batches
+        batch_size (int) -- Current batch size usef
+        run_path (str) -- The path used by hydra to store the experiment
+
+    This class is responsible to save visual into .ply format
+    The configuration looks like that:
+        visualization:
+            activate: False # Wheter to activate the visualizer
+            format: "pointcloud" # image will come later
+            num_samples_per_epoch: 2 # If negative, it will save all elements
+            deterministic: True # False -> Randomly sample elements from epoch to epoch
+            saved_keys: # Mapping from Data Object to structured numpy
+                pos: [['x', 'float'], ['y', 'float'], ['z', 'float']]
+                y: [['l', 'float']]
+                pred: [['p', 'float']]
+            indices: # List of indices to be saved (support "train", "test", "val")
+                train: [0, 3]
+    """
+
     def __init__(self, viz_conf, num_batches, batch_size, run_path):
         # From configuration and dataset
         for stage_name, stage_num_sample in num_batches.items():
@@ -69,6 +91,9 @@ class Visualizer(object):
         return self._activate
 
     def reset(self, epoch, stage):
+        """This function is responsible to restore the visualizer
+            to start a new epoch on a new stage
+        """
         self._current_epoch = epoch
         self._seen_batch = 0
         self._stage = stage
@@ -109,6 +134,11 @@ class Visualizer(object):
         return np.asarray([tuple(o) for o in out], dtype=dtypes)
 
     def save_visuals(self, visuals):
+        """This function is responsible to save the data into .ply objects
+            Parameters:
+                visuals (Dict[Data(pos=torch.Tensor, ...)]) -- Contains a dictionnary of tensors
+            Make sure the saved_keys  within the config maps to the Data attributes.
+        """
         if self._stage in self._indices:
             self._indices[self._stage]
             batch_indices = self._indices[self._stage] // self._batch_size
