@@ -37,7 +37,9 @@ class BaseTracker:
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         metrics = {}
         for key, loss_meter in self._loss_meters.items():
-            metrics[key] = meter_value(loss_meter, dim=0)
+            value = meter_value(loss_meter, dim=0)
+            if value:
+                metrics[key] = meter_value(loss_meter, dim=0)
         return metrics
 
     def track(self, model):

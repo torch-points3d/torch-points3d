@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *
+from src.core.base_conv.partial_dense import *
 from src.core.common_modules import MultiHeadClassifier
 from src.models.base_model import BaseModel
 from src.models.base_architectures.unet import UnwrappedUnetBasedModel
