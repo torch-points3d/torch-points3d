@@ -1,10 +1,12 @@
 import os
 import torch
 import logging
-
+from omegaconf import OmegaConf
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
-from src.core.schedulers.lr_schedulers import build_basic_params
+from src.core.schedulers.lr_schedulers import instantiate_scheduler
+from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
+from src import instantiate_model
 
 log = logging.getLogger(__name__)
 
@@ -36,28 +38,33 @@ def get_model_checkpoint(
 class Checkpoint(object):
     _LATEST = "latest"
 
-    def __init__(self, check_name: str, save_every_iter: bool = True):
+    def __init__(self, checkpoint_file: str, save_every_iter: bool = True):
         """ Checkpoint manager. Saves to working directory with check_name
         Arguments
-            check_name {str} -- name of the checkpoint
+            checkpoint_file {str} -- Path to the checkpoint
             save_every_iter {bool} -- [description] (default: {True})
         """
-        self._check_path = "{}.pt".format(check_name)
+        self._check_path = checkpoint_file
         self._initialize_objects()
 
     def _initialize_objects(self):
         self._objects = {}
         self._objects["models"] = {}
+        self._objects["model_state"] = None
         self._objects["stats"] = {"train": [], "test": [], "val": []}
         self._objects["optimizer"] = None
-        self._objects["lr_params"] = None
         self._filled = False
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, lr_params, **kwargs):
+    def save_objects(self, models_to_save, model_state, stage, current_stat, optimizer, schedulers, **kwargs):
         self._objects["models"] = models_to_save
+        self._objects["model_state"] = model_state
         self._objects["stats"][stage].append(current_stat)
-        self._objects["optimizer"] = optimizer
-        self._objects["lr_params"] = lr_params
+        self._objects["optimizer"] = [optimizer.__class__.__name__, optimizer.state_dict()]
+        schedulers_saved = {
+            scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
+            for scheduler_name, scheduler in schedulers.items()
+        }
+        self._objects["schedulers"] = schedulers_saved
         torch.save(self._objects, self._check_path)
 
     @staticmethod
@@ -66,10 +73,11 @@ class Checkpoint(object):
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
-        ckp = Checkpoint(checkpoint_name)
+        ckp = Checkpoint(checkpoint_file)
         if not os.path.exists(checkpoint_file):
             log.warn("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
             return ckp
+        log.info("Loading checkpoint from {}".format(checkpoint_file))
         ckp._objects = torch.load(checkpoint_file)
         ckp._filled = True
         return ckp
@@ -86,30 +94,52 @@ class Checkpoint(object):
     def is_empty(self):
         return not self._filled
 
-    def get_optimizer(self):
+    def get_model_state(self):
         if not self.is_empty:
             try:
-                return self._objects["optimizer"]
+                return self._objects["model_state"]
+            except:
+                raise KeyError("The checkpoint doesn t contain model_state")
+
+    def get_optimizer(self, params):
+        if not self.is_empty:
+            try:
+                optimizer_config = self._objects["optimizer"]
+                optimizer_cls = getattr(torch.optim, optimizer_config[0])
+                optimizer = optimizer_cls(params)
+                optimizer.load_state_dict(optimizer_config[1])
+                return optimizer
             except:
                 raise KeyError("The checkpoint doesn t contain an optimizer")
 
-    def get_lr_params(self):
+    def get_schedulers(self, model):
         if not self.is_empty:
             try:
-                return self._objects["lr_params"]
+                schedulers_out = {}
+                schedulers_config = self._objects["schedulers"]
+                for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
+                    if scheduler_type == "lr_scheduler":
+                        optimizer = model.optimizer
+                        scheduler = instantiate_scheduler(optimizer, scheduler_opt)
+                        scheduler.load_state_dict(scheduler_state)
+                        schedulers_out["lr_scheduler"] = scheduler
+                    elif scheduler_type == "bn_scheduler":
+                        scheduler = instantiate_bn_scheduler(model, scheduler_opt)
+                        scheduler.load_state_dict(scheduler_state)
+                        schedulers_out["bn_scheduler"] = scheduler
+                    else:
+                        raise NotImplementedError
+                return schedulers_out
             except:
-                params = build_basic_params()
-                log.warning(
-                    "Could not find learning rate parameters in teyh checkpoint, takes the default ones {}".format(
-                        params
-                    )
-                )
-                return params
+                log.warn("The checkpoint doesn t contain schedulers")
+                return None
 
     def get_state_dict(self, weight_name):
         if not self.is_empty:
             try:
                 models = self._objects["models"]
+                keys = [key.replace("best_", "") for key in models.keys()]
+                log.info("Available weights : {}".format(keys))
                 try:
                     key_name = "best_{}".format(weight_name)
                     model = models[key_name]
@@ -132,6 +162,22 @@ class ModelCheckpoint(object):
         self._resume = resume
         self._selection_stage = selection_stage
 
+    def create_mock_dateset(self, dataset_state):
+        raise NotImplementedError
+
+    def create_model_from_checkpoint(self, dataset, weight_name=None):
+        if not self._checkpoint.is_empty:
+            model_state = self._checkpoint.get_model_state()
+            model_class = model_state["model_class"]
+            option = OmegaConf.create(model_state["option"])
+            task = model_state["task"]
+            model = instantiate_model(model_class, task, option, dataset)
+
+            if weight_name:
+                self.initialize_model(model)
+
+            return model
+
     @property
     def start_epoch(self):
         if self._resume:
@@ -145,10 +191,11 @@ class ModelCheckpoint(object):
     def initialize_model(self, model: BaseModel, weight_name: str = None):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
-            model.load_state_dict(state_dict)
-            optimizer = self._checkpoint.get_optimizer()
-            lr_params = self._checkpoint.get_lr_params()
-            model.set_optimizer(optimizer.__class__, lr_params=lr_params)
+            model_state = self._checkpoint.get_model_state()
+            state = {"model_state": model_state, "state_dict": state_dict}
+            model.set_state(state)
+            model.optimizer = self._checkpoint.get_optimizer(model.parameters())
+            model.schedulers = self._checkpoint.get_schedulers(model)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -166,13 +213,13 @@ class ModelCheckpoint(object):
             model {[BaseModel]} -- [Model]
             metrics_holder {[Dict]} -- [Need to contain stage, epoch, current_metrics]
         """
-
         metrics = metrics_holder["current_metrics"]
         stage = metrics_holder["stage"]
         epoch = metrics_holder["epoch"]
 
         stats = self._checkpoint.stats
-        state_dict = model.state_dict()
+        state = model.get_state()
+        state_dict = state["state_dict"]
 
         current_stat = {}
         current_stat["epoch"] = epoch
@@ -212,5 +259,8 @@ class ModelCheckpoint(object):
             for metric_name, metric_value in metrics.items():
                 current_stat[metric_name] = metric_value
                 current_stat["best_{}".format(metric_name)] = metric_value
+                models_to_save["best_{}".format(metric_name)] = state_dict
 
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.lr_params, **kwargs)
+        self._checkpoint.save_objects(
+            models_to_save, state["model_state"], stage, current_stat, model.optimizer, model.schedulers, **kwargs
+        )

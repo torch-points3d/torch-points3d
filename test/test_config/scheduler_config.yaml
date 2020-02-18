@@ -1,0 +1,7 @@
+scheduler:
+    lr_policy: "lambda_rule"
+    rule: 'exponential_decay' # Could be "step_decay"
+    params: 
+        gamma: 0.5 ** (1.0/10.0) # Divide learning by 10 every 10 epochs
+        decay_step: 20000
+        lr_clip: 1e-5

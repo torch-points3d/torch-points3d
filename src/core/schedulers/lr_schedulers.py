@@ -1,46 +1,60 @@
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim import lr_scheduler
 from omegaconf.dictconfig import DictConfig
 import logging
+from src.utils.config import merge_omega_conf
 
 
 log = logging.getLogger(__name__)
 
 
-def build_basic_params():
-    return DictConfig({"base_lr": 0.001})
+def repr(self, scheduler_params={}):
+    return "{}({})".format(self.__class__.__name__, scheduler_params)
 
 
-def get_scheduler(learning_rate_params, optimizer):
-    """ Builds and sets a learning rate scheduler on a given optimizer
+class LRScheduler:
+    def __init__(self, scheduler, scheduler_params):
+        self._scheduler = scheduler
+        self._scheduler_params = scheduler_params
 
-    Arguments:
-        learning_rate_params -- all parameters required for setting the learning rate
-        optimizer -- Optimizer affected by the scheduler
+    @property
+    def scheduler(self):
+        return self._scheduler
 
-    Returns:
-        LRScheduler
+    @property
+    def scheduler_opt(self):
+        return self._scheduler._scheduler_opt
+
+    def __repr__(self):
+        return "{}({})".format(self._scheduler.__class__.__name__, self._scheduler_params)
+
+    def step(self, *args, **kwargs):
+        self._scheduler.step(*args, **kwargs)
+
+    def state_dict(self):
+        return self._scheduler.state_dict()
+
+    def load_state_dict(self, state_dict):
+        self._scheduler.load_state_dict(state_dict)
+
+
+def instantiate_scheduler(optimizer, scheduler_opt):
+    """Return a learning rate scheduler
+    Parameters:
+        optimizer          -- the optimizer of the network
+        scheduler_opt (option class) -- dict containing all the params to build the scheduler　
+                              opt.lr_policy is the name of learning rate policy: lambda_rule | step | plateau | cosine
+                              opt.params contains the scheduler_params to construct the scheduler
+    See https://pytorch.org/docs/stable/optim.html for more details.
     """
-    scheduler_builder = _LR_REGISTER.get(learning_rate_params.scheduler_type, None)
-    if scheduler_builder is None:
-        log.warning("Scheduler could %s not be instantiated", learning_rate_params.scheduler_type)
-        return None
-    return scheduler_builder(learning_rate_params, optimizer)
 
+    scheduler_cls_name = getattr(scheduler_opt, "class")
+    scheduler_cls = getattr(lr_scheduler, scheduler_cls_name)
+    scheduler_params = scheduler_opt.params
 
-def _build_step_decay(learning_rate_params, optimizer):
-    lr_lbmd = lambda e: max(
-        learning_rate_params.lr_decay ** (e // learning_rate_params.decay_step),
-        learning_rate_params.lr_clip / learning_rate_params.base_lr,
-    )
-    return LambdaLR(optimizer, lr_lbmd)
+    if scheduler_cls_name.lower() == "ReduceLROnPlateau".lower():
+        raise NotImplementedError("This scheduler is not fully supported yet")
 
-
-def _build_exponential_decay(learning_rate_params, optimizer):
-    lr_lbmd = lambda e: max(
-        eval(learning_rate_params.gamma) ** (e / learning_rate_params.decay_step),
-        learning_rate_params.lr_clip / learning_rate_params.base_lr,
-    )
-    return LambdaLR(optimizer, lr_lbmd)
-
-
-_LR_REGISTER = {"step_decay": _build_step_decay, "exponential_decay": _build_exponential_decay}
+    scheduler = scheduler_cls(optimizer, **scheduler_params)
+    # used to re_create the scheduler
+    setattr(scheduler, "_scheduler_opt", scheduler_opt)
+    return LRScheduler(scheduler, scheduler_params)

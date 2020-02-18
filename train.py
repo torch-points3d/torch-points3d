@@ -1,7 +1,4 @@
-import os
-import shutil
 import torch
-import numpy as np
 import hydra
 import time
 import logging
@@ -22,7 +19,7 @@ from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 # Utils import
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
-from src.utils.config import set_format
+from src.utils.config import set_format, determine_stage, launch_wandb
 
 log = logging.getLogger(__name__)
 
@@ -41,7 +38,7 @@ def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTrac
             t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()
-            model.optimize_parameters(dataset.batch_size)
+            model.optimize_parameters(epoch, dataset.batch_size)
             if i % 10 == 0:
                 tracker.track(model)
 
@@ -125,24 +122,21 @@ def main(cfg):
     cfg_training = set_format(model_config, cfg.training)
     model_class = getattr(model_config, "class")
     tested_dataset_class = getattr(dataset_config, "class")
-    otimizer_class = getattr(cfg_training.optimizer, "class")
+    otimizer_class = getattr(cfg.training.optim.optimizer, "class")
+    scheduler_class = getattr(cfg.lr_scheduler, "class")
+    wandb_public = getattr(cfg.wandb, "public", False)
 
-    # wandb
-    if cfg.wandb.log:
-        import wandb
+    # Define tags for Wandb
+    tags = [
+        tested_model_name,
+        model_class.split(".")[0],
+        tested_dataset_class,
+        otimizer_class,
+        scheduler_class,
+        wandb_public,
+    ]
 
-        wandb.init(
-            project=cfg.wandb.project,
-            tags=[tested_model_name, model_class.split(".")[0], tested_dataset_class, otimizer_class],
-            notes=cfg.wandb.notes,
-            name=cfg.wandb.name,
-            config={"run_path": os.getcwd()},
-        )
-        shutil.copyfile(
-            os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
-        )
-        wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
-        wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
+    launch_wandb(cfg, tags, wandb_public and cfg.wandb.log)
 
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
@@ -153,26 +147,28 @@ def main(cfg):
 
     # Find and create associated dataset
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(tested_dataset_class, tested_task)(dataset_config, cfg_training)
+    dataset = instantiate_dataset(tested_dataset_class, tested_task, dataset_config, cfg_training)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_config = OmegaConf.merge(model_config, cfg_training)
     model = instantiate_model(model_class, tested_task, model_config, dataset)
+
+    # Log model
     log.info(model)
 
-    # Optimizer
-    model.set_optimizer(
-        getattr(torch.optim, otimizer_class, None), cfg_training.optimizer.params, cfg_training.learning_rate
-    )
+    # Initialize optimizer, schedulers
+    model.instantiate_optimizers(cfg)
+
+    # Choose selection stage
+    selection_stage = determine_stage(cfg, dataset.has_val_loader)
+    tags += [selection_stage]
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:
         dataset.set_strategies(model)
 
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-    log.info("Model size = %i", params)
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
@@ -182,8 +178,10 @@ def main(cfg):
         tested_model_name,
         cfg_training.resume,
         cfg_training.weight_name,
-        "val" if dataset.has_val_loader else "test",
+        selection_stage,
     )
+
+    launch_wandb(cfg, tags, not wandb_public and cfg.wandb.log)
 
     # Run training / evaluation
     model = model.to(device)

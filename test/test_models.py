@@ -14,7 +14,7 @@ from test.mockdatasets import MockDatasetGeometric
 
 from src import instantiate_model
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.utils.config import set_format
+from src.utils.config import set_format, merge_omega_conf
 
 # calls resolve_model, then find_model_using_name
 
@@ -111,13 +111,39 @@ class TestModelUtils(unittest.TestCase):
         model.forward()
         model.backward()
 
-    # def test_pointnet2_customekernel(self):
-    #     model_type = 'pointnet2_dense'
-    #     params = self.config['models']['pointnet2_kc']
-    #     dataset = MockDataset(5)
-    #     model = _find_model_using_name(model_type, 'segmentation', params, dataset)
-    #     model.set_input(dataset[0])
-    #     model.forward()
+    def test_accumulated_gradient(self):
+        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
+        model_class = getattr(params, "class")
+        model_config = OmegaConf.merge(params, self.data_config)
+        config_training = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
+        dataset = MockDatasetGeometric(5)
+        model_config = OmegaConf.merge(model_config, config_training.training)
+        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model.instantiate_optimizers(config_training)
+        model.set_input(dataset[0])
+        expected_make_optimizer_step = [False, False, True, False, False, True, False, False, True, False]
+        expected_contains_grads = [False, True, True, False, True, True, False, True, True, False]
+        make_optimizer_steps = []
+        contains_grads = []
+        for epoch in range(10):
+            model.forward()
+
+            make_optimizer_step = model.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
+            make_optimizer_steps.append(make_optimizer_step)
+
+            grad_ = model._modules["lin1"].weight.grad
+            if grad_ is not None:
+                contains_grads.append((grad_.sum() != 0).item())
+            else:
+                contains_grads.append(False)
+
+            model.backward()  # calculate gradients
+
+            if make_optimizer_step:
+                model._optimizer.step()  # update parameters
+
+        self.assertEqual(contains_grads, expected_contains_grads)
+        self.assertEqual(make_optimizer_steps, expected_make_optimizer_step)
 
 
 if __name__ == "__main__":
