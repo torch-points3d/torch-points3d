@@ -45,7 +45,6 @@ class MockDataset(torch.utils.data.Dataset):
         transform = MultiScaleTransform(strategies)
         self._transform = transform
 
-
 class MockDatasetGeometric(MockDataset):
     def __getitem__(self, index):
         if self._transform:
