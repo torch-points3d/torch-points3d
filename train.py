@@ -93,6 +93,9 @@ def eval_epoch(
             tracker.track(model)
             tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
+            if visualizer.is_active:
+                visualizer.save_visuals(model.get_current_visuals())
+
     metrics = tracker.publish()
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
@@ -120,6 +123,9 @@ def test_epoch(
 
             tracker.track(model)
             tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+
+            if visualizer.is_active:
+                visualizer.save_visuals(model.get_current_visuals())
 
     metrics = tracker.publish()
     tracker.print_summary()
