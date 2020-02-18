@@ -75,7 +75,7 @@ class Checkpoint(object):
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
         ckp = Checkpoint(checkpoint_file)
         if not os.path.exists(checkpoint_file):
-            log.warn("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
+            log.warning("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
             return ckp
         log.info("Loading checkpoint from {}".format(checkpoint_file))
         ckp._objects = torch.load(checkpoint_file)

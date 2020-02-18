@@ -113,6 +113,10 @@ class BaseModel(torch.nn.Module):
         for param_group in self.optimizer.param_groups:
             return param_group["lr"]
 
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     @abstractmethod
     def set_input(self, input):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -233,25 +237,23 @@ class BaseModel(torch.nn.Module):
                 if isinstance(module, BaseInternalLossModule):
                     losses = module.get_internal_losses()
                     for loss_name, loss_value in losses.items():
-                        losses_global[loss_name].append(loss_value)
+                        if torch.is_tensor(loss_value):
+                            assert loss_value.dim() == 0
+                            losses_global[loss_name].append(loss_value)
+                        elif isinstance(loss_value, float):
+                            losses_global[loss_name].append(torch.tensor(loss_value).to(self.device))
+                        else:
+                            raise ValueError("Unsupported value type for a loss: {}".format(loss_value))
                 search_from_key(module._modules, losses_global)
 
         search_from_key(self._modules, losses_global)
         return losses_global
 
-    def collect_internal_losses(self, lambda_weight=1, reduction="sum"):
+    def collect_internal_losses(self, lambda_weight=1, aggr_func=torch.sum):
         """
             Collect internal loss of all child modules with
             internal losses and set the losses
         """
-        if reduction == "sum":
-            aggr_func = torch.sum
-
-        elif reduction == "mean":
-            aggr_func = torch.mean
-        else:
-            raise NotImplementedError
-
         loss_out = 0
         losses = self.get_named_internal_losses()
         for loss_name, loss_values in losses.items():
@@ -293,7 +295,6 @@ class BaseModel(torch.nn.Module):
     def get_from_opt(self, opt, keys=[], default_value=None, msg_err=None, silent=True):
         if len(keys) == 0:
             raise Exception("Keys should not be empty")
-
         value_out = default_value
 
         def search_with_keys(args, keys, value_out):

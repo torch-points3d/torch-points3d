@@ -62,7 +62,7 @@ class TestModelUtils(unittest.TestCase):
         model.backward()
 
     def test_kpconv(self):
-        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
+        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
         model_class = getattr(params, "class")
         model_config = OmegaConf.merge(params, self.data_config)
         dataset = MockDatasetGeometric(5)
@@ -72,7 +72,7 @@ class TestModelUtils(unittest.TestCase):
         model.backward()
 
     def test_kpconvpretransform(self):
-        params = load_model_config("segmentation", "kpconv")["PDSimpleKPConv"]
+        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
         model_config = OmegaConf.merge(params, self.data_config)
         dataset = MockDatasetGeometric(5)
         model_class = getattr(params, "class")
