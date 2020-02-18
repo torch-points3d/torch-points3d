@@ -211,7 +211,7 @@ class ShapeNetDataset(BaseDataset):
             self._category,
             include_normals=dataset_opt.normal,
             split="test",
-            transform = self.test_transform,
+            transform=self.test_transform,
             pre_transform=pre_transform,
         )
         self._categories = train_dataset.categories
