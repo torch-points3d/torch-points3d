@@ -6,6 +6,7 @@ from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.general3dmatch import General3DMatch
 from src.datasets.registration.utils import PatchExtractor
 from src.metrics.registration_tracker import PatchRegistrationTracker
+from src.core.data_transform.transforms import GridSampling
 from torch_geometric.data import Batch
 
 
@@ -118,8 +119,7 @@ class Patch3DMatchDataset(BaseDataset):
 
     def __init__(self, dataset_opt, training_opt):
         super().__init__(dataset_opt, training_opt)
-        pre_transform = self._pre_transform
-
+        pre_transform = GridSampling(size=0.01)
         train_transform = None
         test_transform = None
 

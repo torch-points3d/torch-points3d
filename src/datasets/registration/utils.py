@@ -158,12 +158,12 @@ def compute_overlap_and_matches(path1, path2,
 
 
 def get_3D_bound(list_path_img,
-                 path_intrinsic, list_path_trans):
+                 path_intrinsic, list_path_trans, depth_thresh):
     vol_bnds = np.zeros((3,2))
     for i, path_img in tqdm(enumerate(list_path_img), total=len(list_path_img)):
         # read imageio
         depth = imageio.imread(path_img) / 1000.0
-        depth[depth > 6] = 0
+        depth[depth > depth_thresh] = 0
         intrinsic = np.loadtxt(path_intrinsic)
         pose = np.loadtxt(list_path_trans[i])
         view_frust_pts = fusion.get_view_frustum(depth, intrinsic, pose)
@@ -181,7 +181,8 @@ def rgbd2fragment_fine(list_path_img,
                        voxel_size=0.01,
                        pre_transform=None,
                        depth_thresh=6,
-                       save_pc=True):
+                       save_pc=True,
+                       fixed_size=True):
     """
     fuse rgbd frame with a tsdf volume and get the mesh using marching cube.
     """
@@ -189,9 +190,11 @@ def rgbd2fragment_fine(list_path_img,
     ind = 0
     begin = 0
     end = num_frame_per_fragment
+
     vol_bnds = get_3D_bound(list_path_img[begin:end],
                             path_intrinsic,
-                            list_path_trans[begin:end])
+                            list_path_trans[begin:end],
+                            depth_thresh)
 
     print(vol_bnds)
     tsdf_vol = fusion.TSDFVolume(vol_bnds, voxel_size=voxel_size)
