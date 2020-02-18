@@ -133,7 +133,6 @@ def main(cfg):
         tested_dataset_class,
         otimizer_class,
         scheduler_class,
-        wandb_public,
     ]
 
     launch_wandb(cfg, tags, wandb_public and cfg.wandb.log)
@@ -162,7 +161,6 @@ def main(cfg):
 
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)
-    tags += [selection_stage]
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:

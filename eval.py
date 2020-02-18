@@ -85,11 +85,13 @@ def main(cfg):
     dataset_config = cfg.data
     dataset_class = getattr(dataset_config, "class")
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(dataset_class, tested_task)(dataset_config, cfg_eval)
+    dataset = instantiate_dataset(dataset_class, tested_task, dataset_config, cfg_eval)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_class = getattr(model_config, "class")
+    cfg_training = set_format(model_config, cfg.training)
+    model_config = OmegaConf.merge(model_config, cfg_training)
     model = instantiate_model(model_class, tested_task, model_config, dataset)
 
     log.info(model)
@@ -99,7 +101,8 @@ def main(cfg):
         model.enable_dropout_in_eval()
 
     # Set sampling / search strategies
-    dataset.set_strategies(model, precompute_multi_scale=cfg_eval.precompute_multi_scale)
+    if cfg_training.precompute_multi_scale:
+        dataset.set_strategies(model)
 
     model = model.to(device)
     model_parameters = filter(lambda p: p.requires_grad, model.parameters())
