@@ -24,6 +24,33 @@ def run(iter, visualizer, epoch, stage, data):
 
 
 class TestVisualizer(unittest.TestCase):
+    def test_empty(self):
+        mock_data = Data()
+        mock_data.pos = torch.zeros((batch_size, num_points, 3))
+        mock_data.y = torch.zeros((batch_size, num_points, 1))
+        mock_data.pred = torch.zeros((batch_size, num_points, 1))
+        data = {}
+
+        run_path = os.path.join(DIR, "test_viz")
+
+        try:
+            shutil.rmtree(run_path)
+        except:
+            pass
+        if not os.path.exists(run_path):
+            os.makedirs(run_path)
+
+        mock_num_batches = {"train": 9, "test": 3, "val": 0}
+        config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_indices.yaml"))
+        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, run_path)
+
+        for epoch in range(epochs):
+            run(5, visualizer, epoch, "train", data)
+            run(5, visualizer, epoch, "test", data)
+            run(5, visualizer, epoch, "val", data)
+
+        self.assertEqual(len(os.listdir(os.path.join(run_path, "viz"))), 0)
+
     def test_indices(self):
         mock_data = Data()
         mock_data.pos = torch.zeros((batch_size, num_points, 3))

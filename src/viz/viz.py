@@ -145,7 +145,7 @@ class Visualizer(object):
             pos_indices = self._indices[self._stage] % self._batch_size
             for idx in np.argwhere(self._seen_batch == batch_indices).flatten():
                 pos_idx = pos_indices[idx]
-                for k, item in visuals.items():
+                for visual_name, item in visuals.items():
                     if hasattr(item, "batch"):  # The PYG dataloader has been used
                         out_item = self._extract_from_PYG(item, pos_idx)
                     else:
@@ -158,6 +158,6 @@ class Visualizer(object):
 
                     filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
                     path_out = os.path.join(dir_path, filename)
-                    el = PlyElement.describe(out_item, "sample")
+                    el = PlyElement.describe(out_item, visual_name)
                     PlyData([el], byte_order=">").write(path_out)
             self._seen_batch += 1
