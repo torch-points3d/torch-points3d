@@ -28,7 +28,7 @@ class Visualizer(object):
             os.makedirs(self._viz_path)
 
         self._indices = {}
-        self._contains_indices = {"train": False, "test": False, "val": False}
+        self._contains_indices = False
 
         try:
             indices = getattr(viz_conf, "indices", None)
@@ -38,12 +38,13 @@ class Visualizer(object):
         if indices:
             for split in ["train", "test", "val"]:
                 if hasattr(indices, split):
-                    self._indices[split] = np.asarray(indices.train)
-                    self._contains_indices[split] = True
+                    indices = getattr(indices, split)
+                    self._indices[split] = np.asarray(indices)
+                    self._contains_indices = True
 
     def get_indices(self, stage):
         """This function is responsible to calculate the indices to be saved"""
-        if self._contains_indices[stage]:
+        if self._contains_indices:
             return
         stage_num_batches = getattr(self, "{}_num_batches".format(stage))
         if stage_num_batches > 0:
