@@ -20,13 +20,23 @@ from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
 from src.utils.config import set_format, determine_stage, launch_wandb
+from src.viz import Visualizer
 
 log = logging.getLogger(__name__)
 
 
-def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def train_epoch(
+    epoch,
+    model: BaseModel,
+    dataset,
+    device: str,
+    tracker: BaseTracker,
+    checkpoint: ModelCheckpoint,
+    visualizer: Visualizer,
+):
     model.train()
     tracker.reset("train")
+    visualizer.reset(epoch, "train")
     train_loader = dataset.train_dataloader()
 
     iter_data_time = time.time()
@@ -48,6 +58,10 @@ def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTrac
                 iteration=float(time.time() - iter_start_time),
                 color=COLORS.TRAIN_COLOR
             )
+
+            if visualizer.is_active:
+                visualizer.save_visuals(model.get_current_visuals())
+
             iter_data_time = time.time()
 
     metrics = tracker.publish()
@@ -55,9 +69,12 @@ def train_epoch(epoch, model: BaseModel, dataset, device: str, tracker: BaseTrac
     log.info("Learning rate = %f" % model.learning_rate)
 
 
-def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def eval_epoch(
+    model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
+):
     model.eval()
     tracker.reset("val")
+    visualizer.reset(epoch, "val")
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
@@ -74,9 +91,12 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
-def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def test_epoch(
+    model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
+):
     model.eval()
     tracker.reset("test")
+    visualizer.reset(epoch, "test")
     loader = dataset.test_dataloader()
     with Ctq(loader) as tq_test_loader:
         for data in tq_test_loader:
@@ -93,18 +113,20 @@ def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
-def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def run(
+    cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
+):
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
-        train_epoch(epoch, model, dataset, device, tracker, checkpoint)
+        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
         if dataset.has_val_loader:
-            eval_epoch(model, dataset, device, tracker, checkpoint)
+            eval_epoch(model, dataset, device, tracker, checkpoint, visualizer)
 
-        test_epoch(model, dataset, device, tracker, checkpoint)
+        test_epoch(model, dataset, device, tracker, checkpoint, visualizer)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
-        test_epoch(model, dataset, device, tracker, checkpoint)
+        test_epoch(model, dataset, device, tracker, checkpoint, visualizer)
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -149,6 +171,9 @@ def main(cfg):
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     dataset = instantiate_dataset(tested_dataset_class, tested_task, dataset_config, cfg_training)
 
+    # Create visualizer
+    visualizer = Visualizer(cfg.visualization, dataset.num_samples, dataset.batch_size)
+
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
     model_config = OmegaConf.merge(model_config, cfg_training)
@@ -185,7 +210,7 @@ def main(cfg):
 
     # Run training / evaluation
     model = model.to(device)
-    run(cfg, model, dataset, device, tracker, checkpoint)
+    run(cfg, model, dataset, device, tracker, checkpoint, visualizer)
 
 
 if __name__ == "__main__":

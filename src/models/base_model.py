@@ -41,6 +41,7 @@ class BaseModel(torch.nn.Module):
         super(BaseModel, self).__init__()
         self.opt = opt
         self.loss_names = []
+        self.visual_names = []
         self.output = None
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
@@ -313,6 +314,14 @@ class BaseModel(torch.nn.Module):
                     log.exception(e)
             value_out = default_value
         return value_out
+
+    def get_current_visuals(self):
+        """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+        visual_ret = OrderedDict()
+        for name in self.visual_names:
+            if isinstance(name, str):
+                visual_ret[name] = getattr(self, name)
+        return visual_ret
 
 
 class BaseInternalLossModule(ABC):
