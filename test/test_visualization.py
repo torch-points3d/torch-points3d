@@ -10,7 +10,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from src.viz import Visualizer
+from src.visualization import Visualizer
 
 batch_size = 2
 epochs = 5
@@ -45,9 +45,9 @@ class TestVisualizer(unittest.TestCase):
         visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, run_path)
 
         for epoch in range(epochs):
-            run(5, visualizer, epoch, "train", data)
-            run(5, visualizer, epoch, "test", data)
-            run(5, visualizer, epoch, "val", data)
+            run(9, visualizer, epoch, "train", data)
+            run(3, visualizer, epoch, "test", data)
+            run(2, visualizer, epoch, "val", data)
 
         self.assertEqual(len(os.listdir(os.path.join(run_path, "viz"))), 0)
 
@@ -74,9 +74,9 @@ class TestVisualizer(unittest.TestCase):
         visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, run_path)
 
         for epoch in range(epochs):
-            run(5, visualizer, epoch, "train", data)
-            run(5, visualizer, epoch, "test", data)
-            run(5, visualizer, epoch, "val", data)
+            run(9, visualizer, epoch, "train", data)
+            run(3, visualizer, epoch, "test", data)
+            run(0, visualizer, epoch, "val", data)
 
         targets = ["1_1.ply", "0_0.ply"]
         for split in ["train"]:
@@ -138,15 +138,15 @@ class TestVisualizer(unittest.TestCase):
         if not os.path.exists(run_path):
             os.makedirs(run_path)
 
-        epochs = 50
-        num_samples = 1000
-        mock_num_batches = {"train": num_samples}
+        epochs = 10
+        num_batches = 100
+        mock_num_batches = {"train": num_batches}
 
         config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_non_deterministic.yaml"))
         visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, run_path)
 
         for epoch in range(epochs):
-            run(num_samples // batch_size, visualizer, epoch, "train", data)
+            run(num_batches, visualizer, epoch, "train", data)
 
         count = 0
         for split in ["train"]:
@@ -154,9 +154,9 @@ class TestVisualizer(unittest.TestCase):
             for epoch in range(1, epochs):
                 current = set(os.listdir(os.path.join(run_path, "viz", str(epoch), split)))
                 count += 1 if len(target & current) == 0 else 0
-        self.assertGreaterEqual(count, 49)
+        self.assertGreaterEqual(count, 9)
 
-        shutil.rmtree(run_path)
+        # shutil.rmtree(run_path)
 
     def test_dense_data(self):
         mock_data = Data()
@@ -179,9 +179,9 @@ class TestVisualizer(unittest.TestCase):
         visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, run_path)
 
         for epoch in range(epochs):
-            run(5, visualizer, epoch, "train", data)
-            run(5, visualizer, epoch, "test", data)
-            run(5, visualizer, epoch, "val", data)
+            run(9, visualizer, epoch, "train", data)
+            run(3, visualizer, epoch, "test", data)
+            run(0, visualizer, epoch, "val", data)
 
         for split in ["train", "test"]:
             targets = os.listdir(os.path.join(run_path, "viz", "0", split))
