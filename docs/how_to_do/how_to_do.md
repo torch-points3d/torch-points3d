@@ -201,7 +201,7 @@ class S3DISDataset(BaseDataset):
         self._create_dataloaders(train_dataset, test_dataset, val_dataset=None)
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, task: str, dataset, wandb_log: bool, tensorboard_opt: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -211,7 +211,7 @@ class S3DISDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_opt.log)
 ```
 
 Let's explain the code more in details there.
@@ -265,7 +265,7 @@ This line is important. It is going to wrap your datasets directly within the co
 
 ```python
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, task: str, dataset, wandb_log: bool, tensorboard_opt: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -275,7 +275,7 @@ This line is important. It is going to wrap your datasets directly within the co
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_opt.log)
 ```
 
 Finally, one needs to implement the ```@staticmethod get_tracker``` method with ```model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool``` as parameters.

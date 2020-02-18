@@ -77,10 +77,10 @@ class BaseDataset:
         self._num_classes = train_dataset.num_classes
         self._feature_dimension = train_dataset.num_features
         dataloader = partial(torch.utils.data.DataLoader, collate_fn=self._batch_collate_function,)
-        
+
         if self.train_sampler:
             print(self.train_sampler)
-        
+
         self._train_loader = dataloader(
             train_dataset,
             batch_size=self.training_opt.batch_size,
@@ -205,5 +205,5 @@ class BaseDataset:
 
     @staticmethod
     @abstractmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, task: str, dataset, wandb_log: bool, tensorboard_log: bool):
         pass

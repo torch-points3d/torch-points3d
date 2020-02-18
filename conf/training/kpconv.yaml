@@ -5,9 +5,9 @@ training:
     batch_size: 16
     shuffle: True
     cuda: 1
-    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
+    precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     optim:
-        base_lr:  0.01
+        base_lr:  1e-3
         grad_clip: -1
         optimizer:
             class: Adam
@@ -23,7 +23,7 @@ training:
                 bn_clip : 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
-    checkpoint_dir: ""
+    checkpoint_dir: "/home/nicolas/deeppointcloud-benchmarks/outputs/2020-02-18/15-48-27"
     resume: True
 
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking

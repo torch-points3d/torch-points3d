@@ -211,7 +211,7 @@ class ShapeNetDataset(BaseDataset):
             self._category,
             include_normals=dataset_opt.normal,
             split="test",
-            transform = self.test_transform,
+            transform=self.test_transform,
             pre_transform=pre_transform,
         )
         self._categories = train_dataset.categories
@@ -229,7 +229,7 @@ class ShapeNetDataset(BaseDataset):
         return len(self._categories) > 1
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, task: str, dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -239,5 +239,5 @@ class ShapeNetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return ShapenetPartTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return ShapenetPartTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 

@@ -73,7 +73,6 @@ class TestModelCheckpoint(unittest.TestCase):
         self.assertEqual(model.optimizer.defaults, model2.optimizer.defaults)
         self.assertEqual(model.schedulers["lr_scheduler"].state_dict(), model2.schedulers["lr_scheduler"].state_dict())
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
-        self.assertEqual(model.model_state, model2.model_state)
 
     def test_create_model_from_checkpoint_with_dataset(self):
         params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]

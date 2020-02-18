@@ -14,7 +14,7 @@ from src.datasets.base_dataset import BaseDataset
 # Import from metrics
 from src.metrics.base_tracker import BaseTracker
 from src.metrics.colored_tqdm import Coloredtqdm as Ctq
-from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+from src.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
@@ -133,7 +133,6 @@ def main(cfg):
         tested_dataset_class,
         otimizer_class,
         scheduler_class,
-        wandb_public,
     ]
 
     launch_wandb(cfg, tags, wandb_public and cfg.wandb.log)
@@ -162,7 +161,6 @@ def main(cfg):
 
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)
-    tags += [selection_stage]
 
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:
@@ -170,16 +168,9 @@ def main(cfg):
 
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
-    tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
+    tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb.log, cfg.tensorboard.log)
 
-    checkpoint = get_model_checkpoint(
-        model,
-        cfg_training.checkpoint_dir,
-        tested_model_name,
-        cfg_training.resume,
-        cfg_training.weight_name,
-        selection_stage,
-    )
+    checkpoint = ModelCheckpoint(cfg_training.checkpoint_dir, cfg_training.resume, selection_stage=selection_stage)
 
     launch_wandb(cfg, tags, not wandb_public and cfg.wandb.log)
 
