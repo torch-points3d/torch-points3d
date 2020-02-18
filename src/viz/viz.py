@@ -36,17 +36,10 @@ class Visualizer(object):
             indices = None
 
         if indices:
-            if hasattr(indices, "train"):
-                self._indices = np.asarray(indices.train)
-                self._contains_indices["train"] = True
-
-            if hasattr(indices, "test"):
-                self._indices = np.asarray(indices.test)
-                self._contains_indices["test"] = True
-
-            if hasattr(indices, "val"):
-                self._indices = np.asarray(indices.val)
-                self._contains_indices["val"] = True
+            for split in ["train", "test", "val"]:
+                if hasattr(indices, split):
+                    self._indices[split] = np.asarray(indices.train)
+                    self._contains_indices[split] = True
 
     def get_indices(self, stage):
         """This function is responsible to calculate the indices to be saved"""
