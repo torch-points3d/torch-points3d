@@ -51,6 +51,8 @@ class TestVisualizer(unittest.TestCase):
 
         self.assertEqual(len(os.listdir(os.path.join(run_path, "viz"))), 0)
 
+        shutil.rmtree(run_path)
+
     def test_indices(self):
         mock_data = Data()
         mock_data.pos = torch.zeros((batch_size, num_points, 3))
