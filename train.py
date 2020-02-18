@@ -26,7 +26,7 @@ log = logging.getLogger(__name__)
 
 
 def train_epoch(
-    epoch,
+    epoch: int,
     model: BaseModel,
     dataset,
     device: str,
@@ -70,7 +70,13 @@ def train_epoch(
 
 
 def eval_epoch(
-    model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
+    epoch: int,
+    model: BaseModel,
+    dataset,
+    device,
+    tracker: BaseTracker,
+    checkpoint: ModelCheckpoint,
+    visualizer: Visualizer,
 ):
     model.eval()
     tracker.reset("val")
@@ -92,7 +98,13 @@ def eval_epoch(
 
 
 def test_epoch(
-    model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
+    epoch: int,
+    model: BaseModel,
+    dataset,
+    device,
+    tracker: BaseTracker,
+    checkpoint: ModelCheckpoint,
+    visualizer: Visualizer,
 ):
     model.eval()
     tracker.reset("test")
@@ -120,13 +132,13 @@ def run(
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
         train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
         if dataset.has_val_loader:
-            eval_epoch(model, dataset, device, tracker, checkpoint, visualizer)
+            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
 
-        test_epoch(model, dataset, device, tracker, checkpoint, visualizer)
+        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
-        test_epoch(model, dataset, device, tracker, checkpoint, visualizer)
+        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -172,7 +184,7 @@ def main(cfg):
     dataset = instantiate_dataset(tested_dataset_class, tested_task, dataset_config, cfg_training)
 
     # Create visualizer
-    visualizer = Visualizer(cfg.visualization, dataset.num_samples, dataset.batch_size)
+    visualizer = Visualizer(cfg.visualization, dataset.num_batches, dataset.batch_size, os.getcwd())
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)

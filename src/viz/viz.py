@@ -5,10 +5,10 @@ from plyfile import PlyData, PlyElement
 
 
 class Visualizer(object):
-    def __init__(self, viz_conf, num_samples, batch_size):
+    def __init__(self, viz_conf, num_batches, batch_size, run_path):
         # From configuration and dataset
-        for stage_name, stage_num_sample in num_samples.items():
-            setattr(self, "{}_num_samples".format(stage_name), stage_num_sample)
+        for stage_name, stage_num_sample in num_batches.items():
+            setattr(self, "{}_num_batches".format(stage_name), stage_num_sample)
         self._batch_size = batch_size
         self._activate = viz_conf.activate
         self._format = viz_conf.format
@@ -22,7 +22,7 @@ class Visualizer(object):
         self._current_epoch = None
 
         # Current experiment path
-        self._run_path = os.getcwd()  # Hydra should be used first
+        self._run_path = run_path
         self._viz_path = os.path.join(self._run_path, "viz")
         if not os.path.exists(self._viz_path):
             os.makedirs(self._viz_path)
@@ -52,23 +52,23 @@ class Visualizer(object):
         """This function is responsible to calculate the indices to be saved"""
         if self._contains_indices[stage]:
             return
-        stage_num_sample = getattr(self, "{}_num_samples".format(stage))
-        if stage_num_sample > 0:
+        stage_num_batches = getattr(self, "{}_num_batches".format(stage))
+        if stage_num_batches > 0:
             if self._num_samples_per_epoch < 0:  # All elements should be saved.
-                if stage_num_sample > 0:
-                    self._indices[stage] = np.arange(stage_num_sample)
+                if stage_num_batches > 0:
+                    self._indices[stage] = np.arange(stage_num_batches)
                 else:
                     self._indices[stage] = None
             else:
                 if self._deterministic:
-                    if stage in self._indices:
-                        if self._num_samples_per_epoch > stage_num_sample:
+                    if stage not in self._indices:
+                        if self._num_samples_per_epoch > stage_num_batches:
                             raise Exception("Number of samples to save if higher than the number of available elements")
-                        self._indices[stage] = np.random.permutation(stage_num_sample)[: self._num_samples_per_epoch]
+                        self._indices[stage] = np.random.permutation(stage_num_batches)[: self._num_samples_per_epoch]
                 else:
-                    if self._num_samples_per_epoch > stage_num_sample:
+                    if self._num_samples_per_epoch > stage_num_batches:
                         raise Exception("Number of samples to save if higher than the number of available elements")
-                    self._indices[stage] = np.random.permutation(stage_num_sample)[: self._num_samples_per_epoch]
+                    self._indices[stage] = np.random.permutation(stage_num_batches)[: self._num_samples_per_epoch]
 
     @property
     def is_active(self):
@@ -97,7 +97,7 @@ class Visualizer(object):
             if torch.is_tensor(item[k]) and k in self._saved_keys.keys():
                 if item[k].shape[0] == num_samples:
                     out_data[k] = item[k][pos_idx]
-        return item
+        return out_data
 
     def _dict_to_structured_npy(self, item):
         item.keys()
@@ -115,7 +115,7 @@ class Visualizer(object):
         return np.asarray([tuple(o) for o in out], dtype=dtypes)
 
     def save_visuals(self, visuals):
-        if self._indices[self._stage] is not None:
+        if self._stage in self._indices:
             self._indices[self._stage]
             batch_indices = self._indices[self._stage] // self._batch_size
             pos_indices = self._indices[self._stage] % self._batch_size

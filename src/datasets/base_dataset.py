@@ -184,10 +184,10 @@ class BaseDataset:
         return self.training_opt.batch_size
 
     @property
-    def num_samples(self):
-        return {"train": len(self._train_loader.dataset), \
-                "test": len(self._test_loader.dataset), \
-                "val": len(self._val_loader.dataset) if self.has_val_loader else 0}
+    def num_batches(self):
+        return {"train": len(self._train_loader), \
+                "test": len(self._test_loader), \
+                "val": len(self._val_loader) if self.has_val_loader else 0}
 
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
