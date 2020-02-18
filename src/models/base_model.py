@@ -317,7 +317,7 @@ class BaseModel(torch.nn.Module):
         return value_out
 
     def get_current_visuals(self):
-        """Return visualization images. train.py will display these images with visdom, and save the images to a HTML"""
+        """Return an OrderedDict containing associated tensors within visual_names"""
         visual_ret = OrderedDict()
         for name in self.visual_names:
             if isinstance(name, str):

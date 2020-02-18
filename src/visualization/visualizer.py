@@ -10,7 +10,7 @@ class Visualizer(object):
         viz_conf (OmegaConf Dictionnary) -- stores all config for the visualizer
         num_batches (dict) -- This dictionnary maps stage_name to #batches
         batch_size (int) -- Current batch size usef
-        run_path (str) -- The path used by hydra to store the experiment
+        save_dir (str) -- The path used by hydra to store the experiment
 
     This class is responsible to save visual into .ply format
     The configuration looks like that:
@@ -27,7 +27,7 @@ class Visualizer(object):
                 train: [0, 3]
     """
 
-    def __init__(self, viz_conf, num_batches, batch_size, run_path):
+    def __init__(self, viz_conf, num_batches, batch_size, save_dir):
         # From configuration and dataset
         for stage_name, stage_num_sample in num_batches.items():
             setattr(self, "{}_num_batches".format(stage_name), stage_num_sample)
@@ -44,8 +44,8 @@ class Visualizer(object):
         self._current_epoch = None
 
         # Current experiment path
-        self._run_path = run_path
-        self._viz_path = os.path.join(self._run_path, "viz")
+        self._save_dir = save_dir
+        self._viz_path = os.path.join(self._save_dir, "viz")
         if not os.path.exists(self._viz_path):
             os.makedirs(self._viz_path)
 

@@ -21,7 +21,7 @@ from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
 from src.utils.config import set_format, determine_stage, launch_wandb
-from src.viz import Visualizer
+from src.visualization import Visualizer
 
 log = logging.getLogger(__name__)
 
