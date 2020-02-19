@@ -60,7 +60,11 @@ class L2Regularizer(_Regularizer):
 
     def regularized_all_param(self, reg_loss_function):
         for model_param_name, model_param_value in self.model.named_parameters():
-            if model_param_name.endswith("weight"):
+            if (
+                model_param_name.endswith("weight")
+                and "1.weight" not in model_param_name
+                and "bn" not in model_param_name
+            ):
                 reg_loss_function += self.lambda_reg * L2Regularizer.__add_l2(var=model_param_value)
         return reg_loss_function
 

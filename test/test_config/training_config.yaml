@@ -1,0 +1,41 @@
+training:
+    epochs: 100
+    num_workers: 6
+    batch_size: 16
+    shuffle: True
+    cuda: 1
+    precompute_multi_scale: False
+    optim:
+        base_lr: 0.001
+        accumulated_gradient: 2
+        grad_clip: -1
+        optimizer:
+            class: Adam
+            params:
+                lr: 0.001
+        lr_scheduler:
+            class: MultiStepLR
+            params:
+                milestones: [10, 25, 50, 75, 100]
+                gamma: 0.1
+        bn_scheduler:
+            bn_policy: "step_decay"
+            params:
+                bn_momentum: 0.1
+                bn_decay: 0.9
+                decay_step : 1024
+                bn_clip : 1e-2
+    weight_name: "latest"
+    enable_cudnn: True
+    checkpoint_dir: ""
+    resume: True
+
+wandb:
+    project: default
+    log: False
+    notes: ""
+    name: ""
+    public: True
+
+tensorboard:
+    log: True

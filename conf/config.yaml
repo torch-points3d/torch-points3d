@@ -6,6 +6,8 @@ defaults:
   - dataset: ???
     optional: True
 
+  - visualization: default
+  - lr_scheduler: multi_step
   - training: default
   - eval
 
@@ -16,4 +18,5 @@ defaults:
 
 model_name: ??? # Name of the specific model to load
 
+selection_stage: "test" # Which dataset to use to select best model ["val", "test"]
 pretty_print: False

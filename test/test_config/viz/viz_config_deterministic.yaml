@@ -1,0 +1,9 @@
+visualization:
+  activate: False
+  format: "pointcloud" # image will come later
+  num_samples_per_epoch: 2
+  deterministic: True # False -> Randomly sample elements from epoch to epoch
+  saved_keys: 
+    pos: [['x', 'float'], ['y', 'float'], ['z', 'float']]
+    y: [['l', 'float']]
+    pred: [['p', 'float']]

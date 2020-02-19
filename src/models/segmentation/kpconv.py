@@ -1,3 +1,4 @@
+from typing import Any
 import logging
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
@@ -6,6 +7,7 @@ import torch.nn.functional as F
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *
+from src.core.base_conv.partial_dense import *
 from src.core.common_modules import MultiHeadClassifier
 from src.models.base_model import BaseModel
 from src.models.base_architectures.unet import UnwrappedUnetBasedModel
@@ -63,7 +65,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
                 self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
             self.FC_layer.add_module("Class", Lin(in_feat, self._num_classes, bias=False))
-            self.FC_layer.add_module("Softmax", nn.LogSoftmax(self._num_classes))
+            self.FC_layer.add_module("Softmax", nn.LogSoftmax(-1))
         self.loss_names = ["loss_seg"]
 
         self.lambda_reg = self.get_from_opt(option, ["loss_weights", "lambda_reg"])
@@ -71,6 +73,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.loss_names += ["loss_reg"]
 
         self.lambda_internal_losses = self.get_from_opt(option, ["loss_weights", "lambda_internal_losses"])
+
+        self.visual_names = ["data_visual"]
 
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -116,6 +120,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         else:
             self.output = self.FC_layer(last_feature)
         self.compute_loss()
+
+        self.data_visual = self.input
+        self.data_visual.pred = torch.max(self.output, -1)[1]
         return self.output
 
     def compute_loss(self):

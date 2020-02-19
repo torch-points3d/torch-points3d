@@ -45,10 +45,10 @@ class MockDataset(torch.utils.data.Dataset):
         transform = MultiScaleTransform(strategies)
         self._transform = transform
 
-
 class MockDatasetGeometric(MockDataset):
     def __getitem__(self, index):
         if self._transform:
             return MultiScaleBatch.from_data_list(self.datalist)
         else:
             return Batch.from_data_list(self.datalist)
+
