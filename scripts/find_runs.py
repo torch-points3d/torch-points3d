@@ -4,6 +4,7 @@ import argparse
 from glob import glob
 from collections import defaultdict
 import torch
+import shutil
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
@@ -69,7 +70,7 @@ def main(args):
             experiment_with_models[experiment.model_name].append(experiment)
         else:
             if args.d:
-                pass
+                shutil.rmtree(run_path)
 
     print("")
     for model_name in experiment_with_models.keys():
@@ -87,13 +88,15 @@ def main(args):
             print("")
         print("")
 
+    if args.pdb:
+        import pdb
+
+        pdb.set_trace()
+
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Find experiments")
-    parser.add_argument("-e", type=str, help="Gather epochs training")
-    parser.add_argument("-s", type=str, help="Gather stats")
-    parser.add_argument("-d", type=str, help="Delete empty folders")
-    parser.add_argument("-pdb", type=str, help="Activate pdb for explore Experiment Folder")
+    parser.add_argument("-d", action="store_true", default=False, help="Delete empty folders")
+    parser.add_argument("-pdb", action="store_true", default=False, help="Activate pdb for explore Experiment Folder")
     args = parser.parse_args()
     main(args)
