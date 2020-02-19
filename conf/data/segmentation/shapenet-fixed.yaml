@@ -5,7 +5,7 @@ data:
     normal: True
     train_size: 14016 # Number of shapes in the whole training set
     use_category: False
-    category: "Airplane"
+    category: "Cap"
     first_subsampling: 0.02
     pre_transforms:
       - transform: NormalizeScale

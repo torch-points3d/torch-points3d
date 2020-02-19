@@ -55,6 +55,12 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
 
 
 def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
+    """ Creates a model given a datset and a training config. The config should contain the following:
+    - config.data.task: task that will be evaluated
+    - config.model_name: model to instantiate
+    - config.models: All models available
+    """
+
     # Get task and model_name
     task = config.data.task
     tested_model_name = config.model_name
@@ -80,11 +86,8 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
             % (model_module, class_name)
         )
 
-    option_container = OmegaConf.to_container(model_config)
+    OmegaConf.to_container(model_config)
     model = model_cls(model_config, "dummy", dataset, modellib)
-
-    model_state = {"model_class": model_class, "option": option_container, "model_module": model_module, "task": task}
-    model.model_state = model_state
 
     log.info(model)
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))

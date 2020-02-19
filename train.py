@@ -15,7 +15,7 @@ from src.datasets.base_dataset import BaseDataset
 # Import from metrics
 from src.metrics.base_tracker import BaseTracker
 from src.metrics.colored_tqdm import Coloredtqdm as Ctq
-from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+from src.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
 from src.utils.colors import COLORS
@@ -170,10 +170,12 @@ def main(cfg):
     # Create model and datasets
     dataset = instantiate_dataset(cfg.data)
     if not checkpoint.is_empty and cfg.training.resume:
-        model = checkpoint.create_model_from_checkpoint(dataset, weight_name=cfg.training.weight_name)
+        model = checkpoint.create_model(dataset, weight_name=cfg.training.weight_name)
     else:
         model = instantiate_model(cfg, dataset)
-    model.instantiate_optimizers(cfg)
+        model.instantiate_optimizers(cfg)
+
+    # Set dataloaders
     dataset.create_dataloaders(
         model,
         cfg.training.batch_size,

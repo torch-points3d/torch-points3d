@@ -53,22 +53,6 @@ class BaseModel(torch.nn.Module):
         self._latest_stage = None
         self._latest_epoch = None
         self._schedulers = {}
-        self._model_state = None
-
-    @property
-    def model_state(self):
-        return self._model_state
-
-    @model_state.setter
-    def model_state(self, model_state):
-        self._model_state = model_state
-
-    def get_state(self):
-        return {"model_state": self._model_state, "state_dict": self.state_dict()}
-
-    def set_state(self, state):
-        self.model_state = state["model_state"]
-        self.load_state_dict(state["state_dict"])
 
     @property
     def lr_params(self):
