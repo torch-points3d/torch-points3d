@@ -74,6 +74,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         self.lambda_internal_losses = self.get_from_opt(option, ["loss_weights", "lambda_internal_losses"])
 
+        self.visual_names = ["data_visual"]
+
     def set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -118,6 +120,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         else:
             self.output = self.FC_layer(last_feature)
         self.compute_loss()
+
+        self.data_visual = self.input
+        self.data_visual.pred = torch.max(self.output, -1)[1]
         return self.output
 
     def compute_loss(self):
