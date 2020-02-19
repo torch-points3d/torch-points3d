@@ -7,7 +7,7 @@ training:
     cuda: 1
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     optim:
-        base_lr:  1e-3
+        base_lr: 0.001
         grad_clip: -1
         optimizer:
             class: Adam
@@ -19,7 +19,7 @@ training:
             params:
                 bn_momentum: 0.1
                 bn_decay: 0.9
-                decay_step : 1024
+                decay_step : 10
                 bn_clip : 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
