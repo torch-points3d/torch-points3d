@@ -14,12 +14,13 @@ def contains_key(opt, key):
         return False
 
 
-def instantiate_dataset(dataset_class, task, dataset_config, cfg_training):
+def instantiate_dataset(task, dataset_config) -> BaseDataset:
     """Import the module "data/[module].py".
     In the file, the class called {class_name}() will
     be instantiated. It has to be a subclass of BaseDataset,
     and it is case-insensitive.
     """
+    dataset_class = getattr(dataset_config, "class")
     dataset_paths = dataset_class.split(".")
     module = ".".join(dataset_paths[:-1])
     class_name = dataset_paths[-1]
@@ -38,11 +39,12 @@ def instantiate_dataset(dataset_class, task, dataset_config, cfg_training):
             % (module, class_name)
         )
 
-    dataset = dataset_cls(dataset_config, cfg_training)
+    dataset = dataset_cls(dataset_config)
     return dataset
 
 
-def instantiate_model(model_class, task, option, dataset: BaseDataset) -> BaseModel:
+def instantiate_model(task, option, dataset: BaseDataset) -> BaseModel:
+    model_class = getattr(option, "class")
     model_paths = model_class.split(".")
     module = ".".join(model_paths[:-1])
     class_name = model_paths[-1]

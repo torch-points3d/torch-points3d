@@ -153,6 +153,13 @@ def main(cfg):
     if cfg.pretty_print:
         print(cfg.pretty())
 
+    # Get device
+    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
+    log.info("DEVICE : {}".format(device))
+
+    # Enable CUDNN BACKEND
+    torch.backends.cudnn.enabled = cfg.training.enable_cudnn
+
     # Get task and model_name
     tested_task = cfg.data.task
     tested_model_name = cfg.model_name
@@ -160,7 +167,7 @@ def main(cfg):
     # Find configs
     model_config = getattr(cfg.models, tested_model_name, None)
     dataset_config = cfg.data
-    cfg_training = set_format(model_config, cfg.training)
+    cfg_training = cfg.training
     model_class = getattr(model_config, "class")
     tested_dataset_class = getattr(dataset_config, "class")
     otimizer_class = getattr(cfg.training.optim.optimizer, "class")
@@ -178,30 +185,25 @@ def main(cfg):
 
     launch_wandb(cfg, tags, wandb_public and cfg.wandb.log)
 
-    # Get device
-    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
-    log.info("DEVICE : {}".format(device))
-
-    # Enable CUDNN BACKEND
-    torch.backends.cudnn.enabled = cfg_training.enable_cudnn
-
     # Find and create associated dataset
     dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(tested_dataset_class, tested_task, dataset_config, cfg_training)
-
-    # Create visualizer
-    visualizer = Visualizer(cfg.visualization, dataset.num_batches, dataset.batch_size, os.getcwd())
+    dataset = instantiate_dataset(tested_task, dataset_config)
 
     # Find and create associated model
     resolve_model(model_config, dataset, tested_task)
-    model_config = OmegaConf.merge(model_config, cfg_training)
-    model = instantiate_model(model_class, tested_task, model_config, dataset)
-
-    # Log model
+    model = instantiate_model(tested_task, model_config, dataset)
     log.info(model)
-
-    # Initialize optimizer, schedulers
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
     model.instantiate_optimizers(cfg)
+
+    # Create dataloaders
+    dataset.create_dataloaders(
+        model.conv_type,
+        cfg_training.batch_size,
+        cfg_training.shuffle,
+        cfg_training.num_workers,
+        cfg_training.precompute_multi_scale,
+    )
 
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)
@@ -209,8 +211,6 @@ def main(cfg):
     # Set sampling / search strategies
     if cfg_training.precompute_multi_scale:
         dataset.set_strategies(model)
-
-    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
     tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
 
@@ -227,6 +227,7 @@ def main(cfg):
 
     # Run training / evaluation
     model = model.to(device)
+    visualizer = Visualizer(cfg.visualization, dataset.num_batches, dataset.batch_size, os.getcwd())
     run(cfg, model, dataset, device, tracker, checkpoint, visualizer)
 
 

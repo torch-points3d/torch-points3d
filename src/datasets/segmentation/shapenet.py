@@ -190,15 +190,15 @@ class ShapeNet(InMemoryDataset):
 
 
 class ShapeNetDataset(BaseDataset):
-    def __init__(self, dataset_opt, training_opt):
-        super().__init__(dataset_opt, training_opt)
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
         try:
             self._category = dataset_opt.category
         except KeyError:
             self._category = None
         pre_transform = self.pre_transform
         train_transform = self.train_transform
-        train_dataset = ShapeNet(
+        self.train_dataset = ShapeNet(
             self._data_path,
             self._category,
             include_normals=dataset_opt.normal,
@@ -206,7 +206,7 @@ class ShapeNetDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=train_transform,
         )
-        test_dataset = ShapeNet(
+        self.test_dataset = ShapeNet(
             self._data_path,
             self._category,
             include_normals=dataset_opt.normal,
@@ -214,8 +214,7 @@ class ShapeNetDataset(BaseDataset):
             transform=self.test_transform,
             pre_transform=pre_transform,
         )
-        self._categories = train_dataset.categories
-        self._create_dataloaders(train_dataset, test_dataset)
+        self._categories = self.train_dataset.categories
 
     @property
     def class_to_segments(self):
