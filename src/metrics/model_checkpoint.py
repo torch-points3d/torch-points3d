@@ -1,6 +1,7 @@
 import os
 import torch
 import logging
+import copy
 from omegaconf import OmegaConf, DictConfig
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
@@ -47,14 +48,14 @@ class Checkpoint:
         }
 
         to_save = kwargs
-        for key, value in self.__dict__:
+        for key, value in self.__dict__.items():
             if not key.startswith("_"):
                 to_save[key] = value
         torch.save(to_save, self._check_path)
 
     @staticmethod
     def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig):
-        """ Creates a new checpoint object in the current working directory by loading the
+        """ Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
@@ -65,7 +66,7 @@ class Checkpoint:
             return ckp
         log.info("Loading checkpoint from {}".format(checkpoint_file))
         objects = torch.load(checkpoint_file)
-        for key, value in objects.item():
+        for key, value in objects.items():
             setattr(ckp, key, value)
         ckp._filled = True
         return ckp
@@ -136,13 +137,13 @@ class ModelCheckpoint(object):
     """
 
     def __init__(self, load_dir: str, check_name: str, resume: bool, selection_stage: str, run_config: DictConfig):
-        self._checkpoint = Checkpoint.load(load_dir, check_name, run_config)
+        self._checkpoint = Checkpoint.load(load_dir, check_name, copy.deepcopy(run_config))
         self._resume = resume
         self._selection_stage = selection_stage
 
     def create_model(self, dataset, weight_name=Checkpoint._LATEST):
         if not self.is_empty:
-            run_config = self._checkpoint.run_config
+            run_config = copy.deepcopy(self._checkpoint.run_config)
             model = instantiate_model(run_config, dataset)
             self._initialize_model(model, weight_name)
             return model
@@ -200,7 +201,7 @@ class ModelCheckpoint(object):
         epoch = metrics_holder["epoch"]
 
         stats = self._checkpoint.stats
-        model.state_dict()
+        state_dict = model.state_dict()
 
         current_stat = {}
         current_stat["epoch"] = epoch

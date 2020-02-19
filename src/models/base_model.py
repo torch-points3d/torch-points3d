@@ -53,6 +53,8 @@ class BaseModel(torch.nn.Module):
         self._latest_stage = None
         self._latest_epoch = None
         self._schedulers = {}
+        self._accumulated_gradient_step = None
+        self._grad_clip = -1
 
     @property
     def lr_params(self):
