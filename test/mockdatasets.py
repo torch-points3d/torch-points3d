@@ -51,3 +51,4 @@ class MockDatasetGeometric(MockDataset):
             return MultiScaleBatch.from_data_list(self.datalist)
         else:
             return Batch.from_data_list(self.datalist)
+
