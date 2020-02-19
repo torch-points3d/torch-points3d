@@ -89,6 +89,14 @@ The data reported below correspond to the part segmentation problem for Shapenet
 | [```pointnet2_charlesmsg```](/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes | 1,733,946 | 15:07 / 01:20 (K80) | 0.089 | 82.1 | 85.1 |
 | [```RSCNN_MSG```](/benchmark/shapenet/rscnn_original.md) | No | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04 | 82.811 | 85.3 |
 
+## Explore your experiments
+```
+python scripts/find_runs.py
+```
+And you should see something like that
+
+![experiments](/docs/imgs/find_runs.PNG)
+
 ## Troubleshooting
 #### Undefined symbol / Updating pytorch
 When we update the version of pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
