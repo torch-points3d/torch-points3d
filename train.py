@@ -18,9 +18,8 @@ from src.metrics.colored_tqdm import Coloredtqdm as Ctq
 from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
 
 # Utils import
-from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
-from src.utils.config import set_format, determine_stage, launch_wandb
+from src.utils.config import determine_stage, launch_wandb
 from src.visualization import Visualizer
 
 log = logging.getLogger(__name__)
@@ -160,70 +159,35 @@ def main(cfg):
     # Enable CUDNN BACKEND
     torch.backends.cudnn.enabled = cfg.training.enable_cudnn
 
-    # Get task and model_name
-    tested_task = cfg.data.task
-    tested_model_name = cfg.model_name
+    # Start Wandb if public
+    launch_wandb(cfg, cfg.wandb.public and cfg.wandb.log)
 
-    # Find configs
-    model_config = getattr(cfg.models, tested_model_name, None)
-    dataset_config = cfg.data
-    cfg_training = cfg.training
-    model_class = getattr(model_config, "class")
-    tested_dataset_class = getattr(dataset_config, "class")
-    otimizer_class = getattr(cfg.training.optim.optimizer, "class")
-    scheduler_class = getattr(cfg.lr_scheduler, "class")
-    wandb_public = getattr(cfg.wandb, "public", False)
+    # Checkpoint
+    checkpoint = ModelCheckpoint(
+        cfg.training.checkpoint_dir, cfg.model_name, cfg.training.resume, cfg.training.weight_name, cfg
+    )
 
-    # Define tags for Wandb
-    tags = [
-        tested_model_name,
-        model_class.split(".")[0],
-        tested_dataset_class,
-        otimizer_class,
-        scheduler_class,
-    ]
-
-    launch_wandb(cfg, tags, wandb_public and cfg.wandb.log)
-
-    # Find and create associated dataset
-    dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(tested_task, dataset_config)
-
-    # Find and create associated model
-    resolve_model(model_config, dataset, tested_task)
-    model = instantiate_model(tested_task, model_config, dataset)
-    log.info(model)
-    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
+    # Create model and datasets
+    dataset = instantiate_dataset(cfg.data)
+    if not checkpoint.is_empty and cfg.training.resume:
+        model = checkpoint.create_model_from_checkpoint(dataset, weight_name=cfg.training.weight_name)
+    else:
+        model = instantiate_model(cfg, dataset)
     model.instantiate_optimizers(cfg)
-
-    # Create dataloaders
     dataset.create_dataloaders(
-        model.conv_type,
-        cfg_training.batch_size,
-        cfg_training.shuffle,
-        cfg_training.num_workers,
-        cfg_training.precompute_multi_scale,
+        model,
+        cfg.training.batch_size,
+        cfg.training.shuffle,
+        cfg.training.num_workers,
+        cfg.training.precompute_multi_scale,
     )
 
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)
+    checkpoint.selection_stage = selection_stage
+    tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb, cfg.tensorboard)
 
-    # Set sampling / search strategies
-    if cfg_training.precompute_multi_scale:
-        dataset.set_strategies(model)
-
-    tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
-
-    checkpoint = get_model_checkpoint(
-        model,
-        cfg_training.checkpoint_dir,
-        tested_model_name,
-        cfg_training.resume,
-        cfg_training.weight_name,
-        selection_stage,
-    )
-
-    launch_wandb(cfg, tags, not wandb_public and cfg.wandb.log)
+    launch_wandb(cfg, not cfg.wandb.public and cfg.wandb.log)
 
     # Run training / evaluation
     model = model.to(device)

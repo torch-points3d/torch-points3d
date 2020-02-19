@@ -12,6 +12,7 @@ from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
 from src.utils.colors import COLORS
+from src.models.base_model import BaseModel
 
 # A logger for this file
 log = logging.getLogger(__name__)
@@ -72,15 +73,11 @@ class BaseDataset:
             return lambda datalist: SimpleBatch.from_data_list(datalist)
 
     def create_dataloaders(
-        self,
-        conv_type: ConvolutionFormat,
-        batch_size: int,
-        shuffle: bool,
-        num_workers: int,
-        precompute_multi_scale: bool,
+        self, model: BaseModel, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
     ):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
+        conv_type = model.conv_type
         self._batch_size = batch_size
         batch_collate_function = BaseDataset._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(torch.utils.data.DataLoader, collate_fn=batch_collate_function)
@@ -108,6 +105,9 @@ class BaseDataset:
                 num_workers=num_workers,
                 sampler=self.val_sampler,
             )
+
+        if precompute_multi_scale:
+            self.set_strategies(model)
 
     @property
     def has_val_loader(self):
@@ -216,5 +216,5 @@ class BaseDataset:
 
     @staticmethod
     @abstractmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
         pass

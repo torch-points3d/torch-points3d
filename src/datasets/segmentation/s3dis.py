@@ -175,11 +175,10 @@ class S3DIS1x1Dataset(BaseDataset):
         self._create_dataloaders(train_dataset, test_dataset)
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
         """Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
             dataset {[type]}
             wandb_log - Log using weight and biases
         Returns:
@@ -372,11 +371,10 @@ class S3DISDataset(BaseDataset):
         self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
         """Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
             dataset {[type]}
             wandb_log - Log using weight and biases
         Returns:
@@ -583,10 +581,10 @@ class S3DISFusedDataset(BaseDataset):
 
         self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
 
-        self.train_sampler = BalancedRandomSampler(train_dataset.center_labels)
+        self.train_sampler = BalancedRandomSampler(self.train_dataset.center_labels)
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
         """Factory method for the tracker
 
         Arguments:

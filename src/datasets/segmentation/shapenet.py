@@ -228,11 +228,10 @@ class ShapeNetDataset(BaseDataset):
         return len(self._categories) > 1
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
         """Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
             dataset {[type]}
             wandb_log - Log using weight and biases
         Returns:

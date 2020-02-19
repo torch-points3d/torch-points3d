@@ -54,7 +54,6 @@ class BaseModel(torch.nn.Module):
         self._latest_epoch = None
         self._schedulers = {}
         self._model_state = None
-        print(opt.test)
 
     @property
     def model_state(self):

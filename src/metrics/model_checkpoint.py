@@ -35,7 +35,7 @@ def get_model_checkpoint(
     return model_checkpoint
 
 
-class Checkpoint(object):
+class Checkpoint:
     _LATEST = "latest"
 
     def __init__(self, checkpoint_file: str, save_every_iter: bool = True):
@@ -155,23 +155,22 @@ class Checkpoint(object):
 
 
 class ModelCheckpoint(object):
-    def __init__(
-        self, load_dir: str = None, check_name: str = None, resume: bool = True, selection_stage: str = "test"
-    ):
+    def __init__(self, load_dir: str, check_name: str, resume: bool, selection_stage: str, run_config):
         self._checkpoint = Checkpoint.load(load_dir, check_name)
         self._resume = resume
         self._selection_stage = selection_stage
+        self._run_config = run_config
 
     def create_mock_dateset(self, dataset_state):
         raise NotImplementedError
 
     def create_model_from_checkpoint(self, dataset, weight_name=None):
-        if not self._checkpoint.is_empty:
+        if not self.is_empty:
             model_state = self._checkpoint.get_model_state()
-            model_class = model_state["model_class"]
+            model_state["model_class"]
             option = OmegaConf.create(model_state["option"])
             task = model_state["task"]
-            model = instantiate_model(model_class, task, option, dataset)
+            model = instantiate_model(task, option, dataset)
 
             if weight_name:
                 self.initialize_model(model)
@@ -184,6 +183,18 @@ class ModelCheckpoint(object):
             return self.get_starting_epoch()
         else:
             return 1
+
+    @property
+    def selection_stage(self):
+        return self._selection_stage
+
+    @selection_stage.setter
+    def selection_stage(self, value):
+        self._selection_stage = value
+
+    @property
+    def is_empty(self):
+        return self._checkpoint.is_empty
 
     def get_starting_epoch(self):
         return len(self._checkpoint.stats["train"]) + 1

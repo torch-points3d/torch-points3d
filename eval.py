@@ -109,7 +109,7 @@ def main(cfg):
     params = sum([np.prod(p.size()) for p in model_parameters])
     log.info("Model size = %i", params)
 
-    tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
+    tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb, cfg.tensorboard)
 
     checkpoint = get_model_checkpoint(
         model, cfg_eval.checkpoint_dir, tested_model_name, True, cfg_eval.weight_name, "test"

@@ -2,8 +2,14 @@ import importlib
 import torch
 import copy
 from omegaconf import OmegaConf
+import hydra
+import logging
+
 from src.datasets.base_dataset import BaseDataset
 from src.models.base_model import BaseModel
+from src.utils.model_building_utils.model_definition_resolver import resolve_model
+
+log = logging.getLogger(__name__)
 
 
 def contains_key(opt, key):
@@ -14,12 +20,17 @@ def contains_key(opt, key):
         return False
 
 
-def instantiate_dataset(task, dataset_config) -> BaseDataset:
+def instantiate_dataset(dataset_config) -> BaseDataset:
     """Import the module "data/[module].py".
     In the file, the class called {class_name}() will
     be instantiated. It has to be a subclass of BaseDataset,
     and it is case-insensitive.
     """
+    task = dataset_config.task
+
+    # Find and create associated dataset
+    dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
+
     dataset_class = getattr(dataset_config, "class")
     dataset_paths = dataset_class.split(".")
     module = ".".join(dataset_paths[:-1])
@@ -43,8 +54,16 @@ def instantiate_dataset(task, dataset_config) -> BaseDataset:
     return dataset
 
 
-def instantiate_model(task, option, dataset: BaseDataset) -> BaseModel:
-    model_class = getattr(option, "class")
+def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
+    # Get task and model_name
+    task = config.data.task
+    tested_model_name = config.model_name
+
+    # Find configs
+    model_config = getattr(config.models, tested_model_name, None)
+    resolve_model(model_config, dataset, task)
+
+    model_class = getattr(model_config, "class")
     model_paths = model_class.split(".")
     module = ".".join(model_paths[:-1])
     class_name = model_paths[-1]
@@ -61,9 +80,12 @@ def instantiate_model(task, option, dataset: BaseDataset) -> BaseModel:
             % (model_module, class_name)
         )
 
-    option_container = OmegaConf.to_container(option)
-    model = model_cls(option, "dummy", dataset, modellib)
+    option_container = OmegaConf.to_container(model_config)
+    model = model_cls(model_config, "dummy", dataset, modellib)
 
     model_state = {"model_class": model_class, "option": option_container, "model_module": model_module, "task": task}
     model.model_state = model_state
+
+    log.info(model)
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
     return model
