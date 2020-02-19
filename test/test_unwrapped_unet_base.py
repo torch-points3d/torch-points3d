@@ -9,7 +9,6 @@ sys.path.append(ROOT)
 
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.models.base_architectures import UnwrappedUnetBasedModel
-from src.utils.config import set_format
 
 from test.mockdatasets import MockDataset
 

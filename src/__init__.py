@@ -85,8 +85,6 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
             % (model_module, class_name)
         )
-
-    OmegaConf.to_container(model_config)
     model = model_cls(model_config, "dummy", dataset, modellib)
 
     log.info(model)

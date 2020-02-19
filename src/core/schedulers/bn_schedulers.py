@@ -1,8 +1,6 @@
 from torch import nn
 import logging
 
-from src.utils.config import merge_omega_conf
-
 log = logging.getLogger(__name__)
 
 

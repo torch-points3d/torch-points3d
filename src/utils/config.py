@@ -56,12 +56,6 @@ def determine_stage(cfg, has_val_loader):
     return selection_stage
 
 
-def merge_omega_conf(opt: DictConfig, d: dict):
-    """This function allows to merge a OmegaConf DictConfig with a python dictionnary"""
-    new_opt = OmegaConf.create(d)
-    return OmegaConf.merge(opt, new_opt)
-
-
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)
 
@@ -72,15 +66,3 @@ def is_iterable(entity):
 
 def is_dict(entity):
     return isinstance(entity, dict) or isinstance(entity, DictConfig)
-
-
-def set_format(model_config, cfg_training):
-    """ Adds the type of convolution (DENSE, PARTIAL_DENSE, MESSAGE_PASSING)
-    to the training configuration
-    """
-    conv_type = getattr(model_config, "conv_type", None)
-    if conv_type not in [d.name for d in ConvolutionFormat]:
-        raise Exception("The format type should be defined within {}".format([d.name for d in ConvolutionFormat]))
-    else:
-        format_conf = OmegaConf.create({"conv_type": conv_type.lower()})
-        return OmegaConf.merge(cfg_training, format_conf)

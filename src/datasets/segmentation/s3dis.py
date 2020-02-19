@@ -175,7 +175,7 @@ class S3DIS1x1Dataset(BaseDataset):
         self._create_dataloaders(train_dataset, test_dataset)
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_log: bool):
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:

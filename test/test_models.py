@@ -14,7 +14,6 @@ from test.mockdatasets import MockDatasetGeometric
 
 from src import instantiate_model
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.utils.config import set_format, merge_omega_conf
 
 # calls resolve_model, then find_model_using_name
 

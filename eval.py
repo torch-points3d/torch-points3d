@@ -18,7 +18,6 @@ from src.metrics.model_checkpoint import ModelCheckpoint
 # Utils import
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
-from src.utils.config import set_format
 
 log = logging.getLogger(__name__)
 
