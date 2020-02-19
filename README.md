@@ -72,6 +72,14 @@ And you should see something like that
 
 ![logging](/docs/imgs/logging.png)
 
+## Explore your experiments
+```
+python scripts/find_runs.py
+```
+And you should see something like that
+
+![experiments](/docs/imgs/find_runs.PNG)
+
 # Benchmark
 ## S3DIS 1x1
 
