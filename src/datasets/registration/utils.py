@@ -204,7 +204,12 @@ def rgbd2fragment_fine(list_path_img,
         depth[depth > depth_thresh] = 0
         depth[depth <= 0] = 0
         intrinsic = np.loadtxt(path_intrinsic)
-        color_image = imageio.imread(list_path_color[i])
+        try:
+            color_image = imageio.imread(list_path_color[i])
+        except(IndexError, TypeError):
+            # If the color is not provided, add constant color
+            color_image = np.full((depth.shape[0], depth.shape[1], 3),
+                                  0.5, dtype=float)
         pose = np.loadtxt(list_path_trans[i])
         tsdf_vol.integrate(color_image, depth,
                            intrinsic, pose,
@@ -232,11 +237,13 @@ def rgbd2fragment_fine(list_path_img,
                     end = begin + num_frame_per_fragment
                     vol_bnds = get_3D_bound(list_path_img[begin:end],
                                             path_intrinsic,
-                                            list_path_trans[begin:end])
+                                            list_path_trans[begin:end],
+                                            depth_thresh)
                 else:
                     vol_bnds = get_3D_bound(list_path_img[begin:],
                                             path_intrinsic,
-                                            list_path_trans[begin:])
+                                            list_path_trans[begin:],
+                                            depth_thresh)
                 tsdf_vol = fusion.TSDFVolume(vol_bnds, voxel_size=voxel_size)
 
 

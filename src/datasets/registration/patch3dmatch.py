@@ -88,31 +88,39 @@ class Patch3DMatch(General3DMatch):
         self.radius_patch = radius_patch
 
     def get(self, idx):
-        match = np.load(
-            osp.join(self.processed_dir,
-                     self.mode, 'matches',
-                     'matches{:06d}.npy'.format(idx)),
-            allow_pickle=True).item()
+        if('train' in self.mode or 'eval' in self.mode):
+            match = np.load(
+                osp.join(self.processed_dir,
+                         self.mode, 'matches',
+                         'matches{:06d}.npy'.format(idx)),
+                allow_pickle=True).item()
 
-        print(match['path_source'])
-        data_source = torch.load(match['path_source'])
-        data_target = torch.load(match['path_target'])
-        p_extractor = PatchExtractor(self.radius_patch)
-        # select a random match on the list of match.
-        # It cannot be 0 because matches are filtered.
-        rand = np.random.randint(0, len(match['pair']))
+            print(match['path_source'])
+            data_source = torch.load(match['path_source'])
+            data_target = torch.load(match['path_target'])
+            p_extractor = PatchExtractor(self.radius_patch)
+            # select a random match on the list of match.
+            # It cannot be 0 because matches are filtered.
+            rand = np.random.randint(0, len(match['pair']))
 
-        data_source = p_extractor(data_source, match['pair'][rand][1])
-        data_target = p_extractor(data_target, match['pair'][rand][0])
+            data_source = p_extractor(data_source, match['pair'][rand][1])
+            data_target = p_extractor(data_target, match['pair'][rand][0])
 
-        if(self.transform is not None):
-            data_source = self.transform(data_source)
-            data_target = self.transform(data_target)
-        batch = Batch.from_data_list([data_source, data_target])
-        batch.pair = batch.batch
-        batch.batch = None
+            if(self.transform is not None):
+                data_source = self.transform(data_source)
+                data_target = self.transform(data_target)
+            batch = Batch.from_data_list([data_source, data_target])
+            batch.pair = batch.batch
+            batch.batch = None
+            return batch.contiguous()
 
-        return batch.contiguous()
+        elif ('test' in self.mode):
+            # data = torch.load(self.processed_dir, self.mode, 'fragment', )
+            match = np.load(
+                osp.join(self.processed_dir,
+                         self.mode, 'matches',
+                         'matches{:06d}.npy'.format(idx)),
+                allow_pickle=True).item()
 
 
 class Patch3DMatchDataset(BaseDataset):

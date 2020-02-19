@@ -171,7 +171,16 @@ class General3DMatch(Dataset):
                                         pre_transform=self.pre_transform,
                                         list_path_color=list_path_color)
                 else:
-                    assert list_path_color is not None
+                    assert len(list_path_frames) == len(list_path_trans), \
+                        log.error("For the sequence {},"
+                                  "the number of frame "
+                                  "and the number of "
+                                  "pose is different".format(frames_dir))
+                    if(len(list_path_frames) != len(list_path_color)):
+                        log.warning("For the sequence {},"
+                                    "the number of frame and "
+                                    "color image "
+                                    "is different".format(frames_dir))
                     rgbd2fragment_fine(list_path_frames, path_intrinsic,
                                        list_path_trans, list_path_color,
                                        out_dir, self.num_frame_per_fragment,
@@ -222,10 +231,13 @@ class General3DMatch(Dataset):
                                 ind += 1
 
     def process(self):
-        print("create fragments")
-        self._create_fragment(self.mode)
-        print("compute matches")
-        self._compute_matches_between_fragments(self.mode)
+        if('test' not in self.mode):
+            print("create fragments")
+            self._create_fragment(self.mode)
+            print("compute matches")
+            self._compute_matches_between_fragments(self.mode)
+        else:
+            raise NotImplementedError("TODO :special treatment for the test")
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")
