@@ -7,7 +7,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-added-large-files
-        args: [--maxkb=5000]
+        args: [--maxkb=15000]
   - repo: https://github.com/ambv/black
     rev: stable
     hooks:
