@@ -34,7 +34,7 @@ class TSDFVolume:
         self._vol_bnds = vol_bnds
         self._voxel_size = float(voxel_size)
         self._trunc_margin = 5 * self._voxel_size  # truncation on SDF
-        self._color_const = 256 * 256
+
 
         # Adjust volume bounds and ensure C-order contiguous
         self._vol_dim = np.ceil(
@@ -52,8 +52,6 @@ class TSDFVolume:
         self._tsdf_vol_cpu = np.ones(self._vol_dim).astype(np.float32)
         # for computing the cumulative moving average of observations per voxel
         self._weight_vol_cpu = np.zeros(self._vol_dim).astype(np.float32)
-        self._color_vol_cpu = np.zeros(self._vol_dim).astype(np.float32)
-
         self.gpu_mode = use_gpu and FUSION_GPU_MODE
 
         # Copy voxel volumes to GPU
@@ -62,20 +60,16 @@ class TSDFVolume:
             cuda.memcpy_htod(self._tsdf_vol_gpu, self._tsdf_vol_cpu)
             self._weight_vol_gpu = cuda.mem_alloc(self._weight_vol_cpu.nbytes)
             cuda.memcpy_htod(self._weight_vol_gpu, self._weight_vol_cpu)
-            self._color_vol_gpu = cuda.mem_alloc(self._color_vol_cpu.nbytes)
-            cuda.memcpy_htod(self._color_vol_gpu, self._color_vol_cpu)
 
             # Cuda kernel function (C++)
             self._cuda_src_mod = SourceModule("""
             __global__ void integrate(float * tsdf_vol,
                                   float * weight_vol,
-                                  float * color_vol,
                                   float * vol_dim,
                                   float * vol_origin,
                                   float * cam_intr,
                                   float * cam_pose,
                                   float * other_params,
-                                  float * color_im,
                                   float * depth_im) {
           // Get voxel index
           int gpu_loop_idx = (int) other_params[0];
@@ -126,19 +120,7 @@ class TSDFVolume:
           float w_new = w_old + obs_weight;
           weight_vol[voxel_idx] = w_new;
           tsdf_vol[voxel_idx] = (tsdf_vol[voxel_idx]*w_old+obs_weight*dist)/w_new;
-          // Integrate color
-          float old_color = color_vol[voxel_idx];
-          float old_b = floorf(old_color/(256*256));
-          float old_g = floorf((old_color-old_b*256*256)/256);
-          float old_r = old_color-old_b*256*256-old_g*256;
-          float new_color = color_im[pixel_y*im_w+pixel_x];
-          float new_b = floorf(new_color/(256*256));
-          float new_g = floorf((new_color-new_b*256*256)/256);
-          float new_r = new_color-new_b*256*256-new_g*256;
-          new_b = fmin(roundf((old_b*w_old+obs_weight*new_b)/w_new),255.0f);
-          new_g = fmin(roundf((old_g*w_old+obs_weight*new_g)/w_new),255.0f);
-          new_r = fmin(roundf((old_r*w_old+obs_weight*new_r)/w_new),255.0f);
-          color_vol[voxel_idx] = new_b*256*256+new_g*256+new_r;
+
             }""")
 
             self._cuda_integrate = self._cuda_src_mod.get_function("integrate")
@@ -214,10 +196,9 @@ class TSDFVolume:
             tsdf_vol_int[i] = (w_old[i] * tsdf_vol[i] + obs_weight * dist[i]) / w_new[i]
         return tsdf_vol_int, w_new
 
-    def integrate(self, color_im, depth_im, cam_intr, cam_pose, obs_weight=1.):
+    def integrate(self, depth_im, cam_intr, cam_pose, obs_weight=1.):
         """Integrate an RGB-D frame into the TSDF volume.
         Args:
-        color_im (ndarray): An RGB image of shape (H, W, 3).
         depth_im (ndarray): A depth image of shape (H, W).
         cam_intr (ndarray): The camera intrinsics matrix of shape (3, 3).
         cam_pose (ndarray): The camera pose (i.e. extrinsics) of shape (4, 4).
@@ -225,16 +206,10 @@ class TSDFVolume:
         value
         """
         im_h, im_w = depth_im.shape
-
-        # Fold RGB color image into a single channel image
-        color_im = color_im.astype(np.float32)
-        color_im = np.floor(color_im[..., 2]*self._color_const + color_im[..., 1] * 256 + color_im[..., 0])
-
         if self.gpu_mode:  # GPU mode: integrate voxel volume (calls CUDA kernel)
             for gpu_loop_idx in range(self._n_gpu_loops):
                 self._cuda_integrate(self._tsdf_vol_gpu,
                                      self._weight_vol_gpu,
-                                     self._color_vol_gpu,
                                      cuda.InOut(self._vol_dim.astype(np.float32)),
                                      cuda.InOut(self._vol_origin.astype(np.float32)),
                                      cuda.InOut(cam_intr.reshape(-1).astype(np.float32)),
@@ -247,7 +222,6 @@ class TSDFVolume:
                                          self._trunc_margin,
                                          obs_weight
                                      ], np.float32)),
-                                     cuda.InOut(color_im.reshape(-1).astype(np.float32)),
                                      cuda.InOut(depth_im.reshape(-1).astype(np.float32)),
                                      block=(self._max_gpu_threads_per_block,1,1),
                                      grid=(
@@ -288,53 +262,31 @@ class TSDFVolume:
             self._weight_vol_cpu[valid_vox_x, valid_vox_y, valid_vox_z] = w_new
             self._tsdf_vol_cpu[valid_vox_x, valid_vox_y, valid_vox_z] = tsdf_vol_new
 
-            # Integrate color
-            old_color = self._color_vol_cpu[valid_vox_x, valid_vox_y, valid_vox_z]
-            old_b = np.floor(old_color / self._color_const)
-            old_g = np.floor((old_color-old_b*self._color_const)/256)
-            old_r = old_color - old_b*self._color_const - old_g*256
-            new_color = color_im[pix_y[valid_pts],pix_x[valid_pts]]
-            new_b = np.floor(new_color / self._color_const)
-            new_g = np.floor((new_color - new_b*self._color_const) /256)
-            new_r = new_color - new_b*self._color_const - new_g*256
-            new_b = np.minimum(255., np.round((w_old*old_b + obs_weight*new_b) / w_new))
-            new_g = np.minimum(255., np.round((w_old*old_g + obs_weight*new_g) / w_new))
-            new_r = np.minimum(255., np.round((w_old*old_r + obs_weight*new_r) / w_new))
-            self._color_vol_cpu[valid_vox_x, valid_vox_y, valid_vox_z] = new_b*self._color_const + new_g*256 + new_r
-
     def get_volume(self):
         if self.gpu_mode:
             cuda.memcpy_dtoh(self._tsdf_vol_cpu, self._tsdf_vol_gpu)
             cuda.memcpy_dtoh(self._weight_vol_cpu, self._weight_vol_gpu)
-            cuda.memcpy_dtoh(self._color_vol_cpu, self._color_vol_gpu)
-        return self._tsdf_vol_cpu, self._color_vol_cpu, self._weight_vol_cpu
+
+        return self._tsdf_vol_cpu, self._weight_vol_cpu
 
     def get_mesh(self):
         """Compute a mesh from the voxel volume using marching cubes.
         """
-        tsdf_vol, color_vol, _ = self.get_volume()
+        tsdf_vol, _ = self.get_volume()
 
         # Marching cubes
         verts, faces, norms, vals = measure.marching_cubes_lewiner(tsdf_vol,
                                                                    level=0)
-        verts_ind = np.round(verts).astype(int)
+
         verts = verts*self._voxel_size+self._vol_origin
         # voxel grid coordinates to world coordinates
-
-        # Get vertex colors
-        rgb_vals = color_vol[verts_ind[:, 0], verts_ind[:, 1], verts_ind[:, 2]]
-        colors_b = np.floor(rgb_vals/self._color_const)
-        colors_g = np.floor((rgb_vals-colors_b*self._color_const)/256)
-        colors_r = rgb_vals-colors_b*self._color_const-colors_g*256
-        colors = np.floor(np.asarray([colors_r, colors_g, colors_b])).T
-        colors = colors.astype(np.uint8)
-        return verts, faces, norms, colors
+        return verts, faces, norms
 
     def get_point_cloud(self, tsdf_thresh, weight_thresh):
         """
         compute the surface pointcloud from the voxel volume
         """
-        tsdf_vol, color_vol, weight_vol = self.get_volume()
+        tsdf_vol, weight_vol = self.get_volume()
 
         mask = np.logical_and(np.abs(tsdf_vol) < tsdf_thresh,
                               weight_vol > weight_thresh)
@@ -356,13 +308,8 @@ class TSDFVolume:
 
         pcd = pcd_ind.astype(float) * self._voxel_size+self._vol_origin
         pcd_ind = pcd_ind.astype(int)
-        rgb_vals = color_vol[pcd_ind[:, 0], pcd_ind[:, 1], pcd_ind[:, 2]]
-        colors_b = np.floor(rgb_vals/self._color_const)
-        colors_g = np.floor((rgb_vals-colors_b*self._color_const)/256)
-        colors_r = rgb_vals-colors_b*self._color_const-colors_g*256
-        colors = np.floor(np.asarray([colors_r, colors_g, colors_b])).T
-        colors = colors.astype(np.uint8)
-        return pcd, colors
+
+        return pcd
 
 
 def rigid_transform(xyz, transform):

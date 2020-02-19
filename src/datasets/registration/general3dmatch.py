@@ -2,10 +2,11 @@ import logging
 import numpy as np
 import os
 import os.path as osp
-
+from plyfile import PlyData
 import torch
 
 from torch_geometric.data import Dataset, download_url, extract_zip
+from torch_geometric.data import Data
 from src.datasets.registration.utils import rgbd2fragment_rough
 from src.datasets.registration.utils import rgbd2fragment_fine
 from src.datasets.registration.utils import compute_overlap_and_matches
@@ -13,8 +14,6 @@ from src.datasets.registration.utils import to_list
 from src.datasets.registration.utils import files_exist
 from src.datasets.registration.utils import makedirs
 from src.datasets.registration.utils import get_urls
-
-
 
 log = logging.getLogger(__name__)
 
@@ -46,7 +45,8 @@ class General3DMatch(Dataset):
                  pre_transform=None,
                  pre_filter=None,
                  verbose=False,
-                 debug=False):
+                 debug=False,
+                 detector=None):
         r"""
         the Princeton 3DMatch dataset from the
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -157,9 +157,9 @@ class General3DMatch(Dataset):
                 list_path_frames = sorted([osp.join(frames_dir, f)
                                            for f in os.listdir(frames_dir)
                                            if 'png' in f and 'depth' in f])
-                list_path_color = sorted([osp.join(frames_dir, f)
-                                          for f in os.listdir(frames_dir)
-                                          if 'png' in f and 'color' in f])
+                # list_path_color = sorted([osp.join(frames_dir, f)
+                #                          for f in os.listdir(frames_dir)
+                #                          if 'png' in f and 'color' in f])
                 list_path_trans = sorted([osp.join(frames_dir, f)
                                           for f in os.listdir(frames_dir)
                                           if 'pose' in f and 'txt' in f])
@@ -168,28 +168,20 @@ class General3DMatch(Dataset):
                     rgbd2fragment_rough(list_path_frames, path_intrinsic,
                                         list_path_trans, out_dir,
                                         self.num_frame_per_fragment,
-                                        pre_transform=self.pre_transform,
-                                        list_path_color=list_path_color)
+                                        pre_transform=self.pre_transform)
                 else:
                     assert len(list_path_frames) == len(list_path_trans), \
                         log.error("For the sequence {},"
                                   "the number of frame "
                                   "and the number of "
                                   "pose is different".format(frames_dir))
-                    if(len(list_path_frames) != len(list_path_color)):
-                        log.warning("For the sequence {},"
-                                    "the number of frame and "
-                                    "color image "
-                                    "is different".format(frames_dir))
-                    rgbd2fragment_fine(list_path_frames, path_intrinsic,
-                                       list_path_trans, list_path_color,
+                    rgbd2fragment_fine(list_path_frames,
+                                       path_intrinsic,
+                                       list_path_trans,
                                        out_dir, self.num_frame_per_fragment,
                                        voxel_size=self.tsdf_voxel_size,
                                        pre_transform=self.pre_transform,
                                        depth_thresh=self.depth_thresh)
-
-
-
 
     def _compute_matches_between_fragments(self, mod):
 
@@ -230,6 +222,42 @@ class General3DMatch(Dataset):
                                 np.save(out_path, match)
                                 ind += 1
 
+    def _compute_points_on_fragments(self, mod):
+        """
+        compute descriptors on fragments and save fragments with points on a pt file.
+        """
+        out_dir = osp.join(self.processed_dir,
+                           mod, 'fragment')
+        if files_exist([out_dir]):  # pragma: no cover
+            return
+        makedirs(out_dir)
+        for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
+
+            fragment_dir = osp.join(self.raw_dir,
+                                    mod,
+                                    scene_path)
+            list_fragment_path = sorted([osp.join(fragment_dir, f)
+                                         for f in os.listdir(fragment_dir)
+                                         if 'ply' in f])
+            table = dict()
+            for i, fragment_path in enumerate(list_fragment_path):
+                out_path = osp.join(out_dir, 'fragment_{:06d}.pt'.format(i))
+                table[i] = {'in_path': fragment_path, 'scene_path': scene_path,
+                            'out_path': out_path}
+                # read ply file
+                with open(fragment_path, 'rb') as f:
+                    data = PlyData.read(f)
+                pos = ([torch.tensor(data['vertex'][axis]) for axis in ['x', 'y', 'z']])
+                pos = torch.stack(pos, dim=-1)
+
+                # compute keypoints indices
+                data = Data(pos=pos)
+                if(self.pre_transform is not None):
+                    data = self.pre_transform(data)
+                if(self.detector is not None):
+                    data = self.detector(data)
+                torch.save(data, out_path)
+
     def process(self):
         if('test' not in self.mode):
             print("create fragments")
@@ -237,6 +265,7 @@ class General3DMatch(Dataset):
             print("compute matches")
             self._compute_matches_between_fragments(self.mode)
         else:
+            self._compute_points_on_fragments(self.mode)
             raise NotImplementedError("TODO :special treatment for the test")
 
     def get(self, idx):

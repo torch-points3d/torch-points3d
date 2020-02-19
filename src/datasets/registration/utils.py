@@ -175,7 +175,6 @@ def get_3D_bound(list_path_img,
 def rgbd2fragment_fine(list_path_img,
                        path_intrinsic,
                        list_path_trans,
-                       list_path_color,
                        out_path,
                        num_frame_per_fragment=5,
                        voxel_size=0.01,
@@ -204,26 +203,18 @@ def rgbd2fragment_fine(list_path_img,
         depth[depth > depth_thresh] = 0
         depth[depth <= 0] = 0
         intrinsic = np.loadtxt(path_intrinsic)
-        try:
-            color_image = imageio.imread(list_path_color[i])
-        except(IndexError, TypeError):
-            # If the color is not provided, add constant color
-            color_image = np.full((depth.shape[0], depth.shape[1], 3),
-                                  0.5, dtype=float)
         pose = np.loadtxt(list_path_trans[i])
-        tsdf_vol.integrate(color_image, depth,
+        tsdf_vol.integrate(depth,
                            intrinsic, pose,
                            obs_weight=1.)
         if((i+1) % num_frame_per_fragment == 0):
 
             if(save_pc):
-                pcd, color = tsdf_vol.get_point_cloud(0.2, 1)
-                torch_data = Data(pos=torch.from_numpy(pcd.copy()),
-                                  color=torch.from_numpy(color.copy()))
+                pcd = tsdf_vol.get_point_cloud(0.2, 1)
+                torch_data = Data(pos=torch.from_numpy(pcd.copy()))
             else:
-                verts, faces, norms, colors = tsdf_vol.get_mesh()
+                verts, faces, norms = tsdf_vol.get_mesh()
                 torch_data = Data(pos=torch.from_numpy(verts.copy()),
-                                  color=torch.from_numpy(colors),
                                   norm=torch.from_numpy(norms.copy()))
             if pre_transform is not None:
                 torch_data = pre_transform(torch_data)
@@ -245,11 +236,6 @@ def rgbd2fragment_fine(list_path_img,
                                             list_path_trans[begin:],
                                             depth_thresh)
                 tsdf_vol = fusion.TSDFVolume(vol_bnds, voxel_size=voxel_size)
-
-
-
-
-
 
 
 class PatchExtractor:
