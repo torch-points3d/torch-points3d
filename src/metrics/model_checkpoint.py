@@ -136,7 +136,14 @@ class ModelCheckpoint(object):
         -
     """
 
-    def __init__(self, load_dir: str, check_name: str, resume: bool, selection_stage: str, run_config: DictConfig):
+    def __init__(
+        self,
+        load_dir: str,
+        check_name: str,
+        resume: bool,
+        selection_stage: str,
+        run_config: DictConfig = DictConfig({}),
+    ):
         self._checkpoint = Checkpoint.load(load_dir, check_name, copy.deepcopy(run_config))
         self._resume = resume
         self._selection_stage = selection_stage
@@ -156,6 +163,10 @@ class ModelCheckpoint(object):
             return self.get_starting_epoch()
         else:
             return 1
+
+    @property
+    def data_config(self):
+        return self._checkpoint.run_config.data
 
     @property
     def selection_stage(self):

@@ -168,10 +168,11 @@ def main(cfg):
     )
 
     # Create model and datasets
-    dataset = instantiate_dataset(cfg.data)
     if not checkpoint.is_empty and cfg.training.resume:
+        dataset = instantiate_dataset(checkpoint.data_config)
         model = checkpoint.create_model(dataset, weight_name=cfg.training.weight_name)
     else:
+        dataset = instantiate_dataset(cfg.data)
         model = instantiate_model(cfg, dataset)
         model.instantiate_optimizers(cfg)
 
@@ -187,7 +188,7 @@ def main(cfg):
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)
     checkpoint.selection_stage = selection_stage
-    tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb, cfg.tensorboard)
+    tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb.log, cfg.tensorboard.log)
 
     launch_wandb(cfg, not cfg.wandb.public and cfg.wandb.log)
 

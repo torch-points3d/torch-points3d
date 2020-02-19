@@ -175,7 +175,7 @@ class S3DIS1x1Dataset(BaseDataset):
         self._create_dataloaders(train_dataset, test_dataset)
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -184,7 +184,7 @@ class S3DIS1x1Dataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
 ################################### Used for s3dis radius sphere ###################################
@@ -371,7 +371,7 @@ class S3DISDataset(BaseDataset):
         self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -380,7 +380,7 @@ class S3DISDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
 ################################### Used for fused s3dis radius sphere ###################################
@@ -584,7 +584,7 @@ class S3DISFusedDataset(BaseDataset):
         self.train_sampler = BalancedRandomSampler(self.train_dataset.center_labels)
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -594,4 +594,4 @@ class S3DISFusedDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

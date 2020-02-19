@@ -216,5 +216,5 @@ class BaseDataset:
 
     @staticmethod
     @abstractmethod
-    def get_tracker(model, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         pass
