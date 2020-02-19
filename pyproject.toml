@@ -20,6 +20,10 @@ torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev
 torch-scatter = "^1.4.0"
 torch-sparse = "==0.4.3"
 torch-cluster = "^1.4.5"
+jupyterlab = "^1.2.6"
+panel = "^0.8.0"
+pyvista = "^0.23.1"
+param = "^1.9.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
