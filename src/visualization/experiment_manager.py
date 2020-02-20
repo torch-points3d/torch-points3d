@@ -2,8 +2,12 @@ import os
 from glob import glob
 from collections import defaultdict
 import torch
-
+from plyfile import PlyData, PlyElement
+from numpy.lib import recfunctions as rfn
 from src.utils.colors import COLORS
+import panel as pn
+import numpy as np
+import pyvista as pv
 
 
 def colored_print(color, msg):
@@ -11,6 +15,9 @@ def colored_print(color, msg):
 
 
 class ExperimentFolder:
+
+    POS_KEYS = ["x", "y", "z"]
+
     def __init__(self, run_path):
         self._run_path = run_path
         self._model_name = None
@@ -36,6 +43,31 @@ class ExperimentFolder:
 
     def get_files(self, epoch, split):
         return os.listdir(os.path.join(self._viz_path, str(epoch), split))
+
+    def load_ply(self, epoch, split, file):
+        self._data_name = "data_{}_{}_{}".format(epoch, split, file)
+        if not hasattr(self, self._data_name):
+            path_to_ply = os.path.join(self._viz_path, str(epoch), split, file)
+            if os.path.exists(path_to_ply):
+                plydata = PlyData.read(path_to_ply)
+                arr = np.asarray([e.data for e in plydata.elements])
+                names = list(arr.dtype.names)
+                pos_indices = [names.index(n) for n in self.POS_KEYS]
+                non_pos_indices = {n: names.index(n) for n in names if n not in self.POS_KEYS}
+                arr_ = rfn.structured_to_unstructured(arr).squeeze()
+                xyz = arr_[:, pos_indices]
+                data = {"xyz": xyz, "columns": non_pos_indices.keys(), "name": self._data_name}
+                for n, i in non_pos_indices.items():
+                    data[n] = arr_[:, i]
+                setattr(self, self._data_name, data)
+            else:
+                print("The file doesn' t exist: Wierd !")
+        else:
+            return getattr(self, self._data_name)
+
+    @property
+    def current_pointcloud(self):
+        return getattr(self, self._data_name)
 
     @property
     def contains_viz(self):
@@ -105,6 +137,17 @@ class ExperimentManager(object):
     def model_name_wviz(self):
         keys = list(self._experiment_with_viz.keys())
         return [k.replace(".pt", "") for k in keys]
+
+    @property
+    def current_pointcloud(self):
+        return self._current_experiment.current_pointcloud
+
+    def load_ply_file(self, event):
+        if hasattr(self, "_current_split"):
+            self._current_file = event.obj.value
+            self._current_experiment.load_ply(self._current_epoch, self._current_split, self._current_file)
+        else:
+            return []
 
     def from_split_to_file(self, event):
         if hasattr(self, "_current_epoch"):
