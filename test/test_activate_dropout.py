@@ -1,4 +1,5 @@
 import unittest
+from omegaconf import DictConfig
 from torch.nn import (
     Sequential as Seq,
     Linear as Lin,
@@ -24,7 +25,7 @@ def MLP(channels):
 
 class MockModel(BaseModel):
     def __init__(self):
-        super(MockModel, self).__init__({})
+        super(MockModel, self).__init__(DictConfig({"conv_type": "Dummy"}))
 
         self._channels = [12, 12, 12, 12]
         self.nn = MLP(self._channels)

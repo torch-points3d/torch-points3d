@@ -27,9 +27,8 @@ models:
     KPConvPaper:
         class: kpconv.KPConvPaper
         conv_type: "PARTIAL_DENSE"
-        use_category: use_category
+        use_category: ${data.use_category}
         define_constants:
-            use_category: ${data.use_category}
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
             bn_momentum: 0.02
@@ -114,9 +113,8 @@ models:
     KPConvDeformablePaper:
         class: kpconv.KPConvPaper
         conv_type: "PARTIAL_DENSE"
-        use_category: use_category
+        use_category: ${data.use_category}
         define_constants:
-            use_category: ${data.use_category}
             in_grid_size: ${data.first_subsampling}
             in_feat: 64
             bn_momentum: 0.02

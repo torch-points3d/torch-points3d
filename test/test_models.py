@@ -14,7 +14,6 @@ from test.mockdatasets import MockDatasetGeometric
 
 from src import instantiate_model
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.utils.config import set_format, merge_omega_conf
 
 # calls resolve_model, then find_model_using_name
 
@@ -22,15 +21,12 @@ seed = 0
 torch.manual_seed(seed)
 
 
-def _find_model_using_name(model_class, task, model_config, dataset):
-    resolve_model(model_config, dataset, task)
-    return instantiate_model(model_class, task, model_config, dataset)
-
-
-def load_model_config(task, model_type):
+def load_model_config(task, model_type, model_name):
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
     config = OmegaConf.load(models_conf)
-    return config.models
+    config.update("model_name", model_name)
+    config.update("data.task", "segmentation")
+    return config
 
 
 class TestModelUtils(unittest.TestCase):
@@ -40,43 +36,36 @@ class TestModelUtils(unittest.TestCase):
 
     def test_createall(self):
         for type_file in self.model_type_files:
-
             associated_task = type_file.split("/")[-2]
-            models_config = OmegaConf.load(type_file).models
-            for model_name in models_config.keys():
+            models_config = OmegaConf.load(type_file)
+            models_config.update("data.task", associated_task)
+            models_config = OmegaConf.merge(models_config, self.data_config)
+            for model_name in models_config.models.keys():
                 print(model_name)
                 if model_name not in ["MyTemplateModel"]:
-                    model_config = models_config[model_name]
-                    model_class = getattr(model_config, "class")
-                    model_config = OmegaConf.merge(model_config, self.data_config)
-                    _find_model_using_name(model_class, associated_task, model_config, MockDatasetGeometric(6))
+                    models_config.update("model_name", model_name)
+                    instantiate_model(models_config, MockDatasetGeometric(6))
 
     def test_pointnet2(self):
-        params = load_model_config("segmentation", "pointnet2")["pointnet2"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
+        params = load_model_config("segmentation", "pointnet2", "pointnet2")
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model = instantiate_model(params, dataset)
         model.set_input(dataset[0])
         model.forward()
         model.backward()
 
     def test_kpconv(self):
-        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
+        params = load_model_config("segmentation", "kpconv", "SimpleKPConv")
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model = instantiate_model(params, dataset)
         model.set_input(dataset[0])
         model.forward()
         model.backward()
 
     def test_kpconvpretransform(self):
-        params = load_model_config("segmentation", "kpconv")["SimpleKPConv"]
-        model_config = OmegaConf.merge(params, self.data_config)
+        params = load_model_config("segmentation", "kpconv", "SimpleKPConv")
         dataset = MockDatasetGeometric(5)
-        model_class = getattr(params, "class")
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model = instantiate_model(params, dataset)
         model.eval()
         dataset_transform = MockDatasetGeometric(5)
         dataset_transform.set_strategies(model)
@@ -92,33 +81,28 @@ class TestModelUtils(unittest.TestCase):
         # model.backward()
 
     def test_largekpconv(self):
-        params = load_model_config("segmentation", "kpconv")["KPConvPaper"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
+        params = load_model_config("segmentation", "kpconv", "KPConvPaper")
+        params.update("data.use_category", True)
+        params.update("data.first_subsampling", 0.02)
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model = instantiate_model(params, dataset)
         model.set_input(dataset[0])
         model.forward()
         model.backward()
 
     def test_pointnet2ms(self):
-        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
+        params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
         dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model = instantiate_model(params, dataset)
         model.set_input(dataset[0])
         model.forward()
         model.backward()
 
     def test_accumulated_gradient(self):
-        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
+        params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
         config_training = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
         dataset = MockDatasetGeometric(5)
-        model_config = OmegaConf.merge(model_config, config_training.training)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
+        model = instantiate_model(params, dataset)
         model.instantiate_optimizers(config_training)
         model.set_input(dataset[0])
         expected_make_optimizer_step = [False, False, True, False, False, True, False, False, True, False]

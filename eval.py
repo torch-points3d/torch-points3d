@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 import hydra
 import logging
 from omegaconf import OmegaConf
@@ -14,12 +13,11 @@ from src.datasets.base_dataset import BaseDataset
 # Import from metrics
 from src.metrics.base_tracker import BaseTracker
 from src.metrics.colored_tqdm import Coloredtqdm as Ctq
-from src.metrics.model_checkpoint import get_model_checkpoint, ModelCheckpoint
+from src.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.utils.colors import COLORS
-from src.utils.config import set_format
 
 log = logging.getLogger(__name__)
 
@@ -63,57 +61,35 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
     test_epoch(model, dataset, device, tracker, checkpoint)
 
 
-@hydra.main(config_path="conf/config.yaml")
+@hydra.main(config_path="conf/eval.yaml")
 def main(cfg):
     # Get device
-    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.eval.cuda) else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.cuda) else "cpu")
     log.info("DEVICE : {}".format(device))
 
-    # Get task and model_name
-    tested_task = cfg.data.task
-    tested_model_name = cfg.model_name
-
-    # Find and create associated model
-    model_config = getattr(cfg.models, tested_model_name, None)
-
-    cfg_eval = set_format(model_config, cfg.eval)
-
     # Enable CUDNN BACKEND
-    torch.backends.cudnn.enabled = cfg_eval.enable_cudnn
+    torch.backends.cudnn.enabled = cfg.enable_cudnn
 
-    # Find and create associated dataset
-    dataset_config = cfg.data
-    dataset_class = getattr(dataset_config, "class")
-    dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-    dataset = instantiate_dataset(dataset_class, tested_task, dataset_config, cfg_eval)
+    # Checkpoint
+    checkpoint = ModelCheckpoint(cfg.checkpoint_dir, cfg.model_name, cfg.weight_name, strict=True)
 
-    # Find and create associated model
-    resolve_model(model_config, dataset, tested_task)
-    model_class = getattr(model_config, "class")
-    cfg_training = set_format(model_config, cfg.training)
-    model_config = OmegaConf.merge(model_config, cfg_training)
-    model = instantiate_model(model_class, tested_task, model_config, dataset)
-
+    # Create model and datasets
+    dataset = instantiate_dataset(checkpoint.data_config)
+    model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
     log.info(model)
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
-    model.eval()
-    if cfg_eval.enable_dropout:
-        model.enable_dropout_in_eval()
-
-    # Set sampling / search strategies
-    if cfg_training.precompute_multi_scale:
-        dataset.set_strategies(model)
-
-    model = model.to(device)
-    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-    log.info("Model size = %i", params)
-
-    tracker: BaseTracker = dataset.get_tracker(model, tested_task, dataset, cfg.wandb, cfg.tensorboard)
-
-    checkpoint = get_model_checkpoint(
-        model, cfg_eval.checkpoint_dir, tested_model_name, True, cfg_eval.weight_name, "test"
+    # Set dataloaders
+    dataset.create_dataloaders(
+        model, cfg.batch_size, cfg.shuffle, cfg.num_workers, cfg.precompute_multi_scale,
     )
+    log.info(dataset)
+
+    if cfg.enable_dropout:
+        model.enable_dropout_in_eval()
+    model = model.to(device)
+
+    tracker: BaseTracker = dataset.get_tracker(model, dataset, False, False)
 
     # Run training / evaluation
     run(cfg, model, dataset, device, tracker, checkpoint)

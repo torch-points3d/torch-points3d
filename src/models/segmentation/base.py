@@ -38,7 +38,7 @@ class Segmentation_MP(UnetBasedModel):
         """
         self.input = data
         self.labels = data.y
-        self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
+        self.batch_idx = data.batch
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
