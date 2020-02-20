@@ -7,7 +7,6 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 
 from src.metrics.confusion_matrix import ConfusionMatrix
-from src.metrics.model_checkpoint import ModelCheckpoint
 from src.models.base_model import BaseModel
 
 log = logging.getLogger(__name__)

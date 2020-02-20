@@ -29,9 +29,6 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         self.npoint = npoint
         self.mlps = nn.ModuleList()
         for i in range(len(radii)):
-            mlp_spec = down_conv_nn[i]
-            if self.use_xyz:
-                mlp_spec[0] += 3
             self.mlps.append(pt_utils.SharedMLP(down_conv_nn[i], bn=bn, activation=get_activation(activation)))
 
     def _prepare_features(self, x, pos, new_pos, idx):
