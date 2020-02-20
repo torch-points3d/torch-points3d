@@ -25,7 +25,7 @@ class BaseDataset:
         # Default dataset path
         class_name = self.__class__.__name__.lower().replace("dataset", "")
         self._data_path = os.path.join(dataset_opt.dataroot, class_name)
-
+        self._batch_size = None
         self.strategies = {}
 
         self.train_sampler = None
@@ -215,9 +215,21 @@ class BaseDataset:
         pass
 
     def __repr__(self):
-        message = "Dataset: %s \n" % self.__class__
+        message = "Dataset: %s \n" % self.__class__.__name__
         for attr in self.__dict__:
             if "transform" in attr:
                 message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
-        return message[:-1]
+        for attr in self.__dict__:
+            if attr.endswith("_dataset"):
+                dataset = getattr(self, attr)
+                if dataset:
+                    size = len(dataset)
+                else:
+                    size = 0
+                message += "Size of {}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, size)
+        for key, attr in self.__dict__.items():
+            if key.endswith("_sampler") and attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
+        message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
+        return message
 

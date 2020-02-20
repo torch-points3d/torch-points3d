@@ -183,7 +183,6 @@ def main(cfg):
     log.info(model)
     model.log_optimizers()
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
-    log.info(dataset)
 
     # Set dataloaders
     dataset.create_dataloaders(
@@ -193,6 +192,7 @@ def main(cfg):
         cfg.training.num_workers,
         cfg.training.precompute_multi_scale,
     )
+    log.info(dataset)
 
     # Choose selection stage
     selection_stage = determine_stage(cfg, dataset.has_val_loader)

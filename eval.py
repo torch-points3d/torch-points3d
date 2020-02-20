@@ -78,12 +78,13 @@ def main(cfg):
     model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
     log.info(model)
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
-    log.info(dataset)
 
     # Set dataloaders
     dataset.create_dataloaders(
         model, cfg.batch_size, cfg.shuffle, cfg.num_workers, cfg.precompute_multi_scale,
     )
+    log.info(dataset)
+
     if cfg.enable_dropout:
         model.enable_dropout_in_eval()
     model = model.to(device)
