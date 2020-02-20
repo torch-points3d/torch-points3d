@@ -24,3 +24,7 @@ repos:
             "--ignore-init-module-imports",
             "--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy",
           ]
+  - repo: git://github.com/mantic-data/pre-commit-jupyter
+    sha: master
+    hooks:
+      - id: python-nbconvert

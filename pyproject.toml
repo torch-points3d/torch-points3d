@@ -20,10 +20,6 @@ torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev
 torch-scatter = "^1.4.0"
 torch-sparse = "==0.4.3"
 torch-cluster = "^1.4.5"
-jupyterlab = "^1.2.6"
-panel = "^0.8.0"
-pyvista = "^0.23.1"
-param = "^1.9.3"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
@@ -32,6 +28,10 @@ flake8 = "^3.7"
 rope = "^0.14.0"
 pre-commit = "^1.21.0"
 black = "^19.10b0"
+jupyterlab = "^1.2.6"
+pyvista = "^0.23.1"
+panel = "^0.8.0"
+param = "^1.9.3"
 
 [tool.black]
 line-length = 120

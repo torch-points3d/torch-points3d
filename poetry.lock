@@ -10,7 +10,7 @@ version = "0.9.0"
 six = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 name = "appdirs"
 optional = false
@@ -18,7 +18,7 @@ python-versions = "*"
 version = "1.4.3"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Disable App Nap on OS X 10.9"
 marker = "sys_platform == \"darwin\" or platform_system == \"Darwin\""
 name = "appnope"
@@ -55,7 +55,7 @@ python = "<3.8"
 version = ">=1.4.0,<1.5"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Classes Without Boilerplate"
 name = "attrs"
 optional = false
@@ -80,7 +80,7 @@ version = "1.5"
 pycodestyle = ">=2.5.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Specifications for callback functions passed in to an API"
 name = "backcall"
 optional = false
@@ -108,19 +108,19 @@ typed-ast = ">=1.4.0"
 d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "An easy safelist-based HTML-sanitizing tool."
 name = "bleach"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "3.1.0"
+version = "3.1.1"
 
 [package.dependencies]
 six = ">=1.9.0"
 webencodings = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Interactive plots and applications in the browser from Python"
 name = "bokeh"
 optional = false
@@ -181,7 +181,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "7.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Cross-platform colored terminal text."
 marker = "sys_platform == \"win32\""
 name = "colorama"
@@ -221,7 +221,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*"
 version = "4.4.1"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "XML bomb protection for Python stdlib modules"
 name = "defusedxml"
 optional = false
@@ -248,7 +248,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.16"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Discover and load entry points from installed packages."
 name = "entrypoints"
 optional = false
@@ -445,7 +445,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.8"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Library for reading and writing a wide range of image, video, scientific, and volumetric data formats."
 name = "imageio"
 optional = false
@@ -464,7 +464,7 @@ gdal = ["gdal"]
 itk = ["itk"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Read metadata from Python packages"
 marker = "python_version < \"3.8\""
 name = "importlib-metadata"
@@ -489,7 +489,7 @@ python-versions = ">=2.7,!=3.0,!=3.1,!=3.2,!=3.3"
 version = "1.0.2"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "IPython Kernel for Jupyter"
 name = "ipykernel"
 optional = false
@@ -507,7 +507,7 @@ traitlets = ">=4.1.0"
 test = ["pytest", "pytest-cov", "flaky", "nose"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "IPython: Productive Interactive Computing"
 name = "ipython"
 optional = false
@@ -539,7 +539,7 @@ qtconsole = ["qtconsole"]
 test = ["nose (>=0.10.1)", "requests", "testpath", "pygments", "nbformat", "ipykernel", "numpy (>=1.14)"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Vestigial utilities from IPython"
 name = "ipython-genutils"
 optional = false
@@ -572,7 +572,7 @@ requirements = ["pipreqs", "pip-api"]
 xdg_home = ["appdirs (>=1.4.0)"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "An autocompletion tool for Python that can be used for text editors."
 name = "jedi"
 optional = false
@@ -609,7 +609,7 @@ python-versions = "*"
 version = "0.14.1"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A Python implementation of the JSON5 data format."
 name = "json5"
 optional = false
@@ -636,7 +636,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "An implementation of JSON Schema validation for Python"
 name = "jsonschema"
 optional = false
@@ -658,7 +658,7 @@ format = ["idna", "jsonpointer (>1.13)", "rfc3987", "strict-rfc3339", "webcolors
 format_nongpl = ["idna", "jsonpointer (>1.13)", "webcolors", "rfc3986-validator (>0.1.0)", "rfc3339-validator"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Jupyter protocol implementation and client libraries"
 name = "jupyter-client"
 optional = false
@@ -677,7 +677,7 @@ traitlets = "*"
 test = ["ipykernel", "ipython", "mock", "pytest"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Jupyter core package. A base package on which Jupyter projects rely."
 name = "jupyter-core"
 optional = false
@@ -689,7 +689,7 @@ pywin32 = ">=1.0"
 traitlets = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "The JupyterLab notebook server extension."
 name = "jupyterlab"
 optional = false
@@ -707,7 +707,7 @@ docs = ["sphinx", "recommonmark", "sphinx-rtd-theme", "sphinx-copybutton"]
 test = ["pytest", "pytest-check-links", "requests"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "JupyterLab Server"
 name = "jupyterlab-server"
 optional = false
@@ -800,12 +800,12 @@ python-versions = "*"
 version = "0.6.1"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "I/O for many mesh formats"
 name = "meshio"
 optional = false
 python-versions = ">=3.5"
-version = "4.0.1"
+version = "4.0.2"
 
 [package.dependencies]
 numpy = "*"
@@ -816,7 +816,7 @@ exodus = ["netcdf4"]
 hdf5 = ["h5py"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "The fastest markdown parser in pure Python"
 name = "mistune"
 optional = false
@@ -840,7 +840,7 @@ livereload = ">=2.5.1"
 tornado = ">=5.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Converting Jupyter Notebooks"
 name = "nbconvert"
 optional = false
@@ -868,7 +868,7 @@ serve = ["tornado (>=4.0)"]
 test = ["pytest", "pytest-cov", "ipykernel", "jupyter-client (>=5.3.1)", "ipywidgets (>=7)", "pebble", "mock"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "The Jupyter Notebook format"
 name = "nbformat"
 optional = false
@@ -917,7 +917,7 @@ python-versions = "*"
 version = "1.3.5"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A web-based notebook environment for interactive computing"
 name = "notebook"
 optional = false
@@ -990,7 +990,7 @@ dev27 = ["nox", "pre-commit", "pytest", "twine", "coveralls", "flake8"]
 lint = ["black", "flake8"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Core utilities for Python packages"
 name = "packaging"
 optional = false
@@ -1018,7 +1018,7 @@ pytz = ">=2017.2"
 test = ["pytest (>=4.0.2)", "pytest-xdist", "hypothesis (>=3.58)"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Utilities for writing pandoc filters in python"
 name = "pandocfilters"
 optional = false
@@ -1026,7 +1026,7 @@ python-versions = "*"
 version = "1.4.2"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A high level app and dashboarding solution for Python."
 name = "panel"
 optional = false
@@ -1049,7 +1049,7 @@ recommended = ["notebook (>=5.4)", "holoviews (>=1.12.0)", "matplotlib", "pillow
 tests = ["flake8", "parameterized", "pytest", "scipy", "nbsmoke (>=0.2.0)", "pytest-cov", "codecov", "hvplot", "plotly", "altair", "streamz", "vega-datasets", "vtk", "scikit-learn", "datashader", "jupyter-bokeh", "django"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Declarative Python programming using Parameters."
 name = "param"
 optional = false
@@ -1061,7 +1061,7 @@ all = ["flake8", "nose"]
 tests = ["nose", "flake8"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A Python Parser"
 name = "parso"
 optional = false
@@ -1088,7 +1088,7 @@ python-versions = "*"
 version = "0.1.2"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Pexpect allows easy control of interactive console applications."
 marker = "sys_platform != \"win32\""
 name = "pexpect"
@@ -1100,7 +1100,7 @@ version = "4.8.0"
 ptyprocess = ">=0.5"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Tiny 'shelve'-like database with concurrency support"
 name = "pickleshare"
 optional = false
@@ -1153,7 +1153,7 @@ python = "<3.7"
 version = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python client for the Prometheus monitoring system."
 name = "prometheus-client"
 optional = false
@@ -1178,7 +1178,7 @@ six = "*"
 test = ["pytest (>=2.7.3)", "pytest-cov", "coveralls", "futures", "pytest-benchmark", "mock"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Library for building powerful interactive command lines in Python"
 name = "prompt-toolkit"
 optional = false
@@ -1212,7 +1212,7 @@ version = "5.6.7"
 enum = ["enum34"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Run a subprocess in a pseudo terminal"
 marker = "sys_platform != \"win32\" or os_name != \"nt\""
 name = "ptyprocess"
@@ -1248,7 +1248,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.5.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "python package common tasks for users (e.g. copy examples, fetch data, ...)"
 name = "pyct"
 optional = false
@@ -1272,7 +1272,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.1.1"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Pygments is a syntax highlighting package written in Python."
 name = "pygments"
 optional = false
@@ -1336,7 +1336,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "2.4.6"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Persistent/Functional/Immutable data structures"
 name = "pyrsistent"
 optional = false
@@ -1366,7 +1366,7 @@ python-versions = "*"
 version = "2019.3"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Easier Pythonic interface to VTK"
 name = "pyvista"
 optional = false
@@ -1385,7 +1385,7 @@ vtk = "*"
 colormaps = ["matplotlib", "colorcet", "cmocean"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Bidirectional communication for the PyViz ecosystem."
 name = "pyviz-comms"
 optional = false
@@ -1401,7 +1401,7 @@ build = ["param (>=1.7.0)", "setuptools"]
 tests = ["flake8", "nose"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python for Window Extensions"
 marker = "sys_platform == \"win32\""
 name = "pywin32"
@@ -1410,7 +1410,7 @@ python-versions = "*"
 version = "227"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Python bindings for the winpty library"
 marker = "os_name == \"nt\""
 name = "pywinpty"
@@ -1538,7 +1538,7 @@ version = "1.4.1"
 numpy = ">=1.13.3"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A Great Dane turned Python environment detective"
 name = "scooby"
 optional = false
@@ -1549,7 +1549,7 @@ version = "0.5.2"
 cpu = ["psutil", "mkl"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Send file to trash natively under Mac OS X, Windows and Linux."
 name = "send2trash"
 optional = false
@@ -1651,7 +1651,7 @@ python = ">=3"
 version = ">=0.26"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Terminals served to xterm.js using Tornado websockets"
 name = "terminado"
 optional = false
@@ -1664,7 +1664,7 @@ pywinpty = ">=0.5"
 tornado = ">=4"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Test utilities for code working with files and commands"
 name = "testpath"
 optional = false
@@ -1801,7 +1801,7 @@ version = "4.42.1"
 dev = ["py-make (>=0.1.0)", "twine", "argopt", "pydoc-markdown"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Traitlets Python config system"
 name = "traitlets"
 optional = false
@@ -1870,7 +1870,7 @@ tornado = "*"
 websocket-client = "*"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "VTK is an open-source toolkit for 3D computer graphics, image processing, and visualization"
 name = "vtk"
 optional = false
@@ -1922,7 +1922,7 @@ pyobjc-framework-FSEvents = ">=4.2.2"
 watchmedo = ["PyYAML (>=3.10)", "argh (>=0.24.1)"]
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Measures number of Terminal column cells of wide-character codes"
 name = "wcwidth"
 optional = false
@@ -1930,7 +1930,7 @@ python-versions = "*"
 version = "0.1.8"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Character encoding aliases for legacy web content"
 name = "webencodings"
 optional = false
@@ -1981,7 +1981,7 @@ python-versions = "*"
 version = "1.11.2"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 marker = "python_version < \"3.8\""
 name = "zipp"
@@ -1994,7 +1994,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "a4f6f3e59fd1e38a42a162c10cdf58d49dd81373a418b25cfa1f91542396b43d"
+content-hash = "193ec623722c0d2e59badf6c9aa740558b52556123108259537c6dfe4cda2147"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2033,8 +2033,7 @@ black = [
     {file = "black-19.10b0.tar.gz", hash = "sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539"},
 ]
 bleach = [
-    {file = "bleach-3.1.0-py2.py3-none-any.whl", hash = "sha256:213336e49e102af26d9cde77dd2d0397afabc5a6bf2fed985dc35b5d1e285a16"},
-    {file = "bleach-3.1.0.tar.gz", hash = "sha256:3fdf7f77adcf649c9911387df51254b813185e32b2c6619f690b593a617e19fa"},
+    {file = "bleach-3.1.1.tar.gz", hash = "sha256:aa8b870d0f46965bac2c073a93444636b0e1ca74e9777e34f03dd494b8a59d48"},
 ]
 bokeh = [
     {file = "bokeh-1.4.0.tar.gz", hash = "sha256:c60d38a41a777b8147ee4134e6142cea8026b5eebf48149e370c44689869dce7"},
@@ -2415,8 +2414,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 meshio = [
-    {file = "meshio-4.0.1-py3-none-any.whl", hash = "sha256:24a1912ac76c494b3b71b52c2759b05e5e9bdd63f5cae5a9f280cb28c10a3336"},
-    {file = "meshio-4.0.1.tar.gz", hash = "sha256:3cfccff47c912f59b94fe579448527e3aaf08f88ff27220c8249ae31f6615b8d"},
+    {file = "meshio-4.0.2-py3-none-any.whl", hash = "sha256:c4a5bc6cbf2a6a14e0fa782c91b1a01a33fb38b5fc83b566096ec0c48425a89a"},
+    {file = "meshio-4.0.2.tar.gz", hash = "sha256:89b97f7dc0127fd339f585a45541f4f0bad43eab44a37ea3d1df83733c4f2408"},
 ]
 mistune = [
     {file = "mistune-0.8.4-py2.py3-none-any.whl", hash = "sha256:88a1051873018da288eee8538d476dffe1262495144b33ecb586c4ab266bb8d4"},
