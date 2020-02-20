@@ -12,28 +12,29 @@ from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
 from src.utils.colors import COLORS
+from src.models.base_model import BaseModel
 
 # A logger for this file
 log = logging.getLogger(__name__)
 
 
 class BaseDataset:
-    def __init__(self, dataset_opt, training_opt):
+    def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
 
         # Default dataset path
         class_name = self.__class__.__name__.lower().replace("dataset", "")
         self._data_path = os.path.join(dataset_opt.dataroot, class_name)
-
-        self.training_opt = training_opt
+        self._batch_size = None
         self.strategies = {}
-        self._batch_collate_function = BaseDataset._get_collate_function(
-            training_opt.conv_type, training_opt.precompute_multi_scale
-        )
 
         self.train_sampler = None
         self.test_sampler = None
         self.val_sampler = None
+
+        self.train_dataset = None
+        self.test_dataset = None
+        self.val_dataset = None
 
         self.pre_transform = None
         self.test_transform = None
@@ -45,11 +46,6 @@ class BaseDataset:
                 new_name = key_name.replace("transforms", "transform")
                 try:
                     transform = instantiate_transforms(getattr(dataset_opt, key_name))
-                    log.info(
-                        "Set attr:{} {} {}for dataset with following transform {}".format(
-                            COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform
-                        )
-                    )
                 except Exception:
                     log.exception("Error trying to create {}".format(new_name))
                     continue
@@ -58,53 +54,55 @@ class BaseDataset:
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
-            if conv_type == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower():
+            if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
             else:
                 raise NotImplementedError()
 
         if (
-            conv_type == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
-            or conv_type == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
+            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
+            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
         ):
             return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
-        elif conv_type == ConvolutionFormat.DENSE.value[-1].lower():
+        elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
             return lambda datalist: SimpleBatch.from_data_list(datalist)
 
-    def _create_dataloaders(self, train_dataset, test_dataset, val_dataset=None):
+    def create_dataloaders(
+        self, model: BaseModel, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
+    ):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
-        self._num_classes = train_dataset.num_classes
-        self._feature_dimension = train_dataset.num_features
-        dataloader = partial(torch.utils.data.DataLoader, collate_fn=self._batch_collate_function,)
-        
+        conv_type = model.conv_type
+        self._batch_size = batch_size
+        batch_collate_function = BaseDataset._get_collate_function(conv_type, precompute_multi_scale)
+        dataloader = partial(torch.utils.data.DataLoader, collate_fn=batch_collate_function)
+
         if self.train_sampler:
             log.info(self.train_sampler)
-        
+
         self._train_loader = dataloader(
-            train_dataset,
-            batch_size=self.training_opt.batch_size,
-            shuffle=self.training_opt.shuffle and not self.train_sampler,
-            num_workers=self.training_opt.num_workers,
+            self.train_dataset,
+            batch_size=batch_size,
+            shuffle=shuffle and not self.train_sampler,
+            num_workers=num_workers,
             sampler=self.train_sampler,
         )
 
         self._test_loader = dataloader(
-            test_dataset,
-            batch_size=self.training_opt.batch_size,
-            shuffle=False,
-            num_workers=self.training_opt.num_workers,
-            sampler=self.test_sampler,
+            self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
         )
 
-        if val_dataset:
+        if self.val_dataset:
             self._val_loader = dataloader(
-                val_dataset,
-                batch_size=self.training_opt.batch_size,
+                self.val_dataset,
+                batch_size=batch_size,
                 shuffle=False,
-                num_workers=self.training_opt.num_workers,
+                num_workers=num_workers,
                 sampler=self.val_sampler,
             )
+
+        if precompute_multi_scale:
+            self.set_strategies(model)
 
     @property
     def has_val_loader(self):
@@ -169,25 +167,27 @@ class BaseDataset:
 
     @property
     def num_classes(self):
-        return self._num_classes
+        return self.train_dataset.num_classes
 
     @property
     def weight_classes(self):
-        return getattr(self._train_loader.dataset, "weight_classes", None)
+        return getattr(self.train_dataset, "weight_classes", None)
 
     @property
     def feature_dimension(self):
-        return self._feature_dimension
+        return self.train_dataset.num_features
 
     @property
     def batch_size(self):
-        return self.training_opt.batch_size
+        return self._batch_size
 
     @property
     def num_batches(self):
-        return {"train": len(self._train_loader), \
-                "test": len(self._test_loader), \
-                "val": len(self._val_loader) if self.has_val_loader else 0}
+        return {
+            "train": len(self._train_loader),
+            "test": len(self._test_loader),
+            "val": len(self._val_loader) if self.has_val_loader else 0,
+        }
 
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
@@ -211,5 +211,25 @@ class BaseDataset:
 
     @staticmethod
     @abstractmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         pass
+
+    def __repr__(self):
+        message = "Dataset: %s \n" % self.__class__.__name__
+        for attr in self.__dict__:
+            if "transform" in attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+        for attr in self.__dict__:
+            if attr.endswith("_dataset"):
+                dataset = getattr(self, attr)
+                if dataset:
+                    size = len(dataset)
+                else:
+                    size = 0
+                message += "Size of {}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, size)
+        for key, attr in self.__dict__.items():
+            if key.endswith("_sampler") and attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
+        message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
+        return message
+

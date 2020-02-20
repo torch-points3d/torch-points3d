@@ -1,8 +1,6 @@
 from torch.optim import lr_scheduler
 from omegaconf.dictconfig import DictConfig
 import logging
-from src.utils.config import merge_omega_conf
-
 
 log = logging.getLogger(__name__)
 

@@ -11,8 +11,8 @@ AVAILABLE_NUMBERS = ["10", "40"]
 
 
 class ModelNetDataset(BaseDataset):
-    def __init__(self, dataset_opt, training_opt):
-        super().__init__(dataset_opt, training_opt)
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
 
         number = dataset_opt.number
         if str(number) not in AVAILABLE_NUMBERS:
@@ -22,12 +22,10 @@ class ModelNetDataset(BaseDataset):
         pre_transform = T.Compose([T.NormalizeScale(), MeshToNormal()])
         transform = T.SamplePoints(dataset_opt.num_points) if contains_key(dataset_opt, "num_points") else None
 
-        train_dataset = ModelNet(
+        self.train_dataset = ModelNet(
             self._data_path, name=str(number), train=True, transform=transform, pre_transform=pre_transform,
         )
 
-        test_dataset = ModelNet(
+        self.test_dataset = ModelNet(
             self._data_path, name=str(number), train=False, transform=transform, pre_transform=pre_transform,
         )
-
-        self._create_dataloaders(train_dataset, test_dataset)

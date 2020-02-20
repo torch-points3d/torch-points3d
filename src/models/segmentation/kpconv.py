@@ -4,6 +4,7 @@ from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
 from torch.nn import Sequential, BatchNorm1d, Dropout, Linear
 import torch.nn.functional as F
+from torch import nn
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *
@@ -21,7 +22,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         # Extract parameters from the dataset
         self._num_classes = dataset.num_classes
         self._weight_classes = dataset.weight_classes
-        self._use_category = option.use_category
+        self._use_category = getattr(option, "use_category", False)
         if self._use_category:
             if not dataset.class_to_segments:
                 raise ValueError(

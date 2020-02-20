@@ -159,7 +159,7 @@ models:
             npoint: [512, 128]
             radii: [[0.2], [0.4]]
             nsamples: [[64], [64]]
-            down_conv_nn: [[[FEAT, 64, 64, 128]], [[128, 128, 128, 256]]]
+            down_conv_nn: [[[FEAT + 3, 64, 64, 128]], [[128, 128, 128, 256]]]
         innermost:
             module_name: GlobalDenseBaseModule
             nn: [256 + 3, 256, 512, 1024]
@@ -169,7 +169,7 @@ models:
                 [
                     [1024 + 256, 256, 256],
                     [256 + 128, 256, 128],
-                    [128 + FEAT, 128, 128, 128],
+                    [128 + FEAT + 3, 128, 128, 128],
                 ]
             skip: True
         mlp_cls:

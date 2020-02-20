@@ -5,6 +5,7 @@ import torch
 import os
 import sys
 from collections import defaultdict
+from omegaconf import DictConfig
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
@@ -38,7 +39,7 @@ class MockLossModule(torch.nn.Module, BaseInternalLossModule):
 
 class MockModel(BaseModel):
     def __init__(self):
-        super().__init__({})
+        super().__init__(DictConfig({"conv_type": "dummy"}))
 
         self.model1 = MockLossModule({"mock_loss_1": torch.tensor(0.5), "mock_loss_2": torch.tensor(0.3),})
 
@@ -50,7 +51,7 @@ class TestInternalLosses(unittest.TestCase):
         self.model = MockModel()
 
     def test_get_named_internal_losses(self):
-        
+
         d = defaultdict(list)
         d["mock_loss_1"].append(torch.tensor(0.5))
         d["mock_loss_2"].append(torch.tensor(0.3))
