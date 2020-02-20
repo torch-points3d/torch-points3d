@@ -24,3 +24,8 @@ repos:
             "--ignore-init-module-imports",
             "--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy",
           ]
+  - repo: https://github.com/kynan/nbstripout
+    rev: master
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"
