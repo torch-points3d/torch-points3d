@@ -90,12 +90,13 @@ The data reported below correspond to the part segmentation problem for Shapenet
 | [```RSCNN_MSG```](/benchmark/shapenet/rscnn_original.md) | No | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04 | 82.811 | 85.3 |
 
 ## Explore your experiments
+We provide a [notebook](dashboard/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 ```
-python scripts/find_runs.py
+jupyter labextension install @pyviz/jupyterlab_pyviz
 ```
-And you should see something like that
+Run through the notebook and you should see a dashboard starting that looks like the following:
 
-![experiments](/docs/imgs/find_runs.PNG)
+![dashboard](docs/imgs/Dashboard_demo.gif)
 
 ## Troubleshooting
 #### Undefined symbol / Updating pytorch
