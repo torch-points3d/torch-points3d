@@ -293,14 +293,14 @@ class S3DISOriginal(InMemoryDataset):
             (f, room_name, osp.join(self.raw_dir, f, room_name))
             for f in train_areas
             for room_name in os.listdir(osp.join(self.raw_dir, f))
-            if ".DS_Store" != room_name
+            if os.path.isdir(osp.join(self.raw_dir, f, room_name))
         ]
 
         test_files = [
             (f, room_name, osp.join(self.raw_dir, f, room_name))
             for f in test_areas
             for room_name in os.listdir(osp.join(self.raw_dir, f))
-            if ".DS_Store" != room_name
+            if os.path.isdir(osp.join(self.raw_dir, f, room_name))
         ]
 
         train_data_list, test_data_list = [], []
@@ -494,14 +494,14 @@ class S3DISOriginalFused(InMemoryDataset):
                 (f, room_name, osp.join(self.raw_dir, f, room_name))
                 for f in train_areas
                 for room_name in os.listdir(osp.join(self.raw_dir, f))
-                if (".DS_Store" != room_name) and (".txt" not in room_name)
+                if os.path.isdir(osp.join(self.raw_dir, f, room_name))
             ]
 
             test_files = [
                 (f, room_name, osp.join(self.raw_dir, f, room_name))
                 for f in test_areas
                 for room_name in os.listdir(osp.join(self.raw_dir, f))
-                if (".DS_Store" != room_name) and (".txt" not in room_name)
+                if os.path.isdir(osp.join(self.raw_dir, f, room_name))
             ]
 
             data_list = [[] for _ in range(6)]
