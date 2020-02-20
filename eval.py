@@ -71,11 +71,14 @@ def main(cfg):
     torch.backends.cudnn.enabled = cfg.enable_cudnn
 
     # Checkpoint
-    checkpoint = ModelCheckpoint(cfg.checkpoint_dir, cfg.model_name, False, cfg.weight_name)
+    checkpoint = ModelCheckpoint(cfg.checkpoint_dir, cfg.model_name, cfg.weight_name, strict=True)
 
     # Create model and datasets
     dataset = instantiate_dataset(checkpoint.data_config)
     model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
+    log.info(model)
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
+    log.info(dataset)
 
     # Set dataloaders
     dataset.create_dataloaders(

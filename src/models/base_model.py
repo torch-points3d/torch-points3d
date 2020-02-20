@@ -188,28 +188,24 @@ class BaseModel(torch.nn.Module):
         if hasattr(optimizer_opt, "params"):
             optimizer_params = optimizer_opt.params
         self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
-        colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
 
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
             lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
             self.add_scheduler("lr_scheduler", lr_scheduler)
-            colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
 
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
             bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
             self.add_scheduler("bn_scheduler", bn_scheduler)
-            colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
 
         # Accumulated gradients
         self._accumulated_gradient_step = self.get_from_opt(config, ["training", "optim", "accumulated_gradient"])
         if self._accumulated_gradient_step:
             if self._accumulated_gradient_step > 1:
                 self._accumulated_gradient_count = 0
-                colored_print(COLORS.Green, "Accumulated option activated {}".format(self._accumulated_gradient_step))
             else:
                 raise Exception("When set, accumulated_gradient option should be an integer greater than 1")
 
@@ -321,6 +317,12 @@ class BaseModel(torch.nn.Module):
             if isinstance(name, str):
                 visual_ret[name] = getattr(self, name)
         return visual_ret
+
+    def log_optimizers(self):
+        colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
+        colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
+        colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
+        colored_print(COLORS.Green, "Accumulated gradients: {}".format(self._accumulated_gradient_step))
 
 
 class BaseInternalLossModule(ABC):

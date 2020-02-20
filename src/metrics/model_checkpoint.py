@@ -2,6 +2,7 @@ import os
 import torch
 import logging
 import copy
+import glob
 from omegaconf import OmegaConf, DictConfig
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
@@ -54,16 +55,24 @@ class Checkpoint:
         torch.save(to_save, self._check_path)
 
     @staticmethod
-    def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig):
+    def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig, strict=False):
         """ Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
         ckp = Checkpoint(checkpoint_file)
         if not os.path.exists(checkpoint_file):
-            log.warning("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
+            if strict:
+                available_checkpoints = glob.glob(os.path.join(checkpoint_dir, "*.pt"))
+                message = "The provided path {} didn't contain the checkpoint_file {}".format(
+                    checkpoint_dir, checkpoint_name + ".pt"
+                )
+                if available_checkpoints:
+                    message += "\nDid you mean {}?".format(os.path.basename(available_checkpoints[0]))
+                raise ValueError(message)
             ckp.run_config = run_config
             return ckp
+
         log.info("Loading checkpoint from {}".format(checkpoint_file))
         objects = torch.load(checkpoint_file)
         for key, value in objects.items():
@@ -133,18 +142,23 @@ class ModelCheckpoint(object):
 
     Argumemnts:
         - load_dir: directory where to load the checkpoint from (if exists)
-        -
+        - check_name: Name of the checkpoint (without the .pt extension)
+        - selection_stage: Stage that is used for selecting the best model
+        - run_config: Config of the run. In resume mode, this gets discarded
+        - resume: Resume a previous training - this creates optimizers
+        - strict: If strict and checkpoint is empty then it raises a ValueError. Being in resume mode forces strict
     """
 
     def __init__(
         self,
         load_dir: str,
         check_name: str,
-        resume: bool,
         selection_stage: str,
         run_config: DictConfig = DictConfig({}),
+        resume=False,
+        strict=False,
     ):
-        self._checkpoint = Checkpoint.load(load_dir, check_name, copy.deepcopy(run_config))
+        self._checkpoint = Checkpoint.load(load_dir, check_name, copy.deepcopy(run_config), strict=(strict or resume))
         self._resume = resume
         self._selection_stage = selection_stage
 

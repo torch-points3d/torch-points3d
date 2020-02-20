@@ -86,7 +86,4 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
             % (model_module, class_name)
         )
     model = model_cls(model_config, "dummy", dataset, modellib)
-
-    log.info(model)
-    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
     return model

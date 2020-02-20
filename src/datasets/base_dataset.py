@@ -46,11 +46,6 @@ class BaseDataset:
                 new_name = key_name.replace("transforms", "transform")
                 try:
                     transform = instantiate_transforms(getattr(dataset_opt, key_name))
-                    log.info(
-                        "Set attr:{} {} {}for dataset with following transform {}".format(
-                            COLORS.IPurple, new_name, COLORS.END_NO_TOKEN, transform
-                        )
-                    )
                 except Exception:
                     log.exception("Error trying to create {}".format(new_name))
                     continue
@@ -218,3 +213,11 @@ class BaseDataset:
     @abstractmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         pass
+
+    def __repr__(self):
+        message = "Dataset: %s \n" % self.__class__
+        for attr in self.__dict__:
+            if "transform" in attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+        return message[:-1]
+

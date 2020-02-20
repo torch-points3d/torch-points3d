@@ -58,8 +58,6 @@ models:
         class: rsconv.RSConvLogicModel
         conv_type: "DENSE"
         use_category: ${data.use_category}
-        define_constants:
-            use_category: ${data.use_category}
         down_conv:
             module_name: RSConvOriginalMSGDown
             npoint: [1024, 256, 64, 16]

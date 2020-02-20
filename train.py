@@ -149,6 +149,7 @@ def run(
 
 @hydra.main(config_path="conf/config.yaml")
 def main(cfg):
+    OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
     if cfg.pretty_print:
         print(cfg.pretty())
 
@@ -164,7 +165,11 @@ def main(cfg):
 
     # Checkpoint
     checkpoint = ModelCheckpoint(
-        cfg.training.checkpoint_dir, cfg.model_name, cfg.training.resume, cfg.training.weight_name, cfg
+        cfg.training.checkpoint_dir,
+        cfg.model_name,
+        cfg.training.weight_name,
+        run_config=cfg,
+        resume=bool(cfg.training.checkpoint_dir),
     )
 
     # Create model and datasets
@@ -175,6 +180,10 @@ def main(cfg):
         dataset = instantiate_dataset(cfg.data)
         model = instantiate_model(cfg, dataset)
         model.instantiate_optimizers(cfg)
+    log.info(model)
+    model.log_optimizers()
+    log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
+    log.info(dataset)
 
     # Set dataloaders
     dataset.create_dataloaders(

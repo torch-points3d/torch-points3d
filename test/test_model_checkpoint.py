@@ -35,7 +35,7 @@ class TestModelCheckpoint(unittest.TestCase):
         # Create a checkpt
         with tempfile.TemporaryDirectory() as ckpt_dir:
             name = "test"
-            model_checkpoint = ModelCheckpoint(ckpt_dir, name, False, "test", self.config)
+            model_checkpoint = ModelCheckpoint(ckpt_dir, name, "test", run_config=self.config, resume=False)
             dataset = MockDatasetGeometric(5)
             model = instantiate_model(self.config, dataset)
             model.set_input(dataset[0])
@@ -45,7 +45,7 @@ class TestModelCheckpoint(unittest.TestCase):
             model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
 
             # Load checkpoint and initialize model
-            model_checkpoint = ModelCheckpoint(ckpt_dir, name, True, "test", self.config)
+            model_checkpoint = ModelCheckpoint(ckpt_dir, name, "test", self.config, resume=True)
             model2 = model_checkpoint.create_model(dataset, weight_name="acc")
 
         self.assertEqual(str(model.optimizer.__class__.__name__), str(model2.optimizer.__class__.__name__))
