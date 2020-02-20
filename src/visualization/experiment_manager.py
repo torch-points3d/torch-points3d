@@ -142,36 +142,35 @@ class ExperimentManager(object):
     def current_pointcloud(self):
         return self._current_experiment.current_pointcloud
 
-    def load_ply_file(self, event):
+    def load_ply_file(self, file):
         if hasattr(self, "_current_split"):
-            self._current_file = event.obj.value
+            self._current_file = file
             self._current_experiment.load_ply(self._current_epoch, self._current_split, self._current_file)
         else:
             return []
 
-    def from_split_to_file(self, event):
+    def from_split_to_file(self, split_name):
         if hasattr(self, "_current_epoch"):
-            self._current_split = event.obj.value
+            self._current_split = split_name
             return self._current_experiment.get_files(self._current_epoch, self._current_split)
         else:
             return []
 
-    def from_epoch_to_split(self, event):
+    def from_epoch_to_split(self, epoch):
         if hasattr(self, "_current_experiment"):
-            self._current_epoch = event.obj.value
+            self._current_epoch = epoch
             return self._current_experiment.get_splits(self._current_epoch)
         else:
             return []
 
-    def from_paths_to_epoch(self, event):
-        run_path = event.obj.value
+    def from_paths_to_epoch(self, run_path):
         for exp in self._current_exps:
             if str(run_path) == str(exp.__repr__()):
                 self._current_experiment = exp
         return sorted(self._current_experiment.epochs)
 
-    def get_model_wviz_paths(self, event):
-        model_name = event.obj.value + ".pt"
+    def get_model_wviz_paths(self, model_path):
+        model_name = model_path + ".pt"
         self._current_exps = self._experiment_with_viz[model_name]
         return self._current_exps
 
