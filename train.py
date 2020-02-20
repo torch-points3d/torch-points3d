@@ -6,7 +6,8 @@ import logging
 from omegaconf import OmegaConf
 
 # Import building function for model and dataset
-from src import instantiate_model, instantiate_dataset
+from src.datasets import instantiate_dataset
+from src.models import instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
 from src.models.base_model import BaseModel

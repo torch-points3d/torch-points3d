@@ -28,6 +28,10 @@ flake8 = "^3.7"
 rope = "^0.14.0"
 pre-commit = "^1.21.0"
 black = "^19.10b0"
+jupyterlab = "^1.2.6"
+pyvista = "^0.23.1"
+panel = "^0.8.0"
+param = "^1.9.3"
 
 [tool.black]
 line-length = 120

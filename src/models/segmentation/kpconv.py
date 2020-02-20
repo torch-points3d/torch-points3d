@@ -4,6 +4,7 @@ from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
 from torch.nn import Sequential, BatchNorm1d, Dropout, Linear
 import torch.nn.functional as F
+from torch import nn
 
 from .base import Segmentation_MP
 from src.modules.KPConv import *

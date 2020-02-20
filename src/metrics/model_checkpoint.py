@@ -8,7 +8,7 @@ from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
 from src.core.schedulers.lr_schedulers import instantiate_scheduler
 from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
-from src import instantiate_model
+from src.models.model_factory import instantiate_model
 
 log = logging.getLogger(__name__)
 

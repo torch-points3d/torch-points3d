@@ -9,3 +9,7 @@ results
 site
 *.DS_Store
 kernels/dispositions/*
+notebooks/*checkpoints
+/notebooks/*.html
+py_scripts
+.ipynb_checkpoints

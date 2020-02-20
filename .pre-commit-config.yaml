@@ -5,8 +5,9 @@ repos:
     rev: v1.2.3
     hooks:
       - id: trailing-whitespace
-      - id: check-added-large-files
       - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: [--maxkb=15000]
   - repo: https://github.com/ambv/black
     rev: stable
     hooks:
@@ -23,3 +24,8 @@ repos:
             "--ignore-init-module-imports",
             "--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy",
           ]
+  - repo: https://github.com/kynan/nbstripout
+    rev: master
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"

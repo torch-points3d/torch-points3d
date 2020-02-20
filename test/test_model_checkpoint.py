@@ -10,7 +10,7 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric
-from src import instantiate_model
+from src.models.model_factory import instantiate_model
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 from src.metrics.model_checkpoint import ModelCheckpoint
 

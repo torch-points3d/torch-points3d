@@ -4,7 +4,8 @@ import logging
 from omegaconf import OmegaConf
 
 # Import building function for model and dataset
-from src import instantiate_model, instantiate_dataset
+from src.datasets.dataset_factory import instantiate_dataset
+from src.models.model_factory import instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
 from src.models.base_model import BaseModel
@@ -63,6 +64,8 @@ def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoi
 
 @hydra.main(config_path="conf/eval.yaml")
 def main(cfg):
+    OmegaConf.set_struct(cfg, False)
+
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.cuda) else "cpu")
     log.info("DEVICE : {}".format(device))
