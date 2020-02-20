@@ -11,7 +11,7 @@ sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric
 
-from src.models import instantiate_model
+from src.models.model_factory import instantiate_model
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 
 # calls resolve_model, then find_model_using_name
