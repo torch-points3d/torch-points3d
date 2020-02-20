@@ -27,7 +27,7 @@ class Patch3DMatch(General3DMatch):
                  pre_transform_fragment=None,
                  pre_filter=None,
                  verbose=False,
-                 debug=False):
+                 debug=False, detector=None):
         r"""
         Patch extracted from :the Princeton 3DMatch dataset\n
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -83,7 +83,8 @@ class Patch3DMatch(General3DMatch):
                                            pre_transform,
                                            pre_filter,
                                            verbose,
-                                           debug)
+                                           debug,
+                                           detector)
 
         self.radius_patch = radius_patch
 
@@ -115,7 +116,7 @@ class Patch3DMatch(General3DMatch):
             return batch.contiguous()
 
         elif ('test' in self.mode):
-            # data = torch.load(self.processed_dir, self.mode, 'fragment', )
+            data = torch.load(self.processed_dir, self.mode, 'fragment', )
             match = np.load(
                 osp.join(self.processed_dir,
                          self.mode, 'matches',
@@ -145,7 +146,7 @@ class Patch3DMatchDataset(BaseDataset):
 
         test_dataset = Patch3DMatch(
             root=self._data_path,
-            mode='val',
+            mode='test',
             radius_patch=dataset_opt.radius_patch,
             num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
             max_dist_overlap=dataset_opt.max_dist_overlap,

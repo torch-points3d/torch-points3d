@@ -1,3 +1,4 @@
+import json
 import logging
 import numpy as np
 import os
@@ -95,6 +96,7 @@ class General3DMatch(Dataset):
         self.tsdf_voxel_size = tsdf_voxel_size
         self.depth_thresh = depth_thresh
         self.mode = mode
+        self.detector = detector
         # constant to compute overlap
         self.min_overlap_ratio = min_overlap_ratio
         self.max_overlap_ratio = max_overlap_ratio
@@ -138,7 +140,7 @@ class General3DMatch(Dataset):
 
         print("Create fragment from RGBD frames...")
         if files_exist([osp.join(self.processed_dir, mod, 'fragment')]):  # pragma: no cover
-            print("the fragments on mode {} already exists".format(mod))
+            log.warning("the fragments on mode {} already exists".format(mod))
             return
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
             # TODO list the right sequences.
@@ -196,14 +198,14 @@ class General3DMatch(Dataset):
             list_seq = sorted([f for f in os.listdir(osp.join(self.raw_dir, mod,
                                                               scene_path)) if 'seq' in f])
             for seq in list_seq:
-                print(seq)
+                log.info("{}, {}".format(scene_path, seq))
                 fragment_dir = osp.join(self.processed_dir,
                                         mod, 'fragment',
                                         scene_path, seq)
                 list_fragment_path = sorted([osp.join(fragment_dir, f)
                                              for f in os.listdir(fragment_dir)
                                              if 'fragment' in f])
-                print("compute_overlap_and_matches")
+                log.info("compute_overlap_and_matches")
                 ind = 0
                 for path1 in list_fragment_path:
                     for path2 in list_fragment_path:
@@ -214,9 +216,9 @@ class General3DMatch(Dataset):
                             match = compute_overlap_and_matches(
                                 path1, path2, self.max_dist_overlap)
                             if(self.verbose):
-                                print(match['path_source'],
-                                      match['path_target'],
-                                      'overlap={}'.format(match['overlap']))
+                                log.info(match['path_source'],
+                                         match['path_target'],
+                                         'overlap={}'.format(match['overlap']))
                             if(np.max(match['overlap']) > self.min_overlap_ratio and
                                np.max(match['overlap']) < self.max_overlap_ratio):
                                 np.save(out_path, match)
@@ -231,6 +233,10 @@ class General3DMatch(Dataset):
         if files_exist([out_dir]):  # pragma: no cover
             return
         makedirs(out_dir)
+        ind = 0
+        # table to map fragment numper with
+        self.table = dict()
+        tot = 0
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
 
             fragment_dir = osp.join(self.raw_dir,
@@ -239,11 +245,10 @@ class General3DMatch(Dataset):
             list_fragment_path = sorted([osp.join(fragment_dir, f)
                                          for f in os.listdir(fragment_dir)
                                          if 'ply' in f])
-            table = dict()
+
             for i, fragment_path in enumerate(list_fragment_path):
-                out_path = osp.join(out_dir, 'fragment_{:06d}.pt'.format(i))
-                table[i] = {'in_path': fragment_path, 'scene_path': scene_path,
-                            'out_path': out_path}
+                out_path = osp.join(out_dir, 'fragment_{:06d}.pt'.format(ind))
+
                 # read ply file
                 with open(fragment_path, 'rb') as f:
                     data = PlyData.read(f)
@@ -257,16 +262,25 @@ class General3DMatch(Dataset):
                 if(self.detector is not None):
                     data = self.detector(data)
                 torch.save(data, out_path)
+                num_points = getattr(data, 'keypoints', len(data.pos))
+                tot += num_points
+                self.table[ind] = {'in_path': fragment_path, 'scene_path': scene_path,
+                                   'out_path': out_path, 'num_points': num_points}
+                ind += 1
+        self.table['total_num_points'] = tot
+
+        # save this file into json
+        with open(osp.join(out_dir, 'table.txt'), 'w') as f:
+            json.dump(self.table, f)
 
     def process(self):
         if('test' not in self.mode):
-            print("create fragments")
+            log.info("create fragments")
             self._create_fragment(self.mode)
-            print("compute matches")
+            log.info("compute matches")
             self._compute_matches_between_fragments(self.mode)
         else:
             self._compute_points_on_fragments(self.mode)
-            raise NotImplementedError("TODO :special treatment for the test")
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")

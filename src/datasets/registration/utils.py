@@ -129,26 +129,41 @@ def rgbd2fragment_rough(list_path_img,
     # save fragments for each batches using a simple batch
 
 
+def filter_pair(pair, dist):
+    """
+    give a pair of indices where the distance is positive
+    """
+    pair = pair[dist[:, 0] >= 0]
+    if(len(pair) > 0):
+        pair = pair.numpy()[:, ::-1]
+    else:
+        pair = np.array([])
+    return pair
+
+
 def compute_overlap_and_matches(path1, path2,
-                                max_distance_overlap):
+                                max_distance_overlap, reciprocity=False, num_pos=1):
     data1 = torch.load(path1)
     data2 = torch.load(path2)
 
 
     # we can use ball query on cpu because the points are sorted
     # print(len(data1.pos), len(data2.pos), max_distance_overlap)
-    pair, dist = ball_query(data1.pos, data2.pos,
+    pair, dist = ball_query(data2.pos, data1.pos,
                             radius=max_distance_overlap,
-                            max_num=1, mode=1)
-    pair = pair[dist[:, 0] > 0]
-    if(len(pair) > 0):
-        pair = pair.numpy()[:, ::-1]
-    else:
-        pair = np.array([])
+                            max_num=num_pos, mode=1)
+    pair = filter_pair(pair, dist)
+    overlap = [pair.shape[0]/len(data1.pos)]
+    if(reciprocity):
+        pair2, dist2 = ball_query(data1.pos, data2.pos,
+                                  radius=max_distance_overlap,
+                                  max_num=num_pos, mode=1)
+        pair2 = filter_pair(pair2, dist2)
+        overlap.append(pair2.shape[0]/len(data2.pos))
     #overlap = pair.shape[0] / \
     #    (len(data1.pos) + len(data2.pos) - pair.shape[0])
     # print(pair)
-    overlap = [pair.shape[0]/len(data1.pos), pair.shape[0]/len(data2.pos)]
+
     # print(path1, path2, "overlap=", overlap)
     output = dict(pair=pair,
                   path_source=path1,
