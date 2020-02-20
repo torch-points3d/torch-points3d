@@ -190,15 +190,15 @@ class ShapeNet(InMemoryDataset):
 
 
 class ShapeNetDataset(BaseDataset):
-    def __init__(self, dataset_opt, training_opt):
-        super().__init__(dataset_opt, training_opt)
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
         try:
             self._category = dataset_opt.category
         except KeyError:
             self._category = None
         pre_transform = self.pre_transform
         train_transform = self.train_transform
-        train_dataset = ShapeNet(
+        self.train_dataset = ShapeNet(
             self._data_path,
             self._category,
             include_normals=dataset_opt.normal,
@@ -206,7 +206,7 @@ class ShapeNetDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=train_transform,
         )
-        test_dataset = ShapeNet(
+        self.test_dataset = ShapeNet(
             self._data_path,
             self._category,
             include_normals=dataset_opt.normal,
@@ -214,8 +214,7 @@ class ShapeNetDataset(BaseDataset):
             transform=self.test_transform,
             pre_transform=pre_transform,
         )
-        self._categories = train_dataset.categories
-        self._create_dataloaders(train_dataset, test_dataset)
+        self._categories = self.train_dataset.categories
 
     @property
     def class_to_segments(self):
@@ -229,15 +228,14 @@ class ShapeNetDataset(BaseDataset):
         return len(self._categories) > 1
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt: bool):
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
             dataset {[type]}
             wandb_log - Log using weight and biases
         Returns:
             [BaseTracker] -- tracker
         """
-        return ShapenetPartTracker(dataset, wandb_log=wandb_opt.log, use_tensorboard=tensorboard_opt.log)
+        return ShapenetPartTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 

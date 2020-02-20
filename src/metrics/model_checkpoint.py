@@ -1,7 +1,9 @@
 import os
 import torch
 import logging
-from omegaconf import OmegaConf
+import copy
+import glob
+from omegaconf import OmegaConf, DictConfig
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
 from src.core.schedulers.lr_schedulers import instantiate_scheduler
@@ -18,24 +20,7 @@ DEFAULT_METRICS_FUNC = {
 }  # Those map subsentences to their optimization functions
 
 
-def get_model_checkpoint(
-    model: BaseModel,
-    load_dir: str,
-    check_name: str,
-    resume: bool = True,
-    weight_name: str = None,
-    selection_stage: str = "test",
-):
-    """ Loads a model from a checkpoint or creates a new one.
-    """
-    model_checkpoint: ModelCheckpoint = ModelCheckpoint(load_dir, check_name, resume, selection_stage)
-
-    if resume:
-        model_checkpoint.initialize_model(model, weight_name)
-    return model_checkpoint
-
-
-class Checkpoint(object):
+class Checkpoint:
     _LATEST = "latest"
 
     def __init__(self, checkpoint_file: str, save_every_iter: bool = True):
@@ -45,66 +30,64 @@ class Checkpoint(object):
             save_every_iter {bool} -- [description] (default: {True})
         """
         self._check_path = checkpoint_file
-        self._initialize_objects()
-
-    def _initialize_objects(self):
-        self._objects = {}
-        self._objects["models"] = {}
-        self._objects["model_state"] = None
-        self._objects["stats"] = {"train": [], "test": [], "val": []}
-        self._objects["optimizer"] = None
         self._filled = False
+        self.run_config = None
+        self.models = {}
+        self.stats = {"train": [], "test": [], "val": []}
+        self.optimizer = None
+        self.schedulers = {}
 
-    def save_objects(self, models_to_save, model_state, stage, current_stat, optimizer, schedulers, **kwargs):
-        self._objects["models"] = models_to_save
-        self._objects["model_state"] = model_state
-        self._objects["stats"][stage].append(current_stat)
-        self._objects["optimizer"] = [optimizer.__class__.__name__, optimizer.state_dict()]
-        schedulers_saved = {
+    def save_objects(self, models_to_save, stage, current_stat, optimizer, schedulers, **kwargs):
+        """ Saves checkpoint with updated mdoels for the given stage
+        """
+        self.models = models_to_save
+        self.stats[stage].append(current_stat)
+        self.optimizer = [optimizer.__class__.__name__, optimizer.state_dict()]
+        self.schedulers = {
             scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
             for scheduler_name, scheduler in schedulers.items()
         }
-        self._objects["schedulers"] = schedulers_saved
-        torch.save(self._objects, self._check_path)
+
+        to_save = kwargs
+        for key, value in self.__dict__.items():
+            if not key.startswith("_"):
+                to_save[key] = value
+        torch.save(to_save, self._check_path)
 
     @staticmethod
-    def load(checkpoint_dir: str, checkpoint_name: str):
-        """ Creates a new checpoint object in the current working directory by loading the
+    def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig, strict=False):
+        """ Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
         ckp = Checkpoint(checkpoint_file)
         if not os.path.exists(checkpoint_file):
-            log.warning("The provided path {} didn't contain a checkpoint_file".format(checkpoint_file))
+            if strict:
+                available_checkpoints = glob.glob(os.path.join(checkpoint_dir, "*.pt"))
+                message = "The provided path {} didn't contain the checkpoint_file {}".format(
+                    checkpoint_dir, checkpoint_name + ".pt"
+                )
+                if available_checkpoints:
+                    message += "\nDid you mean {}?".format(os.path.basename(available_checkpoints[0]))
+                raise ValueError(message)
+            ckp.run_config = run_config
             return ckp
+
         log.info("Loading checkpoint from {}".format(checkpoint_file))
-        ckp._objects = torch.load(checkpoint_file)
+        objects = torch.load(checkpoint_file)
+        for key, value in objects.items():
+            setattr(ckp, key, value)
         ckp._filled = True
         return ckp
-
-    @property
-    def models_to_save(self):
-        return self._objects["models"]
-
-    @property
-    def stats(self):
-        return self._objects["stats"]
 
     @property
     def is_empty(self):
         return not self._filled
 
-    def get_model_state(self):
-        if not self.is_empty:
-            try:
-                return self._objects["model_state"]
-            except:
-                raise KeyError("The checkpoint doesn t contain model_state")
-
     def get_optimizer(self, params):
         if not self.is_empty:
             try:
-                optimizer_config = self._objects["optimizer"]
+                optimizer_config = self.optimizer
                 optimizer_cls = getattr(torch.optim, optimizer_config[0])
                 optimizer = optimizer_cls(params)
                 optimizer.load_state_dict(optimizer_config[1])
@@ -116,7 +99,7 @@ class Checkpoint(object):
         if not self.is_empty:
             try:
                 schedulers_out = {}
-                schedulers_config = self._objects["schedulers"]
+                schedulers_config = self.schedulers
                 for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
@@ -137,7 +120,7 @@ class Checkpoint(object):
     def get_state_dict(self, weight_name):
         if not self.is_empty:
             try:
-                models = self._objects["models"]
+                models = self.models
                 keys = [key.replace("best_", "") for key in models.keys()]
                 log.info("Available weights : {}".format(keys))
                 try:
@@ -155,28 +138,38 @@ class Checkpoint(object):
 
 
 class ModelCheckpoint(object):
+    """ Create a checkpoint for a given model
+
+    Argumemnts:
+        - load_dir: directory where to load the checkpoint from (if exists)
+        - check_name: Name of the checkpoint (without the .pt extension)
+        - selection_stage: Stage that is used for selecting the best model
+        - run_config: Config of the run. In resume mode, this gets discarded
+        - resume: Resume a previous training - this creates optimizers
+        - strict: If strict and checkpoint is empty then it raises a ValueError. Being in resume mode forces strict
+    """
+
     def __init__(
-        self, load_dir: str = None, check_name: str = None, resume: bool = True, selection_stage: str = "test"
+        self,
+        load_dir: str,
+        check_name: str,
+        selection_stage: str,
+        run_config: DictConfig = DictConfig({}),
+        resume=False,
+        strict=False,
     ):
-        self._checkpoint = Checkpoint.load(load_dir, check_name)
+        self._checkpoint = Checkpoint.load(load_dir, check_name, copy.deepcopy(run_config), strict=(strict or resume))
         self._resume = resume
         self._selection_stage = selection_stage
 
-    def create_mock_dateset(self, dataset_state):
-        raise NotImplementedError
-
-    def create_model_from_checkpoint(self, dataset, weight_name=None):
-        if not self._checkpoint.is_empty:
-            model_state = self._checkpoint.get_model_state()
-            model_class = model_state["model_class"]
-            option = OmegaConf.create(model_state["option"])
-            task = model_state["task"]
-            model = instantiate_model(model_class, task, option, dataset)
-
-            if weight_name:
-                self.initialize_model(model)
-
+    def create_model(self, dataset, weight_name=Checkpoint._LATEST):
+        if not self.is_empty:
+            run_config = copy.deepcopy(self._checkpoint.run_config)
+            model = instantiate_model(run_config, dataset)
+            self._initialize_model(model, weight_name)
             return model
+        else:
+            raise ValueError("Checkpoint is empty")
 
     @property
     def start_epoch(self):
@@ -185,17 +178,32 @@ class ModelCheckpoint(object):
         else:
             return 1
 
+    @property
+    def data_config(self):
+        return self._checkpoint.run_config.data
+
+    @property
+    def selection_stage(self):
+        return self._selection_stage
+
+    @selection_stage.setter
+    def selection_stage(self, value):
+        self._selection_stage = value
+
+    @property
+    def is_empty(self):
+        return self._checkpoint.is_empty
+
     def get_starting_epoch(self):
         return len(self._checkpoint.stats["train"]) + 1
 
-    def initialize_model(self, model: BaseModel, weight_name: str = None):
+    def _initialize_model(self, model: BaseModel, weight_name):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
-            model_state = self._checkpoint.get_model_state()
-            state = {"model_state": model_state, "state_dict": state_dict}
-            model.set_state(state)
-            model.optimizer = self._checkpoint.get_optimizer(model.parameters())
-            model.schedulers = self._checkpoint.get_schedulers(model)
+            model.load_state_dict(state_dict)
+            if self._resume:
+                model.optimizer = self._checkpoint.get_optimizer(model.parameters())
+                model.schedulers = self._checkpoint.get_schedulers(model)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -218,13 +226,12 @@ class ModelCheckpoint(object):
         epoch = metrics_holder["epoch"]
 
         stats = self._checkpoint.stats
-        state = model.get_state()
-        state_dict = state["state_dict"]
+        state_dict = model.state_dict()
 
         current_stat = {}
         current_stat["epoch"] = epoch
 
-        models_to_save = self._checkpoint.models_to_save
+        models_to_save = self._checkpoint.models
 
         if stage == "train":
             models_to_save[Checkpoint._LATEST] = state_dict
@@ -261,6 +268,4 @@ class ModelCheckpoint(object):
                 current_stat["best_{}".format(metric_name)] = metric_value
                 models_to_save["best_{}".format(metric_name)] = state_dict
 
-        self._checkpoint.save_objects(
-            models_to_save, state["model_state"], stage, current_stat, model.optimizer, model.schedulers, **kwargs
-        )
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)

@@ -1,10 +1,9 @@
 import unittest
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
 import os
 import sys
-import torch
 import hydra
-import shutil
+import tempfile
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
@@ -13,22 +12,15 @@ sys.path.insert(0, ROOT)
 from test.mockdatasets import MockDatasetGeometric
 from src import instantiate_model
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.utils.config import set_format
 from src.metrics.model_checkpoint import ModelCheckpoint
 
-seed = 0
-torch.manual_seed(seed)
 
-
-def _find_model_using_name(model_class, task, model_config, dataset):
-    resolve_model(model_config, dataset, task)
-    return instantiate_model(model_class, task, model_config, dataset)
-
-
-def load_model_config(task, model_type):
+def load_config(task, model_type) -> DictConfig:
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
     config = OmegaConf.load(models_conf)
-    return config.models
+    config.update("model_name", "pointnet2")
+    config.update("data.task", "segmentation")
+    return config
 
 
 class TestModelCheckpoint(unittest.TestCase):
@@ -36,71 +28,30 @@ class TestModelCheckpoint(unittest.TestCase):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         training_config = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
         scheduler_config = OmegaConf.load(os.path.join(DIR, "test_config/scheduler_config.yaml"))
-
-        # new_opt = OmegaConf.create({"training":training_config})
-        self.config = OmegaConf.merge(training_config, scheduler_config)
+        params = load_config("segmentation", "pointnet2")
+        self.config = OmegaConf.merge(training_config, scheduler_config, params)
 
     def test_model_ckpt_using_pointnet2ms(self,):
-        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
-        dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
-        model.set_input(dataset[0])
-        model.instantiate_optimizers(self.config)
-
         # Create a checkpt
-        ckpt_dir = os.path.join(DIR, "test_model_ckpt/")
-        try:
-            shutil.rmtree(ckpt_dir)
-        except:
-            pass
-        if not os.path.exists(ckpt_dir):
-            os.makedirs(ckpt_dir)
-        name = "test"
-        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
-        mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        with tempfile.TemporaryDirectory() as ckpt_dir:
+            name = "test"
+            model_checkpoint = ModelCheckpoint(ckpt_dir, name, "test", run_config=self.config, resume=False)
+            dataset = MockDatasetGeometric(5)
+            model = instantiate_model(self.config, dataset)
+            model.set_input(dataset[0])
+            model.instantiate_optimizers(self.config)
 
-        # Load checkpoint and initialize model
-        model_config = OmegaConf.merge(params, self.data_config)
-        model2 = _find_model_using_name(model_class, "segmentation", model_config, dataset)
-        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
-        model_checkpoint.initialize_model(model2, weight_name="acc")
-        shutil.rmtree(ckpt_dir)
+            mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
+            model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+
+            # Load checkpoint and initialize model
+            model_checkpoint = ModelCheckpoint(ckpt_dir, name, "test", self.config, resume=True)
+            model2 = model_checkpoint.create_model(dataset, weight_name="acc")
 
         self.assertEqual(str(model.optimizer.__class__.__name__), str(model2.optimizer.__class__.__name__))
         self.assertEqual(model.optimizer.defaults, model2.optimizer.defaults)
         self.assertEqual(model.schedulers["lr_scheduler"].state_dict(), model2.schedulers["lr_scheduler"].state_dict())
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
-        self.assertEqual(model.model_state, model2.model_state)
-
-    def test_create_model_from_checkpoint_with_dataset(self):
-        params = load_model_config("segmentation", "pointnet2")["pointnet2ms"]
-        model_class = getattr(params, "class")
-        model_config = OmegaConf.merge(params, self.data_config)
-        dataset = MockDatasetGeometric(5)
-        model = _find_model_using_name(model_class, "segmentation", model_config, dataset)
-        model.set_input(dataset[0])
-        model.instantiate_optimizers(self.config)
-
-        # Create a checkpt
-        ckpt_dir = os.path.join(DIR, "test_model_ckpt/")
-        try:
-            shutil.rmtree(ckpt_dir)
-        except:
-            pass
-        if not os.path.exists(ckpt_dir):
-            os.makedirs(ckpt_dir)
-        name = "test"
-        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
-        mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
-
-        model_checkpoint = ModelCheckpoint(ckpt_dir, name)
-        model = model_checkpoint.create_model_from_checkpoint(dataset)
-        print(model)
-        shutil.rmtree(ckpt_dir)
 
 
 if __name__ == "__main__":

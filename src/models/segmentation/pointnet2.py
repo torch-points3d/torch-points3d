@@ -34,7 +34,7 @@ class PointNet2_D(UnetBasedModel):
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self._num_classes = dataset.num_classes
         self._weight_classes = dataset.weight_classes
-        self._use_category = option.use_category
+        self._use_category = getattr(option, "use_category", False)
         if self._use_category:
             if not dataset.class_to_segments:
                 raise ValueError(
@@ -67,7 +67,8 @@ class PointNet2_D(UnetBasedModel):
                 pos -- Points [B, N, 3]
         """
         assert len(data.pos.shape) == 3
-        self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
+        x = data.x.transpose(1, 2).contiguous() if data.x else None
+        self.input = Data(x=x, pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B * N]
         self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
@@ -87,7 +88,7 @@ class PointNet2_D(UnetBasedModel):
             last_feature = torch.cat((last_feature, cat_one_hot), dim=1)
 
         self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
-        
+
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
         self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)

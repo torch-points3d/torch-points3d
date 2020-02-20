@@ -43,39 +43,18 @@ class BaseModel(torch.nn.Module):
         self.loss_names = []
         self.visual_names = []
         self.output = None
+        self._conv_type = opt.conv_type
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._spatial_ops_dict: Dict = {}
         self._iterations = 0
         self._lr_params = None
-        self._grad_clip = self.get_from_opt(opt, ["optim", "grad_clip"], default_value=-1)
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None
         self._schedulers = {}
-        self._model_state = None
-        self._accumulated_gradient_step = self.get_from_opt(opt, ["optim", "accumulated_gradient"])
-        if self._accumulated_gradient_step:
-            if self._accumulated_gradient_step > 1:
-                self._accumulated_gradient_count = 0
-                colored_print(COLORS.Green, "Accumulated option activated {}".format(self._accumulated_gradient_step))
-            else:
-                raise Exception("accumulated_gradient should be greater than 1")
-
-    @property
-    def model_state(self):
-        return self._model_state
-
-    @model_state.setter
-    def model_state(self, model_state):
-        self._model_state = model_state
-
-    def get_state(self):
-        return {"model_state": self._model_state, "state_dict": self.state_dict()}
-
-    def set_state(self, state):
-        self.model_state = state["model_state"]
-        self.load_state_dict(state["state_dict"])
+        self._accumulated_gradient_step = None
+        self._grad_clip = -1
 
     @property
     def lr_params(self):
@@ -117,6 +96,10 @@ class BaseModel(torch.nn.Module):
     @property
     def device(self):
         return next(self.parameters()).device
+
+    @property
+    def conv_type(self):
+        return self._conv_type
 
     @abstractmethod
     def set_input(self, input):
@@ -193,6 +176,7 @@ class BaseModel(torch.nn.Module):
         return errors_ret
 
     def instantiate_optimizers(self, config):
+        # Optimiser
         optimizer_opt = self.get_from_opt(
             config,
             ["training", "optim", "optimizer"],
@@ -204,19 +188,29 @@ class BaseModel(torch.nn.Module):
         if hasattr(optimizer_opt, "params"):
             optimizer_params = optimizer_opt.params
         self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
-        colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
 
+        # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
             lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
             self.add_scheduler("lr_scheduler", lr_scheduler)
-            colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
 
+        # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
             bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
             self.add_scheduler("bn_scheduler", bn_scheduler)
-            colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
+
+        # Accumulated gradients
+        self._accumulated_gradient_step = self.get_from_opt(config, ["training", "optim", "accumulated_gradient"])
+        if self._accumulated_gradient_step:
+            if self._accumulated_gradient_step > 1:
+                self._accumulated_gradient_count = 0
+            else:
+                raise Exception("When set, accumulated_gradient option should be an integer greater than 1")
+
+        # Gradient clipping
+        self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
         loss = 0
@@ -323,6 +317,12 @@ class BaseModel(torch.nn.Module):
             if isinstance(name, str):
                 visual_ret[name] = getattr(self, name)
         return visual_ret
+
+    def log_optimizers(self):
+        colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
+        colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
+        colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
+        colored_print(COLORS.Green, "Accumulated gradients: {}".format(self._accumulated_gradient_step))
 
 
 class BaseInternalLossModule(ABC):

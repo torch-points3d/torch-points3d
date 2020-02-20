@@ -1,0 +1,14 @@
+data
+*.pyc
+__pycache__
+.vscode
+*outputs*
+wandb
+logs
+results
+site
+*.DS_Store
+kernels/dispositions/*
+
+.git
+data
