@@ -43,15 +43,15 @@ class BackboneBasedModel(BaseModel):
     def _save_sampling_and_search(self, down_conv):
         sampler = getattr(down_conv, "sampler", None)
         if is_list(sampler):
-            self._sampling_and_search_dict["sampler"] += sampler
+            self._spatial_ops_dict["sampler"] = sampler + self._spatial_ops_dict["sampler"]
         else:
-            self._sampling_and_search_dict["sampler"].append(sampler)
+            self._spatial_ops_dict["sampler"] = [sampler] + self._spatial_ops_dict["sampler"]
 
         neighbour_finder = getattr(down_conv, "neighbour_finder", None)
         if is_list(neighbour_finder):
-            self._sampling_and_search_dict["neighbour_finder"] += neighbour_finder
+            self._spatial_ops_dict["neighbour_finder"] = neighbour_finder + self._spatial_ops_dict["neighbour_finder"]
         else:
-            self._sampling_and_search_dict["neighbour_finder"].append(neighbour_finder)
+            self._spatial_ops_dict["neighbour_finder"] = [neighbour_finder] + self._spatial_ops_dict["neighbour_finder"]
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
 

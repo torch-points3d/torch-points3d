@@ -104,8 +104,8 @@ class Patch3DMatch(General3DMatch):
             # It cannot be 0 because matches are filtered.
             rand = np.random.randint(0, len(match['pair']))
 
-            data_source = p_extractor(data_source, match['pair'][rand][1])
-            data_target = p_extractor(data_target, match['pair'][rand][0])
+            data_source = p_extractor(data_source, match['pair'][rand][0])
+            data_target = p_extractor(data_target, match['pair'][rand][1])
 
             if(self.transform is not None):
                 data_source = self.transform(data_source)
@@ -115,24 +115,19 @@ class Patch3DMatch(General3DMatch):
             batch.batch = None
             return batch.contiguous()
 
-        elif ('test' in self.mode):
-            data = torch.load(self.processed_dir, self.mode, 'fragment', )
-            match = np.load(
-                osp.join(self.processed_dir,
-                         self.mode, 'matches',
-                         'matches{:06d}.npy'.format(idx)),
-                allow_pickle=True).item()
+        else:
+            raise NotImplementedError('Need to implement a testing dataset')
 
 
 class Patch3DMatchDataset(BaseDataset):
 
-    def __init__(self, dataset_opt, training_opt):
-        super().__init__(dataset_opt, training_opt)
-        pre_transform = GridSampling(size=0.01)
-        train_transform = None
-        test_transform = None
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
+        pre_transform = self.pre_transform
+        train_transform = self.train_transform
+        test_transform = self.test_transform
 
-        train_dataset = Patch3DMatch(
+        self.train_dataset = Patch3DMatch(
             root=self._data_path,
             mode='train',
             radius_patch=dataset_opt.radius_patch,
@@ -144,7 +139,7 @@ class Patch3DMatchDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=train_transform)
 
-        test_dataset = Patch3DMatch(
+        self.test_dataset = Patch3DMatch(
             root=self._data_path,
             mode='test',
             radius_patch=dataset_opt.radius_patch,
@@ -156,11 +151,9 @@ class Patch3DMatchDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=test_transform)
 
-        self._create_dataloaders(train_dataset, test_dataset)
-
-
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_opt: bool, tensorboard_opt:bool):
+    def get_tracker(model, task: str, dataset, wandb_log: bool,
+                    tensorboard_log:bool):
         """
         Factory method for the tracker
 
@@ -171,5 +164,5 @@ class Patch3DMatchDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return PatchRegistrationTracker(dataset, task, wandb_opt.log,
-                                        use_tensorboard=tensorboard_opt.log)
+        return PatchRegistrationTracker(dataset, task, wandb_log,
+                                        use_tensorboard=tensorboard_log)
