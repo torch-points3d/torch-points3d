@@ -233,7 +233,7 @@ class GridSampling(object):
                 raise ValueError("GridSampling does not support coarsening of edges")
 
             if torch.is_tensor(item) and item.size(0) == num_nodes:
-                if key == "y":
+                if key == "y" and item.dtype == torch.int:
                     item = F.one_hot(item, num_classes=self.num_classes)
                     item = scatter_add(item, cluster, dim=0)
                     data[key] = item.argmax(dim=-1)
