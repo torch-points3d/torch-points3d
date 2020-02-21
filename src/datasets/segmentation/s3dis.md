@@ -1,53 +1,28 @@
 # S3DIS
 
+For S3DIS we use the original dataset for which each area can be fused back together into larger zones. It corresponds to the `Stanford3dDataset_v1.2.zip` file when you are in the download folder.
+
 The dataset contains some bugs which can be found and corrected at those position.
+We provide a patch to fix those. First copy the file s3dis.patch in your s3dis root folder that should contain a `raw` subfolder. Mine looks like that:
 
-use nano +line {path_to_file}
-
-/S3DIS/raw/Area_2/auditorium_1/auditorium_1.txt row 741099: ['0.577500', '-12.407500', '2.604000', '167.\x1000000', '175.000000', '177.000000']
-
-/S3DIS/raw/Area_3/hallway_2/hallway_2.txt row 926335: ['19.302', '-9.1\x160', '1.785', '146', '137', '106']
-
-and in Area_6/copyRoom_1:  mv copy_Room_1.txt copyRoom_1.txt
-
-git apply {the file undernath}
-
-```
-diff --git a/Area_3/hallway_2/hallway_2.txt b/Area_3/hallway_2/hallway_2.txt
-index 02f32b8..870566e 100644
---- a/Area_3/hallway_2/hallway_2.txt
-+++ b/Area_3/hallway_2/hallway_2.txt
-@@ -926334,7 +926334,7 @@
- 19.237 -9.161 1.561 141 131 96
- 19.248 -9.160 1.768 136 129 103
- 19.276 -9.160 1.684 139 130 99
--19.302 -9.10 1.785 146 137 106
-+19.302 -9.1 0 1.785 146 137 106
- 19.242 -9.160 1.790 146 134 108
- 19.271 -9.160 1.679 140 129 99
- 19.278 -9.160 1.761 133 123 98
-diff --git a/Area_5/hallway_6/Annotations/ceiling_1.txt b/Area_5/hallway_6/Annotations/ceiling_1.txt
-index 62e563d..3a9087b 100644
---- a/Area_5/hallway_6/Annotations/ceiling_1.txt
-+++ b/Area_5/hallway_6/Annotations/ceiling_1.txt
-@@ -180386,7 +180386,7 @@
- 22.383 6.858 3.050 155 155 165
- 22.275 6.643 3.048 192 194 191
- 22.359 6.835 3.050 152 152 162
--22.350 6.692 3.048 185187 182
-+22.350 6.692 3.048 185 187 182
- 22.314 6.638 3.048 170 171 175
- 22.481 6.818 3.049 149 149 159
- 22.328 6.673 3.048 190 195 191
-diff --git a/Area_6/copyRoom_1/copy_Room_1.txt b/Area_6/copyRoom_1/copyRoom_1.txt
-similarity index 100%
-rename from Area_6/copyRoom_1/copy_Room_1.txt
-rename to Area_6/copyRoom_1/copyRoom_1.txt
-
+```bash
+drwxrwxr-x 5 nicolas nicolas       4096 Feb 20 21:40 ./
+drwxrwxr-x 4 nicolas nicolas       4096 Feb 20 19:49 ../
+-rw-rw-r-- 1 nicolas nicolas 5149528258 Feb 20 18:12 Stanford3dDataset_v1.2.zip
+drwxrwxr-x 2 nicolas nicolas       4096 Feb 20 20:16 processed/
+drwxrwxr-x 8 nicolas nicolas       4096 Feb 20 18:44 raw/
+-rw-rw-r-- 1 nicolas nicolas       1453 Feb 20 21:41 s3dis.patch
 ```
 
-For s3dis_aligned
+Then run the following command:
 
-/raw/Area_1/WC_1/WC_1.txt row 429611: ['-15.993000', '42.862000', '0.302000', '123.000000', '95.000000', '56.00\x10000']
+```bash
+patch -ruN -p0 -d  raw < s3dis.patch
+```
 
-/raw/Area_6/hallway_2/hallway_2.txt row 842731: ['-5.712000', '18.497000', '2.717000', '226.000000', '219.000000', '2\x111.000000']
+It should return something like that:
+
+```bash
+patching file Area_1/WC_1/WC_1.txt
+patching file Area_6/hallway_2/hallway_2.txt
+```
