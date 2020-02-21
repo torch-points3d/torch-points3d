@@ -1,0 +1,26 @@
+data:
+    task: segmentation
+    class: s3dis.S3DISFusedDataset
+    dataroot: data
+    fold: 5
+    class_weight_method: "sqrt"
+    first_subsampling: 0.04
+    use_category: False
+    sampler: 
+      name: BalancedSampler
+    pre_collate_transform:
+        - transform: PointCloudFusion
+        - transform: GridSampling
+          params:
+              size: ${data.first_subsampling}
+        - transform: ComputeKDTree
+          params:
+              leaf_size: 200
+        - transform: GridSphereSampling
+          params:
+              radius: 50 * ${data.first_subsampling}
+    train_transforms:
+        - transform: RandomRotate
+          params:
+              degrees: 180
+              axis: 2

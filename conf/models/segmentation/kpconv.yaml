@@ -105,7 +105,7 @@ models:
                 ]
         mlp_cls:
             nn: [in_feat, in_feat]
-            dropout: 0.
+            dropout: 0.5
             bn_momentum: bn_momentum
         loss_weights:
             lambda_reg: 1e-6
