@@ -14,8 +14,9 @@ models:
         ]
     loss:
       loss_name: "TripletMarginLoss"
-      margin: 0.1
-      smooth_loss: True
-      triplet_per_anchor: 'all'
+      params:
+        margin: 0.1
+        smooth_loss: True
+        triplet_per_anchor: 'all'
     miner:
       miner_name: "BatchHardMiner"
