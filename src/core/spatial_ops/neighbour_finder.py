@@ -107,6 +107,7 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
 
         if DEBUGGING_VARS["FIND_NEIGHBOUR_DIST"]:
             self._dist_meters = [DistributionNeighbour(r) for r in radius]
+            max_num_neighbors = [256 for _ in max_num_neighbors]
 
         if not is_list(max_num_neighbors) and is_list(radius):
             self._radius = radius

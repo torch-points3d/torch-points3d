@@ -9,7 +9,7 @@ def extract_histogram(spatial_ops, normalize=True):
         dist_meters = nf.dist_meters
         temp = {}
         for dist_meter in dist_meters:
-            hist = dist_meter.histogram_non_zero.copy()
+            hist = dist_meter.histogram.copy()
             if normalize:
                 hist /= hist.sum()
             temp[str(dist_meter.radius)] = hist.tolist()
@@ -19,7 +19,7 @@ def extract_histogram(spatial_ops, normalize=True):
 
 
 class DistributionNeighbour(object):
-    def __init__(self, radius, bins=250):
+    def __init__(self, radius, bins=1000):
         self._radius = radius
         self._bins = bins
         self._histogram = np.zeros(self._bins)
