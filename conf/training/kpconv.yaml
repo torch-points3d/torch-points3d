@@ -28,10 +28,10 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    project: shapenet-pn2
+    project: s3dis
     log: True
-    notes: "Multihead"
-    name: "kpconv-multihead"
+    notes: "1e-4 regularisation + dropout"
+    name: "kpconv-reg=1e-4"
     public: True # It will be display the model within wandb log, else not.
 
 
