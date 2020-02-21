@@ -3,9 +3,11 @@ from typing import List, Union
 import torch
 from torch_geometric.nn import knn, radius
 import torch_points as tp
-
+import torchnet as tnt
 from src.utils.config import is_list
 from src.utils.enums import ConvolutionFormat
+
+from src.utils.debugging_vars import DEBUGGING_VARS, DistributionNeighbour
 
 
 class BaseNeighbourFinder(ABC):
@@ -81,6 +83,10 @@ class BaseMSNeighbourFinder(ABC):
     def num_scales(self):
         pass
 
+    @property
+    def dist_meters(self):
+        return getattr(self, "_dist_meters", None)
+
 
 class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     """ Radius search with support for multiscale for sparse graphs
@@ -98,6 +104,10 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     def __init__(
         self, radius: Union[float, List[float]], max_num_neighbors: Union[int, List[int]] = 64,
     ):
+
+        if DEBUGGING_VARS["FIND_NEIGHBOUR_DIST"]:
+            self._dist_meters = [DistributionNeighbour(r) for r in radius]
+
         if not is_list(max_num_neighbors) and is_list(radius):
             self._radius = radius
             self._max_num_neighbors = [max_num_neighbors for i in range(len(self._radius))]
@@ -121,9 +131,11 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
     def find_neighbours(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
         if scale_idx >= self.num_scales:
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
-        return radius(
+
+        radius_idx = radius(
             x, y, self._radius[scale_idx], batch_x, batch_y, max_num_neighbors=self._max_num_neighbors[scale_idx]
         )
+        return radius_idx
 
     @property
     def num_scales(self):
@@ -144,17 +156,14 @@ class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
         num_neighbours = self._max_num_neighbors[scale_idx]
         neighbours = tp.ball_query(self._radius[scale_idx], num_neighbours, x, y)
-        # mean_count = (
-        #     (neighbours[0, :, :] != neighbours[0, :, 0].view((-1, 1)).repeat(1, num_neighbours)).sum(1).float().mean()
-        # )
-        # for i in range(1, neighbours.shape[0]):
-        #     start = neighbours[i, :, 0]
-        #     valid_neighbours = (neighbours[i, :, :] != start.view((-1, 1)).repeat(1, num_neighbours)).sum(1)
-        #     mean_count += valid_neighbours.float().mean()
-        # mean_count = mean_count / neighbours.shape[0]
-        # print(
-        #     "Radius: %f, Num_neighbours %i, actual, %f" % (self._radius[scale_idx], num_neighbours, mean_count.item())
-        # )
+
+        if DEBUGGING_VARS["FIND_NEIGHBOUR_DIST"]:
+            for i in range(neighbours.shape[0]):
+                start = neighbours[i, :, 0]
+                valid_neighbours = (neighbours[i, :, 1:] != start.view((-1, 1)).repeat(1, num_neighbours - 1)).sum(
+                    1
+                ) + 1
+                self._dist_meters[scale_idx].add_valid_neighbours(valid_neighbours)
         return neighbours
 
     def __call__(self, x, y, scale_idx=0, **kwargs):

@@ -69,26 +69,23 @@ class Visualizer(object):
         if self._contains_indices:
             return
         stage_num_batches = getattr(self, "{}_num_batches".format(stage))
+        total_items = (stage_num_batches - 1) * self._batch_size
         if stage_num_batches > 0:
             if self._num_samples_per_epoch < 0:  # All elements should be saved.
                 if stage_num_batches > 0:
-                    self._indices[stage] = np.arange((stage_num_batches - 1) * self._batch_size)
+                    self._indices[stage] = np.arange(total_items)
                 else:
                     self._indices[stage] = None
             else:
                 if self._deterministic:
                     if stage not in self._indices:
-                        if self._num_samples_per_epoch > stage_num_batches:
+                        if self._num_samples_per_epoch > total_items:
                             raise Exception("Number of samples to save if higher than the number of available elements")
-                        self._indices[stage] = np.random.permutation((stage_num_batches - 1) * self._batch_size)[
-                            : self._num_samples_per_epoch
-                        ]
+                        self._indices[stage] = np.random.permutation(total_items)[: self._num_samples_per_epoch]
                 else:
-                    if self._num_samples_per_epoch > stage_num_batches:
+                    if self._num_samples_per_epoch > total_items:
                         raise Exception("Number of samples to save if higher than the number of available elements")
-                    self._indices[stage] = np.random.permutation((stage_num_batches - 1) * self._batch_size)[
-                        : self._num_samples_per_epoch
-                    ]
+                    self._indices[stage] = np.random.permutation(total_items)[: self._num_samples_per_epoch]
 
     @property
     def is_active(self):
