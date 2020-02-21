@@ -14,7 +14,7 @@ training:
             class: Adam
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
-        scheduler: ${lr_scheduler}
+        lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"
             params:

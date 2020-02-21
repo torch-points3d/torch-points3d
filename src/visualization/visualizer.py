@@ -130,6 +130,7 @@ class Visualizer(object):
             for dtype in self._saved_keys[k]:
                 dtypes.append(dtype)
             out.append(v_npy)
+
         out = np.concatenate(out, axis=-1)
         dtypes = np.dtype([tuple(d) for d in dtypes])
         return np.asarray([tuple(o) for o in out], dtype=dtypes)
@@ -141,7 +142,6 @@ class Visualizer(object):
             Make sure the saved_keys  within the config maps to the Data attributes.
         """
         if self._stage in self._indices:
-            self._indices[self._stage]
             batch_indices = self._indices[self._stage] // self._batch_size
             pos_indices = self._indices[self._stage] % self._batch_size
             for idx in np.argwhere(self._seen_batch == batch_indices).flatten():
