@@ -25,6 +25,8 @@ class RegressionTracker(BaseTracker):
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
+        self._mer = tnt.meter.AverageValueMeter()
+        self._merp = tnt.meter.AverageValueMeter()
 
     def track(self, model: BaseModel):
         """ Add current model predictions (usually the result of a batch) to the tracking
@@ -35,9 +37,9 @@ class RegressionTracker(BaseTracker):
         targets = self._convert(model.get_labels())
 
         erp = torch.sqrt(((outputs - targets) / (targets + self._eps)) ** 2)
-        self._merp = torch.mean(erp).item()
+        self._merp.add(torch.mean(erp).item())
 
-        self._mer = (
+        self._mer.add(
             torch.mean(F.normalize(outputs - targets, p=2, dim=-1))
             / torch.mean((F.normalize(targets, p=2, dim=-1) + self._eps))
         ).item()
@@ -46,6 +48,6 @@ class RegressionTracker(BaseTracker):
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
-        metrics["{}_merp".format(self._stage)] = self._merp
-        metrics["{}_mer".format(self._stage)] = self._mer
+        metrics["{}_merp".format(self._stage)] = self._merp.mean
+        metrics["{}_mer".format(self._stage)] = self._mer.mean
         return metrics
