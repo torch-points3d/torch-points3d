@@ -2,7 +2,7 @@
 training:
     epochs: 100
     num_workers: 6
-    batch_size: 11
+    batch_size: 16
     shuffle: True
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
@@ -15,16 +15,16 @@ training:
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
         lr_scheduler: ${lr_scheduler}
-        # bn_scheduler:
-        #     bn_policy: "step_decay"
-        #     params:
-        #         bn_momentum: 0.1
-        #         bn_decay: 0.9
-        #         decay_step : 10
-        #         bn_clip : 1e-2
+        bn_scheduler:
+            bn_policy: "step_decay"
+            params:
+                bn_momentum: 0.1
+                bn_decay: 0.9
+                decay_step : 10
+                bn_clip : 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
-    checkpoint_dir: "/home/nicolas/deeppointcloud-benchmarks/outputs/2020-02-24/17-47-37"
+    checkpoint_dir: ""
 
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
