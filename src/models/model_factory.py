@@ -19,8 +19,8 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
 
     # Find configs
     model_config = getattr(config.models, tested_model_name, None)
-    if not model_config:
-        raise ValueError("Could not find model named {} in {}".format(tested_model_name, config.models.keys()))
+    if model_config is None:
+        raise Exception("The model_name {} isn t within {}".format(tested_model_name, list(config.models.keys())))
     resolve_model(model_config, dataset, task)
 
     model_class = getattr(model_config, "class")
