@@ -5,12 +5,23 @@ import matplotlib.pyplot as plt
 import os
 from os import path as osp
 import torch
+import logging
 from collections import namedtuple
 from omegaconf import OmegaConf
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 from .enums import ConvolutionFormat
+from src.utils.debugging_vars import DEBUGGING_VARS
 
+
+log = logging.getLogger(__name__)
+
+def set_debugging_vars_to_global(cfg):
+    for key in cfg.keys():
+        key_upper = key.upper()
+        if key_upper in DEBUGGING_VARS.keys():
+            DEBUGGING_VARS[key_upper] = cfg[key]
+    log.info(DEBUGGING_VARS)
 
 def launch_wandb(cfg, launch: bool):
     if launch:

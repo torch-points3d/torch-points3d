@@ -11,6 +11,7 @@ defaults:
   - training: default
   - eval
 
+  - debugging: debugging
   - models: ${defaults.0.task}/${defaults.1.model_type}
   - data: ${defaults.0.task}/${defaults.2.dataset}
   - sota # Contains current SOTA results on different datasets (extracted from papers !).
