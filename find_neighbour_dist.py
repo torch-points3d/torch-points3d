@@ -2,6 +2,7 @@ import os
 import torch
 import hydra
 import logging
+import numpy as np
 from omegaconf import OmegaConf
 import pickle
 
@@ -29,27 +30,36 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger(__name__)
 
 
-def run_epoch(model: BaseModel, loader, device: str):
+def process(model, data, device):
+    data = data.to(device)
+    with torch.no_grad():
+        model.set_input(data)
+        model.forward()
+
+
+def run_epoch(model: BaseModel, loader, device: str, num_batches: int):
     model.eval()
     with Ctq(loader) as tq_loader:
-        for data in tq_loader:
-            data = data.to(device)
-            with torch.no_grad():
-                model.set_input(data)
-                model.forward()
+        for batch_idx, data in enumerate(tq_loader):
+            if batch_idx < num_batches:
+                process(model, data, device)
+            else:
+                break
 
 
 def run(cfg, model: BaseModel, dataset: BaseDataset, device, measurement_name: str):
     measurements = {}
 
-    run_epoch(model, dataset.train_dataloader(), device)
+    num_batches = getattr(cfg.debugging, "num_batches", np.inf)
+
+    run_epoch(model, dataset.train_dataloader(), device, num_batches)
     measurements["train"] = extract_histogram(model.get_spatial_ops(), normalize=False)
 
     if dataset.has_val_loader:
-        run_epoch(model, dataset.val_dataloader(), device)
+        run_epoch(model, dataset.val_dataloader(), device, num_batches)
         measurements["val"] = extract_histogram(model.get_spatial_ops(), normalize=False)
 
-    run_epoch(model, dataset.test_dataloader(), device)
+    run_epoch(model, dataset.test_dataloader(), device, num_batches)
     measurements["test"] = extract_histogram(model.get_spatial_ops(), normalize=False)
 
     with open(os.path.join(DIR, "measurements/{}.pickle".format(measurement_name)), "wb") as f:
@@ -71,25 +81,10 @@ def main(cfg):
     # Enable CUDNN BACKEND
     torch.backends.cudnn.enabled = cfg.training.enable_cudnn
 
-    # Checkpoint
-    checkpoint = ModelCheckpoint(
-        cfg.training.checkpoint_dir,
-        cfg.model_name,
-        cfg.training.weight_name,
-        run_config=cfg,
-        resume=bool(cfg.training.checkpoint_dir),
-    )
+    dataset = instantiate_dataset(cfg.data)
+    model = instantiate_model(cfg, dataset)
 
-    # Create model and datasets
-    if not checkpoint.is_empty and cfg.training.resume:
-        dataset = instantiate_dataset(checkpoint.data_config)
-        model = checkpoint.create_model(dataset, weight_name=cfg.training.weight_name)
-    else:
-        dataset = instantiate_dataset(cfg.data)
-        model = instantiate_model(cfg, dataset)
-        model.instantiate_optimizers(cfg)
     log.info(model)
-    model.log_optimizers()
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
     # Set dataloaders
@@ -101,10 +96,6 @@ def main(cfg):
         cfg.training.precompute_multi_scale,
     )
     log.info(dataset)
-
-    # Choose selection stage
-    selection_stage = determine_stage(cfg, dataset.has_val_loader)
-    checkpoint.selection_stage = selection_stage
 
     # Run training / evaluation
     model = model.to(device)
