@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
-import copy
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -46,24 +45,15 @@ class BaseModel(torch.nn.Module):
         self._conv_type = opt.conv_type
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
+        self._bn_scheduler = None
         self._spatial_ops_dict: Dict = {}
         self._iterations = 0
-        self._lr_params = None
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
-
-    @property
-    def lr_params(self):
-        try:
-            params = copy.deepcopy(self._lr_params)
-            params.lr_base = self.learning_rate
-            return params
-        except:
-            return None
 
     @property
     def schedulers(self):
@@ -323,6 +313,21 @@ class BaseModel(torch.nn.Module):
         colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
         colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
         colored_print(COLORS.Green, "Accumulated gradients: {}".format(self._accumulated_gradient_step))
+
+    def to(self, *args, **kwargs):
+        super().to(*args, *kwargs)
+        if self.optimizer:
+            for state in self.optimizer.state.values():
+                for k, v in state.items():
+                    if isinstance(v, torch.Tensor):
+                        state[k] = v.to(*args, **kwargs)
+        return self
+
+    def cpu(self):
+        return self.to(torch.device("cpu"))
+
+    def cuda(self):
+        return self.to(torch.device("cuda"))
 
 
 class BaseInternalLossModule(ABC):

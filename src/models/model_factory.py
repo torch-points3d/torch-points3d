@@ -19,6 +19,8 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
 
     # Find configs
     model_config = getattr(config.models, tested_model_name, None)
+    if not model_config:
+        raise ValueError("Could not find model named {} in {}".format(tested_model_name, config.models.keys()))
     resolve_model(model_config, dataset, task)
 
     model_class = getattr(model_config, "class")
@@ -28,6 +30,7 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
     model_module = ".".join(["src.models", task, module])
     modellib = importlib.import_module(model_module)
 
+    model_cls = None
     for name, cls in modellib.__dict__.items():
         if name.lower() == class_name.lower():
             model_cls = cls
