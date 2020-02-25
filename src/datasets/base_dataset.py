@@ -89,7 +89,7 @@ class BaseDataset:
         )
 
         if isinstance(self.test_dataset, list):
-            log.warn('Please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model')
+            log.warning('Please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model')
             self._test_loader = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
                                 num_workers=num_workers, sampler=self.test_sampler,
                                 ) for dataset in self.test_dataset]
