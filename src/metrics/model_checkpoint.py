@@ -242,6 +242,9 @@ class ModelCheckpoint(object):
         if stage == "train":
             models_to_save[Checkpoint._LATEST] = state_dict
 
+        if stage not in stats:
+            stats[stage] = []
+
         if len(stats[stage]) > 0:
             latest_stats = stats[stage][-1]
 

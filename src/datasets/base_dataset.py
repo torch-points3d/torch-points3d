@@ -88,9 +88,15 @@ class BaseDataset:
             sampler=self.train_sampler,
         )
 
-        self._test_loader = dataloader(
-            self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
-        )
+        if isinstance(self.test_dataset, list):
+            log.warn('Please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model')
+            self._test_loader = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
+                                num_workers=num_workers, sampler=self.test_sampler,
+                                ) for dataset in self.test_dataset]
+        else:
+            self._test_loader = dataloader(
+                self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
+            )
 
         if self.val_dataset:
             self._val_loader = dataloader(
@@ -117,6 +123,13 @@ class BaseDataset:
 
     def test_dataloader(self):
         return self._test_loader
+
+    @property
+    def num_test_datasets(self):
+        if isinstance(self._test_loader, list):
+            return self._test_loader
+        else:
+            return 1
 
     @property
     def has_fixed_points_transform(self):
@@ -183,25 +196,42 @@ class BaseDataset:
 
     @property
     def num_batches(self):
-        return {
+        out = {
             "train": len(self._train_loader),
-            "test": len(self._test_loader),
             "val": len(self._val_loader) if self.has_val_loader else 0,
         }
+        stage_name = "test"
+        if isinstance(self._test_loader, list):
+            for loader in self._test_loader:
+                stage_name = getattr(loader, "dataset_name", None)
+                if stage_name is None:
+                    stage_name = "test:{}".format(idx)
+                out[stage_name] = len(loader)
+        else:
+            out[stage_name] = len(self._test_loader)
+
+    def _set_composed_multiscale_transform(self, attr, transform):
+        current_transform = getattr(attr.dataset, "transform", None)
+        if current_transform is None:
+            setattr(attr.dataset, "transform", transform)
+        else:
+            if isinstance(current_transform, Compose):  # The transform contains several transformations
+                current_transform.transforms += [transform]
+            else:
+                setattr(
+                    attr.dataset, "transform", Compose([current_transform, transform]),
+                )
 
     def _set_multiscale_transform(self, transform):
-        for _, attr in self.__dict__.items():
-            if isinstance(attr, torch.utils.data.DataLoader):
-                current_transform = getattr(attr.dataset, "transform", None)
-                if current_transform is None:
-                    setattr(attr.dataset, "transform", transform)
-                else:
-                    if isinstance(current_transform, Compose):  # The transform contains several transformations
-                        current_transform.transforms += [transform]
-                    else:
-                        setattr(
-                            attr.dataset, "transform", Compose([current_transform, transform]),
-                        )
+        for attr_name, attr in self.__dict__.items():
+            if isinstance(attr, list):
+                for item in attr:
+                    if isinstance(item, torch.utils.data.DataLoader):
+                        self._set_composed_multiscale_transform(item, transform)
+            elif isinstance(attr, torch.utils.data.DataLoader):
+                self._set_composed_multiscale_transform(attr, transform)
+            else:
+                pass
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
@@ -222,7 +252,9 @@ class BaseDataset:
         for attr in self.__dict__:
             if attr.endswith("_dataset"):
                 dataset = getattr(self, attr)
-                if dataset:
+                if isinstance(dataset, list):
+                    size = ",".join([str(len(d)) for d in dataset])
+                elif dataset:
                     size = len(dataset)
                 else:
                     size = 0
