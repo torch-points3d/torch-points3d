@@ -255,7 +255,7 @@ class BaseDataset:
         is going to be on the validation or test datasets
         """
         selection_stage = getattr(cfg, "selection_stage", "")
-        if selection_stage != "":
+        if selection_stage == "":
             if self.has_val_loader:
                 selection_stage = "val"
             else:
