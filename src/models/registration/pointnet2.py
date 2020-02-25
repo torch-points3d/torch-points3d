@@ -39,7 +39,7 @@ class PatchPointNet2_D(BackboneBasedModel):
         # Size : B x N x 3
         assert len(data.pos.shape) == 3
         self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
-        self.labels = torch.range(0, data.batch[-1]).repeat(2, 1).T.reshape(-1)
+        self.labels = torch.range(0, data.pos.shape[0]).repeat(2, 1).T.reshape(-1)
 
     def forward(self):
         r"""

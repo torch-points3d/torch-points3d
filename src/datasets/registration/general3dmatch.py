@@ -106,14 +106,14 @@ class General3DMatch(Base3DMatch):
         self.radius_patch = radius_patch
         self.is_patch = is_patch
         if(self.mode == 'test'):
-            self.list_test_fragment = [f for f in os.listdir(
+            self.list_test_fragment = sorted([f for f in os.listdir(
                 osp.join(self.processed_dir,
-                         self.mode, 'fragment')) if 'fragment' in f]
+                         self.mode, 'fragment')) if 'fragment' in f])
         else:
             self.list_test_fragment = []
 
-
     def get_patch(self, idx):
+        p_extractor = PatchExtractor(self.radius_patch)
         if('train' in self.mode or 'val' in self.mode):
             match = np.load(
                 osp.join(self.processed_dir,
@@ -124,7 +124,7 @@ class General3DMatch(Base3DMatch):
             print(match['path_source'])
             data_source = torch.load(match['path_source'])
             data_target = torch.load(match['path_target'])
-            p_extractor = PatchExtractor(self.radius_patch)
+
             # select a random match on the list of match.
             # It cannot be 0 because matches are filtered.
             rand = np.random.randint(0, len(match['pair']))
@@ -141,7 +141,14 @@ class General3DMatch(Base3DMatch):
             return batch.contiguous()
 
         else:
-            raise NotImplementedError('Need to implement a testing dataset')
+            # select saved points and extract patches
+            num_pt = idx // self.num_random_pt
+            num_fragment = idx % self.num_random_pt
+            data = torch.load(self.list_test_fragment[num_fragment])
+            data = p_extractor(data, data.keypoints[num_pt])
+            return data
+
+
 
     def get_fragment(self, idx):
 
@@ -166,9 +173,7 @@ class General3DMatch(Base3DMatch):
 
         else:
             data = torch.load(
-                osp.join(
-                    self.processed_dir, self.mode, 'fragment'),
-                'fragment_{:06d}.pt'.format(idx))
+                self.list_test_fragment[idx])
             return data.contiguous()
 
     def get(self, idx):
@@ -182,14 +187,10 @@ class General3DMatch(Base3DMatch):
             return len(os.listdir(osp.join(self.processed_dir,
                                            self.mode, 'matches')))
         else:
-            list_test_fragment = [f for f in os.listdir(
-                osp.join(self.processed_dir,
-                         self.mode, 'fragment')) if 'fragment' in f]
             if(self.is_patch):
-                return len(list_test_fragment) * self.num_random_pt
+                return len(self.list_test_fragment) * self.num_random_pt
             else:
-                return len(list_test_fragment)
-
+                return len(self.list_test_fragment)
 
 
 class General3DMatchDataset(BaseDataset):
@@ -224,7 +225,8 @@ class General3DMatchDataset(BaseDataset):
             tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
             depth_thresh=dataset_opt.depth_thresh,
             pre_transform=pre_transform,
-            transform=test_transform)
+            transform=test_transform,
+            num_random_pt=dataset_opt.num_random_pt)
 
     @staticmethod
     def get_tracker(model, task: str, dataset, wandb_log: bool,

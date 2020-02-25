@@ -100,7 +100,7 @@ class Base3DMatch(Dataset):
         self.mode = mode
         self.num_random_pt = num_random_pt
         # select points for testing
-        self.detector = RandomDetector(self.num_random_pt)
+        self.detector = RandomDetector(num_points=self.num_random_pt)
         # constant to compute overlap
         self.min_overlap_ratio = min_overlap_ratio
         self.max_overlap_ratio = max_overlap_ratio
@@ -287,10 +287,12 @@ class Base3DMatch(Dataset):
                     data = self.pre_transform(data)
                 data = self.detector(data)
                 torch.save(data, out_path)
-                num_points = getattr(data, 'keypoints', len(data.pos))
+                num_points = getattr(data, 'keypoints', data.pos).shape[0]
                 tot += num_points
-                self.table[ind] = {'in_path': fragment_path, 'scene_path': scene_path,
-                                   'out_path': out_path, 'num_points': num_points}
+                self.table[ind] = {'in_path': fragment_path,
+                                   'scene_path': scene_path,
+                                   'out_path': out_path,
+                                   'num_points': num_points}
                 ind += 1
         self.table['total_num_points'] = tot
 

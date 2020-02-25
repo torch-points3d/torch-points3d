@@ -10,7 +10,8 @@ class RandomDetector(object):
         self.num_points = num_points
 
     def __call__(self, data):
-
-        keypoints_idx = torch.randint(0, data.pos.size(0), (self.num_points, ))
+        keypoints_idx = torch.randint(0,
+                                      data.pos.shape[0],
+                                      (self.num_points, ))
         data.keypoints = keypoints_idx
         return data
