@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     tracker.reset("val")
+    model.eval()
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
@@ -41,6 +42,7 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     tracker.reset("test")
+    model.eval()
     loader = dataset.test_dataloader()
     with Ctq(loader) as tq_test_loader:
         for data in tq_test_loader:

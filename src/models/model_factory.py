@@ -30,6 +30,7 @@ def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
     model_module = ".".join(["src.models", task, module])
     modellib = importlib.import_module(model_module)
 
+    model_cls = None
     for name, cls in modellib.__dict__.items():
         if name.lower() == class_name.lower():
             model_cls = cls

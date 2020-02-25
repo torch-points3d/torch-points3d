@@ -67,7 +67,10 @@ class PointNet2_D(UnetBasedModel):
                 pos -- Points [B, N, 3]
         """
         assert len(data.pos.shape) == 3
-        x = data.x.transpose(1, 2).contiguous() if data.x is not None else None
+        if data.x is not None:
+            x = data.x.transpose(1, 2).contiguous()
+        else:
+            x = None
         self.input = Data(x=x, pos=data.pos)
         self.labels = torch.flatten(data.y).long()  # [B * N]
         self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)

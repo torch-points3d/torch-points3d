@@ -3,6 +3,7 @@ import torch
 import logging
 import copy
 import glob
+import shutil
 from omegaconf import OmegaConf, DictConfig
 from src.models.base_model import BaseModel
 from src.utils.colors import COLORS, colored_print
@@ -60,8 +61,8 @@ class Checkpoint:
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
-        ckp = Checkpoint(checkpoint_file)
         if not os.path.exists(checkpoint_file):
+            ckp = Checkpoint(checkpoint_file)
             if strict:
                 available_checkpoints = glob.glob(os.path.join(checkpoint_dir, "*.pt"))
                 message = "The provided path {} didn't contain the checkpoint_file {}".format(
@@ -72,24 +73,29 @@ class Checkpoint:
                 raise ValueError(message)
             ckp.run_config = run_config
             return ckp
-
-        log.info("Loading checkpoint from {}".format(checkpoint_file))
-        objects = torch.load(checkpoint_file)
-        for key, value in objects.items():
-            setattr(ckp, key, value)
-        ckp._filled = True
+        else:
+            chkp_name = os.path.basename(checkpoint_file)
+            shutil.copyfile(
+                checkpoint_file, chkp_name
+            )  # Copy checkpoint to new run directory to make sure we don't override
+            ckp = Checkpoint(chkp_name)
+            log.info("Loading checkpoint from {}".format(checkpoint_file))
+            objects = torch.load(checkpoint_file)
+            for key, value in objects.items():
+                setattr(ckp, key, value)
+            ckp._filled = True
         return ckp
 
     @property
     def is_empty(self):
         return not self._filled
 
-    def get_optimizer(self, params):
+    def get_optimizer(self, model):
         if not self.is_empty:
             try:
                 optimizer_config = self.optimizer
                 optimizer_cls = getattr(torch.optim, optimizer_config[0])
-                optimizer = optimizer_cls(params)
+                optimizer = optimizer_cls(model.parameters())
                 optimizer.load_state_dict(optimizer_config[1])
                 return optimizer
             except:
@@ -202,7 +208,7 @@ class ModelCheckpoint(object):
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
             if self._resume:
-                model.optimizer = self._checkpoint.get_optimizer(model.parameters())
+                model.optimizer = self._checkpoint.get_optimizer(model)
                 model.schedulers = self._checkpoint.get_schedulers(model)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
