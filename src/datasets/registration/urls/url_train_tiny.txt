@@ -1,0 +1,2 @@
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/7-scenes-chess.zip
+http://vision.princeton.edu/projects/2016/3DMatch/downloads/rgbd-datasets/sun3d-mit_32_d507-d507_2.zip
