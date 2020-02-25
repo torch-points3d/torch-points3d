@@ -174,7 +174,7 @@ def main(cfg):
     )
 
     # Create model and datasets
-    if not checkpoint.is_empty and cfg.training.resume:
+    if not checkpoint.is_empty:
         dataset = instantiate_dataset(checkpoint.data_config)
         model = checkpoint.create_model(dataset, weight_name=cfg.training.weight_name)
     else:
