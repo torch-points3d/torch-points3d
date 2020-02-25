@@ -222,15 +222,9 @@ class BaseDataset:
             "train": len(self._train_loader),
             "val": len(self._val_loader) if self.has_val_loader else 0,
         }
-        stage_name = "test"
-        if len(self._test_loaders) > 1:
-            for loader_idx, loader in enumerate(self._test_loaders):
-                stage_name = getattr(loader, "dataset_name", None)
-                if stage_name is None:
-                    stage_name = "test:{}".format(loader_idx)
-                out[stage_name] = len(loader)
-        else:
-            out[stage_name] = len(self._test_loaders[0])
+        for loader_idx, loader in enumerate(self._test_loaders):
+            stage_name = self.get_test_dataset_name(loader_idx)
+            out[stage_name] = len(loader)
         return out
 
     def _set_composed_multiscale_transform(self, attr, transform):
@@ -246,7 +240,7 @@ class BaseDataset:
                 )
 
     def _set_multiscale_transform(self, transform):
-        for attr_name, attr in self.__dict__.items():
+        for _, attr in self.__dict__.items():
             if isinstance(attr, torch.utils.data.DataLoader):
                 self._set_composed_multiscale_transform(attr, transform)
 
