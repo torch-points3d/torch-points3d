@@ -1,6 +1,6 @@
 models:
   minipointnet2:
-    class: pointnet2.SiamesePointNet2_D
+    class: pointnet2.PatchPointNet2_D
     conv_type: "DENSE"
     down_conv:
       module_name: PointNetMSGDown
