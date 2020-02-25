@@ -36,6 +36,8 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
             tracker.track(model)
             tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
+            break
+
     tracker.print_summary()
 
 

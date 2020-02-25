@@ -112,8 +112,6 @@ class BaseDataset:
             )
 
         if precompute_multi_scale:
-            log.info(" ")
-            log.info('Setting multi scale transform for the following loaders:')
             self.set_strategies(model)
 
     @property
@@ -249,16 +247,11 @@ class BaseDataset:
 
     def _set_multiscale_transform(self, transform):
         for attr_name, attr in self.__dict__.items():
-            if isinstance(attr, list):
-                for item in attr:
-                    if isinstance(item, torch.utils.data.DataLoader):
-                        log.info(attr_name)
-                        self._set_composed_multiscale_transform(item, transform)
-                        break
-            elif isinstance(attr, torch.utils.data.DataLoader):
-                log.info(attr_name)
+            if isinstance(attr, torch.utils.data.DataLoader):
                 self._set_composed_multiscale_transform(attr, transform)
-        log.info(" ")
+
+        for loader in self._test_loaders:
+            self._set_composed_multiscale_transform(loader, transform)
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
