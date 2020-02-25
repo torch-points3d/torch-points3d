@@ -89,10 +89,12 @@ class BaseDataset:
         )
 
         if isinstance(self.test_dataset, list):
-            log.warning('You are using multiple test sets, please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model. Choose amongst ..')
             self._test_loaders = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
                                 num_workers=num_workers, sampler=self.test_sampler,
                                 ) for dataset in self.test_dataset]
+            
+            test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
+            log.warning('You are using multiple test sets, please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model. Choose amongst {}. If you want to have better trackable names, add a "dataset_name" attr to the each dataset'.format(test_dataset_names))
         else:
             self._test_loaders = [dataloader(
                 self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
@@ -108,7 +110,7 @@ class BaseDataset:
             )
 
         if precompute_multi_scale:
-            log.info('Setting multi scale transform for datasets')
+            log.info('Setting multi scale transform for the following loaders:')
             self.set_strategies(model)
 
     @property
@@ -244,12 +246,13 @@ class BaseDataset:
                 c = 0
                 for item in attr:
                     if isinstance(item, torch.utils.data.DataLoader):
-                        log.info(attr_name + ":" + str(c))
+                        log.info(attr_name + ": " + str(c))
                         self._set_composed_multiscale_transform(item, transform)
                         c += 1
             elif isinstance(attr, torch.utils.data.DataLoader):
                 log.info(attr_name)
                 self._set_composed_multiscale_transform(attr, transform)
+        log.info(" ")
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
@@ -271,7 +274,7 @@ class BaseDataset:
                 dataset = getattr(self, attr)
                 if isinstance(dataset, list):
                     if len(dataset) > 1:
-                        size = ",".join([str(len(d)) for d in dataset])
+                        size = ", ".join([str(len(d)) for d in dataset])
                     else:
                         size = len(dataset[0])
                 elif dataset:
