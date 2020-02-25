@@ -206,6 +206,7 @@ class ShapeNetDataset(BaseDataset):
             pre_transform=pre_transform,
             transform=train_transform,
         )
+
         self.test_dataset = ShapeNet(
                 self._data_path,
                 self._category,

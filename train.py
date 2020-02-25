@@ -214,8 +214,7 @@ def main(cfg):
     log.info(dataset)
 
     # Choose selection stage
-    selection_stage = dataset.resolve_saving_stage(cfg)
-    checkpoint.selection_stage = selection_stage
+    checkpoint.selection_stage = dataset.resolve_saving_stage(cfg)
     tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb.log, cfg.tensorboard.log)
 
     launch_wandb(cfg, not cfg.wandb.public and cfg.wandb.log)

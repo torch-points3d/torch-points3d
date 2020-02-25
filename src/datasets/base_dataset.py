@@ -27,6 +27,7 @@ class BaseDataset:
         self._data_path = os.path.join(dataset_opt.dataroot, class_name)
         self._batch_size = None
         self.strategies = {}
+        self._contains_dataset_name = False
 
         self.train_sampler = None
         self.test_sampler = None
@@ -98,10 +99,6 @@ class BaseDataset:
             )]
         self._test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
 
-        if self.num_test_datasets > 1:
-            log.info(" ")
-            colored_print(COLORS.Yellow, 'You are using multiple test sets, choose amongst {} by setting selection_stage to any of them. If you want to have better trackable names, add a "dataset_name" attributes to the dataset. Could be done on either one, couple or any'.format(self._test_dataset_names))
-
         if self.val_dataset:
             self._val_loader = dataloader(
                 self.val_dataset,
@@ -135,6 +132,14 @@ class BaseDataset:
     @property
     def test_datatset_names(self):
         return self._test_dataset_names
+
+    @property
+    def available_stage_names(self):
+        out = self._test_dataset_names
+        if self.has_val_loader:
+            out += ['val']
+        return out
+
 
     @property
     def has_fixed_points_transform(self):
@@ -202,6 +207,7 @@ class BaseDataset:
     def get_test_dataset_name(self, index=None):
         loader = self._test_loaders[index]
         if hasattr(loader.dataset, "dataset_name"):
+            self._contains_dataset_name = True
             return loader.dataset.dataset_name
         else:
             if self.num_test_datasets > 1:
@@ -255,12 +261,21 @@ class BaseDataset:
         is going to be on the validation or test datasets
         """
         selection_stage = getattr(cfg, "selection_stage", "")
+
+        log.info("Available stage selection datasets: {} {} {}".format(COLORS.IPurple, self.available_stage_names, COLORS.END_NO_TOKEN))
+        
+        if self.num_test_datasets > 1 and not self._contains_dataset_name:
+            msg = "If you want to have better trackable names for your test datasets, add a "
+            msg += COLORS.IPurple + "dataset_name" + COLORS.END_NO_TOKEN
+            msg += " attribute to them"
+            log.info(msg)
+
         if selection_stage == "":
             if self.has_val_loader:
                 selection_stage = "val"
             else:
                 selection_stage = self.get_test_dataset_name(0)
-        colored_print(COLORS.Yellow, "The models will be selected using the metrics on following dataset: {}".format(selection_stage))
+        log.info("The models will be selected using the metrics on following dataset: {} {} {}".format(COLORS.IPurple, selection_stage, COLORS.END_NO_TOKEN))
         return selection_stage
 
     def __repr__(self):
