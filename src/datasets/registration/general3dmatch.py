@@ -28,7 +28,8 @@ class General3DMatch(Base3DMatch):
                  pre_transform_fragment=None,
                  pre_filter=None,
                  verbose=False,
-                 debug=False, detector=None):
+                 debug=False,
+                 num_random_pt=5000):
         r"""
         Patch extracted from :the Princeton 3DMatch dataset\n
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -83,7 +84,7 @@ class General3DMatch(Base3DMatch):
                 :obj:`torch_geometric.data.Data` object and returns a boolean
                 value, indicating whether the data object should be included in the
                 final dataset. (default: :obj:`None`)
-            detector: function that select a fixed number of point in the dataset for the testing
+            num_random_pt: number of point we select when we test
         """
 
         super(General3DMatch, self).__init__(root,
@@ -100,10 +101,17 @@ class General3DMatch(Base3DMatch):
                                              pre_filter,
                                              verbose,
                                              debug,
-                                             detector)
+                                             num_random_pt)
 
         self.radius_patch = radius_patch
         self.is_patch = is_patch
+        if(self.mode == 'test'):
+            self.list_test_fragment = [f for f in os.listdir(
+                osp.join(self.processed_dir,
+                         self.mode, 'fragment')) if 'fragment' in f]
+        else:
+            self.list_test_fragment = []
+
 
     def get_patch(self, idx):
         if('train' in self.mode or 'val' in self.mode):
@@ -157,8 +165,11 @@ class General3DMatch(Base3DMatch):
             return batch.contiguous()
 
         else:
-            raise NotImplementedError('Need to implement a testing dataset')
-
+            data = torch.load(
+                osp.join(
+                    self.processed_dir, self.mode, 'fragment'),
+                'fragment_{:06d}.pt'.format(idx))
+            return data.contiguous()
 
     def get(self, idx):
         if(self.is_patch):
@@ -171,7 +182,14 @@ class General3DMatch(Base3DMatch):
             return len(os.listdir(osp.join(self.processed_dir,
                                            self.mode, 'matches')))
         else:
-            raise NotImplementedError('need to implement testing dataset')
+            list_test_fragment = [f for f in os.listdir(
+                osp.join(self.processed_dir,
+                         self.mode, 'fragment')) if 'fragment' in f]
+            if(self.is_patch):
+                return len(list_test_fragment) * self.num_random_pt
+            else:
+                return len(list_test_fragment)
+
 
 
 class General3DMatchDataset(BaseDataset):

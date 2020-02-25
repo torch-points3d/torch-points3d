@@ -4,10 +4,12 @@ import numpy as np
 import os
 import os.path as osp
 from plyfile import PlyData
+import shutil
 import torch
 
 from torch_geometric.data import Dataset, download_url, extract_zip
 from torch_geometric.data import Data
+from src.datasets.registration.detector import RandomDetector
 from src.datasets.registration.utils import rgbd2fragment_rough
 from src.datasets.registration.utils import rgbd2fragment_fine
 from src.datasets.registration.utils import compute_overlap_and_matches
@@ -47,7 +49,7 @@ class Base3DMatch(Dataset):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
-                 detector=None):
+                 num_random_pt=5000):
         r"""
         the Princeton 3DMatch dataset from the
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -96,7 +98,9 @@ class Base3DMatch(Dataset):
         self.tsdf_voxel_size = tsdf_voxel_size
         self.depth_thresh = depth_thresh
         self.mode = mode
-        self.detector = detector
+        self.num_random_pt = num_random_pt
+        # select points for testing
+        self.detector = RandomDetector(self.num_random_pt)
         # constant to compute overlap
         self.min_overlap_ratio = min_overlap_ratio
         self.max_overlap_ratio = max_overlap_ratio
@@ -124,12 +128,34 @@ class Base3DMatch(Dataset):
 
     def download(self):
 
-        folder = osp.join(self.raw_dir, self.mode)
-        log.info("Download elements in the file {}...".format(folder))
-        for url in self.dict_urls[self.mode]:
-            path = download_url(url, folder, self.verbose)
-            extract_zip(path, folder, self.verbose)
-            os.unlink(path)
+        if('test' not in self.mode):
+            # we download the raw RGBD file for the train and the validation data
+            folder = osp.join(self.raw_dir, self.mode)
+            log.info("Download elements in the file {}...".format(folder))
+            for url in self.dict_urls[self.mode]:
+                path = download_url(url, folder, self.verbose)
+                extract_zip(path, folder, self.verbose)
+                os.unlink(path)
+        else:
+            # we download fragments for the test data available:
+            # http://3dmatch.cs.princeton.edu/ section
+            # Geometric Registration Benchmark
+            folder_test = osp.join(self.raw_dir, self.mode)
+            for url_raw in self.dict_urls[self.mode]:
+                url = url_raw.split('\n')[0]
+                path = download_url(url, folder_test)
+                extract_zip(path, folder_test)
+                print(path)
+                folder = path.split('.zip')[0]
+                os.unlink(path)
+                path_eval = download_url(url.split('.zip')[0]+'-evaluation.zip', folder)
+                extract_zip(path_eval, folder)
+                os.unlink(path_eval)
+                folder_eval = path_eval.split('.zip')[0]
+                for f in os.listdir(folder_eval):
+                    os.rename(osp.join(folder_eval, f), osp.join(folder, f))
+                shutil.rmtree(folder_eval)
+
 
     def _create_fragment(self, mod):
         r"""
@@ -259,8 +285,7 @@ class Base3DMatch(Dataset):
                 data = Data(pos=pos)
                 if(self.pre_transform is not None):
                     data = self.pre_transform(data)
-                if(self.detector is not None):
-                    data = self.detector(data)
+                data = self.detector(data)
                 torch.save(data, out_path)
                 num_points = getattr(data, 'keypoints', len(data.pos))
                 tot += num_points
