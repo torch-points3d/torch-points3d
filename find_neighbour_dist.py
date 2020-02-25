@@ -61,7 +61,9 @@ def run(cfg, model: BaseModel, dataset: BaseDataset, device, measurement_name: s
 
     for loader_idx, loader in enumerate(dataset.test_dataloaders()):
         run_epoch(model, dataset.test_dataloaders(), device, num_batches)
-        measurements["test:{}".format(loader_idx)] = extract_histogram(model.get_spatial_ops(), normalize=False)
+        measurements[dataset.get_test_dataset_name(loader_idx)] = extract_histogram(
+            model.get_spatial_ops(), normalize=False
+        )
 
     with open(os.path.join(DIR, "measurements/{}.pickle".format(measurement_name)), "wb") as f:
         pickle.dump(measurements, f)

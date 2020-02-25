@@ -52,18 +52,6 @@ def launch_wandb(cfg, launch: bool):
         wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
         wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
 
-
-def determine_stage(cfg, dataset, has_val_loader):
-    """This function is responsible to determine if the best model selection 
-       is going to be on the validation or test dataset
-       keys: ["test", "val"]
-    """
-    selection_stage = getattr(cfg, "selection_stage", None)
-    if not selection_stage or selection_stage != "":
-        selection_stage = dataset.determine_stage
-    colored_print(COLORS.Yellow, "The models will be selected using the metrics on following dataset: {}".format(selection_stage))
-    return selection_stage
-
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)
 

@@ -210,13 +210,6 @@ class BaseDataset:
                 return"test"
 
     @property
-    def determine_stage(self):
-        if self.has_val_loader:
-            return "val"
-        else:
-            return self.get_test_dataset_name(0)
-
-    @property
     def num_batches(self):
         out = {
             "train": len(self._train_loader),
@@ -257,6 +250,19 @@ class BaseDataset:
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         pass
 
+    def resolve_saving_stage(self, cfg):
+        """This function is responsible to determine if the best model selection 
+        is going to be on the validation or test datasets
+        """
+        selection_stage = getattr(cfg, "selection_stage", None)
+        if not selection_stage or selection_stage != "":
+            if self.has_val_loader:
+                selection_stage = "val"
+            else:
+                selection_stage = self.get_test_dataset_name(0)
+        colored_print(COLORS.Yellow, "The models will be selected using the metrics on following dataset: {}".format(selection_stage))
+        return selection_stage
+
     def __repr__(self):
         message = "Dataset: %s \n" % self.__class__.__name__
         for attr in self.__dict__:
@@ -280,4 +286,6 @@ class BaseDataset:
                 message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
         message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
         return message
+
+        
 

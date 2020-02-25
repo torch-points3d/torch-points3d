@@ -26,6 +26,8 @@ class TestBaseDataset(unittest.TestCase):
             def __init__(self, dataset_opt):
                 super().__init__(dataset_opt)
 
+                self._data_path = dataset_opt.dataroot
+
                 self.train_dataset = MockDataset()
 
                 self.val_dataset = MockDataset()
@@ -52,6 +54,8 @@ class TestBaseDataset(unittest.TestCase):
             
             def __init__(self, dataset_opt):
                 super().__init__(dataset_opt)
+
+                self._data_path = dataset_opt.dataroot
 
                 self.train_dataset = MockDataset()
 

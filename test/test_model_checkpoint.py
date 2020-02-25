@@ -3,7 +3,7 @@ from omegaconf import OmegaConf, DictConfig
 import os
 import sys
 import hydra
-import tempfile
+import shutil
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
@@ -33,25 +33,32 @@ class TestModelCheckpoint(unittest.TestCase):
 
     def test_model_ckpt_using_pointnet2ms(self,):
         # Create a checkpt
-        with tempfile.TemporaryDirectory() as ckpt_dir:
-            name = "test"
-            model_checkpoint = ModelCheckpoint(ckpt_dir, name, "test", run_config=self.config, resume=False)
-            dataset = MockDatasetGeometric(5)
-            model = instantiate_model(self.config, dataset)
-            model.set_input(dataset[0])
-            model.instantiate_optimizers(self.config)
+        name = "model"
+        self.run_path = os.path.join(DIR, "checkpt")
+        print(self.run_path)
+        if not os.path.exists(self.run_path):
+            os.makedirs(self.run_path)
 
-            mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
-            model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        model_checkpoint = ModelCheckpoint(self.run_path, name, "test", run_config=self.config, resume=False)
+        dataset = MockDatasetGeometric(5)
+        model = instantiate_model(self.config, dataset)
+        model.set_input(dataset[0])
+        model.instantiate_optimizers(self.config)
 
-            # Load checkpoint and initialize model
-            model_checkpoint = ModelCheckpoint(ckpt_dir, name, "test", self.config, resume=True)
-            model2 = model_checkpoint.create_model(dataset, weight_name="acc")
+        mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+
+        # Load checkpoint and initialize model
+        model_checkpoint = ModelCheckpoint(self.run_path, name, "test", self.config, resume=True)
+        model2 = model_checkpoint.create_model(dataset, weight_name="acc")
 
         self.assertEqual(str(model.optimizer.__class__.__name__), str(model2.optimizer.__class__.__name__))
         self.assertEqual(model.optimizer.defaults, model2.optimizer.defaults)
         self.assertEqual(model.schedulers["lr_scheduler"].state_dict(), model2.schedulers["lr_scheduler"].state_dict())
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
+
+        shutil.rmtree(self.run_path)
+        os.remove(os.path.join(ROOT, "{}.pt".format(name)))
 
 
 if __name__ == "__main__":

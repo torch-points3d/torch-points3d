@@ -20,7 +20,7 @@ from src.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
 from src.utils.colors import COLORS
-from src.utils.config import determine_stage, launch_wandb
+from src.utils.config import resolve_saving_stage, launch_wandb
 from src.visualization import Visualizer
 
 log = logging.getLogger(__name__)
@@ -200,7 +200,7 @@ def main(cfg):
     log.info(dataset)
 
     # Choose selection stage
-    selection_stage = determine_stage(cfg, dataset, dataset.has_val_loader)
+    selection_stage = dataset.resolve_saving_stage(cfg)
     checkpoint.selection_stage = selection_stage
     tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb.log, cfg.tensorboard.log)
 
