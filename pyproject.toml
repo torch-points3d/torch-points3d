@@ -20,6 +20,8 @@ torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev
 torch-scatter = "^1.4.0"
 torch-sparse = "==0.4.3"
 torch-cluster = "^1.4.5"
+numba = "^0.48.0"
+pytorch_metric_learning = "^0.9.75"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"

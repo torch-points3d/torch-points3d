@@ -67,7 +67,7 @@ class BackboneBasedModel(BaseModel):
         """
 
         super(BackboneBasedModel, self).__init__(opt)
-        self._sampling_and_search_dict = {"neighbour_finder": [], "sampler": []}
+        self._spatial_ops_dict = {"neighbour_finder": [], "sampler": []}
 
         # detect which options format has been used to define the model
         if is_list(opt.down_conv) or "down_conv_nn" not in opt.down_conv:

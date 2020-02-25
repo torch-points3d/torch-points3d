@@ -14,8 +14,6 @@ class SiamesePointNet2_D(BackboneBasedModel):
     r"""
     PointNet2 with multi-scale grouping
     metric learning siamese network that uses feature propogation layers
-
-
     """
 
     def __init__(self, option, model_type, dataset, modules):

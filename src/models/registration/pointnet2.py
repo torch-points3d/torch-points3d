@@ -24,16 +24,13 @@ class PatchPointNet2_D(BackboneBasedModel):
         BackboneBasedModel.__init__(self, option, model_type, dataset, modules)
 
         # Last MLP
-        last_mlp_opt = option.mlp_cls
-        self._dim_output = last_mlp_opt.nn[-1][1]
-
-        self.FC_layer = torch.nn.Sequential()
-        for i in range(0, len(last_mlp_opt.nn)):
-            self.FC_layer.add(torch.nn.Linear(last_mlp_opt.nn[i - 1][0], last_mlp_opt.nn[i][1]))
-            self.FC_layer.add(torch.nn.Relu())
-            if i < len(len(last_mlp_opt.nn)) - 1:
-                self.FC_layer.add(torch.nn.Droupout(last_mlp_opt.dropout))
+        self.set_last_mlp(option.mlp_cls)
         self.loss_names = ["loss_reg", "loss", "internal"]
+
+    def set_last_mlp(self, last_mlp_opt):
+        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0])
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
 
     def set_input(self, data):
         # Size : B x N x 3

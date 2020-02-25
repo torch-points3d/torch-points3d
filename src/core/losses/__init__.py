@@ -26,7 +26,7 @@ def instantiate_loss_or_miner(option, mode="loss"):
         margin=0.1
     It can also instantiate a miner to better learn a loss
     """
-    name = option.name
+    class_ = getattr(option, 'class', None)
     try:
         params = option.params
     except KeyError:
@@ -38,15 +38,15 @@ def instantiate_loss_or_miner(option, mode="loss"):
         lparams = None
 
     if mode == "loss":
-        cls = getattr(_custom_losses, name, None)
+        cls = getattr(_custom_losses, class_, None)
         if not cls:
-            cls = getattr(_torch_metric_learning_losses, name, None)
+            cls = getattr(_torch_metric_learning_losses, class_, None)
             if not cls:
-                raise ValueError("loss %s is nowhere to be found" % name)
+                raise ValueError("loss %s is nowhere to be found" % class_)
     elif mode == "miner":
-        cls = getattr(_torch_metric_learning_miners, name, None)
+        cls = getattr(_torch_metric_learning_miners, class_, None)
         if not cls:
-            raise ValueError("miner %s is nowhere to be found" % name)
+            raise ValueError("miner %s is nowhere to be found" % class_)
 
     if params and lparams:
         return cls(*lparams, **params)

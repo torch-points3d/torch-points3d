@@ -37,8 +37,8 @@ class TestModelUtils(unittest.TestCase):
         for type_file in self.model_type_files:
             associated_task = type_file.split("/")[-2]
             models_config = OmegaConf.load(type_file)
-            models_config.update("data.task", associated_task)
             models_config = OmegaConf.merge(models_config, self.data_config)
+            models_config.update("data.task", associated_task)
             for model_name in models_config.models.keys():
                 print(model_name)
                 if model_name not in ["MyTemplateModel"]:

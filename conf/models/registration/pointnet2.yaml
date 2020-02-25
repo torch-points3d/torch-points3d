@@ -12,11 +12,14 @@ models:
             [[FEAT, 16, 16, 32], [FEAT, 32, 32, 64]],
             [[32 + 64, 64, 64, 128], [32 + 64, 64, 64, 128]]
         ]
+    mlp_cls:
+      nn: [128, 128]
+      dropout: 0.5
     loss:
-      loss_name: "TripletMarginLoss"
+      class: "TripletMarginLoss"
       params:
         margin: 0.1
         smooth_loss: True
-        triplet_per_anchor: 'all'
+        triplets_per_anchor: None
     miner:
-      miner_name: "BatchHardMiner"
+      class: "BatchHardMiner"
