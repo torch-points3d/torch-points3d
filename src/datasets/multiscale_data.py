@@ -4,9 +4,6 @@ import copy
 import torch_geometric
 from torch_geometric.data import Data
 from torch_geometric.data import Batch
-import logging
-
-log = logging.getLogger(__name__)
 
 class MultiScaleData(Data):
     def __init__(
@@ -78,11 +75,7 @@ class MultiScaleBatch(MultiScaleData):
             ms_scale = []
             for data_entry in data_list:
                 ms_scale.append(data_entry.multiscale[scale])
-            try:
-                multiscale.append(from_data_list_token(ms_scale))
-            except Exception as e:
-                log.info("Break in down_conv")
-                log.exception(e)
+            multiscale.append(from_data_list_token(ms_scale))
 
         # Build upsample batches
         upsample = []
@@ -90,11 +83,7 @@ class MultiScaleBatch(MultiScaleData):
             upsample_scale = []
             for data_entry in data_list:
                 upsample_scale.append(data_entry.upsample[scale])
-            try:
-                upsample.append(from_data_list_token(upsample_scale))
-            except Exception as e:
-                log.info("Break in up_conv")
-                log.exception(e)
+            upsample.append(from_data_list_token(upsample_scale))
 
         # Create batch from non multiscale data
         for data_entry in data_list:

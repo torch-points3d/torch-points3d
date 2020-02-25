@@ -11,7 +11,7 @@ from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
-from src.utils.colors import COLORS
+from src.utils.colors import COLORS, colored_print
 from src.models.base_model import BaseModel
 
 # A logger for this file
@@ -92,13 +92,15 @@ class BaseDataset:
             self._test_loaders = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
                                 num_workers=num_workers, sampler=self.test_sampler,
                                 ) for dataset in self.test_dataset]
-            
-            test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
-            log.warning('You are using multiple test sets, please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model. Choose amongst {}. If you want to have better trackable names, add a "dataset_name" attr to the each dataset'.format(test_dataset_names))
         else:
             self._test_loaders = [dataloader(
                 self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
             )]
+        self._test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
+
+        if self.num_test_datasets > 1:
+            log.info(" ")
+            colored_print(COLORS.Yellow, 'You are using multiple test sets, choose amongst {} by setting selection_stage to any of them. If you want to have better trackable names, add a "dataset_name" attributes to the dataset. Could be done on either one, couple or any'.format(self._test_dataset_names))
 
         if self.val_dataset:
             self._val_loader = dataloader(
@@ -110,6 +112,7 @@ class BaseDataset:
             )
 
         if precompute_multi_scale:
+            log.info(" ")
             log.info('Setting multi scale transform for the following loaders:')
             self.set_strategies(model)
 
@@ -130,6 +133,10 @@ class BaseDataset:
     @property
     def num_test_datasets(self):
         return len(self._test_loaders)
+
+    @property
+    def test_datatset_names(self):
+        return self._test_dataset_names
 
     @property
     def has_fixed_points_transform(self):
@@ -200,7 +207,7 @@ class BaseDataset:
             return loader.dataset.dataset_name
         else:
             if self.num_test_datasets > 1:
-                return "test:{}".format(index)
+                return "test_{}".format(index)
             else:
                 return"test"
 
@@ -243,12 +250,11 @@ class BaseDataset:
     def _set_multiscale_transform(self, transform):
         for attr_name, attr in self.__dict__.items():
             if isinstance(attr, list):
-                c = 0
                 for item in attr:
                     if isinstance(item, torch.utils.data.DataLoader):
-                        log.info(attr_name + ": " + str(c))
+                        log.info(attr_name)
                         self._set_composed_multiscale_transform(item, transform)
-                        c += 1
+                        break
             elif isinstance(attr, torch.utils.data.DataLoader):
                 log.info(attr_name)
                 self._set_composed_multiscale_transform(attr, transform)

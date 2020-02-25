@@ -12,7 +12,7 @@ from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 from .enums import ConvolutionFormat
 from src.utils.debugging_vars import DEBUGGING_VARS
-
+from src.utils.colors import COLORS, colored_print
 
 log = logging.getLogger(__name__)
 
@@ -59,8 +59,9 @@ def determine_stage(cfg, dataset, has_val_loader):
        keys: ["test", "val"]
     """
     selection_stage = getattr(cfg, "selection_stage", None)
-    if not selection_stage:
+    if not selection_stage or selection_stage != "":
         selection_stage = dataset.determine_stage
+    colored_print(COLORS.Yellow, "The models will be selected using the metrics on following dataset: {}".format(selection_stage))
     return selection_stage
 
 def is_list(entity):
