@@ -202,10 +202,10 @@ class BaseDataset:
         }
         stage_name = "test"
         if isinstance(self._test_loader, list):
-            for loader in self._test_loader:
+            for loader_idx, loader in enumerate(self._test_loader):
                 stage_name = getattr(loader, "dataset_name", None)
                 if stage_name is None:
-                    stage_name = "test:{}".format(idx)
+                    stage_name = "test:{}".format(loader_idx)
                 out[stage_name] = len(loader)
         else:
             out[stage_name] = len(self._test_loader)
