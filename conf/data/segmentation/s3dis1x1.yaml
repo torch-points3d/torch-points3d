@@ -5,18 +5,9 @@ data:
     fold: 5
     class_weight_method: "sqrt"
     use_category: False
-    room_points: 32768
-    num_points: 4096
-    first_subsampling: 0.04
-    pre_transforms:
-        - transform: GridSampling
-          params:
-              size: ${data.first_subsampling}
-
     train_transforms:
         - transform: FixedPoints
-          params:
-              num_points: ${data.num_points}
+          lparams: [4096]
         - transform: RandomTranslate
           params:
               translate: 0.01
@@ -27,5 +18,4 @@ data:
 
     test_transforms:
         - transform: FixedPoints
-          params:
-              num_points: ${data.num_points}
+          lparams: [4096]

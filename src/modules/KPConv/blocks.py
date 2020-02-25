@@ -35,7 +35,6 @@ class SimpleBlock(BaseModule):
         super(SimpleBlock, self).__init__()
         assert len(down_conv_nn) == 2
         num_inputs, num_outputs = down_conv_nn
-        self.grid_size = grid_size
         if deformable:
             density_parameter = self.DEFORMABLE_DENSITY
             self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
@@ -86,7 +85,7 @@ class SimpleBlock(BaseModule):
         return query_data
 
     def extra_repr(self):
-        return "Nb parameters: %i" % self.nb_params
+        return "Nb parameters: {}; {}; {}".format(self.nb_params, self.sampler, self.neighbour_finder)
 
 
 class ResnetBBlock(BaseModule):

@@ -146,8 +146,8 @@ def add_weights(dataset, train, class_weight_method):
 
 
 class S3DIS1x1Dataset(BaseDataset):
-    def __init__(self, dataset_opt, training_opt):
-        super().__init__(dataset_opt, training_opt)
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
 
         pre_transform = self.pre_transform
 
@@ -162,7 +162,7 @@ class S3DIS1x1Dataset(BaseDataset):
             pre_transform=self.pre_transform,
             transform=self.train_transform,
         )
-        test_dataset = S3DIS1x1(
+        self.test_dataset = S3DIS1x1(
             self._data_path,
             test_area=self.dataset_opt.fold,
             train=False,
@@ -170,9 +170,7 @@ class S3DIS1x1Dataset(BaseDataset):
             transform=self.test_transform,
         )
 
-        train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
-
-        self._create_dataloaders(train_dataset, test_dataset)
+        self.train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
