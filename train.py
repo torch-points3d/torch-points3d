@@ -65,8 +65,6 @@ def train_epoch(
 
             iter_data_time = time.time()
 
-            break
-
     metrics = tracker.publish()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
     log.info("Learning rate = %f" % model.learning_rate)
@@ -98,8 +96,6 @@ def eval_epoch(
             if visualizer.is_active:
                 visualizer.save_visuals(model.get_current_visuals())
 
-            break
-
     metrics = tracker.publish()
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
@@ -116,18 +112,10 @@ def test_epoch(
 ):
     model.eval()
 
-    loaders = dataset.test_dataloader()
-    if not isinstance(loaders, list):
-        loaders = [loaders]
-
-    num_loaders = len(loaders)
+    loaders = dataset.test_dataloaders()
 
     for idx, loader in enumerate(loaders):
-        stage_name = "test"
-        if num_loaders > 1:
-            stage_name = getattr(loader, "dataset_name", None)
-            if stage_name is None:
-                stage_name = "test:{}".format(idx)
+        stage_name = dataset.get_test_dataset_name(idx)
         tracker.reset(stage_name)
         visualizer.reset(epoch, stage_name)
         with Ctq(loader) as tq_test_loader:
@@ -142,8 +130,6 @@ def test_epoch(
 
                 if visualizer.is_active:
                     visualizer.save_visuals(model.get_current_visuals())
-
-                break
 
         metrics = tracker.publish()
         tracker.print_summary()
@@ -214,7 +200,7 @@ def main(cfg):
     log.info(dataset)
 
     # Choose selection stage
-    selection_stage = determine_stage(cfg, dataset.has_val_loader, dataset.num_test_datasets)
+    selection_stage = determine_stage(cfg, dataset, dataset.has_val_loader)
     checkpoint.selection_stage = selection_stage
     tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb.log, cfg.tensorboard.log)
 

@@ -39,9 +39,9 @@ class TestBaseDataset(unittest.TestCase):
         model = MockModel(model_config)
 
         mock_base_dataset.create_dataloaders(model, 2, True, 0, False)
-        datasets = mock_base_dataset.test_dataloader()
+        datasets = mock_base_dataset.test_dataloaders()
 
-        self.assertEqual(type(datasets), list)
+        self.assertEqual(len(datasets), 5)
 
     def test_normal(self):
 
@@ -66,10 +66,9 @@ class TestBaseDataset(unittest.TestCase):
         model = MockModel(model_config)
 
         mock_base_dataset.create_dataloaders(model, 2, True, 0, False)
-        datasets = mock_base_dataset.test_dataloader()
+        datasets = mock_base_dataset.test_dataloaders()
 
-        self.assertIsNot(type(datasets), list)
-
+        self.assertEqual(len(datasets), 1)
 
 if __name__ == "__main__":
     unittest.main()

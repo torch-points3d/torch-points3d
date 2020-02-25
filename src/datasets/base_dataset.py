@@ -89,14 +89,14 @@ class BaseDataset:
         )
 
         if isinstance(self.test_dataset, list):
-            log.warning('Please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model')
-            self._test_loader = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
+            log.warning('You are using multiple test sets, please, make sure you have set dataset_name and set selection_stage to one of them to properly track the best model. Choose amongst ..')
+            self._test_loaders = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
                                 num_workers=num_workers, sampler=self.test_sampler,
                                 ) for dataset in self.test_dataset]
         else:
-            self._test_loader = dataloader(
+            self._test_loaders = [dataloader(
                 self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
-            )
+            )]
 
         if self.val_dataset:
             self._val_loader = dataloader(
@@ -108,6 +108,7 @@ class BaseDataset:
             )
 
         if precompute_multi_scale:
+            log.info('Setting multi scale transform for datasets')
             self.set_strategies(model)
 
     @property
@@ -121,15 +122,12 @@ class BaseDataset:
     def val_dataloader(self):
         return self._val_loader
 
-    def test_dataloader(self):
-        return self._test_loader
+    def test_dataloaders(self):
+        return self._test_loaders
 
     @property
     def num_test_datasets(self):
-        if isinstance(self._test_loader, list):
-            return self._test_loader
-        else:
-            return 1
+        return len(self._test_loaders)
 
     @property
     def has_fixed_points_transform(self):
@@ -137,7 +135,7 @@ class BaseDataset:
         This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
         """
         transform_train = self._train_loader.dataset.transform
-        transform_test = self._test_loader.dataset.transform
+        transform_test = self._test_loaders.dataset.transform
 
         if transform_train is None or transform_test is None:
             return False
@@ -194,6 +192,23 @@ class BaseDataset:
     def batch_size(self):
         return self._batch_size
 
+    def get_test_dataset_name(self, index=None):
+        loader = self._test_loaders[index]
+        if hasattr(loader.dataset, "dataset_name"):
+            return loader.dataset.dataset_name
+        else:
+            if self.num_test_datasets > 1:
+                return "test:{}".format(index)
+            else:
+                return"test"
+
+    @property
+    def determine_stage(self):
+        if self.has_val_loader:
+            return "val"
+        else:
+            return self.get_test_dataset_name(0)
+
     @property
     def num_batches(self):
         out = {
@@ -201,14 +216,15 @@ class BaseDataset:
             "val": len(self._val_loader) if self.has_val_loader else 0,
         }
         stage_name = "test"
-        if isinstance(self._test_loader, list):
-            for loader_idx, loader in enumerate(self._test_loader):
+        if len(self._test_loaders) > 1:
+            for loader_idx, loader in enumerate(self._test_loaders):
                 stage_name = getattr(loader, "dataset_name", None)
                 if stage_name is None:
                     stage_name = "test:{}".format(loader_idx)
                 out[stage_name] = len(loader)
         else:
-            out[stage_name] = len(self._test_loader)
+            out[stage_name] = len(self._test_loaders[0])
+        return out
 
     def _set_composed_multiscale_transform(self, attr, transform):
         current_transform = getattr(attr.dataset, "transform", None)
@@ -225,17 +241,18 @@ class BaseDataset:
     def _set_multiscale_transform(self, transform):
         for attr_name, attr in self.__dict__.items():
             if isinstance(attr, list):
+                c = 0
                 for item in attr:
                     if isinstance(item, torch.utils.data.DataLoader):
+                        log.info(attr_name + ":" + str(c))
                         self._set_composed_multiscale_transform(item, transform)
+                        c += 1
             elif isinstance(attr, torch.utils.data.DataLoader):
+                log.info(attr_name)
                 self._set_composed_multiscale_transform(attr, transform)
-            else:
-                pass
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
-
         transform = MultiScaleTransform(strategies)
         self._set_multiscale_transform(transform)
 
@@ -253,7 +270,10 @@ class BaseDataset:
             if attr.endswith("_dataset"):
                 dataset = getattr(self, attr)
                 if isinstance(dataset, list):
-                    size = ",".join([str(len(d)) for d in dataset])
+                    if len(dataset) > 1:
+                        size = ",".join([str(len(d)) for d in dataset])
+                    else:
+                        size = len(dataset[0])
                 elif dataset:
                     size = len(dataset)
                 else:

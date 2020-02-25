@@ -41,18 +41,10 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
 
-    loaders = dataset.test_dataloader()
-    if not isinstance(loaders, list):
-        loaders = [loaders]
-
-    num_loaders = len(loaders)
+    loaders = dataset.test_dataloaders()
 
     for idx, loader in enumerate(loaders):
-        stage_name = "test"
-        if num_loaders > 1:
-            stage_name = getattr(loader, "dataset_name", None)
-            if stage_name is None:
-                stage_name = "test:{}".format(idx)
+        stage_name = dataset.get_test_dataset_name(idx)
         tracker.reset(stage_name)
         with Ctq(loader) as tq_test_loader:
             for data in tq_test_loader:
