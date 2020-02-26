@@ -19,5 +19,5 @@ defaults:
 
 model_name: ??? # Name of the specific model to load
 
-selection_stage: "test" # Which dataset to use to select best model ["val", "test"]
+selection_stage: ""
 pretty_print: False

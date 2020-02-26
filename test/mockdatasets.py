@@ -5,6 +5,13 @@ from src.datasets.batch import SimpleBatch
 from src.core.data_transform import MultiScaleTransform
 from src.datasets.multiscale_data import MultiScaleBatch
 
+class MockDatasetConfig(object):
+
+    def __init__(self):
+        pass
+
+    def keys(self):
+        return []
 
 class MockDataset(torch.utils.data.Dataset):
     def __init__(self, feature_size=0):
@@ -20,6 +27,9 @@ class MockDataset(torch.utils.data.Dataset):
         self._y = torch.tensor([0 for i in range(self.num_points)], dtype=torch.long)
         self._category = torch.ones((self.num_points,), dtype=torch.long)
         self._transform = None
+
+    def __len__(self):
+        return self.num_points
 
     @property
     def datalist(self):

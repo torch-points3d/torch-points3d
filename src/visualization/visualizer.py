@@ -2,6 +2,9 @@ import os
 import torch
 import numpy as np
 from plyfile import PlyData, PlyElement
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class Visualizer(object):
@@ -80,11 +83,11 @@ class Visualizer(object):
                 if self._deterministic:
                     if stage not in self._indices:
                         if self._num_samples_per_epoch > total_items:
-                            raise Exception("Number of samples to save if higher than the number of available elements")
+                            log.warn("Number of samples to save is higher than the number of available elements")
                         self._indices[stage] = np.random.permutation(total_items)[: self._num_samples_per_epoch]
                 else:
                     if self._num_samples_per_epoch > total_items:
-                        raise Exception("Number of samples to save if higher than the number of available elements")
+                        log.warn("Number of samples to save is higher than the number of available elements")
                     self._indices[stage] = np.random.permutation(total_items)[: self._num_samples_per_epoch]
 
     @property
@@ -98,7 +101,8 @@ class Visualizer(object):
         self._current_epoch = epoch
         self._seen_batch = 0
         self._stage = stage
-        self.get_indices(stage)
+        if self._activate:
+            self.get_indices(stage)
 
     def _extract_from_PYG(self, item, pos_idx):
         num_samples = item.batch.shape[0]

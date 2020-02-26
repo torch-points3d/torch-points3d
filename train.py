@@ -20,7 +20,7 @@ from src.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
 from src.utils.colors import COLORS
-from src.utils.config import determine_stage, launch_wandb
+from src.utils.config import launch_wandb
 from src.visualization import Visualizer
 
 log = logging.getLogger(__name__)
@@ -34,6 +34,7 @@ def train_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
+    early_break: bool,
 ):
     model.train()
     tracker.reset("train")
@@ -65,6 +66,9 @@ def train_epoch(
 
             iter_data_time = time.time()
 
+            if early_break:
+                break
+
     metrics = tracker.publish()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
     log.info("Learning rate = %f" % model.learning_rate)
@@ -78,6 +82,7 @@ def eval_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
+    early_break: bool,
 ):
     model.eval()
     tracker.reset("val")
@@ -96,6 +101,9 @@ def eval_epoch(
             if visualizer.is_active:
                 visualizer.save_visuals(model.get_current_visuals())
 
+            if early_break:
+                break
+
     metrics = tracker.publish()
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics)
@@ -109,43 +117,53 @@ def test_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
+    early_break: bool,
 ):
     model.eval()
-    tracker.reset("test")
-    visualizer.reset(epoch, "test")
-    loader = dataset.test_dataloader()
-    with Ctq(loader) as tq_test_loader:
-        for data in tq_test_loader:
-            data = data.to(device)
-            with torch.no_grad():
-                model.set_input(data)
-                model.forward()
 
-            tracker.track(model)
-            tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+    loaders = dataset.test_dataloaders()
 
-            if visualizer.is_active:
-                visualizer.save_visuals(model.get_current_visuals())
+    for idx, loader in enumerate(loaders):
+        stage_name = dataset.get_test_dataset_name(idx)
+        tracker.reset(stage_name)
+        visualizer.reset(epoch, stage_name)
+        with Ctq(loader) as tq_test_loader:
+            for data in tq_test_loader:
+                data = data.to(device)
+                with torch.no_grad():
+                    model.set_input(data)
+                    model.forward()
 
-    metrics = tracker.publish()
-    tracker.print_summary()
-    checkpoint.save_best_models_under_current_metrics(model, metrics)
+                tracker.track(model)
+                tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+
+                if visualizer.is_active:
+                    visualizer.save_visuals(model.get_current_visuals())
+
+                if early_break:
+                    break
+
+        metrics = tracker.publish()
+        tracker.print_summary()
+        checkpoint.save_best_models_under_current_metrics(model, metrics)
 
 
 def run(
     cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
 ):
+
+    early_break = getattr(cfg.debugging, "early_break", False)
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
-        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
+        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
         if dataset.has_val_loader:
-            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
+            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
 
-        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
+        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
-        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer)
+        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -196,8 +214,8 @@ def main(cfg):
     log.info(dataset)
 
     # Choose selection stage
-    selection_stage = determine_stage(cfg, dataset.has_val_loader)
-    checkpoint.selection_stage = selection_stage
+    selection_stage = getattr(cfg, "selection_stage", "")
+    checkpoint.selection_stage = dataset.resolve_saving_stage(selection_stage)
     tracker: BaseTracker = dataset.get_tracker(model, dataset, cfg.wandb.log, cfg.tensorboard.log)
 
     launch_wandb(cfg, not cfg.wandb.public and cfg.wandb.log)

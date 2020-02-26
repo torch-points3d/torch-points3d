@@ -25,7 +25,6 @@ log = logging.getLogger(__name__)
 
 def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     tracker.reset("val")
-    model.eval()
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
@@ -41,20 +40,23 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
 
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
-    tracker.reset("test")
-    model.eval()
-    loader = dataset.test_dataloader()
-    with Ctq(loader) as tq_test_loader:
-        for data in tq_test_loader:
-            data = data.to(device)
-            with torch.no_grad():
-                model.set_input(data)
-                model.forward()
 
-            tracker.track(model)
-            tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+    loaders = dataset.test_dataloaders()
 
-    tracker.print_summary()
+    for idx, loader in enumerate(loaders):
+        stage_name = dataset.get_test_dataset_name(idx)
+        tracker.reset(stage_name)
+        with Ctq(loader) as tq_test_loader:
+            for data in tq_test_loader:
+                data = data.to(device)
+                with torch.no_grad():
+                    model.set_input(data)
+                    model.forward()
+
+                tracker.track(model)
+                tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+
+            tracker.print_summary()
 
 
 def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
@@ -90,6 +92,7 @@ def main(cfg):
     )
     log.info(dataset)
 
+    model.eval()
     if cfg.enable_dropout:
         model.enable_dropout_in_eval()
     model = model.to(device)

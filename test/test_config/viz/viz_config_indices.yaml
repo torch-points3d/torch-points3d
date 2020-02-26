@@ -1,5 +1,5 @@
 visualization:
-  activate: False
+  activate: True
   format: "pointcloud" # image will come later
   num_samples_per_epoch: 2
   deterministic: True # False -> Randomly sample elements from epoch to epoch

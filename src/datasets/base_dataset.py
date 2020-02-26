@@ -11,7 +11,7 @@ from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
-from src.utils.colors import COLORS
+from src.utils.colors import COLORS, colored_print
 from src.models.base_model import BaseModel
 
 # A logger for this file
@@ -27,6 +27,7 @@ class BaseDataset:
         self._data_path = os.path.join(dataset_opt.dataroot, class_name)
         self._batch_size = None
         self.strategies = {}
+        self._contains_dataset_name = False
 
         self.train_sampler = None
         self.test_sampler = None
@@ -88,9 +89,15 @@ class BaseDataset:
             sampler=self.train_sampler,
         )
 
-        self._test_loader = dataloader(
-            self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
-        )
+        if isinstance(self.test_dataset, list):
+            self._test_loaders = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
+                                num_workers=num_workers, sampler=self.test_sampler,
+                                ) for dataset in self.test_dataset]
+        else:
+            self._test_loaders = [dataloader(
+                self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
+            )]
+        self._test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
 
         if self.val_dataset:
             self._val_loader = dataloader(
@@ -115,16 +122,32 @@ class BaseDataset:
     def val_dataloader(self):
         return self._val_loader
 
-    def test_dataloader(self):
-        return self._test_loader
+    def test_dataloaders(self):
+        return self._test_loaders
+
+    @property
+    def num_test_datasets(self):
+        return len(self._test_loaders)
+
+    @property
+    def test_datatset_names(self):
+        return self._test_dataset_names
+
+    @property
+    def available_stage_names(self):
+        out = self._test_dataset_names
+        if self.has_val_loader:
+            out += ['val']
+        return out
+
 
     @property
     def has_fixed_points_transform(self):
         """
         This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
         """
-        transform_train = self._train_loader.dataset.transform
-        transform_test = self._test_loader.dataset.transform
+        transform_train = self.train_transform
+        transform_test = self.test_transform
 
         if transform_train is None or transform_test is None:
             return False
@@ -181,31 +204,50 @@ class BaseDataset:
     def batch_size(self):
         return self._batch_size
 
+    def get_test_dataset_name(self, index=None):
+        loader = self._test_loaders[index]
+        if hasattr(loader.dataset, "dataset_name"):
+            self._contains_dataset_name = True
+            return loader.dataset.dataset_name
+        else:
+            if self.num_test_datasets > 1:
+                return "test_{}".format(index)
+            else:
+                return"test"
+
     @property
     def num_batches(self):
-        return {
+        out = {
             "train": len(self._train_loader),
-            "test": len(self._test_loader),
             "val": len(self._val_loader) if self.has_val_loader else 0,
         }
+        for loader_idx, loader in enumerate(self._test_loaders):
+            stage_name = self.get_test_dataset_name(loader_idx)
+            out[stage_name] = len(loader)
+        return out
+
+    def _set_composed_multiscale_transform(self, attr, transform):
+        current_transform = getattr(attr.dataset, "transform", None)
+        if current_transform is None:
+            setattr(attr.dataset, "transform", transform)
+        else:
+            if isinstance(current_transform, Compose):  # The transform contains several transformations
+                current_transform.transforms += [transform]
+            else:
+                setattr(
+                    attr.dataset, "transform", Compose([current_transform, transform]),
+                )
 
     def _set_multiscale_transform(self, transform):
         for _, attr in self.__dict__.items():
             if isinstance(attr, torch.utils.data.DataLoader):
-                current_transform = getattr(attr.dataset, "transform", None)
-                if current_transform is None:
-                    setattr(attr.dataset, "transform", transform)
-                else:
-                    if isinstance(current_transform, Compose):  # The transform contains several transformations
-                        current_transform.transforms += [transform]
-                    else:
-                        setattr(
-                            attr.dataset, "transform", Compose([current_transform, transform]),
-                        )
+                self._set_composed_multiscale_transform(attr, transform)
+
+        for loader in self._test_loaders:
+            self._set_composed_multiscale_transform(loader, transform)
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
-
         transform = MultiScaleTransform(strategies)
         self._set_multiscale_transform(transform)
 
@@ -213,6 +255,26 @@ class BaseDataset:
     @abstractmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         pass
+
+    def resolve_saving_stage(self, selection_stage):
+        """This function is responsible to determine if the best model selection 
+        is going to be on the validation or test datasets
+        """
+        log.info("Available stage selection datasets: {} {} {}".format(COLORS.IPurple, self.available_stage_names, COLORS.END_NO_TOKEN))
+        
+        if self.num_test_datasets > 1 and not self._contains_dataset_name:
+            msg = "If you want to have better trackable names for your test datasets, add a "
+            msg += COLORS.IPurple + "dataset_name" + COLORS.END_NO_TOKEN
+            msg += " attribute to them"
+            log.info(msg)
+
+        if selection_stage == "":
+            if self.has_val_loader:
+                selection_stage = "val"
+            else:
+                selection_stage = self.get_test_dataset_name(0)
+        log.info("The models will be selected using the metrics on following dataset: {} {} {}".format(COLORS.IPurple, selection_stage, COLORS.END_NO_TOKEN))
+        return selection_stage
 
     def __repr__(self):
         message = "Dataset: %s \n" % self.__class__.__name__
@@ -222,7 +284,12 @@ class BaseDataset:
         for attr in self.__dict__:
             if attr.endswith("_dataset"):
                 dataset = getattr(self, attr)
-                if dataset:
+                if isinstance(dataset, list):
+                    if len(dataset) > 1:
+                        size = ", ".join([str(len(d)) for d in dataset])
+                    else:
+                        size = len(dataset[0])
+                elif dataset:
                     size = len(dataset)
                 else:
                     size = 0
@@ -232,4 +299,6 @@ class BaseDataset:
                 message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
         message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
         return message
+
+        
 
