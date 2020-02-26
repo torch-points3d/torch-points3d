@@ -146,8 +146,8 @@ class BaseDataset:
         """
         This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
         """
-        transform_train = self._train_loader.dataset.transform
-        transform_test = self._test_loaders.dataset.transform
+        transform_train = self.train_transform
+        transform_test = self.test_transform
 
         if transform_train is None or transform_test is None:
             return False
@@ -256,12 +256,10 @@ class BaseDataset:
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         pass
 
-    def resolve_saving_stage(self, cfg):
+    def resolve_saving_stage(self, selection_stage):
         """This function is responsible to determine if the best model selection 
         is going to be on the validation or test datasets
         """
-        selection_stage = getattr(cfg, "selection_stage", "")
-
         log.info("Available stage selection datasets: {} {} {}".format(COLORS.IPurple, self.available_stage_names, COLORS.END_NO_TOKEN))
         
         if self.num_test_datasets > 1 and not self._contains_dataset_name:
