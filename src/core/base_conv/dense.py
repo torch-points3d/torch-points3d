@@ -66,8 +66,8 @@ class BaseDenseConvolutionDown(BaseConvolution):
         """
         x, pos = data.x, data.pos
         idx = self.sampler(pos)
-        pos_flipped = pos.transpose(1, 2).contiguous()
-        new_pos = tp.gather_operation(pos_flipped, idx).transpose(1, 2).contiguous()
+        idx = idx.unsqueeze(-1).repeat(1, 1, pos.shape[-1]).long()
+        new_pos = pos.gather(1, idx)
 
         ms_x = []
         for scale_idx in range(self.neighbour_finder.num_scales):
