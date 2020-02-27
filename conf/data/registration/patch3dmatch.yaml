@@ -20,10 +20,14 @@ data:
   train_transforms:
     - transform: FixedPoints
       lparams: [1024]
+    - transform: NormalizeScale
     - transform: RandomNoise
       params:
         sigma: 0.01
         clip: 0.05
+    - transform: XYZFeature
   test_transforms:
     - transform: FixedPoints
-      lparams: [2048]
+      lparams: [1024]
+    - transform: NormalizeScale
+    - transform: XYZFeature

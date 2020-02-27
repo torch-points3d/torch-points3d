@@ -2,6 +2,7 @@ import sys
 
 import torch_geometric.transforms as T
 from .transforms import *
+from .features import *
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
@@ -40,10 +41,10 @@ def instantiate_transform(transform_option):
 
     if tr_params and lparams:
         return cls(*lparams, **tr_params)
-    
+
     if tr_params:
         return cls(**tr_params)
-    
+
     if lparams:
         return cls(*lparams)
 
@@ -51,7 +52,7 @@ def instantiate_transform(transform_option):
 
 
 def instantiate_transforms(transform_options):
-    """ Creates a torch_geometric composite transform from an OmegaConf list such as 
+    """ Creates a torch_geometric composite transform from an OmegaConf list such as
     - transform: GridSampling
         params:
             size: 0.01
