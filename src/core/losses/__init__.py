@@ -26,7 +26,7 @@ def instantiate_loss_or_miner(option, mode="loss"):
         margin=0.1
     It can also instantiate a miner to better learn a loss
     """
-    class_ = getattr(option, 'class', None)
+    class_ = getattr(option, "class", None)
     try:
         params = option.params
     except KeyError:

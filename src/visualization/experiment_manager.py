@@ -75,7 +75,8 @@ class ExperimentFolder:
             for f in self._files:
                 if "viz" in f:
                     self._viz_path = os.path.join(self._run_path, "viz")
-                    self._contains_viz = True
+                    vizs = os.listdir(self._viz_path)
+                    self._contains_viz = len(vizs) > 0
                     return self._contains_viz
             self._contains_viz = False
             return self._contains_viz
