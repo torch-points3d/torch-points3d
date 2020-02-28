@@ -13,7 +13,6 @@ data:
   first_subsampling: 0.02
   num_random_pt: 5000
   pre_transforms:
-    - transform: NormalizeScale
     - transform: GridSampling
       params:
         size: ${data.first_subsampling}
@@ -23,7 +22,7 @@ data:
     - transform: NormalizeScale
     - transform: RandomNoise
       params:
-        sigma: 0.01
+        sigma: 0.005
         clip: 0.05
     - transform: XYZFeature
   test_transforms:

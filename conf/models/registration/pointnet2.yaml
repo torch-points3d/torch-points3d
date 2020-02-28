@@ -4,16 +4,13 @@ models:
     conv_type: "DENSE"
     down_conv:
       module_name: PointNetMSGDown
-      npoint: [1024, 256]
-      radii: [[0.2, 0.4], [0.4, 0.8]]
-      nsamples: [[16, 32], [16, 32]]
+      npoint: [512, 128]
+      radii: [[0.2], [0.4]]
+      nsamples: [[64], [64]]
       down_conv_nn:
-        [
-            [[FEAT, 16, 16, 32], [FEAT, 32, 32, 64]],
-            [[32 + 64, 64, 64, 128], [32 + 64, 64, 64, 128]]
-        ]
+        [[[FEAT + 3, 64, 64, 128]], [[128+3, 128, 128, 256]]]
     mlp_cls:
-      nn: [128, 128]
+      nn: [128, 256, 32]
       dropout: 0.5
     loss:
       class: "TripletMarginLoss"
