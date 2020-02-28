@@ -107,9 +107,12 @@ class General3DMatch(Base3DMatch):
         self.radius_patch = radius_patch
         self.is_patch = is_patch
         if(self.mode == 'test'):
-            self.list_test_fragment = sorted([f for f in os.listdir(
-                osp.join(self.processed_dir,
-                         self.mode, 'fragment')) if 'fragment' in f])
+            path_fragment = osp.join(
+                self.processed_dir,
+                self.mode, 'fragment')
+            self.list_test_fragment = sorted([osp.join(path_fragment, f) for f
+                                              in os.listdir(path_fragment)
+                                              if 'fragment' in f])
         else:
             self.list_test_fragment = []
 
@@ -141,8 +144,8 @@ class General3DMatch(Base3DMatch):
 
         else:
             # select saved points and extract patches
-            num_pt = idx // self.num_random_pt
-            num_fragment = idx % self.num_random_pt
+            num_pt = idx % self.num_random_pt
+            num_fragment = idx // self.num_random_pt
             data = torch.load(self.list_test_fragment[num_fragment])
             data = p_extractor(data, data.keypoints[num_pt])
             return data.to(torch.float)
