@@ -5,6 +5,7 @@ import torch
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.base3dmatch import Base3DMatch
 from src.datasets.registration.utils import PatchExtractor
+from src.datasets.registration.pair import make_pair
 from src.metrics.registration_tracker import PatchRegistrationTracker
 from src.core.data_transform.transforms import GridSampling
 from torch_geometric.data import Batch
@@ -120,8 +121,6 @@ class General3DMatch(Base3DMatch):
                          self.mode, 'matches',
                          'matches{:06d}.npy'.format(idx)),
                 allow_pickle=True).item()
-
-            print(match['path_source'])
             data_source = torch.load(match['path_source'])
             data_target = torch.load(match['path_target'])
 
@@ -138,7 +137,9 @@ class General3DMatch(Base3DMatch):
             batch = Batch.from_data_list([data_source, data_target])
             batch.pair = batch.batch
             batch.batch = None
-            return batch.contiguous()
+            batch = batch.contiguous().to(torch.float)
+
+            return batch
 
         else:
             # select saved points and extract patches
@@ -146,9 +147,7 @@ class General3DMatch(Base3DMatch):
             num_fragment = idx % self.num_random_pt
             data = torch.load(self.list_test_fragment[num_fragment])
             data = p_extractor(data, data.keypoints[num_pt])
-            return data
-
-
+            return data.to(torch.float)
 
     def get_fragment(self, idx):
 
@@ -169,12 +168,12 @@ class General3DMatch(Base3DMatch):
             batch.pair = batch.batch
             batch.batch = None
             batch.y = torch.from_numpy(match['pair'])
-            return batch.contiguous()
+            return batch.contiguous().to(torch.float)
 
         else:
             data = torch.load(
                 self.list_test_fragment[idx])
-            return data.contiguous()
+            return data.contiguous().to(torch.float)
 
     def get(self, idx):
         if(self.is_patch):
@@ -182,7 +181,7 @@ class General3DMatch(Base3DMatch):
         else:
             return self.get_fragment(idx)
 
-    def len(self):
+    def __len__(self):
         if('train' in self.mode or 'val' in self.mode):
             return len(os.listdir(osp.join(self.processed_dir,
                                            self.mode, 'matches')))
@@ -229,7 +228,7 @@ class General3DMatchDataset(BaseDataset):
             num_random_pt=dataset_opt.num_random_pt)
 
     @staticmethod
-    def get_tracker(model, task: str, dataset, wandb_log: bool,
+    def get_tracker(model, dataset, wandb_log: bool,
                     tensorboard_log: bool):
         """
         Factory method for the tracker
@@ -241,5 +240,5 @@ class General3DMatchDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return PatchRegistrationTracker(dataset, task, wandb_log,
+        return PatchRegistrationTracker(dataset, wandb_log=wandb_log,
                                         use_tensorboard=tensorboard_log)

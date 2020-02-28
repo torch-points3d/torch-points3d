@@ -8,7 +8,7 @@ class OneFeature(object):
     def __call__(self, data):
 
         ones = torch.ones(data.pos.shape[0]).unsqueeze(-1)
-        if not hasattr(data, "x"):
+        if data.x is None:
             data.x = ones
         else:
             data.x = torch.cat([data.x, ones], -1)
@@ -30,8 +30,9 @@ class XYZFeature(object):
             self.axis.append(2)
 
     def __call__(self, data):
+        assert data.pos is not None
         xyz = data.pos[:, self.axis]
-        if not hasattr(data, "x"):
+        if data.x is None:
             data.x = xyz
         else:
             data.x = torch.cat([data.x, xyz], -1)
@@ -44,9 +45,9 @@ class RGBFeature(object):
     """
 
     def __call__(self, data):
-        assert hasattr(data, "color")
+        assert hasattr(data, 'color')
         color = data.color
-        if not hasattr(data, "x"):
+        if data.x is None:
             data.x = color
         else:
             data.x = torch.cat([data.x, color], -1)
@@ -58,13 +59,12 @@ class NormalFeature(object):
     add normal as feature. if it doesn't exist, compute normals
     using PCA
     """
-
     def __call__(self, data):
-        if not hasattr(data, "norm"):
+        if data.norm is None:
             raise NotImplementedError("TODO: Implement normal computation")
 
         norm = data.norm
-        if not hasattr(data, "x"):
+        if data.x is None:
             data.x = norm
         else:
             data.x = torch.cat([data.x, norm], -1)
