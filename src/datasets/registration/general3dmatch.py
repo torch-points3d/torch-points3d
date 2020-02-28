@@ -148,6 +148,8 @@ class General3DMatch(Base3DMatch):
             num_fragment = idx // self.num_random_pt
             data = torch.load(self.list_test_fragment[num_fragment])
             data = p_extractor(data, data.keypoints[num_pt])
+            if(self.transform is not None):
+                data = self.transform(data)
             return data.to(torch.float)
 
     def get_fragment(self, idx):
@@ -214,7 +216,7 @@ class General3DMatchDataset(BaseDataset):
 
         self.test_dataset = General3DMatch(
             root=self._data_path,
-            mode='test',
+            mode='val',
             radius_patch=dataset_opt.radius_patch,
             is_patch=dataset_opt.is_patch,
             num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
