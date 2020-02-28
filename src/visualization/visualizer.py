@@ -115,6 +115,9 @@ class Visualizer(object):
         return out_data
 
     def _extract_from_dense(self, item, pos_idx):
+        assert (
+            item.y.shape[0] == item.pos.shape[0]
+        ), "y and pos should have the same number of samples. Something is probably wrong with your data to visualise"
         num_samples = item.y.shape[0]
         out_data = {}
         for k in item.keys:

@@ -255,7 +255,7 @@ class ModelCheckpoint(object):
                 current_stat[metric_name] = current_metric_value
 
                 metric_func = self.find_func_from_metric_name(metric_name, DEFAULT_METRICS_FUNC)
-                best_metric_from_stats = latest_stats["best_{}".format(metric_name)]
+                best_metric_from_stats = latest_stats.get("best_{}".format(metric_name), current_metric_value)
                 best_value = metric_func(best_metric_from_stats, current_metric_value)
                 current_stat["best_{}".format(metric_name)] = best_value
 
