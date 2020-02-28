@@ -36,7 +36,7 @@ class RadiusNeighbourFinder(BaseNeighbourFinder):
         elif self._conv_type == ConvolutionFormat.DENSE.value[-1] or ConvolutionFormat.PARTIAL_DENSE.value[-1]:
             return tp.ball_query(
                 self._radius, self._max_num_neighbors, x, y, mode=self._conv_type, batch_x=batch_x, batch_y=batch_y
-            )
+            )[0]
         else:
             raise NotImplementedError
 
@@ -156,7 +156,7 @@ class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
         if scale_idx >= self.num_scales:
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
         num_neighbours = self._max_num_neighbors[scale_idx]
-        neighbours = tp.ball_query(self._radius[scale_idx], num_neighbours, x, y)
+        neighbours = tp.ball_query(self._radius[scale_idx], num_neighbours, x, y)[0]
 
         if DEBUGGING_VARS["FIND_NEIGHBOUR_DIST"]:
             for i in range(neighbours.shape[0]):
