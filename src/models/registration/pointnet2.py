@@ -49,6 +49,7 @@ class PatchPointNet2_D(BackboneBasedModel):
             x = torch.cat([data.x_source, data.x_target], 0).transpose(1, 2).contiguous()
         else:
             x = None
+
         pos = torch.cat([data.pos_source, data.pos_target], 0)
         rang = torch.arange(0, data.pos_source.shape[0])
         labels = torch.cat([rang, rang], 0)

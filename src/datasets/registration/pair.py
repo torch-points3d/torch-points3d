@@ -17,5 +17,5 @@ def make_pair(data_source: Data, data_target: Data):
     for key_source in data_source.keys:
         batch[key_source+"_source"] = data_source[key_source]
     for key_target in data_target.keys:
-        batch[key_target+"_source"] = data_target[key_target]
+        batch[key_target+"_target"] = data_target[key_target]
     return batch.contiguous()

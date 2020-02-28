@@ -134,9 +134,7 @@ class General3DMatch(Base3DMatch):
             if(self.transform is not None):
                 data_source = self.transform(data_source)
                 data_target = self.transform(data_target)
-            batch = Batch.from_data_list([data_source, data_target])
-            batch.pair = batch.batch
-            batch.batch = None
+            batch = make_pair(data_source, data_target)
             batch = batch.contiguous().to(torch.float)
 
             return batch
@@ -164,9 +162,7 @@ class General3DMatch(Base3DMatch):
             if(self.transform is not None):
                 data_source = self.transform(data_source)
                 data_target = self.transform(data_target)
-            batch = Batch.from_data_list([data_source, data_target])
-            batch.pair = batch.batch
-            batch.batch = None
+            batch = make_pair(data_source, data_target)
             batch.y = torch.from_numpy(match['pair'])
             return batch.contiguous().to(torch.float)
 
