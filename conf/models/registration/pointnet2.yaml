@@ -8,15 +8,15 @@ models:
       radii: [[0.2], [0.4]]
       nsamples: [[64], [64]]
       down_conv_nn:
-        [[[FEAT, 64, 64, 128]], [[128+3, 128, 128, 256]]]
+        [[[FEAT, 32, 32, 64]], [[64+3, 64, 128, 128]]]
     mlp_cls:
-      nn: [128, 256, 32]
+      nn: [128, 128, 32]
       dropout: 0.5
     loss:
       class: "TripletMarginLoss"
       params:
-        margin: 0.1
+        margin: 0.0
         smooth_loss: True
-        triplets_per_anchor: None
+        triplets_per_anchor: 1000
     miner:
       class: "BatchHardMiner"

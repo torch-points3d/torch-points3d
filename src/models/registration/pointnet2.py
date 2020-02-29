@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 from torch.nn import Linear as Lin
 from torch.nn import Sequential as Seq
 import etw_pytorch_utils as pt_utils
@@ -73,6 +74,7 @@ class PatchPointNet2_D(BackboneBasedModel):
         last_feature = torch.mean(data.x, dim=1)
         # size after global pooling B x D
         self.output = self.FC_layer(last_feature)
+        self.output = F.normalize(self.output, p=2, dim=1)
         if labels is None:
             return self.output
         hard_pairs = None
