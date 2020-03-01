@@ -4,7 +4,6 @@ import shutil
 import matplotlib.pyplot as plt
 import os
 from os import path as osp
-import subprocess
 import torch
 import logging
 from collections import namedtuple
@@ -14,8 +13,20 @@ from omegaconf.dictconfig import DictConfig
 from .enums import ConvolutionFormat
 from src.utils.debugging_vars import DEBUGGING_VARS
 from src.utils.colors import COLORS, colored_print
+import subprocess
 
 log = logging.getLogger(__name__)
+
+class Option:
+    """This class is used to enable accessing arguments as attributes without having OmaConf.
+       It is used along convert_to_base_obj function
+    """
+    def __init__(self, opt):
+        for key, value in opt.items():
+            setattr(self, key, value)
+
+def convert_to_base_obj(opt):
+    return Option(OmegaConf.to_container(opt))
 
 def set_debugging_vars_to_global(cfg):
     for key in cfg.keys():
@@ -27,7 +38,7 @@ def set_debugging_vars_to_global(cfg):
 def set_to_wandb_args(wandb_args, cfg, name):
     var = getattr(cfg.wandb, name, None)
     if var:
-        wandb_args[name]=var   
+        wandb_args[name]=var    
 
 def launch_wandb(cfg, launch: bool):
     if launch:
@@ -56,7 +67,6 @@ def launch_wandb(cfg, launch: bool):
         set_to_wandb_args(wandb_args, cfg, "notes")
 
         wandb.init(**wandb_args)
-        
         shutil.copyfile(
             os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
         )

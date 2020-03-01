@@ -138,6 +138,7 @@ class FPModule_PD(BaseModule):
             x = torch.gather(data.x, 0, data_skip.batch.unsqueeze(-1).repeat((1, data.x.shape[-1])))
         else:
             x = self.upsample_op(data, data_skip, precomputed=pre_data)
+
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
 
