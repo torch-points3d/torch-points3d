@@ -4,6 +4,7 @@ import shutil
 import matplotlib.pyplot as plt
 import os
 from os import path as osp
+import subprocess
 import torch
 import logging
 from collections import namedtuple
@@ -23,6 +24,11 @@ def set_debugging_vars_to_global(cfg):
             DEBUGGING_VARS[key_upper] = cfg[key]
     log.info(DEBUGGING_VARS)
 
+def set_to_wandb_args(wandb_args, cfg, name):
+    var = getattr(cfg.wandb, name, None)
+    if var:
+        wandb_args[name]=var   
+
 def launch_wandb(cfg, launch: bool):
     if launch:
         import wandb
@@ -39,13 +45,18 @@ def launch_wandb(cfg, launch: bool):
             otimizer_class,
             scheduler_class,
         ]
-        wandb.init(
-            project=cfg.wandb.project,
-            tags=tags,
-            notes=cfg.wandb.notes,
-            name=cfg.wandb.name,
-            config={"run_path": os.getcwd()},
-        )
+
+        wandb_args = {}
+        wandb_args["project"]=cfg.wandb.project
+        wandb_args["tags"] = tags
+        wandb_args["config"]={"run_path": os.getcwd(),
+                              "commit": subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()}
+        set_to_wandb_args(wandb_args, cfg, "name")
+        set_to_wandb_args(wandb_args, cfg, "entity")
+        set_to_wandb_args(wandb_args, cfg, "notes")
+
+        wandb.init(**wandb_args)
+        
         shutil.copyfile(
             os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
         )
