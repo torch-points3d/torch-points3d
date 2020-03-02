@@ -23,7 +23,7 @@ class SimpleBlock(BaseModule):
         self,
         down_conv_nn=None,
         grid_size=None,
-        is_strided=False,
+        prev_grid_size=None,
         sigma=1.0,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
@@ -37,10 +37,12 @@ class SimpleBlock(BaseModule):
         num_inputs, num_outputs = down_conv_nn
         if deformable:
             density_parameter = self.DEFORMABLE_DENSITY
-            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=prev_grid_size * sigma)
         else:
             density_parameter = self.RIGID_DENSITY
-            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=prev_grid_size * sigma)
+        search_radius = density_parameter * sigma * prev_grid_size
+        self.neighbour_finder = RadiusNeighbourFinder(search_radius, max_num_neighbors, conv_type=self.CONV_TYPE)
 
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
@@ -48,8 +50,7 @@ class SimpleBlock(BaseModule):
             self.bn = None
         self.activation = activation
 
-        radius = density_parameter * sigma * grid_size
-        self.neighbour_finder = RadiusNeighbourFinder(radius, max_num_neighbors, conv_type=self.CONV_TYPE)
+        is_strided = prev_grid_size != grid_size
         if is_strided:
             self.sampler = GridSampling(grid_size)
         else:
@@ -112,7 +113,7 @@ class ResnetBBlock(BaseModule):
         self,
         down_conv_nn=None,
         grid_size=None,
-        is_strided=False,
+        prev_grid_size=None,
         sigma=1,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
@@ -129,8 +130,7 @@ class ResnetBBlock(BaseModule):
             d_2 = num_outputs // 4
         else:
             num_inputs, d_2, num_outputs = down_conv_nn
-        self.is_strided = is_strided
-        self.grid_size = grid_size
+        self.is_strided = prev_grid_size != grid_size
         self.has_bottleneck = has_bottleneck
 
         # Main branch
@@ -142,7 +142,7 @@ class ResnetBBlock(BaseModule):
         self.kp_conv = SimpleBlock(
             down_conv_nn=kp_size,
             grid_size=grid_size,
-            is_strided=is_strided,
+            prev_grid_size=prev_grid_size,
             sigma=sigma,
             max_num_neighbors=max_num_neighbors,
             activation=activation,
@@ -219,7 +219,7 @@ class KPDualBlock(BaseModule):
         block_names=None,
         down_conv_nn=None,
         grid_size=None,
-        is_strided=None,
+        prev_grid_size=None,
         has_bottleneck=None,
         max_num_neighbors=None,
         deformable=False,
@@ -234,7 +234,7 @@ class KPDualBlock(BaseModule):
             block = kpcls(
                 down_conv_nn=down_conv_nn[i],
                 grid_size=grid_size[i],
-                is_strided=is_strided[i],
+                prev_grid_size=prev_grid_size[i],
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
                 deformable=deformable[i],
