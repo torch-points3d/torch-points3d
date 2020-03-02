@@ -7,6 +7,9 @@ from src.core.common_modules.base_modules import BaseModule
 from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
+from src.core.base_conv.message_passing import GlobalBaseModule
+from src.core.common_modules.base_modules import Identity
+from src.utils.config import is_list
 
 
 class SimpleBlock(BaseModule):
@@ -30,6 +33,7 @@ class SimpleBlock(BaseModule):
         bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
         deformable=False,
+        add_one=False,
         **kwargs,
     ):
         super(SimpleBlock, self).__init__()
@@ -37,10 +41,12 @@ class SimpleBlock(BaseModule):
         num_inputs, num_outputs = down_conv_nn
         if deformable:
             density_parameter = self.DEFORMABLE_DENSITY
-            self.kp_conv = KPConvDeformableLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+            self.kp_conv = KPConvDeformableLayer(
+                num_inputs, num_outputs, point_influence=grid_size * sigma, add_one=add_one
+            )
         else:
             density_parameter = self.RIGID_DENSITY
-            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma)
+            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma, add_one=add_one)
 
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
@@ -90,7 +96,6 @@ class SimpleBlock(BaseModule):
 
 class ResnetBBlock(BaseModule):
     """ Resnet block with optional bottleneck activated by default
-
     Arguments:
         down_conv_nn (len of 2 or 3) :
                         sizes of input, intermediate, output.
@@ -120,6 +125,7 @@ class ResnetBBlock(BaseModule):
         bn_momentum=0.02,
         bn=torch.nn.BatchNorm1d,
         deformable=False,
+        add_one=False,
         **kwargs,
     ):
         super(ResnetBBlock, self).__init__()
@@ -149,6 +155,7 @@ class ResnetBBlock(BaseModule):
             bn_momentum=bn_momentum,
             bn=bn,
             deformable=deformable,
+            add_one=add_one,
         )
 
         if self.has_bottleneck:
@@ -223,6 +230,7 @@ class KPDualBlock(BaseModule):
         has_bottleneck=None,
         max_num_neighbors=None,
         deformable=False,
+        add_one=False,
         **kwargs,
     ):
         super(KPDualBlock, self).__init__()
@@ -238,6 +246,7 @@ class KPDualBlock(BaseModule):
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
                 deformable=deformable[i],
+                add_one=add_one[i] if is_list(add_one) else add_one,
             )
             self.blocks.append(block)
 

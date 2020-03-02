@@ -7,6 +7,16 @@ from .convolution_ops import *
 from src.models.base_model import BaseInternalLossModule
 
 
+def add_ones(query_points, x, add_one):
+    if add_one:
+        ones = torch.ones(query_points.shape[0], dtype=torch.float).unsqueeze(-1).to(query_points.device)
+        if x is not None:
+            x = torch.cat([ones.to(x.dtype), x], dim=-1)
+        else:
+            x = ones
+    return x
+
+
 class KPConvLayer(torch.nn.Module):
     """
     apply the kernel point convolution on a point cloud
@@ -34,11 +44,13 @@ class KPConvLayer(torch.nn.Module):
         KP_influence="linear",
         aggregation_mode="sum",
         dimension=3,
+        add_one=False,
     ):
         super(KPConvLayer, self).__init__()
         self.kernel_radius = self._INFLUENCE_TO_RADIUS * point_influence
         self.point_influence = point_influence
-        self.num_inputs = num_inputs
+        self.add_one = add_one
+        self.num_inputs = num_inputs + self.add_one * 1
         self.num_outputs = num_outputs
 
         self.KP_influence = KP_influence
@@ -54,7 +66,7 @@ class KPConvLayer(torch.nn.Module):
             torch.from_numpy(K_points_numpy.reshape((n_kernel_points, dimension))).to(torch.float), requires_grad=False,
         )
 
-        weights = torch.empty([n_kernel_points, num_inputs, num_outputs], dtype=torch.float)
+        weights = torch.empty([n_kernel_points, self.num_inputs, num_outputs], dtype=torch.float)
         torch.nn.init.xavier_normal_(weights)
         self.weight = Parameter(weights)
 
@@ -65,6 +77,8 @@ class KPConvLayer(torch.nn.Module):
         - neighbors(torch Tensor): neighbors of size N x M
         - features : feature of size N0 x d (d is the number of inputs)
         """
+        x = add_ones(support_points, x, self.add_one)
+
         new_feat = KPConv_ops(
             query_points,
             support_points,
@@ -79,12 +93,13 @@ class KPConvLayer(torch.nn.Module):
         return new_feat
 
     def __repr__(self):
-        return "KPConvLayer(InF: %i, OutF: %i, kernel_pts: %i, radius: %.2f, KP_influence: %s)" % (
+        return "KPConvLayer(InF: %i, OutF: %i, kernel_pts: %i, radius: %.2f, KP_influence: %s, Add_one: %s)" % (
             self.num_inputs,
             self.num_outputs,
             self.n_kernel_points,
             self.kernel_radius,
             self.KP_influence,
+            self.add_one,
         )
 
 
@@ -122,11 +137,13 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
         dimension=3,
         modulated=False,
         loss_mode="fitting",
+        add_one=False,
     ):
         super(KPConvDeformableLayer, self).__init__()
         self.kernel_radius = self._INFLUENCE_TO_RADIUS * point_influence
         self.point_influence = point_influence
-        self.num_inputs = num_inputs
+        self.add_one = add_one
+        self.num_inputs = num_inputs + self.add_one * 1
         self.num_outputs = num_outputs
 
         self.KP_influence = KP_influence
@@ -149,13 +166,13 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
             offset_dim = (dimension + 1) * self.n_kernel_points
         else:
             offset_dim = dimension * self.n_kernel_points
-        offset_weights = torch.empty([n_kernel_points, num_inputs, offset_dim], dtype=torch.float)
+        offset_weights = torch.empty([n_kernel_points, self.num_inputs, offset_dim], dtype=torch.float)
         torch.nn.init.xavier_normal_(offset_weights)
         self.offset_weights = Parameter(offset_weights)
         self.offset_bias = Parameter(torch.zeros(offset_dim, dtype=torch.float))
 
         # Main deformable weights
-        weights = torch.empty([n_kernel_points, num_inputs, num_outputs], dtype=torch.float)
+        weights = torch.empty([n_kernel_points, self.num_inputs, num_outputs], dtype=torch.float)
         torch.nn.init.xavier_normal_(weights)
         self.weight = Parameter(weights)
 
@@ -166,6 +183,9 @@ class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
         - neighbors(torch Tensor): neighbors of size N x M
         - features : feature of size N0 x d (d is the number of inputs)
         """
+
+        x = add_ones(support_points, x, self.add_one)
+
         offset_feat = (
             KPConv_ops(
                 query_points,

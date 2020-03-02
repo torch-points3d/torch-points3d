@@ -13,8 +13,20 @@ from omegaconf.dictconfig import DictConfig
 from .enums import ConvolutionFormat
 from src.utils.debugging_vars import DEBUGGING_VARS
 from src.utils.colors import COLORS, colored_print
+import subprocess
 
 log = logging.getLogger(__name__)
+
+class Option:
+    """This class is used to enable accessing arguments as attributes without having OmaConf.
+       It is used along convert_to_base_obj function
+    """
+    def __init__(self, opt):
+        for key, value in opt.items():
+            setattr(self, key, value)
+
+def convert_to_base_obj(opt):
+    return Option(OmegaConf.to_container(opt))
 
 def set_debugging_vars_to_global(cfg):
     for key in cfg.keys():
@@ -22,6 +34,11 @@ def set_debugging_vars_to_global(cfg):
         if key_upper in DEBUGGING_VARS.keys():
             DEBUGGING_VARS[key_upper] = cfg[key]
     log.info(DEBUGGING_VARS)
+
+def set_to_wandb_args(wandb_args, cfg, name):
+    var = getattr(cfg.wandb, name, None)
+    if var:
+        wandb_args[name]=var    
 
 def launch_wandb(cfg, launch: bool):
     if launch:
@@ -39,13 +56,17 @@ def launch_wandb(cfg, launch: bool):
             otimizer_class,
             scheduler_class,
         ]
-        wandb.init(
-            project=cfg.wandb.project,
-            tags=tags,
-            notes=cfg.wandb.notes,
-            name=cfg.wandb.name,
-            config={"run_path": os.getcwd()},
-        )
+
+        wandb_args = {}
+        wandb_args["project"]=cfg.wandb.project
+        wandb_args["tags"] = tags
+        wandb_args["config"]={"run_path": os.getcwd(),
+                              "commit": subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()}
+        set_to_wandb_args(wandb_args, cfg, "name")
+        set_to_wandb_args(wandb_args, cfg, "entity")
+        set_to_wandb_args(wandb_args, cfg, "notes")
+
+        wandb.init(**wandb_args)
         shutil.copyfile(
             os.path.join(os.getcwd(), ".hydra/config.yaml"), os.path.join(os.getcwd(), ".hydra/hydra-config.yaml")
         )
