@@ -1,18 +1,5 @@
 import torch
-
-
-class OneFeature(object):
-    """
-        x gets ones as features
-    """
-    def __call__(self, data):
-
-        ones = torch.ones(data.pos.shape[0]).unsqueeze(-1)
-        if data.x is None:
-            data.x = ones
-        else:
-            data.x = torch.cat([data.x, ones], -1)
-        return data
+import torch.nn.functional as F
 
 
 class XYZFeature(object):
@@ -43,10 +30,14 @@ class RGBFeature(object):
     """
     add color as feature if it exists
     """
+    def __init__(self, is_normalize=False):
+        self.is_normalize = is_normalize
 
     def __call__(self, data):
         assert hasattr(data, 'color')
         color = data.color
+        if(self.is_normalize):
+            color = F.normalize(color, p=2, dim=1)
         if data.x is None:
             data.x = color
         else:
