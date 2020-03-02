@@ -121,6 +121,8 @@ class FPModule_PD(BaseModule):
         batch_out = data_skip.clone()
         x_skip = data_skip.x
 
+        has_innermost = len(data.x) == data.batch.max() + 1
+
         if precomputed_up:
             if not hasattr(data, "up_idx"):
                 setattr(batch_out, "up_idx", 0)
@@ -132,7 +134,11 @@ class FPModule_PD(BaseModule):
         else:
             pre_data = None
 
-        x = self.upsample_op(data, data_skip, precomputed=pre_data)
+        if has_innermost:
+            x = torch.gather(data.x, 0, data_skip.batch.unsqueeze(-1).repeat((1, data.x.shape[-1])))
+        else:
+            x = self.upsample_op(data, data_skip, precomputed=pre_data)
+
         if x_skip is not None:
             x = torch.cat([x, x_skip], dim=1)
 
