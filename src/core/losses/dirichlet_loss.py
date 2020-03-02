@@ -49,7 +49,7 @@ def _dirichlet_dense(r, pos, f, aggr):
 
 
 def _variance_estimator_dense(r, pos, f):
-    nei_idx = tp.ball_query(r, _MAX_NEIGHBOURS, pos, pos).reshape(pos.shape[0], -1).long()  # [B,N * nei]
+    nei_idx = tp.ball_query(r, _MAX_NEIGHBOURS, pos, pos, sort=True)[0].reshape(pos.shape[0], -1).long()  # [B,N * nei]
     f_neighboors = f.gather(1, nei_idx).reshape(f.shape[0], f.shape[1], -1)  # [B,N , nei]
     gradient = (f.unsqueeze(-1).repeat(1, 1, f_neighboors.shape[-1]) - f_neighboors) ** 2  # [B,N,nei]
     return gradient.sum(-1)
