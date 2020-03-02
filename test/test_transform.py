@@ -38,9 +38,9 @@ class Testhelpers(unittest.TestCase):
     def test_multiscaleTransforms(self):
         samplers = [GridSampling(0.25), None, GridSampling(0.5)]
         search = [
-            RadiusNeighbourFinder(0.5, 10, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
-            RadiusNeighbourFinder(0.5, 15, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
-            RadiusNeighbourFinder(1, 20, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
+            RadiusNeighbourFinder(0.5, 100, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
+            RadiusNeighbourFinder(0.5, 150, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
+            RadiusNeighbourFinder(1, 200, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
         ]
         upsampler = [KNNInterpolate(1), KNNInterpolate(1)]
 
@@ -70,9 +70,10 @@ class Testhelpers(unittest.TestCase):
             torch.zeros((d.pos.shape[0]), dtype=torch.long),
             torch.zeros((ms[0].pos.shape[0]), dtype=torch.long),
         )
-        torch.testing.assert_allclose(ms[0].idx_neighboors, idx)
-        self.assertEqual(ms[1].idx_neighboors.shape[1], 15)
-        self.assertEqual(ms[2].idx_neighboors.shape[1], 20)
+        for i in range(len(ms[0].idx_neighboors)):
+            self.assertEqual(set(ms[0].idx_neighboors[i].tolist()), set(idx[i].tolist()))
+        self.assertEqual(ms[1].idx_neighboors.shape[1], 150)
+        self.assertEqual(ms[2].idx_neighboors.shape[1], 200)
 
         upsample = transformed.upsample
         self.assertEqual(upsample[0].num_nodes, ms[1].num_nodes)
