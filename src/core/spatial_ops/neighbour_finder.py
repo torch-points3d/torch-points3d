@@ -156,7 +156,7 @@ class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
         if scale_idx >= self.num_scales:
             raise ValueError("Scale %i is out of bounds %i" % (scale_idx, self.num_scales))
         num_neighbours = self._max_num_neighbors[scale_idx]
-        neighbours = tp.ball_query(self._radius[scale_idx], num_neighbours, x, y)
+        neighbours = tp.ball_query(self._radius[scale_idx], num_neighbours, x, y)[0]
 
         if DEBUGGING_VARS["FIND_NEIGHBOUR_DIST"]:
             for i in range(neighbours.shape[0]):
