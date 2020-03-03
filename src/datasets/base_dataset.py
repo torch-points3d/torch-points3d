@@ -67,6 +67,33 @@ class BaseDataset:
             return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
         elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
             return lambda datalist: SimpleBatch.from_data_list(datalist)
+        else:
+            raise NotImplementedError("Conv type {} not supported".format(conv_type))
+
+    @staticmethod
+    def get_num_samples(batch, conv_type):
+        if (
+            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
+            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
+        ):
+            return batch.batch.max() + 1
+        elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
+            return batch.pos.shape[0]
+        else:
+            raise NotImplementedError("Conv type {} not supported".format(conv_type))
+
+    @staticmethod
+    def get_sample(batch, key, index, conv_type):
+        assert hasattr(batch, key)
+        if (
+            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
+            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
+        ):
+            return batch[key][batch.batch == index]
+        elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
+            return batch[key][index]
+        else:
+            raise NotImplementedError("Conv type {} not supported".format(conv_type))
 
     def create_dataloaders(
         self, model: BaseModel, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
@@ -81,23 +108,27 @@ class BaseDataset:
         if self.train_sampler:
             log.info(self.train_sampler)
 
-        self._train_loader = dataloader(
-            self.train_dataset,
-            batch_size=batch_size,
-            shuffle=shuffle and not self.train_sampler,
-            num_workers=num_workers,
-            sampler=self.train_sampler,
-        )
+        if self.train_dataset:
+            self._train_loader = dataloader(
+                self.train_dataset,
+                batch_size=batch_size,
+                shuffle=shuffle and not self.train_sampler,
+                num_workers=num_workers,
+                sampler=self.train_sampler,
+            )
 
-        if isinstance(self.test_dataset, list):
-            self._test_loaders = [dataloader(dataset, batch_size=batch_size, shuffle=False, 
-                                num_workers=num_workers, sampler=self.test_sampler,
-                                ) for dataset in self.test_dataset]
-        else:
-            self._test_loaders = [dataloader(
-                self.test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
-            )]
-        self._test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
+        if self.test_dataset:
+            if not isinstance(self.test_dataset, list):
+                test_dataset = [self.test_dataset]
+            else:
+                test_dataset = self.test_dataset
+            self._test_loaders = [
+                dataloader(
+                    dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
+                )
+                for dataset in test_dataset
+            ]
+            self._test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
 
         if self.val_dataset:
             self._val_loader = dataloader(
@@ -137,9 +168,8 @@ class BaseDataset:
     def available_stage_names(self):
         out = self._test_dataset_names
         if self.has_val_loader:
-            out += ['val']
+            out += ["val"]
         return out
-
 
     @property
     def has_fixed_points_transform(self):
@@ -198,7 +228,17 @@ class BaseDataset:
 
     @property
     def feature_dimension(self):
-        return self.train_dataset.num_features
+        if self.train_dataset:
+            return self.train_dataset.num_features
+        elif self.test_dataset is not None:
+            if isinstance(self.test_dataset, list):
+                return self.test_dataset[0].num_features
+            else:
+                return self.test_dataset.num_features
+        elif self.val_dataset is not None:
+            return self.val_dataset.num_features
+        else:
+            raise NotImplementedError()
 
     @property
     def batch_size(self):
@@ -213,7 +253,7 @@ class BaseDataset:
             if self.num_test_datasets > 1:
                 return "test_{}".format(index)
             else:
-                return"test"
+                return "test"
 
     @property
     def num_batches(self):
@@ -260,8 +300,12 @@ class BaseDataset:
         """This function is responsible to determine if the best model selection 
         is going to be on the validation or test datasets
         """
-        log.info("Available stage selection datasets: {} {} {}".format(COLORS.IPurple, self.available_stage_names, COLORS.END_NO_TOKEN))
-        
+        log.info(
+            "Available stage selection datasets: {} {} {}".format(
+                COLORS.IPurple, self.available_stage_names, COLORS.END_NO_TOKEN
+            )
+        )
+
         if self.num_test_datasets > 1 and not self._contains_dataset_name:
             msg = "If you want to have better trackable names for your test datasets, add a "
             msg += COLORS.IPurple + "dataset_name" + COLORS.END_NO_TOKEN
@@ -273,7 +317,11 @@ class BaseDataset:
                 selection_stage = "val"
             else:
                 selection_stage = self.get_test_dataset_name(0)
-        log.info("The models will be selected using the metrics on following dataset: {} {} {}".format(COLORS.IPurple, selection_stage, COLORS.END_NO_TOKEN))
+        log.info(
+            "The models will be selected using the metrics on following dataset: {} {} {}".format(
+                COLORS.IPurple, selection_stage, COLORS.END_NO_TOKEN
+            )
+        )
         return selection_stage
 
     def __repr__(self):
@@ -299,6 +347,4 @@ class BaseDataset:
                 message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
         message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
         return message
-
-        
 
