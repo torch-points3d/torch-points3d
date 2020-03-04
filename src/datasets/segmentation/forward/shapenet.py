@@ -12,7 +12,9 @@ from src.core.data_transform import SaveOriginalPosId
 from src.utils import is_list
 from src.datasets.base_dataset import BaseDataset
 from src.metrics.shapenet_part_tracker import ShapenetPartTracker
-from .shapenet import ShapeNet
+from src.datasets.segmentation.shapenet import ShapeNet
+
+log = logging.getLogger(__name__)
 
 log = logging.getLogger(__name__)
 
