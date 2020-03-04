@@ -34,6 +34,7 @@ jupyterlab = "^1.2.6"
 pyvista = "^0.23.1"
 panel = "^0.8.0"
 param = "^1.9.3"
+codecov = "^2.0.16"
 
 [tool.black]
 line-length = 120

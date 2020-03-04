@@ -24,4 +24,10 @@ jobs:
           $HOME/.poetry/bin/poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with unittest
         run: |
-          $HOME/.poetry/bin/poetry run python -m unittest -v
+          $HOME/.poetry/bin/poetry  coverage run -m unittest
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          name: codecov-umbrella
