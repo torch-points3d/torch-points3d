@@ -2,13 +2,23 @@ data
 *.pyc
 __pycache__
 .vscode
-*outputs*
+**/*.ipynb_checkpoints
 wandb
 logs
 results
 site
 *.DS_Store
-kernels/dispositions/*
+**/*checkpoints
+/**/*.html
+py_scripts
+.ipynb_checkpoints
+measurements/*.pickle
+/forward_scripts/test_data
+/forward_scripts/out
+**/notebooks
+dashboard
+**/outputs
 
 .git
 data
+docs
