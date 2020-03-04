@@ -29,14 +29,14 @@ from src.utils.colors import COLORS
 log = logging.getLogger(__name__)
 
 
-def save(predicted):
+def save(prefix, predicted):
     for key, value in predicted.items():
         filename = key.split(".")[0]
         out_file = filename + "_pred"
-        np.save(out_file, value)
+        np.save(os.path.join(prefix, out_file), value)
 
 
-def run(model: BaseModel, dataset: BaseDataset, device):
+def run(model: BaseModel, dataset: BaseDataset, device, output_path):
     loaders = dataset.test_dataloaders()
     predicted = {}
     for idx, loader in enumerate(loaders):
@@ -49,7 +49,7 @@ def run(model: BaseModel, dataset: BaseDataset, device):
                     model.forward()
                 predicted = {**predicted, **dataset.predict_original_samples(data, model.conv_type, model.get_output())}
 
-    save(predicted)
+    save(output_path, predicted)
 
 
 @hydra.main(config_path="conf/partseg.yaml")
@@ -70,6 +70,7 @@ def main(cfg):
     train_dataset_cls = get_dataset_class(checkpoint.data_config)
     setattr(checkpoint.data_config, "class", train_dataset_cls.FORWARD_CLASS)
     setattr(checkpoint.data_config, "dataroot", cfg.dataroot)
+    setattr(checkpoint.data_config, "forward_category", cfg.forward_category)
     dataset = instantiate_dataset(checkpoint.data_config)
     model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
     log.info(model)
@@ -87,7 +88,10 @@ def main(cfg):
     model = model.to(device)
 
     # Run training / evaluation
-    run(model, dataset, device)
+    if not os.path.exists(cfg.output_path):
+        os.makedirs(cfg.output_path)
+
+    run(model, dataset, device, cfg.output_path)
 
 
 if __name__ == "__main__":
