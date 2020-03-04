@@ -41,7 +41,11 @@ class _ForwardShapenet(torch.utils.data.Dataset):
         raw = read_txt_array(filename)
         pos = raw[:, :3]
         x = raw[:, 3:6]
-        return Data(pos=pos, x=x)
+        if raw.shape[1] == 7:
+            y = raw[:, 7]
+        else:
+            y = None
+        return Data(pos=pos, x=x, y=y)
 
     def get_raw(self, index):
         """ returns the untransformed data associated with an element

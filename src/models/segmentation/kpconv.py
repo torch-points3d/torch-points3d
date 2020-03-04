@@ -128,7 +128,9 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.output = self.FC_layer(last_feature, self.category)
         else:
             self.output = self.FC_layer(last_feature)
-        self.compute_loss()
+
+        if self.labels is not None:
+            self.compute_loss()
 
         self.data_visual = self.input
         self.data_visual.pred = torch.max(self.output, -1)[1]
@@ -186,7 +188,8 @@ class KPConvSeg(Segmentation_MP):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
-        self.compute_loss()
+        if self.labels is not None:
+            self.compute_loss()
         return self.output
 
     def compute_loss(self):

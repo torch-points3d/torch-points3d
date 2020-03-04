@@ -72,7 +72,10 @@ class PointNet2_D(UnetBasedModel):
         else:
             x = None
         self.input = Data(x=x, pos=data.pos)
-        self.labels = torch.flatten(data.y).long()  # [B * N]
+        if data.y is not None:
+            self.labels = torch.flatten(data.y).long()  # [B * N]
+        else:
+            self.labels = None
         self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
         if self._use_category:
             self.category = data.category
@@ -94,7 +97,8 @@ class PointNet2_D(UnetBasedModel):
 
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
+        if self.labels is not None:
+            self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
         return self.output
 
     def backward(self):
