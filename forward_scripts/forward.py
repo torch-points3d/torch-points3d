@@ -52,7 +52,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path):
     save(output_path, predicted)
 
 
-@hydra.main(config_path="conf/partseg.yaml")
+@hydra.main(config_path="conf/config.yaml")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 
@@ -66,11 +66,18 @@ def main(cfg):
     # Checkpoint
     checkpoint = ModelCheckpoint(cfg.checkpoint_dir, cfg.model_name, cfg.weight_name, strict=True)
 
-    # Create model and datasets
+    # Setup the dataset config
+    # Generic config
     train_dataset_cls = get_dataset_class(checkpoint.data_config)
     setattr(checkpoint.data_config, "class", train_dataset_cls.FORWARD_CLASS)
     setattr(checkpoint.data_config, "dataroot", cfg.dataroot)
-    setattr(checkpoint.data_config, "forward_category", cfg.forward_category)
+
+    # Datset specific configs
+    if cfg.data:
+        for key, value in cfg.data.items():
+            checkpoint.data_config.update(key, value)
+
+    # Create dataset and mdoel
     dataset = instantiate_dataset(checkpoint.data_config)
     model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
     log.info(model)
