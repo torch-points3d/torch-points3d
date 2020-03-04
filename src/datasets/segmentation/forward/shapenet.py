@@ -16,8 +16,6 @@ from src.datasets.segmentation.shapenet import ShapeNet
 
 log = logging.getLogger(__name__)
 
-log = logging.getLogger(__name__)
-
 
 class _ForwardShapenet(torch.utils.data.Dataset):
     """ Dataset to run forward inference on Shapenet kind of data data. Runs on a whole folder.
