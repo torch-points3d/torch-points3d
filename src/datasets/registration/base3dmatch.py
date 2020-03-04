@@ -28,11 +28,12 @@ class Base3DMatch(Dataset):
     list_urls_train = get_urls(osp.join(base, 'urls', 'url_train.txt'))
     list_urls_train_small = get_urls(osp.join(base, 'urls', 'url_train_small.txt'))
     list_urls_train_tiny = get_urls(osp.join(base, 'urls', 'url_train_tiny.txt'))
-    list_urls_test = get_urls(osp.join(base, 'urls', 'url_val.txt'))
+    list_urls_val = get_urls(osp.join(base, 'urls', 'url_val.txt'))
     list_urls_test = get_urls(osp.join(base, 'urls', 'url_test.txt'))
     dict_urls = dict(train=list_urls_train,
                      train_small=list_urls_train_small,
                      train_tiny=list_urls_train_tiny,
+                     val=list_urls_val,
                      test=list_urls_test)
 
     def __init__(self, root,

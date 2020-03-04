@@ -5,12 +5,7 @@ import hydra
 from src.datasets.base_dataset import BaseDataset
 
 
-def instantiate_dataset(dataset_config) -> BaseDataset:
-    """Import the module "data/[module].py".
-    In the file, the class called {class_name}() will
-    be instantiated. It has to be a subclass of BaseDataset,
-    and it is case-insensitive.
-    """
+def get_dataset_class(dataset_config):
     task = dataset_config.task
 
     # Find and create associated dataset
@@ -23,7 +18,6 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
     dataset_module = ".".join(["src.datasets", task, module])
     datasetlib = importlib.import_module(dataset_module)
 
-    dataset = None
     target_dataset_name = class_name
     for name, cls in datasetlib.__dict__.items():
         if name.lower() == target_dataset_name.lower() and issubclass(cls, BaseDataset):
@@ -35,5 +29,15 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
             % (module, class_name)
         )
 
+    return dataset_cls
+
+
+def instantiate_dataset(dataset_config) -> BaseDataset:
+    """Import the module "data/[module].py".
+    In the file, the class called {class_name}() will
+    be instantiated. It has to be a subclass of BaseDataset,
+    and it is case-insensitive.
+    """
+    dataset_cls = get_dataset_class(dataset_config)
     dataset = dataset_cls(dataset_config)
     return dataset

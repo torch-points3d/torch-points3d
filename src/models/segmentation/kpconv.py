@@ -82,9 +82,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        if hasattr(data, "x"):
-            ones = torch.ones(data.x.shape[0], dtype=torch.float).unsqueeze(-1).to(data.x.device)
-            data.x = torch.cat([ones, data.x], dim=-1)
+        data.x = add_ones(data.pos, data.x, True)
 
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
@@ -112,15 +110,27 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             stack_down.append(data)
 
         data = self.down_modules[-1](data, pre_computed=self.pre_computed)
+        innermost = False
+
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            data = self.inner_modules[0](data)
+            innermost = True
+
         for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.upsample)
+            if i == 0 and innermost:
+                data = self.up_modules[i]((data, stack_down.pop()))
+            else:
+                data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.upsample)
 
         last_feature = data.x
         if self._use_category:
             self.output = self.FC_layer(last_feature, self.category)
         else:
             self.output = self.FC_layer(last_feature)
-        self.compute_loss()
+
+        if self.labels is not None:
+            self.compute_loss()
 
         self.data_visual = self.input
         self.data_visual.pred = torch.max(self.output, -1)[1]
@@ -178,7 +188,8 @@ class KPConvSeg(Segmentation_MP):
         x = F.dropout(x, p=self.dropout, training=self.training)
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
-        self.compute_loss()
+        if self.labels is not None:
+            self.compute_loss()
         return self.output
 
     def compute_loss(self):

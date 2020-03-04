@@ -190,6 +190,8 @@ class ShapeNet(InMemoryDataset):
 
 
 class ShapeNetDataset(BaseDataset):
+    FORWARD_CLASS = "shapenetforward.ForwardShapenetDataset"
+
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
         try:
@@ -208,13 +210,13 @@ class ShapeNetDataset(BaseDataset):
         )
 
         self.test_dataset = ShapeNet(
-                self._data_path,
-                self._category,
-                include_normals=dataset_opt.normal,
-                split="test",
-                transform=self.test_transform,
-                pre_transform=pre_transform,
-            )
+            self._data_path,
+            self._category,
+            include_normals=dataset_opt.normal,
+            split="test",
+            transform=self.test_transform,
+            pre_transform=pre_transform,
+        )
         self._categories = self.train_dataset.categories
 
     @property

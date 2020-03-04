@@ -14,3 +14,5 @@ notebooks/*checkpoints
 py_scripts
 .ipynb_checkpoints
 measurements/*.pickle
+/forward_scripts/test_data
+/forward_scripts/out
