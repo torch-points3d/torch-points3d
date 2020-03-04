@@ -1,7 +1,7 @@
 ![Project Logo](/docs/logo.png)
 
 
-[![codecov](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks)
+[![codecov](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks) [![Actions Status](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/actions)
 
 
 
