@@ -190,7 +190,7 @@ class ShapeNet(InMemoryDataset):
 
 
 class ShapeNetDataset(BaseDataset):
-    FORWARD_CLASS = "shapenetforward.ForwardShapenetDataset"
+    FORWARD_CLASS = "forward.shapenet.ForwardShapenetDataset"
 
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)

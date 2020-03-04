@@ -61,10 +61,10 @@ class BaseTracker:
         else:
             return x
 
-    def publish_to_tensorboard(self, metrics):
+    def publish_to_tensorboard(self, metrics, step):
         for metric_name, metric_value in metrics.items():
             metric_name = "{}/{}".format(metric_name.replace(self._stage + "_", ""), self._stage)
-            self._writer.add_scalar(metric_name, metric_value, self._n_iter)
+            self._writer.add_scalar(metric_name, metric_value, step)
 
     @staticmethod
     def _remove_stage_from_metric_keys(stage, metrics):
@@ -73,21 +73,22 @@ class BaseTracker:
             new_metrics[metric_name.replace(stage + "_", "")] = metric_value
         return new_metrics
 
-    def publish(self):
-        if self._stage == "train":
-            self._n_iter += 1
-
+    def publish(self, step):
+        """ Publishes the current metrics to wandb and tensorboard
+        Arguments:
+            step: current epoch
+        """
         metrics = self.get_metrics()
 
         if self._wandb:
-            wandb.log(metrics)
+            wandb.log(metrics, step=step)
 
         if self._use_tensorboard:
-            self.publish_to_tensorboard(metrics)
+            self.publish_to_tensorboard(metrics, step)
 
         return {
             "stage": self._stage,
-            "epoch": self._n_iter,
+            "epoch": step,
             "current_metrics": self._remove_stage_from_metric_keys(self._stage, metrics),
         }
 

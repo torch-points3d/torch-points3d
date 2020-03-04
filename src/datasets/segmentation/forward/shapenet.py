@@ -12,7 +12,7 @@ from src.core.data_transform import SaveOriginalPosId
 from src.utils import is_list
 from src.datasets.base_dataset import BaseDataset
 from src.metrics.shapenet_part_tracker import ShapenetPartTracker
-from .shapenet import ShapeNet
+from src.datasets.segmentation.shapenet import ShapeNet
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +81,12 @@ class ForwardShapenetDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
         forward_category = dataset_opt.forward_category
-        assert isinstance(forward_category, str)
+        if not isinstance(forward_category, str):
+            raise ValueError(
+                "dataset_opt.forward_category is not set or is not a string. Current value: {}".format(
+                    dataset_opt.forward_category
+                )
+            )
         self._train_categories = dataset_opt.category
         if not is_list(self._train_categories):
             self._train_categories = [self._train_categories]
