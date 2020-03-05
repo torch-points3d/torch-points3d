@@ -312,3 +312,13 @@ class Base3DMatch(Dataset):
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")
+
+    def __getitem__(self, idx):
+        r"""Gets the data object at index :obj:`idx` and transforms it (in case
+        a :obj:`self.transform` is given).
+        In case :obj:`idx` is a slicing object, *e.g.*, :obj:`[2:5]`, a list, a
+        tuple, a  LongTensor or a BoolTensor, will return a subset of the
+        dataset at the specified indices."""
+
+        data = self.get(idx)
+        return data
