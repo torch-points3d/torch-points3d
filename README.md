@@ -11,7 +11,42 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
-# COMPACT API
+## Getting started
+### Requirements:
+* CUDA > 10
+* Python 3 + headers (python-dev)
+* [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
+
+### Setup repo
+Clone the repo to your local machine then run the following command from the root of the repo
+```
+poetry install
+```
+This will install all required dependencies in a new virtual environment.
+
+Activate it
+
+```bash
+poetry shell
+
+```bash
+You can check that the install has been successful by running
+
+```nash
+python -m unittest
+```
+
+## Train pointnet++ on part segmentation task for dataset shapenet
+
+```bash
+poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
+```
+And you should see something like that
+
+![logging](/docs/imgs/logging.png)
+
+The [config](conf/models/segmentation/pointnet2.yaml) for pointnet++ is a good example of how to define a model and is as follow:
+
 ```yaml
 # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
 # Credit Charles R. Qi: https://github.com/charlesq34/pointnet2/blob/master/models/pointnet2_part_seg_msg_one_hot.py
@@ -46,36 +81,6 @@ pointnet2_onehot:
         nn: [128, 128]
         dropout: 0.5
 ```
-
-## Getting started
-### Requirements:
-* CUDA > 10
-* Python 3 + headers (python-dev)
-* [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
-
-### Setup repo
-Clone the repo to your local machine then run the following command from the root of the repo
-```
-poetry install
-```
-This will install all required dependencies in a new virtual environment.
-
-Activate it
-```
-poetry shell
-```
-You can check that the install has been successful by running
-```
-python -m unittest
-```
-
-## Train pointnet++ on part segmentation task for dataset shapenet
-```
-poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
-```
-And you should see something like that
-
-![logging](/docs/imgs/logging.png)
 
 # Benchmark
 ## S3DIS 1x1
