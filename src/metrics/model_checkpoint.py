@@ -80,7 +80,7 @@ class Checkpoint:
             )  # Copy checkpoint to new run directory to make sure we don't override
             ckp = Checkpoint(chkp_name)
             log.info("Loading checkpoint from {}".format(checkpoint_file))
-            objects = torch.load(checkpoint_file)
+            objects = torch.load(checkpoint_file, map_location="cpu")
             for key, value in objects.items():
                 setattr(ckp, key, value)
             ckp._filled = True

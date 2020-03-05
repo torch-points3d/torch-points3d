@@ -98,9 +98,38 @@ Run through the notebook and you should see a dashboard starting that looks like
 
 ![dashboard](docs/imgs/Dashboard_demo.gif)
 
+## Inference
+### Inference script
+We provide a script for running a given pre trained model on custom data that may not be annotated. You will find an [example](forward_scripts/forward.py) of this for the part segmentation task on Shapenet. Just like for the rest of the codebase most of the customization happens through config files and the provided example can be extended to other datasets. You can also easily create your own from there. Going back to the part segmentation task, say you have a folder full of point clouds that you know are Airplanes, and you have the checkpoint of a model trained on Airplanes and potentially other classes, simply edit the [config.yaml](forward_scripts/conf/config.yaml) and [shapenet.yaml](forward_scripts/conf/dataset/shapenet.yaml) and run the following command:
+
+```bash
+python forward_scripts/forward.py
+```
+
+The result of the forward run will be placed in the specified `output_folder` and you can use the [notebook](forward_scripts/notebooks/viz_shapenet.ipynb) provided to explore the results. Below is an example of the outcome of using a model trained on caps only to find the parts of airplanes and caps.
+
+![resexplore](docs/imgs/inference_demo.gif)
+
+### Containerize your model with Docker
+
+Finally, for people interested in deploying their models to production environments, we provide a [Dockerfile](docker/Dockerfile) as well as a [build script](docker/build.sh). Say you have trained a network for semantic segmentation that gave the weight `<outputfolder/weights.pt>`, the following command will build a docker image for you:
+
+```bash
+cd docker
+./build.sh outputfolder/weights.pt
+```
+
+You can then use it to run a forward pass on a all the point clouds in `input_path` and generate the results in `output_path`
+
+```bash
+docker run -v /test_data:/in -v /test_data/out:/out pointnet2_charlesssg:latest python3 forward_scripts/forward.py dataset=shapenet data.forward_category=Cap input_path="/in" output_path="/out"
+```
+
+The `-v` option mounts a local directory to the container's file system. For example in the command line above, `/test_data/out` will be mounted at the location `/out`. As a consequence, all files written in `/out` will be available in the folder `/test_data/out` on your machine.
+
 ## Troubleshooting
-#### Undefined symbol / Updating pytorch
-When we update the version of pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
+#### Undefined symbol / Updating Pytorch
+When we update the version of Pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
 ```
 ... scatter_cpu.cpython-36m-x86_64-linux-gnu.so: undefined symbol: _ZN3c1012CUDATensorIdEv
 ```
@@ -111,7 +140,7 @@ This can happen for the following libraries:
 * torch-cluster
 * torch-sparse
 
-An easy way to fix this is to run the following command with the virtualenv activated:
+An easy way to fix this is to run the following command with the virtual env activated:
 ```
 pip uninstall torch-scatter torch-sparse torch-cluster torch-points -y
 rm -rf ~/.cache/pip
@@ -124,9 +153,9 @@ For styling you can use [pre-commit hooks](https://ljvmiranda921.github.io/noteb
 ```
 pre-commit install
 ```
-A sequence of checks will be run for you and you may have to add the fixed files again to the stahed files.
+A sequence of checks will be run for you and you may have to add the fixed files again to the stashed files.
 
-## Contributers
+## Contributors
 - [Thomas Chaton](https://github.com/tchaton)
 - [Nicolas Chaulet](https://github.com/nicolas-chaulet)
 - [Tristan Heywood](https://github.com/tristanheywood)

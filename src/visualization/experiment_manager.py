@@ -5,9 +5,7 @@ import torch
 from plyfile import PlyData, PlyElement
 from numpy.lib import recfunctions as rfn
 from src.utils.colors import COLORS
-import panel as pn
 import numpy as np
-import pyvista as pv
 
 
 def colored_print(color, msg):
