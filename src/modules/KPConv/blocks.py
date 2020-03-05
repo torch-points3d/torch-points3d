@@ -109,7 +109,9 @@ class ResnetBBlock(BaseModule):
         has_bottleneck: wether to use the bottleneck or not
         bn_momentum
         bn : batch norm (can be None -> no batch norm)
-        grid_size : size of the grid in case of a strided block,
+        grid_size : size of the grid,
+        prev_grid_size : size of the grid at previous step.
+                        In case of a strided block, this is different than grid_size
     """
 
     CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
@@ -221,6 +223,19 @@ class ResnetBBlock(BaseModule):
 
 
 class KPDualBlock(BaseModule):
+    """ Dual KPConv block (usually strided + non strided)
+
+    Arguments: Accepted kwargs
+        block_names: Name of the blocks to be used as part of this dual block
+        down_conv_nn: Size of the convs e.g. [64,128],
+        grid_size: Size of the grid for each block,
+        prev_grid_size: Size of the grid in the previous KPConv
+        has_bottleneck: Wether a block should implement the bottleneck
+        max_num_neighbors: Max number of neighboors for the radius search,
+        deformable: Is deformable,
+        add_one: Add one as a feature,
+    """
+
     def __init__(
         self,
         block_names=None,
@@ -238,6 +253,12 @@ class KPDualBlock(BaseModule):
         assert len(block_names) == len(down_conv_nn)
         self.blocks = torch.nn.ModuleList()
         for i, class_name in enumerate(block_names):
+            # Constructing extra keyword arguments
+            block_kwargs = {}
+            for key, arg in kwargs.items():
+                block_kwargs[key] = arg[i] if is_list(arg) else arg
+
+            # Building the block
             kpcls = getattr(sys.modules[__name__], class_name)
             block = kpcls(
                 down_conv_nn=down_conv_nn[i],
@@ -245,8 +266,9 @@ class KPDualBlock(BaseModule):
                 prev_grid_size=prev_grid_size[i],
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
-                deformable=deformable[i],
+                deformable=deformable[i] if is_list(deformable) else deformable,
                 add_one=add_one[i] if is_list(add_one) else add_one,
+                **block_kwargs,
             )
             self.blocks.append(block)
 
