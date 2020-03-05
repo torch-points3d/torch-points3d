@@ -26,7 +26,7 @@ class SimpleBlock(BaseModule):
         self,
         down_conv_nn=None,
         grid_size=None,
-        is_strided=False,
+        prev_grid_size=None,
         sigma=1.0,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
@@ -42,11 +42,13 @@ class SimpleBlock(BaseModule):
         if deformable:
             density_parameter = self.DEFORMABLE_DENSITY
             self.kp_conv = KPConvDeformableLayer(
-                num_inputs, num_outputs, point_influence=grid_size * sigma, add_one=add_one
+                num_inputs, num_outputs, point_influence=prev_grid_size * sigma, add_one=add_one
             )
         else:
             density_parameter = self.RIGID_DENSITY
-            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=grid_size * sigma, add_one=add_one)
+            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=prev_grid_size * sigma, add_one=add_one)
+        search_radius = density_parameter * sigma * prev_grid_size
+        self.neighbour_finder = RadiusNeighbourFinder(search_radius, max_num_neighbors, conv_type=self.CONV_TYPE)
 
         if bn:
             self.bn = bn(num_outputs, momentum=bn_momentum)
@@ -54,8 +56,7 @@ class SimpleBlock(BaseModule):
             self.bn = None
         self.activation = activation
 
-        radius = density_parameter * sigma * grid_size
-        self.neighbour_finder = RadiusNeighbourFinder(radius, max_num_neighbors, conv_type=self.CONV_TYPE)
+        is_strided = prev_grid_size != grid_size
         if is_strided:
             self.sampler = GridSampling(grid_size)
         else:
@@ -108,7 +109,9 @@ class ResnetBBlock(BaseModule):
         has_bottleneck: wether to use the bottleneck or not
         bn_momentum
         bn : batch norm (can be None -> no batch norm)
-        grid_size : size of the grid in case of a strided block,
+        grid_size : size of the grid,
+        prev_grid_size : size of the grid at previous step.
+                        In case of a strided block, this is different than grid_size
     """
 
     CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
@@ -117,7 +120,7 @@ class ResnetBBlock(BaseModule):
         self,
         down_conv_nn=None,
         grid_size=None,
-        is_strided=False,
+        prev_grid_size=None,
         sigma=1,
         max_num_neighbors=16,
         activation=torch.nn.LeakyReLU(negative_slope=0.2),
@@ -135,8 +138,7 @@ class ResnetBBlock(BaseModule):
             d_2 = num_outputs // 4
         else:
             num_inputs, d_2, num_outputs = down_conv_nn
-        self.is_strided = is_strided
-        self.grid_size = grid_size
+        self.is_strided = prev_grid_size != grid_size
         self.has_bottleneck = has_bottleneck
 
         # Main branch
@@ -148,7 +150,7 @@ class ResnetBBlock(BaseModule):
         self.kp_conv = SimpleBlock(
             down_conv_nn=kp_size,
             grid_size=grid_size,
-            is_strided=is_strided,
+            prev_grid_size=prev_grid_size,
             sigma=sigma,
             max_num_neighbors=max_num_neighbors,
             activation=activation,
@@ -221,12 +223,25 @@ class ResnetBBlock(BaseModule):
 
 
 class KPDualBlock(BaseModule):
+    """ Dual KPConv block (usually strided + non strided)
+
+    Arguments: Accepted kwargs
+        block_names: Name of the blocks to be used as part of this dual block
+        down_conv_nn: Size of the convs e.g. [64,128],
+        grid_size: Size of the grid for each block,
+        prev_grid_size: Size of the grid in the previous KPConv
+        has_bottleneck: Wether a block should implement the bottleneck
+        max_num_neighbors: Max number of neighboors for the radius search,
+        deformable: Is deformable,
+        add_one: Add one as a feature,
+    """
+
     def __init__(
         self,
         block_names=None,
         down_conv_nn=None,
         grid_size=None,
-        is_strided=None,
+        prev_grid_size=None,
         has_bottleneck=None,
         max_num_neighbors=None,
         deformable=False,
@@ -238,15 +253,22 @@ class KPDualBlock(BaseModule):
         assert len(block_names) == len(down_conv_nn)
         self.blocks = torch.nn.ModuleList()
         for i, class_name in enumerate(block_names):
+            # Constructing extra keyword arguments
+            block_kwargs = {}
+            for key, arg in kwargs.items():
+                block_kwargs[key] = arg[i] if is_list(arg) else arg
+
+            # Building the block
             kpcls = getattr(sys.modules[__name__], class_name)
             block = kpcls(
                 down_conv_nn=down_conv_nn[i],
                 grid_size=grid_size[i],
-                is_strided=is_strided[i],
+                prev_grid_size=prev_grid_size[i],
                 has_bottleneck=has_bottleneck[i],
                 max_num_neighbors=max_num_neighbors[i],
-                deformable=deformable[i],
+                deformable=deformable[i] if is_list(deformable) else deformable,
                 add_one=add_one[i] if is_list(add_one) else add_one,
+                **block_kwargs,
             )
             self.blocks.append(block)
 

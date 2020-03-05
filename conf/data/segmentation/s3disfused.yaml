@@ -20,7 +20,13 @@ data:
           params:
               radius: 50 * ${data.first_subsampling}
     train_transforms:
-        - transform: RandomRotate
-          params:
-              degrees: 180
-              axis: 2
+      - transform: RandomNoise
+        params:
+          sigma: 0.001
+      - transform: RandomRotate
+        params:
+          degrees: 180
+          axis: 2
+      - transform: RandomScaleAnisotropic
+        params:
+          scales: [0.95, 1.05]

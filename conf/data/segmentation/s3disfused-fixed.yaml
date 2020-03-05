@@ -22,10 +22,16 @@ data:
     train_transforms:
         - transform: FixedPoints
           lparams: [4096]
+        - transform: RandomNoise
+          params:
+            sigma: 0.01
         - transform: RandomRotate
           params:
               degrees: 180
               axis: 2
+        - transform: RandomScaleAnisotropic
+          params:
+              scales: [0.95, 1.05]
     test_transform:
         - transform: FixedPoints
           lparams: [4096]

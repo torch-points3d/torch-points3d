@@ -1,5 +1,5 @@
 lr_scheduler:
   class: MultiStepLR
   params:
-    milestones: [10, 20, 30, 50, 70, 100]
+    milestones: [10, 30, 100, 150]
     gamma: 0.5

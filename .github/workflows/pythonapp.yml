@@ -1,6 +1,6 @@
 name: unittest
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   test:
@@ -12,10 +12,17 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.6
+      - name: Install poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        id: cache
+        with:
+          path: /home/runner/.cache/pypoetry/virtualenvs
+          key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-          $HOME/.poetry/bin/poetry install
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: $HOME/.poetry/bin/poetry install
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
