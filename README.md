@@ -1,5 +1,10 @@
 ![Project Logo](/docs/logo.png)
 
+
+[![codecov](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks) [![Actions Status](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/actions)
+
+
+
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on pytorch geometric and hydra core.
 
 **[Documentation](https://deeppointcloud-benchmarks.readthedocs.io/en/latest/)** | **[Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html)** | **[Facebook Hydra](https://hydra.cc/)**
