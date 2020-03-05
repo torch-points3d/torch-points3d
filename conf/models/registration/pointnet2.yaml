@@ -7,8 +7,9 @@ models:
       npoint: [512, 128]
       radii: [[0.2], [0.4]]
       nsamples: [[64], [64]]
+      use_xyz: False
       down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64+3, 64, 128, 128]]]
+        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 128]]]
     mlp_cls:
       nn: [128, 128, 32]
       dropout: 0.5
