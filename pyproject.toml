@@ -17,6 +17,7 @@ mkdocs = "^1.0"
 torch = "1.3.1"
 etw-pytorch-utils = {git = "https://github.com/erikwijmans/etw_pytorch_utils.git"}
 torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev = "v0.4.1"}
+MinkowskiEngine = "^0.4.1"
 torch-scatter = "^1.4.0"
 torch-sparse = "==0.4.3"
 torch-cluster = "^1.4.5"

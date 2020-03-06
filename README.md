@@ -18,7 +18,21 @@ The framework allows lean and yet complex model to be built with minimum effort 
 * [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
 
 ### Setup repo
-Clone the repo to your local machine then run the following command from the root of the repo
+Clone the repo to your local machine
+
+The repository is supporting MinkowskiEngine which requires openblas-dev.
+```bash
+sudo apt install libopenblas-dev
+```
+
+Add those lines to your .bashrc and source it.
+```bash
+export CPATH=/usr/local/cuda/include:$CPATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+export DYLD_LIBRARY_PATH=/usr/local/cuda/lib:$DYLD_LIBRARY_PATH
+```
+
+Run the following command from the root of the repo
 ```
 poetry install
 ```

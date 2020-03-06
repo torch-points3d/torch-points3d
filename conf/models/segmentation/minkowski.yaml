@@ -1,0 +1,29 @@
+models:
+    # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngin
+    MinkUNet:
+        class: minkowski.Minkowski_Model
+        conv_type: "SPARSE"
+        down_conv:
+            module_name: ResnetBlockDown
+            dimension: 3
+            down_conv_nn:
+                [
+                    [FEAT, 32, 64], 
+                    [64, 64 // 4, 128], 
+                    [128, 128 // 4, 256], 
+                    [256, 256 // 4, 512]
+                ]
+        up_conv:
+            module_name: ResnetBlockUp
+            dimension: 3
+            up_conv_nn:
+                [
+                    [512 + 512, 256, 256],
+                    [256 + 128, 128, 128],
+                    [128 + 64, 64, 64],
+                    [64 + FEAT, 64, 64],
+                ]
+            skip: True
+        mlp_cls:
+            nn: [64]
+            dropout: 0.5
