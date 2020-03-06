@@ -527,8 +527,22 @@ class MultiScaleTransform(object):
         return "{}".format(self.__class__.__name__)
 
 class AddFeatsByKeys(object):
+    """[This transform takes a list of attributes names and if allowed, add them to x]
+    
+    Example:
 
-    def __init__(self, list_add_to_x, feat_names, input_nc_feats: List = None, stricts: List = None):
+        Before calling "AddFeatsByKeys", data.x is empty
+
+        - transform: AddFeatsByKeys
+          params:
+              list_add_to_x: [False, True, True]    
+              feat_names: ['normal', 'rgb', "elevation"]
+              input_nc_feats: [3, 3, 1]
+
+        After calling "AddFeatsByKeys", data.x contains "rgb" and "elevation". Its shape[-1] == 4 (rgb:3 + elevation:1)
+    """
+
+    def __init__(self, list_add_to_x: List[bool], feat_names: List[str], input_nc_feats: List[int] = None, stricts: List[bool] = None):
         from torch_geometric.transforms import Compose
        
         num_names = len(feat_names)
