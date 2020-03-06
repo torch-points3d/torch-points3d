@@ -48,6 +48,11 @@ jobs:
           git config --local user.name "GitHub Action"
           git commit -m "Adding requirements.txt" | exit 0
 
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
