@@ -7,13 +7,13 @@ from torch_geometric.data import Data
 def remove_duplicates_func(data):
     indices = data.indices
     num_points = indices.shape[0]
-    _, inds = np.unique(indices, axis=0, return_index=True)
+    _, inds = np.unique(indices.numpy(), axis=0, return_index=True)
+    inds = torch.from_numpy(inds)
     new_data = Data()
     for key in set(data.keys):
         item = data[key].clone()
         if num_points == item.shape[0]:
-            item = item[inds]
-            setattr(new_data, key, item)
+            setattr(new_data, key, item[inds])
     return new_data
 
 

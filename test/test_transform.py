@@ -20,6 +20,8 @@ from src.core.data_transform import (
     MultiScaleTransform,
     AddFeatByKey,
     AddFeatsByKeys,
+    RemoveAttributes,
+    RemoveDuplicatedCoords,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -141,8 +143,32 @@ class Testhelpers(unittest.TestCase):
         )
         mask = np.random.uniform(0, 1, (4)) > 0.5
         transform = AddFeatsByKeys(mask, keys)
-        transform(data)
-        self.assertEqual(data.x.shape[-1], np.sum(values[mask]))
+        data_out = transform(data)
+        self.assertEqual(data_out.x.shape[-1], np.sum(values[mask]))
+
+    def test_RemoveAttributes(self):
+        N = 10
+        mapping = {"a": 1, "b": 2, "c": 3, "d": 4}
+        keys, values = np.asarray(list(mapping.keys())), np.asarray(list(mapping.values()))
+        data = Data(
+            a=torch.randn((N, 1)),
+            b=torch.randn((N, 2)),
+            c=torch.randn((N, 3)),
+            d=torch.randn((N, 4)),
+            pos=torch.randn((N)),
+        )
+        mask = np.random.uniform(0, 1, (4)) > 0.5
+        transform = RemoveAttributes(keys[mask])
+        data_out = transform(data)
+        for key in keys[mask]:
+            self.assertNotIn(key, list(data_out.keys))
+
+    def test_RemoveDuplicatedCoords(self):
+        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
+        data = Data(indices=torch.from_numpy(indices))
+        transform = RemoveDuplicatedCoords()
+        data_out = transform(data)
+        self.assertEqual(data_out.indices.shape[0], 5)
 
 
 if __name__ == "__main__":
