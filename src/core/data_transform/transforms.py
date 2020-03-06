@@ -463,6 +463,59 @@ class MultiScaleTransform(object):
     def __repr__(self):
         return "{}".format(self.__class__.__name__)
 
+class AddFeatByKey(object):
+    
+    def __init__(self, add_to_x, feat_name, input_nc_feat=None, strict=True):
+        """[This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True ]
+        
+        Arguments:
+            add_to_x {[bool]} -- [Control if the feature is going to be added/concatenated to x]
+            feat_name {[str]} -- [The feature to be found within data to be added/concatenated to x]
+        
+        Keyword Arguments:
+            input_nc_feat {[int]} -- [Optional: If provided, check if dimension feature check last dimension] (default: {None})
+            strict {bool} -- [Optional: Recommended to be set to True. If False, it won't break if feat isn't found or dimension doesn t match.] (default: {True})
+        """
+
+        self._add_to_x: bool = add_to_x
+        self._feat_name: str = feat_name
+        self._input_nc_feat = input_nc_feat
+        self._strict: bool = strict
+
+    def __call__(self, data: Data):
+        if not self._add_to_x:
+            return data
+        feat = getattr(data, self._feat_name, None)
+        if feat is None:
+            if self._strict:
+                raise Exception("Data should contain the attribute {}".format(self._feat_name))
+            else:
+                return data
+        else:
+            if self._input_nc_feat:
+                feat_dim = 1 if feat.dim() == 1 else feat.shape[-1]
+                if self._input_nc_feat != feat_dim and self._strict:
+                    raise Exception('The shape of feat: {} doesn t match {}'.format(feat.shape, self._input_nc_feat))
+            x = getattr(data, "x", None)
+            if x is None:
+                if self._strict and data.pos.shape[0] != feat.shape[0]:
+                    raise Exception("We expected to have an attribute x")
+                data.x = feat
+            else:
+                if x.shape[0] == feat.shape[0]:
+                    if x.dim() == 1:
+                        x = x.unsqueeze(-1)
+                    if feat.dim() == 1:
+                        feat = feat.unsqueeze(-1)
+                    data.x = torch.cat([x, feat], axis=-1)
+                else:
+                    raise Exception("The tensor x and {} can't be concatenated, x: {}, feat: {}".format(self._feat_name, 
+                                                                                                        x.pos.shape[0], 
+                                                                                                        feat.pos.shape[0]))
+        return data
+
+    def __repr__(self):
+        return  "{}(add_to_x: {}, feat_name: {}, strict: {})".format(self.__class__.__name__, self._add_to_x, self._feat_name, self._strict)
 
 class SaveOriginalPosId:
     """ Transform that adds the index of the point to the data object

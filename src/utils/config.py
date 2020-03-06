@@ -17,6 +17,22 @@ import subprocess
 
 log = logging.getLogger(__name__)
 
+class ConvolutionFormatFactory:
+
+    @staticmethod
+    def check_is_dense_format(conv_type):
+        if (
+            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower()
+            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value.lower()
+            or conv_type.lower() == ConvolutionFormat.SPARSE.value.lower()
+        ):
+            return False
+        elif conv_type.lower() == ConvolutionFormat.DENSE.value.lower():
+            return True
+        else:
+            raise NotImplementedError("Conv type {} not supported".format(conv_type))    
+
+
 class Option:
     """This class is used to enable accessing arguments as attributes without having OmaConf.
        It is used along convert_to_base_obj function

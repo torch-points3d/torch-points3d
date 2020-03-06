@@ -61,20 +61,20 @@ class TestDataLoaders(unittest.TestCase):
 class TestBatchCollate(unittest.TestCase):
     def test_num_batches(self):
         data = Data(pos=torch.randn((2, 3, 3)))
-        self.assertEqual(MockBaseDataset.get_num_samples(data, ConvolutionFormat.DENSE.value[-1]), 2)
+        self.assertEqual(MockBaseDataset.get_num_samples(data, ConvolutionFormat.DENSE.value), 2)
 
         data = Data(pos=torch.randn((3, 3)), batch=torch.tensor([0, 1, 2]))
-        self.assertEqual(MockBaseDataset.get_num_samples(data, ConvolutionFormat.PARTIAL_DENSE.value[-1]), 3)
+        self.assertEqual(MockBaseDataset.get_num_samples(data, ConvolutionFormat.PARTIAL_DENSE.value), 3)
 
     def test_get_sample(self):
         data = Data(pos=torch.randn((2, 3, 3)))
         torch.testing.assert_allclose(
-            MockBaseDataset.get_sample(data, "pos", 1, ConvolutionFormat.DENSE.value[-1]), data.pos[1]
+            MockBaseDataset.get_sample(data, "pos", 1, ConvolutionFormat.DENSE.value), data.pos[1]
         )
 
         data = Data(pos=torch.randn((3, 3)), batch=torch.tensor([0, 1, 2]))
         torch.testing.assert_allclose(
-            MockBaseDataset.get_sample(data, "pos", 1, ConvolutionFormat.PARTIAL_DENSE.value[-1]), data.pos[1]
+            MockBaseDataset.get_sample(data, "pos", 1, ConvolutionFormat.PARTIAL_DENSE.value), data.pos[1]
         )
 
 
