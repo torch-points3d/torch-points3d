@@ -8,31 +8,46 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
+
       - name: Set up Python 3.6
         uses: actions/setup-python@v1
         with:
           python-version: 3.6
+
       - name: Install poetry
         run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+
       - name: Cache dependencies
         uses: actions/cache@v1
         id: cache
         with:
           path: /home/runner/.cache/pypoetry/virtualenvs
           key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: $HOME/.poetry/bin/poetry install
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
           $HOME/.poetry/bin/poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           $HOME/.poetry/bin/poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
       - name: Test with unittest
         run: |
           $HOME/.poetry/bin/poetry run coverage run -m unittest
           $HOME/.poetry/bin/poetry run coverage xml
+
+      - name: Generate requirements.txt
+        run: |
+          $HOME/.poetry/bin/poetry export -f requirements.txt > requirements.txt
+          git add requirements.txt
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -m "Adding requirements.txt" | exit 0
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
