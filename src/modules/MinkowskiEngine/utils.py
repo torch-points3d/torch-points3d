@@ -4,6 +4,17 @@ import MinkowskiEngine as ME
 from torch_geometric.data import Data
 
 
+def shuffle_data(data):
+    num_points = data.pos.shape[0]
+    shuffle_idx = torch.randperm(num_points)
+    new_data = Data()
+    for key in set(data.keys):
+        item = data[key].clone()
+        if num_points == item.shape[0]:
+            setattr(new_data, key, item[shuffle_idx])
+    return data
+
+
 def remove_duplicates_func(data):
     indices = data.indices
     num_points = indices.shape[0]
@@ -32,7 +43,7 @@ def to_sparse_input(data, grid_size, save_delta=True, save_delta_norm=True, remo
 
         indices = quantized_coords[inds]
 
-        new_data = Data(indices=indices)
+        new_data = Data(indices=indices.long())
         if save_delta or save_delta_norm:
             pos_inds = data.pos[inds]
             grid_pos = grid_size * np.rint(pos_inds / grid_size)

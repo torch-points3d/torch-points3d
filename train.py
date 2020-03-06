@@ -44,8 +44,7 @@ def train_epoch(
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
-            data = data.to(device)  # This takes time
-            model.set_input(data)
+            model.set_input(data, device=device)
             t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()

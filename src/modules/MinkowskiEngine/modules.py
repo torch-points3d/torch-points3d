@@ -58,7 +58,7 @@ class BaseResBlock(nn.Module):
             )
 
             if norm_layer:
-                modules.append(norm_layer(conv_dim[0], momentum=bn_momentum))
+                modules.append(norm_layer(conv_dim[1], momentum=bn_momentum))
 
             if activation:
                 modules.append(activation(inplace=True))
@@ -89,7 +89,7 @@ class ResnetBlockDown(BaseResBlock):
         activation=ME.MinkowskiReLU,
         bn_momentum=0.1,
         dimension=-1,
-        down_stride=1,
+        down_stride=2,
         **kwargs
     ):
 
@@ -137,7 +137,7 @@ class ResnetBlockUp(BaseResBlock):
         activation=ME.MinkowskiReLU,
         bn_momentum=0.1,
         dimension=-1,
-        up_stride=1,
+        up_stride=2,
         skip=True,
         **kwargs
     ):
@@ -165,12 +165,11 @@ class ResnetBlockUp(BaseResBlock):
         )
 
     def forward(self, x, x_skip):
-
         residual, x = super().forward(x)
 
-        x = self.upsample(residual + x)
+        x = self.upsample(residual) + x
 
         if self.skip:
-            return torch.cat([x, x_skip], -1)
+            return ME.cat(x, x_skip)
         else:
             return x

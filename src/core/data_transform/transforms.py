@@ -19,9 +19,11 @@ from src.utils.config import is_list
 from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
 from src.utils import is_iterable
-from src.modules.MinkowskiEngine import to_sparse_input, remove_duplicates_func
+from src.modules.MinkowskiEngine import to_sparse_input, remove_duplicates_func, shuffle_data
 
 class RemoveAttributes(object):
+    """[This transform allows to remove unnecessary attributes from data for optimization purposes]
+    """
 
     def __init__(self, attr_names=[], strict=False):
         self._attr_names = attr_names
@@ -39,10 +41,12 @@ class RemoveAttributes(object):
     def __repr__(self):
         return "{}(attr_names={}, strict={})".format(self.__class__.__name__, self._attr_names, self._strict)
 
-class RemoveDuplicatedCoords(object):
+class ShuffleData(object):
+    """[This transform allows to shuffle the data]
+    """
 
     def _process(self, data):
-        return remove_duplicates_func(data)
+        return shuffle_data(data)
 
     def __call__(self, data):
         if isinstance(data, list):
@@ -55,8 +59,35 @@ class RemoveDuplicatedCoords(object):
     def __repr__(self):
         return "{}()".format(self.__class__.__name__)
 
+class RemoveDuplicatedCoords(object):
+    """[This transform allows to remove duplicated indices within data for sparse input]
+    """
+
+    def __init__(self, shuffle=False):
+        self._shuffle = shuffle
+        if self._shuffle:
+            self._shuffle_transform = ShuffleData()
+
+    def _process(self, data):
+        if self._shuffle:
+            data = self._shuffle_transform(data)
+        return remove_duplicates_func(data)
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data))  # 2d list needs to be flatten
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(shuffle={})".format(self.__class__.__name__, self._shuffle)
+
 
 class ToSparseInput(object):
+    """[This transform allows to prepare data for sparse model as SparseConv / Minkowski Engine]
+    """
 
     def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, remove_duplicates:bool=True):
         if grid_size is None:
