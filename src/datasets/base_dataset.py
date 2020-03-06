@@ -23,8 +23,12 @@ class BaseDataset:
         self.dataset_opt = dataset_opt
 
         # Default dataset path
-        class_name = self.__class__.__name__.lower().replace("dataset", "")
-        self._data_path = os.path.join(dataset_opt.dataroot, class_name)
+        dataset_name = dataset_opt.get("dataset_name", None)
+        if dataset_name:
+            self._data_path = os.path.join(dataset_opt.dataroot, dataset_name)
+        else:
+            class_name = self.__class__.__name__.lower().replace("dataset", "")
+            self._data_path = os.path.join(dataset_opt.dataroot, class_name)
         self._batch_size = None
         self.strategies = {}
         self._contains_dataset_name = False

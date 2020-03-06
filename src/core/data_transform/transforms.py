@@ -7,7 +7,6 @@ import torch
 import random
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
-from torch_geometric.data import Data
 from functools import partial
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
@@ -20,6 +19,52 @@ from src.utils.config import is_list
 from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
 from src.utils import is_iterable
+from src.modules.MinkowskiEngine import to_sparse_input
+
+class RemoveAttributes(object):
+
+    def __init__(self, attr_names=[], strict=False):
+        self._attr_names = attr_names
+        self._strict = strict
+
+    def __call__(self, data):
+        keys = set(data.keys)
+        for attr_name in self._attr_names:
+            if attr_name not in keys and self._strict:
+                raise Exception("attr_name: {} isn t within keys: {}".format(attr_name, keys))
+        for attr_name in self._attr_names:
+            delattr(data, attr_name)    
+        return data
+    
+    def __repr__(self):
+        return "{}(attr_names={}, strict={})".format(self.__class__.__name__, self._attr_names, self._strict)
+
+class ToSparseInput(object):
+
+    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False):
+        if grid_size is None:
+            raise Exception("Grid size should be provided")
+
+        elif grid_size == 0:
+            raise Exception("Grid size should not be equal to 0")
+
+        self._grid_size = grid_size
+        self._save_delta = save_delta
+        self._save_delta_norm = save_delta_norm
+
+    def _process(self, data):
+        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta)
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data))  # 2d list needs to be flatten
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(grid_size={}, save_delta={}, save_delta_norm={})".format(self.__class__.__name__, self._grid_size, self._save_delta, self._save_delta_norm)
 
 
 class PointCloudFusion(object):
