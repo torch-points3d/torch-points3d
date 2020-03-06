@@ -15,4 +15,9 @@ data:
         - transform: RemoveAttributes
           params:
               attr_names: ['pos']
-    
+    train_transforms:
+        - transform: RemoveDuplicatedCoords 
+    test_transforms:
+        - transform: RemoveDuplicatedCoords    
+    val_transforms:
+        - transform: RemoveDuplicatedCoords       

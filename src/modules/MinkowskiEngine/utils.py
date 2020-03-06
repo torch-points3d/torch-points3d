@@ -4,6 +4,19 @@ import MinkowskiEngine as ME
 from torch_geometric.data import Data
 
 
+def remove_duplicates_func(data):
+    indices = data.indices
+    num_points = indices.shape[0]
+    _, inds = np.unique(indices, axis=0, return_index=True)
+    new_data = Data()
+    for key in set(data.keys):
+        item = data[key].clone()
+        if num_points == item.shape[0]:
+            item = item[inds]
+            setattr(new_data, key, item)
+    return new_data
+
+
 def to_sparse_input(data, grid_size, save_delta=True, save_delta_norm=True, remove_duplicates=True):
     if grid_size is None:
         raise Exception("Grid size should be provided")
@@ -36,4 +49,6 @@ def to_sparse_input(data, grid_size, save_delta=True, save_delta_norm=True, remo
                 item = item[inds]
                 setattr(new_data, key, item)
 
+        if remove_duplicates:
+            new_data = remove_duplicates_func(new_data)
         return new_data
