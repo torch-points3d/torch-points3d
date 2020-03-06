@@ -19,6 +19,7 @@ from src.core.data_transform import (
     GridSampling,
     MultiScaleTransform,
     AddFeatByKey,
+    AddFeatsByKeys,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -126,6 +127,22 @@ class Testhelpers(unittest.TestCase):
                                 self.assertEqual(data.x.shape, torch.Size([10, 2]))
 
                         c += 1
+
+    def test_AddFeatsByKeys(self):
+        N = 10
+        mapping = {"a": 1, "b": 2, "c": 3, "d": 4}
+        keys, values = np.asarray(list(mapping.keys())), np.asarray(list(mapping.values()))
+        data = Data(
+            a=torch.randn((N, 1)),
+            b=torch.randn((N, 2)),
+            c=torch.randn((N, 3)),
+            d=torch.randn((N, 4)),
+            pos=torch.randn((N)),
+        )
+        mask = np.random.uniform(0, 1, (4)) > 0.5
+        transform = AddFeatsByKeys(mask, keys)
+        transform(data)
+        self.assertEqual(data.x.shape[-1], np.sum(values[mask]))
 
 
 if __name__ == "__main__":

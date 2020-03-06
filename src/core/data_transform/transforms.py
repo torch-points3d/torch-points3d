@@ -531,7 +531,7 @@ class AddFeatsByKeys(object):
     
     Example:
 
-        Before calling "AddFeatsByKeys", data.x is empty
+        Before calling "AddFeatsByKeys", if data.x was empty
 
         - transform: AddFeatsByKeys
           params:
@@ -550,7 +550,6 @@ class AddFeatsByKeys(object):
             raise Exception("Expected to have at least one feat_names")
         
         assert len(list_add_to_x) == num_names
-        num_names = num_names)
 
         if input_nc_feats:
             assert len(input_nc_feats) == num_names
@@ -566,7 +565,7 @@ class AddFeatsByKeys(object):
 
         self.transform = Compose(transforms)
 
-    def __call__(self, data)
+    def __call__(self, data):
         return self.transform(data)
 
 
