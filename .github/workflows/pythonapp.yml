@@ -43,7 +43,7 @@ jobs:
       - name: Generate requirements.txt
         run: |
           $HOME/.poetry/bin/poetry export -f requirements.txt > requirements.txt
-          git add requirements.txt
+          git add -f requirements.txt
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git commit -m "Adding requirements.txt" | exit 0
