@@ -38,7 +38,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
             neighbour_finder -- Multiscale strategy for finding neighbours
     """
 
-    CONV_TYPE = ConvolutionFormat.DENSE.value[-1]
+    CONV_TYPE = ConvolutionFormat.DENSE.value
 
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
@@ -79,7 +79,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
 class BaseDenseConvolutionUp(BaseConvolution):
 
-    CONV_TYPE = ConvolutionFormat.DENSE.value[-1]
+    CONV_TYPE = ConvolutionFormat.DENSE.value
 
     def __init__(self, neighbour_finder, *args, **kwargs):
         super(BaseDenseConvolutionUp, self).__init__(None, neighbour_finder, *args, **kwargs)

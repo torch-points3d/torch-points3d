@@ -18,7 +18,7 @@ class SimpleBlock(BaseModule):
     we can perform a stride version (just change the query and the neighbors)
     """
 
-    CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
+    CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value
     DEFORMABLE_DENSITY = 5.0
     RIGID_DENSITY = 2.5
 
@@ -114,7 +114,7 @@ class ResnetBBlock(BaseModule):
                         In case of a strided block, this is different than grid_size
     """
 
-    CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value[-1]
+    CONV_TYPE = ConvolutionFormat.PARTIAL_DENSE.value
 
     def __init__(
         self,

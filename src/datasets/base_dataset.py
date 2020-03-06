@@ -11,12 +11,12 @@ from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
+from src.utils.config import ConvolutionFormatFactory
 from src.utils.colors import COLORS, colored_print
 from src.models.base_model import BaseModel
 
 # A logger for this file
 log = logging.getLogger(__name__)
-
 
 class BaseDataset:
     def __init__(self, dataset_opt):
@@ -37,10 +37,63 @@ class BaseDataset:
         self.test_dataset = None
         self.val_dataset = None
 
-        self.pre_transform = None
-        self.test_transform = None
-        self.train_transform = None
-        self.val_transform = None
+        BaseDataset.set_transform(self, dataset_opt)
+    
+    @staticmethod
+    def add_transform(transform_list_to_be_added, out=[]):
+        """[Add transforms to an existing list or not]
+        
+        Arguments:
+            transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
+            out {[type]} -- [Should be a lis]
+        
+        Returns:
+            [list] -- [List of transforms]
+        """
+        if out is None:
+            out = []
+        if transform_list_to_be_added is not None:
+            if isinstance(transform_list_to_be_added, Compose):
+                out += transform_list_to_be_added.transforms
+            elif isinstance(transform_list_to_be_added, list):
+                out += transform_list_to_be_added
+            else:
+                raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
+        return out
+
+
+    @staticmethod
+    def remove_transform(transform_in, list_transform_class):
+        """[Remove a transform if within list_transform_class]
+        
+        Arguments:
+            transform_in {[type]} -- [Compose | List of transform]
+            list_transform_class {[type]} -- [List of transform class to be removed]
+        
+        Returns:
+            [type] -- [description]
+        """
+        if isinstance(transform_in, Compose) or isinstance(transform_in, list):
+            if len(list_transform_class) > 0:
+                transform_out = []
+                transforms = transform_in.transforms if isinstance(transform_in, Compose) else transform_in
+                for t in transforms:
+                    if not isinstance(t, tuple(list_transform_class)):
+                        transform_out.append(t)
+                transform_out = Compose(transform_out)
+        else:
+            transform_out = transform_in
+        return transform_out
+
+    @staticmethod
+    def set_transform(obj, dataset_opt):
+        """This function create and set the transform to the obj as attributes
+        """
+        obj.pre_transform = None
+        obj.test_transform = None
+        obj.train_transform = None
+        obj.val_transform = None
+        obj.inference_transform = None
 
         for key_name in dataset_opt.keys():
             if "transform" in key_name:
@@ -48,52 +101,50 @@ class BaseDataset:
                 try:
                     transform = instantiate_transforms(getattr(dataset_opt, key_name))
                 except Exception:
-                    log.exception("Error trying to create {}".format(new_name))
+                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
-                setattr(self, new_name, transform)
+                setattr(obj, new_name, transform)
+
+        inference_transform = BaseDataset.add_transform(obj.pre_transform)
+        inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
+        obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
+
+        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
+
         if is_multiscale:
-            if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower():
+            if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
             else:
-                raise NotImplementedError()
+                raise NotImplementedError("MultiscaleTransform is activated and supported only for partial_dense format")
 
-        if (
-            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
-            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
-        ):
-            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
-        elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
+        if is_dense:
             return lambda datalist: SimpleBatch.from_data_list(datalist)
         else:
-            raise NotImplementedError("Conv type {} not supported".format(conv_type))
+             return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
 
     @staticmethod
     def get_num_samples(batch, conv_type):
-        if (
-            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
-            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
-        ):
-            return batch.batch.max() + 1
-        elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
+
+        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
+
+        if is_dense:
             return batch.pos.shape[0]
         else:
-            raise NotImplementedError("Conv type {} not supported".format(conv_type))
+            return batch.batch.max() + 1
 
     @staticmethod
     def get_sample(batch, key, index, conv_type):
+        
         assert hasattr(batch, key)
-        if (
-            conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value[-1].lower()
-            or conv_type.lower() == ConvolutionFormat.MESSAGE_PASSING.value[-1].lower()
-        ):
-            return batch[key][batch.batch == index]
-        elif conv_type.lower() == ConvolutionFormat.DENSE.value[-1].lower():
+        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
+
+        if is_dense:
             return batch[key][index]
         else:
-            raise NotImplementedError("Conv type {} not supported".format(conv_type))
+            return batch[key][batch.batch == index]
 
     def create_dataloaders(
         self, model: BaseModel, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
@@ -347,4 +398,3 @@ class BaseDataset:
                 message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
         message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
         return message
-

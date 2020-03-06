@@ -23,17 +23,15 @@ class BaseNeighbourFinder(ABC):
 
 
 class RadiusNeighbourFinder(BaseNeighbourFinder):
-    def __init__(
-        self, radius: float, max_num_neighbors: int = 64, conv_type=ConvolutionFormat.MESSAGE_PASSING.value[-1]
-    ):
+    def __init__(self, radius: float, max_num_neighbors: int = 64, conv_type=ConvolutionFormat.MESSAGE_PASSING.value):
         self._radius = radius
         self._max_num_neighbors = max_num_neighbors
         self._conv_type = conv_type.lower()
 
     def find_neighbours(self, x, y, batch_x=None, batch_y=None):
-        if self._conv_type == ConvolutionFormat.MESSAGE_PASSING.value[-1]:
+        if self._conv_type == ConvolutionFormat.MESSAGE_PASSING.value:
             return radius(x, y, self._radius, batch_x, batch_y, max_num_neighbors=self._max_num_neighbors)
-        elif self._conv_type == ConvolutionFormat.DENSE.value[-1] or ConvolutionFormat.PARTIAL_DENSE.value[-1]:
+        elif self._conv_type == ConvolutionFormat.DENSE.value or ConvolutionFormat.PARTIAL_DENSE.value:
             return tp.ball_query(
                 self._radius, self._max_num_neighbors, x, y, mode=self._conv_type, batch_x=batch_x, batch_y=batch_y
             )
