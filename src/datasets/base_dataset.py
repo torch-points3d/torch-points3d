@@ -274,6 +274,30 @@ class BaseDataset:
         return None
 
     @property
+    def input_nc(self):
+        sample = self.train_dataset[0]
+        x = getattr(sample, "x", None)
+        if x is not None:
+            if x.dim() == 1:
+                return 1
+            else:
+                return x.shape[-1]
+        else:
+            return 0
+
+    @property
+    def output_nc(self):
+        sample = self.train_dataset[0]
+        y = getattr(sample, "y", None)
+        if y is not None:
+            if y.dim() == 1:
+                return 1
+            else:
+                return y.shape[-1]
+        else:
+            return 0
+
+    @property
     def num_classes(self):
         return self.train_dataset.num_classes
 

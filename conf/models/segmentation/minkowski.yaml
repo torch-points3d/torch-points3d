@@ -26,3 +26,10 @@ models:
         mlp_cls:
             nn: [64]
             dropout: 0.5
+
+    # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngin
+    MinkUnetBaseline:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet18A"
+        D: 3
