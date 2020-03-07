@@ -29,6 +29,7 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
+    entity: ""
     project: default
     log: False
     notes:
