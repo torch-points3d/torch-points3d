@@ -31,9 +31,8 @@ log = logging.getLogger(__name__)
 
 
 def process(model, data, device):
-    data = data.to(device)
     with torch.no_grad():
-        model.set_input(data)
+        model.set_input(data, device)
         model.forward()
 
 

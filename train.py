@@ -44,7 +44,7 @@ def train_epoch(
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
-            model.set_input(data, device=device)
+            model.set_input(data, device)
             t_data = time.time() - iter_data_time
 
             iter_start_time = time.time()
@@ -88,9 +88,8 @@ def eval_epoch(
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
-            data = data.to(device)
             with torch.no_grad():
-                model.set_input(data)
+                model.set_input(data, device)
                 model.forward()
 
             tracker.track(model)
@@ -127,9 +126,8 @@ def test_epoch(
         visualizer.reset(epoch, stage_name)
         with Ctq(loader) as tq_test_loader:
             for data in tq_test_loader:
-                data = data.to(device)
                 with torch.no_grad():
-                    model.set_input(data)
+                    model.set_input(data, device)
                     model.forward()
 
                 tracker.track(model)

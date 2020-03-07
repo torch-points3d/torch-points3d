@@ -31,12 +31,12 @@ class Segmentation_MP(UnetBasedModel):
 
         self.loss_names = ["loss_seg"]
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        self.input = data
+        self.input = data.to(device)
         self.labels = data.y
         self.batch_idx = data.batch
 

@@ -29,8 +29,9 @@ class SiamesePointNet2_D(BackboneBasedModel):
 
         self.loss_names = ["loss_patch_desc"]
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         assert len(data.pos.shape) == 3
+        data = data.to(device)
         self.input = Data(x=data.x.transpose(1, 2).contiguous(), pos=data.pos)
 
     def forward(self):

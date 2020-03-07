@@ -20,7 +20,8 @@ class PointNet(BaseModel):
         )
         self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
 
-    def set_input(self, data):
+    def set_input(self, data, device):
+        data = data.to(device)
         self.input = data
         self.labels = data.y
 

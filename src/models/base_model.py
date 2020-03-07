@@ -92,7 +92,7 @@ class BaseModel(torch.nn.Module):
         return self._conv_type
 
     @abstractmethod
-    def set_input(self, input, device=device):
+    def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input (dict): includes the data itself and its metadata information.

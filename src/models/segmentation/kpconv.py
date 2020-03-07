@@ -77,11 +77,12 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         self.visual_names = ["data_visual"]
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
+        data = data.to(device)
         data.x = add_ones(data.pos, data.x, True)
 
         if isinstance(data, MultiScaleBatch):
