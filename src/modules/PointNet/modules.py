@@ -1,5 +1,5 @@
 import torch
-from torch_geometric.nn import global_max_pool
+from torch_geometric.nn import global_max_pool, global_mean_pool
 
 from src.core.common_modules.base_modules import *
 from src.core.common_modules.spatial_transform import BaseLinearTransformSTNkD
@@ -7,17 +7,28 @@ from src.models.base_model import BaseInternalLossModule
 
 
 class MiniPointNet(torch.nn.Module):
-    def __init__(self, local_nn, global_nn):
+    def __init__(self, local_nn, global_nn, aggr="max", return_local_out=False):
         super().__init__()
 
         self.local_nn = MLP(local_nn)
-        self.global_nn = MLP(global_nn)
+        self.global_nn = MLP(global_nn) if global_nn else None
+        self.g_pool = global_max_pool if aggr == "max" else global_mean_pool
+        self.return_local_out = return_local_out
 
     def forward(self, x, batch):
-        x = self.local_nn(x)
-        x = global_max_pool(x, batch)
-        x = self.global_nn(x)
+        y = x = self.local_nn(x)  # [num_points, in_dim] -> [num_points, local_out_nn]
+        x = self.g_pool(x, batch)  # [num_points, local_out_nn] -> [local_out_nn]
+        if self.global_nn:
+            x = self.global_nn(x)  # [local_out_nn] -> [global_out_nn]
+        if self.return_local_out:
+            return x, y
+        return x
 
+    def forward_embedding(self, pos, batch):
+        global_feat, local_feat = self.forward(pos, batch)
+        indices = batch.unsqueeze(-1).repeat((1, global_feat.shape[-1]))
+        gathered_global_feat = torch.gather(global_feat, 0, indices)
+        x = torch.cat([local_feat, gathered_global_feat], -1)
         return x
 
 

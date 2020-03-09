@@ -1,12 +1,11 @@
 import importlib
 import hydra
 
-from src.datasets.base_dataset import BaseDataset
 from .base_model import BaseModel
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 
 
-def instantiate_model(config, dataset: BaseDataset) -> BaseModel:
+def instantiate_model(config, dataset) -> BaseModel:
     """ Creates a model given a datset and a training config. The config should contain the following:
     - config.data.task: task that will be evaluated
     - config.model_name: model to instantiate

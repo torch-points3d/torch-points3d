@@ -2,19 +2,38 @@ import sys
 
 import torch_geometric.transforms as T
 from .transforms import *
+from .inference_transforms import *
 from .features import *
+
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
-_intersection = set(_custom_transforms.__dict__) & set(_torch_geometric_transforms.__dict__)
-_intersection = [module for module in _intersection if not module.startswith("_")]
-if _intersection:
-    raise Exception(
-        "It seems that you are overiding a transform from pytorch gemetric, \
-            this is forbiden, please rename your classes {}".format(
-            _intersection
+_intersection_names = set(_custom_transforms.__dict__) & set(_torch_geometric_transforms.__dict__)
+_intersection_names = [module for module in _intersection_names if not module.startswith("_")]
+L_intersection_names = len(_intersection_names) > 0
+_intersection_cls = []
+
+for transform_name in _intersection_names:
+    transform_cls = getattr(_custom_transforms, transform_name)
+    if not "torch_geometric.transforms." in str(transform_cls):
+        _intersection_cls.append(transform_cls)
+L_intersection_cls = len(_intersection_cls) > 0
+
+if L_intersection_names:
+    if L_intersection_cls:
+        raise Exception(
+            "It seems that you are overiding a transform from pytorch gemetric, \
+                this is forbiden, please rename your classes {} from {}".format(
+                _intersection_names, _intersection_cls
+            )
         )
-    )
+    else:
+        raise Exception(
+            "It seems you are importing transforms {} from pytorch geometric within the current code base. \
+             Please, remove them or add them within a class, function, etc.".format(
+                _intersection_names
+            )
+        )
 
 
 def instantiate_transform(transform_option):

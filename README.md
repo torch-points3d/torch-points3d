@@ -28,11 +28,11 @@ Activate it
 
 ```bash
 poetry shell
+```
 
-```bash
 You can check that the install has been successful by running
 
-```nash
+```bash
 python -m unittest
 ```
 

@@ -13,7 +13,13 @@ from omegaconf import OmegaConf
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-from src.core.data_transform import instantiate_transform, instantiate_transforms, GridSampling, MultiScaleTransform
+from src.core.data_transform import (
+    instantiate_transform,
+    instantiate_transforms,
+    GridSampling,
+    MultiScaleTransform,
+    AddFeatByKey,
+)
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
 from src.datasets.multiscale_data import MultiScaleBatch
@@ -38,9 +44,9 @@ class Testhelpers(unittest.TestCase):
     def test_multiscaleTransforms(self):
         samplers = [GridSampling(0.25), None, GridSampling(0.5)]
         search = [
-            RadiusNeighbourFinder(0.5, 100, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
-            RadiusNeighbourFinder(0.5, 150, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
-            RadiusNeighbourFinder(1, 200, ConvolutionFormat.PARTIAL_DENSE.value[-1]),
+            RadiusNeighbourFinder(0.5, 100, ConvolutionFormat.PARTIAL_DENSE.value),
+            RadiusNeighbourFinder(0.5, 150, ConvolutionFormat.PARTIAL_DENSE.value),
+            RadiusNeighbourFinder(1, 200, ConvolutionFormat.PARTIAL_DENSE.value),
         ]
         upsampler = [KNNInterpolate(1), KNNInterpolate(1)]
 
@@ -82,6 +88,44 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(upsample[1].y_idx.max(), pos.shape[0] - 1)
         self.assertEqual(upsample[1].__inc__("x_idx", 0), ms[0].num_nodes)
         self.assertEqual(upsample[1].__inc__("y_idx", 0), pos.shape[0])
+
+    def test_AddFeatByKey(self):
+
+        add_to_x = [False, True]
+        feat_name = ["y", "none"]
+        strict = [False, True]
+        input_nc_feat = [None, 1, 2]
+
+        c = 0
+        for atx in add_to_x:
+            for fn in feat_name:
+                for ine in input_nc_feat:
+                    for s in strict:
+                        fn_none = False
+                        ine_2 = False
+                        try:
+                            data = Data(x=torch.randn((10)), pos=torch.randn((10)), y=torch.randn((10)))
+                            transform = AddFeatByKey(atx, fn, input_nc_feat=ine, strict=s)
+                            data = transform(data)
+                        except Exception:
+                            if fn == "none":
+                                fn_none = True
+                            if ine == 2:
+                                ine_2 = True
+
+                        if fn_none or ine_2:
+                            c += 1
+                            continue
+
+                        if not atx:
+                            self.assertEqual(data.x.shape, torch.Size([10]))
+                        else:
+                            if fn == "none":
+                                self.assertEqual(data.x.shape, torch.Size([10]))
+                            else:
+                                self.assertEqual(data.x.shape, torch.Size([10, 2]))
+
+                        c += 1
 
 
 if __name__ == "__main__":
