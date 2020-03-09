@@ -184,8 +184,7 @@ class General3DMatch(Base3DMatch):
 
     def __len__(self):
         if('train' in self.mode or 'val' in self.mode):
-            return len(os.listdir(osp.join(self.processed_dir,
-                                           self.mode, 'matches')))
+            return len(os.listdir(osp.join(self.processed_dir, self.mode, 'matches')))
         else:
             if(self.is_patch):
                 return len(self.list_test_fragment) * self.num_random_pt

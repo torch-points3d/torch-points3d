@@ -22,7 +22,7 @@ data:
     - transform: NormalizeScale
     - transform: RandomNoise
       params:
-        sigma: 0.005
+        sigma: 0.0
         clip: 0.05
     - transform: XYZFeature
   test_transforms:
