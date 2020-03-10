@@ -4,8 +4,8 @@ models:
     conv_type: "DENSE"
     down_conv:
       module_name: PointNetMSGDown
-      npoint: [512, 128]
-      radii: [[0.2], [0.4]]
+      npoint: [256, 128]
+      radii: [[0.04], [0.1]]
       nsamples: [[64], [64]]
       use_xyz: False
       down_conv_nn:
@@ -18,6 +18,6 @@ models:
       params:
         margin: 0.0
         smooth_loss: True
-        triplets_per_anchor: 1000
+        triplets_per_anchor: 'all'
     miner:
       class: "BatchHardMiner"

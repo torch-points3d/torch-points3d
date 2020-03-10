@@ -11,7 +11,8 @@ data:
   depth_thresh: 4.5
   radius_patch: 0.3
   first_subsampling: 0.02
-  num_random_pt: 5000
+  num_random_pt: 300
+  is_offline: True
   pre_transforms:
     - transform: GridSampling
       params:
@@ -22,11 +23,17 @@ data:
     - transform: NormalizeScale
     - transform: RandomNoise
       params:
-        sigma: 0.0
+        sigma: 0.0005
         clip: 0.05
-    - transform: XYZFeature
+    - transform: AddFeatByKey
+      params:
+        add_to_x: True
+        feat_name: 'pos'
   test_transforms:
     - transform: FixedPoints
       lparams: [1024]
     - transform: NormalizeScale
-    - transform: XYZFeature
+    - transform: AddFeatByKey
+      params:
+        add_to_x: True
+        feat_name: 'pos'

@@ -17,6 +17,7 @@ from src.datasets.registration.utils import to_list
 from src.datasets.registration.utils import files_exist
 from src.datasets.registration.utils import makedirs
 from src.datasets.registration.utils import get_urls
+from src.datasets.registration.utils import PatchExtractor
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +51,10 @@ class Base3DMatch(Dataset):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
-                 num_random_pt=5000):
+                 num_random_pt=5000,
+                 is_offline=False,
+                 radius_patch=None,
+                 pre_transform_patch=None):
         r"""
         the Princeton 3DMatch dataset from the
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -106,6 +110,11 @@ class Base3DMatch(Dataset):
         self.min_overlap_ratio = min_overlap_ratio
         self.max_overlap_ratio = max_overlap_ratio
         self.max_dist_overlap = max_dist_overlap
+
+        self.is_offline = is_offline
+        self.num_random_pt = num_random_pt
+        self.radius_patch = radius_patch
+        self.pre_transform_patch = pre_transform_patch
         if mode not in self.dict_urls.keys():
             raise RuntimeError('this mode {} does '
                                'not exist'
@@ -124,8 +133,12 @@ class Base3DMatch(Dataset):
 
     @property
     def processed_file_names(self):
-        return [osp.join(self.mode, 'fragment'),
-                osp.join(self.mode, 'matches')]
+        res =  [osp.join(self.mode, 'raw_fragment'),
+                osp.join(self.mode, 'matches'),
+                osp.join(self.mode, 'fragment')]
+        if self.is_offline:
+            res.append(osp.join(self.mode, 'patches'))
+        return res
 
     def download(self):
 
@@ -157,7 +170,6 @@ class Base3DMatch(Dataset):
                     os.rename(osp.join(folder_eval, f), osp.join(folder, f))
                 shutil.rmtree(folder_eval)
 
-
     def _create_fragment(self, mod):
         r"""
         create fragments from the rgbd frames ie a partial reconstruction of
@@ -166,7 +178,7 @@ class Base3DMatch(Dataset):
         """
 
         print("Create fragment from RGBD frames...")
-        if files_exist([osp.join(self.processed_dir, mod, 'fragment')]):  # pragma: no cover
+        if files_exist([osp.join(self.processed_dir, mod, 'raw_fragment')]):  # pragma: no cover
             log.warning("the fragments on mode {} already exists".format(mod))
             return
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
@@ -177,7 +189,7 @@ class Base3DMatch(Dataset):
                 frames_dir = osp.join(self.raw_dir, self.mode,
                                       scene_path, seq)
                 out_dir = osp.join(self.processed_dir,
-                                   mod, 'fragment',
+                                   mod, 'raw_fragment',
                                    scene_path, seq)
                 makedirs(out_dir)
                 path_intrinsic = osp.join(self.raw_dir,
@@ -197,7 +209,7 @@ class Base3DMatch(Dataset):
                     rgbd2fragment_rough(list_path_frames, path_intrinsic,
                                         list_path_trans, out_dir,
                                         self.num_frame_per_fragment,
-                                        pre_transform=self.pre_transform)
+                                        pre_transform=None)
                 else:
                     assert len(list_path_frames) == len(list_path_trans), \
                         log.error("For the sequence {},"
@@ -209,8 +221,38 @@ class Base3DMatch(Dataset):
                                        list_path_trans,
                                        out_dir, self.num_frame_per_fragment,
                                        voxel_size=self.tsdf_voxel_size,
-                                       pre_transform=self.pre_transform,
+                                       pre_transform=None,
                                        depth_thresh=self.depth_thresh)
+
+    def _pre_transform_fragment(self, mod):
+        """
+        pre_transform raw fragments and save it into fragments
+        """
+        out_dir = osp.join(self.processed_dir,
+                           mod, 'fragment')
+        if files_exist([out_dir]):  # pragma: no cover
+            return
+        makedirs(out_dir)
+        for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
+            # TODO list the right sequences.
+            list_seq = [f for f in os.listdir(osp.join(self.raw_dir, mod,
+                                                       scene_path)) if 'seq' in f]
+            for seq in list_seq:
+                in_dir = osp.join(self.processed_dir,
+                                  mod, 'raw_fragment',
+                                  scene_path, seq)
+                out_dir = osp.join(self.processed_dir,
+                                   mod, 'fragment',
+                                   scene_path, seq)
+                makedirs(out_dir)
+                list_fragment_path = sorted([f
+                                             for f in os.listdir(in_dir)
+                                             if 'fragment' in f])
+                for path in list_fragment_path:
+                    data = torch.load(osp.join(in_dir, path))
+                    if(self.pre_transform is not None):
+                        data = self.pre_transform(data)
+                    torch.save(data, osp.join(out_dir, path))
 
     def _compute_matches_between_fragments(self, mod):
 
@@ -250,6 +292,53 @@ class Base3DMatch(Dataset):
                                np.max(match['overlap']) < self.max_overlap_ratio):
                                 np.save(out_path, match)
                                 ind += 1
+
+    def _save_patches(self, mod):
+        """
+        save patch to load it offline for the training
+        """
+        p_extractor = PatchExtractor(self.radius_patch)
+        out_dir = osp.join(self.processed_dir,
+                           mod, 'patches')
+        if files_exist([out_dir]):  # pragma: no cover
+            return
+        makedirs(out_dir)
+        match_dir = osp.join(self.processed_dir,
+                             mod, 'matches')
+        idx = 0
+        for i in range(len(os.listdir(match_dir))):
+            match = np.load(
+                osp.join(match_dir,
+                         'matches{:06d}.npy'.format(i)),
+                allow_pickle=True).item()
+
+            for _ in range(self.num_random_pt):
+                data_source = torch.load(match['path_source'])
+                data_target = torch.load(match['path_target'])
+                rand = np.random.randint(0, len(match['pair']))
+                data_source = p_extractor(data_source, match['pair'][rand][0])
+                data_target = p_extractor(data_target, match['pair'][rand][1])
+                if(self.pre_transform_patch is not None):
+                    data_source = self.pre_transform_patch(data_source)
+                    data_target = self.pre_transform_patch(data_target)
+                if(self.pre_filter is not None):
+                    if(self.pre_filter(data_source) and self.pre_filter(data_target)):
+
+                        torch.save(data_source,
+                                   osp.join(out_dir,
+                                            'patches_source{:06d}.pt'.format(idx)))
+                        torch.save(data_target,
+                                   osp.join(out_dir,
+                                            'patches_target{:06d}.pt'.format(idx)))
+                        idx += 1
+                else:
+                    torch.save(data_source,
+                               osp.join(out_dir,
+                                        'patches_source{:06d}.pt'.format(idx)))
+                    torch.save(data_target,
+                               osp.join(out_dir,
+                                        'patches_target{:06d}.pt'.format(idx)))
+                    idx += 1
 
     def _compute_points_on_fragments(self, mod):
         """
@@ -302,11 +391,18 @@ class Base3DMatch(Dataset):
             json.dump(self.table, f)
 
     def process(self):
+
         if('test' not in self.mode):
             log.info("create fragments")
             self._create_fragment(self.mode)
+            log.info("pre_transform those fragments")
+            self._pre_transform_fragment(self.mode)
             log.info("compute matches")
             self._compute_matches_between_fragments(self.mode)
+            if(self.is_offline):
+                log.info("precompute patches and save it")
+                self._save_patches(self.mode)
+
         else:
             self._compute_points_on_fragments(self.mode)
 

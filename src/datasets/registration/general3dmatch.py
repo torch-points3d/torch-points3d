@@ -11,10 +11,9 @@ from src.core.data_transform.transforms import GridSampling
 from torch_geometric.data import Batch
 
 
-class General3DMatch(Base3DMatch):
+class Patch3DMatch(Base3DMatch):
 
     def __init__(self, root,
-                 is_patch=True,
                  radius_patch=0.3,
                  num_frame_per_fragment=50,
                  mode='train_small',
@@ -30,7 +29,9 @@ class General3DMatch(Base3DMatch):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
-                 num_random_pt=5000):
+                 num_random_pt=5000,
+                 is_offline=False,
+                 pre_transform_patch=None):
         r"""
         Patch extracted from :the Princeton 3DMatch dataset\n
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -85,27 +86,33 @@ class General3DMatch(Base3DMatch):
                 :obj:`torch_geometric.data.Data` object and returns a boolean
                 value, indicating whether the data object should be included in the
                 final dataset. (default: :obj:`None`)
-            num_random_pt: number of point we select when we test
+            num_random_pt: number of point we select
         """
 
-        super(General3DMatch, self).__init__(root,
-                                             num_frame_per_fragment,
-                                             mode,
-                                             min_overlap_ratio,
-                                             max_overlap_ratio,
-                                             max_dist_overlap,
-                                             tsdf_voxel_size,
-                                             depth_thresh,
-                                             is_fine,
-                                             transform,
-                                             pre_transform,
-                                             pre_filter,
-                                             verbose,
-                                             debug,
-                                             num_random_pt)
+        super(Patch3DMatch, self).__init__(root,
+                                           num_frame_per_fragment,
+                                           mode,
+                                           min_overlap_ratio,
+                                           max_overlap_ratio,
+                                           max_dist_overlap,
+                                           tsdf_voxel_size,
+                                           depth_thresh,
+                                           is_fine,
+                                           transform,
+                                           pre_transform,
+                                           pre_filter,
+                                           verbose,
+                                           debug,
+                                           num_random_pt,
+                                           is_offline,
+                                           radius_patch,
+                                           pre_transform_patch)
 
         self.radius_patch = radius_patch
-        self.is_patch = is_patch
+        self.is_offline = is_offline
+        self.path_data = osp.join(self.processed_dir, self.mode, 'matches')
+        if(self.is_offline):
+            self.path_data = osp.join(self.processed_dir, self.mode, 'patches')
         if(self.mode == 'test'):
             path_fragment = osp.join(
                 self.processed_dir,
@@ -116,12 +123,11 @@ class General3DMatch(Base3DMatch):
         else:
             self.list_test_fragment = []
 
-    def get_patch(self, idx):
+    def get_patch_online(self, idx):
         p_extractor = PatchExtractor(self.radius_patch)
         if('train' in self.mode or 'val' in self.mode):
             match = np.load(
-                osp.join(self.processed_dir,
-                         self.mode, 'matches',
+                osp.join(self.path_data,
                          'matches{:06d}.npy'.format(idx)),
                 allow_pickle=True).item()
             data_source = torch.load(match['path_source'])
@@ -152,6 +158,130 @@ class General3DMatch(Base3DMatch):
                 data = self.transform(data)
             return data.to(torch.float)
 
+    def get_patch_offline(self, idx):
+        data_source = torch.load(
+            osp.join(self.path_data, 'patches_source{:06d}.pt'.format(idx)))
+        data_target = torch.load(
+            osp.join(self.path_data, 'patches_target{:06d}.pt'.format(idx)))
+        if(self.transform is not None):
+            data_source = self.transform(data_source)
+            data_target = self.transform(data_target)
+        batch = make_pair(data_source, data_target)
+        batch = batch.contiguous().to(torch.float)
+
+        return batch
+
+    def get(self, idx):
+        if(self.is_offline):
+            return self.get_patch_offline(idx)
+        else:
+            return self.get_patch_online(idx)
+
+    def __len__(self):
+        if('train' in self.mode or 'val' in self.mode):
+            size_dataset = len(os.listdir(self.path_data))
+            if(self.is_offline):
+                size_dataset = size_dataset // 2
+            return size_dataset
+        else:
+            return len(self.list_test_fragment) * self.num_random_pt
+
+
+class Fragment3DMatch(Base3DMatch):
+    r"""
+        Fragment extracted from :the Princeton 3DMatch dataset\n
+        `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
+        <https://arxiv.org/pdf/1603.08182.pdf>`_
+        paper, containing rgbd frames of the following dataset:
+        `" SUN3D: A Database of Big Spaces Reconstructed using SfM and Object Labels
+        "<http://sun3d.cs.princeton.edu/>`
+        `"Scene Coordinate Regression Forests for Camera Relocalization in RGB-D Images
+        "<https://www.microsoft.com/en-us/research/publication/scene-coordinate-regression-forests-for-camera-relocalization-in-rgb-d-images/>`
+        `"Unsupervised Feature Learning for 3D Scene Labeling
+        "<http://rgbd-dataset.cs.washington.edu/dataset/rgbd-scenes-v2/>`
+        `"BundleFusion: Real-time Globally Consistent 3D Reconstruction using Online
+        Surface Re-integration
+        "<http://graphics.stanford.edu/projects/bundlefusion/>`
+        `"Learning to Navigate the Energy Landscape
+        "<http://graphics.stanford.edu/projects/reloc/>`
+
+        Args:
+
+            root (string): Root directory where the dataset should be saved
+
+            num_frame_per_fragment (int, optional): indicate the number of frames
+                we use to build fragments. If it is equal to 0, then we don't
+                build fragments and use the raw frames.
+
+            mode (string, optional): If :obj:`True`, loads the training dataset,
+            otherwise the test dataset. (default: :obj:`True`)
+
+            min_overlap_ratio(float, optional): the minimum overlap we should have to match two fragments (overlap is the number of points in a fragment that matches in an other fragment divided by the number of points)
+            max_overlap_ratio(float, optional): the maximum overlap we should have to match two fragments
+            max_dist_overlap(float, optional): minimum distance to consider that a point match with an other.
+            tsdf_voxel_size(float, optional): the size of the tsdf voxel grid to perform fine RGBD fusion to create fine fragments
+            depth_thresh: threshold to remove depth pixel that are two far.
+
+            is_fine: fine mode for the fragment fusion
+
+
+            transform (callable, optional): A function/transform that takes in
+                an :obj:`torch_geometric.data.Data` object and returns a
+                transformed version. The data object will be transformed before
+                every access. (default: :obj:`None`)
+
+            pre_transform (callable, optional): A function/transform that takes in
+                an :obj:`torch_geometric.data.Data` object and returns a
+                transformed version. The data object will be transformed before
+                being saved to disk. (default: :obj:`None`)
+            pre_filter (callable, optional): A function that takes in an
+                :obj:`torch_geometric.data.Data` object and returns a boolean
+                value, indicating whether the data object should be included in the
+                final dataset. (default: :obj:`None`)
+            num_random_pt: number of point we select when we test
+        """
+    def __init__(self, root,
+                 num_frame_per_fragment=50,
+                 mode='train_small',
+                 min_overlap_ratio=0.3,
+                 max_overlap_ratio=1.0,
+                 max_dist_overlap=0.01,
+                 tsdf_voxel_size=0.02,
+                 depth_thresh=6,
+                 is_fine=True,
+                 transform=None,
+                 pre_transform=None,
+                 pre_transform_fragment=None,
+                 pre_filter=None,
+                 verbose=False,
+                 debug=False,
+                 num_random_pt=5000,
+                 is_offline=False):
+        super(Fragment3DMatch, self).__init__(root,
+                                              num_frame_per_fragment,
+                                              mode,
+                                              min_overlap_ratio,
+                                              max_overlap_ratio,
+                                              max_dist_overlap,
+                                              tsdf_voxel_size,
+                                              depth_thresh,
+                                              is_fine,
+                                              transform,
+                                              pre_transform,
+                                              pre_filter,
+                                              verbose,
+                                              debug,
+                                              num_random_pt)
+        if(self.mode == 'test'):
+            path_fragment = osp.join(
+                self.processed_dir,
+                self.mode, 'fragment')
+            self.list_test_fragment = sorted([osp.join(path_fragment, f) for f
+                                              in os.listdir(path_fragment)
+                                              if 'fragment' in f])
+        else:
+            self.list_test_fragment = []
+
     def get_fragment(self, idx):
 
         if('train' in self.mode or 'val' in self.mode):
@@ -177,19 +307,10 @@ class General3DMatch(Base3DMatch):
             return data.contiguous().to(torch.float)
 
     def get(self, idx):
-        if(self.is_patch):
-            return self.get_patch(idx)
-        else:
-            return self.get_fragment(idx)
+        return self.get_fragment(idx)
 
     def __len__(self):
-        if('train' in self.mode or 'val' in self.mode):
-            return len(os.listdir(osp.join(self.processed_dir, self.mode, 'matches')))
-        else:
-            if(self.is_patch):
-                return len(self.list_test_fragment) * self.num_random_pt
-            else:
-                return len(self.list_test_fragment)
+        return len(self.list_test_fragment)
 
 
 class General3DMatchDataset(BaseDataset):
@@ -200,32 +321,56 @@ class General3DMatchDataset(BaseDataset):
         train_transform = self.train_transform
         test_transform = self.test_transform
 
-        self.train_dataset = General3DMatch(
-            root=self._data_path,
-            mode='train',
-            radius_patch=dataset_opt.radius_patch,
-            is_patch=dataset_opt.is_patch,
-            num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
-            max_dist_overlap=dataset_opt.max_dist_overlap,
-            min_overlap_ratio=dataset_opt.min_overlap_ratio,
-            tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
-            depth_thresh=dataset_opt.depth_thresh,
-            pre_transform=pre_transform,
-            transform=train_transform)
+        if dataset_opt.is_patch:
+            self.train_dataset = Patch3DMatch(
+                root=self._data_path,
+                mode='train',
+                radius_patch=dataset_opt.radius_patch,
+                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                depth_thresh=dataset_opt.depth_thresh,
+                pre_transform=pre_transform,
+                transform=train_transform,
+                num_random_pt=dataset_opt.num_random_pt,
+                is_offline=dataset_opt.is_offline)
 
-        self.test_dataset = General3DMatch(
-            root=self._data_path,
-            mode='val',
-            radius_patch=dataset_opt.radius_patch,
-            is_patch=dataset_opt.is_patch,
-            num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
-            max_dist_overlap=dataset_opt.max_dist_overlap,
-            min_overlap_ratio=dataset_opt.min_overlap_ratio,
-            tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
-            depth_thresh=dataset_opt.depth_thresh,
-            pre_transform=pre_transform,
-            transform=test_transform,
-            num_random_pt=dataset_opt.num_random_pt)
+            self.test_dataset = Patch3DMatch(
+                root=self._data_path,
+                mode='val',
+                radius_patch=dataset_opt.radius_patch,
+                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                depth_thresh=dataset_opt.depth_thresh,
+                pre_transform=pre_transform,
+                transform=test_transform,
+                num_random_pt=dataset_opt.num_random_pt)
+        else:
+            self.train_dataset = Fragment3DMatch(
+                root=self._data_path,
+                mode='train',
+                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                depth_thresh=dataset_opt.depth_thresh,
+                pre_transform=pre_transform,
+                transform=train_transform)
+
+            self.test_dataset = Fragment3DMatch(
+                root=self._data_path,
+                mode='val',
+                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                depth_thresh=dataset_opt.depth_thresh,
+                pre_transform=pre_transform,
+                transform=test_transform,
+                num_random_pt=dataset_opt.num_random_pt)
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool,
