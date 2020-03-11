@@ -30,12 +30,10 @@ class Base3DMatch(Dataset):
     list_urls_train_small = get_urls(osp.join(base, 'urls', 'url_train_small.txt'))
     list_urls_train_tiny = get_urls(osp.join(base, 'urls', 'url_train_tiny.txt'))
     list_urls_val = get_urls(osp.join(base, 'urls', 'url_val.txt'))
-    list_urls_test = get_urls(osp.join(base, 'urls', 'url_test.txt'))
     dict_urls = dict(train=list_urls_train,
                      train_small=list_urls_train_small,
                      train_tiny=list_urls_train_tiny,
-                     val=list_urls_val,
-                     test=list_urls_test)
+                     val=list_urls_val)
 
     def __init__(self, root,
                  num_frame_per_fragment=50,
@@ -143,34 +141,14 @@ class Base3DMatch(Dataset):
         return res
 
     def download(self):
+        # we download the raw RGBD file for the train and the validation data
+        folder = osp.join(self.raw_dir, self.mode)
+        log.info("Download elements in the file {}...".format(folder))
+        for url in self.dict_urls[self.mode]:
+            path = download_url(url, folder, self.verbose)
+            extract_zip(path, folder, self.verbose)
+            os.unlink(path)
 
-        if('test' not in self.mode):
-            # we download the raw RGBD file for the train and the validation data
-            folder = osp.join(self.raw_dir, self.mode)
-            log.info("Download elements in the file {}...".format(folder))
-            for url in self.dict_urls[self.mode]:
-                path = download_url(url, folder, self.verbose)
-                extract_zip(path, folder, self.verbose)
-                os.unlink(path)
-        else:
-            # we download fragments for the test data available:
-            # http://3dmatch.cs.princeton.edu/ section
-            # Geometric Registration Benchmark
-            folder_test = osp.join(self.raw_dir, self.mode)
-            for url_raw in self.dict_urls[self.mode]:
-                url = url_raw.split('\n')[0]
-                path = download_url(url, folder_test)
-                extract_zip(path, folder_test)
-                print(path)
-                folder = path.split('.zip')[0]
-                os.unlink(path)
-                path_eval = download_url(url.split('.zip')[0]+'-evaluation.zip', folder)
-                extract_zip(path_eval, folder)
-                os.unlink(path_eval)
-                folder_eval = path_eval.split('.zip')[0]
-                for f in os.listdir(folder_eval):
-                    os.rename(osp.join(folder_eval, f), osp.join(folder, f))
-                shutil.rmtree(folder_eval)
 
     def _create_fragment(self, mod):
         r"""
@@ -343,70 +321,17 @@ class Base3DMatch(Dataset):
                                         'patches_target{:06d}.pt'.format(idx)))
                     idx += 1
 
-    def _pre_transform_fragments_ply(self, mod):
-        """
-        apply pre_transform on fragments (ply) and save the results
-        """
-        out_dir = osp.join(self.processed_dir,
-                           mod, 'fragment')
-        if files_exist([out_dir]):  # pragma: no cover
-            return
-        makedirs(out_dir)
-        ind = 0
-        # table to map fragment numper with
-        self.table = dict()
-        tot = 0
-        for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
-
-            fragment_dir = osp.join(self.raw_dir,
-                                    mod,
-                                    scene_path)
-            list_fragment_path = sorted([f
-                                         for f in os.listdir(fragment_dir)
-                                         if 'ply' in f])
-
-            for i, f_p in enumerate(list_fragment_path):
-                fragment_path = osp.join(fragment_dir, f_p)
-                out_path = osp.join(out_dir, 'fragment_{:06d}.pt'.format(ind))
-
-                # read ply file
-                with open(fragment_path, 'rb') as f:
-                    data = PlyData.read(f)
-                pos = ([torch.tensor(data['vertex'][axis]) for axis in ['x', 'y', 'z']])
-                pos = torch.stack(pos, dim=-1)
-
-                # compute keypoints indices
-                data = Data(pos=pos)
-                if(self.pre_transform is not None):
-                    data = self.pre_transform(data)
-
-                torch.save(data, out_path)
-                self.table[ind] = {'in_path': fragment_path,
-                                   'scene_path': scene_path,
-                                   'fragment_name': f_p,
-                                   'out_path': out_path}
-                ind += 1
-        self.table['total_num_points'] = tot
-
-        # save this file into json
-        with open(osp.join(out_dir, 'table.txt'), 'w') as f:
-            json.dump(self.table, f)
-
     def process(self):
+        log.info("create fragments")
+        self._create_fragment(self.mode)
+        log.info("pre_transform those fragments")
+        self._pre_transform_fragment(self.mode)
+        log.info("compute matches")
+        self._compute_matches_between_fragments(self.mode)
+        if(self.is_offline):
+            log.info("precompute patches and save it")
+            self._save_patches(self.mode)
 
-        if('test' not in self.mode):
-            log.info("create fragments")
-            self._create_fragment(self.mode)
-            log.info("pre_transform those fragments")
-            self._pre_transform_fragment(self.mode)
-            log.info("compute matches")
-            self._compute_matches_between_fragments(self.mode)
-            if(self.is_offline):
-                log.info("precompute patches and save it")
-                self._save_patches(self.mode)
-
-        else:
-            self._compute_points_on_fragments(self.mode)
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")

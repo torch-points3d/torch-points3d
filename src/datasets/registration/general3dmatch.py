@@ -26,7 +26,6 @@ class Patch3DMatch(Base3DMatch):
                  is_fine=True,
                  transform=None,
                  pre_transform=None,
-                 pre_transform_fragment=None,
                  pre_filter=None,
                  verbose=False,
                  debug=False,
@@ -56,8 +55,6 @@ class Patch3DMatch(Base3DMatch):
 
             radius_patch(float, optional): the size of the patch
 
-            is_patch(bool, optional): is it a patch mode or a
-
             num_frame_per_fragment (int, optional): indicate the number of frames
                 we use to build fragments. If it is equal to 0, then we don't
                 build fragments and use the raw frames.
@@ -66,13 +63,14 @@ class Patch3DMatch(Base3DMatch):
             otherwise the test dataset. (default: :obj:`True`)
 
             min_overlap_ratio(float, optional): the minimum overlap we should have to match two fragments (overlap is the number of points in a fragment that matches in an other fragment divided by the number of points)
-            max_overlap_ratio(float, optional): the maximum overlap we should have to match two fragments
+
             max_dist_overlap(float, optional): minimum distance to consider that a point match with an other.
             tsdf_voxel_size(float, optional): the size of the tsdf voxel grid to perform fine RGBD fusion to create fine fragments
             depth_thresh: threshold to remove depth pixel that are two far.
 
             is_fine: fine mode for the fragment fusion
 
+            limit_size : limit the number of pixel at each direction to abvoid to heavy tsdf voxel
 
             transform (callable, optional): A function/transform that takes in
                 an :obj:`torch_geometric.data.Data` object and returns a

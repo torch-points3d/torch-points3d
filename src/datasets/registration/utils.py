@@ -220,7 +220,7 @@ def rgbd2fragment_fine(
         if (i + 1) % num_frame_per_fragment == 0:
 
             if save_pc:
-                pcd = tsdf_vol.get_point_cloud(0.2, 1)
+                pcd = tsdf_vol.get_point_cloud(0.2, 0.0)
                 torch_data = Data(pos=torch.from_numpy(pcd.copy()))
             else:
                 verts, faces, norms = tsdf_vol.get_mesh()
