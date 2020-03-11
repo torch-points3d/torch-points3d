@@ -44,6 +44,7 @@ class Base3DMatch(Dataset):
                  max_overlap_ratio=1.0,
                  max_dist_overlap=0.01,
                  tsdf_voxel_size=0.01,
+                 limit_size=700,
                  depth_thresh=6,
                  is_fine=True,
                  transform=None,
@@ -101,6 +102,7 @@ class Base3DMatch(Dataset):
         self.is_fine = is_fine
         self.num_frame_per_fragment = num_frame_per_fragment
         self.tsdf_voxel_size = tsdf_voxel_size
+        self.limit_size = limit_size
         self.depth_thresh = depth_thresh
         self.mode = mode
         self.num_random_pt = num_random_pt
@@ -222,7 +224,8 @@ class Base3DMatch(Dataset):
                                        out_dir, self.num_frame_per_fragment,
                                        voxel_size=self.tsdf_voxel_size,
                                        pre_transform=None,
-                                       depth_thresh=self.depth_thresh)
+                                       depth_thresh=self.depth_thresh,
+                                       limit_size=self.limit_size)
 
     def _pre_transform_fragment(self, mod):
         """
@@ -340,9 +343,9 @@ class Base3DMatch(Dataset):
                                         'patches_target{:06d}.pt'.format(idx)))
                     idx += 1
 
-    def _compute_points_on_fragments(self, mod):
+    def _pre_transform_fragments_ply(self, mod):
         """
-        compute descriptors on fragments and save fragments with points on a pt file.
+        apply pre_transform on fragments (ply) and save the results
         """
         out_dir = osp.join(self.processed_dir,
                            mod, 'fragment')
@@ -358,11 +361,12 @@ class Base3DMatch(Dataset):
             fragment_dir = osp.join(self.raw_dir,
                                     mod,
                                     scene_path)
-            list_fragment_path = sorted([osp.join(fragment_dir, f)
+            list_fragment_path = sorted([f
                                          for f in os.listdir(fragment_dir)
                                          if 'ply' in f])
 
-            for i, fragment_path in enumerate(list_fragment_path):
+            for i, f_p in enumerate(list_fragment_path):
+                fragment_path = osp.join(fragment_dir, f_p)
                 out_path = osp.join(out_dir, 'fragment_{:06d}.pt'.format(ind))
 
                 # read ply file
@@ -375,14 +379,12 @@ class Base3DMatch(Dataset):
                 data = Data(pos=pos)
                 if(self.pre_transform is not None):
                     data = self.pre_transform(data)
-                data = self.detector(data)
+
                 torch.save(data, out_path)
-                num_points = getattr(data, 'keypoints', data.pos).shape[0]
-                tot += num_points
                 self.table[ind] = {'in_path': fragment_path,
                                    'scene_path': scene_path,
-                                   'out_path': out_path,
-                                   'num_points': num_points}
+                                   'fragment_name': f_p,
+                                   'out_path': out_path}
                 ind += 1
         self.table['total_num_points'] = tot
 

@@ -21,6 +21,7 @@ class Patch3DMatch(Base3DMatch):
                  max_overlap_ratio=1.0,
                  max_dist_overlap=0.01,
                  tsdf_voxel_size=0.02,
+                 limit_size=700,
                  depth_thresh=6,
                  is_fine=True,
                  transform=None,
@@ -96,6 +97,7 @@ class Patch3DMatch(Base3DMatch):
                                            max_overlap_ratio,
                                            max_dist_overlap,
                                            tsdf_voxel_size,
+                                           limit_size,
                                            depth_thresh,
                                            is_fine,
                                            transform,
@@ -113,50 +115,31 @@ class Patch3DMatch(Base3DMatch):
         self.path_data = osp.join(self.processed_dir, self.mode, 'matches')
         if(self.is_offline):
             self.path_data = osp.join(self.processed_dir, self.mode, 'patches')
-        if(self.mode == 'test'):
-            path_fragment = osp.join(
-                self.processed_dir,
-                self.mode, 'fragment')
-            self.list_test_fragment = sorted([osp.join(path_fragment, f) for f
-                                              in os.listdir(path_fragment)
-                                              if 'fragment' in f])
-        else:
-            self.list_test_fragment = []
 
     def get_patch_online(self, idx):
         p_extractor = PatchExtractor(self.radius_patch)
-        if('train' in self.mode or 'val' in self.mode):
-            match = np.load(
-                osp.join(self.path_data,
-                         'matches{:06d}.npy'.format(idx)),
-                allow_pickle=True).item()
-            data_source = torch.load(match['path_source'])
-            data_target = torch.load(match['path_target'])
 
-            # select a random match on the list of match.
-            # It cannot be 0 because matches are filtered.
-            rand = np.random.randint(0, len(match['pair']))
+        match = np.load(
+            osp.join(self.path_data,
+                     'matches{:06d}.npy'.format(idx)),
+            allow_pickle=True).item()
+        data_source = torch.load(match['path_source'])
+        data_target = torch.load(match['path_target'])
 
-            data_source = p_extractor(data_source, match['pair'][rand][0])
-            data_target = p_extractor(data_target, match['pair'][rand][1])
+        # select a random match on the list of match.
+        # It cannot be 0 because matches are filtered.
+        rand = np.random.randint(0, len(match['pair']))
 
-            if(self.transform is not None):
-                data_source = self.transform(data_source)
-                data_target = self.transform(data_target)
-            batch = make_pair(data_source, data_target)
-            batch = batch.contiguous().to(torch.float)
+        data_source = p_extractor(data_source, match['pair'][rand][0])
+        data_target = p_extractor(data_target, match['pair'][rand][1])
 
-            return batch
+        if(self.transform is not None):
+            data_source = self.transform(data_source)
+            data_target = self.transform(data_target)
+        batch = make_pair(data_source, data_target)
+        batch = batch.contiguous().to(torch.float)
 
-        else:
-            # select saved points and extract patches
-            num_pt = idx % self.num_random_pt
-            num_fragment = idx // self.num_random_pt
-            data = torch.load(self.list_test_fragment[num_fragment])
-            data = p_extractor(data, data.keypoints[num_pt])
-            if(self.transform is not None):
-                data = self.transform(data)
-            return data.to(torch.float)
+        return batch
 
     def get_patch_offline(self, idx):
         data_source = torch.load(
@@ -178,13 +161,10 @@ class Patch3DMatch(Base3DMatch):
             return self.get_patch_online(idx)
 
     def __len__(self):
-        if('train' in self.mode or 'val' in self.mode):
-            size_dataset = len(os.listdir(self.path_data))
-            if(self.is_offline):
-                size_dataset = size_dataset // 2
-            return size_dataset
-        else:
-            return len(self.list_test_fragment) * self.num_random_pt
+        size_dataset = len(os.listdir(self.path_data))
+        if(self.is_offline):
+            size_dataset = size_dataset // 2
+        return size_dataset
 
 
 class Fragment3DMatch(Base3DMatch):
@@ -247,6 +227,7 @@ class Fragment3DMatch(Base3DMatch):
                  max_overlap_ratio=1.0,
                  max_dist_overlap=0.01,
                  tsdf_voxel_size=0.02,
+                 limit_size=700,
                  depth_thresh=6,
                  is_fine=True,
                  transform=None,
@@ -254,9 +235,7 @@ class Fragment3DMatch(Base3DMatch):
                  pre_transform_fragment=None,
                  pre_filter=None,
                  verbose=False,
-                 debug=False,
-                 num_random_pt=5000,
-                 is_offline=False):
+                 debug=False):
         super(Fragment3DMatch, self).__init__(root,
                                               num_frame_per_fragment,
                                               mode,
@@ -264,47 +243,32 @@ class Fragment3DMatch(Base3DMatch):
                                               max_overlap_ratio,
                                               max_dist_overlap,
                                               tsdf_voxel_size,
+                                              limit_size,
                                               depth_thresh,
                                               is_fine,
                                               transform,
                                               pre_transform,
                                               pre_filter,
                                               verbose,
-                                              debug,
-                                              num_random_pt)
-        if(self.mode == 'test'):
-            path_fragment = osp.join(
-                self.processed_dir,
-                self.mode, 'fragment')
-            self.list_test_fragment = sorted([osp.join(path_fragment, f) for f
-                                              in os.listdir(path_fragment)
-                                              if 'fragment' in f])
-        else:
-            self.list_test_fragment = []
+                                              debug)
 
     def get_fragment(self, idx):
 
-        if('train' in self.mode or 'val' in self.mode):
-            match = np.load(
-                osp.join(self.processed_dir,
-                         self.mode, 'matches',
-                         'matches{:06d}.npy'.format(idx)),
-                allow_pickle=True).item()
+        match = np.load(
+            osp.join(self.processed_dir,
+                     self.mode, 'matches',
+                     'matches{:06d}.npy'.format(idx)),
+            allow_pickle=True).item()
 
-            print(match['path_source'])
-            data_source = torch.load(match['path_source'])
-            data_target = torch.load(match['path_target'])
-            if(self.transform is not None):
-                data_source = self.transform(data_source)
-                data_target = self.transform(data_target)
-            batch = make_pair(data_source, data_target)
-            batch.y = torch.from_numpy(match['pair'])
-            return batch.contiguous().to(torch.float)
-
-        else:
-            data = torch.load(
-                self.list_test_fragment[idx])
-            return data.contiguous().to(torch.float)
+        print(match['path_source'])
+        data_source = torch.load(match['path_source'])
+        data_target = torch.load(match['path_target'])
+        if(self.transform is not None):
+            data_source = self.transform(data_source)
+            data_target = self.transform(data_target)
+        batch = make_pair(data_source, data_target)
+        batch.y = torch.from_numpy(match['pair'])
+        return batch.contiguous().to(torch.float)
 
     def get(self, idx):
         return self.get_fragment(idx)
@@ -330,6 +294,7 @@ class General3DMatchDataset(BaseDataset):
                 max_dist_overlap=dataset_opt.max_dist_overlap,
                 min_overlap_ratio=dataset_opt.min_overlap_ratio,
                 tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=train_transform,
@@ -344,6 +309,7 @@ class General3DMatchDataset(BaseDataset):
                 max_dist_overlap=dataset_opt.max_dist_overlap,
                 min_overlap_ratio=dataset_opt.min_overlap_ratio,
                 tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=test_transform,
@@ -356,6 +322,7 @@ class General3DMatchDataset(BaseDataset):
                 max_dist_overlap=dataset_opt.max_dist_overlap,
                 min_overlap_ratio=dataset_opt.min_overlap_ratio,
                 tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=train_transform)
@@ -367,10 +334,10 @@ class General3DMatchDataset(BaseDataset):
                 max_dist_overlap=dataset_opt.max_dist_overlap,
                 min_overlap_ratio=dataset_opt.min_overlap_ratio,
                 tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
-                transform=test_transform,
-                num_random_pt=dataset_opt.num_random_pt)
+                transform=test_transform)
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool,

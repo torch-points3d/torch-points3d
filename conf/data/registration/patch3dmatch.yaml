@@ -7,7 +7,8 @@ data:
   num_frame_per_fragment: 101
   max_dist_overlap: 0.04
   min_overlap_ratio: 0.2
-  tsdf_voxel_size: 0.01
+  tsdf_voxel_size: 0.006
+  limit_size: 850
   depth_thresh: 4.5
   radius_patch: 0.3
   first_subsampling: 0.02

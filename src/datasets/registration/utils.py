@@ -162,7 +162,7 @@ def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=
     return output
 
 
-def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh):
+def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, limit_size=600, voxel_size=0.01):
     vol_bnds = np.zeros((3, 2))
     for i, path_img in tqdm(enumerate(list_path_img), total=len(list_path_img)):
         # read imageio
@@ -173,6 +173,15 @@ def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh):
         view_frust_pts = fusion.get_view_frustum(depth, intrinsic, pose)
         vol_bnds[:, 0] = np.minimum(vol_bnds[:, 0], np.amin(view_frust_pts, axis=1))
         vol_bnds[:, 1] = np.maximum(vol_bnds[:, 1], np.amax(view_frust_pts, axis=1))
+
+    # remove some voxel that are on the edge to control the size of the tsdf.
+    vol_dim = (vol_bnds[:, 1] - vol_bnds[:, 0]) / voxel_size
+    for i in range(3):
+        # add and substract delta to limit the size
+        if(vol_dim[i] > limit_size):
+            delta = voxel_size * (vol_dim[i] - limit_size) * 0.5
+            vol_bnds[i][0] += delta
+            vol_bnds[i][1] -= delta
     return vol_bnds
 
 
@@ -186,7 +195,7 @@ def rgbd2fragment_fine(
     pre_transform=None,
     depth_thresh=6,
     save_pc=True,
-    fixed_size=True,
+    limit_size=600
 ):
     """
     fuse rgbd frame with a tsdf volume and get the mesh using marching cube.
@@ -196,7 +205,7 @@ def rgbd2fragment_fine(
     begin = 0
     end = num_frame_per_fragment
 
-    vol_bnds = get_3D_bound(list_path_img[begin:end], path_intrinsic, list_path_trans[begin:end], depth_thresh)
+    vol_bnds = get_3D_bound(list_path_img[begin:end], path_intrinsic, list_path_trans[begin:end], depth_thresh, voxel_size=voxel_size, limit_size=limit_size)
 
     print(vol_bnds)
     tsdf_vol = fusion.TSDFVolume(vol_bnds, voxel_size=voxel_size)
@@ -226,11 +235,12 @@ def rgbd2fragment_fine(
                 if begin + num_frame_per_fragment < len(list_path_img):
                     end = begin + num_frame_per_fragment
                     vol_bnds = get_3D_bound(
-                        list_path_img[begin:end], path_intrinsic, list_path_trans[begin:end], depth_thresh
+                        list_path_img[begin:end], path_intrinsic, list_path_trans[begin:end], depth_thresh, voxel_size=voxel_size, limit_size=limit_size
                     )
                 else:
                     vol_bnds = get_3D_bound(
-                        list_path_img[begin:], path_intrinsic, list_path_trans[begin:], depth_thresh
+                        list_path_img[begin:], path_intrinsic, list_path_trans[begin:],
+                        depth_thresh, voxel_size=voxel_size, limit_size=limit_size
                     )
                 tsdf_vol = fusion.TSDFVolume(vol_bnds, voxel_size=voxel_size)
 
