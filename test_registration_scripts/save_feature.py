@@ -7,7 +7,6 @@ import os.path as osp
 import sys
 import numpy as np
 
-
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
@@ -29,12 +28,24 @@ from src.utils.colors import COLORS
 log = logging.getLogger(__name__)
 
 
-def save(out_path, scene_name, pc_name, feature):
+def save(out_path, scene_name, pc_name, data, feature):
+    """
+    save pointcloud, feature and keypoint if it is asked
+    """
+    dico = dict()
+    dico["pcd"] = data.pos.numpy()
+    dico["feat"] = feature
+    if len(feature) != len(data.pos):
+        # it must contain keypoints
+        assert getattr(data, "keypoint", None) is not None
+        dico["keypoint"] = data["keypoint"]
+    else:
+        dico["keypoint"] = np.arange(0, len(feature))
     out_dir = osp.join(out_path, scene_name)
     if not osp.exists(out_dir):
         os.makedirs(out_dir)
     out_file = osp.join(out_dir, pc_name + "_desc.npz")
-    np.save(out_file, feature)
+    np.save(out_file, dico)
 
 
 def run(model: BaseModel, dataset: BaseDataset, device, cfg):
@@ -58,7 +69,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
                         model.forward()
                         features.append(model.get_output())
             features = np.stack(features, 0)
-            save(cfg.output_path, scene_name, pc_name, features)
+            save(cfg.output_path, scene_name, pc_name, dataset.base_dataset[i].to("cpu"), features)
     else:
         dataset.create_dataloaders(
             model, 1, False, cfg.num_workers, False,
@@ -71,7 +82,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
                     model.set_input(data)
                     model.forward()
                     features = model.get_output()[0]  # batch of 1
-                    save(cfg.output_path, scene_name, pc_name, features)
+                    save(cfg.output_path, scene_name, pc_name, data.to("cpu"), features)
 
 
 @hydra.main(config_path="conf/config.yaml")
