@@ -164,6 +164,8 @@ def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=
 
 def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, limit_size=600, voxel_size=0.01):
     vol_bnds = np.zeros((3, 2))
+    list_min = np.zeros((3, len(list_path_img)))
+    list_max = np.zeros((3, len(list_path_img)))
     for i, path_img in tqdm(enumerate(list_path_img), total=len(list_path_img)):
         # read imageio
         depth = imageio.imread(path_img) / 1000.0
@@ -171,8 +173,12 @@ def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, l
         intrinsic = np.loadtxt(path_intrinsic)
         pose = np.loadtxt(list_path_trans[i])
         view_frust_pts = fusion.get_view_frustum(depth, intrinsic, pose)
-        vol_bnds[:, 0] = np.minimum(vol_bnds[:, 0], np.amin(view_frust_pts, axis=1))
-        vol_bnds[:, 1] = np.maximum(vol_bnds[:, 1], np.amax(view_frust_pts, axis=1))
+        list_min[:, i] = np.amin(view_frust_pts, axis=1)
+        list_max[:, i] = np.amax(view_frust_pts, axis=1)
+    # take the quantile instead of the min to be more robust to outilers frames
+
+    vol_bnds[:, 0] = np.quantile(list_min, 0.1, axis=1)
+    vol_bnds[:, 1] = np.quantile(list_max, 0.9, axis=1)
 
     # remove some voxel that are on the edge to control the size of the tsdf.
     vol_dim = (vol_bnds[:, 1] - vol_bnds[:, 0]) / voxel_size
