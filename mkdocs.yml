@@ -4,16 +4,26 @@ repo_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
 
 nav:
     - Home: index.md
-    - Installation: src/installation.md
-    - Convolution Type Introduction: src/conv_type.md
-    - Introduction by Example: how_to_do/how_to_do.md
+    - Getting started:
+        - Installation: src/gettingstarted/installation.md
+        - Train!: src/gettingstarted/trainmodel.md
+        - Project's organisation: src/gettingstarted/projectorganisation.md
+    - Core features:
+        - Configuration: src/corefeatures/configuration.md
+        - Data structures: src/corefeatures/datastructures.md
+        - Visualization: src/corefeatures/visualization.md
+        - ModelCheckpoint: src/corefeatures/modelcheckpoint.md
+        - Datasets: src/corefeatures/datasets.md
+        - Logging: src/corefeatures/logging.md
+    - Introduction by Example:
+        - Create a new dataset: src/howtos/createdataset.md
+        - Create a new model: src/howtos/createmodel.md
+        - Run new experiment: src/howtos/runexperiment.md
     - Core: src/core.md
     - Models: src/models.md
-    - Datasets: src/datasets.md
+
     - Modules: src/modules.md
-    - Logging: src/logging.md
-    - ModelCheckpoint: src/modelcheckpoint.md
-    - Visualization: src/visualization.md
+   
     - API:
         - core: src/api/core.md
 
@@ -25,7 +35,6 @@ markdown_extensions:
     - mkautodoc
     - toc:
         permalink: "#"
-        baselevel: 2
 
 extra_css:
     - css/custom.css

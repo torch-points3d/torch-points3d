@@ -1,15 +1,15 @@
 ![Screenshot](logo.png)
 
-_Deep Point Cloud Benchmark_ is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark datasets. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro) thanks for the great work!
+_Deep Point Cloud Benchmark_ is a framework for developing and testing common deep learning models to solve tasks related to unstructured 3D spatial data i.e. Point Clouds. The framework currently integrates some of the best published architectures and it  integrates the most common public datasests for ease of reproducibility. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro) thanks for the great work!
 
-Here is the link to the [```Github```](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks) project.
+We aim to build a tool which can be used for benchmarking SOTA models, while also allowing practitioners to efficiently pursue research into point cloud analysis,  with the end-goal of building models which can be applied to real-life applications.
 
-We aim to build a tool which can be used for benchmarking SOTA models, while also allowing users to efficiently pursue research into point cloud analysis,  with the end-goal of building models which can be applied to real-life applications.
+![dashboard](imgs/Dashboard_demo.gif)
 
-<h2>Core features</h2>
+# Core features
 
 * ```Task``` driven implementation with dynamic model and dataset resolution from arguments.
-* ```Core``` implementation of common components for point cloud deep learning - greatly simplying the creation of new models:
+* ```Core``` implementation of common components for point cloud deep learning - greatly simplifying the creation of new models:
     * ```Core Architectures``` - Unet
     * ```Core Modules``` - Residual Block, Down-sampling and Up-sampling convolutions
     * ```Core Transforms``` - Grid Sampling, Rotation, Scaling
@@ -25,28 +25,27 @@ We aim to build a tool which can be used for benchmarking SOTA models, while als
 * Several visualiation tools ```(tensorboard, wandb)``` and _dynamic metric-based model checkpointing_, which is easily customizable. 
 * _Dynamic customized placeholder resolution_ for smart model definition.
 
-<h2>Current supported models</h2>
+# Supported models
+The following models have been tested and validated:
 
-* [```RandLA-Net```: Efficient Semantic Segmentation of Large-Scale Point Clouds ](https://arxiv.org/pdf/1911.11236.pdf)
 * [```Relation-Shape Convolutional (RSConv)``` Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601)
 * [```KPConv```: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1904.08889)
 * [```PointCNN```: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791)
 * [```PointNet++```: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
-* [```Submanifold sparse convolutional networks```](https://arxiv.org/pdf/1711.10275.pdf)
+
+We are actively working on adding the following ones to the framework:
+
+* [```RandLA-Net```: Efficient Semantic Segmentation of Large-Scale Point Clouds ](https://arxiv.org/pdf/1911.11236.pdf) - implemented but not completely tested
+* [```4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks```](https://arxiv.org/abs/1904.08755) - Actively being worked on
 
 and much more to come ...
 
 
-<h2>Current supported tasks</h2>
+# Supported tasks
 
 * Segmentation
-* Classification
-
-## Ressources
-
-* [Pytorch Geometric Slides](http://rusty1s.github.io/pyg_slides.pdf)
-
-
-![Screenshot](https://uploads-ssl.webflow.com/5a9058c8f7462d00014ad4ff/5a988ceadc6c9b0001cb2511_point%20cloud.JPG)
+* Registration
+* Classification [TO COME]
+* Object detection [TO COME]
 
 

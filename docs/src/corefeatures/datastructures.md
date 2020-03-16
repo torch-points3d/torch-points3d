@@ -28,7 +28,7 @@ Drawbacks
 
 <h2> torch_geometric.data.DataLoader TYPE </h2>
 
-![Screenshot](/docs/imgs/pyg_batch.PNG)
+![Screenshot](../../imgs/pyg_batch.PNG)
 
 The collate function can be found there [```Batch.from_data_list```](https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/data/batch.html#Batch)
 
