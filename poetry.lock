@@ -17,7 +17,6 @@ optional = false
 python-versions = "*"
 version = "1.4.3"
 
-
 [[package]]
 category = "dev"
 description = "Disable App Nap on OS X 10.9"
