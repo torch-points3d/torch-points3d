@@ -17,7 +17,6 @@ torchnet = "^0.0.4"
 tensorboard = "^2.1"
 mkdocs = "^1.0"
 torch = "1.3.1"
-numba = "^0.48.0"
 etw-pytorch-utils = {git = "https://github.com/erikwijmans/etw_pytorch_utils.git"}
 torch-points = {git = "https://github.com/nicolas-chaulet/torch-points.git", rev = "v0.4.1"}
 torch-scatter = "^1.4.0"
@@ -44,4 +43,4 @@ mkautodoc = "^0.1.0"
 line-length = 120
 [build-system]
 requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api
+build-backend = "poetry.masonry.api"
