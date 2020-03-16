@@ -1,4 +1,5 @@
 site_name: Deep Point Cloud Benchmark
+repo_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
 
 nav:
     - Home: index.md
