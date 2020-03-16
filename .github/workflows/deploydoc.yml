@@ -1,9 +1,9 @@
 name: doc
 
-on: [push]
-    # push:
-    #   branches:
-    #   - author
+on:
+  push:
+    branches:
+    - master
 
 jobs:
     deploy-doc:
