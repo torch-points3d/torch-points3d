@@ -1,4 +1,5 @@
 site_name: Deep Point Cloud Benchmark
+site_url: https://nicolas-chaulet.github.io/deeppointcloud-benchmarks/
 repo_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
 
 nav:
@@ -28,3 +29,6 @@ markdown_extensions:
 
 extra_css:
     - css/custom.css
+
+extra:
+    version: 0.1.0

@@ -38,4 +38,4 @@ jobs:
                 git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
                 git remote rm origin
                 git remote add origin "${remote_repo}"
-                $HOME/.poetry/bin/poetry run mkdocs gh-deploy --force
+                PYTHONPATH=`pwd` $HOME/.poetry/bin/poetry run mkdocs gh-deploy --force
