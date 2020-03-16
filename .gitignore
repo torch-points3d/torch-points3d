@@ -16,4 +16,3 @@ py_scripts
 measurements/*.pickle
 /forward_scripts/test_data
 /forward_scripts/out
-requirements.txt

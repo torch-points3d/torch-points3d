@@ -40,20 +40,6 @@ jobs:
           $HOME/.poetry/bin/poetry run coverage run -m unittest
           $HOME/.poetry/bin/poetry run coverage xml
 
-      - name: Generate requirements.txt
-        run: |
-          $HOME/.poetry/bin/poetry export -f requirements.txt > requirements.txt
-          git add -f requirements.txt
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git commit -m "Adding requirements.txt" | exit 0
-
-      - name: Push changes
-        uses: ad-m/github-push-action@master
-        with:
-          branch: ${{ github.head_ref }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

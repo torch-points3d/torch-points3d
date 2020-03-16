@@ -1,6 +1,5 @@
 ![Screenshot](logo.png)
 
-
 _Deep Point Cloud Benchmark_ is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark datasets. It heavily relies on [```Pytorch Geometric```](https://github.com/rusty1s/pytorch_geometric) and [```Facebook Hydra library```](https://hydra.cc/docs/intro) thanks for the great work!
 
 Here is the link to the [```Github```](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks) project.

@@ -29,3 +29,12 @@ repos:
     hooks:
       - id: nbstripout
         files: ".ipynb"
+  - repo: local
+    hooks:
+      - id: requirements.txt
+        name: Generate requirements.txt
+        entry: poetry export
+        args: ["-f" ,"requirements.txt", "-o", "requirements.txt"]
+        pass_filenames: false
+        language: system
+        files: 'poetry.lock'

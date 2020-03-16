@@ -1,0 +1,17 @@
+div.autodoc-docstring {
+    padding-left: 20px;
+    margin-bottom: 35px;
+    border-left: 5px solid rgba(230, 230, 230);
+}
+div.autodoc-signature {
+    margin-bottom: 10px;
+}
+div.autodoc-docstring p {
+    margin-bottom: 5px;
+}
+  
+  
+div.autodoc-members {
+    padding-left: 20px;
+    margin-bottom: 15px;
+}
