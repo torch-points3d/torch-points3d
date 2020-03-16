@@ -1,0 +1,35 @@
+name: doc
+
+on: [push]
+    # push:
+    #   branches:
+    #   - author
+
+jobs:
+    deploy-doc:
+        runs-on: ubuntu-latest
+
+        steps:
+        - uses: actions/checkout@v1
+
+        - name: Set up Python 3.6
+            uses: actions/setup-python@v1
+            with:
+            python-version: 3.6
+
+        - name: Install poetry
+            run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+
+        - name: Cache dependencies
+            uses: actions/cache@v1
+            id: cache
+            with:
+            path: /home/runner/.cache/pypoetry/virtualenvs
+            key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+        - name: Install dependencies
+            if: steps.cache.outputs.cache-hit != 'true'
+            run: $HOME/.poetry/bin/poetry install
+
+        - name: Deploy doc
+            run: PYTHONPATH=`pwd` $HOME/.poetry/bin/poetry run mkdocs gh-deploy
