@@ -3,6 +3,9 @@ name = "deeppointcloud_benchmark"
 version = "0.1.0"
 description = ""
 authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
+packages = [
+    { include = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
