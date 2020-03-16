@@ -8,6 +8,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-added-large-files
         args: [--maxkb=15000]
+      - id: check-yaml
   - repo: https://github.com/ambv/black
     rev: stable
     hooks:
@@ -29,7 +30,3 @@ repos:
     hooks:
       - id: nbstripout
         files: ".ipynb"
-  - repo:  https://github.com/adrienverge/yamllint
-    rev: master
-    hooks:
-      - id: yamllint
