@@ -1,0 +1,13 @@
+version: 2
+
+build:
+   image: latest
+
+python:
+   version: 3.6
+   system_packages: true
+   install:
+      - method: pip
+        path: .
+
+formats: []
