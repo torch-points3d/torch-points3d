@@ -40,7 +40,6 @@ theme:
     titles_only: False
 
 markdown_extensions:
-    - mkautodoc
     - toc:
         permalink: "#"
 
