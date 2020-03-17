@@ -72,7 +72,7 @@ tensorboard==2.1.1
 torch==1.3.1
 torch-cluster==1.4.5
 torch-geometric==1.3.2
--e git+https://github.com/nicolas-chaulet/torch-points.git@55c3605c963bc6f3eec700a71edebf0f8c849a01#egg=torch-points
+https://github.com/nicolas-chaulet/torch-points/releases/download/v0.4.1/torch_points-0.4.1-cp36-cp36m-linux_x86_64.whl
 torch-scatter==1.4.0
 torch-sparse==0.4.3
 torchfile==0.1.0
