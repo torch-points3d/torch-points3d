@@ -29,7 +29,15 @@ nav:
 
 
 
-theme: readthedocs
+theme: 
+    name: readthedocs
+    highlightjs: true
+    hljs_languages:
+        - yaml
+        - python
+        - bash
+    navigation_depth: 4
+    titles_only: False
 
 markdown_extensions:
     - mkautodoc

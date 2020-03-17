@@ -46,3 +46,5 @@ pointnet2_onehot:
         nn: [128, 128]
         dropout: 0.5
 ```
+
+Once the training is complete, you can access the model checkpoint as well as any visualisation and graphs that you may have generated in the `outputs/<date>/<time>` folder where date and time correspond to the time where you launched the training. 
