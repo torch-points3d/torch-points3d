@@ -24,8 +24,8 @@ nav:
 
     - Modules: src/modules.md
    
-    - API:
-        - core: src/api/core.md
+    # - API:
+    #     - core: src/api/core.md
 
 
 
