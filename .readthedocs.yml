@@ -1,3 +1,6 @@
 version: 2
 
-formats: []
+sphinx:
+   configuration: docs/conf.py
+
+formats: all
