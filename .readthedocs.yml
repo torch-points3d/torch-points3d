@@ -1,13 +1,3 @@
 version: 2
 
-mkdocs:
- configuration: mkdocs.yml
-
-build:
-   image: latest
-
-python:
-   version: 3.6
-   system_packages: true
-
 formats: []
