@@ -35,7 +35,7 @@ repos:
       - id: requirements.txt
         name: Generate requirements.txt
         entry: poetry export
-        args: ["-f" ,"requirements.txt", "-o", "requirements.txt"]
+        args: ["-f" ,"requirements.txt", "-o", "requirements.txt","--without-hashes"]
         pass_filenames: false
         language: system
         files: 'poetry.lock'
