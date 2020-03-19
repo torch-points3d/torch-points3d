@@ -28,10 +28,10 @@ author = "Thomas Chaton and Nicolas Chaulet"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx_rtd_theme", "sphinx.ext.autosectionlabel", "sphinx.ext.autodoc" ,'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',]
+extensions = ["sphinx_rtd_theme", "sphinx.ext.autosectionlabel", "sphinx.ext.autodoc" ,'sphinx.ext.mathjax',    'sphinx.ext.githubpages',
+    'sphinx.ext.napoleon']
 autosectionlabel_prefix_document = True
-autodoc_mock_imports = ["torch_scatter", "torch_sparse", "torch_cluster", "torch_points", "numpy", "torch", "torch_geometric", "sklearn"]
+autodoc_mock_imports = ["torch_scatter", "torch_sparse", "torch_cluster", "torch_points", "torch", "torch_geometric", "sklearn"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

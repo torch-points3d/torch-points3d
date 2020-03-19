@@ -90,6 +90,7 @@ Supported tasks
 .. toctree::
    :glob:
    :maxdepth: 1
+   :caption: Contents
    :hidden:
     
    src/gettingstarted
