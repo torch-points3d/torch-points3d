@@ -379,9 +379,11 @@ Launch an experiment with your new models and datasets
 -------------------------------------------------------
 
 .. code-block::
-   poetry run python run task=segmentation dataset=s3dis model_type=pointnet2 model_name=pointnet2_charlesmsg
+
+    poetry run python run task=segmentation dataset=s3dis model_type=pointnet2 model_name=pointnet2_charlesmsg
 
 Your terminal should contain:
+
 .. image:: ../imgs/logging.png
    :target: ../imgs/logging.png
    :alt: logging

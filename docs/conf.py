@@ -48,11 +48,9 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = {
     "display_version": True,
     "prev_next_buttons_location": "bottom",
-    "vcs_pageview_mode": "edit",
-    "github_url": "https://github.com/nicolas-chaulet/deeppointcloud-benchmarks",
     # Toc options
     "collapse_navigation": False,
-    "navigation_depth": 2,
+    "navigation_depth": 3,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

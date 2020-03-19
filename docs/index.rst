@@ -90,6 +90,8 @@ Supported tasks
 .. toctree::
    :glob:
    :maxdepth: 1
+   :hidden:
     
    src/gettingstarted
    src/tutorials
+   src/advanced

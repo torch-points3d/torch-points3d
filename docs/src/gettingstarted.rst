@@ -85,7 +85,7 @@ You should now be able to run the tests successfully:
    python -m unittest
 
 
-Train your first model
+Train!
 -----------------------
 
 You should now be in a position to train your first model. Here is how is goes to train pointnet++ on part segmentation task for dataset shapenet, simply run the following:
@@ -110,6 +110,20 @@ The `config <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/m
    :lines: 87-122
 
 Once the training is complete, you can access the model checkpoint as well as any visualisation and graphs that you may have generated in the ``outputs/<date>/<time>`` folder where date and time correspond to the time where you launched the training. 
+
+Visualise your results
+------------------------
+
+We provide a `notebook <dashboard/dashboard.ipynb>`_ based on `pyvista <https://docs.pyvista.org/>`_ and `panel <https://panel.holoviz.org/>`_ that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+
+.. code-block:: bash
+    
+    jupyter labextension install @pyviz/jupyterlab_pyviz
+
+Once this is done you can launch jupyter lab from the root directory and run through the notebook. You should see a dashboard starting that looks like the following:
+
+.. image::
+    ../imgs/Dashboard_demo.gif
 
 Project structure
 -------------------
