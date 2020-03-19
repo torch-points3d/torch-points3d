@@ -31,7 +31,7 @@ author = "Thomas Chaton and Nicolas Chaulet"
 extensions = ["sphinx_rtd_theme", "sphinx.ext.autosectionlabel", "sphinx.ext.autodoc" ,'sphinx.ext.mathjax',    'sphinx.ext.githubpages',
     'sphinx.ext.napoleon']
 autosectionlabel_prefix_document = True
-autodoc_mock_imports = ["torch_scatter", "torch_sparse", "torch_cluster", "torch_points", "torch", "torch_geometric", "sklearn"]
+autodoc_mock_imports = ["torch_scatter", "torch_sparse", "torch_cluster", "torch_points", "torch", "torch_geometric", "sklearn", "omegaconf","etw-pytorch-utils"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
