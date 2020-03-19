@@ -5,20 +5,26 @@ from test.mockdatasets import MockDataset
 
 log = logging.getLogger(__name__)
 
+
 class ModelInference(object):
-    r"""This transform is responsible to perform a point cloud inference using a pre_trained model
-    Args:
-        checkpoint_dir (str): Path to a checkpoint_dir
-        model_name (str): Model name
+    """ Base class transform for performing a point cloud inference using a pre_trained model
+    Subclass and implement the ``__call__`` method with your own forward. 
+    See ``PointNetForward`` for an example implementation.
+    
+    Parameters
+    ----------
+    checkpoint_dir: str
+        Path to a checkpoint directory
+    model_name: str
+        Model name, the file ``checkpoint_dir/model_name.pt`` must exist
     """
+
     def __init__(self, checkpoint_dir, model_name, weight_name, feat_name, num_classes=None, mock_dataset=True):
         # Checkpoint
         from src.datasets.base_dataset import BaseDataset
         from src.datasets.dataset_factory import instantiate_dataset
-        checkpoint = model_checkpoint.ModelCheckpoint(checkpoint_dir, 
-                                     model_name, 
-                                     weight_name, 
-                                     strict=True)
+
+        checkpoint = model_checkpoint.ModelCheckpoint(checkpoint_dir, model_name, weight_name, strict=True)
         if mock_dataset:
             dataset = MockDataset(num_classes)
             dataset.num_classes = num_classes
@@ -27,18 +33,38 @@ class ModelInference(object):
         BaseDataset.set_transform(self, checkpoint.data_config)
         self.model = checkpoint.create_model(dataset, weight_name=weight_name)
         self.model.eval()
-                                     
+
     def __call__(self, data):
         raise NotImplementedError
 
+
 class PointNetForward(ModelInference):
+    """ Transform for running a PointNet inference on a Data object. It assumes that the
+    model has been trained for segmentation.
+    
+    Parameters
+    ----------
+    checkpoint_dir: str
+        Path to a checkpoint directory
+    model_name: str
+        Model name, the file ``checkpoint_dir/model_name.pt`` must exist
+    weight_name: str
+        Type of weights to load (best for iou, best for loss etc...)
+    feat_name: str
+        Name of the key in Data that will hold the output of the forward
+    num_classes: int
+        Number of classes that the model was trained on
+    """
 
     def __init__(self, checkpoint_dir, model_name, weight_name, feat_name, num_classes, mock_dataset=True):
-        super(PointNetForward, self).__init__(checkpoint_dir, model_name, weight_name, feat_name, num_classes=num_classes, mock_dataset=mock_dataset)
+        super(PointNetForward, self).__init__(
+            checkpoint_dir, model_name, weight_name, feat_name, num_classes=num_classes, mock_dataset=mock_dataset
+        )
         self.feat_name = feat_name
-        
+
         from src.datasets.base_dataset import BaseDataset
         from torch_geometric.transforms import FixedPoints
+
         self.inference_transform = BaseDataset.remove_transform(self.inference_transform, [GridSampling, FixedPoints])
 
     def __call__(self, data):
@@ -52,4 +78,6 @@ class PointNetForward(ModelInference):
         return data
 
     def __repr__(self):
-        return "{}(model: {}, transform: {})".format(self.__class__.__name__, self.model.__class__.__name__, self.inference_transform)
+        return "{}(model: {}, transform: {})".format(
+            self.__class__.__name__, self.model.__class__.__name__, self.inference_transform
+        )
