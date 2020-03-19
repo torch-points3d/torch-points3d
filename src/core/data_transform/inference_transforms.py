@@ -8,13 +8,15 @@ log = logging.getLogger(__name__)
 
 class ModelInference(object):
     """ Base class transform for performing a point cloud inference using a pre_trained model
-    Subclass and implement the `__call__` method with your own forward. 
-    See `PointNetForward` for an example implementation.
+    Subclass and implement the ``__call__`` method with your own forward. 
+    See ``PointNetForward`` for an example implementation.
     
-    **Parameters**:
-
-    - checkpoint_dir (str): Path to a checkpoint directory
-    - model_name (str): Model name, the file `checkpoint_dir/model_name.pt` must exist
+    Parameters
+    ----------
+    checkpoint_dir: str
+        Path to a checkpoint directory
+    model_name: str
+        Model name, the file ``checkpoint_dir/model_name.pt`` must exist
     """
 
     def __init__(self, checkpoint_dir, model_name, weight_name, feat_name, num_classes=None, mock_dataset=True):
@@ -40,13 +42,18 @@ class PointNetForward(ModelInference):
     """ Transform for running a PointNet inference on a Data object. It assumes that the
     model has been trained for segmentation.
     
-    **Parameters**:
-
-    - checkpoint_dir (str): Path to a checkpoint directory
-    - model_name (str): Model name, the file `checkpoint_dir/model_name.pt` must exist
-    - weight_name (str): Type of weights to load (best for iou, best for loss etc...)
-    - feat_name (str): Name of the key in Data that will hold the output of the forward
-    - num_classes (int): Number of classes that the model was trained on
+    Parameters
+    ----------
+    checkpoint_dir: str
+        Path to a checkpoint directory
+    model_name: str
+        Model name, the file ``checkpoint_dir/model_name.pt`` must exist
+    weight_name: str
+        Type of weights to load (best for iou, best for loss etc...)
+    feat_name: str
+        Name of the key in Data that will hold the output of the forward
+    num_classes: int
+        Number of classes that the model was trained on
     """
 
     def __init__(self, checkpoint_dir, model_name, weight_name, feat_name, num_classes, mock_dataset=True):

@@ -95,3 +95,11 @@ Supported tasks
    src/gettingstarted
    src/tutorials
    src/advanced
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :caption: API
+   :hidden:
+    
+   src/api/transforms

@@ -244,7 +244,7 @@ therefore, the points have to be converted into indices living within a grid.
 
 
 Backbone Architectures
----------------------
+------------------------
 
 Several unet could be built using different convolution or blocks.
 However, the final model will still be a UNet.

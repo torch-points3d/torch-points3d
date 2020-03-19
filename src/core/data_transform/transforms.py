@@ -24,10 +24,9 @@ from src.utils import is_iterable
 
 class PointCloudFusion(object):
     """ This transform is responsible to perform a point cloud fusion from a list of data
-    
-    If a list of data is provided -> Create one Batch object with all data
-    
-    If a list of list of data is provided -> Create a list of fused point cloud
+
+    - If a list of data is provided -> Create one Batch object with all data
+    - If a list of list of data is provided -> Create a list of fused point cloud
     """
 
     def _process(self, data_list):
@@ -55,13 +54,16 @@ class GridSphereSampling(object):
     """Fits the point cloud to a grid and for each point in this grid, 
     create a sphere with a radius r
 
-    **Parameters:**
-
-    - radius (float or [float] or Tensor): Radius of the sphere to be sampled.
-    - grid_size (float or [float] or Tensor): Grid_size to be used with GridSampling to select spheres center.
-            If None, radius will be used
-    - delattr_kd_tree (bool): If True, KDTREE_KEY should be deleted as an attribute if it exists
-    - center: (bool):  If True, a centre transform is apply on each sphere. 
+    Parameters
+    ----------
+    radius: float
+        Radius of the sphere to be sampled.
+    grid_size: float, optional
+        Grid_size to be used with GridSampling to select spheres center. If None, radius will be used
+    delattr_kd_tree: bool, optional
+        If True, KDTREE_KEY should be deleted as an attribute if it exists
+    center: bool, optional
+        If True, a centre transform is apply on each sphere. 
     """
 
     KDTREE_KEY = "kd_tree"
@@ -130,8 +132,10 @@ class GridSphereSampling(object):
 class ComputeKDTree(object):
     """Calculate the KDTree and saves it within data
 
-    **Parameters:**
-        leaf_size  (int): Size of the leaf node.
+    Parameters
+    -----------
+    leaf_size:int
+        Size of the leaf node.
     """
 
     def __init__(self, leaf_size):
@@ -155,10 +159,12 @@ class ComputeKDTree(object):
 class RandomSphere(object):
     """Select points within a sphere of a given radius. The centre is chosen randomly within the point cloud.
 
-    **Parameters:**
-
-    - radius (float): Radius of the sphere to be sampled.
-    - strategy (str): choose between `random` and `freq_class_based`. The `freq_class_based` 
+    Parameters
+    ----------
+    radius: float
+        Radius of the sphere to be sampled.
+    strategy: str 
+        choose between `random` and `freq_class_based`. The `freq_class_based` \
         favors points with low frequency class. This can be used to balance unbalanced datasets
     """
 
@@ -214,20 +220,19 @@ class RandomSphere(object):
 
 
 class GridSampling(object):
-    """Clusters points into voxels with size :attr:`size`.
+    """ Clusters points into voxels with size :attr:`size`.
 
-    **Parameters:**
-
-    - size (float or [float] or Tensor): Size of a voxel (in each dimension).
-    - start (float or [float] or Tensor, optional): Start coordinates of the
-        grid (in each dimension). If set to `None`, will be set to the
-        minimum coordinates found in `data.pos`.
-        (default: `None`)
-    - end (float or [float] or Tensor, optional): End coordinates of the grid
-        (in each dimension). If set to `None`, will be set to the
-        maximum coordinates found in `data.pos`.
-        (default: `None`)
-    - num_classes (int, optional): number of classes in the dataset (speeds up the computation slightly)
+    Parameters
+    ----------
+    size: float
+        Size of a voxel (in each dimension).
+    start: float
+        Start coordinates of the grid (in each dimension). \
+        If set to `None`, will be set to the minimum coordinates found in `data.pos`. (default: `None`)
+    end: float
+        End coordinates of the grid (in each dimension). \
+        If set to `None`, will be set to the maximum coordinates found in `data.pos`. (default: `None`)
+    num_classes: max number of classes for one hot encoding of y vector
     """
 
     def __init__(self, size, start=None, end=None, num_classes=-1):
@@ -276,9 +281,10 @@ class GridSampling(object):
 class RandomSymmetry(object):
     """ Apply a random symmetry transformation on the data 
 
-    ** Parameters: **
-    
-    - axis [bool, bool, bool]: axis along which the symmetry is applied
+    Parameters
+    ----------
+    axis: Tuple[bool,bool,bool], optional
+        axis along which the symmetry is applied
     """
 
     def __init__(self, axis=[False, False, False]):
@@ -299,10 +305,12 @@ class RandomSymmetry(object):
 class RandomNoise(object):
     """ Simple isotropic additive gaussian noise (Jitter)
 
-    ** Parameters: **
-
-    - sigma (float): Variance of the noise
-    - clip (float): Maximum amplitude of the noise
+    Parameters
+    ----------
+    sigma: 
+        Variance of the noise
+    clip: 
+        Maximum amplitude of the noise
     """
 
     def __init__(self, sigma=0.01, clip=0.05):
@@ -320,22 +328,27 @@ class RandomNoise(object):
 
 
 class RandomScaleAnisotropic:
-    """ Scales node positions by a randomly sampled factor `s1, s2, s3` within a
+    r""" Scales node positions by a randomly sampled factor ``s1, s2, s3`` within a
     given interval, *e.g.*, resulting in the transformation matrix
     
-    ```
-    s1 0 0
-    0 s2 0
-    0 0 s3
-    ```
+    .. math::
+        \left[
+        \begin{array}{ccc}
+            s1 & 0 & 0 \\
+            0 & s2 & 0 \\
+            0 & 0 & s3 \\
+        \end{array}
+        \right]
+    
 
     for three-dimensional positions.
-
-    **Parameters:**
-
-    - scales (tuple): scaling factor interval, e.g. `(a, b)`, then scale
-            is randomly sampled from the range
-            `a <=  < b`.
+    
+    Parameter
+    ---------
+    scales:
+        scaling factor interval, e.g. ``(a, b)``, then scale \
+        is randomly sampled from the range \
+        ``a <=  b``. \
     """
 
     def __init__(self, scales=None, anisotropic=True):
@@ -394,9 +407,10 @@ class MultiScaleTransform(object):
     """ Pre-computes a sequence of downsampling / neighboorhood search on the CPU. 
     This currently only works on PARTIAL_DENSE formats
 
-    **Parameters:**
-
-    - strategies [Dict[str, object]]: Dictionary that contains the samplers and neighbour_finder
+    Parameters
+    -----------
+    strategies: Dict[str, object]
+        Dictionary that contains the samplers and neighbour_finder
     """
 
     def __init__(self, strategies):
@@ -468,15 +482,19 @@ class MultiScaleTransform(object):
 
 class AddFeatByKey(object):
     def __init__(self, add_to_x, feat_name, input_nc_feat=None, strict=True):
-        """[This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True ]
+        """This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True
         
-        Arguments:
-            add_to_x {[bool]} -- [Control if the feature is going to be added/concatenated to x]
-            feat_name {[str]} -- [The feature to be found within data to be added/concatenated to x]
+        Paremeters
+        ----------
+        add_to_x: bool
+            Control if the feature is going to be added/concatenated to x
+        feat_name: str
+            The feature to be found within data to be added/concatenated to x
         
-        Keyword Arguments:
-            input_nc_feat {[int]} -- [Optional: If provided, check if dimension feature check last dimension] (default: {None})
-            strict {bool} -- [Optional: Recommended to be set to True. If False, it won't break if feat isn't found or dimension doesn t match.] (default: {True})
+        input_nc_feat: int, optional
+            If provided, check if dimension feature check last dimension (default: ``None``)
+        strict: bool, optional
+            Recommended to be set to True. If False, it won't break if feat isn't found or dimension doesn t match. (default: ``True``)
         """
 
         self._add_to_x: bool = add_to_x
