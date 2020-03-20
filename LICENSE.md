@@ -1,3 +1,5 @@
+License
+==========
 Unless otherwise indicated, all files this repository are
 
   Copyright (c) 2020, Principia Labs Ltd
@@ -6,7 +8,7 @@ Unless otherwise indicated, all files this repository are
 and are released under the terms of the BSD open source license.
 
 Overall license (BSD)
-===========================
+---------------------
 
   Copyright (c) 2020, Principia Labs Ltd
   (nicolas.chaulet@gmail.com & thomas.chaton.ai@gmail.com)

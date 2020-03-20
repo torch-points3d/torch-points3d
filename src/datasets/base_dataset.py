@@ -19,6 +19,7 @@ from src.models.base_model import BaseModel
 # A logger for this file
 log = logging.getLogger(__name__)
 
+
 class BaseDataset:
     def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
@@ -45,6 +46,7 @@ class BaseDataset:
     def add_transform(transform_list_to_be_added, out=[]):
         """[Add transforms to an existing list or not]
 
+
         Arguments:
             transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
             out {[type]} -- [Should be a lis]
@@ -63,10 +65,11 @@ class BaseDataset:
                 raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
         return out
 
-
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
-        """[Remove a transform if within list_transform_class]
+
+        """Remove a transform if within list_transform_class
+
 
         Arguments:
             transform_in {[type]} -- [Compose | List of transform]
@@ -135,12 +138,14 @@ class BaseDataset:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
             else:
-                raise NotImplementedError("MultiscaleTransform is activated and supported only for partial_dense format")
+                raise NotImplementedError(
+                    "MultiscaleTransform is activated and supported only for partial_dense format"
+                )
 
         if is_dense:
             return lambda datalist: SimpleBatch.from_data_list(datalist)
         else:
-             return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
+            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
 
     @staticmethod
     def get_num_samples(batch, conv_type):
