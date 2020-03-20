@@ -128,4 +128,37 @@ Once this is done you can launch jupyter lab from the root directory and run thr
 Project structure
 -------------------
 
-TBD
+The ambition of the project is to be a base for all point cloud related deep learning research. As such we wanted to make it
+scalable and also ensure that components could be reused. Below is the overall structure of the project:
+
+.. code-block:: bash
+
+   ├── benchmark                 # Output from various benchmark runs
+   ├── conf                      # All configurations for training nad evaluation leave there
+   ├── dashboard                 # A collection of notebooks that allow result exploration and network debugging
+   ├── docker                    # Docker image that can be used for inference or training
+   ├── docs                      # All the doc
+   ├── eval.py                   # Eval script
+   ├── find_neighbour_dist.py    # Script that helps find the optimal number of neighbours for neighbour search operations
+   ├── forward_scripts           # Script that runs a forward pass on possibly non annotated data
+   ├── outputs                   # All outputs from your runs sorted by date
+   ├── scripts                   # Some scripts to help manage the project
+   ├── src                       
+   │   ├── core                  # Core components
+   │   ├── datasets              # All code related to datasets
+   │   ├── metrics               # All metrics and trackers
+   │   ├── models                # All models
+   │   ├── modules               # Basic modules that can be used in a modular way
+   │   ├── utils                 # Various utils
+   │   └── visualization         # Visualization
+   ├── test
+   └── train.py                  # Main script to launch a training
+
+.. note::
+   As a general philosophy we have split datasets and models by task. For example, datasets has three subfolders:
+   
+   - segmentation 
+   - classification
+   - registration
+
+   where each folder contains the dataset related to each task.
