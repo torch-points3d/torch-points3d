@@ -124,18 +124,6 @@ class MinkUNetBase(ResNetBase):
     # Once data is processed, call clear to reset the model before calling
     # initialize_coords
     def __init__(self, in_channels, out_channels, D=3):
-        print(
-            in_channels,
-            out_channels,
-            D,
-            self.BLOCK,
-            self.PLANES,
-            self.DILATIONS,
-            self.LAYERS,
-            self.INIT_DIM,
-            self.OUT_TENSOR_STRIDE,
-        )
-
         ResNetBase.__init__(self, in_channels, out_channels, D)
 
     def network_initialization(self, in_channels, out_channels, D):

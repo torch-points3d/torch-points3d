@@ -12,6 +12,7 @@ data:
           params:
               grid_size: ${data.grid_size}
               save_delta: True
+              remove_duplicates: False
         - transform: RemoveAttributes
           params:
               attr_names: ['pos']

@@ -42,7 +42,7 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint = ModelCheckpoint(self.run_path, name, "test", run_config=self.config, resume=False)
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(self.config, dataset)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], "cpu")
         model.instantiate_optimizers(self.config)
 
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}

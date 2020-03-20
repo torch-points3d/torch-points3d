@@ -89,7 +89,7 @@ class ToSparseInput(object):
     """[This transform allows to prepare data for sparse model as SparseConv / Minkowski Engine]
     """
 
-    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, remove_duplicates:bool=True):
+    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, remove_duplicates:bool=True, apply_mean:bool=True):
         if grid_size is None:
             raise Exception("Grid size should be provided")
 
@@ -100,9 +100,10 @@ class ToSparseInput(object):
         self._save_delta = save_delta
         self._save_delta_norm = save_delta_norm
         self._remove_duplicates = remove_duplicates
+        self._apply_mean = apply_mean
 
     def _process(self, data):
-        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, remove_duplicates=self._remove_duplicates)
+        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, remove_duplicates=self._remove_duplicates, apply_mean=self._apply_mean)
 
     def __call__(self, data):
         if isinstance(data, list):
@@ -113,14 +114,15 @@ class ToSparseInput(object):
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, save_delta={}, save_delta_norm={}, remove_duplicates={})".format(self.__class__.__name__, self._grid_size, self._save_delta, self._save_delta_norm, self._remove_duplicates)
+        return "{}(grid_size={}, save_delta={}, save_delta_norm={}, remove_duplicates={}, apply_mean={})".format(self.__class__.__name__, self._grid_size, self._save_delta, self._save_delta_norm, self._remove_duplicates, self._apply_mean)
 
 
 class PointCloudFusion(object):
-    """ This transform is responsible to perform a point cloud fusion from a list of data
-
-    - If a list of data is provided -> Create one Batch object with all data
-    - If a list of list of data is provided -> Create a list of fused point cloud
+    r"""This transform is responsible to perform a point cloud fusion from a list of data
+    If a list of data is provided -> Create one Batch object with all data
+    If a list of list of data is provided -> Create a list of fused point cloud
+    Args:
+        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
     """
 
     def _process(self, data_list):
@@ -145,7 +147,7 @@ class PointCloudFusion(object):
 
 
 class GridSphereSampling(object):
-    """Fits the point cloud to a grid and for each point in this grid, 
+   """Fits the point cloud to a grid and for each point in this grid, 
     create a sphere with a radius r
 
     Parameters
@@ -159,7 +161,7 @@ class GridSphereSampling(object):
     center: bool, optional
         If True, a centre transform is apply on each sphere. 
     """
-
+    
     KDTREE_KEY = "kd_tree"
 
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
@@ -231,7 +233,6 @@ class ComputeKDTree(object):
     leaf_size:int
         Size of the leaf node.
     """
-
     def __init__(self, leaf_size):
         self._leaf_size = leaf_size
 
@@ -261,7 +262,7 @@ class RandomSphere(object):
         choose between `random` and `freq_class_based`. The `freq_class_based` \
         favors points with low frequency class. This can be used to balance unbalanced datasets
     """
-
+    
     KDTREE_KEY = "kd_tree"
 
     def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True, center=True):
@@ -371,7 +372,6 @@ class GridSampling(object):
     def __repr__(self):
         return "{}(size={})".format(self.__class__.__name__, self.size)
 
-
 class RandomSymmetry(object):
     """ Apply a random symmetry transformation on the data 
 
@@ -406,7 +406,7 @@ class RandomNoise(object):
     clip: 
         Maximum amplitude of the noise
     """
-
+    
     def __init__(self, sigma=0.01, clip=0.05):
         self.sigma = sigma
         self.clip = clip
@@ -666,18 +666,13 @@ class AddFeatByKey(object):
                         feat = feat.unsqueeze(-1)
                     data.x = torch.cat([x, feat], axis=-1)
                 else:
-                    raise Exception(
-                        "The tensor x and {} can't be concatenated, x: {}, feat: {}".format(
-                            self._feat_name, x.pos.shape[0], feat.pos.shape[0]
-                        )
-                    )
+                    raise Exception("The tensor x and {} can't be concatenated, x: {}, feat: {}".format(self._feat_name, 
+                                                                                                        x.pos.shape[0], 
+                                                                                                        feat.pos.shape[0]))
         return data
 
     def __repr__(self):
-        return "{}(add_to_x: {}, feat_name: {}, strict: {})".format(
-            self.__class__.__name__, self._add_to_x, self._feat_name, self._strict
-        )
-
+        return  "{}(add_to_x: {}, feat_name: {}, strict: {})".format(self.__class__.__name__, self._add_to_x, self._feat_name, self._strict)
 
 class SaveOriginalPosId:
     """ Transform that adds the index of the point to the data object
