@@ -21,7 +21,7 @@ data:
   train_transforms:
     - transform: FixedPoints
       lparams: [1024]
-    - transform: NormalizeScale
+    - transform: Center
     - transform: RandomNoise
       params:
         sigma: 0.0005
@@ -33,7 +33,7 @@ data:
   test_transforms:
     - transform: FixedPoints
       lparams: [1024]
-    - transform: NormalizeScale
+    - transform: Center
     - transform: AddFeatByKey
       params:
         add_to_x: True
