@@ -289,14 +289,10 @@ Here is ``PointNet++`` Multi-Scale original version by `Charles R. Qi <https://g
 Let's dig in the definition.
 
 
-.. raw:: html
-
-   <h6> Requiered arguments </h6>
-
-
+**Required arguments**
 
 * 
-  ``pointnet2_charlesmsg`` is model_name and should be provided from the commande line in order to load this file configuration.
+  ``pointnet2_charlesmsg`` is model_name and should be provided from the command line in order to load this file configuration.
 
 * 
   ``architecture: pointnet2.PointNet2_D``. It indicates where to find the Model Logic.
@@ -306,32 +302,45 @@ Let's dig in the definition.
   ``conv_type: "DENSE"``
 
 
-.. raw:: html
-
-   <h6> "Optional" arguments </h6>
+**"Optional" arguments**
 
 
 When I say optional, I mean those parameters could be defined differently for your own model.
-We don't want to force any particular configuration format.
-``However, the simplest is always better !``
+We don't want to force any particular configuration format however, the simpler is always better !
 
-This particular format is used by our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class `src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/models/base_architectures/unet.py>`_ with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
+The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class 
+`src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/models/base_architectures/unet.py>`_ 
+with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
+The following arguments are required by those classes:
 
-Those particular class is looking for those keys within the configuration
-
-
-* ``down_conv``
-* ``innermost``
-* ``up_conv``
+* ``down_conv``: parameters of each down convolution layer
+* ``innermost``: parameters of the innermost layer
+* ``up_conv``: parameters of each up convolution layer
 
 Those elements need to contain a ``module_name`` which will be used to create the associated Module.
 
-Those BaseUnets class will do the followings:
-
+Those Unet builder classes will do the followings:
 
 * If provided a list, it will use the index to access the value
 * If provided something else, it will broadcast the arguments to all convolutions.
 
+**Understanding the model**
+
+From the configuration written above, we can infer that
+
+- The model has got two down convolutions, one inner module and three up convolutions
+- Each down convolutions is a multiscale pointnet++ convolution implemented with the class ``PointNetMSGDown``
+- The first down convolution uses the following parameters:
+
+    - only 512 points are kept after this layer,
+    - three scales with radii 0.1, 0.2 and 0.4 are used,
+    - 32, 64 and 128 neighbours are kept for each scale
+    - the multi layer perceptrons for each scale are of size: [FEAT+3, 32, 32, 64], [FEAT+3, 64, 64, 128] and [FEAT+3, 64, 96, 128] respectively
+- The up convolution uses ``DenseFPModule`` and the first layer has got an MLP of size  [1024 + 256*2, 256, 256]
+- The final classifier has got two layers and uses a dropout of 0.5
+
+Another example with RSConcv
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Here is an example with the ``RSConv`` implementation in ``MESSAGE_TYPE ConvType``.
 
 .. code-block:: python
@@ -375,8 +384,10 @@ Here is an extract from the model architecture config:
 
 
 
-Launch an experiment with your new models and datasets
--------------------------------------------------------
+Launch an experiment
+--------------------
+Now that we have our new dataset and model, it is time to launch a training. If you have followed the instructions above you should
+be able to simply run the following command and should run smoothly!
 
 .. code-block::
 
@@ -387,3 +398,75 @@ Your terminal should contain:
 .. image:: ../imgs/logging.png
    :target: ../imgs/logging.png
    :alt: logging
+
+Adding a model for regression
+--------------------------------
+
+Now that we have a good understanding about how to add new datasets and models, let's conclude with adding a new task.
+Let's say that you want to do solve a regression task. The steps you will have to take are as follow:
+
+- Add a new dataset within the ``src/datasets/regression`` folder
+- Add a new model within the ``src/models/regression`` folder
+- Add the dataset and model configurations to the conf folder. Similarly, those new config will go into a regression folder.
+
+Finally, converting a model for regression is rather straightforward, you only need to change the last layer of your network and change the loss as well.
+This would look like the following for our pointnet++ example above:
+
+.. code-block:: python
+
+   import torch
+
+   import torch.nn.functional as F
+   from torch_geometric.data import Data
+   import etw_pytorch_utils as pt_utils
+   import logging
+
+   from src.modules.pointnet2 import * # This part is extremely important. Always important the associated modules within your this file
+   from src.core.base_conv.dense import DenseFPModule
+   from src.models.base_architectures import UnetBasedModel
+
+   log = logging.getLogger(__name__)
+
+   class PointNet2_D(UnetBasedModel):
+       def __init__(self, option, model_type, dataset, modules):
+           """Initialize this model class.
+           Parameters:
+               opt -- training/test options
+           A few things can be done here.
+           - (required) call the initialization function of BaseModel
+           - define loss function, visualization images, model names, and optimizers
+           """
+           UnetBasedModel.__init__(
+               self, option, model_type, dataset, modules
+           )  # call the initialization method of UnetBasedModel
+
+           # Create the mlp to classify data
+           nn = option.mlp_cls.nn
+           self.dropout = option.mlp_cls.get("dropout")
+           self.lin1 = torch.nn.Linear(nn[0], nn[1])
+           self.lin2 = torch.nn.Linear(nn[2], nn[3])
+           self.lin3 = torch.nn.Linear(nn[4], 1)
+
+           self.loss_names = ["loss_reg"] # This will be used the automatically get loss_seg from self
+
+        def forward(self) -> Any:
+            """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
+            data = self.model(self.input)
+            x = F.relu(self.lin1(data.x))
+            x = F.dropout(x, p=self.dropout, training=self.training)
+            x = self.lin2(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+            self.output = self.lin3(x)
+            return self.output
+
+        def backward(self):
+            """Calculate losses, gradients, and update network weights; called in every training iteration"""
+            # calculate the intermediate results if necessary; here self.output has been computed during function <forward>
+            # calculate loss given the input and intermediate results
+            self.loss_reg = F.mse_loss(self.output, self.labels)
+
+            self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
+
+.. note::
+
+    We already provide a tracker for regression `here <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/metrics/regression_tracker.py>`_.
