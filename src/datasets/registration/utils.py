@@ -266,10 +266,10 @@ class PatchExtractor:
         ind, dist = ball_query(point, pos, radius=self.radius_patch, max_num=-1, mode=1)
 
         row, col = ind[dist[:, 0] > 0].t()
-
+        patch = Data()
         for key in data.keys:
             if torch.is_tensor(data[key]):
                 if torch.all(col < data[key].shape[0]):
-                    data[key] = data[key][col]
+                    patch[key] = data[key][col]
 
-        return data
+        return patch

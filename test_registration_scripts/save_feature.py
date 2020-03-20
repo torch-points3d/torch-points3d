@@ -32,26 +32,25 @@ def save(out_path, scene_name, pc_name, data, feature):
     """
     save pointcloud, feature and keypoint if it is asked
     """
-    dico = dict()
-    dico["pcd"] = data.pos.numpy()
-    dico["feat"] = feature
+
+    kp = None
     if len(feature) != len(data.pos):
         # it must contain keypoints
-        assert getattr(data, "keypoint", None) is not None
-        dico["keypoint"] = data["keypoint"]
+        assert getattr(data, "keypoints", None) is not None
+        kp = data["keypoints"]
     else:
-        dico["keypoint"] = np.arange(0, len(feature))
+        kp = np.arange(0, len(feature))
     out_dir = osp.join(out_path, scene_name)
     if not osp.exists(out_dir):
         os.makedirs(out_dir)
-    out_file = osp.join(out_dir, pc_name + "_desc.npz")
-    np.save(out_file, dico)
+    out_file = osp.join(out_dir, pc_name.split(".")[0] + "_desc.npz")
+    np.savez(out_file, pcd=data.pos.numpy(), feat=feature, keypoints=kp)
 
 
-def run(model: BaseModel, dataset: BaseDataset, device, cfg):
+def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
     # Set dataloaders
-    num_fragment = len(dataset.get_num_fragment())
-    if cfg.data_config.is_patch:
+    num_fragment = dataset.num_fragment
+    if cfg.data.is_patch:
         for i in range(num_fragment):
             dataset.set_patches(i)
             dataset.create_dataloaders(
@@ -67,9 +66,10 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
                     with torch.no_grad():
                         model.set_input(data)
                         model.forward()
-                        features.append(model.get_output())
-            features = np.stack(features, 0)
-            save(cfg.output_path, scene_name, pc_name, dataset.base_dataset[i].to("cpu"), features)
+                        features.append(model.get_output().cpu())
+            features = torch.cat(features, 0).numpy()
+            log.info("save {} from {} in  {}".format(pc_name, scene_name, output_path))
+            save(output_path, scene_name, pc_name, dataset.base_dataset[i].to("cpu"), features)
     else:
         dataset.create_dataloaders(
             model, 1, False, cfg.num_workers, False,
@@ -82,10 +82,10 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
                     model.set_input(data)
                     model.forward()
                     features = model.get_output()[0]  # batch of 1
-                    save(cfg.output_path, scene_name, pc_name, data.to("cpu"), features)
+                    save(output_path, scene_name, pc_name, data.to("cpu"), features)
 
 
-@hydra.main(config_path="conf/config.yaml")
+@hydra.main(config_path="../conf/config.yaml")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 
@@ -101,17 +101,8 @@ def main(cfg):
 
     # Setup the dataset config
     # Generic config
-    train_dataset_cls = get_dataset_class(checkpoint.data_config)
-    setattr(checkpoint.data_config, "class", train_dataset_cls.FORWARD_CLASS)
-    setattr(checkpoint.data_config, "dataroot", cfg.input_path)
 
-    # Datset specific configs
-    if cfg.data:
-        for key, value in cfg.data.items():
-            checkpoint.data_config.update(key, value)
-
-    # Create dataset and mdoel
-    dataset = instantiate_dataset(checkpoint.data_config)
+    dataset = instantiate_dataset(cfg.data)
     model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
     log.info(model)
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
@@ -124,10 +115,11 @@ def main(cfg):
     model = model.to(device)
 
     # Run training / evaluation
-    if not os.path.exists(cfg.output_path):
-        os.makedirs(cfg.output_path)
+    output_path = os.path.join(cfg.checkpoint_dir, cfg.data.name, "features")
+    if not os.path.exists(output_path):
+        os.makedirs(output_path, exist_ok=True)
 
-    run(model, dataset, device, cfg.output_path)
+    run(model, dataset, device, output_path, cfg)
 
 
 if __name__ == "__main__":

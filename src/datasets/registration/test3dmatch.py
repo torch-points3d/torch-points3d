@@ -31,7 +31,7 @@ class Test3DMatch(Base3DMatchTest):
         self.radius_patch = radius_patch
         self.patch_extractor = PatchExtractor(self.radius_patch)
         self.path_table = osp.join(self.processed_dir, 'fragment')
-        with open(self.path_table, 'r') as f:
+        with open(osp.join(self.path_table, 'table.json'), 'r') as f:
             self.table = json.load(f)
 
     def get(self, idx):
@@ -43,7 +43,9 @@ class Test3DMatch(Base3DMatchTest):
         fragment = self.get(idx)
         patch_dataset = [self.patch_extractor(fragment, fragment.keypoints[i])
                          for i in range(self.num_random_pt)]
-        return SimplePatch(patch_dataset, self.transform)
+
+        simple_patch = SimplePatch(patch_dataset, self.transform)
+        return simple_patch
 
     def __len__(self):
         return len(self.table)
@@ -71,7 +73,7 @@ class Test3DMatchDataset(BaseDataset):
                                         transform=test_transform,
                                         num_random_pt=dataset_opt.num_random_pt)
 
-        if(self.is_patch):
+        if(dataset_opt.is_patch):
             self.test_dataset = self.base_dataset.get_patches(0)
         else:
             self.test_dataset = self.base_dataset
@@ -84,8 +86,9 @@ class Test3DMatchDataset(BaseDataset):
         return a pair of string which indicate the name of the scene and
         the name of the point cloud
         """
-        table = self.base_dataset.get_table()[idx]
-        return table['scene_path'], table['out_path']
+        table = self.base_dataset.get_table()[str(idx)]
+        return table['scene_path'], table['fragment_name']
 
-    def get_num_fragment(self):
+    @property
+    def num_fragment(self):
         return len(self.base_dataset)

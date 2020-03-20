@@ -29,17 +29,25 @@ class SimplePatch(torch.utils.data.Dataset):
         """
         transform a list of Data into a dataset(and apply transform)
         """
-        self.list_patches = list_patches
-        self.transform = self.transform
+        if(transform is None):
+            self.list_patches = list_patches
+        else:
+            self.list_patches = [transform(p) for p in list_patches]
+        self.transform = transform
+
 
     def __len__(self):
         return len(self.list_patches)
 
     def __getitem__(self, idx):
         data = self.list_patches[idx]
-        if(self.transform is not None):
-            data = self.transform(data)
         return data
+
+    @property
+    def num_features(self):
+        if self[0].x is None:
+            return 0
+        return 1 if self[0].x.dim() == 1 else self[0].x.size(1)
 
 
 class BaseTest(Dataset):
@@ -120,7 +128,7 @@ class BaseTest(Dataset):
                 ind += 1
 
         # save this file into json
-        with open(osp.join(out_dir, 'table.txt'), 'w') as f:
+        with open(osp.join(out_dir, 'table.json'), 'w') as f:
             json.dump(self.table, f)
 
     def process(self):
