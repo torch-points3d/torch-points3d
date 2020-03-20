@@ -4,6 +4,7 @@ import torch_geometric.transforms as T
 from .transforms import *
 from .inference_transforms import *
 from .features import *
+from .filters import *
 
 
 _custom_transforms = sys.modules[__name__]
@@ -81,3 +82,10 @@ def instantiate_transforms(transform_options):
     for transform in transform_options:
         transforms.append(instantiate_transform(transform))
     return T.Compose(transforms)
+
+
+def instantiate_filters(filter_options):
+    filters = []
+    for filt in filter_options:
+        filters.append(instantiate_transform(filt))
+    return FCompose(filters)

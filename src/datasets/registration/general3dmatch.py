@@ -2,13 +2,15 @@ import numpy as np
 import os
 import os.path as osp
 import torch
+from torch_geometric.data import Batch
+
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.base3dmatch import Base3DMatch
 from src.datasets.registration.utils import PatchExtractor
 from src.datasets.registration.pair import make_pair
 from src.metrics.registration_tracker import PatchRegistrationTracker
 from src.core.data_transform.transforms import GridSampling
-from torch_geometric.data import Batch
+
 
 
 class Patch3DMatch(Base3DMatch):
@@ -282,6 +284,7 @@ class General3DMatchDataset(BaseDataset):
         pre_transform = self.pre_transform
         train_transform = self.train_transform
         test_transform = self.test_transform
+        pre_filter = self.pre_filter
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(
@@ -297,7 +300,8 @@ class General3DMatchDataset(BaseDataset):
                 pre_transform=pre_transform,
                 transform=train_transform,
                 num_random_pt=dataset_opt.num_random_pt,
-                is_offline=dataset_opt.is_offline)
+                is_offline=dataset_opt.is_offline,
+                pre_filter=pre_filter)
 
             self.test_dataset = Patch3DMatch(
                 root=self._data_path,
@@ -323,7 +327,8 @@ class General3DMatchDataset(BaseDataset):
                 limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
-                transform=train_transform)
+                transform=train_transform,
+                pre_filter=pre_filter)
 
             self.test_dataset = Fragment3DMatch(
                 root=self._data_path,

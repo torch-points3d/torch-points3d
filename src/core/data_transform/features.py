@@ -1,48 +1,19 @@
 import torch
 import torch.nn.functional as F
+from torch_geometric.transforms import Center
 
 
-class XYZFeature(object):
+def compute_planarity(eigenvalues):
     """
-    add the X, Y and Z as a feature
+    compute the planarity with respect to the eigenvalues of the covariance matrix of the centered pointcloud
+    let $\lambda_1, \lambda_2, \lambda_3$ be the eigenvalues st
+    $$
+    \lambda_1 \leq \lambda_2 \leq \lambda_3
+    $$
+    then planarity is defined as:
+    planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
     """
-
-    def __init__(self, add_x=True, add_y=True, add_z=True):
-        self.axis = []
-        if(add_x):
-            self.axis.append(0)
-        if(add_y):
-            self.axis.append(1)
-        if(add_z):
-            self.axis.append(2)
-
-    def __call__(self, data):
-        assert data.pos is not None
-        xyz = data.pos[:, self.axis]
-        if data.x is None:
-            data.x = xyz
-        else:
-            data.x = torch.cat([data.x, xyz], -1)
-        return data
-
-
-class RGBFeature(object):
-    """
-    add color as feature if it exists
-    """
-    def __init__(self, is_normalize=False):
-        self.is_normalize = is_normalize
-
-    def __call__(self, data):
-        assert hasattr(data, 'color')
-        color = data.color
-        if(self.is_normalize):
-            color = F.normalize(color, p=2, dim=1)
-        if data.x is None:
-            data.x = color
-        else:
-            data.x = torch.cat([data.x, color], -1)
-        return data
+    return (eigenvalues[1] - eigenvalues[0]) / eigenvalues[2]
 
 
 class NormalFeature(object):
@@ -60,3 +31,32 @@ class NormalFeature(object):
         else:
             data.x = torch.cat([data.x, norm], -1)
         return data
+
+
+class PCACompute(object):
+    """
+    compute PCA of a point cloud and store the eigen values and the eigenvectors
+    """
+
+    def call(self, data):
+        pos_centered = data.pos - data.pos.mean(axis=0)
+        cov_matrix = pos_centered.T.mm(pos_centered) / len(pos_centered)
+        eig, v = torch.symeig(cov_matrix, eigenvectors=True)
+        data.eigenvalues = eig
+        data.eigenvectors = v
+        return data
+
+
+class PlanarityFilter(object):
+    """
+    compute planarity and return false if the planarity is above a threshold
+    """
+
+    def __init__(self, thresh=0.3):
+        self.thresh = thresh
+
+    def __call__(self, data):
+        if(data.eigenvalues is None):
+            data = PCACompute()(data)
+        planarity = compute_planarity(data.eigenvalues)
+        return planarity < self.thresh

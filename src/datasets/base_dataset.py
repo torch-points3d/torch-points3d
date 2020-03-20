@@ -8,6 +8,7 @@ import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
 
 from src.core.data_transform import instantiate_transforms, MultiScaleTransform
+from src.core.data_transform import instantiate_filters
 from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
@@ -38,6 +39,7 @@ class BaseDataset:
         self.val_dataset = None
 
         BaseDataset.set_transform(self, dataset_opt)
+        BaseDataset.set_filter(self, dataset_opt)
 
     @staticmethod
     def add_transform(transform_list_to_be_added, out=[]):
@@ -108,6 +110,21 @@ class BaseDataset:
         inference_transform = BaseDataset.add_transform(obj.pre_transform)
         inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
         obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
+
+    @staticmethod
+    def set_filter(obj, dataset_opt):
+        """This function create and set the pre_filter to the obj as attributes
+        """
+        obj.pre_filter = None
+        for key_name in dataset_opt.keys():
+            if "filter" in key_name:
+                new_name = key_name.replace("filters", "filter")
+                try:
+                    filt = instantiate_filters(getattr(dataset_opt, key_name))
+                except Exception:
+                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
+                    continue
+                setattr(obj, new_name, filt)
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
