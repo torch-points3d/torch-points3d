@@ -33,6 +33,12 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: $HOME/.poetry/bin/poetry install
 
+      - name: Add Minkowski Engine
+        run: |
+          git clone https://github.com/StanfordVL/MinkowskiEngine.git@v0.4.2
+          cd MinkowskiEngine
+          $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
+
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names

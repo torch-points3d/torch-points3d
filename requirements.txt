@@ -34,7 +34,6 @@ kiwisolver==1.1.0
 markdown==3.2.1
 markupsafe==1.1.1
 matplotlib==3.2.0
-minkowskiengine==0.4.1
 networkx==2.4
 numpy==1.18.1
 nvidia-ml-py3==7.352.0
