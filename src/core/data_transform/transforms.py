@@ -147,7 +147,7 @@ class PointCloudFusion(object):
 
 
 class GridSphereSampling(object):
-   """Fits the point cloud to a grid and for each point in this grid, 
+    """Fits the point cloud to a grid and for each point in this grid, 
     create a sphere with a radius r
 
     Parameters

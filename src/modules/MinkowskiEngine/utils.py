@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import MinkowskiEngine as ME
+import torch.nn.functional as F
 from torch_geometric.data import Data
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 import re
@@ -47,7 +48,7 @@ def apply_mean_func(data):
 
         if torch.is_tensor(item) and item.size(0) == num_nodes:
             if key == "y":
-                item = F.one_hot(item, num_classes=self.num_classes)
+                item = F.one_hot(item)
                 item = scatter_add(item, cluster, dim=0)
                 data[key] = item.argmax(dim=-1)
             elif key == "batch":
