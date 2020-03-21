@@ -32,16 +32,16 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: $HOME/.poetry/bin/poetry install
 
-      # - name: Checkout tools repo
-      #   uses: actions/checkout@v2
-      #   with:
-      #     repository: https://github.com/StanfordVL/MinkowskiEngine.git@v0.4.2
-      #     path: ../MinkowskiEngine
+      - name: Checkout tools repo
+        uses: actions/checkout@v2
+        with:
+          repository: https://github.com/StanfordVL/MinkowskiEngine.git@v0.4.2
+          path: ../MinkowskiEngine
 
-      # - name: Add Minkowski Engine
-      #   run: |
-      #     cd ../MinkowskiEngine
-      #     $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
+      - name: Add Minkowski Engine
+        run: |
+          cd ../MinkowskiEngine
+          $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
 
       - name: Lint with flake8
         run: |
