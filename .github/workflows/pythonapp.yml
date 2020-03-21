@@ -14,13 +14,15 @@ jobs:
         with:
           python-version: 3.6
 
-      - name: Install system dependencies
+      - name: Install poetry
         run: |
           curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
           $HOME/.poetry/bin/poetry run pip install --upgrade pip
-          apt-get install libopenblas-dev
 
-      - name: Cache dependencies
+      - name: Install system dependencies
+        run: sudo apt-get install libopenblas-dev
+
+      - name: Cache python dependencies
         uses: actions/cache@v1
         id: cache
         with:
