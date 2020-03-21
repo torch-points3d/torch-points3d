@@ -37,11 +37,11 @@ jobs:
         with:
           repository: StanfordVL/MinkowskiEngine
           ref: v0.4.2
-          path: ../MinkowskiEngine
+          path: MinkowskiEngine
 
       - name: Add Minkowski Engine
         run: |
-          cd ../MinkowskiEngine
+          cd MinkowskiEngine
           $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
 
       - name: Lint with flake8
