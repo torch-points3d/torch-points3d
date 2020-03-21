@@ -37,13 +37,13 @@ if L_intersection_names:
         )
 
 
-def instantiate_transform(transform_option):
+def instantiate_transform(transform_option, attr='transform'):
     """ Creates a transform from an OmegaConf dict such as
     transform: GridSampling
         params:
             size: 0.01
     """
-    tr_name = transform_option.transform
+    tr_name = getattr(transform_option, attr, None)
     try:
         tr_params = transform_option.params
     except KeyError:
@@ -87,5 +87,5 @@ def instantiate_transforms(transform_options):
 def instantiate_filters(filter_options):
     filters = []
     for filt in filter_options:
-        filters.append(instantiate_transform(filt))
+        filters.append(instantiate_transform(filt, 'filter'))
     return FCompose(filters)

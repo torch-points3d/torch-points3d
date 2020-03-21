@@ -26,7 +26,7 @@ class PlanarityFilter(object):
         self.thresh = thresh
 
     def __call__(self, data):
-        if(data.eigenvalues is None):
+        if(getattr(data, 'eigenvalues', None) is None):
             data = PCACompute()(data)
         planarity = compute_planarity(data.eigenvalues)
         return planarity < self.thresh

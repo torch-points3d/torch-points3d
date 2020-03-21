@@ -1,7 +1,5 @@
 import torch
 import torch.nn.functional as F
-from torch_geometric.transforms import Center
-
 
 def compute_planarity(eigenvalues):
     """
@@ -38,7 +36,7 @@ class PCACompute(object):
     compute PCA of a point cloud and store the eigen values and the eigenvectors
     """
 
-    def call(self, data):
+    def __call__(self, data):
         pos_centered = data.pos - data.pos.mean(axis=0)
         cov_matrix = pos_centered.T.mm(pos_centered) / len(pos_centered)
         eig, v = torch.symeig(cov_matrix, eigenvectors=True)
