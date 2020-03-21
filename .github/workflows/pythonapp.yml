@@ -35,7 +35,8 @@ jobs:
       - name: Checkout tools repo
         uses: actions/checkout@v2
         with:
-          repository: https://github.com/StanfordVL/MinkowskiEngine.git@v0.4.2
+          repository: StanfordVL/MinkowskiEngine
+          ref: v0.4.2
           path: ../MinkowskiEngine
 
       - name: Add Minkowski Engine
