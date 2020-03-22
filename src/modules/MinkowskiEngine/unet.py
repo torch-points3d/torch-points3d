@@ -35,7 +35,7 @@ class SkipModule(nn.Module):
         if self.connection == "concat":
             return ME.cat(skip_x, self._submodule(skip_x))
         elif self.connection == "residual":
-            return x + self._submodule(skip_x)
+            return skip_x + self._submodule(skip_x)
         else:
             return self._submodule(skip_x)
 
