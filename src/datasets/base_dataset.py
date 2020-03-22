@@ -127,7 +127,7 @@ class BaseDataset:
         if is_dense:
             return lambda datalist: SimpleBatch.from_data_list(datalist)
         else:
-             return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
+            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
 
     @staticmethod
     def get_num_samples(batch, conv_type):
@@ -272,30 +272,6 @@ class BaseDataset:
         } 
         """
         return None
-
-    @property
-    def input_nc(self):
-        sample = self.train_dataset[0]
-        x = getattr(sample, "x", None)
-        if x is not None:
-            if x.dim() == 1:
-                return 1
-            else:
-                return x.shape[-1]
-        else:
-            return 0
-
-    @property
-    def output_nc(self):
-        sample = self.train_dataset[0]
-        y = getattr(sample, "y", None)
-        if y is not None:
-            if y.dim() == 1:
-                return 1
-            else:
-                return y.shape[-1]
-        else:
-            return 0
 
     @property
     def num_classes(self):

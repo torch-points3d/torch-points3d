@@ -4,7 +4,7 @@ import torch_geometric.transforms as T
 from .transforms import *
 from .inference_transforms import *
 from .features import *
-
+from .sparse_transforms import *
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]

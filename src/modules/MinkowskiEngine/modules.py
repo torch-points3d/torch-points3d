@@ -5,7 +5,24 @@ from src.utils.config import is_list
 
 
 class BasicBlock(nn.Module):
-    expansion = 1
+    """This module implements a basic residual convolution block using MinkowskiEngine
+
+    Parameters
+    ----------
+    inplanes: int
+        Input dimension
+    planes: int
+        Output dimension
+    dilation: int
+        Dilation value
+    downsample: nn.Module
+        If provided, downsample will be applied on input before doing residual addition
+    bn_momentum: float
+        Input dimension
+    """
+
+
+    EXPANSION = 1
 
     def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None, bn_momentum=0.1, dimension=-1):
         super(BasicBlock, self).__init__()
@@ -42,7 +59,7 @@ class BasicBlock(nn.Module):
 
 
 class Bottleneck(nn.Module):
-    expansion = 4
+    EXPANSION = 4
 
     def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None, bn_momentum=0.1, dimension=-1):
         super(Bottleneck, self).__init__()
@@ -56,8 +73,8 @@ class Bottleneck(nn.Module):
         )
         self.norm2 = ME.MinkowskiBatchNorm(planes, momentum=bn_momentum)
 
-        self.conv3 = ME.MinkowskiConvolution(planes, planes * self.expansion, kernel_size=1, dimension=dimension)
-        self.norm3 = ME.MinkowskiBatchNorm(planes * self.expansion, momentum=bn_momentum)
+        self.conv3 = ME.MinkowskiConvolution(planes, planes * self.EXPANSION, kernel_size=1, dimension=dimension)
+        self.norm3 = ME.MinkowskiBatchNorm(planes * self.EXPANSION, momentum=bn_momentum)
 
         self.relu = ME.MinkowskiReLU(inplace=True)
         self.downsample = downsample

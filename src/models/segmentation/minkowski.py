@@ -32,6 +32,7 @@ class Minkowski_Baseline_Model(BaseModel):
         self.loss_seg.backward()
 
 
+# This model still doesn't fully work yet.
 class Minkowski_Model(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
@@ -56,10 +57,6 @@ class Minkowski_Model(UnwrappedUnetBasedModel):
 
         for i in range(len(self.up_modules)):
             x = self.up_modules[i](x, stack_down.pop())
-
-        import pdb
-
-        pdb.set_trace()
 
     def backward(self):
         pass

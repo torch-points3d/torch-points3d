@@ -19,10 +19,16 @@ from src.utils.config import is_list
 from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
 from src.utils import is_iterable
-from src.modules.MinkowskiEngine import to_sparse_input, remove_duplicates_func, shuffle_data
 
 class RemoveAttributes(object):
-    """[This transform allows to remove unnecessary attributes from data for optimization purposes]
+    """This transform allows to remove unnecessary attributes from data for optimization purposes
+    
+    Parameters
+    ----------
+    attr_names: list
+        Remove the attributes from data using the provided `attr_name` within attr_names
+    strict: bool=False
+        Wether True, it will raise an execption if the provided attr_name isn t within data keys.
     """
 
     def __init__(self, attr_names=[], strict=False):
@@ -41,88 +47,16 @@ class RemoveAttributes(object):
     def __repr__(self):
         return "{}(attr_names={}, strict={})".format(self.__class__.__name__, self._attr_names, self._strict)
 
-class ShuffleData(object):
-    """[This transform allows to shuffle the data]
-    """
-
-    def _process(self, data):
-        return shuffle_data(data)
-
-    def __call__(self, data):
-        if isinstance(data, list):
-            data = [self._process(d) for d in tq(data)]
-            data = list(itertools.chain(*data))  # 2d list needs to be flatten
-        else:
-            data = self._process(data)
-        return data
-
-    def __repr__(self):
-        return "{}()".format(self.__class__.__name__)
-
-class RemoveDuplicatedCoords(object):
-    """[This transform allows to remove duplicated indices within data for sparse input]
-    """
-
-    def __init__(self, shuffle=False):
-        self._shuffle = shuffle
-        if self._shuffle:
-            self._shuffle_transform = ShuffleData()
-
-    def _process(self, data):
-        if self._shuffle:
-            data = self._shuffle_transform(data)
-        return remove_duplicates_func(data)
-
-    def __call__(self, data):
-        if isinstance(data, list):
-            data = [self._process(d) for d in tq(data)]
-            data = list(itertools.chain(*data))  # 2d list needs to be flatten
-        else:
-            data = self._process(data)
-        return data
-
-    def __repr__(self):
-        return "{}(shuffle={})".format(self.__class__.__name__, self._shuffle)
-
-
-class ToSparseInput(object):
-    """[This transform allows to prepare data for sparse model as SparseConv / Minkowski Engine]
-    """
-
-    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, remove_duplicates:bool=True, apply_mean:bool=True):
-        if grid_size is None:
-            raise Exception("Grid size should be provided")
-
-        elif grid_size == 0:
-            raise Exception("Grid size should not be equal to 0")
-
-        self._grid_size = grid_size
-        self._save_delta = save_delta
-        self._save_delta_norm = save_delta_norm
-        self._remove_duplicates = remove_duplicates
-        self._apply_mean = apply_mean
-
-    def _process(self, data):
-        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, remove_duplicates=self._remove_duplicates, apply_mean=self._apply_mean)
-
-    def __call__(self, data):
-        if isinstance(data, list):
-            data = [self._process(d) for d in tq(data)]
-            data = list(itertools.chain(*data))  # 2d list needs to be flatten
-        else:
-            data = self._process(data)
-        return data
-
-    def __repr__(self):
-        return "{}(grid_size={}, save_delta={}, save_delta_norm={}, remove_duplicates={}, apply_mean={})".format(self.__class__.__name__, self._grid_size, self._save_delta, self._save_delta_norm, self._remove_duplicates, self._apply_mean)
-
-
 class PointCloudFusion(object):
-    r"""This transform is responsible to perform a point cloud fusion from a list of data
+    
+    """This transform is responsible to perform a point cloud fusion from a list of data
     If a list of data is provided -> Create one Batch object with all data
     If a list of list of data is provided -> Create a list of fused point cloud
-    Args:
-        radius (float or [float] or Tensor): Radius of the sphere to be sampled.
+    
+    Parameters
+    ----------
+        radius: float: 
+            Radius of the sphere to be sampled.
     """
 
     def _process(self, data_list):
@@ -572,107 +506,6 @@ class MultiScaleTransform(object):
 
     def __repr__(self):
         return "{}".format(self.__class__.__name__)
-
-class AddFeatsByKeys(object):
-    """[This transform takes a list of attributes names and if allowed, add them to x]
-    
-    Example:
-
-        Before calling "AddFeatsByKeys", if data.x was empty
-
-        - transform: AddFeatsByKeys
-          params:
-              list_add_to_x: [False, True, True]    
-              feat_names: ['normal', 'rgb', "elevation"]
-              input_nc_feats: [3, 3, 1]
-
-        After calling "AddFeatsByKeys", data.x contains "rgb" and "elevation". Its shape[-1] == 4 (rgb:3 + elevation:1)
-    """
-
-    def __init__(self, list_add_to_x: List[bool], feat_names: List[str], input_nc_feats: List[int] = None, stricts: List[bool] = None):
-        from torch_geometric.transforms import Compose
-       
-        num_names = len(feat_names)
-        if num_names == 0:
-            raise Exception("Expected to have at least one feat_names")
-        
-        assert len(list_add_to_x) == num_names
-
-        if input_nc_feats:
-            assert len(input_nc_feats) == num_names
-        else:
-            input_nc_feats = [None for _ in range(num_names)]
-
-        if stricts:
-            assert len(stricts) == num_names
-        else:
-            stricts = [True for _ in range(num_names)]
-
-        transforms = [AddFeatByKey(add_to_x, feat_name, input_nc_feat=input_nc_feat, strict=strict) for add_to_x, feat_name, input_nc_feat, strict in zip(list_add_to_x, feat_names, input_nc_feats, stricts)]
-
-        self.transform = Compose(transforms)
-
-    def __call__(self, data):
-        return self.transform(data)
-
-
-class AddFeatByKey(object):
-    """This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True
-    
-    Paremeters
-    ----------
-    add_to_x: bool
-        Control if the feature is going to be added/concatenated to x
-    feat_name: str
-        The feature to be found within data to be added/concatenated to x
-    
-    input_nc_feat: int, optional
-        If provided, check if dimension feature check last dimension (default: ``None``)
-    strict: bool, optional
-        Recommended to be set to True. If False, it won't break if feat isn't found or dimension doesn t match. (default: ``True``)
-    """
-    
-    def __init__(self, add_to_x, feat_name, input_nc_feat=None, strict=True):
-
-        self._add_to_x: bool = add_to_x
-        self._feat_name: str = feat_name
-        self._input_nc_feat = input_nc_feat
-        self._strict: bool = strict
-
-    def __call__(self, data: Data):
-        if not self._add_to_x:
-            return data
-        feat = getattr(data, self._feat_name, None)
-        if feat is None:
-            if self._strict:
-                raise Exception("Data should contain the attribute {}".format(self._feat_name))
-            else:
-                return data
-        else:
-            if self._input_nc_feat:
-                feat_dim = 1 if feat.dim() == 1 else feat.shape[-1]
-                if self._input_nc_feat != feat_dim and self._strict:
-                    raise Exception("The shape of feat: {} doesn t match {}".format(feat.shape, self._input_nc_feat))
-            x = getattr(data, "x", None)
-            if x is None:
-                if self._strict and data.pos.shape[0] != feat.shape[0]:
-                    raise Exception("We expected to have an attribute x")
-                data.x = feat
-            else:
-                if x.shape[0] == feat.shape[0]:
-                    if x.dim() == 1:
-                        x = x.unsqueeze(-1)
-                    if feat.dim() == 1:
-                        feat = feat.unsqueeze(-1)
-                    data.x = torch.cat([x, feat], axis=-1)
-                else:
-                    raise Exception("The tensor x and {} can't be concatenated, x: {}, feat: {}".format(self._feat_name, 
-                                                                                                        x.pos.shape[0], 
-                                                                                                        feat.pos.shape[0]))
-        return data
-
-    def __repr__(self):
-        return  "{}(add_to_x: {}, feat_name: {}, strict: {})".format(self.__class__.__name__, self._add_to_x, self._feat_name, self._strict)
 
 class SaveOriginalPosId:
     """ Transform that adds the index of the point to the data object
