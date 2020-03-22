@@ -2,5 +2,5 @@ input_path: '/media/admincaor/DataHDD2To/mines/code/deeppointcloud-benchmarks/da
 output_path: '/media/admincaor/DataHDD2To/mines/code/deeppointcloud-benchmarks/outputs/fpfh/3DMatch'
 radius: 0.3
 max_nn: 256
-radius_normal: 0.3
+radius_normal: 0.093
 max_nn_normal: 17

@@ -5,33 +5,43 @@ import os
 import os.path as osp
 import json
 from omegaconf import OmegaConf
+import sys
+
+# Import building function for model and dataset
+DIR = os.path.dirname(os.path.realpath(__file__))
+ROOT = os.path.join(DIR, "..")
+sys.path.insert(0, ROOT)
+
 from src.datasets.registration.evaluation import read_gt_log
 
 
-def compute_matches(feat_source, feat_target):
+def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=False, sym=True):
     """
-    compute matches between features(list of tuple of indices)
-    and return dist
+    compute matches between features
     """
-    tree = KDTree(feat_target)
-    ind_source = np.arange(len(feat_source)).reshape(-1, 1)
-    dist, ind_target = tree.query(feat_source, k=1)
-    inds = np.hstack((ind_source, ind_target))
-    return inds
+    tree_source = KDTree(feature_source)
+    tree_target = KDTree(feature_target)
+    _, nn_ind_source = tree_target.query(feature_source, k=1)
+    _, nn_ind_target = tree_source.query(feature_target, k=1)
+
+    # symetric test
+    if sym:
+        indmatch = np.where(nn_ind_source.T[0][nn_ind_target.T[0]] == np.arange(len(feature_source)))[0]
+    else:
+        indmatch = np.arange(len(feature_source))
+
+    new_kp_source = np.copy(kp_source[nn_ind_target.T[0][indmatch]])
+    new_kp_target = np.copy(kp_target[indmatch])
+
+    return new_kp_source, new_kp_target
 
 
-def sym_test(inds):
-    """
-    perform symmetric test to remove bad matches
-    """
-
-
-def compute_dists(pcd_source, pcd_target, trans, inds):
+def compute_dists(kp_source, kp_target, trans):
     """
     compute distance between points that are matches
     """
-    pcd_source_t = pcd_source.dot(trans[:3, :3].T) + trans[:3, 3]
-    dist = np.linalg.norm(pcd_source_t[inds[:, 0]] - pcd_target[inds[:, 1]], axis=1)
+    kp_target_t = kp_target.dot(trans[:3, :3].T) + trans[:3, 3]
+    dist = np.linalg.norm(kp_source - kp_target_t, axis=1)
     return dist
 
 
@@ -56,16 +66,29 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     data_source = np.load(path_descr_source)
     data_target = np.load(path_descr_target)
 
-    inds = compute_matches(data_source["feat"], data_target["feat"])
-    dist = compute_dists(data_source["pcd"], data_target["pcd"], gt_trans, inds)
+    kp_source, kp_target = compute_matches(
+        data_source["feat"],
+        data_target["feat"],
+        data_source["pcd"][data_source["keypoints"]],
+        data_target["pcd"][data_target["keypoints"]],
+    )
+
+    dist = compute_dists(kp_source, kp_target, gt_trans)
 
     n_s = osp.split(path_descr_source)[-1].split(".")[0]
     n_t = osp.split(path_descr_target)[-1].split(".")[0]
     out_path = osp.join(res_path, "{}_{}.npz".format(n_s, n_t))
-    frac_correct = compute_mean_correct_matches(inds, dist, list_tau)
-    print(n_s, n_t)
+    frac_correct = compute_mean_correct_matches(dist, list_tau)
+    print(n_s, n_t, frac_correct[0:5], list_tau)
     np.savez(
-        out_path, inds=inds, dist=dist, list_tau1=list_tau, frac_correct=frac_correct, name_source=n_s, name_target=n_t
+        out_path,
+        kp_source,
+        kp_target,
+        dist=dist,
+        list_tau1=list_tau,
+        frac_correct=frac_correct,
+        name_source=n_s,
+        name_target=n_t,
     )
     return frac_correct[0]
 
@@ -98,7 +121,7 @@ def evaluate(path_raw_fragment, path_results, list_tau1, list_tau2):
     list_scene = os.listdir(path_raw_fragment)
 
     for scene in list_scene:
-
+        print(scene)
         path_log = osp.join(path_raw_fragment, scene, "gt.log")
         list_pair_num, list_mat = read_gt_log(path_log)
         list_pair = []
