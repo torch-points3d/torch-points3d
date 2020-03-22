@@ -4,6 +4,55 @@ import MinkowskiEngine as ME
 from src.utils.config import is_list
 
 
+class SparseResBlock(nn.Module):
+    def __init__(
+        self,
+        a,
+        b,
+        dimension,
+        leakiness=0,
+        use_dropout=False,
+        dropout_rate=0.1,
+        norm_layer=ME.MinkowskiBatchNorm,
+        mix_conv=False,
+    ):
+        super(SparseResBlock, self).__init__()
+        self.a = a
+        self.b = b
+        self.dimension = dimension
+        self.use_dropout = use_dropout
+        self.dropout_rate = dropout_rate
+        self.norm_layer = norm_layer
+        self.mix_conv = mix_conv
+        self.resblock = self.block(a, b, dimension, use_dropout, dropout_rate, norm_layer, mix_conv)
+
+    def block(self, a, b, dimension, use_dropout, dropout_rate, norm_layer, mix_conv, leakiness=0, join=True):
+
+        modules = []
+
+        self.network_in_network = None
+        if a != b:
+            self.network_in_network = ME.MinkowskiConvolution(a, b, kernel_size=1, dimension=self.dimension)
+
+        modules.append(self.norm_layer(a) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+
+        modules.append(ME.MinkowskiConvolution(a, b, kernel_size=3, dimension=self.dimension))
+        modules.append(self.norm_layer(b) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+
+        if use_dropout:
+            modules.append(ME.MinkowskiDropout(p=self.dropout_rate))
+
+        modules.append(ME.MinkowskiConvolution(b, b, kernel_size=3, dimension=self.dimension))
+
+        return nn.Sequential(*modules)
+
+    def forward(self, x):
+        residual = self.resblock(x)
+        if self.network_in_network:
+            x = self.network_in_network(x)
+        return x + residual
+
+
 class BasicBlock(nn.Module):
     """This module implements a basic residual convolution block using MinkowskiEngine
 

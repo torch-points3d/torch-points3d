@@ -2,7 +2,7 @@ models:
     # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngin
     # STILL NOT FULLY WORKING !
     MinkUNet:
-        class: minkowski.Minkowski_Model
+        class: minkowski.Minkowski_API_Model
         conv_type: "SPARSE"
         down_conv:
             module_name: ResnetBlockDown
@@ -27,3 +27,14 @@ models:
         mlp_cls:
             nn: [64]
             dropout: 0.5
+
+    MinkUNetConfigurable:
+        class: minkowski.Minkowski_Model
+        conv_type: "SPARSE"
+        input_planes: [8, 16, 32, 64, 128, 256]
+        norm_layer: "MinkowskiSELU"
+        use_dropout: True
+        n_reps: 1
+        dim: 3
+        dropout_rate: .1
+        mix_conv: False    
