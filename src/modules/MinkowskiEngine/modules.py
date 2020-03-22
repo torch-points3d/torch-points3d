@@ -21,7 +21,6 @@ class BasicBlock(nn.Module):
         Input dimension
     """
 
-
     EXPANSION = 1
 
     def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None, bn_momentum=0.1, dimension=-1):

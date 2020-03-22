@@ -51,18 +51,18 @@ class ResNetBase(nn.Module):
 
     def _make_layer(self, block, planes, blocks, stride=1, dilation=1, bn_momentum=0.1):
         downsample = None
-        if stride != 1 or self.inplanes != planes * block.expansion:
+        if stride != 1 or self.inplanes != planes * block.EXPANSION:
             downsample = nn.Sequential(
                 ME.MinkowskiConvolution(
-                    self.inplanes, planes * block.expansion, kernel_size=1, stride=stride, dimension=self.D
+                    self.inplanes, planes * block.EXPANSION, kernel_size=1, stride=stride, dimension=self.D
                 ),
-                ME.MinkowskiBatchNorm(planes * block.expansion),
+                ME.MinkowskiBatchNorm(planes * block.EXPANSION),
             )
         layers = []
         layers.append(
             block(self.inplanes, planes, stride=stride, dilation=dilation, downsample=downsample, dimension=self.D)
         )
-        self.inplanes = planes * block.expansion
+        self.inplanes = planes * block.EXPANSION
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, stride=1, dilation=dilation, dimension=self.D))
 
@@ -157,21 +157,21 @@ class MinkUNetBase(ResNetBase):
         )
         self.bntr4 = ME.MinkowskiBatchNorm(self.PLANES[4])
 
-        self.inplanes = self.PLANES[4] + self.PLANES[2] * self.BLOCK.expansion
+        self.inplanes = self.PLANES[4] + self.PLANES[2] * self.BLOCK.EXPANSION
         self.block5 = self._make_layer(self.BLOCK, self.PLANES[4], self.LAYERS[4])
         self.convtr5p8s2 = ME.MinkowskiConvolutionTranspose(
             self.inplanes, self.PLANES[5], kernel_size=2, stride=2, dimension=D
         )
         self.bntr5 = ME.MinkowskiBatchNorm(self.PLANES[5])
 
-        self.inplanes = self.PLANES[5] + self.PLANES[1] * self.BLOCK.expansion
+        self.inplanes = self.PLANES[5] + self.PLANES[1] * self.BLOCK.EXPANSION
         self.block6 = self._make_layer(self.BLOCK, self.PLANES[5], self.LAYERS[5])
         self.convtr6p4s2 = ME.MinkowskiConvolutionTranspose(
             self.inplanes, self.PLANES[6], kernel_size=2, stride=2, dimension=D
         )
         self.bntr6 = ME.MinkowskiBatchNorm(self.PLANES[6])
 
-        self.inplanes = self.PLANES[6] + self.PLANES[0] * self.BLOCK.expansion
+        self.inplanes = self.PLANES[6] + self.PLANES[0] * self.BLOCK.EXPANSION
         self.block7 = self._make_layer(self.BLOCK, self.PLANES[6], self.LAYERS[6])
         self.convtr7p2s2 = ME.MinkowskiConvolutionTranspose(
             self.inplanes, self.PLANES[7], kernel_size=2, stride=2, dimension=D
