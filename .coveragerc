@@ -1,6 +1,10 @@
 [run]
 source = src
 branch = True
+omit=
+    src/datasets/regression/*
+    src/datasets/classification/*
+    src/datasets/segmentation/*
 
 [report]
 exclude_lines =
