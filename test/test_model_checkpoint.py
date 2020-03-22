@@ -58,7 +58,7 @@ class TestModelCheckpoint(unittest.TestCase):
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
 
         shutil.rmtree(self.run_path)
-        os.remove(os.path.join(ROOT, "{}.pt".format(name)))
+        os.remove(os.path.join(DIR, "{}.pt".format(name)))
 
 
 if __name__ == "__main__":

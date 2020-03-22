@@ -4,7 +4,7 @@ from torch_geometric.nn import fps
 import unittest
 import logging
 
-from . import run_if_cuda
+from test import run_if_cuda
 
 log = logging.getLogger(__name__)
 
