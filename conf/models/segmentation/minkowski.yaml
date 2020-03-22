@@ -32,7 +32,7 @@ models:
         class: minkowski.Minkowski_Model
         conv_type: "SPARSE"
         input_planes: [8, 16, 32, 64, 128, 256]
-        norm_layer: "MinkowskiSELU"
+        norm_layer: "MinkowskiBatchNorm"
         use_dropout: True
         n_reps: 1
         dim: 3

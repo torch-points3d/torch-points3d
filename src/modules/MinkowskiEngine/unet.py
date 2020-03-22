@@ -71,7 +71,7 @@ class UnwrappedSparseUnet(nn.Module):
 
         modules.append(ME.MinkowskiConvolution(input_nc, 8, kernel_size=3, dimension=self.dimension))
         modules.append(self.U(input_planes))
-        modules.append(self.norm_layer(8) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+        modules.append(self.norm_layer(8))
         modules.append(ME.MinkowskiConvolution(8, output_nc, kernel_size=3, dimension=self.dimension))
         modules.append(ME.MinkowskiTanh())
 
@@ -97,10 +97,10 @@ class UnwrappedSparseUnet(nn.Module):
 
             residual = (
                 Sequential()
-                .add(self.norm_layer(nPlanes[0]) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+                .add(self.norm_layer(nPlanes[0]))
                 .add(ME.MinkowskiConvolution(nPlanes[0], nPlanes[1], kernel_size=3, stride=2, dimension=self.dimension))
                 .add(self.U(nPlanes[1:]))
-                .add(self.norm_layer(nPlanes[1]) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+                .add(self.norm_layer(nPlanes[1]))
                 .add(
                     ME.MinkowskiConvolutionTranspose(
                         nPlanes[1], nPlanes[0], kernel_size=3, stride=2, dimension=self.dimension
@@ -123,58 +123,6 @@ class UnwrappedSparseUnet(nn.Module):
                     )
                 )
         return m
-
-    """
-    def U(self, nPlanes, n_input_planes=-1):  # Recursive function
-        for i in range(self.reps):
-            m.add(
-                SparseResBlock(
-                    n_input_planes if n_input_planes != -1 else nPlanes[0],
-                    nPlanes[0],
-                    self.dimension,
-                    use_dropout=self.use_dropout,
-                    dropout_rate=self.dropout_rate,
-                    norm_layer=self.norm_layer,
-                    mix_conv=self.mix_conv,
-                )
-            )
-            n_input_planes = -1
-        if len(nPlanes) > 1:
-            m.add(
-                scn.ConcatTable()
-                .add(scn.Identity())
-                .add(
-                    scn.Sequential()
-                    .add(self.norm_layer(nPlanes[0]) if self.norm_layer != scn.SELU else self.norm_layer())
-                    .add(
-                        scn.Convolution(
-                            self.dimension, nPlanes[0], nPlanes[1], self.downsample[0], self.downsample[1], False
-                        )
-                    )
-                    .add(self.U(nPlanes[1:]))
-                    .add(self.norm_layer(nPlanes[1]) if self.norm_layer != scn.SELU else self.norm_layer())
-                    .add(
-                        scn.Deconvolution(
-                            self.dimension, nPlanes[1], nPlanes[0], self.downsample[0], self.downsample[1], False
-                        )
-                    )
-                )
-            )
-            m.add(scn.JoinTable())
-            for i in range(self.reps):
-                m.add(
-                    SparseResBlock(
-                        nPlanes[0] * (2 if i == 0 else 1),
-                        nPlanes[0],
-                        self.dimension,
-                        use_dropout=self.use_dropout,
-                        dropout_rate=self.dropout_rate,
-                        norm_layer=self.norm_layer,
-                        mix_conv=self.mix_conv,
-                    )
-                )
-        return m
-        """
 
     def forward(self, x):
         x = self.model(x)

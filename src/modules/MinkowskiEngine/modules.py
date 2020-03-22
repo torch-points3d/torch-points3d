@@ -34,10 +34,10 @@ class SparseResBlock(nn.Module):
         if a != b:
             self.network_in_network = ME.MinkowskiConvolution(a, b, kernel_size=1, dimension=self.dimension)
 
-        modules.append(self.norm_layer(a) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+        modules.append(self.norm_layer(a))
 
         modules.append(ME.MinkowskiConvolution(a, b, kernel_size=3, dimension=self.dimension))
-        modules.append(self.norm_layer(b) if self.norm_layer != ME.MinkowskiSELU else self.norm_layer())
+        modules.append(self.norm_layer(b))
 
         if use_dropout:
             modules.append(ME.MinkowskiDropout(p=self.dropout_rate))
