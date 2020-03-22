@@ -23,6 +23,13 @@ def load_config(task, model_type) -> DictConfig:
     return config
 
 
+def remove(path):
+    try:
+        os.remove(path)
+    except:
+        pass
+
+
 class TestModelCheckpoint(unittest.TestCase):
     def setUp(self):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
@@ -58,7 +65,8 @@ class TestModelCheckpoint(unittest.TestCase):
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
 
         shutil.rmtree(self.run_path)
-        os.remove(os.path.join(DIR, "{}.pt".format(name)))
+        remove(os.path.join(ROOT, "{}.pt".format(name)))
+        remove(os.path.join(DIR, "{}.pt".format(name)))
 
 
 if __name__ == "__main__":
