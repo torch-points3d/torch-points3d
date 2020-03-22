@@ -7,10 +7,10 @@ from torch_geometric.data import Batch
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.base3dmatch import Base3DMatch
 from src.datasets.registration.utils import PatchExtractor
-from src.datasets.registration.pair import make_pair
+from src.datasets.registration.pair import Pair
 from src.metrics.registration_tracker import PatchRegistrationTracker
 from src.core.data_transform.transforms import GridSampling
-
+from src.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 
 
 class Patch3DMatch(Base3DMatch):
@@ -136,7 +136,7 @@ class Patch3DMatch(Base3DMatch):
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
-        batch = make_pair(data_source, data_target)
+        batch = Pair.make_pair(data_source, data_target)
         batch = batch.contiguous().to(torch.float)
 
         return batch
@@ -149,7 +149,7 @@ class Patch3DMatch(Base3DMatch):
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
-        batch = make_pair(data_source, data_target)
+        batch = Pair.make_pair(data_source, data_target)
         batch = batch.contiguous().to(torch.float)
 
         return batch
@@ -266,7 +266,7 @@ class Fragment3DMatch(Base3DMatch):
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
-        batch = make_pair(data_source, data_target)
+        batch = Pair.make_pair(data_source, data_target)
         batch.y = torch.from_numpy(match['pair'])
         return batch.contiguous().to(torch.float)
 
@@ -277,7 +277,7 @@ class Fragment3DMatch(Base3DMatch):
         return len(self.list_test_fragment)
 
 
-class General3DMatchDataset(BaseDataset):
+class General3DMatchDataset(BaseSiameseDataset):
 
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)

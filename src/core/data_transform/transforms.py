@@ -15,6 +15,7 @@ from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
 
 from src.datasets.multiscale_data import MultiScaleData
+from src.datasets.registration.pair import Pair
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from torch_geometric.data import Data, Batch
@@ -51,7 +52,7 @@ class PointCloudFusion(object):
 
 
 class GridSphereSampling(object):
-    """Fits the point cloud to a grid and for each point in this grid, 
+    """Fits the point cloud to a grid and for each point in this grid,
     create a sphere with a radius r
 
     Parameters
@@ -63,7 +64,7 @@ class GridSphereSampling(object):
     delattr_kd_tree: bool, optional
         If True, KDTREE_KEY should be deleted as an attribute if it exists
     center: bool, optional
-        If True, a centre transform is apply on each sphere. 
+        If True, a centre transform is apply on each sphere.
     """
 
     KDTREE_KEY = "kd_tree"
@@ -163,7 +164,7 @@ class RandomSphere(object):
     ----------
     radius: float
         Radius of the sphere to be sampled.
-    strategy: str 
+    strategy: str
         choose between `random` and `freq_class_based`. The `freq_class_based` \
         favors points with low frequency class. This can be used to balance unbalanced datasets
     """
@@ -279,7 +280,7 @@ class GridSampling(object):
 
 
 class RandomSymmetry(object):
-    """ Apply a random symmetry transformation on the data 
+    """ Apply a random symmetry transformation on the data
 
     Parameters
     ----------
@@ -307,9 +308,9 @@ class RandomNoise(object):
 
     Parameters
     ----------
-    sigma: 
+    sigma:
         Variance of the noise
-    clip: 
+    clip:
         Maximum amplitude of the noise
     """
 
@@ -330,7 +331,7 @@ class RandomNoise(object):
 class RandomScaleAnisotropic:
     r""" Scales node positions by a randomly sampled factor ``s1, s2, s3`` within a
     given interval, *e.g.*, resulting in the transformation matrix
-    
+
     .. math::
         \left[
         \begin{array}{ccc}
@@ -339,10 +340,10 @@ class RandomScaleAnisotropic:
             0 & 0 & s3 \\
         \end{array}
         \right]
-    
+
 
     for three-dimensional positions.
-    
+
     Parameter
     ---------
     scales:
@@ -404,7 +405,7 @@ class MeshToNormal(object):
 
 
 class MultiScaleTransform(object):
-    """ Pre-computes a sequence of downsampling / neighboorhood search on the CPU. 
+    """ Pre-computes a sequence of downsampling / neighboorhood search on the CPU.
     This currently only works on PARTIAL_DENSE formats
 
     Parameters
@@ -483,14 +484,14 @@ class MultiScaleTransform(object):
 class AddFeatByKey(object):
     def __init__(self, add_to_x, feat_name, input_nc_feat=None, strict=True):
         """This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True
-        
+
         Paremeters
         ----------
         add_to_x: bool
             Control if the feature is going to be added/concatenated to x
         feat_name: str
             The feature to be found within data to be added/concatenated to x
-        
+
         input_nc_feat: int, optional
             If provided, check if dimension feature check last dimension (default: ``None``)
         strict: bool, optional
@@ -552,3 +553,21 @@ class SaveOriginalPosId:
     def __call__(self, data):
         setattr(data, self.KEY, torch.arange(0, data.pos.shape[0]))
         return data
+
+
+class PairTransform(object):
+
+    def __init__(self, transform):
+        """
+        apply the transform for a pair of data
+        (as defined in src/datasets/registration/pair.py)
+
+        """
+        self.transform = transform
+
+
+    def __call__(self, data):
+        data_source, data_target = data.to_data()
+        data_source = self.transform(data_source)
+        data_target = self.transform(data_target)
+        return Pair.make_pair(data_source, data_target)
