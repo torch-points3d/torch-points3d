@@ -15,9 +15,13 @@ jobs:
           python-version: 3.6
 
       - name: Install poetry
-        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 
-      - name: Cache dependencies
+      - name: Install system dependencies
+        run: sudo apt-get install libopenblas-dev
+
+      - name: Cache python dependencies
         uses: actions/cache@v1
         id: cache
         with:
@@ -27,6 +31,18 @@ jobs:
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: $HOME/.poetry/bin/poetry install
+
+      - name: Checkout tools repo
+        uses: actions/checkout@v2
+        with:
+          repository: StanfordVL/MinkowskiEngine
+          ref: v0.4.2
+          path: MinkowskiEngine
+
+      - name: Add Minkowski Engine
+        run: |
+          cd MinkowskiEngine
+          $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
 
       - name: Lint with flake8
         run: |

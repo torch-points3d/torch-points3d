@@ -1,7 +1,13 @@
+import os
+import sys
 import logging
-import src.metrics.model_checkpoint as model_checkpoint
-from src.core.data_transform.transforms import GridSampling
+
+
+ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..")
+sys.path.append(os.path.join(ROOT))
 from test.mockdatasets import MockDataset
+from .grid_transform import GridSampling
+import src.metrics.model_checkpoint as model_checkpoint
 
 log = logging.getLogger(__name__)
 
@@ -81,3 +87,4 @@ class PointNetForward(ModelInference):
         return "{}(model: {}, transform: {})".format(
             self.__class__.__name__, self.model.__class__.__name__, self.inference_transform
         )
+

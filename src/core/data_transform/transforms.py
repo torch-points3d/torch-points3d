@@ -5,26 +5,55 @@ import math
 import re
 import torch
 import random
-from torch.nn import functional as F
+from tqdm import tqdm as tq
 from sklearn.neighbors import NearestNeighbors, KDTree
-from torch_geometric.data import Data
 from functools import partial
-from torch_geometric.nn import fps, radius, knn, voxel_grid
-from torch_geometric.nn.pool.consecutive import consecutive_cluster
+from torch.nn import functional as F
+from torch_geometric.nn import fps, radius, knn
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
+from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
-from torch_geometric.data import Data, Batch
-from tqdm import tqdm as tq
 from src.utils import is_iterable
+from .grid_transform import group_data, GridSampling
+from .sparse_transforms import shuffle_data
+
+
+class RemoveAttributes(object):
+    """This transform allows to remove unnecessary attributes from data for optimization purposes
+    
+    Parameters
+    ----------
+    attr_names: list
+        Remove the attributes from data using the provided `attr_name` within attr_names
+    strict: bool=False
+        Wether True, it will raise an execption if the provided attr_name isn t within data keys.
+    """
+
+    def __init__(self, attr_names=[], strict=False):
+        self._attr_names = attr_names
+        self._strict = strict
+
+    def __call__(self, data):
+        keys = set(data.keys)
+        for attr_name in self._attr_names:
+            if attr_name not in keys and self._strict:
+                raise Exception("attr_name: {} isn t within keys: {}".format(attr_name, keys))
+        for attr_name in self._attr_names:
+            delattr(data, attr_name)
+        return data
+
+    def __repr__(self):
+        return "{}(attr_names={}, strict={})".format(self.__class__.__name__, self._attr_names, self._strict)
 
 
 class PointCloudFusion(object):
-    """ This transform is responsible to perform a point cloud fusion from a list of data
 
+    """This transform is responsible to perform a point cloud fusion from a list of data
+    
     - If a list of data is provided -> Create one Batch object with all data
     - If a list of list of data is provided -> Create a list of fused point cloud
     """
@@ -217,65 +246,6 @@ class RandomSphere(object):
         return "{}(radius={}, center={}, sampling_strategy={})".format(
             self.__class__.__name__, self._radius, self._center, self._sampling_strategy
         )
-
-
-class GridSampling(object):
-    """ Clusters points into voxels with size :attr:`size`.
-
-    Parameters
-    ----------
-    size: float
-        Size of a voxel (in each dimension).
-    start: float
-        Start coordinates of the grid (in each dimension). \
-        If set to `None`, will be set to the minimum coordinates found in `data.pos`. (default: `None`)
-    end: float
-        End coordinates of the grid (in each dimension). \
-        If set to `None`, will be set to the maximum coordinates found in `data.pos`. (default: `None`)
-    num_classes: max number of classes for one hot encoding of y vector
-    """
-
-    def __init__(self, size, start=None, end=None, num_classes=-1):
-        self.size = size
-        self.start = start
-        self.end = end
-        self.num_classes = num_classes
-
-    def _process(self, data):
-        num_nodes = data.num_nodes
-
-        if "batch" not in data:
-            batch = data.pos.new_zeros(num_nodes, dtype=torch.long)
-        else:
-            batch = data.batch
-
-        cluster = voxel_grid(data.pos, batch, self.size, self.start, self.end)
-        cluster, perm = consecutive_cluster(cluster)
-
-        for key, item in data:
-            if bool(re.search("edge", key)):
-                raise ValueError("GridSampling does not support coarsening of edges")
-
-            if torch.is_tensor(item) and item.size(0) == num_nodes:
-                if key == "y":
-                    item = F.one_hot(item, num_classes=self.num_classes)
-                    item = scatter_add(item, cluster, dim=0)
-                    data[key] = item.argmax(dim=-1)
-                elif key == "batch" or key == SaveOriginalPosId.KEY:
-                    data[key] = item[perm]
-                else:
-                    data[key] = scatter_mean(item, cluster, dim=0)
-        return data
-
-    def __call__(self, data):
-        if isinstance(data, list):
-            data = [self._process(d) for d in data]
-        else:
-            data = self._process(data)
-        return data
-
-    def __repr__(self):
-        return "{}(size={})".format(self.__class__.__name__, self.size)
 
 
 class RandomSymmetry(object):
@@ -480,75 +450,20 @@ class MultiScaleTransform(object):
         return "{}".format(self.__class__.__name__)
 
 
-class AddFeatByKey(object):
-    def __init__(self, add_to_x, feat_name, input_nc_feat=None, strict=True):
-        """This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True
-        
-        Paremeters
-        ----------
-        add_to_x: bool
-            Control if the feature is going to be added/concatenated to x
-        feat_name: str
-            The feature to be found within data to be added/concatenated to x
-        
-        input_nc_feat: int, optional
-            If provided, check if dimension feature check last dimension (default: ``None``)
-        strict: bool, optional
-            Recommended to be set to True. If False, it won't break if feat isn't found or dimension doesn t match. (default: ``True``)
-        """
+class ShuffleData(object):
+    """ This transform allow to shuffle feature, pos and label tensors within data
+    """
 
-        self._add_to_x: bool = add_to_x
-        self._feat_name: str = feat_name
-        self._input_nc_feat = input_nc_feat
-        self._strict: bool = strict
+    def _process(self, data):
+        return shuffle_data(data)
 
-    def __call__(self, data: Data):
-        if not self._add_to_x:
-            return data
-        feat = getattr(data, self._feat_name, None)
-        if feat is None:
-            if self._strict:
-                raise Exception("Data should contain the attribute {}".format(self._feat_name))
-            else:
-                return data
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data))  # 2d list needs to be flatten
         else:
-            if self._input_nc_feat:
-                feat_dim = 1 if feat.dim() == 1 else feat.shape[-1]
-                if self._input_nc_feat != feat_dim and self._strict:
-                    raise Exception("The shape of feat: {} doesn t match {}".format(feat.shape, self._input_nc_feat))
-            x = getattr(data, "x", None)
-            if x is None:
-                if self._strict and data.pos.shape[0] != feat.shape[0]:
-                    raise Exception("We expected to have an attribute x")
-                data.x = feat
-            else:
-                if x.shape[0] == feat.shape[0]:
-                    if x.dim() == 1:
-                        x = x.unsqueeze(-1)
-                    if feat.dim() == 1:
-                        feat = feat.unsqueeze(-1)
-                    data.x = torch.cat([x, feat], axis=-1)
-                else:
-                    raise Exception(
-                        "The tensor x and {} can't be concatenated, x: {}, feat: {}".format(
-                            self._feat_name, x.pos.shape[0], feat.pos.shape[0]
-                        )
-                    )
+            data = self._process(data)
         return data
 
     def __repr__(self):
-        return "{}(add_to_x: {}, feat_name: {}, strict: {})".format(
-            self.__class__.__name__, self._add_to_x, self._feat_name, self._strict
-        )
-
-
-class SaveOriginalPosId:
-    """ Transform that adds the index of the point to the data object
-    This allows us to track this point from the output back to the input data object
-    """
-
-    KEY = "origin_id"
-
-    def __call__(self, data):
-        setattr(data, self.KEY, torch.arange(0, data.pos.shape[0]))
-        return data
+        return "{}()".format(self.__class__.__name__)

@@ -1,16 +1,20 @@
 import importlib
 import copy
 import hydra
+import logging
 
 from src.datasets.base_dataset import BaseDataset
+
+log = logging.getLogger(__name__)
 
 
 def get_dataset_class(dataset_config):
     task = dataset_config.task
-
     # Find and create associated dataset
-    dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
-
+    try:
+        dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
+    except Exception as e:
+        log.error("This should happen only during testing")
     dataset_class = getattr(dataset_config, "class")
     dataset_paths = dataset_class.split(".")
     module = ".".join(dataset_paths[:-1])
@@ -28,7 +32,6 @@ def get_dataset_class(dataset_config):
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
             % (module, class_name)
         )
-
     return dataset_cls
 
 

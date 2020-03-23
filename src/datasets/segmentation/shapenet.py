@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import shutil
 import json
-
+from tqdm import tqdm as tq
 import torch
 
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
@@ -152,7 +152,7 @@ class ShapeNet(InMemoryDataset):
         categories_ids = [self.category_ids[cat] for cat in self.categories]
         cat_idx = {categories_ids[i]: i for i in range(len(categories_ids))}
 
-        for name in filenames:
+        for name in tq(filenames):
             cat = name.split(osp.sep)[0]
             if cat not in categories_ids:
                 continue

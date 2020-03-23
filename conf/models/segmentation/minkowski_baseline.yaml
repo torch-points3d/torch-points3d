@@ -1,0 +1,61 @@
+models:
+    # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngine/blob/master/examples/minkunet.py
+    MinkUNet14A:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet14A"
+        D: 3
+
+    MinkUNet14B:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet14B"
+        D: 3
+
+    MinkUNet14C:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet14C"
+        D: 3
+
+    MinkUNet14D:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet14D"
+        D: 3
+
+    MinkUNet18A:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet18A"
+        D: 3
+
+    MinkUNet18B:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet18B"
+        D: 3
+  
+    MinkUNet18D:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet18D"
+        D: 3
+
+    MinkUNet34A:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet34A"
+        D: 3
+
+    MinkUNet34B:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet34B"
+        D: 3
+
+    MinkUNet34C:
+        class: minkowski.Minkowski_Baseline_Model
+        conv_type: "SPARSE"
+        model_name: "MinkUNet34C"
+        D: 3

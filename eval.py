@@ -28,9 +28,8 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
     loader = dataset.val_dataloader()
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
-            data = data.to(device)
             with torch.no_grad():
-                model.set_input(data)
+                model.set_input(data, device)
                 model.forward()
 
             tracker.track(model)
@@ -48,9 +47,8 @@ def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
         tracker.reset(stage_name)
         with Ctq(loader) as tq_test_loader:
             for data in tq_test_loader:
-                data = data.to(device)
                 with torch.no_grad():
-                    model.set_input(data)
+                    model.set_input(data, device)
                     model.forward()
 
                 tracker.track(model)

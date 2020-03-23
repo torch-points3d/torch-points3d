@@ -41,9 +41,11 @@ class PatchPointNet2_D(BackboneBasedModel):
         else:
             self.FC_layer = Seq(Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         # Size : B x N x 3
         # manually concatenate the b
+        data = data.to(device)
+
         if getattr(data, "pos_source", None) is not None:
             assert len(data.pos_source.shape) == 3 and len(data.pos_target.shape) == 3
             x = torch.cat([data.x_source, data.x_target], 0)

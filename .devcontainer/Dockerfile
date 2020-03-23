@@ -22,7 +22,7 @@ ARG USER_GID=$USER_UID
 
 RUN apt-get update \
     && apt-get install -y --fix-missing --no-install-recommends\
-    libffi-dev libssl-dev build-essential \
+    libffi-dev libssl-dev build-essential libopenblas-dev\
     python3-pip python3-dev python3-venv python3-setuptools\
     git iproute2 procps lsb-release \
     libsm6 libxext6 libxrender-dev \

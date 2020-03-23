@@ -43,9 +43,8 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path):
         dataset.get_test_dataset_name(idx)
         with Ctq(loader) as tq_test_loader:
             for data in tq_test_loader:
-                data = data.to(device)
                 with torch.no_grad():
-                    model.set_input(data)
+                    model.set_input(data, device)
                     model.forward()
                 predicted = {**predicted, **dataset.predict_original_samples(data, model.conv_type, model.get_output())}
 

@@ -42,7 +42,7 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
@@ -51,6 +51,7 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
                 x -- Features [B, C, N]
                 pos -- Features [B, 3, N]
         """
+        data = data.to(device)
         self.input = Data(x=data.x.transpose(1, 2).contiguous() if data.x is not None else None, pos=data.pos)
         if data.y is not None:
             self.labels = torch.flatten(data.y).long()  # [B,N]
