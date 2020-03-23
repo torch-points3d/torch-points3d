@@ -194,8 +194,3 @@ A sequence of checks will be run for you and you may have to add the fixed files
 
 When it comes to docstrings we use [numpy style](https://numpydoc.readthedocs.io/en/latest/format.html) docstrings, for those who use
 Visual Studio Code, there is a great [extension](https://github.com/NilsJPWerner/autoDocstring) that can help with that. Install it and set the format to numpy and you should be good to go!
-
-## Contributors
-- [Thomas Chaton](https://github.com/tchaton)
-- [Nicolas Chaulet](https://github.com/nicolas-chaulet)
-- [Tristan Heywood](https://github.com/tristanheywood)
