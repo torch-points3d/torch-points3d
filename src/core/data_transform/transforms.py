@@ -20,6 +20,7 @@ from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
 from src.utils import is_iterable
 
+
 class RemoveAttributes(object):
     """This transform allows to remove unnecessary attributes from data for optimization purposes
     
@@ -41,22 +42,19 @@ class RemoveAttributes(object):
             if attr_name not in keys and self._strict:
                 raise Exception("attr_name: {} isn t within keys: {}".format(attr_name, keys))
         for attr_name in self._attr_names:
-            delattr(data, attr_name)    
+            delattr(data, attr_name)
         return data
-    
+
     def __repr__(self):
         return "{}(attr_names={}, strict={})".format(self.__class__.__name__, self._attr_names, self._strict)
 
+
 class PointCloudFusion(object):
-    
+
     """This transform is responsible to perform a point cloud fusion from a list of data
-    If a list of data is provided -> Create one Batch object with all data
-    If a list of list of data is provided -> Create a list of fused point cloud
     
-    Parameters
-    ----------
-        radius: float: 
-            Radius of the sphere to be sampled.
+    - If a list of data is provided -> Create one Batch object with all data
+    - If a list of list of data is provided -> Create a list of fused point cloud
     """
 
     def _process(self, data_list):
@@ -95,7 +93,7 @@ class GridSphereSampling(object):
     center: bool, optional
         If True, a centre transform is apply on each sphere. 
     """
-    
+
     KDTREE_KEY = "kd_tree"
 
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
@@ -167,6 +165,7 @@ class ComputeKDTree(object):
     leaf_size:int
         Size of the leaf node.
     """
+
     def __init__(self, leaf_size):
         self._leaf_size = leaf_size
 
@@ -196,7 +195,7 @@ class RandomSphere(object):
         choose between `random` and `freq_class_based`. The `freq_class_based` \
         favors points with low frequency class. This can be used to balance unbalanced datasets
     """
-    
+
     KDTREE_KEY = "kd_tree"
 
     def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True, center=True):
@@ -306,6 +305,7 @@ class GridSampling(object):
     def __repr__(self):
         return "{}(size={})".format(self.__class__.__name__, self.size)
 
+
 class RandomSymmetry(object):
     """ Apply a random symmetry transformation on the data 
 
@@ -340,7 +340,7 @@ class RandomNoise(object):
     clip: 
         Maximum amplitude of the noise
     """
-    
+
     def __init__(self, sigma=0.01, clip=0.05):
         self.sigma = sigma
         self.clip = clip
@@ -506,6 +506,7 @@ class MultiScaleTransform(object):
 
     def __repr__(self):
         return "{}".format(self.__class__.__name__)
+
 
 class SaveOriginalPosId:
     """ Transform that adds the index of the point to the data object

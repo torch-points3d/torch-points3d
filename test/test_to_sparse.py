@@ -18,31 +18,30 @@ from src.datasets.multiscale_data import MultiScaleBatch
 
 class TestSparse(unittest.TestCase):
     def test_to_sparse_input(self):
-
         arr = np.asarray([[0, 0, 0], [0, 1, 0], [0, 1, 0.25], [0.25, 0.25, 0]])
-
-        data = Data(pos=torch.from_numpy(arr))
-
-        transform = ToSparseInput(
-            grid_size=1, save_delta=True, save_delta_norm=True, remove_duplicates=True, apply_mean=False
-        )
-
+        feat = torch.tensor([0, 1, 2, 3])
+        data = Data(pos=torch.from_numpy(arr), x=feat)
+        transform = ToSparseInput(grid_size=1, save_delta=True, save_delta_norm=True, mode="last")
         data_out = transform(data.clone())
 
         self.assertIn("delta_norm", data_out.keys)
         self.assertIn("delta", data_out.keys)
-        self.assertIn("indices", data_out.keys)
-        self.assertEqual(arr.shape[0] - 2, data_out.pos.shape[0])
+        self.assertEqual(data_out.pos.dtype, torch.int)
+        self.assertEqual(2, data_out.pos.shape[0])
+        torch.testing.assert_allclose(data_out.x, torch.tensor([3, 2]))
 
     def test_to_sparse_input_mean(self):
-
-        arr = np.asarray([[0, 0, 0], [0, 1, 0], [0, 1, 0.25], [0.25, 0.25, 0], [10, 10, 0], [10, 10, 0.25]])
-        data = Data(pos=torch.from_numpy(arr))
-        transform = ToSparseInput(
-            grid_size=1, save_delta=False, save_delta_norm=False, remove_duplicates=False, apply_mean=True
-        )
+        arr = np.asarray([[0, 0, 0], [0, 1, 0], [0, 1, 0.25], [0.25, 0.25, 0]])
+        feat = torch.tensor([0, 1.0, 2.0, 4.0])
+        data = Data(pos=torch.from_numpy(arr), x=feat)
+        transform = ToSparseInput(grid_size=1, save_delta=True, save_delta_norm=True, mode="mean")
         data_out = transform(data.clone())
-        self.assertEqual(arr.shape[0] - 3, data_out.pos.shape[0])
+
+        self.assertIn("delta_norm", data_out.keys)
+        self.assertIn("delta", data_out.keys)
+        self.assertEqual(data_out.pos.dtype, torch.int)
+        self.assertEqual(2, data_out.pos.shape[0])
+        torch.testing.assert_allclose(data_out.x, torch.tensor([2, 1.5]))
 
 
 if __name__ == "__main__":

@@ -19,13 +19,13 @@ from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from torch_geometric.data import Data, Batch
 from tqdm import tqdm as tq
+
 from src.utils import is_iterable
-from src.modules.MinkowskiEngine import to_sparse_input, remove_duplicates_func, shuffle_data
+from src.modules.MinkowskiEngine import to_sparse_input, quantize_data, shuffle_data
 
 
 class ShuffleData(object):
     """This transform allow to shuffle tensors within data
-
     """
 
     def _process(self, data):
@@ -42,7 +42,7 @@ class ShuffleData(object):
     def __repr__(self):
         return "{}()".format(self.__class__.__name__)
 
-class RemoveDuplicatedCoords(object):
+class RemoveDuplicateCoords(object):
     """This transform allow to remove duplicated coords within `indices` from data
 
     Parameters
@@ -59,7 +59,7 @@ class RemoveDuplicatedCoords(object):
     def _process(self, data):
         if self._shuffle:
             data = self._shuffle_transform(data)
-        return remove_duplicates_func(data)
+        return quantize_data(data,mode="last")
 
     def __call__(self, data):
         if isinstance(data, list):
@@ -87,21 +87,14 @@ class ToSparseInput(object):
         If True, apply the mean over the points within a cell and associate the value to the grid point.
     """
 
-    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, remove_duplicates:bool=True, apply_mean:bool=True):
-        if grid_size is None:
-            raise Exception("Grid size should be provided")
-
-        elif grid_size == 0:
-            raise Exception("Grid size should not be equal to 0")
-
+    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, mode="last"):
         self._grid_size = grid_size
         self._save_delta = save_delta
         self._save_delta_norm = save_delta_norm
-        self._remove_duplicates = remove_duplicates
-        self._apply_mean = apply_mean
+        self._mode = mode
 
     def _process(self, data):
-        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, remove_duplicates=self._remove_duplicates, apply_mean=self._apply_mean)
+        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, mode=self._mode)
 
     def __call__(self, data):
         if isinstance(data, list):

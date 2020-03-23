@@ -14,12 +14,14 @@ class Minkowski_Baseline_Model(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(Minkowski_Baseline_Model, self).__init__(option)
 
-        self.model = initialize_minkowski_unet(option.model_name, dataset.input_nc, dataset.num_classes, option.D)
+        self.model = initialize_minkowski_unet(
+            option.model_name, dataset.feature_dimension, dataset.num_classes, option.D
+        )
 
     def set_input(self, data, device):
 
         self.batch_idx = data.batch.squeeze()
-        coords = torch.cat([data.indices, data.batch.unsqueeze(-1)], -1).int()
+        coords = torch.cat([data.batch.unsqueeze(-1), data.pos], -1).int()
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y.to(device)
 
@@ -39,7 +41,7 @@ class Minkowski_Model(UnwrappedUnetBasedModel):
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
 
     def set_input(self, data, device):
-        coords = torch.cat([data.indices, data.batch.unsqueeze(-1)], -1).int()
+        coords = torch.cat([data.batch.unsqueeze(-1), data.pos], -1).int()
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y
 

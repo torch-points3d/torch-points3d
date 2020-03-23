@@ -24,3 +24,14 @@ Transforms
 
 .. autoclass:: src.core.data_transform.PointNetForward
 
+.. autoclass:: src.core.data_transform.AddFeatsByKeys
+
+.. autoclass:: src.core.data_transform.AddFeatsByKey
+
+.. autoclass:: src.core.data_transform.RemoveAttributes
+
+.. autoclass:: src.core.data_transform.RemoveDuplicatedCoords
+
+.. autoclass:: src.core.data_transform.ToSparseInput
+
+.. autoclass:: src.core.data_transform.ShuffleData

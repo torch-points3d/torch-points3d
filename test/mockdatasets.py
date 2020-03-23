@@ -5,8 +5,8 @@ from src.datasets.batch import SimpleBatch
 from src.core.data_transform import MultiScaleTransform
 from src.datasets.multiscale_data import MultiScaleBatch
 
-class MockDatasetConfig(object):
 
+class MockDatasetConfig(object):
     def __init__(self):
         pass
 
@@ -15,6 +15,7 @@ class MockDatasetConfig(object):
 
     def get(self, dataset_name, default):
         return None
+
 
 class MockDataset(torch.utils.data.Dataset):
     def __init__(self, feature_size=0):
@@ -53,18 +54,11 @@ class MockDataset(torch.utils.data.Dataset):
     def class_to_segments(self):
         return {"class1": [0, 1, 2, 3, 4, 5], "class2": [6, 7, 8, 9]}
 
-    @property
-    def input_nc(self):
-        return 1
-
-    @property
-    def output_nc(self):
-        return self.num_classes
-
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
         transform = MultiScaleTransform(strategies)
         self._transform = transform
+
 
 class MockDatasetGeometric(MockDataset):
     def __getitem__(self, index):
@@ -72,4 +66,3 @@ class MockDatasetGeometric(MockDataset):
             return MultiScaleBatch.from_data_list(self.datalist)
         else:
             return Batch.from_data_list(self.datalist)
-

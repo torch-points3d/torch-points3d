@@ -1,9 +1,6 @@
-import numpy as np
 import torch
 import MinkowskiEngine as ME
 import torch.nn.functional as F
-from torch_geometric.data import Data
-from torch_geometric.nn.pool.consecutive import consecutive_cluster
 import re
 from torch_scatter import scatter_add, scatter_mean
 
@@ -11,106 +8,114 @@ from torch_scatter import scatter_add, scatter_mean
 def shuffle_data(data):
     num_points = data.pos.shape[0]
     shuffle_idx = torch.randperm(num_points)
-    new_data = Data()
     for key in set(data.keys):
-        item = data[key].clone()
+        item = data[key]
         if num_points == item.shape[0]:
-            setattr(new_data, key, item[shuffle_idx])
+            data[key] = item[shuffle_idx]
     return data
 
 
-def remove_duplicates_func(data):
-    indices = data.indices
-    num_points = indices.shape[0]
-    _, inds = np.unique(indices.numpy(), axis=0, return_index=True)
-    inds = torch.from_numpy(inds)
-    new_data = Data()
-    for key in set(data.keys):
-        item = data[key].clone()
-        if num_points == item.shape[0]:
-            setattr(new_data, key, item[inds])
-    return new_data
+def quantize_data(data, mode="last"):
+    """ Creates the quantized version of a data object in which ``pos`` has
+    already been quantized. It either averages all points in the same cell or picks
+    the last one as being the representent for that cell.
+
+    Parameters
+    ----------
+    data : Data
+        data object in which ``pos`` has already been quantized. ``pos`` must be
+        a ``torch.Tensor[int]`` or ``torch.Tensor[long]``
+    mode : str
+        Option to select how the features and labels for each voxel is computed. Can be ``last`` or ``mean``.
+        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average.
+
+    Returns
+    -------
+    data: Data
+        Returns the same data object with only one point per voxel
+    """
+    assert data.pos.dtype == torch.int or data.pos.dtype == torch.long
+
+    # Build clusters
+    if hasattr(data, "batch"):
+        pos = torch.cat([data.batch.unsqueeze(-1), data.pos], dim=-1)
+    else:
+        pos = data.pos.clone()
+    unique_pos, cluster = torch.unique(pos, return_inverse=True, dim=0)
+    unique_pos_indices = torch.arange(cluster.size(0), dtype=cluster.dtype, device=cluster.device)
+    unique_pos_indices = cluster.new_empty(unique_pos.size(0)).scatter_(0, cluster, unique_pos_indices)
+
+    # Agregate features within the same voxel
+    data = groud_data(data, cluster, unique_pos_indices, mode=mode)
+    return data
 
 
-def apply_mean_func(data):
+def groud_data(data, cluster, unique_pos_indices, mode="last"):
     num_nodes = data.num_nodes
-    indices = data.indices
-    _, inds = np.unique(indices.numpy(), axis=0, return_index=True)
-    indices -= indices.min(0)[0]
-    indices = indices.numpy()
-    spatial_size = indices.max(0)
-    cluster = ((indices) * np.cumsum(spatial_size)).sum(-1)
-    cluster, perm = consecutive_cluster(torch.from_numpy(cluster))
-
     for key, item in data:
         if bool(re.search("edge", key)):
-            raise ValueError("GridSampling does not support coarsening of edges")
+            raise ValueError("Edges not supported. Wrong data type.")
 
         if torch.is_tensor(item) and item.size(0) == num_nodes:
-            if key == "y":
-                item = F.one_hot(item)
-                item = scatter_add(item, cluster, dim=0)
-                data[key] = item.argmax(dim=-1)
-            elif key == "batch":
-                data[key] = item[perm]
-            else:
-                data[key] = scatter_mean(item, cluster, dim=0)
+            if mode == "last" or key == "batch":
+                data[key] = item[unique_pos_indices]
+            elif mode == "mean":
+                if key == "y":
+                    item = F.one_hot(item)
+                    item = scatter_add(item, cluster, dim=0)
+                    data[key] = item.argmax(dim=-1)
+                else:
+                    data[key] = scatter_mean(item, cluster, dim=0)
     return data
 
 
 def to_sparse_input(
-    data,
-    grid_size,
-    save_delta=True,
-    save_delta_norm=True,
-    remove_duplicates=True,
-    apply_mean=True,
-    mapping_func=np.floor,
+    data, grid_size, save_delta=True, save_delta_norm=True, mode="last", quantizing_func=torch.floor,
 ):
+    if quantizing_func not in [torch.floor, torch.ceil, torch.round]:
+        raise Exception("quantizing_func should be floor, ceil, round")
 
-    if mapping_func not in [np.floor, np.ceil, np.rint]:
-        raise Exception("mapping_func should be floor, ceil, rint")
+    if grid_size is None or grid_size <= 0:
+        raise Exception("Grid size should be provided and greater than 0")
 
-    if apply_mean and remove_duplicates:
-        raise Exception("remove_duplicates and apply_mean can't at the same time")
+    # Quantize positions
+    raw_pos = data.pos.clone()
+    data.pos = quantizing_func(data.pos / grid_size).int()
 
-    if grid_size is None:
-        raise Exception("Grid size should be provided")
+    # Add delta as a feature
+    if save_delta or save_delta_norm:
+        normalised_delta = compute_sparse_delta(raw_pos, data.pos, grid_size, quantizing_func)
+        if save_delta:
+            data.delta = normalised_delta
+        if save_delta_norm:
+            data.delta_norm = torch.norm(normalised_delta, p=2, dim=-1)  # normalise between -1 and 1 (roughly)
 
-    elif grid_size == 0:
-        raise Exception("Grid size should not be equal to 0")
+    # Agregate
+    data = quantize_data(data, mode=mode)
+    return data
 
-    else:
-        num_points = data.pos.shape[0]
-        quantized_coords = mapping_func(data.pos / grid_size)
 
-        if remove_duplicates:
-            inds = ME.utils.sparse_quantize(quantized_coords, return_index=True)
-            indices = quantized_coords[inds]
-            new_data = Data(indices=indices.long())
-        else:
-            new_data = Data(indices=quantized_coords.long())
-            inds = torch.arange(num_points)
+def compute_sparse_delta(raw_pos, quantized_pos, grid_size, quantizing_func):
+    """ Computes the error between the raw position and the quantized position
+    Error is normalised between -1 and 1
 
-        if save_delta or save_delta_norm:
-            pos_inds = data.pos[inds]
-            grid_pos = grid_size * mapping_func(pos_inds / grid_size)
-            delta = pos_inds - grid_pos
-            if save_delta:
-                new_data.delta = 2 * delta / grid_size
+    Parameters
+    ----------
+    raw_pos : torch.Tensor
+    quantized_pos : torch.Tensor
+    quantizing_func : func
 
-            if save_delta_norm:
-                new_data.delta_norm = torch.norm(delta, p=2, dim=-1) / grid_size
 
-        for key in set(data.keys):
-            item = data[key].clone()
-            if num_points == item.shape[0]:
-                item = item[inds]
-                setattr(new_data, key, item)
+    Returns
+    -------
+    torch.Tensor
+        Error normalized between -1 and 1
+    """
+    delta = raw_pos - quantized_pos
+    shift = 0
+    if quantizing_func == torch.ceil:
+        shift = 1
+    elif quantizing_func == torch.floor:
+        shift = -1
 
-        if remove_duplicates:
-            new_data = remove_duplicates_func(new_data)
-        else:
-            if apply_mean:
-                new_data = apply_mean_func(new_data)
-        return new_data
+    return 2 * delta / grid_size + shift  # normalise between -1 and 1 (roughly)
