@@ -58,7 +58,7 @@ You can check that the install has been successful by running
 Minkowski engine support
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The repository is supporting MinkowskiEngine which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
+The repository is supporting `Minkowski Engine <https://stanfordvl.github.io/MinkowskiEngine/>`_ which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
 
 .. code-block:: bash
    sudo apt install libopenblas-dev

@@ -36,7 +36,7 @@ python -m unittest
 ```
 
 #### Minkowski Engine
-The repository is supporting MinkowskiEngine which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
+The repository is supporting [Minkowski Engine) which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
 
 ```bash
 sudo apt install libopenblas-dev
@@ -66,6 +66,7 @@ poetry install -E MinkowskiEngine --no-root
 ```bash
 poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
 ```
+
 And you should see something like that
 
 ![logging](/docs/imgs/logging.png)
