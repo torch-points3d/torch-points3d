@@ -17,21 +17,9 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ### Setup repo
 Clone the repo to your local machine
 
-The repository is supporting MinkowskiEngine which requires openblas-dev.
-```bash
-sudo apt install libopenblas-dev
-```
-
-Add those lines to your .bashrc and source it.
-```bash
-export CPATH=/usr/local/cuda/include:$CPATH
-export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
-export DYLD_LIBRARY_PATH=/usr/local/cuda/lib:$DYLD_LIBRARY_PATH
-```
-
 Run the following command from the root of the repo
 ```
-poetry install
+poetry install --no-root
 ```
 This will install all required dependencies in a new virtual environment.
 
@@ -46,6 +34,32 @@ You can check that the install has been successful by running
 ```bash
 python -m unittest
 ```
+
+#### Minkowski Engine
+The repository is supporting MinkowskiEngine which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
+
+```bash
+sudo apt install libopenblas-dev
+```
+
+then make sure that `nvcc` is in your path:
+
+```bash
+nvcc -V
+```
+
+If it's not then locate it (`locate nvcc`) and add its location to your `PATH` variable. On my machine:
+
+```bash
+export PATH="/usr/local/cuda-10.2/bin:$PATH"
+```
+
+You are now in a position to install MinkowskiEngine with GPU support:
+
+```bash
+poetry install -E MinkowskiEngine --no-root
+```
+
 
 ## Train pointnet++ on part segmentation task for dataset shapenet
 
