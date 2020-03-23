@@ -11,7 +11,7 @@ from torch_geometric.data import Data
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-import src.core.data_transform.transforms as cT
+import src.core.data_transform as cT
 
 
 class TestGridSampling(unittest.TestCase):
