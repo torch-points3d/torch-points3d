@@ -26,7 +26,7 @@ Transforms
 
 .. autoclass:: src.core.data_transform.AddFeatsByKeys
 
-.. autoclass:: src.core.data_transform.AddFeatsByKey
+.. autoclass:: src.core.data_transform.AddFeatByKey
 
 .. autoclass:: src.core.data_transform.RemoveAttributes
 
