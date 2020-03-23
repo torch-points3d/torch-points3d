@@ -14,6 +14,10 @@ data:
   first_subsampling: 0.02
   num_random_pt: 300
   is_offline: True
+  pre_filters:
+    - filter: PlanarityFilter
+      params:
+        thresh: 0.3
   pre_transforms:
     - transform: GridSampling
       params:
@@ -30,6 +34,7 @@ data:
       params:
         add_to_x: True
         feat_name: 'pos'
+    - transform: NormalizeFeatures
   test_transforms:
     - transform: FixedPoints
       lparams: [1024]
@@ -38,3 +43,4 @@ data:
       params:
         add_to_x: True
         feat_name: 'pos'
+    - transform: NormalizeFeatures

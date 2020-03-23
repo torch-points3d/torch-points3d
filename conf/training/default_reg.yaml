@@ -1,6 +1,6 @@
 # Those arguments defines the training hyper-parameters
 training:
-    epochs: 100
+    epochs: 3000
     num_workers: 6
     batch_size: 32
     shuffle: True
@@ -14,6 +14,7 @@ training:
             class: Adam
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
+
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"

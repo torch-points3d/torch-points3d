@@ -1,5 +1,5 @@
 import torch
-rom typing import List, Optional
+from typing import List, Optional
 from torch_geometric.data import Data
 from torch_geometric.data import Batch
 from src.datasets.multiscale_data import MultiScaleBatch

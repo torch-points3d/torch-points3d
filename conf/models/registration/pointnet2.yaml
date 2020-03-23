@@ -5,7 +5,7 @@ models:
     down_conv:
       module_name: PointNetMSGDown
       npoint: [256, 128]
-      radii: [[0.04], [0.1]]
+      radii: [[0.08], [0.15]]
       nsamples: [[64], [64]]
       use_xyz: False
       down_conv_nn:
@@ -16,7 +16,7 @@ models:
     loss:
       class: "TripletMarginLoss"
       params:
-        margin: 0.0
+        margin: 0.001
         smooth_loss: True
         triplets_per_anchor: 'all'
     miner:
