@@ -18,7 +18,7 @@ from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from src.utils import is_iterable
-from .grid_transform import group_data
+from .grid_transform import group_data, GridSampling
 from .sparse_transforms import shuffle_data
 
 
