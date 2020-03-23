@@ -30,7 +30,7 @@ Transforms
 
 .. autoclass:: src.core.data_transform.RemoveAttributes
 
-.. autoclass:: src.core.data_transform.RemoveDuplicatedCoords
+.. autoclass:: src.core.data_transform.RemoveDuplicateCoords
 
 .. autoclass:: src.core.data_transform.ToSparseInput
 
