@@ -18,3 +18,4 @@ measurements/*.pickle
 /forward_scripts/out
 _build
 docs_old
+/test/kernels/dispositions
