@@ -18,20 +18,13 @@ class TestGridSampling(unittest.TestCase):
     def setUp(self):
         num_classes = 2
         self.sampler = cT.GridSampling(0.04, num_classes=num_classes)
-
         num_points = 5
-
         pos = torch.from_numpy(np.array([[0, 0, 0.01], [0.01, 0, 0], [0, 0.01, 0], [0, 0.01, 0], [0.01, 0, 0.01]]))
-
         batch = torch.from_numpy(np.zeros(num_points)).long()
-
         y = np.asarray(np.random.randint(0, 2, 5))
         uniq, counts = np.unique(y, return_counts=True)
-
         self.answer = uniq[np.argmax(counts)]
-
         y = torch.from_numpy(y)
-
         self.data = Data(pos=pos, batch=batch, y=y)
 
     def test_simple(self):
@@ -39,9 +32,7 @@ class TestGridSampling(unittest.TestCase):
         This test verifies that the class output is correct and corresponds to the maximun vote from sub_part
         """
         out = self.sampler(self.data)
-
         y = out.y.detach().cpu().numpy()
-
         npt.assert_array_almost_equal(self.answer, y)
 
 
