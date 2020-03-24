@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --fix-missing --no-install-recommends\
-    libffi-dev libssl-dev build-essential \
+    libffi-dev libssl-dev build-essential libopenblas-dev\
     python3-pip python3-dev python3-venv python3-setuptools\
     git iproute2 procps lsb-release \
     libsm6 libxext6 libxrender-dev \
@@ -18,7 +18,7 @@ RUN pip3 install setuptools poetry
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-dev && rm -rf /root/.cache
+RUN POETRY_VIRTUALENVS_CREATE=false poetry install -E MinkowskiEngine --no-dev --no-root && rm -rf /root/.cache
 
 ARG MODEL=""
 ENV WORKDIR=/dpb

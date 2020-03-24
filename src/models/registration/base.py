@@ -31,7 +31,8 @@ class PatchSiamese(BackboneBasedModel):
         self.loss_names = ["loss_reg"]
 
     def set_input(self, data, device):
-        self.input = data.to(device)
+        data = data.to(device)
+        self.input = data
         # TODO multiscale data pre_computed...
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale

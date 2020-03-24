@@ -36,7 +36,8 @@ class Segmentation_MP(UnetBasedModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
-        self.input = data.to(device)
+        data = data.to(device)
+        self.input = data
         self.labels = data.y
         self.batch_idx = data.batch
 
