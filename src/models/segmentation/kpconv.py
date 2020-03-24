@@ -167,6 +167,7 @@ class KPConvSeg(Segmentation_MP):
     """ Basic implementation of KPConv"""
 
     def set_input(self, data, device):
+        data = data.to(device)
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
             self.upsample = data.upsample
