@@ -61,21 +61,25 @@ Minkowski engine support
 The repository is supporting `Minkowski Engine <https://stanfordvl.github.io/MinkowskiEngine/>`_ which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
 
 .. code-block:: bash
+
    sudo apt install libopenblas-dev
 
 then make sure that `nvcc` is in your path:
 
 .. code-block:: bash
+
    nvcc -V
 
 If it's not then locate it (`locate nvcc`) and add its location to your `PATH` variable. On my machine:
 
 .. code-block:: bash
+
    export PATH="/usr/local/cuda-10.2/bin:$PATH"
 
 You are now in a position to install MinkowskiEngine with GPU support:
 
 .. code-block:: bash
+
    poetry install -E MinkowskiEngine --no-root
 
 
