@@ -35,8 +35,8 @@ You can check that the install has been successful by running
 python -m unittest
 ```
 
-#### Minkowski Engine
-The repository is supporting [Minkowski Engine) which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
+#### [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine)
+The repository is supporting [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
 
 ```bash
 sudo apt install libopenblas-dev
