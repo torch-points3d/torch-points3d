@@ -63,7 +63,7 @@ class PatchPointNet2_D(BackboneBasedModel):
         else:
             x = None
 
-        self.input = Data(x=x, pos=pos, y=labels)
+        self.input = Data(x=x, pos=pos, y=labels).to(device)
 
     def forward(self):
         r"""
@@ -73,8 +73,9 @@ class PatchPointNet2_D(BackboneBasedModel):
         labels = data.y
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
-        # size after pointnet B x N x D
-        last_feature = torch.mean(data.x, dim=1)
+
+        # size after pointnet B x D x N
+        last_feature = torch.mean(data.x, dim=-1)
         # size after global pooling B x D
         self.output = self.FC_layer(last_feature)
         self.output = F.normalize(self.output, p=2, dim=1)

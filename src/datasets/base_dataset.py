@@ -69,15 +69,9 @@ class BaseDataset:
 
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
-<<<<<<< HEAD
 
-        """Remove a transform if within list_transform_class
-
-
-=======
         """ Remove a transform if within list_transform_class
 
->>>>>>> upstream/master
         Arguments:
             transform_in {[type]} -- [Compose | List of transform]
             list_transform_class {[type]} -- [List of transform class to be removed]
