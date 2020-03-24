@@ -1,8 +1,12 @@
 import importlib
 import copy
 import hydra
+import logging
 
 from src.datasets.base_dataset import BaseDataset
+
+log = logging.getLogger(__name__)
+
 
 def get_dataset_class(dataset_config):
     task = dataset_config.task
@@ -10,7 +14,7 @@ def get_dataset_class(dataset_config):
     try:
         dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
     except Exception as e:
-        print("This should happen only during testing")
+        log.error("This should happen only during testing")
     dataset_class = getattr(dataset_config, "class")
     dataset_paths = dataset_class.split(".")
     module = ".".join(dataset_paths[:-1])

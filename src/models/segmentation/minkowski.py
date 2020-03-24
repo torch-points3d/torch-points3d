@@ -47,13 +47,12 @@ class Minkowski_Model(BaseModel):
             n_reps=option.n_reps,
             dim=option.dim,
             dropout_rate=option.dropout_rate,
-            mix_conv=option.mix_conv,
-        )
+            mix_conv=option.mix_conv)
 
     def set_input(self, data, device):
 
         self.batch_idx = data.batch.squeeze()
-        coords = torch.cat([data.indices, data.batch.unsqueeze(-1)], -1).int()
+        coords = torch.cat([data.batch.unsqueeze(-1), data.pos], -1).int()
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y.to(device)
 
@@ -73,7 +72,7 @@ class Minkowski_API_Model(UnwrappedUnetBasedModel):
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
 
     def set_input(self, data, device):
-        coords = torch.cat([data.indices, data.batch.unsqueeze(-1)], -1).int()
+        coords = torch.cat([data.batch.unsqueeze(-1), data.pos], -1).int()
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y
 

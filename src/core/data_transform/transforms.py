@@ -5,20 +5,22 @@ import math
 import re
 import torch
 import random
-from torch.nn import functional as F
+from tqdm import tqdm as tq
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
-from torch_geometric.nn import fps, radius, knn, voxel_grid
-from torch_geometric.nn.pool.consecutive import consecutive_cluster
+from torch.nn import functional as F
+from torch_geometric.nn import fps, radius, knn
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
+from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
-from torch_geometric.data import Data, Batch
-from tqdm import tqdm as tq
 from src.utils import is_iterable
+from .grid_transform import group_data, GridSampling
+from .sparse_transforms import shuffle_data
+
 
 class RemoveAttributes(object):
     """This transform allows to remove unnecessary attributes from data for optimization purposes
@@ -41,22 +43,19 @@ class RemoveAttributes(object):
             if attr_name not in keys and self._strict:
                 raise Exception("attr_name: {} isn t within keys: {}".format(attr_name, keys))
         for attr_name in self._attr_names:
-            delattr(data, attr_name)    
+            delattr(data, attr_name)
         return data
-    
+
     def __repr__(self):
         return "{}(attr_names={}, strict={})".format(self.__class__.__name__, self._attr_names, self._strict)
 
+
 class PointCloudFusion(object):
-    
+
     """This transform is responsible to perform a point cloud fusion from a list of data
-    If a list of data is provided -> Create one Batch object with all data
-    If a list of list of data is provided -> Create a list of fused point cloud
     
-    Parameters
-    ----------
-        radius: float: 
-            Radius of the sphere to be sampled.
+    - If a list of data is provided -> Create one Batch object with all data
+    - If a list of list of data is provided -> Create a list of fused point cloud
     """
 
     def _process(self, data_list):
@@ -95,7 +94,7 @@ class GridSphereSampling(object):
     center: bool, optional
         If True, a centre transform is apply on each sphere. 
     """
-    
+
     KDTREE_KEY = "kd_tree"
 
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
@@ -167,6 +166,7 @@ class ComputeKDTree(object):
     leaf_size:int
         Size of the leaf node.
     """
+
     def __init__(self, leaf_size):
         self._leaf_size = leaf_size
 
@@ -196,7 +196,7 @@ class RandomSphere(object):
         choose between `random` and `freq_class_based`. The `freq_class_based` \
         favors points with low frequency class. This can be used to balance unbalanced datasets
     """
-    
+
     KDTREE_KEY = "kd_tree"
 
     def __init__(self, radius, strategy="random", class_weight_method="sqrt", delattr_kd_tree=True, center=True):
@@ -248,64 +248,6 @@ class RandomSphere(object):
         )
 
 
-class GridSampling(object):
-    """ Clusters points into voxels with size :attr:`size`.
-
-    Parameters
-    ----------
-    size: float
-        Size of a voxel (in each dimension).
-    start: float
-        Start coordinates of the grid (in each dimension). \
-        If set to `None`, will be set to the minimum coordinates found in `data.pos`. (default: `None`)
-    end: float
-        End coordinates of the grid (in each dimension). \
-        If set to `None`, will be set to the maximum coordinates found in `data.pos`. (default: `None`)
-    num_classes: max number of classes for one hot encoding of y vector
-    """
-
-    def __init__(self, size, start=None, end=None, num_classes=-1):
-        self.size = size
-        self.start = start
-        self.end = end
-        self.num_classes = num_classes
-
-    def _process(self, data):
-        num_nodes = data.num_nodes
-
-        if "batch" not in data:
-            batch = data.pos.new_zeros(num_nodes, dtype=torch.long)
-        else:
-            batch = data.batch
-
-        cluster = voxel_grid(data.pos, batch, self.size, self.start, self.end)
-        cluster, perm = consecutive_cluster(cluster)
-
-        for key, item in data:
-            if bool(re.search("edge", key)):
-                raise ValueError("GridSampling does not support coarsening of edges")
-
-            if torch.is_tensor(item) and item.size(0) == num_nodes:
-                if key == "y":
-                    item = F.one_hot(item, num_classes=self.num_classes)
-                    item = scatter_add(item, cluster, dim=0)
-                    data[key] = item.argmax(dim=-1)
-                elif key == "batch" or key == SaveOriginalPosId.KEY:
-                    data[key] = item[perm]
-                else:
-                    data[key] = scatter_mean(item, cluster, dim=0)
-        return data
-
-    def __call__(self, data):
-        if isinstance(data, list):
-            data = [self._process(d) for d in data]
-        else:
-            data = self._process(data)
-        return data
-
-    def __repr__(self):
-        return "{}(size={})".format(self.__class__.__name__, self.size)
-
 class RandomSymmetry(object):
     """ Apply a random symmetry transformation on the data 
 
@@ -340,7 +282,7 @@ class RandomNoise(object):
     clip: 
         Maximum amplitude of the noise
     """
-    
+
     def __init__(self, sigma=0.01, clip=0.05):
         self.sigma = sigma
         self.clip = clip
@@ -507,13 +449,21 @@ class MultiScaleTransform(object):
     def __repr__(self):
         return "{}".format(self.__class__.__name__)
 
-class SaveOriginalPosId:
-    """ Transform that adds the index of the point to the data object
-    This allows us to track this point from the output back to the input data object
+
+class ShuffleData(object):
+    """ This transform allow to shuffle feature, pos and label tensors within data
     """
 
-    KEY = "origin_id"
+    def _process(self, data):
+        return shuffle_data(data)
 
     def __call__(self, data):
-        setattr(data, self.KEY, torch.arange(0, data.pos.shape[0]))
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data))  # 2d list needs to be flatten
+        else:
+            data = self._process(data)
         return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)

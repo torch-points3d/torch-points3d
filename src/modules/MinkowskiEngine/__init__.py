@@ -1,10 +1,8 @@
 import sys
-from .utils import *
 from .networks import *
 from .unet import UnwrappedSparseUnet
 
 _custom_models = sys.modules[__name__]
-
 
 def initialize_custom_minkowski_unet(
     input_nc,
@@ -32,7 +30,5 @@ def initialize_custom_minkowski_unet(
 
 
 def initialize_baseline_minkowski_unet(model_name, in_channels, out_channels, D):
-
     net_cls = getattr(_custom_models, model_name)
-
     return net_cls(in_channels=in_channels, out_channels=out_channels, D=D)

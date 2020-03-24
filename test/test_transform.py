@@ -21,7 +21,7 @@ from src.core.data_transform import (
     AddFeatByKey,
     AddFeatsByKeys,
     RemoveAttributes,
-    RemoveDuplicatedCoords,
+    RemoveDuplicateCoords,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -163,12 +163,12 @@ class Testhelpers(unittest.TestCase):
         for key in keys[mask]:
             self.assertNotIn(key, list(data_out.keys))
 
-    def test_RemoveDuplicatedCoords(self):
+    def test_RemoveDuplicateCoords(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(indices=torch.from_numpy(indices))
-        transform = RemoveDuplicatedCoords()
+        data = Data(pos=torch.from_numpy(indices))
+        transform = RemoveDuplicateCoords()
         data_out = transform(data)
-        self.assertEqual(data_out.indices.shape[0], 5)
+        self.assertEqual(data_out.pos.shape[0], 5)
 
 
 if __name__ == "__main__":

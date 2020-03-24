@@ -1,4 +1,5 @@
 from typing import List
+from tqdm import tqdm as tq
 import itertools
 import numpy as np
 import math
@@ -12,21 +13,15 @@ from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
+from torch_geometric.data import Data, Batch
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
-from torch_geometric.data import Data, Batch
-from tqdm import tqdm as tq
 from src.utils import is_iterable
 
 
-from typing import *
-import torch
-import torch.nn.functional as F
-
 class AddFeatsByKeys(object):
-
     """This transform takes a list of attributes names and if allowed, add them to x
 
     Example:
@@ -54,13 +49,19 @@ class AddFeatsByKeys(object):
         Recommended to be set to list of True. If True, it will raise an Exception if feat isn't found or dimension doesn t match.
     """
 
-    def __init__(self, list_add_to_x: List[bool], feat_names: List[str], input_nc_feats: List[int] = None, stricts: List[bool] = None):
+    def __init__(
+        self,
+        list_add_to_x: List[bool],
+        feat_names: List[str],
+        input_nc_feats: List[int] = None,
+        stricts: List[bool] = None,
+    ):
         from torch_geometric.transforms import Compose
-       
+
         num_names = len(feat_names)
         if num_names == 0:
             raise Exception("Expected to have at least one feat_names")
-        
+
         assert len(list_add_to_x) == num_names
 
         if input_nc_feats:
@@ -73,7 +74,10 @@ class AddFeatsByKeys(object):
         else:
             stricts = [True for _ in range(num_names)]
 
-        transforms = [AddFeatByKey(add_to_x, feat_name, input_nc_feat=input_nc_feat, strict=strict) for add_to_x, feat_name, input_nc_feat, strict in zip(list_add_to_x, feat_names, input_nc_feats, stricts)]
+        transforms = [
+            AddFeatByKey(add_to_x, feat_name, input_nc_feat=input_nc_feat, strict=strict)
+            for add_to_x, feat_name, input_nc_feat, strict in zip(list_add_to_x, feat_names, input_nc_feats, stricts)
+        ]
 
         self.transform = Compose(transforms)
 
@@ -95,7 +99,7 @@ class AddFeatByKey(object):
     strict: bool, optional
         Recommended to be set to True. If False, it won't break if feat isn't found or dimension doesn t match. (default: ``True``)
     """
-    
+
     def __init__(self, add_to_x, feat_name, input_nc_feat=None, strict=True):
 
         self._add_to_x: bool = add_to_x
@@ -130,13 +134,18 @@ class AddFeatByKey(object):
                         feat = feat.unsqueeze(-1)
                     data.x = torch.cat([x, feat], axis=-1)
                 else:
-                    raise Exception("The tensor x and {} can't be concatenated, x: {}, feat: {}".format(self._feat_name, 
-                                                                                                        x.pos.shape[0], 
-                                                                                                        feat.pos.shape[0]))
+                    raise Exception(
+                        "The tensor x and {} can't be concatenated, x: {}, feat: {}".format(
+                            self._feat_name, x.pos.shape[0], feat.pos.shape[0]
+                        )
+                    )
         return data
 
     def __repr__(self):
-        return  "{}(add_to_x: {}, feat_name: {}, strict: {})".format(self.__class__.__name__, self._add_to_x, self._feat_name, self._strict)
+        return "{}(add_to_x: {}, feat_name: {}, strict: {})".format(
+            self.__class__.__name__, self._add_to_x, self._feat_name, self._strict
+        )
+
 
 class XYZFeature(object):
     """
@@ -145,11 +154,11 @@ class XYZFeature(object):
 
     def __init__(self, add_x=True, add_y=True, add_z=True):
         self.axis = []
-        if(add_x):
+        if add_x:
             self.axis.append(0)
-        if(add_y):
+        if add_y:
             self.axis.append(1)
-        if(add_z):
+        if add_z:
             self.axis.append(2)
 
     def __call__(self, data):
@@ -166,13 +175,14 @@ class RGBFeature(object):
     """
     add color as feature if it exists
     """
+
     def __init__(self, is_normalize=False):
         self.is_normalize = is_normalize
 
     def __call__(self, data):
-        assert hasattr(data, 'color')
+        assert hasattr(data, "color")
         color = data.color
-        if(self.is_normalize):
+        if self.is_normalize:
             color = F.normalize(color, p=2, dim=1)
         if data.x is None:
             data.x = color
@@ -186,6 +196,7 @@ class NormalFeature(object):
     add normal as feature. if it doesn't exist, compute normals
     using PCA
     """
+
     def __call__(self, data):
         if data.norm is None:
             raise NotImplementedError("TODO: Implement normal computation")
