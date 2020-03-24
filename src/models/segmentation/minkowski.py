@@ -1,6 +1,6 @@
-import etw_pytorch_utils as pt_utils
 import logging
 import torch.nn.functional as F
+import torch
 
 from src.modules.MinkowskiEngine import *
 from src.models.base_architectures import UnwrappedUnetBasedModel
@@ -21,7 +21,7 @@ class Minkowski_Baseline_Model(BaseModel):
     def set_input(self, data, device):
 
         self.batch_idx = data.batch.squeeze()
-        coords = torch.cat([data.batch.unsqueeze(-1), data.pos], -1).int()
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y.to(device)
 
@@ -41,7 +41,7 @@ class Minkowski_Model(UnwrappedUnetBasedModel):
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
 
     def set_input(self, data, device):
-        coords = torch.cat([data.batch.unsqueeze(-1), data.pos], -1).int()
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y
 

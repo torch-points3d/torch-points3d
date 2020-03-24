@@ -52,6 +52,7 @@ def quantize_data(data, mode="last"):
         Returns the same data object with only one point per voxel
     """
     assert data.pos.dtype == torch.int or data.pos.dtype == torch.long
+    assert mode=="last" or mode=="mean"
 
     # Build clusters
     if hasattr(data, "batch"):
@@ -70,6 +71,7 @@ def quantize_data(data, mode="last"):
 def to_sparse_input(
     data, grid_size, save_delta=True, save_delta_norm=True, mode="last", quantizing_func=torch.floor,
 ):
+    assert mode=="last" or mode=="mean" or mode =="keep_duplicate"
     if quantizing_func not in [torch.floor, torch.ceil, torch.round]:
         raise Exception("quantizing_func should be floor, ceil, round")
 
@@ -89,7 +91,8 @@ def to_sparse_input(
             data.delta_norm = torch.norm(normalised_delta, p=2, dim=-1)  # normalise between -1 and 1 (roughly)
 
     # Agregate
-    data = quantize_data(data, mode=mode)
+    if mode != "keep_duplicate":
+        data = quantize_data(data, mode=mode)
     return data
 
 
@@ -166,8 +169,9 @@ class ToSparseInput(object):
         If True, the norm tensor from closest grid to a given point would be saved. It is normalised between -1 and 1.
         New feature: ``delta_norm``
     mode : str
-        Option to select how the features and labels for each voxel are computed. Can be ``last`` or ``mean``.
-        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average.
+        Option to select how the features and labels for each voxel are computed. Can be ``keep_duplicate``, ``last`` or ``mean``.
+        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average. ``keep_duplicate``
+        keeps potential duplicate coordinates in cells
 
     Returns
     -------

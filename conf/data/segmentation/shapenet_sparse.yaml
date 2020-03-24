@@ -11,11 +11,8 @@ data:
         - transform: ToSparseInput
           params:
               grid_size: ${data.grid_size}
-              save_delta: True
-              remove_duplicates: False
-        - transform: RemoveAttributes
-          params:
-              attr_names: ['pos']
+              save_delta: False
+              mode: "keep_duplicate"
     train_transforms:
         - transform: RemoveDuplicateCoords 
     test_transforms:

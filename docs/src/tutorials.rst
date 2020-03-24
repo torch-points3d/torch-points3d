@@ -241,11 +241,12 @@ Let's create a new file ``/src/models/segmentation/pointnet2.py`` with its assoc
 
            self.loss_names = ["loss_seg"] # This will be used the automatically get loss_seg from self
 
-       def set_input(self, data):
+       def set_input(self, data, device):
            """Unpack input data from the dataloader and perform necessary pre-processing steps.
            Parameters:
                input: a dictionary that contains the data itself and its metadata information.
            """
+           data = data.to(device)
            self.input = data
            self.labels = data.y
            self.batch_idx = torch.arange(0, data.pos.shape[0]).view(-1, 1).repeat(1, data.pos.shape[1]).view(-1)
