@@ -23,6 +23,13 @@ def load_config(task, model_type) -> DictConfig:
     return config
 
 
+def remove(path):
+    try:
+        os.remove(path)
+    except:
+        pass
+
+
 class TestModelCheckpoint(unittest.TestCase):
     def setUp(self):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
@@ -42,7 +49,7 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint = ModelCheckpoint(self.run_path, name, "test", run_config=self.config, resume=False)
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(self.config, dataset)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], "cpu")
         model.instantiate_optimizers(self.config)
 
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
@@ -58,7 +65,8 @@ class TestModelCheckpoint(unittest.TestCase):
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
 
         shutil.rmtree(self.run_path)
-        os.remove(os.path.join(ROOT, "{}.pt".format(name)))
+        remove(os.path.join(ROOT, "{}.pt".format(name)))
+        remove(os.path.join(DIR, "{}.pt".format(name)))
 
 
 if __name__ == "__main__":

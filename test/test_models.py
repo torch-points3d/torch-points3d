@@ -18,6 +18,7 @@ from src.utils.model_building_utils.model_definition_resolver import resolve_mod
 
 seed = 0
 torch.manual_seed(seed)
+device = "cpu"
 
 
 def load_model_config(task, model_type, model_name):
@@ -41,7 +42,7 @@ class TestModelUtils(unittest.TestCase):
             models_config.update("data.task", associated_task)
             for model_name in models_config.models.keys():
                 print(model_name)
-                if model_name not in ["MyTemplateModel"]:
+                if model_name not in ["MyTemplateModel", "MinkUNet"]:
                     models_config.update("model_name", model_name)
                     instantiate_model(models_config, MockDatasetGeometric(6))
 
@@ -49,7 +50,7 @@ class TestModelUtils(unittest.TestCase):
         params = load_model_config("segmentation", "pointnet2", "pointnet2")
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], device)
         model.forward()
         model.backward()
 
@@ -57,7 +58,7 @@ class TestModelUtils(unittest.TestCase):
         params = load_model_config("segmentation", "kpconv", "SimpleKPConv")
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], device)
         model.forward()
         model.backward()
 
@@ -68,7 +69,7 @@ class TestModelUtils(unittest.TestCase):
         model.eval()
         dataset_transform = MockDatasetGeometric(5)
         dataset_transform.set_strategies(model)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], device)
         model.forward()
         model.get_output()
 
@@ -85,7 +86,7 @@ class TestModelUtils(unittest.TestCase):
         params.update("data.first_subsampling", 0.02)
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], device)
         model.forward()
         model.backward()
 
@@ -93,7 +94,7 @@ class TestModelUtils(unittest.TestCase):
         params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], device)
         model.forward()
         model.backward()
 
@@ -103,7 +104,7 @@ class TestModelUtils(unittest.TestCase):
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)
         model.instantiate_optimizers(config_training)
-        model.set_input(dataset[0])
+        model.set_input(dataset[0], "cpu")
         expected_make_optimizer_step = [False, False, True, False, False, True, False, False, True, False]
         expected_contains_grads = [False, True, True, False, True, True, False, True, True, False]
         make_optimizer_steps = []

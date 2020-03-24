@@ -15,9 +15,11 @@ The framework allows lean and yet complex model to be built with minimum effort 
 * [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
 
 ### Setup repo
-Clone the repo to your local machine then run the following command from the root of the repo
+Clone the repo to your local machine
+
+Run the following command from the root of the repo
 ```
-poetry install
+poetry install --no-root
 ```
 This will install all required dependencies in a new virtual environment.
 
@@ -33,11 +35,38 @@ You can check that the install has been successful by running
 python -m unittest
 ```
 
+#### Minkowski Engine
+The repository is supporting [Minkowski Engine) which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
+
+```bash
+sudo apt install libopenblas-dev
+```
+
+then make sure that `nvcc` is in your path:
+
+```bash
+nvcc -V
+```
+
+If it's not then locate it (`locate nvcc`) and add its location to your `PATH` variable. On my machine:
+
+```bash
+export PATH="/usr/local/cuda-10.2/bin:$PATH"
+```
+
+You are now in a position to install MinkowskiEngine with GPU support:
+
+```bash
+poetry install -E MinkowskiEngine --no-root
+```
+
+
 ## Train pointnet++ on part segmentation task for dataset shapenet
 
 ```bash
 poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
 ```
+
 And you should see something like that
 
 ![logging](/docs/imgs/logging.png)
@@ -165,8 +194,3 @@ A sequence of checks will be run for you and you may have to add the fixed files
 
 When it comes to docstrings we use [numpy style](https://numpydoc.readthedocs.io/en/latest/format.html) docstrings, for those who use
 Visual Studio Code, there is a great [extension](https://github.com/NilsJPWerner/autoDocstring) that can help with that. Install it and set the format to numpy and you should be good to go!
-
-## Contributors
-- [Thomas Chaton](https://github.com/tchaton)
-- [Nicolas Chaulet](https://github.com/nicolas-chaulet)
-- [Tristan Heywood](https://github.com/tristanheywood)

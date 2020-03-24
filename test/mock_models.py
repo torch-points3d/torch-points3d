@@ -13,7 +13,7 @@ class MockModel(BaseModel):
     def __init__(self, opt):
         super(MockModel, self).__init__(opt)
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         pass
 
     def forward(self):

@@ -2,6 +2,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class COLORS:
     """[This class is used to color the bash shell by using {} {} {} with 'COLORS.{}, text, COLORS.END_TOKEN']
     """
@@ -82,6 +83,7 @@ class COLORS:
     On_IPurple = "\033[10;95m"  # Purple
     On_ICyan = "\033[0;106m"  # Cyan
     On_IWhite = "\033[0;107m"  # White
+
 
 def colored_print(color, msg):
     log.info(color + msg + COLORS.END_NO_TOKEN)

@@ -42,14 +42,16 @@ class PatchPointNet2_D(BackboneBasedModel):
         else:
             self.FC_layer = torch.nn.Identity()
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         # Size : B x N x 3
         # manually concatenate the b
+
         if getattr(data, "pos_target", None) is not None:
             assert len(data.pos.shape) == 3 and len(data.pos_target.shape) == 3
             x = torch.cat([data.x, data.x_target], 0)
             pos = torch.cat([data.pos, data.pos_target], 0)
             rang = torch.arange(0, data.pos.shape[0])
+
             labels = torch.cat([rang, rang], 0)
         else:
             x = data.x

@@ -1,0 +1,24 @@
+data:
+    class: shapenet.ShapeNetDataset
+    dataset_name: "shapenet_sparse"
+    task: segmentation
+    dataroot: data
+    normal: True
+    use_category: True
+    grid_size: 0.02
+    pre_transforms:
+        - transform: NormalizeScale
+        - transform: ToSparseInput
+          params:
+              grid_size: ${data.grid_size}
+              save_delta: True
+              remove_duplicates: False
+        - transform: RemoveAttributes
+          params:
+              attr_names: ['pos']
+    train_transforms:
+        - transform: RemoveDuplicateCoords 
+    test_transforms:
+        - transform: RemoveDuplicateCoords    
+    val_transforms:
+        - transform: RemoveDuplicateCoords       

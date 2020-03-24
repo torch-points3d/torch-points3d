@@ -19,14 +19,17 @@ from src.models.base_model import BaseModel
 # A logger for this file
 log = logging.getLogger(__name__)
 
-
 class BaseDataset:
     def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
 
         # Default dataset path
-        class_name = self.__class__.__name__.lower().replace("dataset", "")
-        self._data_path = os.path.join(dataset_opt.dataroot, class_name)
+        dataset_name = dataset_opt.get("dataset_name", None)
+        if dataset_name:
+            self._data_path = os.path.join(dataset_opt.dataroot, dataset_name)
+        else:
+            class_name = self.__class__.__name__.lower().replace("dataset", "")
+            self._data_path = os.path.join(dataset_opt.dataroot, class_name)
         self._batch_size = None
         self.strategies = {}
         self._contains_dataset_name = False
@@ -45,8 +48,6 @@ class BaseDataset:
     @staticmethod
     def add_transform(transform_list_to_be_added, out=[]):
         """[Add transforms to an existing list or not]
-
-
         Arguments:
             transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
             out {[type]} -- [Should be a lis]
@@ -65,12 +66,18 @@ class BaseDataset:
                 raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
         return out
 
+
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
+<<<<<<< HEAD
 
         """Remove a transform if within list_transform_class
 
 
+=======
+        """ Remove a transform if within list_transform_class
+
+>>>>>>> upstream/master
         Arguments:
             transform_in {[type]} -- [Compose | List of transform]
             list_transform_class {[type]} -- [List of transform class to be removed]
@@ -138,9 +145,7 @@ class BaseDataset:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
             else:
-                raise NotImplementedError(
-                    "MultiscaleTransform is activated and supported only for partial_dense format"
-                )
+                raise NotImplementedError("MultiscaleTransform is activated and supported only for partial_dense format")
 
         if is_dense:
             return lambda datalist: SimpleBatch.from_data_list(datalist)

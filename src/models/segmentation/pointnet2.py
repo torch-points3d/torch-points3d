@@ -57,7 +57,7 @@ class PointNet2_D(UnetBasedModel):
         self.FC_layer.conv1d(self._num_classes, activation=None)
         self.loss_names = ["loss_seg"]
 
-    def set_input(self, data):
+    def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
@@ -67,6 +67,7 @@ class PointNet2_D(UnetBasedModel):
                 pos -- Points [B, N, 3]
         """
         assert len(data.pos.shape) == 3
+        data = data.to(device)
         if data.x is not None:
             x = data.x.transpose(1, 2).contiguous()
         else:
