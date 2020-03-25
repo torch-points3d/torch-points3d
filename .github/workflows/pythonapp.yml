@@ -53,7 +53,7 @@ jobs:
 
       - name: Test with unittest
         run: |
-          $HOME/.poetry/bin/poetry run coverage run -m unittest
+          $HOME/.poetry/bin/poetry run coverage run -m unittest -v
           $HOME/.poetry/bin/poetry run coverage xml
 
       - name: Upload coverage to Codecov
