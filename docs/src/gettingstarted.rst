@@ -1,4 +1,4 @@
-:github_url: "https://github.com/nicolas-chaulet/deeppointcloud-benchmarks"
+:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
 
 Getting Started
 ================
@@ -53,7 +53,7 @@ You can check that the install has been successful by running
 .. code-block:: bash
 
    poetry shell
-   python -m unittest
+   python -m unittest -v
 
 Minkowski engine support
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -110,7 +110,7 @@ You should now be able to run the tests successfully:
 
 .. code-block:: bash
 
-   python -m unittest
+   python -m unittest -v
 
 
 Train!

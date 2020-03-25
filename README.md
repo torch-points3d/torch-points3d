@@ -32,7 +32,7 @@ poetry shell
 You can check that the install has been successful by running
 
 ```bash
-python -m unittest
+python -m unittest -v
 ```
 
 #### [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine)
