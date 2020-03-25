@@ -35,6 +35,18 @@ class TestModelUtils(unittest.TestCase):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
 
+    def test_createall(self):
+        for type_file in self.model_type_files:
+            associated_task = type_file.split("/")[-2]
+            models_config = OmegaConf.load(type_file)
+            models_config = OmegaConf.merge(models_config, self.data_config)
+            models_config.update("data.task", associated_task)
+            for model_name in models_config.models.keys():
+                with self.subTest(model_name):
+                    if model_name not in ["MyTemplateModel", "MinkUNet"]:
+                        models_config.update("model_name", model_name)
+                        instantiate_model(models_config, MockDatasetGeometric(6))
+
     def test_runall(self):
         def is_known_to_fail(model_name):
             forward_failing = ["MyTemplateModel", "MinkUNet", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]

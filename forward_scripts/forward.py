@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 def save(prefix, predicted):
     for key, value in predicted.items():
-        filename = key.split(".")[0]
+        filename = os.path.splitext(key)[0]
         out_file = filename + "_pred"
         np.save(os.path.join(prefix, out_file), value)
 
