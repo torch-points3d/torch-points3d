@@ -147,12 +147,12 @@ class ForwardShapenetDataset(BaseDataset):
         setattr(batch, "_pred", output)
         for b in range(num_sample):
             sampleid = batch.sampleid[b]
-            sample_raw_pos = self.test_dataset.get_raw(sampleid).pos.to(output.device)
+            sample_raw_pos = self.test_dataset[0].get_raw(sampleid).pos.to(output.device)
             predicted = BaseDataset.get_sample(batch, "_pred", b, conv_type)
             origindid = BaseDataset.get_sample(batch, SaveOriginalPosId.KEY, b, conv_type)
             full_prediction = knn_interpolate(predicted, sample_raw_pos[origindid], sample_raw_pos, k=3)
             labels = full_prediction.max(1)[1].unsqueeze(-1)
-            full_res_results[self.test_dataset.get_filename(sampleid)] = np.hstack(
+            full_res_results[self.test_dataset[0].get_filename(sampleid)] = np.hstack(
                 (sample_raw_pos.cpu().numpy(), labels.cpu().numpy(),)
             )
         return full_res_results
