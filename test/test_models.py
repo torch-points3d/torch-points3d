@@ -43,13 +43,13 @@ class TestModelUtils(unittest.TestCase):
             models_config.update("data.task", associated_task)
             for model_name in models_config.models.keys():
                 with self.subTest(model_name):
-                    if model_name not in ["MyTemplateModel", "MinkUNet"]:
+                    if model_name not in ["MyTemplateModel", "MinkUNet_WIP"]:
                         models_config.update("model_name", model_name)
                         instantiate_model(models_config, MockDatasetGeometric(6))
 
     def test_runall(self):
         def is_known_to_fail(model_name):
-            forward_failing = ["MyTemplateModel", "MinkUNet", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
+            forward_failing = ["MyTemplateModel", "MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
             for failing in forward_failing:
                 if failing.lower() in model_name.lower():
                     return True

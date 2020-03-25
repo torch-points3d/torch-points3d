@@ -1,7 +1,7 @@
 models:
     # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngin
     # STILL NOT FULLY WORKING !
-    MinkUNet:
+    MinkUNet_WIP:
         class: minkowski.Minkowski_Model
         conv_type: "SPARSE"
         down_conv:
