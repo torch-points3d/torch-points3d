@@ -9,9 +9,10 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from test.mockdatasets import MockDatasetGeometric
+from test.mockdatasets import MockDatasetGeometric, MockDataset
 
 from src.models.model_factory import instantiate_model
+from src.core.data_transform import ToSparseInput
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
 
 # calls resolve_model, then find_model_using_name
@@ -41,26 +42,46 @@ class TestModelUtils(unittest.TestCase):
             models_config = OmegaConf.merge(models_config, self.data_config)
             models_config.update("data.task", associated_task)
             for model_name in models_config.models.keys():
-                print(model_name)
-                if model_name not in ["MyTemplateModel", "MinkUNet"]:
-                    models_config.update("model_name", model_name)
-                    instantiate_model(models_config, MockDatasetGeometric(6))
+                with self.subTest(model_name):
+                    if model_name not in ["MinkUNet_WIP"]:
+                        models_config.update("model_name", model_name)
+                        instantiate_model(models_config, MockDatasetGeometric(6))
 
-    def test_pointnet2(self):
-        params = load_model_config("segmentation", "pointnet2", "pointnet2")
-        dataset = MockDatasetGeometric(5)
-        model = instantiate_model(params, dataset)
-        model.set_input(dataset[0], device)
-        model.forward()
-        model.backward()
+    def test_runall(self):
+        def is_known_to_fail(model_name):
+            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
+            for failing in forward_failing:
+                if failing.lower() in model_name.lower():
+                    return True
+            return False
 
-    def test_kpconv(self):
-        params = load_model_config("segmentation", "kpconv", "SimpleKPConv")
-        dataset = MockDatasetGeometric(5)
-        model = instantiate_model(params, dataset)
-        model.set_input(dataset[0], device)
-        model.forward()
-        model.backward()
+        def get_dataset(conv_type):
+            features = 2
+            if conv_type.lower() == "dense":
+                return MockDataset(features, num_points=2048)
+            if conv_type.lower() == "sparse":
+                return MockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
+            return MockDatasetGeometric(features)
+
+        for type_file in self.model_type_files:
+            associated_task = type_file.split("/")[-2]
+            models_config = OmegaConf.load(type_file)
+            models_config = OmegaConf.merge(models_config, self.data_config)
+            models_config.update("data.task", associated_task)
+            for model_name in models_config.models.keys():
+                with self.subTest(model_name):
+                    if not is_known_to_fail(model_name):
+                        models_config.update("model_name", model_name)
+                        dataset = get_dataset(models_config.models[model_name].conv_type)
+                        model = instantiate_model(models_config, dataset)
+                        model.set_input(dataset[0], device)
+                        try:
+                            model.forward()
+                            model.backward()
+                        except Exception as e:
+                            print("Model failing:")
+                            print(model)
+                            raise e
 
     def test_kpconvpretransform(self):
         params = load_model_config("segmentation", "kpconv", "SimpleKPConv")
@@ -74,11 +95,6 @@ class TestModelUtils(unittest.TestCase):
         model.get_output()
 
         torch.testing.assert_allclose(dataset_transform[0].pos, dataset[0].pos)
-        # model.set_input(dataset_transform[0])
-        # model.forward()
-        # output_tr = model.get_output()
-        # torch.testing.assert_allclose(output, output_tr)
-        # model.backward()
 
     def test_largekpconv(self):
         params = load_model_config("segmentation", "kpconv", "KPConvPaper")

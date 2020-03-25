@@ -8,14 +8,25 @@ data:
     grid_size: 0.02
     pre_transforms:
         - transform: NormalizeScale
+    train_transforms:
+        - transform: RandomNoise
+          params:
+            sigma: 0.01
+            clip: 0.05
         - transform: ToSparseInput
           params:
-              grid_size: ${data.grid_size}
-              save_delta: False
-              mode: "keep_duplicate"
-    train_transforms:
-        - transform: RemoveDuplicateCoords 
+            grid_size: ${data.grid_size}
+            save_delta: False
+            mode: "mean"
     test_transforms:
-        - transform: RemoveDuplicateCoords    
+        - transform: ToSparseInput
+          params:
+            grid_size: ${data.grid_size}
+            save_delta: False
+            mode: "mean"
     val_transforms:
-        - transform: RemoveDuplicateCoords       
+        - transform: ToSparseInput
+          params:
+            grid_size: ${data.grid_size}
+            save_delta: False
+            mode: "mean" 
