@@ -8,6 +8,41 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
+## Project structure
+
+   ├── benchmark                 # Output from various benchmark runs
+   ├── conf                      # All configurations for training nad evaluation leave there
+   ├── dashboard                 # A collection of notebooks that allow result exploration and network debugging
+   ├── docker                    # Docker image that can be used for inference or training
+   ├── docs                      # All the doc
+   ├── eval.py                   # Eval script
+   ├── find_neighbour_dist.py    # Script that helps find the optimal number of neighbours for neighbour search operations
+   ├── forward_scripts           # Script that runs a forward pass on possibly non annotated data
+   ├── outputs                   # All outputs from your runs sorted by date
+   ├── scripts                   # Some scripts to help manage the project
+   ├── src                       
+   │   ├── core                  # Core components
+   │   ├── datasets              # All code related to datasets
+   │   ├── metrics               # All metrics and trackers
+   │   ├── models                # All models
+   │   ├── modules               # Basic modules that can be used in a modular way
+   │   ├── utils                 # Various utils
+   │   └── visualization         # Visualization
+   ├── test
+   └── train.py                  # Main script to launch a training
+
+As a general philosophy we have split datasets and models by task. For example, datasets has three subfolders:
+
+- segmentation 
+- classification
+- registration
+
+where each folder contains the dataset related to each task.
+
+* **[PointNet](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
+* **[PointNet++](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1609.02907)
+
+
 ## Getting started
 ### Requirements:
 * CUDA > 10
