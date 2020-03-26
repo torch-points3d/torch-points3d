@@ -19,6 +19,7 @@ from src.models.base_model import BaseModel
 # A logger for this file
 log = logging.getLogger(__name__)
 
+
 class BaseDataset:
     def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
@@ -38,12 +39,13 @@ class BaseDataset:
         self.test_sampler = None
         self.val_sampler = None
 
-        self.train_dataset = None
-        self.test_dataset = None
-        self.val_dataset = None
+        self._train_dataset = None
+        self._test_dataset = None
+        self._val_dataset = None
 
         BaseDataset.set_transform(self, dataset_opt)
         BaseDataset.set_filter(self, dataset_opt)
+
 
     @staticmethod
     def add_transform(transform_list_to_be_added, out=[]):
@@ -65,7 +67,6 @@ class BaseDataset:
             else:
                 raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
         return out
-
 
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
@@ -132,15 +133,15 @@ class BaseDataset:
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
-
-        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
-
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
             else:
-                raise NotImplementedError("MultiscaleTransform is activated and supported only for partial_dense format")
+                raise NotImplementedError(
+                    "MultiscaleTransform is activated and supported only for partial_dense format"
+                )
 
+        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_dense:
             return lambda datalist: SimpleBatch.from_data_list(datalist)
         else:
@@ -148,9 +149,7 @@ class BaseDataset:
 
     @staticmethod
     def get_num_samples(batch, conv_type):
-
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
-
         if is_dense:
             return batch.pos.shape[0]
         else:
@@ -161,7 +160,6 @@ class BaseDataset:
 
         assert hasattr(batch, key)
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
-
         if is_dense:
             return batch[key][index]
         else:
@@ -189,17 +187,12 @@ class BaseDataset:
             )
 
         if self.test_dataset:
-            if not isinstance(self.test_dataset, list):
-                test_dataset = [self.test_dataset]
-            else:
-                test_dataset = self.test_dataset
             self._test_loaders = [
                 dataloader(
                     dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
                 )
-                for dataset in test_dataset
+                for dataset in self.test_dataset
             ]
-            self._test_dataset_names = [self.get_test_dataset_name(idx) for idx in range(self.num_test_datasets)]
 
         if self.val_dataset:
             self._val_loader = dataloader(
@@ -221,25 +214,76 @@ class BaseDataset:
         except:
             False
 
+    @property
+    def train_dataset(self):
+        return self._train_dataset
+
+    @train_dataset.setter
+    def train_dataset(self, value):
+        self._train_dataset = value
+        if not hasattr(self._train_dataset, "name"):
+            setattr(self._train_dataset, "name", "train")
+
+    @property
+    def val_dataset(self):
+        return self._val_dataset
+
+    @val_dataset.setter
+    def val_dataset(self, value):
+        self._val_dataset = value
+        if not hasattr(self._val_dataset, "name"):
+            setattr(self._val_dataset, "name", "val")
+
+    @property
+    def test_dataset(self):
+        return self._test_dataset
+
+    @test_dataset.setter
+    def test_dataset(self, value):
+        if isinstance(value, list):
+            self._test_dataset = value
+        else:
+            self._test_dataset = [value]
+
+        for i, dataset in enumerate(self._test_dataset):
+            if not hasattr(dataset, "name"):
+                if self.num_test_datasets > 1:
+                    setattr(dataset, "name", "test_%i" % i)
+                else:
+                    setattr(dataset, "name", "test")
+            else:
+                self._contains_dataset_name = True
+
+        # Check for uniqueness
+        all_names = [d.name for d in self.test_dataset]
+        if len(set(all_names)) != len(all_names):
+            raise ValueError("Datasets need to have unique names. Current names are {}".format(all_names))
+
+    @property
+    def train_dataloader(self):
+        return self._train_loader
+
+    @property
     def val_dataloader(self):
         return self._val_loader
 
+    @property
     def test_dataloaders(self):
         return self._test_loaders
 
     @property
     def num_test_datasets(self):
-        return len(self._test_loaders)
+        return len(self._test_dataset)
 
     @property
     def test_datatset_names(self):
-        return self._test_dataset_names
+        return [d.name for d in self.test_dataset]
 
     @property
     def available_stage_names(self):
-        out = self._test_dataset_names
+        out = self.test_datatset_names
         if self.has_val_loader:
-            out += ["val"]
+            out += [self._val_dataset.name]
         return out
 
     @property
@@ -269,9 +313,6 @@ class BaseDataset:
             if isinstance(transform, FixedPoints):
                 test_bool = True
         return train_bool and test_bool
-
-    def train_dataloader(self):
-        return self._train_loader
 
     @property
     def is_hierarchical(self):
@@ -315,27 +356,29 @@ class BaseDataset:
     def batch_size(self):
         return self._batch_size
 
-    def get_test_dataset_name(self, index=None):
-        loader = self._test_loaders[index]
-        if hasattr(loader.dataset, "dataset_name"):
-            self._contains_dataset_name = True
-            return loader.dataset.dataset_name
-        else:
-            if self.num_test_datasets > 1:
-                return "test_{}".format(index)
-            else:
-                return "test"
-
     @property
     def num_batches(self):
         out = {
-            "train": len(self._train_loader),
+            self.train_dataset.name: len(self._train_loader),
             "val": len(self._val_loader) if self.has_val_loader else 0,
         }
-        for loader_idx, loader in enumerate(self._test_loaders):
-            stage_name = self.get_test_dataset_name(loader_idx)
+        for loader in self._test_loaders:
+            stage_name = loader.dataset.name
             out[stage_name] = len(loader)
         return out
+
+    def get_dataset(self, name):
+        """ Get a dataset by name. Raises an exception if no dataset was found
+
+        Parameters
+        ----------
+        name : str
+        """
+        all_datasets = [self.train_dataset, self.val_dataset] + [t for t in self.test_dataset]
+        for dataset in all_datasets:
+            if dataset.name == name:
+                return dataset
+        raise ValueError("No dataset with name %s was found." % name)
 
     def _set_composed_multiscale_transform(self, attr, transform):
         current_transform = getattr(attr.dataset, "transform", None)
@@ -379,15 +422,15 @@ class BaseDataset:
 
         if self.num_test_datasets > 1 and not self._contains_dataset_name:
             msg = "If you want to have better trackable names for your test datasets, add a "
-            msg += COLORS.IPurple + "dataset_name" + COLORS.END_NO_TOKEN
+            msg += COLORS.IPurple + "name" + COLORS.END_NO_TOKEN
             msg += " attribute to them"
             log.info(msg)
 
         if selection_stage == "":
             if self.has_val_loader:
-                selection_stage = "val"
+                selection_stage = self.val_dataset.name
             else:
-                selection_stage = self.get_test_dataset_name(0)
+                selection_stage = self.test_dataset[0].name
         log.info(
             "The models will be selected using the metrics on following dataset: {} {} {}".format(
                 COLORS.IPurple, selection_stage, COLORS.END_NO_TOKEN
@@ -412,6 +455,8 @@ class BaseDataset:
                     size = len(dataset)
                 else:
                     size = 0
+                if attr.startswith("_"):
+                    attr = attr[1:]
                 message += "Size of {}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, size)
         for key, attr in self.__dict__.items():
             if key.endswith("_sampler") and attr:
