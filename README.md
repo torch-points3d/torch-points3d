@@ -42,6 +42,8 @@ As a general philosophy we have split datasets and models by task. For example, 
 
 where each folder contains the dataset related to each task.
 
+## In detail, the following methods are currently implemented:
+
 * **[PointNet](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
 * **[PointNet++](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1609.02907)
 * **[RSConv](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
