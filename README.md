@@ -42,10 +42,10 @@ As a general philosophy we have split datasets and models by task. For example, 
 
 where each folder contains the dataset related to each task.
 
-## In detail, the following methods are currently implemented:
+## Methods currently implemented
 
 * **[PointNet](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
-* **[PointNet++](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1609.02907)
+* **[PointNet++](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
 * **[RSConv](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
 * **[RandLA-Net](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
 * **[PointCNN](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
