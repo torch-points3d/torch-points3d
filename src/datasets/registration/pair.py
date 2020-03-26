@@ -30,6 +30,8 @@ class Pair(Data):
         batch = data_source
         for key_target in data_target.keys:
             batch[key_target+"_target"] = data_target[key_target]
+        if(batch.x is None):
+            batch["x_target"] = None
         return batch.contiguous()
 
     def to_data(self):
@@ -65,7 +67,7 @@ class MultiScalePair(Pair):
             upsample_target: Optional[List[Data]] = None,
             **kwargs,
     ):
-        MultiScaleData.__init__(x=x, pos=pos,
+        MultiScalePair.__init__(x=x, pos=pos,
                                 multiscale=multiscale,
                                 upsample=upsample,
                                 x_target=x_target, pos_target=pos_target,
@@ -129,8 +131,8 @@ class PairBatch(Pair):
         """
         assert isinstance(data_list[0], Pair)
         data_list_s, data_list_t = list(map(list, zip(*[data.to_data() for data in data_list])))
-        batch_s = Batch.from_data_list(data_list_s, follow_batch)
-        batch_t = Batch.from_data_list(data_list_t, follow_batch)
+        batch_s = Batch.from_data_list(data_list_s)
+        batch_t = Batch.from_data_list(data_list_t)
         return Pair.make_pair(batch_s, batch_t).contiguous()
 
 
@@ -147,3 +149,60 @@ class PairMultiScaleBatch(MultiScalePair):
         batch_s = MultiScaleBatch.from_data_list(data_list_s)
         batch_t = MultiScaleBatch.from_data_list(data_list_t)
         return MultiScalePair.make_pair(batch_s, batch_t).contiguous()
+
+
+class SimpleBatch(Pair):
+    r""" A classic batch object wrapper with :class:`torch_geometric.data.Data` being the
+    base class, all its methods can also be used here.
+    Here it inherit from Pair instead of Data.
+    """
+
+    def __init__(self, batch=None, **kwargs):
+        super(SimpleBatch, self).__init__(**kwargs)
+
+        self.batch = batch
+        self.__data_class__ = Data
+
+    @staticmethod
+    def from_data_list(data_list):
+        r"""Constructs a batch object from a python list holding
+        :class:`torch_geometric.data.Data` objects.
+        """
+        keys = [set(data.keys) for data in data_list]
+        keys = list(set.union(*keys))
+
+        # Check if all dimensions matches and we can concatenate data
+        # if len(data_list) > 0:
+        #    for data in data_list[1:]:
+        #        for key in keys:
+        #            assert data_list[0][key].shape == data[key].shape
+
+        batch = SimpleBatch()
+        batch.__data_class__ = data_list[0].__class__
+
+        for key in keys:
+            batch[key] = []
+
+        for _, data in enumerate(data_list):
+            for key in data.keys:
+                item = data[key]
+                batch[key].append(item)
+
+        for key in batch.keys:
+            item = batch[key][0]
+            if (
+                torch.is_tensor(item)
+                or isinstance(item, int)
+                or isinstance(item, float)
+            ):
+                batch[key] = torch.stack(batch[key])
+            else:
+                raise ValueError("Unsupported attribute type")
+
+        return batch.contiguous()
+        # return [batch.x.transpose(1, 2).contiguous(), batch.pos, batch.y.view(-1)]
+
+    @property
+    def num_graphs(self):
+        """Returns the number of graphs in the batch."""
+        return self.batch[-1].item() + 1

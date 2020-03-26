@@ -48,7 +48,10 @@ class PatchPointNet2_D(BackboneBasedModel):
 
         if getattr(data, "pos_target", None) is not None:
             assert len(data.pos.shape) == 3 and len(data.pos_target.shape) == 3
-            x = torch.cat([data.x, data.x_target], 0)
+            if data.x is not None:
+                x = torch.cat([data.x, data.x_target], 0)
+            else:
+                x = None
             pos = torch.cat([data.pos, data.pos_target], 0)
             rang = torch.arange(0, data.pos.shape[0])
 
@@ -60,8 +63,6 @@ class PatchPointNet2_D(BackboneBasedModel):
 
         if x is not None:
             x = x.transpose(1, 2).contiguous()
-        else:
-            x = None
 
         self.input = Data(x=x, pos=pos, y=labels).to(device)
 

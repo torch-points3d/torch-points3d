@@ -7,9 +7,9 @@ models:
       npoint: [256, 128]
       radii: [[0.08], [0.15]]
       nsamples: [[64], [64]]
-      use_xyz: False
+      use_xyz: True
       down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 128]]]
+        [[[FEAT+3, 32, 32, 64]], [[64+3, 64, 128, 128]]]
     mlp_cls:
       nn: [128, 128, 32]
       dropout: 0.5
@@ -30,9 +30,9 @@ models:
       npoint: [128, 32]
       radii: [[0.08], [0.15]]
       nsamples: [[64], [64]]
-      use_xyz: False
+      use_xyz: True
       down_conv_nn:
-        [[[FEAT, 32, 32, 32]], [[32, 64, 64, 64]]]
+        [[[FEAT+3, 32, 32, 32]], [[32+3, 64, 64, 64]]]
     mlp_cls:
       nn: [64, 64, 32]
       dropout: 0.5
@@ -43,159 +43,3 @@ models:
         triplets_per_anchor: 'all'
     miner:
       class: "BatchHardMiner"
-
-
-  minipointnet2_simple_0:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 32]]]
-    mlp_cls:
-      nn: []
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'
-
-
-
-  minipointnet2_simple_1:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 32]]]
-    mlp_cls:
-      nn: []
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'
-    miner:
-      class: TripletMarginMiner
-      params:
-        margin: 0.1
-        type_of_triplets: "semihard"
-
-  minipointnet2_simple_2:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 32]]]
-    mlp_cls:
-      nn: []
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'
-    miner:
-      class: "BatchHardMiner"
-
-
-  minipointnet2_0:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 128]]]
-    mlp_cls:
-      nn: [128, 128, 32]
-      dropout: 0.5
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'
-
-  minipointnet2_1:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 16, 16, 32]], [[32, 32, 64, 128]]]
-    mlp_cls:
-      nn: [128, 128, 32]
-      dropout: 0.5
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'
-
-
-  minipointnet2_2:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 32, 32, 64]], [[64, 64, 128, 128]]]
-    mlp_cls:
-      nn: [128, 128, 32]
-      dropout: 0.5
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'
-
-    miner:
-      class: TripletMarginMiner
-      params:
-        margin: 0.1
-        type_of_triplets: "semihard"
-
-
-  minipointnet2_3:
-    class: pointnet2.PatchPointNet2_D
-    conv_type: "DENSE"
-    down_conv:
-      module_name: PointNetMSGDown
-      npoint: [256, 128]
-      radii: [[0.08], [0.15]]
-      nsamples: [[64], [64]]
-      use_xyz: False
-      down_conv_nn:
-        [[[FEAT, 32, 64, 128]], [[128, 128, 128, 256]]]
-    mlp_cls:
-      nn: [256, 256, 32]
-      dropout: 0.5
-    loss:
-      class: "TripletMarginLoss"
-      params:
-        smooth_loss: True
-        triplets_per_anchor: 'all'

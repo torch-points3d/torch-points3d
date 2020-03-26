@@ -15,8 +15,4 @@ data:
   test_transforms:
     - transform: FixedPoints
       lparams: [1024]
-    - transform: NormalizeScale
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'pos'
+    - transform: Center

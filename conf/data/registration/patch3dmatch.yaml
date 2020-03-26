@@ -18,6 +18,10 @@ data:
     - filter: PlanarityFilter
       params:
         thresh: 0.3
+  test_pre_filters:
+    - filter: RandomFilter
+      params:
+        thresh: 0.1
   pre_transforms:
     - transform: GridSampling
       params:
@@ -30,17 +34,7 @@ data:
       params:
         sigma: 0.0005
         clip: 0.05
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'pos'
-    - transform: NormalizeFeatures
   test_transforms:
     - transform: FixedPoints
       lparams: [1024]
     - transform: Center
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'pos'
-    - transform: NormalizeFeatures

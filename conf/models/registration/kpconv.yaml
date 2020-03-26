@@ -1,0 +1,63 @@
+models:
+  KPConv:
+    class: kpconv.PatchKPConv
+    conv_type: "PARTIAL_DENSE"
+    define_constants:
+      in_grid_size: ${data.first_subsampling}
+      in_feat: 32
+      out_feat: 32
+      bn_momentum: 0.02
+    down_conv:
+      down_conv_nn:
+        [
+        [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
+        [[2*in_feat, 2*in_feat], [2*in_feat, 2*in_feat]],
+        [[2*in_feat, 4*in_feat], [4*in_feat, 4*in_feat]],
+        ]
+      grid_size:
+        [
+        [in_grid_size, in_grid_size],
+        [4*in_grid_size, 4*in_grid_size],
+        [8*in_grid_size, 8*in_grid_size],
+        ]
+      prev_grid_size:
+        [
+        [in_grid_size, in_grid_size],
+        [in_grid_size, 4*in_grid_size],
+        [4*in_grid_size, 8*in_grid_size],
+        ]
+      block_names:
+        [
+        ["SimpleBlock", "ResnetBBlock"],
+        ["ResnetBBlock", "ResnetBBlock"],
+        ["ResnetBBlock", "ResnetBBlock"],
+        ]
+      has_bottleneck:
+        [
+        [False, True],
+        [True, True],
+        [True, True],
+        ]
+      deformable:
+        [
+        [False, False],
+        [False, False],
+        [False, False],
+        ]
+      max_num_neighbors:
+        [[12, 12], [12, 25], [25, 38]]
+      module_name: KPDualBlock
+
+    mlp_cls:
+      nn: [4*in_feat, 2*in_feat, out_feat]
+      dropout: 0.5
+      bn_momentum: bn_momentum
+    loss_weights:
+      lambda_reg: 0
+    loss:
+      class: "TripletMarginLoss"
+      params:
+        smooth_loss: True
+        triplets_per_anchor: 'all'
+    miner:
+      class: "BatchHardMiner"

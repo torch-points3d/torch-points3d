@@ -22,6 +22,7 @@ from src.datasets.base_dataset import BaseDataset
 from src.models.base_model import BaseModel
 from src.core.common_modules.base_modules import Identity
 from src.utils.config import is_list
+from src.core.losses import instantiate_loss_or_miner
 
 log = logging.getLogger(__name__)
 
@@ -417,6 +418,8 @@ class UnwrappedUnetBasedModel(BaseModel):
             self._save_upsample(up_module)
             self.up_modules.append(up_module)
 
+        self.loss_module, self.miner_module = self.get_loss(getattr(opt, "loss", None), getattr(opt, "miner", None))
+
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
         if factory_module_cls is None:
@@ -468,3 +471,16 @@ class UnwrappedUnetBasedModel(BaseModel):
                 break
 
         return flattenedOpts
+
+    def get_loss(self, opt_loss, opt_miner):
+        """
+        instantiate the loss and the miner if it's available
+        """
+        loss = None
+        miner = None
+        if opt_loss is not None:
+            loss = instantiate_loss_or_miner(opt_loss, mode="loss")
+        if opt_miner is not None:
+            miner = instantiate_loss_or_miner(opt_miner, mode="miner")
+
+        return loss, miner

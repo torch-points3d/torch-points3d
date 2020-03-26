@@ -10,7 +10,7 @@ from torch_geometric.transforms import Compose, FixedPoints
 from src.core.data_transform import instantiate_transforms, MultiScaleTransform
 from src.core.data_transform import PairTransform
 from src.core.data_transform import instantiate_filters
-from src.datasets.batch import SimpleBatch
+from src.datasets.registration.pair import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
 from src.utils.config import ConvolutionFormatFactory

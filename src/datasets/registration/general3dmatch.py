@@ -151,7 +151,6 @@ class Patch3DMatch(Base3DMatch):
             data_target = self.transform(data_target)
         batch = Pair.make_pair(data_source, data_target)
         batch = batch.contiguous().to(torch.float)
-
         return batch
 
     def get(self, idx):
@@ -285,6 +284,7 @@ class General3DMatchDataset(BaseSiameseDataset):
         train_transform = self.train_transform
         test_transform = self.test_transform
         pre_filter = self.pre_filter
+        test_pre_filter = self.test_pre_filter
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(
@@ -315,7 +315,9 @@ class General3DMatchDataset(BaseSiameseDataset):
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=test_transform,
-                num_random_pt=dataset_opt.num_random_pt)
+                num_random_pt=dataset_opt.num_random_pt,
+                is_offline=dataset_opt.is_offline,
+                pre_filter=test_pre_filter)
         else:
             self.train_dataset = Fragment3DMatch(
                 root=self._data_path,
