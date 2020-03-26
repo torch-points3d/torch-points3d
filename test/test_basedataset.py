@@ -131,7 +131,7 @@ class TestDataset(unittest.TestCase):
         model = MockModel(model_config)
         dataset.create_dataloaders(model, 5, True, 0, False)
 
-        loaders = dataset.test_dataloaders()
+        loaders = dataset.test_dataloaders
         self.assertEqual(len(loaders), 2)
         self.assertEqual(len(loaders[0].dataset), 10)
         self.assertEqual(len(loaders[1].dataset), 20)
@@ -166,9 +166,31 @@ class TestDataset(unittest.TestCase):
         model = MockModel(model_config)
 
         mock_base_dataset.create_dataloaders(model, 2, True, 0, False)
-        datasets = mock_base_dataset.test_dataloaders()
+        datasets = mock_base_dataset.test_dataloaders
 
         self.assertEqual(len(datasets), 1)
+
+    def test_get_by_name(self):
+        dataset_opt = MockDatasetConfig()
+        setattr(dataset_opt, "dataroot", os.path.join(DIR, "temp_dataset"))
+
+        mock_base_dataset = MockBaseDataset(dataset_opt)
+        mock_base_dataset.test_dataset = [MockDataset(), MockDataset()]
+        mock_base_dataset.train_dataset = MockDataset()
+        mock_base_dataset.val_dataset = MockDataset()
+
+        for name in ["train", "val", "test_0", "test_1"]:
+            self.assertEqual(mock_base_dataset.get_dataset(name).name, name)
+
+        test_with_name = MockDataset()
+        setattr(test_with_name, "name", "testos")
+        mock_base_dataset.test_dataset = test_with_name
+        with self.assertRaises(ValueError):
+            mock_base_dataset.get_dataset("test_1")
+        mock_base_dataset.get_dataset("testos")
+
+        with self.assertRaises(ValueError):
+            mock_base_dataset.test_dataset = [test_with_name,test_with_name]
 
 
 class TestBatchCollate(unittest.TestCase):

@@ -45,14 +45,14 @@ class TestForwardData(unittest.TestCase):
     def test_dataloaders(self):
         dataset = ForwardShapenetDataset(self.config)
         dataset.create_dataloaders(MockModel(DictConfig({"conv_type": "DENSE"})), 2, False, 1, False)
-        forward_set = dataset.test_dataloaders()[0]
+        forward_set = dataset.test_dataloaders[0]
         for b in forward_set:
             self.assertEqual(b.origin_id.shape, (2, 2))
 
         sparseconfig = DictConfig({"dataroot": self.datadir, "category": "Airplane", "forward_category": "Airplane"})
         dataset = ForwardShapenetDataset(sparseconfig)
         dataset.create_dataloaders(MockModel(DictConfig({"conv_type": "PARTIAL_DENSE"})), 2, False, 1, False)
-        forward_set = dataset.test_dataloaders()[0]
+        forward_set = dataset.test_dataloaders[0]
         for b in forward_set:
             torch.testing.assert_allclose(b.origin_id, torch.tensor([0, 1, 2, 0, 1, 2, 3]))
             torch.testing.assert_allclose(b.sampleid, torch.tensor([0, 1]))
@@ -60,7 +60,7 @@ class TestForwardData(unittest.TestCase):
     def test_predictupsampledense(self):
         dataset = ForwardShapenetDataset(self.config)
         dataset.create_dataloaders(MockModel(DictConfig({"conv_type": "DENSE"})), 2, False, 1, False)
-        forward_set = dataset.test_dataloaders()[0]
+        forward_set = dataset.test_dataloaders[0]
         for b in forward_set:
             output = torch.tensor([[1, 0], [1, 0], [0, 1], [0, 1]])
             predicted = dataset.predict_original_samples(b, "DENSE", output)
@@ -73,7 +73,7 @@ class TestForwardData(unittest.TestCase):
     def test_predictupsamplepartialdense(self):
         dataset = ForwardShapenetDataset(self.config)
         dataset.create_dataloaders(MockModel(DictConfig({"conv_type": "PARTIAL_DENSE"})), 2, False, 1, False)
-        forward_set = dataset.test_dataloaders()[0]
+        forward_set = dataset.test_dataloaders[0]
         for b in forward_set:
             output = torch.tensor([[1, 0], [1, 0], [0, 1], [0, 1]])
             predicted = dataset.predict_original_samples(b, "PARTIAL_DENSE", output)

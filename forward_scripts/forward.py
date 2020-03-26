@@ -37,10 +37,10 @@ def save(prefix, predicted):
 
 
 def run(model: BaseModel, dataset: BaseDataset, device, output_path):
-    loaders = dataset.test_dataloaders()
+    loaders = dataset.test_dataloaders
     predicted = {}
-    for idx, loader in enumerate(loaders):
-        dataset.get_test_dataset_name(idx)
+    for loader in loaders:
+        loader.dataset.name
         with Ctq(loader) as tq_test_loader:
             for data in tq_test_loader:
                 with torch.no_grad():

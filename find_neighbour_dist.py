@@ -51,18 +51,16 @@ def run(cfg, model: BaseModel, dataset: BaseDataset, device, measurement_name: s
 
     num_batches = getattr(cfg.debugging, "num_batches", np.inf)
 
-    run_epoch(model, dataset.train_dataloader(), device, num_batches)
+    run_epoch(model, dataset.train_dataloader, device, num_batches)
     measurements["train"] = extract_histogram(model.get_spatial_ops(), normalize=False)
 
     if dataset.has_val_loader:
-        run_epoch(model, dataset.val_dataloader(), device, num_batches)
+        run_epoch(model, dataset.val_dataloader, device, num_batches)
         measurements["val"] = extract_histogram(model.get_spatial_ops(), normalize=False)
 
-    for loader_idx, loader in enumerate(dataset.test_dataloaders()):
-        run_epoch(model, dataset.test_dataloaders(), device, num_batches)
-        measurements[dataset.get_test_dataset_name(loader_idx)] = extract_histogram(
-            model.get_spatial_ops(), normalize=False
-        )
+    for loader in dataset.test_dataloaders:
+        run_epoch(model, dataset.test_dataloaders, device, num_batches)
+        measurements[loader.dataset.name] = extract_histogram(model.get_spatial_ops(), normalize=False)
 
     with open(os.path.join(DIR, "measurements/{}.pickle".format(measurement_name)), "wb") as f:
         pickle.dump(measurements, f)

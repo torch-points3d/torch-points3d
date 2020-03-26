@@ -39,7 +39,7 @@ def train_epoch(
     model.train()
     tracker.reset("train")
     visualizer.reset(epoch, "train")
-    train_loader = dataset.train_dataloader()
+    train_loader = dataset.train_dataloader
 
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
@@ -85,7 +85,7 @@ def eval_epoch(
     model.eval()
     tracker.reset("val")
     visualizer.reset(epoch, "val")
-    loader = dataset.val_dataloader()
+    loader = dataset.val_dataloader
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
             with torch.no_grad():
@@ -118,10 +118,10 @@ def test_epoch(
 ):
     model.eval()
 
-    loaders = dataset.test_dataloaders()
+    loaders = dataset.test_dataloaders
 
-    for idx, loader in enumerate(loaders):
-        stage_name = dataset.get_test_dataset_name(idx)
+    for loader in loaders:
+        stage_name = loader.dataset.name
         tracker.reset(stage_name)
         visualizer.reset(epoch, stage_name)
         with Ctq(loader) as tq_test_loader:
