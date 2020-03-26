@@ -23,13 +23,13 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ├─ outputs                 # All outputs from your runs sorted by date
 ├─ scripts                 # Some scripts to help manage the project
 ├─ src                       
-│   ├─ core                # Core components
-│   ├─ datasets            # All code related to datasets
-│   ├─ metrics             # All metrics and trackers
-│   ├─ models              # All models
-│   ├─ modules             # Basic modules that can be used in a modular way
-│   ├─ utils               # Various utils
-│   └─ visualization       # Visualization
+    ├─ core                # Core components
+    ├─ datasets            # All code related to datasets
+    ├─ metrics             # All metrics and trackers
+    ├─ models              # All models
+    ├─ modules             # Basic modules that can be used in a modular way
+    ├─ utils               # Various utils
+    └─ visualization       # Visualization
 ├─ test
 └─ train.py                # Main script to launch a training
 ```
