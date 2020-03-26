@@ -78,7 +78,7 @@ class PointNetForward(ModelInference):
         data_c.pos = data_c.pos.float()
         if self.inference_transform:
             data_c = self.inference_transform(data_c)
-        self.model.set_input(data_c)
+        self.model.set_input(data_c, data.pos.device)
         feat = self.model.get_local_feat().detach()
         setattr(data, str(self.feat_name), feat)
         return data
@@ -87,4 +87,3 @@ class PointNetForward(ModelInference):
         return "{}(model: {}, transform: {})".format(
             self.__class__.__name__, self.model.__class__.__name__, self.inference_transform
         )
-

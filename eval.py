@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 
 def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
     tracker.reset("val")
-    loader = dataset.val_dataloader()
+    loader = dataset.val_dataloader
     with Ctq(loader) as tq_val_loader:
         for data in tq_val_loader:
             with torch.no_grad():
@@ -40,10 +40,10 @@ def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoi
 
 def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
 
-    loaders = dataset.test_dataloaders()
+    loaders = dataset.test_dataloaders
 
-    for idx, loader in enumerate(loaders):
-        stage_name = dataset.get_test_dataset_name(idx)
+    for loader in loaders:
+        stage_name = loader.dataset.name
         tracker.reset(stage_name)
         with Ctq(loader) as tq_test_loader:
             for data in tq_test_loader:

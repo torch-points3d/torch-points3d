@@ -13,10 +13,11 @@ log = logging.getLogger(__name__)
 class Minkowski_Baseline_Model(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(Minkowski_Baseline_Model, self).__init__(option)
-
+        
         self.model = initialize_baseline_minkowski_unet(
             option.model_name, dataset.feature_dimension, dataset.num_classes, option.D
         )
+        self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
         self.batch_idx = data.batch.squeeze()
@@ -56,9 +57,8 @@ class Minkowski_Model(BaseModel):
         self.labels = data.y.to(device)
 
     def forward(self):
-
-        self.output = self.model(self.input).feats
-        self.loss_seg = F.cross_entropy(self.output, self.labels)
+        self.output = F.log_softmax(self.model(self.input).feats, dim=-1)
+        self.loss_seg = F.nll_loss(self.output, self.labels)
 
     def backward(self):
         self.loss_seg.backward()
@@ -69,6 +69,7 @@ class Minkowski_API_Model(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)

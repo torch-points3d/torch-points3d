@@ -100,20 +100,25 @@ class BaseModel(torch.nn.Module):
         raise NotImplementedError
 
     def get_labels(self):
-        """ returns a trensor of size [N_points] where each value is the label of a point
+        """ returns a trensor of size ``[N_points]`` where each value is the label of a point
         """
         return getattr(self, "labels", None)
 
     def get_batch_idx(self):
-        """ returns a trensor of size [N_points] where each value is the batch index of a point
+        """ returns a trensor of size ``[N_points]`` where each value is the batch index of a point
         """
         return getattr(self, "batch_idx", None)
 
     def get_output(self):
-        """ returns a trensor of size [N_points,...] where each value is the output
+        """ returns a trensor of size ``[N_points,...]`` where each value is the output
         of the network for a point (output of the last layer in general)
         """
         return self.output
+
+    def get_input(self):
+        """ returns the last input that was given to the model or ``None``
+        """
+        return getattr(self, "input", None)
 
     @abstractmethod
     def forward(self) -> Any:

@@ -18,10 +18,10 @@ class MockDatasetConfig(object):
 
 
 class MockDataset(torch.utils.data.Dataset):
-    def __init__(self, feature_size=0):
+    def __init__(self, feature_size=0, transform=None, num_points=100):
         self.feature_dimension = feature_size
         self.num_classes = 10
-        self.num_points = 100
+        self.num_points = num_points
         self.batch_size = 2
         self.weight_classes = None
         if feature_size > 0:
@@ -30,7 +30,8 @@ class MockDataset(torch.utils.data.Dataset):
             self._feature = None
         self._y = torch.tensor([0 for i in range(self.num_points)], dtype=torch.long)
         self._category = torch.ones((self.num_points,), dtype=torch.long)
-        self._transform = None
+        self._ms_transform = None
+        self._transform = transform
 
     def __len__(self):
         return self.num_points
@@ -45,6 +46,8 @@ class MockDataset(torch.utils.data.Dataset):
         ]
         if self._transform:
             datalist = [self._transform(d.clone()) for d in datalist]
+        if self._ms_transform:
+            datalist = [self._ms_transform(d.clone()) for d in datalist]
         return datalist
 
     def __getitem__(self, index):
@@ -57,12 +60,12 @@ class MockDataset(torch.utils.data.Dataset):
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
         transform = MultiScaleTransform(strategies)
-        self._transform = transform
+        self._ms_transform = transform
 
 
 class MockDatasetGeometric(MockDataset):
     def __getitem__(self, index):
-        if self._transform:
+        if self._ms_transform:
             return MultiScaleBatch.from_data_list(self.datalist)
         else:
             return Batch.from_data_list(self.datalist)

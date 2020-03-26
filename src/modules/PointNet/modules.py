@@ -77,17 +77,15 @@ class PointNetSeg(torch.nn.Module):
         self.seg_nn = MLP(seg_nn)
 
         self._use_scatter_pooling = True
-        self._batch_size = None
 
-    def set_scatter_pooling(self, use_scatter_pooling, batch_size):
+    def set_scatter_pooling(self, use_scatter_pooling):
         self._use_scatter_pooling = use_scatter_pooling
-        self._batch_size = batch_size
 
     def func_global_max_pooling(self, x3, batch):
         if self._use_scatter_pooling:
             return global_max_pool(x3, batch)
         else:
-            global_feature = x3.view((self._batch_size, -1, x3.shape[-1])).max(1)
+            global_feature = x3.max(1)
             return global_feature[0]
 
     def forward(self, x, batch):
