@@ -18,7 +18,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ├─ docker                  # Docker image that can be used for inference or training
 ├─ docs                    # All the doc
 ├─ eval.py                 # Eval script
-├─ find_neighbour_dist.py  # Script that helps find the optimal number of neighbours for neighbour search operations
+├─ find_neighbour_dist.py  # Script to find optimal #neighbours within neighbour search operations
 ├─ forward_scripts         # Script that runs a forward pass on possibly non annotated data
 ├─ outputs                 # All outputs from your runs sorted by date
 ├─ scripts                 # Some scripts to help manage the project
