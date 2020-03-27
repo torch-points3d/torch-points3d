@@ -8,6 +8,14 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
+## Available datasets
+
+* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405) 
+```
+mkdir -p data/scannet/raw/
+poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --types _vh_clean.segs.json --types .txt  _vh_clean_2.ply _vh_clean_2.0.010000.segs.json .aggregation.json
+```
+
 ## Getting started
 ### Requirements:
 * CUDA > 10

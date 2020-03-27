@@ -19,3 +19,4 @@ measurements/*.pickle
 _build
 docs_old
 /test/kernels/dispositions
+*.egg-info*
