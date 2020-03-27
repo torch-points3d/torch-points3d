@@ -66,7 +66,7 @@ poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --ty
 * S3DIS Fused
 ```
 
-* **[Shapenet](https://www.shapenet.org/)** from Iro Armeni *et al.*: [ShapeNet: An Information-Rich 3D Model Repository](Angel X. Chang) 
+* **[Shapenet](https://www.shapenet.org/)** from Iro Armeni *et al.*: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012) 
 
 ### Registration
 * **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng *et al.*: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182) 
