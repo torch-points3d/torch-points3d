@@ -36,6 +36,7 @@ LABEL_MAP_FILE = LABEL_MAP_FILES[0]
 RELEASE_SIZE = '1.2TB'
 V1_IDX = 1
 
+FAILED_DOWNLOAD = []
 
 def get_release_scans(release_file):
     scan_lines = urlopen(release_file)
@@ -72,15 +73,18 @@ def download_file(url, out_file):
         print('WARNING: skipping download of existing file ' + out_file)
 
 def download_scan(scan_id, out_dir, file_types, use_v1_sens):
-    print('Downloading ScanNet ' + RELEASE_NAME + ' scan ' + scan_id + ' ...')
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-    for ft in file_types:
-        v1_sens = use_v1_sens and ft == '.sens'
-        url = BASE_URL + RELEASE + '/' + scan_id + '/' + scan_id + ft if not v1_sens else BASE_URL + RELEASES[V1_IDX] + '/' + scan_id + '/' + scan_id + ft
-        out_file = out_dir + '/' + scan_id + ft
-        download_file(url, out_file)
-    print('Downloaded scan ' + scan_id)
+    try:
+        print('Downloading ScanNet ' + RELEASE_NAME + ' scan ' + scan_id + ' ...')
+        if not os.path.isdir(out_dir):
+            os.makedirs(out_dir)
+        for ft in file_types:
+            v1_sens = use_v1_sens and ft == '.sens'
+            url = BASE_URL + RELEASE + '/' + scan_id + '/' + scan_id + ft if not v1_sens else BASE_URL + RELEASES[V1_IDX] + '/' + scan_id + '/' + scan_id + ft
+            out_file = out_dir + '/' + scan_id + ft
+            download_file(url, out_file)
+        print('Downloaded scan ' + scan_id)
+    except:
+        FAILED_DOWNLOAD.append(scan_id)
 
 
 def download_task_data(out_dir):
@@ -210,5 +214,7 @@ def main():
             download_release(release_test_scans, out_dir_test_scans, file_types_test, use_v1_sens=False)
             download_file(os.path.join(BASE_URL, RELEASE_TASKS, TEST_FRAMES_FILE[0]), os.path.join(out_dir_tasks, TEST_FRAMES_FILE[0]))
 
+        print("FAILED DOWNLOADING")
+        print(FAILED_DOWNLOAD)
 
 if __name__ == "__main__": main()
