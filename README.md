@@ -8,7 +8,6 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
-
 ## Project structure
 
 ```bash
@@ -51,6 +50,15 @@ where each folder contains the dataset related to each task.
 * **[PointCNN](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
 * **[KPConv](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
 * **[MinkowskiEngine](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
+
+
+## Available datasets
+
+* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405) 
+```
+mkdir -p data/scannet/raw/
+poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --types _vh_clean.segs.json --types .txt  _vh_clean_2.ply _vh_clean_2.0.010000.segs.json .aggregation.json
+```
 
 ## Getting started
 ### Requirements:
