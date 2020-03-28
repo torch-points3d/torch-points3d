@@ -15,7 +15,7 @@ from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zi
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 import multiprocessing
-
+from tqdm import tqdm
 from src.metrics.segmentation_tracker import SegmentationTracker
 
 from src.datasets.base_dataset import BaseDataset
@@ -301,11 +301,8 @@ class Scannet(InMemoryDataset):
         instance_labels = instance_labels[mask]
 
         num_instances = len(np.unique(instance_labels))
-        log.info('Num of instances: {}'.format(num_instances))
-
         bbox_mask = np.in1d(instance_bboxes[:,-1], obj_class_ids)
         instance_bboxes = instance_bboxes[bbox_mask,:]
-        log.info('Num of care instances: {}'.format(instance_bboxes.shape[0]))
 
         N = mesh_vertices.shape[0]
         if max_num_point:
@@ -336,9 +333,7 @@ class Scannet(InMemoryDataset):
         self.SCAN_NAMES = [[line.rstrip() for line in open(osp.join(metadata_path, sf))]for sf in split_files]
 
     @staticmethod
-    def process_func(pre_transform, failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
-        log.info("")
-        log.info("Processing scan_name: {}".format(scan_name))
+    def process_func(id_scan, pre_transform, failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
         try:
             data = Scannet.read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, 
             obj_class_ids, use_instance_labels=use_instance_labels, use_instance_bboxes=use_instance_bboxes)
@@ -350,22 +345,21 @@ class Scannet(InMemoryDataset):
             return
         if pre_transform:
             data = pre_transform(data)
-        print(data)
+        log.info("{}| scan_name: {}, data: {}".format(id_scan, scan_name, data))
         return data
 
     def process(self):
         self.download()
         self.read_from_metadata()
         failures = {k:[] for k in self.SPLIT}
-
         scannet_dir = osp.join(self.raw_dir, "scans")
-
         for i, (scan_names, split) in enumerate(zip(self.SCAN_NAMES, self.SPLIT)):
-
+            total = len(scan_names)
+            args = [("{}/{}".format(id, total), self.pre_transform, failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                        self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for id, scan_name in enumerate(scan_names)]
             with multiprocessing.Pool(processes=self.process_workers) as pool:
-                args = [(self.pre_transform, failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
-                            self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for scan_name in scan_names]
                 datas = pool.starmap(Scannet.process_func, args)
+            log.info("SAVING TO {}".format(split, self.processed_paths[i]))
             torch.save(self.collate(datas), self.processed_paths[i])
         log.info("FAILURES: {}".format(failures))
 
