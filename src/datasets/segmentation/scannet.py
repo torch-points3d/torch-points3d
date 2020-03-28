@@ -336,7 +336,7 @@ class Scannet(InMemoryDataset):
         self.SCAN_NAMES = [[line.rstrip() for line in open(osp.join(metadata_path, sf))]for sf in split_files]
 
     @staticmethod
-    def process_func(failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
+    def process_func(pre_transform, failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
         log.info("")
         log.info("Processing scan_name: {}".format(scan_name))
         try:
@@ -347,6 +347,9 @@ class Scannet(InMemoryDataset):
         except Exception as e:
             print(e)
             failures[split].append(scan_name)
+            return
+        if pre_transform:
+            data = pre_transform(data)
         print(data)
         return data
 
@@ -360,13 +363,9 @@ class Scannet(InMemoryDataset):
         for i, (scan_names, split) in enumerate(zip(self.SCAN_NAMES, self.SPLIT)):
 
             with multiprocessing.Pool(processes=self.process_workers) as pool:
-
-                args = [(failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                args = [(self.pre_transform, failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
                             self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for scan_name in scan_names]
                 datas = pool.starmap(Scannet.process_func, args)
-
-            if self.pre_transform:
-                datas = [self.pre_transform(data) for data in datas]
             torch.save(self.collate(datas), self.processed_paths[i])
         log.info("FAILURES: {}".format(failures))
 
