@@ -21,7 +21,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ├─ forward_scripts         # Script that runs a forward pass on possibly non annotated data
 ├─ outputs                 # All outputs from your runs sorted by date
 ├─ scripts                 # Some scripts to help manage the project
-├─ src                       
+├─ src  
     ├─ core                # Core components
     ├─ datasets            # All code related to datasets
     ├─ metrics             # All metrics and trackers
@@ -35,7 +35,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 
 As a general philosophy we have split datasets and models by task. For example, datasets has three subfolders:
 
-- segmentation 
+- segmentation
 - classification
 - registration
 
@@ -54,25 +54,25 @@ where each folder contains the dataset related to each task.
 
 ## Available datasets
 ### Segmentation
-* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405) 
+* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 ```
 mkdir -p data/scannet/raw/
 poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --types _vh_clean.segs.json --types .txt  _vh_clean_2.ply _vh_clean_2.0.010000.segs.json .aggregation.json
 ```
-* **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni *et al.*: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105) 
+* **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni *et al.*: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105)
 ```
 * S3DIS 1x1
 * S3DIS Room
 * S3DIS Fused
 ```
 
-* **[Shapenet](https://www.shapenet.org/)** from Iro Armeni *et al.*: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012) 
+* **[Shapenet](https://www.shapenet.org/)** from Iro Armeni *et al.*: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
 
 ### Registration
-* **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng *et al.*: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182) 
+* **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng *et al.*: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
 
 ### Classification
-* **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu *et al.*: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf) 
+* **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu *et al.*: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
 ## Getting started
 ### Requirements:
