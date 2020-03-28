@@ -1,23 +1,198 @@
-class ScannetDataset:import os
+import os
 import os.path as osp
 import shutil
 import json
 from tqdm import tqdm as tq
 import torch
+from glob import glob
+import sys
+import json
+import csv
 
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 
-from src.metrics.shapenet_part_tracker import ShapenetPartTracker
+from src.metrics.segmentation_tracker import SegmentationTracker
 
 from src.datasets.base_dataset import BaseDataset
 
-class Scannet(InMemoryDataset):
 
+# REFERENCE TO https://github.com/facebookresearch/votenet/blob/master/scannet/load_scannet_data.py
+###################### UTILS ##################
+try:
+    import numpy as np
+except:
+    print("Failed to import numpy package.")
+    sys.exit(-1)
+
+try:
+    from plyfile import PlyData, PlyElement
+except:
+    print("Please install the module 'plyfile' for PLY i/o, e.g.")
+    print("pip install plyfile")
+    sys.exit(-1)
+
+def represents_int(s):
+    ''' if string s represents an int. '''
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
+def read_label_mapping(filename, label_from='raw_category', label_to='nyu40id'):
+    assert os.path.isfile(filename)
+    mapping = dict()
+    with open(filename) as csvfile:
+        reader = csv.DictReader(csvfile, delimiter='\t')
+        for row in reader:
+            mapping[row[label_from]] = int(row[label_to])
+    if represents_int(list(mapping.keys())[0]):
+        mapping = {int(k):v for k,v in mapping.items()}
+    return mapping
+
+def read_mesh_vertices(filename):
+    """ read XYZ for each vertex.
+    """
+    assert os.path.isfile(filename)
+    with open(filename, 'rb') as f:
+        plydata = PlyData.read(f)
+        num_verts = plydata['vertex'].count
+        vertices = np.zeros(shape=[num_verts, 3], dtype=np.float32)
+        vertices[:,0] = plydata['vertex'].data['x']
+        vertices[:,1] = plydata['vertex'].data['y']
+        vertices[:,2] = plydata['vertex'].data['z']
+    return vertices
+
+def read_mesh_vertices_rgb(filename):
+    """ read XYZ RGB for each vertex.
+    Note: RGB values are in 0-255
+    """
+    assert os.path.isfile(filename)
+    with open(filename, 'rb') as f:
+        plydata = PlyData.read(f)
+        num_verts = plydata['vertex'].count
+        vertices = np.zeros(shape=[num_verts, 6], dtype=np.float32)
+        vertices[:,0] = plydata['vertex'].data['x']
+        vertices[:,1] = plydata['vertex'].data['y']
+        vertices[:,2] = plydata['vertex'].data['z']
+        vertices[:,3] = plydata['vertex'].data['red']
+        vertices[:,4] = plydata['vertex'].data['green']
+        vertices[:,5] = plydata['vertex'].data['blue']
+    return vertices
+
+
+def read_aggregation(filename):
+    assert os.path.isfile(filename)
+    object_id_to_segs = {}
+    label_to_segs = {}
+    with open(filename) as f:
+        data = json.load(f)
+        num_objects = len(data['segGroups'])
+        for i in range(num_objects):
+            object_id = data['segGroups'][i]['objectId'] + 1 # instance ids should be 1-indexed
+            label = data['segGroups'][i]['label']
+            segs = data['segGroups'][i]['segments']
+            object_id_to_segs[object_id] = segs
+            if label in label_to_segs:
+                label_to_segs[label].extend(segs)
+            else:
+                label_to_segs[label] = segs
+    return object_id_to_segs, label_to_segs
+
+
+def read_segmentation(filename):
+    assert os.path.isfile(filename)
+    seg_to_verts = {}
+    with open(filename) as f:
+        data = json.load(f)
+        num_verts = len(data['segIndices'])
+        for i in range(num_verts):
+            seg_id = data['segIndices'][i]
+            if seg_id in seg_to_verts:
+                seg_to_verts[seg_id].append(i)
+            else:
+                seg_to_verts[seg_id] = [i]
+    return seg_to_verts, num_verts
+
+
+def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file=None):
+    """ points are XYZ RGB (RGB in 0-255),
+    semantic label as nyu40 ids,
+    instance label as 1-#instance,
+    box as (cx,cy,cz,dx,dy,dz,semantic_label)
+    """
+    label_map = read_label_mapping(label_map_file,
+        label_from='raw_category', label_to='nyu40id')    
+    mesh_vertices = read_mesh_vertices_rgb(mesh_file)
+
+    # Load scene axis alignment matrix
+    lines = open(meta_file).readlines()
+    for line in lines:
+        if 'axisAlignment' in line:
+            axis_align_matrix = [float(x) \
+                for x in line.rstrip().strip('axisAlignment = ').split(' ')]
+            break
+    axis_align_matrix = np.array(axis_align_matrix).reshape((4,4))
+    pts = np.ones((mesh_vertices.shape[0], 4))
+    pts[:,0:3] = mesh_vertices[:,0:3]
+    pts = np.dot(pts, axis_align_matrix.transpose()) # Nx4
+    mesh_vertices[:,0:3] = pts[:,0:3]
+
+    # Load semantic and instance labels
+    object_id_to_segs, label_to_segs = read_aggregation(agg_file)
+    seg_to_verts, num_verts = read_segmentation(seg_file)
+    label_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
+    object_id_to_label_id = {}
+    for label, segs in label_to_segs.items():
+        label_id = label_map[label]
+        for seg in segs:
+            verts = seg_to_verts[seg]
+            label_ids[verts] = label_id
+    instance_ids = np.zeros(shape=(num_verts), dtype=np.uint32) # 0: unannotated
+    num_instances = len(np.unique(list(object_id_to_segs.keys())))
+    for object_id, segs in object_id_to_segs.items():
+        for seg in segs:
+            verts = seg_to_verts[seg]
+            instance_ids[verts] = object_id
+            if object_id not in object_id_to_label_id:
+                object_id_to_label_id[object_id] = label_ids[verts][0]
+    instance_bboxes = np.zeros((num_instances,7))
+    for obj_id in object_id_to_segs:
+        label_id = object_id_to_label_id[obj_id]
+        obj_pc = mesh_vertices[instance_ids==obj_id, 0:3]
+        if len(obj_pc) == 0: continue
+        # Compute axis aligned box
+        # An axis aligned bounding box is parameterized by
+        # (cx,cy,cz) and (dx,dy,dz) and label id
+        # where (cx,cy,cz) is the center point of the box,
+        # dx is the x-axis length of the box.
+        xmin = np.min(obj_pc[:,0])
+        ymin = np.min(obj_pc[:,1])
+        zmin = np.min(obj_pc[:,2])
+        xmax = np.max(obj_pc[:,0])
+        ymax = np.max(obj_pc[:,1])
+        zmax = np.max(obj_pc[:,2])
+        bbox = np.array([(xmin+xmax)/2, (ymin+ymax)/2, (zmin+zmax)/2,
+            xmax-xmin, ymax-ymin, zmax-zmin, label_id])
+        # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
+        instance_bboxes[obj_id-1,:] = bbox 
+
+    return mesh_vertices.astype(np.float32), label_ids.astype(np.int), instance_ids.astype(np.int),\
+        instance_bboxes.astype(np.float32), object_id_to_label_id
+
+######################## SCANNET DATASET ##########################
+
+class Scannet(InMemoryDataset):
     CLASS_LABELS = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                     'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
                     'shower curtain', 'toilet', 'sink', 'bathtub', 'otherfurniture')
+    URLS_METADATA = ["https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2-labels.combined.tsv", 
+                     "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_train.txt",
+                     "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_test.txt",
+                     "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_val.txt"]
     VALID_CLASS_IDS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39)
     SCANNET_COLOR_MAP = {
         0: (0., 0., 0.),
@@ -61,6 +236,10 @@ class Scannet(InMemoryDataset):
         40: (100., 85., 144.),
     }
 
+    SPLIT = ["train", "val", "test"]
+
+    DONOTCARE_CLASS_IDS = np.array([])
+
     def __init__(
         self,
         root,
@@ -68,14 +247,22 @@ class Scannet(InMemoryDataset):
         transform=None,
         pre_transform=None,
         pre_filter=None,
+        version="v2",
+        use_instance_labels=False,
+        use_instance_bboxes=False,
+        donotcare_class_ids=None,
+        max_num_point=None
     ):
-        if categories is None:
-            categories = list(self.category_ids.keys())
-        if isinstance(categories, str):
-            categories = [categories]
-        assert all(category in self.category_ids for category in categories)
-        self.categories = categories
-        super(ShapeNet, self).__init__(root, transform, pre_transform, pre_filter)
+
+        if donotcare_class_ids:
+            self.DONOTCARE_CLASS_IDS = np.asarray(donotcare_class_ids)
+        assert version in ["v2", "v1"], "The version should be either v1 or v2"
+        self.version = version
+        self.max_num_point = max_num_point
+        self.use_instance_labels = use_instance_labels
+        self.use_instance_bboxes = use_instance_bboxes
+
+        super(Scannet, self).__init__(root, transform, pre_transform, pre_filter)
 
         if split == "train":
             path = self.processed_paths[0]
@@ -83,8 +270,6 @@ class Scannet(InMemoryDataset):
             path = self.processed_paths[1]
         elif split == "test":
             path = self.processed_paths[2]
-        elif split == "trainval":
-            path = self.processed_paths[3]
         else:
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
 
@@ -92,103 +277,124 @@ class Scannet(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return list(self.category_ids.values()) + ["train_test_split"]
+        return glob(osp.join(self.raw_dir, "scans", "*"))
 
     @property
     def processed_file_names(self):
-        cats = "_".join([cat[:3].lower() for cat in self.categories])
-        return [os.path.join("{}_{}.pt".format(cats, split)) for split in ["train", "val", "test", "trainval"]]
+        return ["{}.pt".format(s,) for s in self.SPLIT]
 
     def download(self):
-        path = download_url(self.url, self.root)
-        extract_zip(path, self.root)
-        os.unlink(path)
-        shutil.rmtree(self.raw_dir)
-        name = self.url.split("/")[-1].split(".")[0]
-        os.rename(osp.join(self.root, name), self.raw_dir)
+        if len(self.raw_file_names) == 0:
+            raise Exception("Please, run poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --types _vh_clean.segs.json --types .txt  _vh_clean_2.ply _vh_clean_2.0.010000.segs.json .aggregation.json")
+        else:
+            metadata_path = osp.join(self.raw_dir, "metadata")
+            if not os.path.exists(metadata_path):
+                os.makedirs(metadata_path)
+            for url in self.URLS_METADATA:
+                _ = download_url(url, metadata_path)
 
-    def process_filenames(self, filenames):
-        data_list = []
-        categories_ids = [self.category_ids[cat] for cat in self.categories]
-        cat_idx = {categories_ids[i]: i for i in range(len(categories_ids))}
+    @staticmethod
+    def read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):    
+        mesh_file = osp.join(scannet_dir, scan_name, scan_name + '_vh_clean_2.ply')
+        agg_file = osp.join(scannet_dir, scan_name, scan_name + '.aggregation.json')
+        seg_file = osp.join(scannet_dir, scan_name, scan_name + '_vh_clean_2.0.010000.segs.json')
+        meta_file = osp.join(scannet_dir, scan_name, scan_name + '.txt') # includes axisAlignment info for the train set scans.   
+        mesh_vertices, semantic_labels, instance_labels, instance_bboxes, instance2semantic = \
+            export(mesh_file, agg_file, seg_file, meta_file, label_map_file, None)
 
-        for name in tq(filenames):
-            cat = name.split(osp.sep)[0]
-            if cat not in categories_ids:
-                continue
+        mask = np.logical_not(np.in1d(semantic_labels, donotcare_class_ids))
+        mesh_vertices = mesh_vertices[mask,:]
+        semantic_labels = semantic_labels[mask]
+        instance_labels = instance_labels[mask]
 
-            data = read_txt_array(osp.join(self.raw_dir, name))
-            pos = data[:, :3]
-            x = data[:, 3:6]
-            y = data[:, -1].type(torch.long)
-            category = torch.ones(x.shape[0], dtype=torch.long) * cat_idx[cat]
-            data = Data(pos=pos, x=x, y=y, category=category)
-            if self.pre_filter is not None and not self.pre_filter(data):
-                continue
-            if self.pre_transform is not None:
-                data = self.pre_transform(data)
-            data_list.append(data)
+        num_instances = len(np.unique(instance_labels))
+        print('Num of instances: ', num_instances)
 
-        return data_list
+        bbox_mask = np.in1d(instance_bboxes[:,-1], obj_class_ids)
+        instance_bboxes = instance_bboxes[bbox_mask,:]
+        print('Num of care instances: ', instance_bboxes.shape[0])
+
+        N = mesh_vertices.shape[0]
+        if max_num_point:
+            if N > max_num_point:
+                choices = np.random.choice(N, max_num_point, replace=False)
+                mesh_vertices = mesh_vertices[choices, :]
+                semantic_labels = semantic_labels[choices]
+                instance_labels = instance_labels[choices]
+
+        data = {}
+        data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
+        data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:]) / 255.
+        data["y"] = torch.from_numpy(semantic_labels)
+        
+        if use_instance_labels:
+            data["iy"] = torch.from_numpy(instance_labels)
+        
+        if use_instance_bboxes:
+            data["bbox"] = torch.from_numpy(instance_bboxes)
+
+        return Data(**data)
+
+    def read_from_metadata(self):
+        metadata_path = osp.join(self.raw_dir, "metadata")
+        self.LABEL_MAP_FILE = osp.join(metadata_path, "scannetv2-labels.combined.tsv")
+        split_files = ["scannetv2_{}.txt".format(s) for s in self.SPLIT]
+        self.SCAN_NAMES = [[line.rstrip() for line in open(osp.join(metadata_path, sf))]for sf in split_files]
 
     def process(self):
-        trainval = []
-        for i, split in enumerate(["train", "val", "test"]):
-            path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
-            with open(path, "r") as f:
-                filenames = [
-                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
-                ]  # Removing first directory.
-            data_list = self.process_filenames(filenames)
-            if split == "train" or split == "val":
-                trainval += data_list
-            torch.save(self.collate(data_list), self.processed_paths[i])
-        torch.save(self.collate(trainval), self.processed_paths[3])
+        self.download()
+        self.read_from_metadata()
+
+        scannet_dir = osp.join(self.raw_dir, "scans")
+
+        for i, (scan_names, split) in enumerate(zip(self.SCAN_NAMES, self.SPLIT)):
+            datas = []
+
+            for scan_name in scan_names:
+                print("scan_name: {}".format(scan_name))
+                data = Scannet.read_one_scan(scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                                             self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes)
+
+                if self.pre_transform:
+                    data = self.pre_transform(data)
+
+                datas.append(data)
+
+            torch.save(self.collate(datas), self.processed_paths[i])
+
 
     def __repr__(self):
-        return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)
+        return "{}({})".format(self.__class__.__name__, len(self))
 
 
-class ShapeNetDataset(BaseDataset):
-    FORWARD_CLASS = "forward.shapenet.ForwardShapenetDataset"
+class ScannetDataset(BaseDataset):
 
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
-        try:
-            self._category = dataset_opt.category
-        except KeyError:
-            self._category = None
-        pre_transform = self.pre_transform
-        train_transform = self.train_transform
-        self.train_dataset = ShapeNet(
+
+        self.train_dataset = Scannet(
             self._data_path,
-            self._category,
-            include_normals=dataset_opt.normal,
-            split="trainval",
-            pre_transform=pre_transform,
-            transform=train_transform,
+            split="train",
+            pre_transform=self.pre_transform,
+            transform=self.train_transform,
+            version=dataset_opt.version
         )
 
-        self.test_dataset = ShapeNet(
+        self.val_dataset = Scannet(
             self._data_path,
-            self._category,
-            include_normals=dataset_opt.normal,
+            split="val",
+            transform=self.test_transform,
+            pre_transform=self.pre_transform,
+            version=dataset_opt.version
+        )
+
+        self.test_dataset = Scannet(
+            self._data_path,
             split="test",
             transform=self.test_transform,
-            pre_transform=pre_transform,
+            pre_transform=self.pre_transform,
+            version=dataset_opt.version
         )
-        self._categories = self.train_dataset.categories
-
-    @property
-    def class_to_segments(self):
-        classes_to_segment = {}
-        for key in self._categories:
-            classes_to_segment[key] = ShapeNet.seg_classes[key]
-        return classes_to_segment
-
-    @property
-    def is_hierarchical(self):
-        return len(self._categories) > 1
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
@@ -200,5 +406,5 @@ class ShapeNetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return ShapenetPartTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 

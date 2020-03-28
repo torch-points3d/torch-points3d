@@ -1,9 +1,9 @@
 data:
     class: scannet.ScannetDataset
-    dataset_name: "scannet_sparse"
     task: segmentation
     dataroot: data
     grid_size: 0.02
+    version: 'v2'
     pre_transforms:
         - transform: ToSparseInput
           params:
