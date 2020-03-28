@@ -11,3 +11,8 @@ data:
         - transform: GridSampling
           params:
               size: ${data.first_subsampling}
+
+    pre_filters:
+      - filter: PlanarityFilter
+        params:
+          thresh: 0.3
