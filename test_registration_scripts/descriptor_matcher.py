@@ -1,9 +1,9 @@
+import pandas as pd
 import hydra
 import numpy as np
 from sklearn.neighbors import KDTree
 import os
 import os.path as osp
-import json
 from omegaconf import OmegaConf
 import sys
 
@@ -12,7 +12,28 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from src.datasets.registration.evaluation import read_gt_log
+
+def read_gt_log(path):
+    """
+    read the gt.log of evaluation set of 3DMatch or ETH Dataset and parse it.
+    """
+    list_pair = []
+    list_mat = []
+    with open(path, "r") as f:
+        all_mat = f.readlines()
+    mat = np.zeros((4, 4))
+    for i in range(len(all_mat)):
+        if i % 5 == 0:
+            if i != 0:
+                list_mat.append(mat)
+            mat = np.zeros((4, 4))
+            list_pair.append(list(map(int, all_mat[i].split("\t")[:-1])))
+        else:
+            line = all_mat[i].split("\t")
+
+            mat[i % 5 - 1] = np.asarray(line[:4], dtype=np.float)
+    list_mat.append(mat)
+    return list_pair, list_mat
 
 
 def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=False, sym=True):
@@ -77,20 +98,19 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
 
     n_s = osp.split(path_descr_source)[-1].split(".")[0]
     n_t = osp.split(path_descr_target)[-1].split(".")[0]
-    out_path = osp.join(res_path, "{}_{}.npz".format(n_s, n_t))
+
     frac_correct = compute_mean_correct_matches(dist, list_tau)
     print(n_s, n_t, frac_correct[0:5], list_tau)
-    np.savez(
-        out_path,
-        kp_source,
-        kp_target,
+    dico = dict(
+        kp_source=kp_source,
+        kp_target=kp_target,
         dist=dist,
         list_tau1=list_tau,
         frac_correct=frac_correct,
         name_source=n_s,
         name_target=n_t,
     )
-    return frac_correct[0]
+    return dico
 
 
 def compute_recall_scene(scene_name, list_pair, list_trans, list_tau1, list_tau2, res_path):
@@ -98,18 +118,20 @@ def compute_recall_scene(scene_name, list_pair, list_trans, list_tau1, list_tau2
     evaluate the recall for each scene
     """
     list_frac_correct = []
+    list_dico = []
     for i, pair in enumerate(list_pair):
-        u_st = pair_evaluation(pair[0], pair[1], list_trans[i], list_tau1, res_path)
-        list_frac_correct.append(u_st)
+        dico = pair_evaluation(pair[0], pair[1], list_trans[i], list_tau1, res_path)
+        list_frac_correct.append(dico["frac_correct"])
+        list_dico[dico]
 
     list_recall = compute_mean_correct_matches(np.asarray(list_frac_correct), list_tau2, is_leq=False)
-    out_path = osp.join(res_path, "res_recall.json")
-    with open(out_path, "w") as f:
-        print(list_recall)
-        print(list_tau2)
-        print(scene_name)
-        dico = dict(scene_name=scene_name, list_tau2=list(list_tau2), list_recall=list(list_recall))
-        json.dump(dico, f)
+    print("Save the matches")
+    df_matches = pd.DataFrame(list_dico)
+    df_matches.to_csv(osp.join(res_path, "matches.csv"))
+    dico = dict(scene_name=scene_name, list_tau2=list(list_tau2), list_recall=list(list_recall))
+    df_res = pd.DataFrame([dico])
+    df_res.to_csv(osp.join(res_path, "res_recall.csv"))
+    return dico
 
 
 def evaluate(path_raw_fragment, path_results, list_tau1, list_tau2):
@@ -119,7 +141,7 @@ def evaluate(path_raw_fragment, path_results, list_tau1, list_tau2):
     """
 
     list_scene = os.listdir(path_raw_fragment)
-
+    list_total_res = []
     for scene in list_scene:
         print(scene)
         path_log = osp.join(path_raw_fragment, scene, "gt.log")
@@ -134,7 +156,12 @@ def evaluate(path_raw_fragment, path_results, list_tau1, list_tau2):
         res_path = osp.join(path_results, "matches", scene)
         if not osp.exists(res_path):
             os.makedirs(res_path, exist_ok=True)
-        compute_recall_scene(scene, list_pair, list_mat, list_tau1, list_tau2, res_path)
+        dico = compute_recall_scene(scene, list_pair, list_mat, list_tau1, list_tau2, res_path)
+        list_total_res.append(dico)
+    total_recall = np.mean([d["list_recall"] for d in list_total_res], axis=0)
+    list_total_res.append(dict(scene_name="total", list_tau2=list_tau2, list_recall=list(total_recall)))
+    df = pd.DataFrame(list_total_res)
+    df.to_csv(osp.join(path_results, "matches", "total_res.csv"))
 
 
 @hydra.main(config_path="conf/config.yaml")

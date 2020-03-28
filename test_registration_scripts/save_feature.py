@@ -1,3 +1,4 @@
+import open3d
 import torch
 import hydra
 import logging
@@ -62,9 +63,11 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
 
             with Ctq(loader) as tq_test_loader:
                 for data in tq_test_loader:
-                    data = data.to(device)
+                    # pcd = open3d.geometry.PointCloud()
+                    # pcd.points = open3d.utility.Vector3dVector(data.pos[0].numpy())
+                    # open3d.visualization.draw_geometries([pcd])
                     with torch.no_grad():
-                        model.set_input(data)
+                        model.set_input(data, device)
                         model.forward()
                         features.append(model.get_output().cpu())
             features = torch.cat(features, 0).numpy()
@@ -77,9 +80,8 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
         loader = dataset.test_dataloaders()[0]
         with Ctq(loader) as tq_test_loader:
             for i, data in enumerate(tq_test_loader):
-                data = data.to(device)
                 with torch.no_grad():
-                    model.set_input(data)
+                    model.set_input(data, device)
                     model.forward()
                     features = model.get_output()[0]  # batch of 1
                     save(output_path, scene_name, pc_name, data.to("cpu"), features)

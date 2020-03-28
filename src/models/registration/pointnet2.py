@@ -11,6 +11,7 @@ from src.modules.pointnet2 import *
 from src.core.base_conv.dense import DenseFPModule
 from src.core.common_modules import MLP
 from src.models.base_architectures import BackboneBasedModel
+from src.models.base_architectures import UnwrappedUnetBasedModel
 from src.models.registration.base import create_batch_siamese
 
 log = logging.getLogger(__name__)
@@ -34,7 +35,6 @@ class PatchPointNet2_D(BackboneBasedModel):
     def set_last_mlp(self, last_mlp_opt):
 
         if len(last_mlp_opt.nn) > 2:
-
             self.FC_layer = MLP(last_mlp_opt.nn[: len(last_mlp_opt.nn) - 1])
             self.FC_layer.add_module("last", Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
         elif len(last_mlp_opt.nn) == 2:
@@ -96,3 +96,10 @@ class PatchPointNet2_D(BackboneBasedModel):
         # calculate loss given the input and intermediate results
         if hasattr(self, "loss"):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
+
+
+class FragmentPointNet(UnwrappedUnetBasedModel):
+    def __init__(self, option, model_type, dataset, modules):
+        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        self.set_last_mlp(option.mlp_cls)
+        self.loss_names = ["loss_reg", "loss", "internal"]
