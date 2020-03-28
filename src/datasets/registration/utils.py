@@ -5,7 +5,7 @@ import os
 import os.path as osp
 import torch
 from torch_geometric.data import Data
-from torch_points_kernels.points_cpu import ball_query
+from torch_points.points_cpu import ball_query
 import imageio
 from tqdm import tqdm
 
