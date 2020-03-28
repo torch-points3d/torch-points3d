@@ -1,5 +1,5 @@
-input_path: '/media/admincaor/DataHDD2To/mines/code/deeppointcloud-benchmarks/data/test3dmatch/processed/fragment'
-output_path: '/media/admincaor/DataHDD2To/mines/code/deeppointcloud-benchmarks/outputs/fpfh/3DMatch'
+input_path: '../../../data/test3dmatch/processed/fragment'
+output_path: '../../fpfh/3DMatch'
 radius: 0.3
 max_nn: 256
 radius_normal: 0.093
