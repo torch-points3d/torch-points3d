@@ -4,8 +4,19 @@ data:
     dataroot: data
     grid_size: 0.02
     version: 'v2'
+    use_instance_labels: False
+    use_instance_bboxes: False
+    donotcare_class_ids: []
+    max_num_point: 65536
     pre_transforms:
         - transform: ToSparseInput
           params:
             grid_size: ${data.grid_size}
             mode: "mean"
+        - transform: AddOnes
+        - transform: AddFeatsByKeys
+          params:
+            list_add_to_x: [True, True]
+            feat_names: ["ones", "rgb"]
+            input_nc_feats: [1, 3]
+            stricts: [True, True]

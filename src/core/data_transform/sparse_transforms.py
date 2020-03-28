@@ -69,7 +69,7 @@ def quantize_data(data, mode="last"):
 
 
 def to_sparse_input(
-    data, grid_size, save_delta=True, save_delta_norm=True, mode="last", quantizing_func=torch.floor,
+    data, grid_size, save_delta=False, save_delta_norm=False, mode="last", quantizing_func=torch.floor,
 ):
     assert mode=="last" or mode=="mean" or mode =="keep_duplicate"
     if quantizing_func not in [torch.floor, torch.ceil, torch.round]:

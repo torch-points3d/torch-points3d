@@ -207,3 +207,13 @@ class NormalFeature(object):
         else:
             data.x = torch.cat([data.x, norm], -1)
         return data
+
+class AddOnes(object):
+    """
+    Add ones tensor to data
+    """
+
+    def __call__(self, data):
+        num_nodes = data.pos.shape[0]
+        data.ones = torch.ones((num_nodes, 1)).float()
+        return data

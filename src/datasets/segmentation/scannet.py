@@ -8,7 +8,9 @@ from glob import glob
 import sys
 import json
 import csv
-
+import logging
+import numpy as np
+from plyfile import PlyData, PlyElement
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
@@ -17,21 +19,10 @@ from src.metrics.segmentation_tracker import SegmentationTracker
 
 from src.datasets.base_dataset import BaseDataset
 
+log = logging.getLogger(__name__)
 
 # REFERENCE TO https://github.com/facebookresearch/votenet/blob/master/scannet/load_scannet_data.py
 ###################### UTILS ##################
-try:
-    import numpy as np
-except:
-    print("Failed to import numpy package.")
-    sys.exit(-1)
-
-try:
-    from plyfile import PlyData, PlyElement
-except:
-    print("Please install the module 'plyfile' for PLY i/o, e.g.")
-    print("pip install plyfile")
-    sys.exit(-1)
 
 def represents_int(s):
     ''' if string s represents an int. '''
@@ -40,7 +31,6 @@ def represents_int(s):
         return True
     except ValueError:
         return False
-
 
 def read_label_mapping(filename, label_from='raw_category', label_to='nyu40id'):
     assert os.path.isfile(filename)
@@ -263,7 +253,6 @@ class Scannet(InMemoryDataset):
         self.use_instance_bboxes = use_instance_bboxes
 
         super(Scannet, self).__init__(root, transform, pre_transform, pre_filter)
-
         if split == "train":
             path = self.processed_paths[0]
         elif split == "val":
@@ -308,11 +297,11 @@ class Scannet(InMemoryDataset):
         instance_labels = instance_labels[mask]
 
         num_instances = len(np.unique(instance_labels))
-        print('Num of instances: ', num_instances)
+        log.info('Num of instances: {}'.format(num_instances))
 
         bbox_mask = np.in1d(instance_bboxes[:,-1], obj_class_ids)
         instance_bboxes = instance_bboxes[bbox_mask,:]
-        print('Num of care instances: ', instance_bboxes.shape[0])
+        log.info('Num of care instances: {}'.format(instance_bboxes.shape[0]))
 
         N = mesh_vertices.shape[0]
         if max_num_point:
@@ -326,6 +315,7 @@ class Scannet(InMemoryDataset):
         data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
         data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:]) / 255.
         data["y"] = torch.from_numpy(semantic_labels)
+        data["x"] = None
         
         if use_instance_labels:
             data["iy"] = torch.from_numpy(instance_labels)
@@ -344,6 +334,7 @@ class Scannet(InMemoryDataset):
     def process(self):
         self.download()
         self.read_from_metadata()
+        failures = {k:[] for k in self.SPLIT}
 
         scannet_dir = osp.join(self.raw_dir, "scans")
 
@@ -351,16 +342,19 @@ class Scannet(InMemoryDataset):
             datas = []
 
             for scan_name in scan_names:
-                print("scan_name: {}".format(scan_name))
-                data = Scannet.read_one_scan(scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
-                                             self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes)
-
+                log.info("Processing scan_name: {}".format(scan_name))
+                try:
+                    data = Scannet.read_one_scan(scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                                                self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes)
+                except KeyboardInterrupt:
+                    raise KeyboardInterrupt
+                except Exception as e:
+                    failures[split].append(scan_name)
                 if self.pre_transform:
                     data = self.pre_transform(data)
-
                 datas.append(data)
-
             torch.save(self.collate(datas), self.processed_paths[i])
+        log.info("FAILURES: {}".format(failures))
 
 
     def __repr__(self):
@@ -372,20 +366,34 @@ class ScannetDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
+        use_instance_labels: bool = dataset_opt.use_instance_labels
+        use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
+        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids
+        max_num_point: int = dataset_opt.max_num_point
+
         self.train_dataset = Scannet(
             self._data_path,
             split="train",
             pre_transform=self.pre_transform,
             transform=self.train_transform,
-            version=dataset_opt.version
+            version=dataset_opt.version,
+            use_instance_labels=use_instance_labels,
+            use_instance_bboxes=use_instance_bboxes,
+            donotcare_class_ids=donotcare_class_ids,
+            max_num_point=max_num_point,            
         )
+
 
         self.val_dataset = Scannet(
             self._data_path,
             split="val",
-            transform=self.test_transform,
+            transform=self.val_transform,
             pre_transform=self.pre_transform,
-            version=dataset_opt.version
+            version=dataset_opt.version,
+            use_instance_labels=use_instance_labels,
+            use_instance_bboxes=use_instance_bboxes,
+            donotcare_class_ids=donotcare_class_ids,
+            max_num_point=max_num_point,  
         )
 
         self.test_dataset = Scannet(
@@ -393,7 +401,11 @@ class ScannetDataset(BaseDataset):
             split="test",
             transform=self.test_transform,
             pre_transform=self.pre_transform,
-            version=dataset_opt.version
+            version=dataset_opt.version,
+            use_instance_labels=use_instance_labels,
+            use_instance_bboxes=use_instance_bboxes,
+            donotcare_class_ids=donotcare_class_ids,
+            max_num_point=max_num_point,  
         )
 
     @staticmethod
