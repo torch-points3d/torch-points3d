@@ -334,15 +334,8 @@ class Scannet(InMemoryDataset):
 
     @staticmethod
     def process_func(id_scan, pre_transform, failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
-        try:
-            data = Scannet.read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, 
-            obj_class_ids, use_instance_labels=use_instance_labels, use_instance_bboxes=use_instance_bboxes)
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt
-        except Exception as e:
-            print(e)
-            failures[split].append(scan_name)
-            return
+        data = Scannet.read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, 
+               obj_class_ids, use_instance_labels=use_instance_labels, use_instance_bboxes=use_instance_bboxes)
         if pre_transform:
             data = pre_transform(data)
         log.info("{}| scan_name: {}, data: {}".format(id_scan, scan_name, data))
@@ -354,13 +347,18 @@ class Scannet(InMemoryDataset):
         failures = {k:[] for k in self.SPLIT}
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.SCAN_NAMES, self.SPLIT)):
-            total = len(scan_names)
-            args = [("{}/{}".format(id, total), self.pre_transform, failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
-                        self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for id, scan_name in enumerate(scan_names)]
-            with multiprocessing.Pool(processes=self.process_workers) as pool:
-                datas = pool.starmap(Scannet.process_func, args)
-            log.info("SAVING TO {}".format(split, self.processed_paths[i]))
-            torch.save(self.collate(datas), self.processed_paths[i])
+            if not os.path.exists(self.processed_paths[i]):
+                scannet_dir = osp.join(self.raw_dir, "scans" if split in ["train", "val"] else "scans_test")
+                datas = []
+                total = len(scan_names)
+                args = [("{}/{}".format(id, total), self.pre_transform, failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                            self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for id, scan_name in enumerate(scan_names)]
+                for arg in args:
+                    data = Scannet.process_func(*arg)
+                    datas.append(data)
+                    #datas = pool.starmap(Scannet.process_func, args)
+                log.info("SAVING TO {}".format(split, self.processed_paths[i]))
+                torch.save(self.collate(datas), self.processed_paths[i])
         log.info("FAILURES: {}".format(failures))
 
     def __repr__(self):
@@ -392,20 +390,8 @@ class ScannetDataset(BaseDataset):
 
         self.val_dataset = Scannet(
             self._data_path,
-            split="val",
-            transform=self.val_transform,
-            pre_transform=self.pre_transform,
-            version=dataset_opt.version,
-            use_instance_labels=use_instance_labels,
-            use_instance_bboxes=use_instance_bboxes,
-            donotcare_class_ids=donotcare_class_ids,
-            max_num_point=max_num_point,  
-        )
-
-        self.test_dataset = Scannet(
-            self._data_path,
             split="test",
-            transform=self.test_transform,
+            transform=self.val_transform,
             pre_transform=self.pre_transform,
             version=dataset_opt.version,
             use_instance_labels=use_instance_labels,

@@ -8,7 +8,7 @@ data:
     use_instance_bboxes: False
     donotcare_class_ids: []
     max_num_point: None
-    process_workers: 2
+    process_workers: 1
     pre_transforms:
         - transform: ToSparseInput
           params:
