@@ -14,6 +14,7 @@ from plyfile import PlyData, PlyElement
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
+import multiprocessing
 
 from src.metrics.segmentation_tracker import SegmentationTracker
 
@@ -183,7 +184,8 @@ class Scannet(InMemoryDataset):
                      "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_train.txt",
                      "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_test.txt",
                      "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_val.txt"]
-    VALID_CLASS_IDS = (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39)
+    VALID_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
+    
     SCANNET_COLOR_MAP = {
         0: (0., 0., 0.),
         1: (174., 199., 232.),
@@ -241,7 +243,8 @@ class Scannet(InMemoryDataset):
         use_instance_labels=False,
         use_instance_bboxes=False,
         donotcare_class_ids=None,
-        max_num_point=None
+        max_num_point=None,
+        process_workers = 4,
     ):
 
         if donotcare_class_ids:
@@ -251,6 +254,7 @@ class Scannet(InMemoryDataset):
         self.max_num_point = max_num_point
         self.use_instance_labels = use_instance_labels
         self.use_instance_bboxes = use_instance_bboxes
+        self.process_workers = process_workers
 
         super(Scannet, self).__init__(root, transform, pre_transform, pre_filter)
         if split == "train":
@@ -331,6 +335,19 @@ class Scannet(InMemoryDataset):
         split_files = ["scannetv2_{}.txt".format(s) for s in self.SPLIT]
         self.SCAN_NAMES = [[line.rstrip() for line in open(osp.join(metadata_path, sf))]for sf in split_files]
 
+    @staticmethod
+    def process_func(failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
+        log.info("Processing scan_name: {}".format(scan_name))
+        try:
+            data = Scannet.read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, 
+            obj_class_ids, use_instance_labels=use_instance_labels, use_instance_bboxes=use_instance_bboxes)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except Exception as e:
+            print(e)
+            failures[split].append(scan_name)
+        return data
+
     def process(self):
         self.download()
         self.read_from_metadata()
@@ -339,22 +356,15 @@ class Scannet(InMemoryDataset):
         scannet_dir = osp.join(self.raw_dir, "scans")
 
         for i, (scan_names, split) in enumerate(zip(self.SCAN_NAMES, self.SPLIT)):
-            datas = []
 
-            for scan_name in scan_names:
-                log.info("Processing scan_name: {}".format(scan_name))
-                try:
-                    data = Scannet.read_one_scan(scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
-                            self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes)
-                except KeyboardInterrupt:
-                    raise KeyboardInterrupt
-                except Exception as e:
-                    print(e)
-                    failures[split].append(scan_name)
-                if self.pre_transform:
-                    data = self.pre_transform(data)
-                print(data)
-                datas.append(data)
+            with multiprocessing.Pool(processes=self.process_workers) as pool:
+
+                args = [(failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                            self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for scan_name in scan_names]
+                datas = pool.starmap(Scannet.process_func, args)
+
+            if self.pre_transform:
+                datas = [self.pre_transform(data) for data in datas]
             torch.save(self.collate(datas), self.processed_paths[i])
         log.info("FAILURES: {}".format(failures))
 
