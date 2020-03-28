@@ -345,13 +345,15 @@ class Scannet(InMemoryDataset):
                 log.info("Processing scan_name: {}".format(scan_name))
                 try:
                     data = Scannet.read_one_scan(scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
-                                                self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes)
+                            self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes)
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except Exception as e:
+                    print(e)
                     failures[split].append(scan_name)
                 if self.pre_transform:
                     data = self.pre_transform(data)
+                print(data)
                 datas.append(data)
             torch.save(self.collate(datas), self.processed_paths[i])
         log.info("FAILURES: {}".format(failures))
@@ -369,7 +371,7 @@ class ScannetDataset(BaseDataset):
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
         donotcare_class_ids: [] = dataset_opt.donotcare_class_ids
-        max_num_point: int = dataset_opt.max_num_point
+        max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
 
         self.train_dataset = Scannet(
             self._data_path,
