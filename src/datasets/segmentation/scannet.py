@@ -337,6 +337,7 @@ class Scannet(InMemoryDataset):
 
     @staticmethod
     def process_func(failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
+        log.info("")
         log.info("Processing scan_name: {}".format(scan_name))
         try:
             data = Scannet.read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, 
@@ -346,6 +347,7 @@ class Scannet(InMemoryDataset):
         except Exception as e:
             print(e)
             failures[split].append(scan_name)
+        print(data)
         return data
 
     def process(self):
@@ -367,7 +369,6 @@ class Scannet(InMemoryDataset):
                 datas = [self.pre_transform(data) for data in datas]
             torch.save(self.collate(datas), self.processed_paths[i])
         log.info("FAILURES: {}".format(failures))
-
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, len(self))

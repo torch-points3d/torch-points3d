@@ -179,14 +179,14 @@ class ToSparseInput(object):
         Returns the same data object with only one point per voxel
     """
 
-    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, mode="last"):
+    def __init__(self, grid_size=None, save_delta:bool=False, save_delta_norm:bool=False, mode="last"):
         self._grid_size = grid_size
         self._save_delta = save_delta
         self._save_delta_norm = save_delta_norm
         self._mode = mode
 
     def _process(self, data):
-        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, mode=self._mode)
+        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, save_delta_norm=self._save_delta_norm, mode=self._mode)
 
     def __call__(self, data):
         if isinstance(data, list):
