@@ -11,11 +11,11 @@ training:
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
         grad_clip: -1
         optimizer:
-            class: sgd
+            class: SGD
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
-                sgd_momentum: 0.9
-                sgd_dampening: 0.1
+                momentum: 0.9
+                dampening: 0.1
                 weight_decay: 1e-4
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
