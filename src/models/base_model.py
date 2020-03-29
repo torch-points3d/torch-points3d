@@ -271,7 +271,7 @@ class BaseModel(torch.nn.Module):
         else:
             return loss / c
 
-    def get_lossor_and_miner(self, opt_loss, opt_miner):
+    def get_loss_and_miner(self, opt_loss, opt_miner):
         """
         instantiate the loss and the miner if it's available
         """
