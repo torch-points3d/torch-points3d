@@ -517,7 +517,6 @@ class Scannet(InMemoryDataset):
                 else:
                     datas = []
                     for arg in args:
-                        if use_multiprocessing
                         data = Scannet.process_func(*arg)
                         datas.append(data)
                 log.info("SAVING TO {}".format(split, self.processed_paths[i]))

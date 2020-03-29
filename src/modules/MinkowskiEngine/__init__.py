@@ -1,5 +1,6 @@
 import sys
 from .networks import *
+from .res16unet import *
 
 _custom_models = sys.modules[__name__]
 
