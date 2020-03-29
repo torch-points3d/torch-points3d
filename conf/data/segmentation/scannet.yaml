@@ -1,5 +1,6 @@
 data:
     class: scannet.ScannetDataset
+    dataset_name: "scannet_test"
     task: segmentation
     dataroot: data
     grid_size: 0.05

@@ -16,14 +16,129 @@ from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 import multiprocessing
 from tqdm import tqdm
-from src.metrics.segmentation_tracker import SegmentationTracker
 
+import tempfile
+import urllib
+
+if sys.version_info[0] == 3:
+    from urllib.request import urlopen
+else:
+    from urllib import urlopen
+
+from src.metrics.scannet_tracker import ScannetTracker
 from src.datasets.base_dataset import BaseDataset
 
 log = logging.getLogger(__name__)
 
+# Ref: https://github.com/xjwang-cs/TSDF_utils/blob/master/download-scannet.py
+########################################################################################
+#                                                                                      #
+#                                      Download script                                 #
+#                                                                                      #
+########################################################################################
+
+BASE_URL = 'http://kaldir.vc.in.tum.de/scannet/'
+TOS_URL = BASE_URL + 'ScanNet_TOS.pdf'
+FILETYPES = ['.aggregation.json', '.sens', '.txt', '_vh_clean.ply', '_vh_clean_2.0.010000.segs.json', '_vh_clean_2.ply', '_vh_clean.segs.json', '_vh_clean.aggregation.json', '_vh_clean_2.labels.ply', '_2d-instance.zip', '_2d-instance-filt.zip', '_2d-label.zip', '_2d-label-filt.zip']
+FILETYPES_TEST = ['.sens', '.txt', '_vh_clean.ply', '_vh_clean_2.ply']
+PREPROCESSED_FRAMES_FILE = ['scannet_frames_25k.zip', '5.6GB']
+TEST_FRAMES_FILE = ['scannet_frames_test.zip', '610MB']
+LABEL_MAP_FILES = ['scannetv2-labels.combined.tsv', 'scannet-labels.combined.tsv']
+RELEASES = ['v2/scans', 'v1/scans']
+RELEASES_TASKS = ['v2/tasks', 'v1/tasks']
+RELEASES_NAMES = ['v2', 'v1']
+RELEASE = RELEASES[0]
+RELEASE_TASKS = RELEASES_TASKS[0]
+RELEASE_NAME = RELEASES_NAMES[0]
+LABEL_MAP_FILE = LABEL_MAP_FILES[0]
+RELEASE_SIZE = '1.2TB'
+V1_IDX = 1
+
+
+def get_release_scans(release_file):
+    scan_lines = urlopen(release_file)
+    scans = []
+    for scan_line in scan_lines:
+        scan_id = scan_line.decode('utf8').rstrip('\n')
+        scans.append(scan_id)
+    return scans
+
+
+def download_release(release_scans, out_dir, file_types, use_v1_sens):
+    if len(release_scans) == 0:
+        return
+    print('Downloading ScanNet ' + RELEASE_NAME + ' release to ' + out_dir + '...')
+    for scan_id in release_scans:
+        scan_out_dir = os.path.join(out_dir, scan_id)
+        download_scan(scan_id, scan_out_dir, file_types, use_v1_sens)
+    print('Downloaded ScanNet ' + RELEASE_NAME + ' release.')
+
+
+def download_file(url, out_file):
+    out_dir = os.path.dirname(out_file)
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+    if not os.path.isfile(out_file):
+        print('\t' + url + ' > ' + out_file)
+        fh, out_file_tmp = tempfile.mkstemp(dir=out_dir)
+        f = os.fdopen(fh, 'w')
+        f.close()
+        urllib.request.urlretrieve(url, out_file_tmp)
+        #urllib.urlretrieve(url, out_file_tmp)
+        os.rename(out_file_tmp, out_file)
+    else:
+        print('WARNING: skipping download of existing file ' + out_file)
+
+def download_scan(scan_id, out_dir, file_types, use_v1_sens):
+    try:
+        print('Downloading ScanNet ' + RELEASE_NAME + ' scan ' + scan_id + ' ...')
+        if not os.path.isdir(out_dir):
+            os.makedirs(out_dir)
+        for ft in file_types:
+            v1_sens = use_v1_sens and ft == '.sens'
+            url = BASE_URL + RELEASE + '/' + scan_id + '/' + scan_id + ft if not v1_sens else BASE_URL + RELEASES[V1_IDX] + '/' + scan_id + '/' + scan_id + ft
+            out_file = out_dir + '/' + scan_id + ft
+            download_file(url, out_file)
+        print('Downloaded scan ' + scan_id)
+    except:
+        FAILED_DOWNLOAD.append(scan_id)
+
+
+def download_task_data(out_dir):
+    print('Downloading ScanNet v1 task data...')
+    files = [
+        LABEL_MAP_FILES[V1_IDX], 'obj_classification/data.zip',
+        'obj_classification/trained_models.zip', 'voxel_labeling/data.zip',
+        'voxel_labeling/trained_models.zip'
+    ]
+    for file in files:
+        url = BASE_URL + RELEASES_TASKS[V1_IDX] + '/' + file
+        localpath = os.path.join(out_dir, file)
+        localdir = os.path.dirname(localpath)
+        if not os.path.isdir(localdir):
+          os.makedirs(localdir)
+        download_file(url, localpath)
+    print('Downloaded task data.')
+
+
+def download_label_map(out_dir):
+    print('Downloading ScanNet ' + RELEASE_NAME + ' label mapping file...')
+    files = [ LABEL_MAP_FILE ]
+    for file in files:
+        url = BASE_URL + RELEASE_TASKS + '/' + file
+        localpath = os.path.join(out_dir, file)
+        localdir = os.path.dirname(localpath)
+        if not os.path.isdir(localdir):
+          os.makedirs(localdir)
+        download_file(url, localpath)
+    print('Downloaded ScanNet ' + RELEASE_NAME + ' label mapping file.')
+
 # REFERENCE TO https://github.com/facebookresearch/votenet/blob/master/scannet/load_scannet_data.py
-###################### UTILS ##################
+########################################################################################
+#                                                                                      #
+#                                      UTILS                                           #
+#                                                                                      #
+########################################################################################
 
 def represents_int(s):
     ''' if string s represents an int. '''
@@ -174,9 +289,14 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
     return mesh_vertices.astype(np.float32), label_ids.astype(np.int), instance_ids.astype(np.int),\
         instance_bboxes.astype(np.float32), object_id_to_label_id
 
-######################## SCANNET DATASET ##########################
+########################################################################################
+#                                                                                      #
+#                          SCANNET InMemoryDataset DATASET                             #
+#                                                                                      #
+########################################################################################
 
 class Scannet(InMemoryDataset):
+
     CLASS_LABELS = ('wall', 'floor', 'cabinet', 'bed', 'chair', 'sofa', 'table', 'door', 'window',
                     'bookshelf', 'picture', 'counter', 'desk', 'curtain', 'refrigerator',
                     'shower curtain', 'toilet', 'sink', 'bathtub', 'otherfurniture')
@@ -228,7 +348,7 @@ class Scannet(InMemoryDataset):
         40: (100., 85., 144.),
     }
 
-    SPLIT = ["train", "val", "test"]
+    SPLIT = ["train", "val"]
 
     DONOTCARE_CLASS_IDS = np.array([])
 
@@ -244,7 +364,9 @@ class Scannet(InMemoryDataset):
         use_instance_bboxes=False,
         donotcare_class_ids=None,
         max_num_point=None,
-        process_workers = 4,
+        use_multiprocessing=False,
+        process_workers= 4,
+        types = [".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"]
     ):
 
         if donotcare_class_ids:
@@ -254,7 +376,9 @@ class Scannet(InMemoryDataset):
         self.max_num_point = max_num_point
         self.use_instance_labels = use_instance_labels
         self.use_instance_bboxes = use_instance_bboxes
+        self.use_multiprocessing = use_multiprocessing
         self.process_workers = process_workers
+        self.types = types
 
         super(Scannet, self).__init__(root, transform, pre_transform, pre_filter)
         if split == "train":
@@ -269,6 +393,10 @@ class Scannet(InMemoryDataset):
         self.data, self.slices = torch.load(path)
 
     @property
+    def valid_class_ids(self):
+        return self.VALID_CLASS_IDS
+
+    @property
     def raw_file_names(self):
         return glob(osp.join(self.raw_dir, "scans", "*"))
 
@@ -276,14 +404,46 @@ class Scannet(InMemoryDataset):
     def processed_file_names(self):
         return ["{}.pt".format(s,) for s in self.SPLIT]
 
+    def download_scans(self):
+        release_file = BASE_URL + RELEASE + '.txt'
+        release_scans = get_release_scans(release_file)
+        file_types = FILETYPES
+        release_test_file = BASE_URL + RELEASE + '_test.txt'
+        release_test_scans = get_release_scans(release_test_file)
+        file_types_test = FILETYPES_TEST
+        out_dir_scans = os.path.join(self.raw_dir, 'scans')
+
+        if self.types:  # download file type
+            file_types = self.types
+            for file_type in file_types:
+                if file_type not in FILETYPES:
+                    print('ERROR: Invalid file type: ' + file_type)
+                    return
+            file_types_test = []
+            for file_type in file_types:
+                if file_type not in FILETYPES_TEST:
+                    file_types_test.append(file_type)
+        download_label_map(self.raw_dir)
+        print('WARNING: You are downloading all ScanNet ' + RELEASE_NAME + ' scans of type ' + file_types[0])
+        print('Note that existing scan directories will be skipped. Delete partially downloaded directories to re-download.')
+        print('***')
+        print('Press any key to continue, or CTRL-C to exit.')
+        key = input('')
+        if self.version == "v2" and '.sens' in file_types:
+            print('Note: ScanNet v2 uses the same .sens files as ScanNet v1: Press \'n\' to exclude downloading .sens files for each scan')
+            key = input('')
+            if key.strip().lower() == 'n':
+                file_types.remove('.sens')
+        download_release(release_scans, out_dir_scans, file_types, use_v1_sens=True)
+        if self.version == "v2":
+            download_label_map(self.raw_dir)
+
     def download(self):
-        if len(self.raw_file_names) == 0:
-            raise Exception("Please, run poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --types _vh_clean.segs.json --types .txt  _vh_clean_2.ply _vh_clean_2.0.010000.segs.json .aggregation.json")
-        else:
-            metadata_path = osp.join(self.raw_dir, "metadata")
-            if not os.path.exists(metadata_path):
-                os.makedirs(metadata_path)
-            for url in self.URLS_METADATA:
+        self.download_scans()
+        metadata_path = osp.join(self.raw_dir, "metadata")
+        if not os.path.exists(metadata_path):
+            os.makedirs(metadata_path)
+        for url in self.URLS_METADATA:
                 _ = download_url(url, metadata_path)
 
     @staticmethod
@@ -333,7 +493,7 @@ class Scannet(InMemoryDataset):
         self.SCAN_NAMES = [[line.rstrip() for line in open(osp.join(metadata_path, sf))]for sf in split_files]
 
     @staticmethod
-    def process_func(id_scan, pre_transform, failures, split, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
+    def process_func(id_scan, pre_transform, scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, use_instance_labels=True, use_instance_bboxes=True):
         data = Scannet.read_one_scan(scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, 
                obj_class_ids, use_instance_labels=use_instance_labels, use_instance_bboxes=use_instance_bboxes)
         if pre_transform:
@@ -344,26 +504,27 @@ class Scannet(InMemoryDataset):
     def process(self):
         self.download()
         self.read_from_metadata()
-        failures = {k:[] for k in self.SPLIT}
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.SCAN_NAMES, self.SPLIT)):
             if not os.path.exists(self.processed_paths[i]):
                 scannet_dir = osp.join(self.raw_dir, "scans" if split in ["train", "val"] else "scans_test")
-                datas = []
                 total = len(scan_names)
-                args = [("{}/{}".format(id, total), self.pre_transform, failures, split, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
+                args = [("{}/{}".format(id, total), self.pre_transform, scannet_dir, scan_name, self.LABEL_MAP_FILE, self.DONOTCARE_CLASS_IDS, 
                             self.max_num_point, self.VALID_CLASS_IDS, self.use_instance_labels, self.use_instance_bboxes) for id, scan_name in enumerate(scan_names)]
-                for arg in args:
-                    data = Scannet.process_func(*arg)
-                    datas.append(data)
-                    #datas = pool.starmap(Scannet.process_func, args)
+                if self.use_multiprocessing:
+                    with multiprocessing.Pool(processes=self.process_workers) as pool:
+                        datas = pool.starmap(Scannet.process_func, args)
+                else:
+                    datas = []
+                    for arg in args:
+                        if use_multiprocessing
+                        data = Scannet.process_func(*arg)
+                        datas.append(data)
                 log.info("SAVING TO {}".format(split, self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
-        log.info("FAILURES: {}".format(failures))
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, len(self))
-
 
 class ScannetDataset(BaseDataset):
 
@@ -387,10 +548,9 @@ class ScannetDataset(BaseDataset):
             max_num_point=max_num_point,            
         )
 
-
         self.val_dataset = Scannet(
             self._data_path,
-            split="test",
+            split="val",
             transform=self.val_transform,
             pre_transform=self.pre_transform,
             version=dataset_opt.version,
@@ -410,5 +570,6 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        valid_class_ids = dataset.train_dataset.valid_class_ids
+        return ScannetTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, valid_class_ids=valid_class_ids)
 
