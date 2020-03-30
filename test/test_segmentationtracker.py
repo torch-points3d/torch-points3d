@@ -29,7 +29,7 @@ class MockModel:
             np.asarray([[1, 0], [1, 0]]),
             np.asarray([[1, 0], [1, 0], [1, 0]]),
         ]
-        self.labels = [np.asarray([1, 1]), np.asarray([1, 1]), np.asarray([1, 1]), np.asarray([1, 1, 0])]
+        self.labels = [np.asarray([1, 1]), np.asarray([1, 1]), np.asarray([1, 1]), np.asarray([0, 0, -100])]
         self.batch_idx = [np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0, 0, 1])]
 
     def get_output(self):
@@ -68,6 +68,16 @@ class TestSegmentationTracker(unittest.TestCase):
         metrics = tracker.get_metrics()
         for k in ["test_acc", "test_miou", "test_macc"]:
             self.assertAlmostEqual(metrics[k], 0, 5)
+
+    def test_ignore_label(self):
+        tracker = SegmentationTracker(MockDataset())
+        tracker.reset("test")
+        model = MockModel()
+        model.iter = 3
+        tracker.track(model)
+        metrics = tracker.get_metrics()
+        for k in ["test_acc", "test_miou", "test_macc"]:
+            self.assertAlmostEqual(metrics[k], 100, 5)
 
 
 if __name__ == "__main__":

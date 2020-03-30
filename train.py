@@ -155,11 +155,13 @@ def run(
         if dataset.has_val_loader:
             eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
 
-        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
+        if dataset.has_test_loaders:
+            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
-        test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
+        if dataset.has_test_loaders:
+            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
 
 
 @hydra.main(config_path="conf/config.yaml")
