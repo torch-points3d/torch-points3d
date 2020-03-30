@@ -21,7 +21,7 @@ import tempfile
 import urllib
 from urllib.request import urlopen
 
-from src.metrics.scannet_tracker import ScannetTracker
+from src.metrics.segmentation_tracker import SegmentationTracker
 from src.datasets.base_dataset import BaseDataset
 
 log = logging.getLogger(__name__)
@@ -518,7 +518,6 @@ class Scannet(InMemoryDataset):
         semantic_labels = semantic_labels[mask]
         instance_labels = instance_labels[mask]
 
-        num_instances = len(np.unique(instance_labels))
         bbox_mask = np.in1d(instance_bboxes[:, -1], obj_class_ids)
         instance_bboxes = instance_bboxes[bbox_mask, :]
 
@@ -614,7 +613,7 @@ class Scannet(InMemoryDataset):
                     for arg in args:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
-                log.info("SAVING TO {}".format(split, self.processed_paths[i]))
+                log.info("SAVING TO {}".format(self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
 
     def __repr__(self):
@@ -664,7 +663,6 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        valid_class_ids = dataset.train_dataset.VALID_CLASS_IDS
-        return ScannetTracker(
-            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, valid_class_ids=valid_class_ids
+        return SegmentationTracker(
+            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=Scannet.IGNORE_LABEL
         )
