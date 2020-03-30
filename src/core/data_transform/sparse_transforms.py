@@ -69,7 +69,7 @@ def quantize_data(data, mode="last"):
 
 
 def to_sparse_input(
-    data, grid_size, save_delta=True, save_delta_norm=True, mode="last", quantizing_func=torch.floor,
+    data, grid_size, save_delta=False, save_delta_norm=False, mode="last", quantizing_func=torch.floor,
 ):
     assert mode=="last" or mode=="mean" or mode =="keep_duplicate"
     if quantizing_func not in [torch.floor, torch.ceil, torch.round]:
@@ -179,14 +179,16 @@ class ToSparseInput(object):
         Returns the same data object with only one point per voxel
     """
 
-    def __init__(self, grid_size=None, save_delta: bool=False, save_delta_norm:bool=False, mode="last"):
+    def __init__(self, grid_size=None, save_delta:bool=False, save_delta_norm:bool=False, mode="last", quantizing_func="floor"):
         self._grid_size = grid_size
         self._save_delta = save_delta
         self._save_delta_norm = save_delta_norm
         self._mode = mode
+        assert quantizing_func in ["floor", "ceil", "round"]
+        self._quantizing_func = getattr(torch, quantizing_func)
 
     def _process(self, data):
-        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, mode=self._mode)
+        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, save_delta_norm=self._save_delta_norm, mode=self._mode, quantizing_func=self._quantizing_func)
 
     def __call__(self, data):
         if isinstance(data, list):

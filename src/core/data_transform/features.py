@@ -47,6 +47,8 @@ class AddFeatsByKeys(object):
         If provided, evaluate the dimension of the associated feature shape[-1] found using feat_names and this provided value. It allows to make sure feature dimension didn't change
     stricts: List[bool], optional
         Recommended to be set to list of True. If True, it will raise an Exception if feat isn't found or dimension doesn t match.
+    delete_feats: List[bool], optional
+        Wether we want to delete the feature from the data object. List length must match teh number of features added.
     """
 
     def __init__(
@@ -55,7 +57,14 @@ class AddFeatsByKeys(object):
         feat_names: List[str],
         input_nc_feats: List[int] = None,
         stricts: List[bool] = None,
+        delete_feats: List[bool] = None
     ):
+
+        self._feat_names = feat_names
+        self._list_add_to_x = list_add_to_x
+        self._delete_feats = delete_feats
+        if self._delete_feats:
+            assert len(self._delete_feats) == len(self._feat_names)
         from torch_geometric.transforms import Compose
 
         num_names = len(feat_names)
@@ -82,7 +91,18 @@ class AddFeatsByKeys(object):
         self.transform = Compose(transforms)
 
     def __call__(self, data):
-        return self.transform(data)
+        data = self.transform(data)
+        if self._delete_feats:
+            for feat_name, delete_feat in zip(self._feat_names, self._delete_feats):
+                if delete_feat:
+                    delattr(data, feat_name)
+        return data
+
+    def __repr__(self):
+        msg = ''
+        for f, a in zip(self._feat_names, self._list_add_to_x):
+            msg += "{}:{}, ".format(f, a)
+        return "{}({})".format(self.__class__.__name__, msg[:-2])
 
 
 class AddFeatByKey(object):
@@ -207,3 +227,16 @@ class NormalFeature(object):
         else:
             data.x = torch.cat([data.x, norm], -1)
         return data
+
+class AddOnes(object):
+    """
+    Add ones tensor to data
+    """
+
+    def __call__(self, data):
+        num_nodes = data.pos.shape[0]
+        data.ones = torch.ones((num_nodes, 1)).float()
+        return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)

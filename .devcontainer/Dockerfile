@@ -35,5 +35,11 @@ RUN pip3 install setuptools poetry
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install
-RUN pre-commit install
+RUN poetry install --no-root
+RUN poetry env info --path > /python_path
+RUN cat /python_path
+
+RUN git clone https://github.com/StanfordVL/MinkowskiEngine.git /tmp/ME \
+    && cd /tmp/ME \
+    && export VENV=`cat /python_path` \
+    && $VENV/bin/python setup.py install --cpu_only

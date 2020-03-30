@@ -1,0 +1,39 @@
+data:
+    class: scannet.ScannetDataset
+    task: segmentation
+    dataroot: data
+    grid_size: 0.05
+    version: 'v2'
+    use_instance_labels: False
+    use_instance_bboxes: False
+    donotcare_class_ids: []
+    max_num_point: None
+    process_workers: 1
+    train_transform:
+      - transform: ToSparseInput
+        params:
+          grid_size: ${data.grid_size}
+          mode: "mean"
+          quantizing_func: "round"
+      - transform: AddOnes
+      - transform: AddFeatsByKeys
+        params:
+          list_add_to_x: [True,True]
+          feat_names: ["ones","rgb"]
+          input_nc_feats: [1,3]
+          stricts: [True, True]
+          delete_feats: [True, True]
+    val_transform:
+      - transform: ToSparseInput
+        params:
+          grid_size: ${data.grid_size}
+          mode: "mean"
+          quantizing_func: "round"
+      - transform: AddOnes
+      - transform: AddFeatsByKeys
+        params:
+          list_add_to_x: [True,True]
+          feat_names: ["ones","rgb"]
+          input_nc_feats: [1,3]
+          stricts: [True, True]
+          delete_feats: [True, True]

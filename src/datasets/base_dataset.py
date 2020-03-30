@@ -190,11 +190,11 @@ class BaseDataset:
 
     @property
     def has_val_loader(self):
-        try:
-            _ = getattr(self, "_val_loader")
-            return True
-        except:
-            False
+        return hasattr(self, "_val_loader")
+
+    @property
+    def has_test_loaders(self):
+        return hasattr(self, "_test_loaders")
 
     @property
     def train_dataset(self):
@@ -255,11 +255,14 @@ class BaseDataset:
 
     @property
     def num_test_datasets(self):
-        return len(self._test_dataset)
+        return len(self._test_dataset) if self._test_dataset else 0
 
     @property
     def test_datatset_names(self):
-        return [d.name for d in self.test_dataset]
+        if self.test_dataset:
+            return [d.name for d in self.test_dataset]
+        else:
+            return []
 
     @property
     def available_stage_names(self):
@@ -344,9 +347,10 @@ class BaseDataset:
             self.train_dataset.name: len(self._train_loader),
             "val": len(self._val_loader) if self.has_val_loader else 0,
         }
-        for loader in self._test_loaders:
-            stage_name = loader.dataset.name
-            out[stage_name] = len(loader)
+        if self.test_dataset:
+            for loader in self._test_loaders:
+                stage_name = loader.dataset.name
+                out[stage_name] = len(loader)
         return out
 
     def get_dataset(self, name):
