@@ -47,6 +47,8 @@ class AddFeatsByKeys(object):
         If provided, evaluate the dimension of the associated feature shape[-1] found using feat_names and this provided value. It allows to make sure feature dimension didn't change
     stricts: List[bool], optional
         Recommended to be set to list of True. If True, it will raise an Exception if feat isn't found or dimension doesn t match.
+    delete_feats: List[bool], optional
+        Wether we want to delete the feature from the data object. List length must match teh number of features added.
     """
 
     def __init__(

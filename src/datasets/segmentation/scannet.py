@@ -68,10 +68,16 @@ def download_release(release_scans, out_dir, file_types, use_v1_sens):
     if len(release_scans) == 0:
         return
     print('Downloading ScanNet ' + RELEASE_NAME + ' release to ' + out_dir + '...')
+    failed = []
     for scan_id in release_scans:
         scan_out_dir = os.path.join(out_dir, scan_id)
-        download_scan(scan_id, scan_out_dir, file_types, use_v1_sens)
-    print('Downloaded ScanNet ' + RELEASE_NAME + ' release.')
+        try:
+            download_scan(scan_id, scan_out_dir, file_types, use_v1_sens)
+        except:
+            failed.append(scan_id)
+    log.info('Downloaded ScanNet ' + RELEASE_NAME + ' release.')
+    if len(failed):
+        log.warning("Failed downloads: {}".format(failed))
 
 
 def download_file(url, out_file):
@@ -79,7 +85,7 @@ def download_file(url, out_file):
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
     if not os.path.isfile(out_file):
-        print('\t' + url + ' > ' + out_file)
+        log.info('\t' + url + ' > ' + out_file)
         fh, out_file_tmp = tempfile.mkstemp(dir=out_dir)
         f = os.fdopen(fh, 'w')
         f.close()
@@ -87,25 +93,22 @@ def download_file(url, out_file):
         #urllib.urlretrieve(url, out_file_tmp)
         os.rename(out_file_tmp, out_file)
     else:
-        print('WARNING: skipping download of existing file ' + out_file)
+        log.warning('WARNING Skipping download of existing file ' + out_file)
 
 def download_scan(scan_id, out_dir, file_types, use_v1_sens):
-    try:
-        print('Downloading ScanNet ' + RELEASE_NAME + ' scan ' + scan_id + ' ...')
-        if not os.path.isdir(out_dir):
-            os.makedirs(out_dir)
-        for ft in file_types:
-            v1_sens = use_v1_sens and ft == '.sens'
-            url = BASE_URL + RELEASE + '/' + scan_id + '/' + scan_id + ft if not v1_sens else BASE_URL + RELEASES[V1_IDX] + '/' + scan_id + '/' + scan_id + ft
-            out_file = out_dir + '/' + scan_id + ft
-            download_file(url, out_file)
-        print('Downloaded scan ' + scan_id)
-    except:
-        FAILED_DOWNLOAD.append(scan_id)
+    log.info('Downloading ScanNet ' + RELEASE_NAME + ' scan ' + scan_id + ' ...')
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+    for ft in file_types:
+        v1_sens = use_v1_sens and ft == '.sens'
+        url = BASE_URL + RELEASE + '/' + scan_id + '/' + scan_id + ft if not v1_sens else BASE_URL + RELEASES[V1_IDX] + '/' + scan_id + '/' + scan_id + ft
+        out_file = out_dir + '/' + scan_id + ft
+        download_file(url, out_file)
+    log.info('Downloaded scan ' + scan_id)
 
 
 def download_task_data(out_dir):
-    print('Downloading ScanNet v1 task data...')
+    log.info('Downloading ScanNet v1 task data...')
     files = [
         LABEL_MAP_FILES[V1_IDX], 'obj_classification/data.zip',
         'obj_classification/trained_models.zip', 'voxel_labeling/data.zip',
@@ -118,11 +121,11 @@ def download_task_data(out_dir):
         if not os.path.isdir(localdir):
           os.makedirs(localdir)
         download_file(url, localpath)
-    print('Downloaded task data.')
+    log.info('Downloaded task data.')
 
 
 def download_label_map(out_dir):
-    print('Downloading ScanNet ' + RELEASE_NAME + ' label mapping file...')
+    log.info('Downloading ScanNet ' + RELEASE_NAME + ' label mapping file...')
     files = [ LABEL_MAP_FILE ]
     for file in files:
         url = BASE_URL + RELEASE_TASKS + '/' + file
@@ -131,7 +134,7 @@ def download_label_map(out_dir):
         if not os.path.isdir(localdir):
           os.makedirs(localdir)
         download_file(url, localpath)
-    print('Downloaded ScanNet ' + RELEASE_NAME + ' label mapping file.')
+    log.info('Downloaded ScanNet ' + RELEASE_NAME + ' label mapping file.')
 
 # REFERENCE TO https://github.com/facebookresearch/votenet/blob/master/scannet/load_scannet_data.py
 ########################################################################################
@@ -417,20 +420,20 @@ class Scannet(InMemoryDataset):
             file_types = self.types
             for file_type in file_types:
                 if file_type not in FILETYPES:
-                    print('ERROR: Invalid file type: ' + file_type)
+                    log.error('ERROR: Invalid file type: ' + file_type)
                     return
             file_types_test = []
             for file_type in file_types:
                 if file_type not in FILETYPES_TEST:
                     file_types_test.append(file_type)
         download_label_map(self.raw_dir)
-        print('WARNING: You are downloading all ScanNet ' + RELEASE_NAME + ' scans of type ' + file_types[0])
-        print('Note that existing scan directories will be skipped. Delete partially downloaded directories to re-download.')
-        print('***')
-        print('Press any key to continue, or CTRL-C to exit.')
+        log.info('WARNING: You are downloading all ScanNet ' + RELEASE_NAME + ' scans of type ' + file_types[0])
+        log.info('Note that existing scan directories will be skipped. Delete partially downloaded directories to re-download.')
+        log.info('***')
+        log.info('Press any key to continue, or CTRL-C to exit.')
         key = input('')
         if self.version == "v2" and '.sens' in file_types:
-            print('Note: ScanNet v2 uses the same .sens files as ScanNet v1: Press \'n\' to exclude downloading .sens files for each scan')
+            log.info('Note: ScanNet v2 uses the same .sens files as ScanNet v1: Press \'n\' to exclude downloading .sens files for each scan')
             key = input('')
             if key.strip().lower() == 'n':
                 file_types.remove('.sens')
@@ -439,6 +442,11 @@ class Scannet(InMemoryDataset):
             download_label_map(self.raw_dir)
 
     def download(self):
+        log.info('By pressing any key to continue you confirm that you have agreed to the ScanNet terms of use as described at:')
+        log.info(TOS_URL)
+        log.info('***')
+        log.info('Press any key to continue, or CTRL-C to exit.')
+        key = input('')
         self.download_scans()
         metadata_path = osp.join(self.raw_dir, "metadata")
         if not os.path.exists(metadata_path):

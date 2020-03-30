@@ -55,10 +55,7 @@ where each folder contains the dataset related to each task.
 ## Available datasets
 ### Segmentation
 * **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
-```
-mkdir -p data/scannet/raw/
-poetry run python scripts/datasets/download-scannet.py -o data/scannet/raw/ --types _vh_clean.segs.json --types .txt  _vh_clean_2.ply _vh_clean_2.0.010000.segs.json .aggregation.json
-```
+
 * **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni *et al.*: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105)
 ```
 * S3DIS 1x1

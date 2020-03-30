@@ -4,7 +4,7 @@ from MinkowskiEngine import MinkowskiNetwork
 from MinkowskiEngine import MinkowskiReLU
 import MinkowskiEngine.MinkowskiOps as me
 
-from .common import ConvType, NormType, conv, conv_tr, get_norm
+from .common import ConvType, NormType, conv, conv_tr, get_norm, sum_pool
 
 
 class BasicBlockBase(nn.Module):
@@ -135,6 +135,7 @@ class ResNetBase(MinkowskiNetwork):
     OUT_PIXEL_DIST = 32
     HAS_LAST_BLOCK = False
     CONV_TYPE = ConvType.HYPERCUBE
+    CONV1_KERNEL_SIZE = 3
 
     def __init__(self, in_channels, out_channels, D, **kwargs):
         super(ResNetBase, self).__init__(D)
@@ -157,7 +158,7 @@ class ResNetBase(MinkowskiNetwork):
         bn_momentum = 0.02
         self.inplanes = self.INIT_DIM
         self.conv1 = conv(
-            in_channels, self.inplanes, kernel_size=space_n_time_m(config.conv1_kernel_size, 1), stride=1, D=D
+            in_channels, self.inplanes, kernel_size=space_n_time_m(self.CONV1_KERNEL_SIZE, 1), stride=1, D=D
         )
 
         self.bn1 = get_norm(NormType.BATCH_NORM, self.inplanes, D=self.D, bn_momentum=bn_momentum)
