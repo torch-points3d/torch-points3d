@@ -3,9 +3,6 @@ name = "deeppointcloud_benchmark"
 version = "0.1.0"
 description = ""
 authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
-packages = [
-    { include = "src" }
-]
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -40,6 +37,7 @@ param = "^1.9.3"
 codecov = "^2.0.16"
 sphinx = "^2.4.4"
 sphinx-autobuild = "^0.7.1"
+gpustat = "^0.6.0"
 
 [tool.poetry.extras]
 MinkowskiEngine = ["MinkowskiEngine"]

@@ -18,7 +18,11 @@ RUN pip3 install setuptools poetry
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install -E MinkowskiEngine --no-dev --no-root && rm -rf /root/.cache
+RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-dev --no-root && rm -rf /root/.cache
+
+RUN git clone https://github.com/StanfordVL/MinkowskiEngine.git /tmp/ME \
+    && cd /tmp/ME \
+    && python3 setup.py install --cpu_only
 
 ARG MODEL=""
 ENV WORKDIR=/dpb

@@ -30,7 +30,7 @@ class _ForwardShapenet(torch.utils.data.Dataset):
         super().__init__()
         self._category = category
         self._path = path
-        self._files = glob.glob(os.path.join(self._path, "*.txt"))
+        self._files = sorted(glob.glob(os.path.join(self._path, "*.txt")))
         self._transforms = transforms
         self._include_normals = include_normals
         assert os.path.exists(self._path)

@@ -8,7 +8,7 @@ from src.metrics.base_tracker import BaseTracker, meter_value
 
 
 class SegmentationTracker(BaseTracker):
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False):
+    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label=-100):
         """ This is a generic tracker for segmentation tasks.
         It uses a confusion matrix in the back-end to track results.
         Use the tracker to track an epoch.
@@ -23,6 +23,7 @@ class SegmentationTracker(BaseTracker):
         """
         super(SegmentationTracker, self).__init__(stage, wandb_log, use_tensorboard)
         self._num_classes = dataset.num_classes
+        self._ignore_label = -100
         self.reset(stage)
 
     def reset(self, stage="train"):
@@ -40,6 +41,15 @@ class SegmentationTracker(BaseTracker):
 
         outputs = self._convert(model.get_output())
         targets = self._convert(model.get_labels())
+
+        # Mask ignored label
+        mask = targets != self._ignore_label
+        outputs = outputs[mask]
+        targets = targets[mask]
+
+        if len(targets) == 0:
+            return
+
         assert outputs.shape[0] == len(targets)
         self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
 
