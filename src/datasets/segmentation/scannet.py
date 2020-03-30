@@ -19,11 +19,7 @@ from tqdm import tqdm
 
 import tempfile
 import urllib
-
-if sys.version_info[0] == 3:
-    from urllib.request import urlopen
-else:
-    from urllib import urlopen
+from urllib.request import urlopen
 
 from src.metrics.scannet_tracker import ScannetTracker
 from src.datasets.base_dataset import BaseDataset
@@ -440,12 +436,14 @@ class Scannet(InMemoryDataset):
     def processed_file_names(self):
         return ["{}.pt".format(s,) for s in Scannet.SPLITS]
 
+    @property
+    def num_classes(self):
+        return len(Scannet.VALID_CLASS_IDS)
+
     def download_scans(self):
         release_file = BASE_URL + RELEASE + ".txt"
         release_scans = get_release_scans(release_file)
         file_types = FILETYPES
-        release_test_file = BASE_URL + RELEASE + "_test.txt"
-        release_test_scans = get_release_scans(release_test_file)
         file_types_test = FILETYPES_TEST
         out_dir_scans = os.path.join(self.raw_dir, "scans")
 
@@ -535,7 +533,7 @@ class Scannet(InMemoryDataset):
 
         # Set ignored classes to ignore label
         semantic_labels_mask = np.logical_not(np.in1d(semantic_labels, obj_class_ids))
-        semantic_labels[semantic_labels_mask] = self.IGNORE_LABEL
+        semantic_labels[semantic_labels_mask] = Scannet.IGNORE_LABEL
 
         # Build data container
         data = {}
