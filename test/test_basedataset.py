@@ -93,7 +93,6 @@ class TestDataset(unittest.TestCase):
                 super(SimpleDataset, self).__init__(dataset_opt)
 
                 self.train_dataset = CustomMockDataset(10, 1, 3, 10)
-                self.val_dataset = CustomMockDataset(10, 1, 3, 10)
                 self.test_dataset = CustomMockDataset(10, 1, 3, 10)
 
         dataset = SimpleDataset(opt)
@@ -109,7 +108,8 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(dataset.val_transform, None)
         self.assertNotEqual(dataset.train_dataset, None)
         self.assertNotEqual(dataset.test_dataset, None)
-        self.assertNotEqual(dataset.val_dataset, None)
+        self.assertTrue(dataset.has_test_loaders)
+        self.assertFalse(dataset.has_val_loader)
 
     def test_multiple_test_datasets(self):
         opt = Options()

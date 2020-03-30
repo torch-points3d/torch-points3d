@@ -190,19 +190,11 @@ class BaseDataset:
 
     @property
     def has_val_loader(self):
-        try:
-            _ = getattr(self, "_val_loader")
-            return True
-        except:
-            False
+        return hasattr(self, "_val_loader")
 
     @property
     def has_test_loaders(self):
-        try:
-            _ = getattr(self, "_test_loaders")
-            return True
-        except:
-            False
+        return hasattr(self, "_test_loaders")
 
     @property
     def train_dataset(self):
