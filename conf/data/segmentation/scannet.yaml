@@ -9,6 +9,9 @@ data:
     donotcare_class_ids: []
     max_num_point: None
     process_workers: 1
+    pre_transform:
+      - transform: GridSampling
+        lparams: [0.02]
     train_transform:
       - transform: ToSparseInput
         params:

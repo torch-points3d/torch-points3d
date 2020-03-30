@@ -32,9 +32,10 @@ def group_data(data, cluster, unique_pos_indices, mode="last"):
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
                 if key == "y":
-                    item = F.one_hot(item)
+                    item_min = item.min()
+                    item = F.one_hot(item - item_min)
                     item = scatter_add(item, cluster, dim=0)
-                    data[key] = item.argmax(dim=-1)
+                    data[key] = item.argmax(dim=-1) + item_min
                 else:
                     data[key] = scatter_mean(item, cluster, dim=0)
     return data

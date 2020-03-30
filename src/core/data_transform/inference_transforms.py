@@ -4,7 +4,8 @@ import logging
 
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..")
-sys.path.append(os.path.join(ROOT))
+sys.path.insert(0, os.path.join(ROOT))
+
 from test.mockdatasets import MockDataset
 from .grid_transform import GridSampling
 import src.metrics.model_checkpoint as model_checkpoint
