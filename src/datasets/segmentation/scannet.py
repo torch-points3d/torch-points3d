@@ -430,7 +430,7 @@ class Scannet(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return glob(osp.join(self.raw_dir, "scans", "*"))
+        return ["metadata", "scans", "scannetv2-labels.combined.tsv"]
 
     @property
     def processed_file_names(self):
@@ -585,7 +585,6 @@ class Scannet(InMemoryDataset):
         return data
 
     def process(self):
-        self.download()
         self.read_from_metadata()
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
