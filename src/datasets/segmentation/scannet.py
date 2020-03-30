@@ -530,9 +530,16 @@ class Scannet(InMemoryDataset):
                 semantic_labels = semantic_labels[choices]
                 instance_labels = instance_labels[choices]
 
-        # Set ignored classes to ignore label
-        semantic_labels_mask = np.logical_not(np.in1d(semantic_labels, obj_class_ids))
-        semantic_labels[semantic_labels_mask] = Scannet.IGNORE_LABEL
+        # Remap labels to [0-(len(valid_labels))]
+        count = 0
+        for i in range(max(Scannet.SCANNET_COLOR_MAP.keys()) + 1):
+            if i in Scannet.VALID_CLASS_IDS:
+                label = count
+                count += 1
+            else:
+                label = Scannet.IGNORE_LABEL
+            mask = semantic_labels == i
+            semantic_labels[mask] = label
 
         # Build data container
         data = {}
