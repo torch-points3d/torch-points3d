@@ -57,7 +57,7 @@ class AddFeatsByKeys(object):
         feat_names: List[str],
         input_nc_feats: List[int] = None,
         stricts: List[bool] = None,
-        delete_feats: List[bool] = None
+        delete_feats: List[bool] = None,
     ):
 
         self._feat_names = feat_names
@@ -99,7 +99,7 @@ class AddFeatsByKeys(object):
         return data
 
     def __repr__(self):
-        msg = ''
+        msg = ""
         for f, a in zip(self._feat_names, self._list_add_to_x):
             msg += "{}:{}, ".format(f, a)
         return "{}({})".format(self.__class__.__name__, msg[:-2])
@@ -227,6 +227,7 @@ class NormalFeature(object):
         else:
             data.x = torch.cat([data.x, norm], -1)
         return data
+
 
 class AddOnes(object):
     """
