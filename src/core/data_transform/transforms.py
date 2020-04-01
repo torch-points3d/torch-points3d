@@ -496,7 +496,7 @@ class RandomDropout:
         self.dropout_application_ratio = dropout_application_ratio
 
     def __call__(self, data):
-        if random.random() < self.dropout_ratio:
+        if random.random() < self.dropout_application_ratio:
             N = len(data.pos)
             data = FP(int(N * (1 - self.dropout_ratio)))(data)
         return data

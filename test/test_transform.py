@@ -175,7 +175,7 @@ class Testhelpers(unittest.TestCase):
     def test_dropout(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
         data = Data(pos=torch.from_numpy(indices))
-        tr = RandomDropout(dropout_ratio=0.5, dropout_application_ratio=1)
+        tr = RandomDropout(dropout_ratio=0.5, dropout_application_ratio=1.1)
         data = tr(data)
         self.assertEqual(len(data.pos), 3)
 
