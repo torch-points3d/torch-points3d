@@ -272,7 +272,7 @@ class BaseModel(torch.nn.Module):
             return loss / c
 
     @staticmethod
-    def get_metric_loss_and_miner(self, opt_loss, opt_miner):
+    def get_metric_loss_and_miner(opt_loss, opt_miner):
         """
         instantiate the loss and the miner if it's available
         in the yaml config:
