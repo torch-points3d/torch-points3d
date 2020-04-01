@@ -211,20 +211,6 @@ class PCACompute(object):
         return data
 
 
-class PlanarityFilter(object):
-    """
-    compute planarity and return false if the planarity is above a threshold
-    """
-    def __init__(self, thresh=0.3):
-        self.thresh = thresh
-
-    def __call__(self, data):
-        if(data.eigenvalues is None):
-            data = PCACompute()(data)
-        planarity = compute_planarity(data.eigenvalues)
-        return planarity < self.thresh
-
-
 class AddOnes(object):
     """
     Add ones tensor to data
