@@ -23,6 +23,7 @@ from urllib.request import urlopen
 
 from src.metrics.segmentation_tracker import SegmentationTracker
 from src.datasets.base_dataset import BaseDataset
+from . import IGNORE_LABEL
 
 log = logging.getLogger(__name__)
 
@@ -384,8 +385,6 @@ class Scannet(InMemoryDataset):
 
     SPLITS = ["train", "val"]
 
-    IGNORE_LABEL = -100
-
     def __init__(
         self,
         root,
@@ -537,7 +536,7 @@ class Scannet(InMemoryDataset):
                 label = count
                 count += 1
             else:
-                label = Scannet.IGNORE_LABEL
+                label = IGNORE_LABEL
             mask = semantic_labels == i
             semantic_labels[mask] = label
 
@@ -671,5 +670,5 @@ class ScannetDataset(BaseDataset):
             [BaseTracker] -- tracker
         """
         return SegmentationTracker(
-            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=Scannet.IGNORE_LABEL
+            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )

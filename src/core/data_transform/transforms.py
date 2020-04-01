@@ -13,6 +13,7 @@ from torch_geometric.nn import fps, radius, knn
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
+from torch_geometric.transforms import FixedPoints as FP
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
@@ -467,3 +468,35 @@ class ShuffleData(object):
 
     def __repr__(self):
         return "{}()".format(self.__class__.__name__)
+
+
+class ShiftVoxels:
+    """ Trick to make Sparse conv invariant to even and odds coordinates
+    https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/train.py#L78
+    """
+
+    def __call__(self, data):
+        data.pos += (torch.rand(3) * 100).type_as(data.pos)
+        return data
+
+
+class RandomDropout:
+    """ Randomly drop points from the input data
+
+    Parameters
+    ----------
+    dropout_ratio : float, optional
+        Ratio that gets dropped
+    dropout_application_ratio   : float, optional
+        chances of the dropout to be applied
+    """
+
+    def __init__(self, dropout_ratio=0.2, dropout_application_ratio=0.5):
+        self.dropout_ratio = dropout_ratio
+        self.dropout_application_ratio = dropout_application_ratio
+
+    def __call__(self, data):
+        if random.random() < self.dropout_application_ratio:
+            N = len(data.pos)
+            data = FP(int(N * (1 - self.dropout_ratio)))(data)
+        return data

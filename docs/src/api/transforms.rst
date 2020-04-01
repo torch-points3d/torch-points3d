@@ -35,3 +35,13 @@ Transforms
 .. autoclass:: src.core.data_transform.ToSparseInput
 
 .. autoclass:: src.core.data_transform.ShuffleData
+
+.. autoclass:: src.core.data_transform.ShiftVoxels
+
+.. autoclass:: src.core.data_transform.ChromaticTranslation
+
+.. autoclass:: src.core.data_transform.ChromaticAutoContrast
+
+.. autoclass:: src.core.data_transform.ChromaticJitter
+
+.. autoclass:: src.core.data_transform.RandomDropout
