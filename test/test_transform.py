@@ -22,6 +22,8 @@ from src.core.data_transform import (
     AddFeatsByKeys,
     RemoveAttributes,
     RemoveDuplicateCoords,
+    RandomDropout,
+    ShiftVoxels,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -169,6 +171,20 @@ class Testhelpers(unittest.TestCase):
         transform = RemoveDuplicateCoords()
         data_out = transform(data)
         self.assertEqual(data_out.pos.shape[0], 5)
+
+    def test_dropout(self):
+        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
+        data = Data(pos=torch.from_numpy(indices))
+        tr = RandomDropout(dropout_ratio=0.5, dropout_application_ratio=1.1)
+        data = tr(data)
+        self.assertEqual(len(data.pos), 3)
+
+    def test_shiftvoxels(self):
+        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
+        data = Data(pos=torch.from_numpy(indices))
+        tr = ShiftVoxels()
+        tr_data = tr(data.clone())
+        self.assertGreaterEqual(tr_data.pos[0][0], data.pos[0][0])
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ from src.core.common_modules import MultiHeadClassifier
 from src.models.base_model import BaseModel
 from src.models.base_architectures.unet import UnwrappedUnetBasedModel
 from src.datasets.multiscale_data import MultiScaleBatch
+from src.datasets.segmentation import IGNORE_LABEL
 
 log = logging.getLogger(__name__)
 
@@ -153,7 +154,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
 
         # Final cross entrop loss
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes)
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL)
         self.loss += self.loss_seg
 
     def backward(self):
@@ -199,4 +200,6 @@ class KPConvSeg(Segmentation_MP):
             self._weight_classes = self._weight_classes.to(self.output.device)
 
         self.loss_reg = self.get_internal_loss()
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes) + self.loss_reg
+        self.loss_seg = (
+            F.nll_loss(self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL) + self.loss_reg
+        )

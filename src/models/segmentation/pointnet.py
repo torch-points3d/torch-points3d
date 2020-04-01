@@ -7,6 +7,7 @@ from src.utils.config import ConvolutionFormatFactory
 from src.modules.PointNet import *
 from src.models.base_model import BaseModel
 from src.utils.model_building_utils.resolver_utils import flatten_dict
+from src.datasets.segmentation import IGNORE_LABEL
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +32,8 @@ class PointNet(BaseModel):
         internal_loss = self.get_internal_loss()
         if self.labels is not None:
             self.loss = (
-                F.nll_loss(self.output, self.labels) + (internal_loss if internal_loss.item() != 0 else 0) * 0.001
+                F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
+                + (internal_loss if internal_loss.item() != 0 else 0) * 0.001
             )
         return self.output
 

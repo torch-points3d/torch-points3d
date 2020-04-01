@@ -5,10 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+from src.datasets.segmentation import IGNORE_LABEL
 
-def filter_valid(output, target, other=None):
+
+def filter_valid(output, target, ignore_label=IGNORE_LABEL, other=None):
     """ Removes predictions for nodes without ground truth """
-    idx = target != -100
+    idx = target != ignore_label
     if other is not None:
         return output[idx, :], target[idx], other[idx, ...]
     return output[idx, :], target[idx]
