@@ -271,14 +271,23 @@ class BaseModel(torch.nn.Module):
         else:
             return loss / c
 
-    def get_loss_and_miner(self, opt_loss, opt_miner):
+    @staticmethod
+    def get_metric_loss_and_miner(self, opt_loss, opt_miner):
         """
         instantiate the loss and the miner if it's available
+        in the yaml config:
+
+        example in the yaml config
+        metric_loss:
+            class: "TripletMarginLoss"
+            params:
+                smooth_loss: True
+                triplets_per_anchors: 'all'
         """
         loss = None
         miner = None
         if opt_loss is not None:
-            loss = instantiate_loss_or_miner(opt_loss, mode="loss")
+            loss = instantiate_loss_or_miner(opt_loss, mode="metric_loss")
         if opt_miner is not None:
             miner = instantiate_loss_or_miner(opt_miner, mode="miner")
 
