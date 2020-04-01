@@ -13,7 +13,7 @@ models:
     mlp_cls:
       nn: [128, 128, 32]
       dropout: 0.5
-    loss:
+    metric_loss:
       class: "TripletMarginLoss"
       params:
         smooth_loss: True

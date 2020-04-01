@@ -2,7 +2,7 @@ import torch
 from typing import List, Optional
 from torch_geometric.data import Data
 from torch_geometric.data import Batch
-from src.datasets.multiscale_data import MultiScaleBatch
+from src.datasets.multiscale_data import MultiScaleBatch, MultiScaleData
 import re
 
 class Pair(Data):
@@ -16,18 +16,20 @@ class Pair(Data):
             pos_target=None,
             **kwargs,
     ):
-        super().__init__(x=x, pos=pos,
-                         x_target=x_target, pos_target=pos_target, **kwargs)
+        self.__data_class__ = Data
+        super(Pair, self).__init__(x=x, pos=pos,
+                                   x_target=x_target, pos_target=pos_target, **kwargs)
 
 
-    @staticmethod
-    def make_pair(data_source: Data, data_target: Data):
+    @classmethod
+    def make_pair(cls, data_source, data_target):
         """
         add in a Data object the source elem, the target elem.
         """
         # add concatenation of the point cloud
-
-        batch = data_source
+        batch = cls()
+        for key in data_source.keys:
+            batch[key] = data_source[key]
         for key_target in data_target.keys:
             batch[key_target+"_target"] = data_target[key_target]
         if(batch.x is None):
@@ -35,8 +37,8 @@ class Pair(Data):
         return batch.contiguous()
 
     def to_data(self):
-        data_source = Data()
-        data_target = Data()
+        data_source = self.__data_class__()
+        data_target = self.__data_class__()
         for key in self.keys:
             match = re.search(r"(.+)_target$", key)
             if match is None:
@@ -67,13 +69,14 @@ class MultiScalePair(Pair):
             upsample_target: Optional[List[Data]] = None,
             **kwargs,
     ):
-        MultiScalePair.__init__(x=x, pos=pos,
-                                multiscale=multiscale,
-                                upsample=upsample,
-                                x_target=x_target, pos_target=pos_target,
-                                multiscale_target=multiscale_target,
-                                upsample_target=upsample_target,
-                                **kwargs)
+        super(MultiScalePair, self).__init__(x=x, pos=pos,
+                                             multiscale=multiscale,
+                                             upsample=upsample,
+                                             x_target=x_target, pos_target=pos_target,
+                                             multiscale_target=multiscale_target,
+                                             upsample_target=upsample_target,
+                                             **kwargs)
+        self.__data_class__ = MultiScaleData
 
     def apply(self, func, *keys):
         r"""Applies the function :obj:`func` to all tensor and Data attributes
@@ -119,8 +122,9 @@ class PairBatch(Pair):
         Pair batch for message passing
         """
         self.batch_target = batch_target
-        Batch.__init__(batch=batch, **kwargs)
-        self.__data_class__ = Pair
+        self.batch = None
+        super(PairBatch, self).__init__(**kwargs)
+        self.__data_class__ = Batch
 
     @staticmethod
     def from_data_list(data_list):
@@ -133,10 +137,16 @@ class PairBatch(Pair):
         data_list_s, data_list_t = list(map(list, zip(*[data.to_data() for data in data_list])))
         batch_s = Batch.from_data_list(data_list_s)
         batch_t = Batch.from_data_list(data_list_t)
-        return Pair.make_pair(batch_s, batch_t).contiguous()
+        return PairBatch.make_pair(batch_s, batch_t).contiguous()
 
 
 class PairMultiScaleBatch(MultiScalePair):
+
+    def __init__(self, batch=None, batch_target=None, **kwargs):
+        self.batch = batch
+        self.batch_target = batch_target
+        super(PairMultiScaleBatch, self).__init__(**kwargs)
+        self.__data_class__ = MultiScaleBatch
 
     @staticmethod
     def from_data_list(data_list):
@@ -145,10 +155,10 @@ class PairMultiScaleBatch(MultiScalePair):
         a batch
         Warning : follow_batch is not here yet...
         """
-        data_list_s, data_list_t = list(map(list, zip(*[data.to_pair() for data in data_list])))
+        data_list_s, data_list_t = list(map(list, zip(*[data.to_data() for data in data_list])))
         batch_s = MultiScaleBatch.from_data_list(data_list_s)
         batch_t = MultiScaleBatch.from_data_list(data_list_t)
-        return MultiScalePair.make_pair(batch_s, batch_t).contiguous()
+        return PairMultiScaleBatch.make_pair(batch_s, batch_t).contiguous()
 
 
 class SimpleBatch(Pair):
