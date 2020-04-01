@@ -57,7 +57,7 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
             hard_pairs = self.miner_module(self.output, self.labels)
 
         # loss
-        self.loss_reg = self.loss_module(feat, self.labels, hard_pairs)
+        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs)
         self.internal = self.get_internal_loss()
         self.loss = self.loss_reg + self.internal
 
@@ -118,7 +118,14 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         )
 
     def compute_loss(self):
-        self.loss = 0
+        # miner
+        hard_pairs = None
+        if self.miner_module is not None:
+            hard_pairs = self.miner_module(self.output, self.labels)
+        # loss
+        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs)
+        self.internal = self.get_internal_loss()
+        self.loss = self.loss_reg + self.internal
 
     def forward(self):
 

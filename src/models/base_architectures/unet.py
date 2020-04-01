@@ -405,6 +405,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         # Down modules
         for i in range(len(opt.down_conv.down_conv_nn)):
             args = self._fetch_arguments(opt.down_conv, i, "DOWN")
+
             conv_cls = self._get_from_kwargs(args, "conv_cls")
             down_module = conv_cls(**args)
             self._save_sampling_and_search(down_module)

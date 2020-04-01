@@ -1,6 +1,6 @@
 # Those arguments defines the training hyper-parameters
 training:
-    epochs: 3000
+    epochs: 6000
     num_workers: 6
     batch_size: 64
     shuffle: True
