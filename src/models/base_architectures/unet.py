@@ -419,7 +419,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             self._save_upsample(up_module)
             self.up_modules.append(up_module)
 
-        self.loss_module, self.miner_module = self.get_loss_and_miner(
+        self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
             getattr(opt, "loss", None), getattr(opt, "miner", None)
         )
 

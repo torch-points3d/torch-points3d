@@ -37,7 +37,7 @@ def instantiate_loss_or_miner(option, mode="loss"):
     except KeyError:
         lparams = None
 
-    if mode == "loss":
+    if "loss" in mode:
         cls = getattr(_custom_losses, class_, None)
         if not cls:
             cls = getattr(_torch_metric_learning_losses, class_, None)
@@ -47,6 +47,8 @@ def instantiate_loss_or_miner(option, mode="loss"):
         cls = getattr(_torch_metric_learning_miners, class_, None)
         if not cls:
             raise ValueError("miner %s is nowhere to be found" % class_)
+    else:
+        raise NotImplementedError("Cannot instantiate this mode {}".format(mode))
 
     if params and lparams:
         return cls(*lparams, **params)

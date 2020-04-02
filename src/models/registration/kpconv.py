@@ -104,7 +104,7 @@ class PatchKPConv(BackboneBasedModel):
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, self.labels)
-        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
 
         self.loss += self.loss_reg
 

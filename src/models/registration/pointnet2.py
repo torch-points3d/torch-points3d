@@ -85,7 +85,7 @@ class PatchPointNet2_D(BackboneBasedModel):
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, labels)
-        self.loss_reg = self.loss_module(self.output, labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(self.output, labels, hard_pairs)
         self.internal = self.get_internal_loss()
         self.loss = self.loss_reg + self.internal
         return self.output

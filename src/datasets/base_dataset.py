@@ -44,7 +44,7 @@ class BaseDataset:
         self._val_dataset = None
 
         BaseDataset.set_transform(self, dataset_opt)
-        BaseDataset.set_filter(self, dataset_opt)
+        self.set_filter(dataset_opt)
 
 
     @staticmethod
@@ -116,11 +116,10 @@ class BaseDataset:
         inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
         obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
-    @staticmethod
-    def set_filter(obj, dataset_opt):
+    def set_filter(self, dataset_opt):
         """This function create and set the pre_filter to the obj as attributes
         """
-        obj.pre_filter = None
+        self.pre_filter = None
         for key_name in dataset_opt.keys():
             if "filter" in key_name:
                 new_name = key_name.replace("filters", "filter")
@@ -129,7 +128,7 @@ class BaseDataset:
                 except Exception:
                     log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
-                setattr(obj, new_name, filt)
+                setattr(self, new_name, filt)
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):

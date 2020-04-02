@@ -57,7 +57,7 @@ class AddFeatsByKeys(object):
         feat_names: List[str],
         input_nc_feats: List[int] = None,
         stricts: List[bool] = None,
-        delete_feats: List[bool] = None
+        delete_feats: List[bool] = None,
     ):
 
         self._feat_names = feat_names
@@ -99,7 +99,7 @@ class AddFeatsByKeys(object):
         return data
 
     def __repr__(self):
-        msg = ''
+        msg = ""
         for f, a in zip(self._feat_names, self._list_add_to_x):
             msg += "{}:{}, ".format(f, a)
         return "{}({})".format(self.__class__.__name__, msg[:-2])
@@ -210,19 +210,6 @@ class PCACompute(object):
         data.eigenvectors = v
         return data
 
-
-class PlanarityFilter(object):
-    """
-    compute planarity and return false if the planarity is above a threshold
-    """
-    def __init__(self, thresh=0.3):
-        self.thresh = thresh
-
-    def __call__(self, data):
-        if(data.eigenvalues is None):
-            data = PCACompute()(data)
-        planarity = compute_planarity(data.eigenvalues)
-        return planarity < self.thresh
 
 class AddOnes(object):
     """

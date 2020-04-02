@@ -5,6 +5,7 @@ import torch
 from src.modules.MinkowskiEngine import *
 from src.models.base_architectures import UnwrappedUnetBasedModel
 from src.models.base_model import BaseModel
+from src.datasets.segmentation import IGNORE_LABEL
 
 
 log = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class Minkowski_Baseline_Model(BaseModel):
 
     def forward(self):
         self.output = F.log_softmax(self.model(self.input).feats, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels)
+        self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
 
     def backward(self):
         self.loss_seg.backward()

@@ -5,6 +5,7 @@ from .transforms import *
 from .grid_transform import *
 from .sparse_transforms import *
 from .inference_transforms import *
+from .feature_augment import *
 from .features import *
 from .filters import *
 

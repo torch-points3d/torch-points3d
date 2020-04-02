@@ -1,23 +1,9 @@
-import os
-from abc import ABC, abstractmethod
-import logging
-from functools import partial
-
-import torch
-import torch_geometric
-from torch_geometric.transforms import Compose, FixedPoints
-
-from src.core.data_transform import instantiate_transforms, MultiScaleTransform
+from src.core.data_transform import MultiScaleTransform
 from src.core.data_transform import PairTransform
-from src.core.data_transform import instantiate_filters
 from src.datasets.registration.pair import SimpleBatch
-from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
 from src.utils.config import ConvolutionFormatFactory
-from src.utils.colors import COLORS, colored_print
-from src.models.base_model import BaseModel
 from src.datasets.registration.pair import PairMultiScaleBatch, PairBatch
-
 from src.datasets.base_dataset import BaseDataset
 
 
@@ -46,7 +32,6 @@ class BaseSiameseDataset(BaseDataset):
             return lambda datalist: SimpleBatch.from_data_list(datalist)
         else:
             return lambda datalist: PairBatch.from_data_list(datalist)
-
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
