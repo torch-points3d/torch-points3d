@@ -103,16 +103,19 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         x = input
         stack_down = []
         for i in range(len(self.down_modules) - 1):
-            print(x.shape)
+            print("Down", i, x.shape)
             x = self.down_modules[i](x)
             stack_down.append(x)
 
+        print("Down", i + 1, x.shape)
         x = self.down_modules[-1](x)
+        print([sd.shape for sd in stack_down])
 
         for i in range(len(self.up_modules)):
+            print("UP", i, x.shape)
             x = self.up_modules[i](x, stack_down.pop())
-            print(x.shape)
 
+        print("UP", i + 1, x.shape)
         return ME.SparseTensor(
             x.F / torch.norm(x.F, p=2, dim=1, keepdim=True), coords_key=x.coords_key, coords_manager=x.coords_man
         )
