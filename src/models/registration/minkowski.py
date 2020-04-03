@@ -13,10 +13,10 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(Minkowski_Baseline_Model_Fragment, self).__init__(option)
         self.model = initialize_minkowski_unet(
-            option.model_name, dataset.feature_dimension, dataset.num_classes, option.D
+            option.model_name, dataset.feature_dimension, option.out_channels, option.D
         )
-        self.loss_module, self.miner_module = self.get_loss_and_miner(
-            getattr(option, "loss", None), getattr(option, "miner", None)
+        self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
+            getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
         self.num_pos_pairs = option.num_pos_pairs
         self.loss_names = ["loss_reg", "loss", "internal"]
@@ -79,7 +79,8 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
-        self.loss_names = ["loss_reg"]
+        self.loss_names = ["loss_reg", "loss"]
+        self.normalize_feature = option.normalize_feature
 
     def set_input(self, data, device):
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
@@ -103,22 +104,21 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         x = input
         stack_down = []
         for i in range(len(self.down_modules) - 1):
-            print("Down", i, x.shape)
             x = self.down_modules[i](x)
             stack_down.append(x)
 
-        print("Down", i + 1, x.shape)
         x = self.down_modules[-1](x)
-        print([sd.shape for sd in stack_down])
+        stack_down.append(None)
 
         for i in range(len(self.up_modules)):
-            print("UP", i, x.shape)
             x = self.up_modules[i](x, stack_down.pop())
 
-        print("UP", i + 1, x.shape)
-        return ME.SparseTensor(
-            x.F / torch.norm(x.F, p=2, dim=1, keepdim=True), coords_key=x.coords_key, coords_manager=x.coords_man
-        )
+        if self.normalize_feature:
+            return ME.SparseTensor(
+                x.F / torch.norm(x.F, p=2, dim=1, keepdim=True), coords_key=x.coords_key, coords_manager=x.coords_man
+            )
+        else:
+            return x
 
     def compute_loss(self):
         # miner
@@ -135,10 +135,11 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         self.output = self.apply_nn(self.input)
         if self.labels is None:
             return self.output
-        else:
-            self.output_target = self.apply_nn(self.input_target)
-            self.compute_loss()
-            return
+
+        self.output_target = self.apply_nn(self.input_target)
+        self.compute_loss()
+        return self.output
 
     def backward(self):
-        self.loss.backward()
+        if hasattr(self, "loss"):
+            self.loss.backward()
