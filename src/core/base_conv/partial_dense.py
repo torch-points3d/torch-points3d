@@ -17,7 +17,7 @@ from torch_geometric.nn import (
     knn,
 )
 from torch_geometric.data import Batch
-import torch_points as tp
+import torch_points_kernels as tp
 import etw_pytorch_utils as pt_utils
 
 from src.core.spatial_ops import *

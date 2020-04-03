@@ -1,5 +1,5 @@
 import torch
-import torch_points as tp
+import torch_points_kernels as tp
 from torch_cluster import radius
 from torch_scatter import scatter_add
 

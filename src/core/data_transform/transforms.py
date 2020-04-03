@@ -476,7 +476,6 @@ class PairTransform(object):
         """
         apply the transform for a pair of data
         (as defined in src/datasets/registration/pair.py)
-
         """
         self.transform = transform
 

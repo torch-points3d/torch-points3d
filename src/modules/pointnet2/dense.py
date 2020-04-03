@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch_points as tp
+import torch_points_kernels as tp
 import etw_pytorch_utils as pt_utils
 
 from src.core.base_conv.dense import *
