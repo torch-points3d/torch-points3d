@@ -1,10 +1,10 @@
 :github_url: "https://github.com/nicolas-chaulet/deeppointcloud-benchmarks"
 
 
-FILTERS
+Filters
 ==========
 
-.. autoclass:: src.core.data_transform.PlanarityFliter
+.. autoclass:: src.core.data_transform.PlanarityFilter
 
 .. autoclass:: src.core.data_transform.RandomFilter
 

@@ -168,16 +168,19 @@ class AddFeatByKey(object):
 
 
 def compute_planarity(eigenvalues):
-    """
-    compute the planarity with respect to the eigenvalues of the covariance matrix of the centered pointcloud
+    r"""
+    compute the planarity with respect to the eigenvalues of the covariance matrix of the pointcloud
     let
-    :amath:`\lambda_1, \lambda_2, \lambda_3` be the eigenvalues st
+    :math:`\lambda_1, \lambda_2, \lambda_3` be the eigenvalues st:
+
     .. math::
         \lambda_1 \leq \lambda_2 \leq \lambda_3
 
     then planarity is defined as:
+
     .. math::
         planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
+
     """
     return (eigenvalues[1] - eigenvalues[0]) / eigenvalues[2]
 
@@ -200,17 +203,18 @@ class NormalFeature(object):
 
 
 class PCACompute(object):
-    """
-    compute `Principal Component Analysis<https://en.wikipedia.org/wiki/Principal_component_analysis>`__ of a point cloud :math:`x_1,\dots, x_n`.
+    r"""
+    compute `Principal Component Analysis <https://en.wikipedia.org/wiki/Principal_component_analysis>`__ of a point cloud :math:`x_1,\dots, x_n`.
     It computes the eigenvalues and the eigenvectors of the matrix :math:`C` which is the covariance matrix of the point cloud:
+
     .. math::
-        x_{centered} = \frac{1}{n}\sum_{i=1}^n x_i
-        C = \sum_{i=1} (x_i - x_{centered})(x_i - x_{centered})^T
+        x_{centered} &= \frac{1}{n} \sum_{i=1}^n x_i
+
+        C &= \frac{1}{n} \sum_{i=1}^n (x_i - x_{centered})(x_i - x_{centered})^T
+
     store the eigen values and the eigenvectors in data.
     in eigenvalues attribute and eigenvectors attributes.
-    data.eigenvalues is a tensor :math:`(\lambda_1, \lambda_2, \lambda_3)` such that:
-    ..math::
-        \lambda_1 \leq \lambda_2 \leq \lambda_3
+    data.eigenvalues is a tensor :math:`(\lambda_1, \lambda_2, \lambda_3)` such that :math:`\lambda_1 \leq \lambda_2 \leq \lambda_3`.
 
     data.eigenvectors is a 3 x 3 matrix such that the column are the eigenvectors associated to their eigenvalues
     Therefore, the first column of data.eigenvectors estimates the normal at the center of the pointcloud.
@@ -245,7 +249,9 @@ class AddOnes(object):
 class XYZFeature(object):
     """
     add the X, Y and Z as a feature
-    parameters:
+
+    Parameters
+    -----------
     add_x: bool
         whether we add the x position or not
     add_y: bool

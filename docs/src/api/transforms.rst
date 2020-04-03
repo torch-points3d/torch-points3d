@@ -47,3 +47,5 @@ Transforms
 .. autoclass:: src.core.data_transform.RandomDropout
 
 .. autoclass:: src.core.data_transform.PCACompute
+
+.. autofunction:: src.core.data_transform.compute_planarity

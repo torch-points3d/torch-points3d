@@ -37,12 +37,13 @@ class FCompose(object):
 class PlanarityFilter(object):
     """
     compute planarity and return false if the planarity of a pointcloud is above or below a threshold
+
     Parameter
     ---------
     thresh: float, optional
         threshold to filter low planar pointcloud
     is_leq: bool, optional
-        planarity is lesser or equal than the threshold ? or greater than the threshold
+        choose whether planarity should be lesser or equal than the threshold or greater than the threshold.
     """
 
     def __init__(self, thresh=0.3, is_leq=True):
