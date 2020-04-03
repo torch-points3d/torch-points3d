@@ -15,17 +15,14 @@ class TestFilter(unittest.TestCase):
     def test_planarity_filter(self):
 
         # Plane with high planarity
-        vec1 = torch.randn(3)
-        vec1 = vec1 / torch.norm(vec1)
-        vec2 = torch.randn(3)
-        vec2 = vec2 / torch.norm(vec2)
-        plane = torch.randn(100, 1) * vec1.view(1, 3) + torch.randn(100, 1) * vec2.view(1, 3)
+        U = euler_angles_to_rotation_matrix(torch.rand(3) * np.pi)
+        plane = torch.rand(1000, 3) @ U @ torch.diag(torch.tensor([1, 1, 0.001])) @ U
         data1 = Data(pos=plane)
         # random isotropic gaussian
         data2 = Data(pos=torch.randn(100, 3))
         plane_filter = PlanarityFilter(0.3)
-        self.assertTrue(plane_filter(data2))
-        self.assertFalse(plane_filter(data1))
+        self.assertTrue(plane_filter(data2).item())
+        self.assertFalse(plane_filter(data1).item())
 
     def test_composition(self):
 
@@ -42,6 +39,6 @@ class TestFilter(unittest.TestCase):
 
         compose_filter = FCompose([PlanarityFilter(0.5, is_leq=True), PlanarityFilter(0.1, is_leq=False)])
 
-        self.assertTrue(compose_filter(data_1))
-        self.assertFalse(compose_filter(data_2))
-        self.assertFalse(compose_filter(data_3))
+        self.assertTrue(compose_filter(data_1).item())
+        self.assertFalse(compose_filter(data_2).item())
+        self.assertFalse(compose_filter(data_3).item())
