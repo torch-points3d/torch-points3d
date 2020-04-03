@@ -247,33 +247,35 @@ class Fragment3DMatch(Base3DMatch):
                                               is_fine,
                                               transform,
                                               pre_transform,
+                                              pre_transform_fragment,
                                               pre_filter,
                                               verbose,
                                               debug)
+        self.path_match = osp.join(self.processed_dir, self.mode, 'matches')
+        self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
 
     def get_fragment(self, idx):
 
         match = np.load(
-            osp.join(self.processed_dir,
-                     self.mode, 'matches',
+            osp.join(self.path_match,
                      'matches{:06d}.npy'.format(idx)),
             allow_pickle=True).item()
-
-        print(match['path_source'])
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
+
         batch = Pair.make_pair(data_source, data_target)
         batch.y = torch.from_numpy(match['pair'])
+
         return batch.contiguous().to(torch.float)
 
     def get(self, idx):
         return self.get_fragment(idx)
 
     def __len__(self):
-        return len(self.list_test_fragment)
+        return len(self.list_fragment)
 
 
 class General3DMatchDataset(BaseSiameseDataset):
@@ -284,7 +286,7 @@ class General3DMatchDataset(BaseSiameseDataset):
         train_transform = self.train_transform
         test_transform = self.test_transform
         pre_filter = self.pre_filter
-        test_pre_filter = self.test_pre_filter
+        test_pre_filter = getattr(self, 'test_pre_filter', None)
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(

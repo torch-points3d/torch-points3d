@@ -19,14 +19,24 @@ data:
   train_transforms:
     - transform: RandomNoise
       params:
-      sigma: 0.005
-      clip: 0.05
+        sigma: 0.005
+        clip: 0.05
+    - transform: AddOnes
+    - transform: AddFeatByKey
+      params:
+        add_to_x: True
+        feat_name: 'ones'
     - transform: ToSparseInput
       params:
         grid_size: ${data.grid_size}
         save_delta: False
         mode: "mean"
   test_transforms:
+    - transform: AddOnes
+    - transform: AddFeatByKey
+      params:
+        add_to_x: True
+        feat_name: 'ones'
     - transform: ToSparseInput
       params:
         grid_size: ${data.grid_size}
