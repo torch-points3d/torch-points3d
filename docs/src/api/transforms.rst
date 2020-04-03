@@ -45,3 +45,5 @@ Transforms
 .. autoclass:: src.core.data_transform.ChromaticJitter
 
 .. autoclass:: src.core.data_transform.RandomDropout
+
+.. autoclass:: src.core.data_transform.PCACompute

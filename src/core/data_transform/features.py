@@ -166,15 +166,18 @@ class AddFeatByKey(object):
             self.__class__.__name__, self._add_to_x, self._feat_name, self._strict
         )
 
+
 def compute_planarity(eigenvalues):
     """
     compute the planarity with respect to the eigenvalues of the covariance matrix of the centered pointcloud
-    let $\lambda_1, \lambda_2, \lambda_3$ be the eigenvalues st
-    $$
-    \lambda_1 \leq \lambda_2 \leq \lambda_3
-    $$
+    let
+    :amath:`\lambda_1, \lambda_2, \lambda_3` be the eigenvalues st
+    .. math::
+        \lambda_1 \leq \lambda_2 \leq \lambda_3
+
     then planarity is defined as:
-    planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
+    .. math::
+        planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
     """
     return (eigenvalues[1] - eigenvalues[0]) / eigenvalues[2]
 
@@ -198,9 +201,20 @@ class NormalFeature(object):
 
 class PCACompute(object):
     """
-    compute PCA of a point cloud and store the eigen values and the eigenvectors
-    """
+    compute `Principal Component Analysis<https://en.wikipedia.org/wiki/Principal_component_analysis>`__ of a point cloud :math:`x_1,\dots, x_n`.
+    It computes the eigenvalues and the eigenvectors of the matrix :math:`C` which is the covariance matrix of the point cloud:
+    .. math::
+        x_{centered} = \frac{1}{n}\sum_{i=1}^n x_i
+        C = \sum_{i=1} (x_i - x_{centered})(x_i - x_{centered})^T
+    store the eigen values and the eigenvectors in data.
+    in eigenvalues attribute and eigenvectors attributes.
+    data.eigenvalues is a tensor :math:`(\lambda_1, \lambda_2, \lambda_3)` such that:
+    ..math::
+        \lambda_1 \leq \lambda_2 \leq \lambda_3
 
+    data.eigenvectors is a 3 x 3 matrix such that the column are the eigenvectors associated to their eigenvalues
+    Therefore, the first column of data.eigenvectors estimates the normal at the center of the pointcloud.
+    """
 
     def __call__(self, data):
         pos_centered = data.pos - data.pos.mean(axis=0)
@@ -209,6 +223,9 @@ class PCACompute(object):
         data.eigenvalues = eig
         data.eigenvectors = v
         return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)
 
 
 class AddOnes(object):
@@ -223,3 +240,37 @@ class AddOnes(object):
 
     def __repr__(self):
         return "{}()".format(self.__class__.__name__)
+
+
+class XYZFeature(object):
+    """
+    add the X, Y and Z as a feature
+    parameters:
+    add_x: bool
+        whether we add the x position or not
+    add_y: bool
+        whether we add the y position or not
+    add_z: bool
+        whether we add the z position or not
+    """
+
+    def __init__(self, add_x=True, add_y=True, add_z=True):
+        self.axis = []
+        if add_x:
+            self.axis.append(0)
+        if add_y:
+            self.axis.append(1)
+        if add_z:
+            self.axis.append(2)
+
+    def __call__(self, data):
+        assert data.pos is not None
+        xyz = data.pos[:, self.axis]
+        if data.x is None:
+            data.x = xyz
+        else:
+            data.x = torch.cat([data.x, xyz], -1)
+        return data
+
+    def __repr__(self):
+        return "{}(axis={})".format(self.__class__.__name__, self.axis)
