@@ -42,7 +42,7 @@ autodoc_mock_imports = [
     "torch_scatter",
     "torch_sparse",
     "torch_cluster",
-    "torch_points",
+    "torch_points_kernels",
     "torch",
     "torch_geometric",
     "sklearn",
