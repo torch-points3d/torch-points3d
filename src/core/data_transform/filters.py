@@ -20,30 +20,46 @@ class FCompose(object):
         self.boolean_operation = boolean_operation
 
     def __call__(self, data):
-
-        res = True
+        assert len(self.list_filter) > 0
+        res = self.list_filter[0](data)
         for filter_fn in self.list_filter:
             res = self.boolean_operation(res, filter_fn(data))
         return res
 
+    def __repr__(self):
+        rep = "{}([".format(self.__class__.__name__)
+        for filt in self.list_filter:
+            rep = rep + filt.__repr__() + ", "
+        rep = rep + "])"
+        return rep
+
 
 class PlanarityFilter(object):
     """
-    compute planarity and return false if the planarity of a pointcloud is above a threshold
+    compute planarity and return false if the planarity of a pointcloud is above or below a threshold
     Parameter
     ---------
     thresh: float, optional
         threshold to filter low planar pointcloud
+    is_leq: bool, optional
+        planarity is lesser or equal than the threshold ? or greater than the threshold
     """
 
-    def __init__(self, thresh=0.3):
+    def __init__(self, thresh=0.3, is_leq=True):
         self.thresh = thresh
+        self.is_leq = is_leq
 
     def __call__(self, data):
         if(getattr(data, 'eigenvalues', None) is None):
             data = PCACompute()(data)
         planarity = compute_planarity(data.eigenvalues)
-        return planarity < self.thresh
+        if(self.is_leq):
+            return planarity <= self.thresh
+        else:
+            return planarity > self.thresh
+
+    def __repr__(self):
+        return "{}(thresh={}, is_leq={})".format(self.__class__.__name__, self.thresh, self.is_leq)
 
 
 class RandomFilter(object):
@@ -61,3 +77,6 @@ class RandomFilter(object):
 
     def __call__(self, data):
         return random.random() < self.thresh
+
+    def __repr__(self):
+        return "{}(thresh={})".format(self.__class__.__name__, self.thresh)
