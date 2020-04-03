@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Union
 import torch
 from torch_geometric.nn import knn, radius
-import torch_points as tp
+import torch_points_kernels as tp
 import torchnet as tnt
 from src.utils.config import is_list
 from src.utils.enums import ConvolutionFormat

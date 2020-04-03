@@ -4,7 +4,7 @@ import torch
 from torch_geometric.nn import voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
-import torch_points as tp
+import torch_points_kernels as tp
 
 from src.utils.config import is_list
 from src.utils.enums import ConvolutionFormat
