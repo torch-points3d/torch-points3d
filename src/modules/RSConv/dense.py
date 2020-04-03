@@ -5,7 +5,7 @@ from torch.nn import Sequential as Seq
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Conv1d
-import torch_points as tp
+import torch_points_kernels as tp
 import etw_pytorch_utils as pt_utils
 from typing import Tuple
 
