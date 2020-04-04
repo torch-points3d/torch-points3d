@@ -82,7 +82,7 @@ models:
                     [False, False],
                 ]
             max_num_neighbors:
-                [[12, 12], [12, 25], [25, 38], [38, 36], [36, 32]]
+                [[25, 25], [25, 30], [30, 38], [38, 38], [38, 38]]
             module_name: KPDualBlock
         up_conv:
             module_name: FPModule_PD
@@ -94,7 +94,7 @@ models:
                     [2*in_feat + 2*in_feat, in_feat],
                 ]
             skip: True
-            up_k: [3,3,3,3]
+            up_k: [1,1,1,1]
             bn_momentum:
                 [
                     bn_momentum,
@@ -105,7 +105,7 @@ models:
                 ]
         mlp_cls:
             nn: [in_feat, in_feat]
-            dropout: 0.5
+            dropout: 0
             bn_momentum: bn_momentum
         loss_weights:
             lambda_reg: 0

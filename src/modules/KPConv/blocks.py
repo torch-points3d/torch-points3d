@@ -3,7 +3,7 @@ import sys
 from torch.nn import Linear as Lin
 
 from .kernels import KPConvLayer, KPConvDeformableLayer
-from src.core.common_modules.base_modules import BaseModule
+from src.core.common_modules.base_modules import BaseModule, FastBatchNorm1d
 from src.core.spatial_ops import RadiusNeighbourFinder
 from src.core.data_transform import GridSampling
 from src.utils.enums import ConvolutionFormat
@@ -29,9 +29,9 @@ class SimpleBlock(BaseModule):
         prev_grid_size=None,
         sigma=1.0,
         max_num_neighbors=16,
-        activation=torch.nn.LeakyReLU(negative_slope=0.2),
+        activation=torch.nn.LeakyReLU(negative_slope=0.1),
         bn_momentum=0.02,
-        bn=torch.nn.BatchNorm1d,
+        bn=FastBatchNorm1d,
         deformable=False,
         add_one=False,
         **kwargs,
@@ -123,10 +123,10 @@ class ResnetBBlock(BaseModule):
         prev_grid_size=None,
         sigma=1,
         max_num_neighbors=16,
-        activation=torch.nn.LeakyReLU(negative_slope=0.2),
+        activation=torch.nn.LeakyReLU(negative_slope=0.1),
         has_bottleneck=True,
         bn_momentum=0.02,
-        bn=torch.nn.BatchNorm1d,
+        bn=FastBatchNorm1d,
         deformable=False,
         add_one=False,
         **kwargs,

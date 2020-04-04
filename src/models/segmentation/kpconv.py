@@ -2,11 +2,12 @@ from typing import Any
 import logging
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
-from torch.nn import Sequential, BatchNorm1d, Dropout, Linear
+from torch.nn import Sequential, Dropout, Linear
 import torch.nn.functional as F
 from torch import nn
 
 from .base import Segmentation_MP
+from src.core.common_modules import FastBatchNorm1d
 from src.modules.KPConv import *
 from src.core.base_conv.partial_dense import *
 from src.core.common_modules import MultiHeadClassifier
@@ -56,7 +57,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
                     Sequential(
                         *[
                             Linear(in_feat, last_mlp_opt.nn[i], bias=False),
-                            BatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
+                            FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
                             LeakyReLU(0.2),
                         ]
                     ),

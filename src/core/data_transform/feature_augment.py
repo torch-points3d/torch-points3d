@@ -78,3 +78,28 @@ class ChromaticJitter:
             noise *= self.std
             data.rgb = torch.clamp(noise + data.rgb, 0, 1)
         return data
+
+
+class DropFeature:
+    """ Sets the given feature to 0 with a given probability
+
+    Parameters
+    ----------
+    drop_proba:
+        Probability that the feature gets dropped
+    feature_name:
+        Name of the feature to drop
+    """
+
+    def __init__(self, drop_proba=0.2, feature_name="rgb"):
+        self._drop_proba = drop_proba
+        self._feature_name = feature_name
+
+    def __call__(self, data):
+        assert hasattr(data, self._feature_name)
+        if random.random() < self._drop_proba:
+            data[self._feature_name] = data[self._feature_name] * 0
+        return data
+
+    def __repr__(self):
+        return "DropFeature: proba = {}, feature = {}".format(self._drop_proba, self._feature_name)

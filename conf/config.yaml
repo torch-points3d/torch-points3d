@@ -7,9 +7,8 @@ defaults:
     optional: True
 
   - visualization: default
-  - lr_scheduler: multi_step
+  - lr_scheduler: exponential
   - training: default
-  - eval
 
   - debugging: default.yaml
   - models: ${defaults.0.task}/${defaults.1.model_type}
