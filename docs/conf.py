@@ -51,6 +51,7 @@ autodoc_mock_imports = [
     "tqdm",
     "hydra",
     "matplotlib",
+    "pytorch_metric_learning",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
