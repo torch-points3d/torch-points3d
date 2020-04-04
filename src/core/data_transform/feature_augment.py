@@ -95,7 +95,11 @@ class DropFeature:
         self._drop_proba = drop_proba
         self._feature_name = feature_name
 
-    def __call(self, data):
+    def __call__(self, data):
         assert hasattr(data, self._feature_name)
         if random.random() < self._drop_proba:
             data[self._feature_name] = data[self._feature_name] * 0
+        return data
+
+    def __repr__(self):
+        return "DropFeature: proba = {}, feature = {}".format(self._drop_proba, self._feature_name)

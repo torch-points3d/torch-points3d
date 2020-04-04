@@ -190,6 +190,15 @@ class XYZFeature(object):
             data.x = torch.cat([data.x, xyz], -1)
         return data
 
+    def __repr__(self):
+        coords = ""
+        axis = ["x", "y", "z"]
+        for a in self.axis:
+            if len(coords):
+                coords += ", "
+            coords += axis[a]
+        return "XYZFeature: " + coords
+
 
 class RGBFeature(object):
     """

@@ -94,7 +94,7 @@ models:
                     [2*in_feat + 2*in_feat, in_feat],
                 ]
             skip: True
-            up_k: [3,3,3,3]
+            up_k: [1,1,1,1]
             bn_momentum:
                 [
                     bn_momentum,

@@ -41,7 +41,7 @@ data:
           add_x: False
           add_y: False
           add_z: True
-      - transform: AddFeatsByKey
+      - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
           feat_names: [rgb]
@@ -52,7 +52,7 @@ data:
           add_x: False
           add_y: False
           add_z: True
-      - transform: AddFeatsByKey
+      - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
           feat_names: [rgb]

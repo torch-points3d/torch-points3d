@@ -118,7 +118,7 @@ def KPConv_ops(
     # In case of closest mode, only the closest KP can influence each point
     if aggregation_mode == "closest":
         neighbors_1nn = torch.argmin(sq_distances, dim=-1)
-        all_weights *= torch.transpose(nn.functional.one_hot(neighbors_1nn, K_points.shape[0]), 1, 2)
+        all_weights *= torch.transpose(torch.nn.functional.one_hot(neighbors_1nn, K_points.shape[0]), 1, 2)
 
     elif aggregation_mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
