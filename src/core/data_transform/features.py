@@ -30,7 +30,7 @@ class AddFeatsByKeys(object):
 
         - transform: AddFeatsByKeys
           params:
-              list_add_to_x: [False, True, True]    
+              list_add_to_x: [False, True, True]
               feat_names: ['normal', 'rgb', "elevation"]
               input_nc_feats: [3, 3, 1]
 
@@ -107,7 +107,7 @@ class AddFeatsByKeys(object):
 
 class AddFeatByKey(object):
     """This transform is responsible to get an attribute under feat_name and add it to x if add_to_x is True
-    
+
     Paremeters
     ----------
     add_to_x: bool
@@ -167,9 +167,97 @@ class AddFeatByKey(object):
         )
 
 
+def compute_planarity(eigenvalues):
+    r"""
+    compute the planarity with respect to the eigenvalues of the covariance matrix of the pointcloud
+    let
+    :math:`\lambda_1, \lambda_2, \lambda_3` be the eigenvalues st:
+
+    .. math::
+        \lambda_1 \leq \lambda_2 \leq \lambda_3
+
+    then planarity is defined as:
+
+    .. math::
+        planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
+
+    """
+    return (eigenvalues[1] - eigenvalues[0]) / eigenvalues[2]
+
+
+class NormalFeature(object):
+    """
+    add normal as feature. if it doesn't exist, compute normals
+    using PCA
+    """
+    def __call__(self, data):
+        if data.norm is None:
+            raise NotImplementedError("TODO: Implement normal computation")
+
+        norm = data.norm
+        if data.x is None:
+            data.x = norm
+        else:
+            data.x = torch.cat([data.x, norm], -1)
+        return data
+
+
+class PCACompute(object):
+    r"""
+    compute `Principal Component Analysis <https://en.wikipedia.org/wiki/Principal_component_analysis>`__ of a point cloud :math:`x_1,\dots, x_n`.
+    It computes the eigenvalues and the eigenvectors of the matrix :math:`C` which is the covariance matrix of the point cloud:
+
+    .. math::
+        x_{centered} &= \frac{1}{n} \sum_{i=1}^n x_i
+
+        C &= \frac{1}{n} \sum_{i=1}^n (x_i - x_{centered})(x_i - x_{centered})^T
+
+    store the eigen values and the eigenvectors in data.
+    in eigenvalues attribute and eigenvectors attributes.
+    data.eigenvalues is a tensor :math:`(\lambda_1, \lambda_2, \lambda_3)` such that :math:`\lambda_1 \leq \lambda_2 \leq \lambda_3`.
+
+    data.eigenvectors is a 3 x 3 matrix such that the column are the eigenvectors associated to their eigenvalues
+    Therefore, the first column of data.eigenvectors estimates the normal at the center of the pointcloud.
+    """
+
+    def __call__(self, data):
+        pos_centered = data.pos - data.pos.mean(axis=0)
+        cov_matrix = pos_centered.T.mm(pos_centered) / len(pos_centered)
+        eig, v = torch.symeig(cov_matrix, eigenvectors=True)
+        data.eigenvalues = eig
+        data.eigenvectors = v
+        return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)
+
+
+class AddOnes(object):
+    """
+    Add ones tensor to data
+    """
+
+    def __call__(self, data):
+        num_nodes = data.pos.shape[0]
+        data.ones = torch.ones((num_nodes, 1)).float()
+        return data
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)
+
+
 class XYZFeature(object):
     """
     add the X, Y and Z as a feature
+
+    Parameters
+    -----------
+    add_x: bool
+        whether we add the x position or not
+    add_y: bool
+        whether we add the y position or not
+    add_z: bool
+        whether we add the z position or not
     """
 
     def __init__(self, add_x=True, add_y=True, add_z=True):
@@ -190,54 +278,5 @@ class XYZFeature(object):
             data.x = torch.cat([data.x, xyz], -1)
         return data
 
-
-class RGBFeature(object):
-    """
-    add color as feature if it exists
-    """
-
-    def __init__(self, is_normalize=False):
-        self.is_normalize = is_normalize
-
-    def __call__(self, data):
-        assert hasattr(data, "color")
-        color = data.color
-        if self.is_normalize:
-            color = F.normalize(color, p=2, dim=1)
-        if data.x is None:
-            data.x = color
-        else:
-            data.x = torch.cat([data.x, color], -1)
-        return data
-
-
-class NormalFeature(object):
-    """
-    add normal as feature. if it doesn't exist, compute normals
-    using PCA
-    """
-
-    def __call__(self, data):
-        if data.norm is None:
-            raise NotImplementedError("TODO: Implement normal computation")
-
-        norm = data.norm
-        if data.x is None:
-            data.x = norm
-        else:
-            data.x = torch.cat([data.x, norm], -1)
-        return data
-
-
-class AddOnes(object):
-    """
-    Add ones tensor to data
-    """
-
-    def __call__(self, data):
-        num_nodes = data.pos.shape[0]
-        data.ones = torch.ones((num_nodes, 1)).float()
-        return data
-
     def __repr__(self):
-        return "{}()".format(self.__class__.__name__)
+        return "{}(axis={})".format(self.__class__.__name__, self.axis)

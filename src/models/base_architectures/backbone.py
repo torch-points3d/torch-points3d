@@ -98,7 +98,9 @@ class BackboneBasedModel(BaseModel):
             self._save_sampling_and_search(down_module)
             self.down_modules.append(down_module)
 
-        self.loss_module, self.miner_module = self.get_loss(getattr(opt, "loss", None), getattr(opt, "miner", None))
+        self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
+            getattr(opt, "metric_loss", None), getattr(opt, "miner", None)
+        )
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:
         factory_module_cls = getattr(modules_lib, "{}Factory".format(model_name), None)
@@ -151,16 +153,3 @@ class BackboneBasedModel(BaseModel):
                 break
 
         return flattenedOpts
-
-    def get_loss(self, opt_loss, opt_miner):
-        """
-        instantiate the loss and the miner if it's available
-        """
-        loss = None
-        miner = None
-        if opt_loss is not None:
-            loss = instantiate_loss_or_miner(opt_loss, mode="loss")
-        if opt_miner is not None:
-            miner = instantiate_loss_or_miner(opt_miner, mode="miner")
-
-        return loss, miner

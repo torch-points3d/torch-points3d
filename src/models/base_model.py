@@ -10,6 +10,7 @@ from src.core.schedulers.lr_schedulers import instantiate_scheduler
 from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 
 from src.core.regularizer import *
+from src.core.losses import instantiate_loss_or_miner
 from src.utils.config import is_dict
 from src.utils.colors import colored_print, COLORS
 
@@ -269,6 +270,28 @@ class BaseModel(torch.nn.Module):
             return loss
         else:
             return loss / c
+
+    @staticmethod
+    def get_metric_loss_and_miner(opt_loss, opt_miner):
+        """
+        instantiate the loss and the miner if it's available
+        in the yaml config:
+
+        example in the yaml config
+        metric_loss:
+            class: "TripletMarginLoss"
+            params:
+                smooth_loss: True
+                triplets_per_anchors: 'all'
+        """
+        loss = None
+        miner = None
+        if opt_loss is not None:
+            loss = instantiate_loss_or_miner(opt_loss, mode="metric_loss")
+        if opt_miner is not None:
+            miner = instantiate_loss_or_miner(opt_miner, mode="miner")
+
+        return loss, miner
 
     def get_spatial_ops(self):
         return self._spatial_ops_dict

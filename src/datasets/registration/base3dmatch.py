@@ -17,6 +17,7 @@ from src.datasets.registration.utils import to_list
 from src.datasets.registration.utils import files_exist
 from src.datasets.registration.utils import makedirs
 from src.datasets.registration.utils import get_urls
+from src.datasets.registration.utils import PatchExtractor
 
 log = logging.getLogger(__name__)
 
@@ -29,12 +30,10 @@ class Base3DMatch(Dataset):
     list_urls_train_small = get_urls(osp.join(base, 'urls', 'url_train_small.txt'))
     list_urls_train_tiny = get_urls(osp.join(base, 'urls', 'url_train_tiny.txt'))
     list_urls_val = get_urls(osp.join(base, 'urls', 'url_val.txt'))
-    list_urls_test = get_urls(osp.join(base, 'urls', 'url_test.txt'))
     dict_urls = dict(train=list_urls_train,
                      train_small=list_urls_train_small,
                      train_tiny=list_urls_train_tiny,
-                     val=list_urls_val,
-                     test=list_urls_test)
+                     val=list_urls_val)
 
     def __init__(self, root,
                  num_frame_per_fragment=50,
@@ -43,6 +42,7 @@ class Base3DMatch(Dataset):
                  max_overlap_ratio=1.0,
                  max_dist_overlap=0.01,
                  tsdf_voxel_size=0.01,
+                 limit_size=700,
                  depth_thresh=6,
                  is_fine=True,
                  transform=None,
@@ -50,7 +50,10 @@ class Base3DMatch(Dataset):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
-                 num_random_pt=5000):
+                 num_random_pt=5000,
+                 is_offline=False,
+                 radius_patch=None,
+                 pre_transform_patch=None):
         r"""
         the Princeton 3DMatch dataset from the
         `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
@@ -97,6 +100,7 @@ class Base3DMatch(Dataset):
         self.is_fine = is_fine
         self.num_frame_per_fragment = num_frame_per_fragment
         self.tsdf_voxel_size = tsdf_voxel_size
+        self.limit_size = limit_size
         self.depth_thresh = depth_thresh
         self.mode = mode
         self.num_random_pt = num_random_pt
@@ -106,6 +110,11 @@ class Base3DMatch(Dataset):
         self.min_overlap_ratio = min_overlap_ratio
         self.max_overlap_ratio = max_overlap_ratio
         self.max_dist_overlap = max_dist_overlap
+
+        self.is_offline = is_offline
+        self.num_random_pt = num_random_pt
+        self.radius_patch = radius_patch
+        self.pre_transform_patch = pre_transform_patch
         if mode not in self.dict_urls.keys():
             raise RuntimeError('this mode {} does '
                                'not exist'
@@ -124,38 +133,21 @@ class Base3DMatch(Dataset):
 
     @property
     def processed_file_names(self):
-        return [osp.join(self.mode, 'fragment'),
-                osp.join(self.mode, 'matches')]
+        res =  [osp.join(self.mode, 'raw_fragment'),
+                osp.join(self.mode, 'matches'),
+                osp.join(self.mode, 'fragment')]
+        if self.is_offline:
+            res.append(osp.join(self.mode, 'patches'))
+        return res
 
     def download(self):
-
-        if('test' not in self.mode):
-            # we download the raw RGBD file for the train and the validation data
-            folder = osp.join(self.raw_dir, self.mode)
-            log.info("Download elements in the file {}...".format(folder))
-            for url in self.dict_urls[self.mode]:
-                path = download_url(url, folder, self.verbose)
-                extract_zip(path, folder, self.verbose)
-                os.unlink(path)
-        else:
-            # we download fragments for the test data available:
-            # http://3dmatch.cs.princeton.edu/ section
-            # Geometric Registration Benchmark
-            folder_test = osp.join(self.raw_dir, self.mode)
-            for url_raw in self.dict_urls[self.mode]:
-                url = url_raw.split('\n')[0]
-                path = download_url(url, folder_test)
-                extract_zip(path, folder_test)
-                print(path)
-                folder = path.split('.zip')[0]
-                os.unlink(path)
-                path_eval = download_url(url.split('.zip')[0]+'-evaluation.zip', folder)
-                extract_zip(path_eval, folder)
-                os.unlink(path_eval)
-                folder_eval = path_eval.split('.zip')[0]
-                for f in os.listdir(folder_eval):
-                    os.rename(osp.join(folder_eval, f), osp.join(folder, f))
-                shutil.rmtree(folder_eval)
+        # we download the raw RGBD file for the train and the validation data
+        folder = osp.join(self.raw_dir, self.mode)
+        log.info("Download elements in the file {}...".format(folder))
+        for url in self.dict_urls[self.mode]:
+            path = download_url(url, folder, self.verbose)
+            extract_zip(path, folder, self.verbose)
+            os.unlink(path)
 
 
     def _create_fragment(self, mod):
@@ -166,7 +158,7 @@ class Base3DMatch(Dataset):
         """
 
         print("Create fragment from RGBD frames...")
-        if files_exist([osp.join(self.processed_dir, mod, 'fragment')]):  # pragma: no cover
+        if files_exist([osp.join(self.processed_dir, mod, 'raw_fragment')]):  # pragma: no cover
             log.warning("the fragments on mode {} already exists".format(mod))
             return
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
@@ -177,7 +169,7 @@ class Base3DMatch(Dataset):
                 frames_dir = osp.join(self.raw_dir, self.mode,
                                       scene_path, seq)
                 out_dir = osp.join(self.processed_dir,
-                                   mod, 'fragment',
+                                   mod, 'raw_fragment',
                                    scene_path, seq)
                 makedirs(out_dir)
                 path_intrinsic = osp.join(self.raw_dir,
@@ -197,7 +189,7 @@ class Base3DMatch(Dataset):
                     rgbd2fragment_rough(list_path_frames, path_intrinsic,
                                         list_path_trans, out_dir,
                                         self.num_frame_per_fragment,
-                                        pre_transform=self.pre_transform)
+                                        pre_transform=None)
                 else:
                     assert len(list_path_frames) == len(list_path_trans), \
                         log.error("For the sequence {},"
@@ -209,8 +201,39 @@ class Base3DMatch(Dataset):
                                        list_path_trans,
                                        out_dir, self.num_frame_per_fragment,
                                        voxel_size=self.tsdf_voxel_size,
-                                       pre_transform=self.pre_transform,
-                                       depth_thresh=self.depth_thresh)
+                                       pre_transform=None,
+                                       depth_thresh=self.depth_thresh,
+                                       limit_size=self.limit_size)
+
+    def _pre_transform_fragment(self, mod):
+        """
+        pre_transform raw fragments and save it into fragments
+        """
+        out_dir = osp.join(self.processed_dir,
+                           mod, 'fragment')
+        if files_exist([out_dir]):  # pragma: no cover
+            return
+        makedirs(out_dir)
+        for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
+            # TODO list the right sequences.
+            list_seq = [f for f in os.listdir(osp.join(self.raw_dir, mod,
+                                                       scene_path)) if 'seq' in f]
+            for seq in list_seq:
+                in_dir = osp.join(self.processed_dir,
+                                  mod, 'raw_fragment',
+                                  scene_path, seq)
+                out_dir = osp.join(self.processed_dir,
+                                   mod, 'fragment',
+                                   scene_path, seq)
+                makedirs(out_dir)
+                list_fragment_path = sorted([f
+                                             for f in os.listdir(in_dir)
+                                             if 'fragment' in f])
+                for path in list_fragment_path:
+                    data = torch.load(osp.join(in_dir, path))
+                    if(self.pre_transform is not None):
+                        data = self.pre_transform(data)
+                    torch.save(data, osp.join(out_dir, path))
 
     def _compute_matches_between_fragments(self, mod):
 
@@ -251,64 +274,74 @@ class Base3DMatch(Dataset):
                                 np.save(out_path, match)
                                 ind += 1
 
-    def _compute_points_on_fragments(self, mod):
+    def _save_patches(self, mod):
         """
-        compute descriptors on fragments and save fragments with points on a pt file.
+        save patch to load it offline for the training
         """
+        p_extractor = PatchExtractor(self.radius_patch)
         out_dir = osp.join(self.processed_dir,
-                           mod, 'fragment')
+                           mod, 'patches')
         if files_exist([out_dir]):  # pragma: no cover
             return
         makedirs(out_dir)
-        ind = 0
-        # table to map fragment numper with
-        self.table = dict()
-        tot = 0
-        for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
+        match_dir = osp.join(self.processed_dir,
+                             mod, 'matches')
+        idx = 0
+        for i in range(len(os.listdir(match_dir))):
+            match = np.load(
+                osp.join(match_dir,
+                         'matches{:06d}.npy'.format(i)),
+                allow_pickle=True).item()
 
-            fragment_dir = osp.join(self.raw_dir,
-                                    mod,
-                                    scene_path)
-            list_fragment_path = sorted([osp.join(fragment_dir, f)
-                                         for f in os.listdir(fragment_dir)
-                                         if 'ply' in f])
+            for _ in range(self.num_random_pt):
+                data_source = torch.load(match['path_source'])
+                data_target = torch.load(match['path_target'])
+                rand = np.random.randint(0, len(match['pair']))
+                data_source = p_extractor(data_source, match['pair'][rand][0])
+                data_target = p_extractor(data_target, match['pair'][rand][1])
+                if(self.pre_transform_patch is not None):
+                    data_source = self.pre_transform_patch(data_source)
+                    data_target = self.pre_transform_patch(data_target)
+                if(self.pre_filter is not None):
+                    if(self.pre_filter(data_source) and self.pre_filter(data_target)):
 
-            for i, fragment_path in enumerate(list_fragment_path):
-                out_path = osp.join(out_dir, 'fragment_{:06d}.pt'.format(ind))
-
-                # read ply file
-                with open(fragment_path, 'rb') as f:
-                    data = PlyData.read(f)
-                pos = ([torch.tensor(data['vertex'][axis]) for axis in ['x', 'y', 'z']])
-                pos = torch.stack(pos, dim=-1)
-
-                # compute keypoints indices
-                data = Data(pos=pos)
-                if(self.pre_transform is not None):
-                    data = self.pre_transform(data)
-                data = self.detector(data)
-                torch.save(data, out_path)
-                num_points = getattr(data, 'keypoints', data.pos).shape[0]
-                tot += num_points
-                self.table[ind] = {'in_path': fragment_path,
-                                   'scene_path': scene_path,
-                                   'out_path': out_path,
-                                   'num_points': num_points}
-                ind += 1
-        self.table['total_num_points'] = tot
-
-        # save this file into json
-        with open(osp.join(out_dir, 'table.txt'), 'w') as f:
-            json.dump(self.table, f)
+                        torch.save(data_source,
+                                   osp.join(out_dir,
+                                            'patches_source{:06d}.pt'.format(idx)))
+                        torch.save(data_target,
+                                   osp.join(out_dir,
+                                            'patches_target{:06d}.pt'.format(idx)))
+                        idx += 1
+                else:
+                    torch.save(data_source,
+                               osp.join(out_dir,
+                                        'patches_source{:06d}.pt'.format(idx)))
+                    torch.save(data_target,
+                               osp.join(out_dir,
+                                        'patches_target{:06d}.pt'.format(idx)))
+                    idx += 1
 
     def process(self):
-        if('test' not in self.mode):
-            log.info("create fragments")
-            self._create_fragment(self.mode)
-            log.info("compute matches")
-            self._compute_matches_between_fragments(self.mode)
-        else:
-            self._compute_points_on_fragments(self.mode)
+        log.info("create fragments")
+        self._create_fragment(self.mode)
+        log.info("pre_transform those fragments")
+        self._pre_transform_fragment(self.mode)
+        log.info("compute matches")
+        self._compute_matches_between_fragments(self.mode)
+        if(self.is_offline):
+            log.info("precompute patches and save it")
+            self._save_patches(self.mode)
+
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")
+
+    def __getitem__(self, idx):
+        r"""Gets the data object at index :obj:`idx` and transforms it (in case
+        a :obj:`self.transform` is given).
+        In case :obj:`idx` is a slicing object, *e.g.*, :obj:`[2:5]`, a list, a
+        tuple, a  LongTensor or a BoolTensor, will return a subset of the
+        dataset at the specified indices."""
+
+        data = self.get(idx)
+        return data

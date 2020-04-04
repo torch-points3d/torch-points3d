@@ -7,11 +7,21 @@ data:
   num_frame_per_fragment: 101
   max_dist_overlap: 0.04
   min_overlap_ratio: 0.2
-  tsdf_voxel_size: 0.01
+  tsdf_voxel_size: 0.006
+  limit_size: 850
   depth_thresh: 4.5
   radius_patch: 0.3
   first_subsampling: 0.02
-  num_random_pt: 5000
+  num_random_pt: 300
+  is_offline: True
+  pre_filters:
+    - filter: PlanarityFilter
+      params:
+        thresh: 0.3
+  test_pre_filters:
+    - filter: RandomFilter
+      params:
+        thresh: 0.1
   pre_transforms:
     - transform: GridSampling
       params:
@@ -19,14 +29,12 @@ data:
   train_transforms:
     - transform: FixedPoints
       lparams: [1024]
-    - transform: NormalizeScale
+    - transform: Center
     - transform: RandomNoise
       params:
-        sigma: 0.005
+        sigma: 0.0005
         clip: 0.05
-    - transform: XYZFeature
   test_transforms:
     - transform: FixedPoints
       lparams: [1024]
-    - transform: NormalizeScale
-    - transform: XYZFeature
+    - transform: Center

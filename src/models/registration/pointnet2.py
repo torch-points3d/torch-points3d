@@ -11,6 +11,7 @@ from src.modules.pointnet2 import *
 from src.core.base_conv.dense import DenseFPModule
 from src.core.common_modules import MLP
 from src.models.base_architectures import BackboneBasedModel
+from src.models.base_architectures import UnwrappedUnetBasedModel
 from src.models.registration.base import create_batch_siamese
 
 log = logging.getLogger(__name__)
@@ -33,24 +34,27 @@ class PatchPointNet2_D(BackboneBasedModel):
 
     def set_last_mlp(self, last_mlp_opt):
 
-        assert len(last_mlp_opt.nn) >= 2
         if len(last_mlp_opt.nn) > 2:
-
             self.FC_layer = MLP(last_mlp_opt.nn[: len(last_mlp_opt.nn) - 1])
             self.FC_layer.add_module("last", Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
-        else:
+        elif len(last_mlp_opt.nn) == 2:
             self.FC_layer = Seq(Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
+        else:
+            self.FC_layer = torch.nn.Identity()
 
     def set_input(self, data, device):
         # Size : B x N x 3
         # manually concatenate the b
-        data = data.to(device)
 
-        if getattr(data, "pos_source", None) is not None:
-            assert len(data.pos_source.shape) == 3 and len(data.pos_target.shape) == 3
-            x = torch.cat([data.x_source, data.x_target], 0)
-            pos = torch.cat([data.pos_source, data.pos_target], 0)
-            rang = torch.arange(0, data.pos_source.shape[0])
+        if getattr(data, "pos_target", None) is not None:
+            assert len(data.pos.shape) == 3 and len(data.pos_target.shape) == 3
+            if data.x is not None:
+                x = torch.cat([data.x, data.x_target], 0)
+            else:
+                x = None
+            pos = torch.cat([data.pos, data.pos_target], 0)
+            rang = torch.arange(0, data.pos.shape[0])
+
             labels = torch.cat([rang, rang], 0)
         else:
             x = data.x
@@ -59,10 +63,8 @@ class PatchPointNet2_D(BackboneBasedModel):
 
         if x is not None:
             x = x.transpose(1, 2).contiguous()
-        else:
-            x = None
 
-        self.input = Data(x=x, pos=pos, y=labels)
+        self.input = Data(x=x, pos=pos, y=labels).to(device)
 
     def forward(self):
         r"""
@@ -72,8 +74,9 @@ class PatchPointNet2_D(BackboneBasedModel):
         labels = data.y
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
-        # size after pointnet B x N x D
-        last_feature = torch.mean(data.x, dim=1)
+
+        # size after pointnet B x D x N
+        last_feature = torch.mean(data.x, dim=-1)
         # size after global pooling B x D
         self.output = self.FC_layer(last_feature)
         self.output = F.normalize(self.output, p=2, dim=1)
@@ -82,7 +85,7 @@ class PatchPointNet2_D(BackboneBasedModel):
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, labels)
-        self.loss_reg = self.loss_module(self.output, labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(self.output, labels, hard_pairs)
         self.internal = self.get_internal_loss()
         self.loss = self.loss_reg + self.internal
         return self.output
@@ -93,3 +96,10 @@ class PatchPointNet2_D(BackboneBasedModel):
         # calculate loss given the input and intermediate results
         if hasattr(self, "loss"):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
+
+
+class FragmentPointNet(UnwrappedUnetBasedModel):
+    def __init__(self, option, model_type, dataset, modules):
+        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        self.set_last_mlp(option.mlp_cls)
+        self.loss_names = ["loss_reg", "loss", "internal"]
