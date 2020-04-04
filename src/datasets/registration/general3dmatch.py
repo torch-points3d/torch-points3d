@@ -262,6 +262,7 @@ class Fragment3DMatch(Base3DMatch):
             allow_pickle=True).item()
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
+
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)

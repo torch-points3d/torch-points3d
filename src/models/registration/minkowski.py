@@ -57,7 +57,7 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
             hard_pairs = self.miner_module(self.output, self.labels)
 
         # loss
-        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
         self.internal = self.get_internal_loss()
         self.loss = self.loss_reg + self.internal
 
@@ -78,24 +78,27 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
 class MinkowskiFragment(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
+        self.num_pos_pairs = option.num_pos_pairs
+        self.normalize_feature = option.normalize_feature
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self.loss_names = ["loss_reg", "loss"]
-        self.normalize_feature = option.normalize_feature
 
     def set_input(self, data, device):
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
 
         if hasattr(data, "pos_target"):
+            print(data.y.max(0))
+            print(data.y.shape)
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
             num_pos_pairs = len(data.y)
             if self.num_pos_pairs < len(data.y):
                 num_pos_pairs = self.num_pos_pairs
-            rand_ind = self.randperm(len(data.y))[:num_pos_pairs]
-            self.ind = data.y[rand_ind:, 0].to(device)
-            self.ind_target = data.y[rand_ind:, 1].to(device)
-            rang = torch.range(0, self.num_pos_pairs)
+            rand_ind = torch.randperm(len(data.y))[:num_pos_pairs]
+            self.ind = data.y[rand_ind, 0].to(torch.long).to(device)
+            self.ind_target = data.y[rand_ind, 1].to(torch.long).to(device)
+            rang = torch.arange(0, num_pos_pairs)
             self.labels = torch.cat([rang, rang], 0).to(device)
         else:
             self.labels = None
@@ -122,21 +125,30 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
 
     def compute_loss(self):
         # miner
+
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, self.labels)
         # loss
-        self.loss_reg = self.loss_module(self.output, self.labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
         self.internal = self.get_internal_loss()
         self.loss = self.loss_reg + self.internal
 
     def forward(self):
+        print(self.input.F.shape)
+        print(self.input_target.F.shape)
+        out = self.apply_nn(self.input)
 
-        self.output = self.apply_nn(self.input)
         if self.labels is None:
+            self.output = out.F
             return self.output
 
-        self.output_target = self.apply_nn(self.input_target)
+        out_target = self.apply_nn(self.input_target)
+        print(out.F.shape)
+        print(out_target.F.shape)
+        print(self.ind.max())
+        print(self.ind_target.max())
+        self.output = torch.cat([out.F[self.ind], out_target.F[self.ind_target]], 0)
         self.compute_loss()
         return self.output
 

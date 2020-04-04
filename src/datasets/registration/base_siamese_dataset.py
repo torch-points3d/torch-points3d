@@ -14,9 +14,7 @@ class BaseSiameseDataset(BaseDataset):
         """
         super().__init__(dataset_opt)
 
-
-    @staticmethod
-    def _get_collate_function(conv_type, is_multiscale):
+    def _get_collate_function(self, conv_type, is_multiscale):
 
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
 

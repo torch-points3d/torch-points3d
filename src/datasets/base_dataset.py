@@ -19,7 +19,6 @@ from src.models.base_model import BaseModel
 # A logger for this file
 log = logging.getLogger(__name__)
 
-
 class BaseDataset:
     def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
@@ -130,8 +129,7 @@ class BaseDataset:
                     continue
                 setattr(self, new_name, filt)
 
-    @staticmethod
-    def _get_collate_function(conv_type, is_multiscale):
+    def _get_collate_function(self, conv_type, is_multiscale):
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
@@ -171,7 +169,7 @@ class BaseDataset:
         """
         conv_type = model.conv_type
         self._batch_size = batch_size
-        batch_collate_function = BaseDataset._get_collate_function(conv_type, precompute_multi_scale)
+        batch_collate_function = self._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(torch.utils.data.DataLoader, collate_fn=batch_collate_function)
 
         if self.train_sampler:
