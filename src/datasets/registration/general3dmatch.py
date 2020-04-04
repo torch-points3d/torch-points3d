@@ -269,7 +269,6 @@ class Fragment3DMatch(Base3DMatch):
 
         batch = Pair.make_pair(data_source, data_target)
         batch.y = torch.from_numpy(match['pair'])
-
         return batch.contiguous().to(torch.float)
 
     def get(self, idx):
@@ -277,6 +276,7 @@ class Fragment3DMatch(Base3DMatch):
 
     def __len__(self):
         return len(self.list_fragment)
+
 
 
 class General3DMatchDataset(BaseSiameseDataset):
@@ -288,6 +288,7 @@ class General3DMatchDataset(BaseSiameseDataset):
         test_transform = self.test_transform
         pre_filter = self.pre_filter
         test_pre_filter = getattr(self, 'test_pre_filter', None)
+
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(

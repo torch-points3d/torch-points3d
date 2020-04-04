@@ -35,6 +35,7 @@ models:
         mlp_cls:
             nn: [32]
             dropout: 0.5
+        num_pos_pairs: 2048
         normalize_feature: True
         metric_loss:
           class: "ContrastiveLoss"
