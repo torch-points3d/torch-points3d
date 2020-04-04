@@ -24,6 +24,7 @@ from src.core.data_transform import (
     RemoveDuplicateCoords,
     RandomDropout,
     ShiftVoxels,
+    PCACompute,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -185,6 +186,18 @@ class Testhelpers(unittest.TestCase):
         tr = ShiftVoxels()
         tr_data = tr(data.clone())
         self.assertGreaterEqual(tr_data.pos[0][0], data.pos[0][0])
+
+    def test_PCACompute(self):
+        vec1 = torch.randn(3)
+        vec1 = vec1 / torch.norm(vec1)
+        vec2 = torch.randn(3)
+        vec2 = vec2 / torch.norm(vec2)
+        norm = vec1.cross(vec2) / torch.norm(vec1.cross(vec2))
+        plane = torch.randn(100, 1) * vec1.view(1, 3) + torch.randn(100, 1) * vec2.view(1, 3)
+        data = Data(pos=plane)
+        pca = PCACompute()
+        data = pca(data)
+        npt.assert_almost_equal(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1)
 
 
 if __name__ == "__main__":

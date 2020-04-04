@@ -8,6 +8,7 @@ import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
 
 from src.core.data_transform import instantiate_transforms, MultiScaleTransform
+from src.core.data_transform import instantiate_filters
 from src.datasets.batch import SimpleBatch
 from src.datasets.multiscale_data import MultiScaleBatch
 from src.utils.enums import ConvolutionFormat
@@ -43,15 +44,16 @@ class BaseDataset:
         self._val_dataset = None
 
         BaseDataset.set_transform(self, dataset_opt)
+        self.set_filter(dataset_opt)
+
 
     @staticmethod
     def add_transform(transform_list_to_be_added, out=[]):
-        """ Add transforms to an existing list or not
-        
+        """[Add transforms to an existing list or not]
         Arguments:
             transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
             out {[type]} -- [Should be a lis]
-        
+
         Returns:
             [list] -- [List of transforms]
         """
@@ -68,12 +70,13 @@ class BaseDataset:
 
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
+
         """ Remove a transform if within list_transform_class
-        
+
         Arguments:
             transform_in {[type]} -- [Compose | List of transform]
             list_transform_class {[type]} -- [List of transform class to be removed]
-        
+
         Returns:
             [type] -- [description]
         """
@@ -113,6 +116,20 @@ class BaseDataset:
         inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
         obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
+    def set_filter(self, dataset_opt):
+        """This function create and set the pre_filter to the obj as attributes
+        """
+        self.pre_filter = None
+        for key_name in dataset_opt.keys():
+            if "filter" in key_name:
+                new_name = key_name.replace("filters", "filter")
+                try:
+                    filt = instantiate_filters(getattr(dataset_opt, key_name))
+                except Exception:
+                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
+                    continue
+                setattr(self, new_name, filt)
+
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
@@ -139,6 +156,7 @@ class BaseDataset:
 
     @staticmethod
     def get_sample(batch, key, index, conv_type):
+
         assert hasattr(batch, key)
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_dense:
@@ -158,7 +176,6 @@ class BaseDataset:
 
         if self.train_sampler:
             log.info(self.train_sampler)
-
         if self.train_dataset:
             self._train_loader = dataloader(
                 self.train_dataset,
@@ -311,7 +328,7 @@ class BaseDataset:
         {
             'Airplaine': [0,1,2],
             'Boat': [3,4,5]
-        } 
+        }
         """
         return None
 
@@ -355,7 +372,7 @@ class BaseDataset:
 
     def get_dataset(self, name):
         """ Get a dataset by name. Raises an exception if no dataset was found
-        
+
         Parameters
         ----------
         name : str
@@ -397,7 +414,7 @@ class BaseDataset:
         pass
 
     def resolve_saving_stage(self, selection_stage):
-        """This function is responsible to determine if the best model selection 
+        """This function is responsible to determine if the best model selection
         is going to be on the validation or test datasets
         """
         log.info(

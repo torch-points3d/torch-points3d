@@ -27,8 +27,9 @@ class PatchRegistrationTracker(BaseTracker):
         super().track(model)
 
         outputs = self._convert(model.get_output())
+        N = len(outputs) // 2
 
-        self._acc = compute_accuracy(outputs[::2], outputs[1::2])
+        self._acc = compute_accuracy(outputs[:N], outputs[N:])
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked

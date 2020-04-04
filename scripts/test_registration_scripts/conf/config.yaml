@@ -1,0 +1,5 @@
+
+path_raw_fragment: "../../../data/test3dmatch/raw/raw_fragment"
+path_results: "../../2020-03-19/14-07-35/3DMatch"
+list_tau1: [0.1, 0.05, 0.15, 0.2, 0.25, 0.3]
+list_tau2: [0.05, 0.1, 0.15, 0.20, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65]

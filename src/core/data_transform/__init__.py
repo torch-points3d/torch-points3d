@@ -7,6 +7,7 @@ from .sparse_transforms import *
 from .inference_transforms import *
 from .feature_augment import *
 from .features import *
+from .filters import *
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
@@ -38,13 +39,13 @@ if L_intersection_names:
         )
 
 
-def instantiate_transform(transform_option):
+def instantiate_transform(transform_option, attr='transform'):
     """ Creates a transform from an OmegaConf dict such as
     transform: GridSampling
         params:
             size: 0.01
     """
-    tr_name = transform_option.transform
+    tr_name = getattr(transform_option, attr, None)
     try:
         tr_params = transform_option.params
     except KeyError:
@@ -83,3 +84,10 @@ def instantiate_transforms(transform_options):
     for transform in transform_options:
         transforms.append(instantiate_transform(transform))
     return T.Compose(transforms)
+
+
+def instantiate_filters(filter_options):
+    filters = []
+    for filt in filter_options:
+        filters.append(instantiate_transform(filt, 'filter'))
+    return FCompose(filters)

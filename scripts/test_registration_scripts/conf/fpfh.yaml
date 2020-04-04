@@ -1,0 +1,6 @@
+input_path: '../../../data/test3dmatch/processed/fragment'
+output_path: '../../fpfh/3DMatch'
+radius: 0.3
+max_nn: 256
+radius_normal: 0.093
+max_nn_normal: 17

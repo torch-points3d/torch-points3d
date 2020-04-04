@@ -1,8 +1,8 @@
 # Those arguments defines the training hyper-parameters
 training:
-    epochs: 30000
+    epochs: 3000
     num_workers: 6
-    batch_size: 32
+    batch_size: 64
     shuffle: True
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
@@ -14,6 +14,7 @@ training:
             class: Adam
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
+
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"
