@@ -88,8 +88,6 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
 
         if hasattr(data, "pos_target"):
-            print(data.y.max(0))
-            print(data.y.shape)
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
             num_pos_pairs = len(data.y)
@@ -135,19 +133,12 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         self.loss = self.loss_reg + self.internal
 
     def forward(self):
-        print(self.input.F.shape)
-        print(self.input_target.F.shape)
         out = self.apply_nn(self.input)
-
         if self.labels is None:
             self.output = out.F
             return self.output
 
         out_target = self.apply_nn(self.input_target)
-        print(out.F.shape)
-        print(out_target.F.shape)
-        print(self.ind.max())
-        print(self.ind_target.max())
         self.output = torch.cat([out.F[self.ind], out_target.F[self.ind_target]], 0)
         self.compute_loss()
         return self.output
