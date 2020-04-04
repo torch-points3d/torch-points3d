@@ -141,8 +141,8 @@ def filter_pair(pair, dist):
 
 
 def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=False, num_pos=1):
-    data1 = torch.load(path1)
-    data2 = torch.load(path2)
+    data1 = torch.load(path1).to(torch.float)
+    data2 = torch.load(path2).to(torch.float)
 
     # we can use ball query on cpu because the points are sorted
     # print(len(data1.pos), len(data2.pos), max_distance_overlap)
