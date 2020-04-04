@@ -5,6 +5,41 @@
 import torch
 
 
+def gather(x, idx, method=2):
+    """
+    https://github.com/pytorch/pytorch/issues/15245
+    implementation of a custom gather operation for faster backwards.
+    :param x: input with shape [N, D_1, ... D_d]
+    :param idx: indexing with shape [n_1, ..., n_m]
+    :param method: Choice of the method
+    :return: x[idx] with shape [n_1, ..., n_m, D_1, ... D_d]
+    """
+    idx[idx == -1] = x.shape[0] - 1  # Shadow point
+    if method == 0:
+        return x[idx]
+    elif method == 1:
+        x = x.unsqueeze(1)
+        x = x.expand((-1, idx.shape[-1], -1))
+        idx = idx.unsqueeze(2)
+        idx = idx.expand((-1, -1, x.shape[-1]))
+        return x.gather(0, idx)
+    elif method == 2:
+        for i, ni in enumerate(idx.size()[1:]):
+            x = x.unsqueeze(i + 1)
+            new_s = list(x.size())
+            new_s[i + 1] = ni
+            x = x.expand(new_s)
+        n = len(idx.size())
+        for i, di in enumerate(x.size()[n:]):
+            idx = idx.unsqueeze(i + n)
+            new_s = list(idx.size())
+            new_s[i + n] = di
+            idx = idx.expand(new_s)
+        return x.gather(0, idx)
+    else:
+        raise ValueError("Unkown method")
+
+
 def radius_gaussian(sq_r, sig, eps=1e-9):
     """
     Compute a radius gaussian (gaussian of distance)
@@ -42,21 +77,20 @@ def KPConv_ops(
     """
 
     # Get variables
-    n_kp = int(K_points.shape[0])
+    int(K_points.shape[0])
 
     # Add a fake point in the last row for shadow neighbors
     shadow_point = torch.ones_like(support_points[:1, :]) * 1e6
     support_points = torch.cat([support_points, shadow_point], dim=0)
 
     # Get neighbor points [n_points, n_neighbors, dim]
-    neighbors = support_points[neighbors_indices]
+    neighbors = gather(support_points, neighbors_indices)
 
     # Center every neighborhood
     neighbors = neighbors - query_points.unsqueeze(1)
 
     # Get all difference matrices [n_points, n_neighbors, n_kpoints, dim]
-    neighbors = neighbors.unsqueeze(2)
-    neighbors = neighbors.repeat([1, 1, n_kp, 1])
+    neighbors.unsqueeze_(2)
     differences = neighbors - K_points
 
     # Get the square distances [n_points, n_neighbors, n_kpoints]
@@ -66,25 +100,25 @@ def KPConv_ops(
     if KP_influence == "constant":
         # Every point get an influence of 1.
         all_weights = torch.ones_like(sq_distances)
-        all_weights = all_weights.permute(0, 2, 1)
+        all_weights = all_weights.transpose(2, 1)
 
     elif KP_influence == "linear":
         # Influence decrease linearly with the distance, and get to zero when d = KP_extent.
-        all_weights = torch.relu(1 - torch.sqrt(sq_distances) / KP_extent)
-        all_weights = all_weights.permute(0, 2, 1)
+        all_weights = torch.clamp(1 - torch.sqrt(sq_distances) / KP_extent, min=0.0)
+        all_weights = all_weights.transpose(2, 1)
 
     elif KP_influence == "gaussian":
         # Influence in gaussian of the distance.
         sigma = KP_extent * 0.3
         all_weights = radius_gaussian(sq_distances, sigma)
-        all_weights = all_weights.permute(0, 2, 1)
+        all_weights = all_weights.transpose(2, 1)
     else:
         raise ValueError("Unknown influence function type (config.KP_influence)")
 
     # In case of closest mode, only the closest KP can influence each point
     if aggregation_mode == "closest":
         neighbors_1nn = torch.argmin(sq_distances, dim=-1)
-        all_weights *= torch.zeros_like(all_weights, dtype=torch.float32).scatter_(1, neighbors_1nn.unsqueeze(1), 1)
+        all_weights *= torch.transpose(nn.functional.one_hot(neighbors_1nn, K_points.shape[0]), 1, 2)
 
     elif aggregation_mode != "sum":
         raise ValueError("Unknown convolution mode. Should be 'closest' or 'sum'")
@@ -92,7 +126,7 @@ def KPConv_ops(
     features = torch.cat([features, torch.zeros_like(features[:1, :])], dim=0)
 
     # Get the features of each neighborhood [n_points, n_neighbors, in_fdim]
-    neighborhood_features = features[neighbors_indices]
+    neighborhood_features = gather(features, neighbors_indices)
 
     # Apply distance weights [n_points, n_kpoints, in_fdim]
     weighted_features = torch.matmul(all_weights, neighborhood_features)
