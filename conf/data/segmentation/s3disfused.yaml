@@ -3,7 +3,6 @@ data:
     class: s3dis.S3DISFusedDataset
     dataroot: data
     fold: 5
-    class_weight_method: "sqrt"
     first_subsampling: 0.04
     use_category: False
     sampler: 
@@ -29,4 +28,32 @@ data:
           axis: 2
       - transform: RandomScaleAnisotropic
         params:
-          scales: [0.95, 1.05]
+          scales: [0.8, 1.2]
+      - transform: RandomSymmetry
+        params:
+          axis: [True, False, False]
+      - transform: DropFeature
+        params:
+          drop_proba: 0.2
+          feature_name: rgb
+      - transform: XYZFeature
+        params:
+          add_x: False
+          add_y: False
+          add_z: True
+      - transform: AddFeatsByKey
+        params:
+          list_add_to_x: [True]
+          feat_names: [rgb]
+          delete_feats: [True]
+    test_transform:
+      - transform: XYZFeature
+        params:
+          add_x: False
+          add_y: False
+          add_z: True
+      - transform: AddFeatsByKey
+        params:
+          list_add_to_x: [True]
+          feat_names: [rgb]
+          delete_feats: [True]

@@ -1,18 +1,20 @@
 # Those arguments defines the training hyper-parameters
 training:
-    epochs: 100
-    num_workers: 4
-    batch_size: 16
+    epochs: 200
+    num_workers: 10
+    batch_size: 10
     shuffle: True
     cuda: 1
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     optim:
-        base_lr: 0.001
-        grad_clip: -1
+        base_lr: 0.01
+        grad_clip: 100
         optimizer:
-            class: Adam
+            class: SGD
             params:
+                momentum: 0.98
                 lr: ${training.optim.base_lr} # The path is cut from training
+                weight_decay: 1e-3
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"
@@ -30,11 +32,11 @@ training:
 wandb:
     project: s3dis
     log: True
-    notes: "1e-4 regularisation + dropout"
-    name: "kpconv-reg=1e-4"
+    notes: "Fixed labels"
+    name: "kpconv-fixedlabels"
     public: True # It will be display the model within wandb log, else not.
 
 
 # parameters for TensorBoard Visualization
 tensorboard:
-    log: True
+    log: False
