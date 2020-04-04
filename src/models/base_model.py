@@ -148,7 +148,7 @@ class BaseModel(torch.nn.Module):
         self.backward()  # calculate gradients
 
         if self._grad_clip > 0:
-            torch.nn.utils.clip_grad_norm_(self.parameters(), self._grad_clip)
+            torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
 
         if make_optimizer_step:
             self._optimizer.step()  # update parameters

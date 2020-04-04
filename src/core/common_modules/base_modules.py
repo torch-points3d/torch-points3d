@@ -127,3 +127,16 @@ class MultiHeadClassifier(BaseModule):
             probs = softmax[cat_mask, : len(seg_indices)]
             output[cat_mask, seg_indices[0] : seg_indices[-1] + 1] = probs
         return output
+
+
+class FastBatchNorm1d(BaseModule):
+    def __init__(self, num_features, momentum=0.1):
+        super().__init__()
+        self.batch_norm = BN(num_features, momentum=momentum)
+
+    def forward(self, x):
+        x = x.unsqueeze(2)
+        x = x.transpose(0, 2)
+        x = self.batch_norm(x)
+        x = x.transpose(0, 2)
+        return x.squeeze()

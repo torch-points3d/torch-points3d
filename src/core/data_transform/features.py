@@ -177,10 +177,8 @@ def compute_planarity(eigenvalues):
         \lambda_1 \leq \lambda_2 \leq \lambda_3
 
     then planarity is defined as:
-
     .. math::
         planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
-
     """
     return (eigenvalues[1] - eigenvalues[0]) / eigenvalues[2]
 
@@ -279,4 +277,10 @@ class XYZFeature(object):
         return data
 
     def __repr__(self):
-        return "{}(axis={})".format(self.__class__.__name__, self.axis)
+        coords = ""
+        axis = ["x", "y", "z"]
+        for a in self.axis:
+            if len(coords):
+                coords += ", "
+            coords += axis[a]
+        return "XYZFeature: " + coords

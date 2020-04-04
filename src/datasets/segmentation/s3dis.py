@@ -50,7 +50,7 @@ OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
 
 def object_name_to_label(object_class):
     """convert from object name in S3DIS to an int"""
-    object_label = OBJECT_LABEL.get(object_class, 0)
+    object_label = OBJECT_LABEL.get(object_class, OBJECT_LABEL["clutter"])
     return object_label
 
 
@@ -402,7 +402,6 @@ class S3DISOriginalFused(InMemoryDataset):
         pre_filter=None,
         keep_instance=False,
         verbose=False,
-        elevation=True,
         debug=False,
     ):
         assert test_area >= 1 and test_area <= 6
@@ -411,7 +410,6 @@ class S3DISOriginalFused(InMemoryDataset):
         self.test_area = test_area
         self.keep_instance = keep_instance
         self.verbose = verbose
-        self.elevation = elevation
         self.debug = debug
         super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
@@ -515,12 +513,7 @@ class S3DISOriginalFused(InMemoryDataset):
                     )
 
                     rgb_norm = rgb.float() / 255.0
-                    if self.elevation:
-                        elevation = xyz[:, -1].unsqueeze(-1)
-                        feats = torch.cat([rgb_norm, elevation], -1)
-                    else:
-                        feats = rgb_norm
-                    data = Data(pos=xyz, x=feats, y=room_labels)
+                    data = Data(pos=xyz, y=room_labels, rgb=rgb_norm)
 
                     if self.keep_instance:
                         data.room_object_indices = room_object_indices
@@ -577,9 +570,13 @@ class S3DISFusedDataset(BaseDataset):
             transform=self.test_transform,
         )
 
-        self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
+        if dataset_opt.class_weight_method:
+            self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
 
-        self.train_sampler = BalancedRandomSampler(self.train_dataset.center_labels)
+        if dataset_opt.sampler:
+            self.train_sampler = BalancedRandomSampler(self.train_dataset.center_labels)
+        else:
+            self.train_sampler = None
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
