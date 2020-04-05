@@ -135,10 +135,15 @@ class PairBatch(Pair):
         """
         assert isinstance(data_list[0], Pair)
         data_list_s, data_list_t = list(map(list, zip(*[data.to_data() for data in data_list])))
+        if hasattr(data_list_s[0], 'pair_ind'):
+            pair_ind = concatenate_pair_ind(data_list_s, data_list_t)
+        else:
+            pair_ind = None
         batch_s = Batch.from_data_list(data_list_s)
         batch_t = Batch.from_data_list(data_list_t)
-        return PairBatch.make_pair(batch_s, batch_t).contiguous()
-
+        pair = PairBatch.make_pair(batch_s, batch_t)
+        pair.pair_ind = pair_ind
+        return pair.contiguous()
 
 class PairMultiScaleBatch(MultiScalePair):
 
@@ -156,19 +161,25 @@ class PairMultiScaleBatch(MultiScalePair):
         Warning : follow_batch is not here yet...
         """
         data_list_s, data_list_t = list(map(list, zip(*[data.to_data() for data in data_list])))
+        if hasattr(data_list_s[0], 'pair_ind'):
+            pair_ind = concatenate_pair_ind(data_list_s, data_list_t).to(torch.long)
+        else:
+            pair_ind = None
         batch_s = MultiScaleBatch.from_data_list(data_list_s)
         batch_t = MultiScaleBatch.from_data_list(data_list_t)
-        return PairMultiScaleBatch.make_pair(batch_s, batch_t).contiguous()
+        pair = PairMultiScaleBatch.make_pair(batch_s, batch_t)
+        pair.pair_ind = pair_ind
+        return pair.contiguous()
 
 
-class SimpleBatch(Pair):
+class SimplePairBatch(Pair):
     r""" A classic batch object wrapper with :class:`torch_geometric.data.Data` being the
     base class, all its methods can also be used here.
     Here it inherit from Pair instead of Data.
     """
 
     def __init__(self, batch=None, **kwargs):
-        super(SimpleBatch, self).__init__(**kwargs)
+        super(SimplePairBatch, self).__init__(**kwargs)
 
         self.batch = batch
         self.__data_class__ = Data
@@ -204,11 +215,16 @@ class SimpleBatch(Pair):
                 torch.is_tensor(item)
                 or isinstance(item, int)
                 or isinstance(item, float)
-            ):
+            ) and key != "pair_ind":
                 batch[key] = torch.stack(batch[key])
             else:
                 raise ValueError("Unsupported attribute type")
-
+        # add pair_ind for dense data too
+        if hasattr(data_list[0], 'pair_ind'):
+            pair_ind = concatenate_pair_ind(data_list, data_list).to(torch.long)
+        else:
+            pair_ind = None
+        batch.pair_ind = pair_ind
         return batch.contiguous()
         # return [batch.x.transpose(1, 2).contiguous(), batch.pos, batch.y.view(-1)]
 
@@ -216,3 +232,30 @@ class SimpleBatch(Pair):
     def num_graphs(self):
         """Returns the number of graphs in the batch."""
         return self.batch[-1].item() + 1
+
+
+def concatenate_pair_ind(list_data_source, list_data_target):
+    """
+    for a list of pair of indices batched, change the index it refers to wrt the batch index
+    Parameters
+    ----------
+    list_data_source: list[Data]
+    list_data_target: list[Data]
+    Returns
+    -------
+    torch.Tensor
+        indices of y corrected wrt batch indices
+
+
+    """
+
+    assert len(list_data_source) == len(list_data_target)
+    assert hasattr(list_data_source[0], "pair_ind")
+    list_pair_ind = []
+    cum_size = torch.zeros(2)
+    for i in range(len(list_data_source)):
+        size = torch.tensor([len(list_data_source[i].pos),
+                             len(list_data_target[i].pos)])
+        list_pair_ind.append(list_data_source[i].pair_ind + cum_size)
+        cum_size = cum_size + size
+    return torch.cat(list_pair_ind, 0)

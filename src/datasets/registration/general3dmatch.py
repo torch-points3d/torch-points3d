@@ -11,7 +11,7 @@ from src.datasets.registration.pair import Pair
 from src.metrics.registration_tracker import PatchRegistrationTracker
 from src.core.data_transform.transforms import GridSampling
 from src.datasets.registration.base_siamese_dataset import BaseSiameseDataset
-
+from src.datasets.registration.utils import compute_overlap_and_matches
 
 class Patch3DMatch(Base3DMatch):
 
@@ -234,7 +234,8 @@ class Fragment3DMatch(Base3DMatch):
                  pre_transform_fragment=None,
                  pre_filter=None,
                  verbose=False,
-                 debug=False):
+                 debug=False,
+                 is_online_matching=False):
         super(Fragment3DMatch, self).__init__(root,
                                               num_frame_per_fragment,
                                               mode,
@@ -253,6 +254,7 @@ class Fragment3DMatch(Base3DMatch):
                                               debug)
         self.path_match = osp.join(self.processed_dir, self.mode, 'matches')
         self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
+        self.is_online_matching = is_online_matching
 
     def get_fragment(self, idx):
 
@@ -268,7 +270,11 @@ class Fragment3DMatch(Base3DMatch):
             data_target = self.transform(data_target)
 
         batch = Pair.make_pair(data_source, data_target)
-        batch.y = torch.from_numpy(match['pair'])
+        if(self.is_online_matching):
+            new_match = compute_overlap_and_matches(data_source, data_target, self.max_dist_overlap)
+            batch.pair_ind = torch.from_numpy(new_match['pair'])
+        else:
+            batch.pair_ind = torch.from_numpy(match['pair'])
         return batch.contiguous().to(torch.float)
 
     def get(self, idx):

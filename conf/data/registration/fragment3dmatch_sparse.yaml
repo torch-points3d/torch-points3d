@@ -10,13 +10,13 @@ data:
   tsdf_voxel_size: 0.006
   limit_size: 850
   depth_thresh: 4.5
+  first_subsampling: 0.02
   grid_size: 0.02
+  is_online_matching: True
   pre_transforms:
-    - transform: ToSparseInput
+    - transform: GridSampling
       params:
-        grid_size: ${data.grid_size}
-        save_delta: False
-        mode: "mean"
+        size: ${data.first_subsampling}
   train_transforms:
     - transform: RandomNoise
       params:
@@ -27,9 +27,19 @@ data:
       params:
         add_to_x: True
         feat_name: 'ones'
+    - transform: ToSparseInput
+      params:
+        grid_size: ${data.grid_size}
+        save_delta: False
+        mode: "mean"
   test_transforms:
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
         add_to_x: True
         feat_name: 'ones'
+    - transform: ToSparseInput
+      params:
+        grid_size: ${data.grid_size}
+        save_delta: False
+        mode: "mean"

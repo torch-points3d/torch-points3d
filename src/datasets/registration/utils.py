@@ -140,17 +140,21 @@ def filter_pair(pair, dist):
     return pair
 
 
-def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=False, num_pos=1):
-    data1 = torch.load(path1).to(torch.float)
-    data2 = torch.load(path2).to(torch.float)
+def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=False, num_pos=1, rot_gt=torch.eye(3)):
 
     # we can use ball query on cpu because the points are sorted
     # print(len(data1.pos), len(data2.pos), max_distance_overlap)
-    pair, dist = ball_query(data2.pos, data1.pos, radius=max_distance_overlap, max_num=num_pos, mode=1)
+    pair, dist = ball_query(data2.pos.to(torch.float),
+                            data1.pos.to(torch.float) @ rot_gt.T,
+                            radius=max_distance_overlap,
+                            max_num=num_pos, mode=1)
     pair = filter_pair(pair, dist)
     overlap = [pair.shape[0] / len(data1.pos)]
     if reciprocity:
-        pair2, dist2 = ball_query(data1.pos, data2.pos, radius=max_distance_overlap, max_num=num_pos, mode=1)
+        pair2, dist2 = ball_query(data1.pos.to(torch.float) @ rot_gt.T,
+                                  data2.pos.to(torch.float),
+                                  radius=max_distance_overlap,
+                                  max_num=num_pos, mode=1)
         pair2 = filter_pair(pair2, dist2)
         overlap.append(pair2.shape[0] / len(data2.pos))
     # overlap = pair.shape[0] / \
@@ -158,7 +162,7 @@ def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=
     # print(pair)
 
     # print(path1, path2, "overlap=", overlap)
-    output = dict(pair=pair, path_source=path1, path_target=path2, overlap=overlap)
+    output = dict(pair=pair, overlap=overlap)
     return output
 
 

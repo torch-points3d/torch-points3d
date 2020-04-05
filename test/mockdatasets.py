@@ -4,7 +4,7 @@ from torch_geometric.data import Data, Batch
 from src.datasets.batch import SimpleBatch
 from src.core.data_transform import MultiScaleTransform
 from src.datasets.multiscale_data import MultiScaleBatch
-
+from src.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch
 
 class MockDatasetConfig(object):
     def __init__(self):
@@ -69,3 +69,25 @@ class MockDatasetGeometric(MockDataset):
             return MultiScaleBatch.from_data_list(self.datalist)
         else:
             return Batch.from_data_list(self.datalist)
+
+
+
+class PairMockDaraset(MockDataset):
+
+    def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True):
+        super(PairMockDaraset, self).__init__(feature_size, transform, num_points)
+        if(self.is_pair_ind):
+            self._pair_ind = torch.tensor([[0, 1], [1, 0]])
+        else:
+            self._pair_ind = None
+
+    @property
+    def datalist(self):
+        torch.manual_seed(0)
+        pos = torch.randn((self.num_points, 3))
+        datalist = [
+            Pair(pos=torch.randn((self.num_points, 3)), x=self._feature,
+                 pos_target=torch.randn((self.num_points, 3)), x_target=self._feature,
+                 pair_ind=self._pair_ind)
+            for i in range(self.batch_size)
+        ]

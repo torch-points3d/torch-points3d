@@ -30,12 +30,12 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
         if hasattr(data, "pos_target"):
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
-            num_pos_pairs = len(data.y)
-            if self.num_pos_pairs < len(data.y):
+            num_pos_pairs = len(data.pair_ind)
+            if self.num_pos_pairs < len(data.pair_ind):
                 num_pos_pairs = self.num_pos_pairs
-            rand_ind = self.randperm(len(data.y))[:num_pos_pairs]
-            self.ind = data.y[rand_ind:, 0].to(device)
-            self.ind_target = data.y[rand_ind:, 1].to(device)
+            rand_ind = self.randperm(len(data.pair_ind))[:num_pos_pairs]
+            self.ind = data.pair_ind[rand_ind:, 0].to(device)
+            self.ind_target = data.pair_ind[rand_ind:, 1].to(device)
             rang = torch.range(0, self.num_pos_pairs)
             self.labels = torch.cat([rang, rang], 0).to(device)
         else:
@@ -90,12 +90,13 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         if hasattr(data, "pos_target"):
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
-            num_pos_pairs = len(data.y)
-            if self.num_pos_pairs < len(data.y):
+
+            num_pos_pairs = len(data.pair_ind)
+            if self.num_pos_pairs < len(data.pair_ind):
                 num_pos_pairs = self.num_pos_pairs
-            rand_ind = torch.randperm(len(data.y))[:num_pos_pairs]
-            self.ind = data.y[rand_ind, 0].to(torch.long).to(device)
-            self.ind_target = data.y[rand_ind, 1].to(torch.long).to(device)
+            rand_ind = torch.randperm(len(data.pair_ind))[:num_pos_pairs]
+            self.ind = data.pair_ind[rand_ind, 0].to(torch.long).to(device)
+            self.ind_target = data.pair_ind[rand_ind, 1].to(torch.long).to(device)
             rang = torch.arange(0, num_pos_pairs)
             self.labels = torch.cat([rang, rang], 0).to(device)
         else:

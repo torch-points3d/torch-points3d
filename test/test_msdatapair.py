@@ -2,7 +2,7 @@ import unittest
 import torch
 import torch.testing as tt
 from torch_geometric.data import Data
-
+import numpy.testing as npt
 
 from src.datasets.registration.pair import Pair, MultiScalePair, PairBatch, PairMultiScaleBatch
 
@@ -92,3 +92,76 @@ class TestMSPair(unittest.TestCase):
         tt.assert_allclose(ms_batches[0].batch, torch.tensor([0, 1]))
         tt.assert_allclose(ms_batches[1].batch, torch.tensor([0, 1]))
         tt.assert_allclose(ms_batches[1].x, torch.tensor([8, 16]))
+
+
+    def test_pair_ind(self):
+        data1 = Data(pos=torch.randn(100, 3))
+        data2 = Data(pos=torch.randn(114, 3))
+        pair1 = Pair.make_pair(data1, data2)
+        pair1.pair_ind = torch.tensor([[0, 1], [99, 36], [98, 113], [54, 29], [10, 110], [1, 0]])
+        data3 = Data(pos=torch.randn(102, 3))
+        data4 = Data(pos=torch.randn(104, 3))
+        pair2 = Pair.make_pair(data3, data4)
+        pair2.pair_ind = torch.tensor([[0, 1], [45, 28], [101, 36], [98, 1], [14, 99], [34, 52], [1, 0]])
+        data5 = Data(pos=torch.randn(128, 3))
+        data6 = Data(pos=torch.randn(2102, 3))
+        pair3 = Pair.make_pair(data5, data6)
+        pair3.pair_ind = torch.tensor([[0, 1], [100, 1000], [1, 0]])
+
+        batch = PairBatch.from_data_list([pair1, pair2, pair3])
+        expected_pair_ind = torch.tensor([[0, 1],
+                                          [99, 36],
+                                          [98, 113],
+                                          [54, 29],
+                                          [10, 110],
+                                          [1, 0],
+                                          [0 + 100, 1 + 114],
+                                          [45 + 100, 28 + 114],
+                                          [101 + 100, 36 + 114],
+                                          [98 + 100, 1 + 114],
+                                          [14 + 100, 99 + 114],
+                                          [34 + 100, 52 + 114],
+                                          [1 + 100, 0 + 114],
+                                          [0 + 100 + 102, 1 + 114 + 104],
+                                          [100 + 100 + 102, 1000 + 114 + 104],
+                                          [1 + 100 + 102, 0 + 114 + 104]]).to(torch.long)
+        npt.assert_almost_equal(batch.pair_ind.numpy(), expected_pair_ind.numpy())
+
+    def test_ms_pair_ind(self):
+
+        x = torch.randn(1001, 3)
+        pos = x
+        x_target = torch.randn(1452, 3)
+        pos_target = x_target
+        ms = [Data(x=x, pos=pos), Data(x=4 * x, pos=4 * pos)]
+        ms_target = [Data(x=x_target, pos=pos_target),
+                     Data(x=4 * x_target, pos=4 * pos_target)]
+        data1 = MultiScalePair(x=x, pos=pos, multiscale=ms,
+                               x_target=x_target, pos_target=pos_target,
+                               multiscale_target=ms_target)
+        data1.pair_ind = torch.tensor([[0, 1], [99, 36], [98, 113], [54, 29], [10, 110], [1, 0]])
+        x = torch.randn(300, 3)
+        pos = x
+        x_target = torch.randn(154, 3)
+        pos_target = x_target
+        ms = [Data(x=x, pos=pos), Data(x=4 * x, pos=4 * pos)]
+        ms_target = [Data(x=x_target, pos=pos_target),
+                     Data(x=4 * x_target, pos=4 * pos_target)]
+        data2 = MultiScalePair(x=x, pos=pos, multiscale=ms,
+                               x_target=x_target, pos_target=pos_target,
+                               multiscale_target=ms_target)
+        data2.pair_ind = torch.tensor([[0, 1], [100, 1000], [1, 0]])
+
+        batch = PairMultiScaleBatch.from_data_list([data1, data2])
+
+        expected_pair_ind = torch.tensor([[0, 1],
+                                          [99, 36],
+                                          [98, 113],
+                                          [54, 29],
+                                          [10, 110],
+                                          [1, 0],
+                                          [0 + 1001, 1 + 1452],
+                                          [100 + 1001, 1000 + 1452],
+                                          [1 + 1001, 0 + 1452]])
+
+        npt.assert_almost_equal(batch.pair_ind.numpy(), expected_pair_ind.numpy())

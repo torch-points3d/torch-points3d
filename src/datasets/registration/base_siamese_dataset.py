@@ -1,6 +1,6 @@
 from src.core.data_transform import MultiScaleTransform
 from src.core.data_transform import PairTransform
-from src.datasets.registration.pair import SimpleBatch
+from src.datasets.registration.pair import SimplePairBatch
 from src.utils.enums import ConvolutionFormat
 from src.utils.config import ConvolutionFormatFactory
 from src.datasets.registration.pair import PairMultiScaleBatch, PairBatch
@@ -27,7 +27,7 @@ class BaseSiameseDataset(BaseDataset):
                 )
 
         if is_dense:
-            return lambda datalist: SimpleBatch.from_data_list(datalist)
+            return lambda datalist: SimplePairBatch.from_data_list(datalist)
         else:
             return lambda datalist: PairBatch.from_data_list(datalist)
 

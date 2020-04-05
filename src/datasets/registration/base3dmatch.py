@@ -262,9 +262,12 @@ class Base3DMatch(Dataset):
                         if path1 < path2:
                             out_path = osp.join(out_dir,
                                                 'matches{:06d}.npy'.format(ind))
-
+                            data1 = torch.load(path1)
+                            data2 = torch.load(path2)
                             match = compute_overlap_and_matches(
-                                path1, path2, self.max_dist_overlap)
+                                data1, data2, self.max_dist_overlap)
+                            match['path_source'] = path1
+                            match['path_target'] = path2
                             if(self.verbose):
                                 log.info(match['path_source'],
                                          match['path_target'],
