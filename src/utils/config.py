@@ -17,8 +17,8 @@ import subprocess
 
 log = logging.getLogger(__name__)
 
-class ConvolutionFormatFactory:
 
+class ConvolutionFormatFactory:
     @staticmethod
     def check_is_dense_format(conv_type):
         if (
@@ -30,19 +30,22 @@ class ConvolutionFormatFactory:
         elif conv_type.lower() == ConvolutionFormat.DENSE.value.lower():
             return True
         else:
-            raise NotImplementedError("Conv type {} not supported".format(conv_type))    
+            raise NotImplementedError("Conv type {} not supported".format(conv_type))
 
 
 class Option:
     """This class is used to enable accessing arguments as attributes without having OmaConf.
        It is used along convert_to_base_obj function
     """
+
     def __init__(self, opt):
         for key, value in opt.items():
             setattr(self, key, value)
 
+
 def convert_to_base_obj(opt):
     return Option(OmegaConf.to_container(opt))
+
 
 def set_debugging_vars_to_global(cfg):
     for key in cfg.keys():
@@ -51,10 +54,12 @@ def set_debugging_vars_to_global(cfg):
             DEBUGGING_VARS[key_upper] = cfg[key]
     log.info(DEBUGGING_VARS)
 
+
 def set_to_wandb_args(wandb_args, cfg, name):
     var = getattr(cfg.wandb, name, None)
     if var:
-        wandb_args[name]=var    
+        wandb_args[name] = var
+
 
 def launch_wandb(cfg, launch: bool):
     if launch:
@@ -74,10 +79,18 @@ def launch_wandb(cfg, launch: bool):
         ]
 
         wandb_args = {}
-        wandb_args["project"]=cfg.wandb.project
+        wandb_args["project"] = cfg.wandb.project
         wandb_args["tags"] = tags
-        wandb_args["config"]={"run_path": os.getcwd(),
-                              "commit": subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()}
+        try:
+            wandb_args["config"] = {
+                "run_path": os.getcwd(),
+                "commit": subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip(),
+            }
+        except:
+            wandb_args["config"] = {
+                "run_path": os.getcwd(),
+                "commit": "n/a",
+            }
         set_to_wandb_args(wandb_args, cfg, "name")
         set_to_wandb_args(wandb_args, cfg, "entity")
         set_to_wandb_args(wandb_args, cfg, "notes")
@@ -88,6 +101,7 @@ def launch_wandb(cfg, launch: bool):
         )
         wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
         wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
+
 
 def is_list(entity):
     return isinstance(entity, list) or isinstance(entity, ListConfig)
