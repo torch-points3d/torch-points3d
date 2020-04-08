@@ -40,8 +40,7 @@ def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=
     """
     compute matches between features
     """
-    print(feature_source.shape)
-    print(feature_target.shape)
+
     tree_source = KDTree(feature_source)
     tree_target = KDTree(feature_target)
     _, nn_ind_source = tree_target.query(feature_source, k=1)
@@ -52,11 +51,6 @@ def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=
         indmatch = np.where(nn_ind_source.T[0][nn_ind_target.T[0]] == np.arange(len(feature_source)))[0]
     else:
         indmatch = np.arange(len(feature_target))
-    print("indmatch", len(indmatch))
-    print("sym_size, ", nn_ind_source.T[0][nn_ind_target.T[0]].shape)
-    print("sym", nn_ind_source.T[0][nn_ind_target.T[0]])
-    print("nn_ind_source", nn_ind_source.shape)
-    print("nn_ind_target", nn_ind_target.shape)
     new_kp_source = np.copy(kp_source[nn_ind_target.T[0][indmatch]])
     new_kp_target = np.copy(kp_target[indmatch])
 
@@ -114,7 +108,6 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     n_t = osp.split(path_descr_target)[-1].split(".")[0]
 
     frac_correct = compute_mean_correct_matches(dist, list_tau)
-    print(n_s, n_t, frac_correct[0:5], list_tau)
     dico = dict(
         kp_source=kp_source,
         kp_target=kp_target,
