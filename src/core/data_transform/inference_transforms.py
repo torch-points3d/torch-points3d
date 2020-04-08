@@ -6,7 +6,6 @@ import logging
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..")
 sys.path.insert(0, os.path.join(ROOT))
 
-from test.mockdatasets import MockDataset
 from .grid_transform import GridSampling
 import src.metrics.model_checkpoint as model_checkpoint
 
@@ -30,6 +29,7 @@ class ModelInference(object):
         # Checkpoint
         from src.datasets.base_dataset import BaseDataset
         from src.datasets.dataset_factory import instantiate_dataset
+        from test.mockdatasets import MockDataset
 
         checkpoint = model_checkpoint.ModelCheckpoint(checkpoint_dir, model_name, weight_name, strict=True)
         if mock_dataset:

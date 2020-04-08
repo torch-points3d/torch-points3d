@@ -61,6 +61,8 @@ class PointCloudFusion(object):
     """
 
     def _process(self, data_list):
+        if len(data_list) == 0:
+            return Data()
         data = Batch.from_data_list(data_list)
         delattr(data, "batch")
         return data
@@ -142,8 +144,9 @@ class GridSphereSampling(object):
                     item = item[ind]
                     if self._center and key == "pos":  # Center the sphere.
                         item -= t_center
-                    setattr(new_data, key, item)
+                setattr(new_data, key, item)
             new_data.center_label = grid_label
+            new_data.center = t_center.unsqueeze(0)
 
             datas.append(new_data)
         return datas
@@ -452,7 +455,6 @@ class MultiScaleTransform(object):
         return "{}".format(self.__class__.__name__)
 
 
-
 class ShuffleData(object):
     """ This transform allow to shuffle feature, pos and label tensors within data
     """
@@ -469,16 +471,13 @@ class ShuffleData(object):
         return data
 
 
-
 class PairTransform(object):
-
     def __init__(self, transform):
         """
         apply the transform for a pair of data
         (as defined in src/datasets/registration/pair.py)
         """
         self.transform = transform
-
 
     def __call__(self, data):
         data_source, data_target = data.to_data()

@@ -19,7 +19,7 @@ import csv
 import pandas as pd
 from src.metrics.segmentation_tracker import SegmentationTracker
 from src.datasets.samplers import BalancedRandomSampler
-import src.core.data_transform.transforms as cT
+import src.core.data_transform as cT
 from src.datasets.base_dataset import BaseDataset
 import pickle
 
@@ -415,14 +415,15 @@ class S3DISOriginalFused(InMemoryDataset):
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self.data, self.slices = torch.load(path)
 
-        if train:
-            self._center_labels = self.load_center_labels("train")
-        else:
-            self._center_labels = None
+        if not train:
+            self.raw_test_data = torch.load(self.raw_areas_paths[test_area - 1])
 
     @property
     def center_labels(self):
-        return self._center_labels
+        if hasattr(self.data, "center_label"):
+            return self.data.center_label
+        else:
+            return None
 
     @property
     def raw_file_names(self):
@@ -435,9 +436,25 @@ class S3DISOriginalFused(InMemoryDataset):
         return os.path.join(self.processed_dir, pre_processed_file_names)
 
     @property
+    def raw_areas_paths(self):
+        return [os.path.join(self.processed_dir, "raw_area_%i.pt" % i) for i in range(6)]
+
+    @property
     def processed_file_names(self):
         test_area = self.test_area
-        return ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
+        return (
+            ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
+            + self.raw_areas_paths
+            + [self.pre_processed_path]
+        )
+
+    @property
+    def raw_test_data(self):
+        return self._raw_test_data
+
+    @raw_test_data.setter
+    def raw_test_data(self, value):
+        self._raw_test_data = value
 
     def download(self):
         raw_folders = os.listdir(self.raw_dir)
@@ -457,27 +474,6 @@ class S3DISOriginalFused(InMemoryDataset):
                         self.zip_name, self.url, self.raw_dir, self.folders
                     )
                 )
-
-    def extract_center_labels(self, data_list):
-        extract_center_labels = []
-        for data in data_list:
-            if hasattr(data, "center_label"):
-                extract_center_labels.append(getattr(data, "center_label"))
-                delattr(data, "center_label")
-        return extract_center_labels
-
-    def save_center_labels(self, split_name, center_labels):
-        name = "{}_center_labels.pt".format(split_name)
-        pickle_out = open(os.path.join(self.processed_dir, name), "wb")
-        pickle.dump(center_labels, pickle_out)
-        pickle_out.close()
-
-    def load_center_labels(self, split_name):
-        name = "{}_center_labels.pt".format(split_name)
-        pickle_out = open(os.path.join(self.processed_dir, name), "rb")
-        center_labels = pickle.load(pickle_out)
-        pickle_out.close()
-        return center_labels
 
     def process(self):
 
@@ -500,6 +496,7 @@ class S3DISOriginalFused(InMemoryDataset):
                 if os.path.isdir(osp.join(self.raw_dir, f, room_name))
             ]
 
+            # Gather data per area
             data_list = [[] for _ in range(6)]
             for (area, room_name, file_path) in tq(train_files + test_files):
 
@@ -521,10 +518,17 @@ class S3DISOriginalFused(InMemoryDataset):
                     if self.pre_filter is not None and not self.pre_filter(data):
                         continue
 
-                    if self.pre_transform is not None:
-                        data = self.pre_transform(data)
-
                     data_list[area_num].append(data)
+
+            raw_areas = cT.PointCloudFusion()(data_list)
+            for i, area in enumerate(raw_areas):
+                torch.save(area, self.raw_areas_paths[i])
+
+            for area_datas in data_list:
+                # Apply pre_transform
+                if self.pre_transform is not None:
+                    for data in area_datas:
+                        data = self.pre_transform(data)
 
             torch.save(data_list, self.pre_processed_path)
         else:
@@ -533,19 +537,13 @@ class S3DISOriginalFused(InMemoryDataset):
         if self.debug:
             return
 
-        train_data_list = [data_list[i] for i in range(6) if i != self.test_area - 1]
+        train_data_list = [data_list[i] for i in range(6) if (i != self.test_area - 1 and len(data_list[i]))]
         test_data_list = data_list[self.test_area - 1]
 
         if self.pre_collate_transform:
             log.info("pre_collate_transform ...")
             train_data_list = self.pre_collate_transform(train_data_list)
             test_data_list = self.pre_collate_transform(test_data_list)
-
-        train_center_labels = self.extract_center_labels(train_data_list)
-        self.save_center_labels("train", train_center_labels)
-
-        test_center_labels = self.extract_center_labels(test_data_list)
-        self.save_center_labels("test", test_center_labels)
 
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
