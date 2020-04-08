@@ -37,10 +37,15 @@ class Test3DMatch(Base3DMatchTest):
     def get(self, idx):
         data = torch.load(
             osp.join(self.path_table, 'fragment_{:06d}.pt'.format(idx)))
+        data.mask = torch.zeros(len(data.pos))
+        data.mask[data.keypoints] = 1
+        if(self.transform is not None):
+            data = self.transform(data)
         return data
 
     def get_patches(self, idx):
-        fragment = self.get(idx)
+        fragment = torch.load(
+            osp.join(self.path_table, 'fragment_{:06d}.pt'.format(idx)))
         patch_dataset = [self.patch_extractor(fragment, fragment.keypoints[i])
                          for i in range(self.num_random_pt)]
 

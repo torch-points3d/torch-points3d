@@ -271,8 +271,9 @@ class Fragment3DMatch(Base3DMatch):
 
         batch = Pair.make_pair(data_source, data_target)
         if(self.is_online_matching):
+
             new_match = compute_overlap_and_matches(data_source, data_target, self.max_dist_overlap)
-            batch.pair_ind = torch.from_numpy(new_match['pair'])
+            batch.pair_ind = torch.from_numpy(new_match['pair'].copy())
         else:
             batch.pair_ind = torch.from_numpy(match['pair'])
         return batch.contiguous().to(torch.float)
@@ -340,7 +341,8 @@ class General3DMatchDataset(BaseSiameseDataset):
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=train_transform,
-                pre_filter=pre_filter)
+                pre_filter=pre_filter,
+                is_online_matching=dataset_opt.is_online_matching)
 
             self.test_dataset = Fragment3DMatch(
                 root=self._data_path,
@@ -352,7 +354,8 @@ class General3DMatchDataset(BaseSiameseDataset):
                 limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
-                transform=test_transform)
+                transform=test_transform,
+                is_online_matching=dataset_opt.is_online_matching)
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool,

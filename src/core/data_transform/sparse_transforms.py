@@ -70,7 +70,7 @@ def quantize_data(data, mode="last"):
 
 def to_sparse_input(
     data, grid_size, save_delta=False, save_delta_norm=False, mode="last", quantizing_func=torch.floor,
-):
+        keep_xyz=False):
     assert mode=="last" or mode=="mean" or mode =="keep_duplicate"
     if quantizing_func not in [torch.floor, torch.ceil, torch.round]:
         raise Exception("quantizing_func should be floor, ceil, round")
@@ -80,6 +80,8 @@ def to_sparse_input(
 
     # Quantize positions
     raw_pos = data.pos.clone()
+    if(keep_xyz):
+        data.xyz = raw_pos
     data.pos = quantizing_func(data.pos / grid_size).int()
 
     # Add delta as a feature
@@ -179,16 +181,17 @@ class ToSparseInput(object):
         Returns the same data object with only one point per voxel
     """
 
-    def __init__(self, grid_size=None, save_delta:bool=False, save_delta_norm:bool=False, mode="last", quantizing_func="floor"):
+    def __init__(self, grid_size=None, save_delta:bool=False, save_delta_norm:bool=False, mode="last", quantizing_func="floor", keep_xyz:bool=False):
         self._grid_size = grid_size
         self._save_delta = save_delta
         self._save_delta_norm = save_delta_norm
         self._mode = mode
+        self._keep_xyz = keep_xyz
         assert quantizing_func in ["floor", "ceil", "round"]
         self._quantizing_func = getattr(torch, quantizing_func)
 
     def _process(self, data):
-        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, save_delta_norm=self._save_delta_norm, mode=self._mode, quantizing_func=self._quantizing_func)
+        return to_sparse_input(data, self._grid_size, save_delta=self._save_delta, save_delta_norm=self._save_delta_norm, mode=self._mode, quantizing_func=self._quantizing_func, keep_xyz=self._keep_xyz)
 
     def __call__(self, data):
         if isinstance(data, list):

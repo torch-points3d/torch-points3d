@@ -4,7 +4,7 @@ from torch_geometric.data import Data, Batch
 from src.datasets.batch import SimpleBatch
 from src.core.data_transform import MultiScaleTransform
 from src.datasets.multiscale_data import MultiScaleBatch
-from src.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch
+from src.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 
 class MockDatasetConfig(object):
     def __init__(self):
@@ -71,12 +71,11 @@ class MockDatasetGeometric(MockDataset):
             return Batch.from_data_list(self.datalist)
 
 
-
 class PairMockDaraset(MockDataset):
 
     def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True):
         super(PairMockDaraset, self).__init__(feature_size, transform, num_points)
-        if(self.is_pair_ind):
+        if(is_pair_ind):
             self._pair_ind = torch.tensor([[0, 1], [1, 0]])
         else:
             self._pair_ind = None
@@ -84,10 +83,27 @@ class PairMockDaraset(MockDataset):
     @property
     def datalist(self):
         torch.manual_seed(0)
-        pos = torch.randn((self.num_points, 3))
         datalist = [
             Pair(pos=torch.randn((self.num_points, 3)), x=self._feature,
                  pos_target=torch.randn((self.num_points, 3)), x_target=self._feature,
                  pair_ind=self._pair_ind)
             for i in range(self.batch_size)
         ]
+        if self._transform:
+            datalist = [self._transform(d.clone()) for d in datalist]
+        if self._ms_transform:
+            datalist = [self._ms_transform(d.clone()) for d in datalist]
+        return datalist
+
+    def __getitem__(self, index):
+        return DensePairBatch.from_data_list(self.datalist)
+
+
+class PairMockDatasetGeometric(PairMockDaraset):
+
+    def __getitem__(self, index):
+
+        if self._ms_transform:
+            return PairMultiScaleBatch.from_data_list(self.datalist)
+        else:
+            return PairBatch.from_data_list(self.datalist)

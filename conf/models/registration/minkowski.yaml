@@ -34,14 +34,13 @@ models:
             dilation: [1, 1, 1, 1]
         mlp_cls:
             nn: [32]
-            dropout: 0.5
-        num_pos_pairs: 2048
+        num_pos_pairs: 4096
         normalize_feature: True
         metric_loss:
           class: "ContrastiveLoss"
           params:
-            pos_margin: 0
-            neg_margin: 1
+            pos_margin: 0.1
+            neg_margin: 2
             power: 1
         miner:
           class: "BatchHardMiner"

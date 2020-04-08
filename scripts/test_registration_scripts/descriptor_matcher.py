@@ -9,7 +9,7 @@ import sys
 
 # Import building function for model and dataset
 DIR = os.path.dirname(os.path.realpath(__file__))
-ROOT = os.path.join(DIR, "..")
+ROOT = os.path.join(DIR, "..", "..")
 sys.path.insert(0, ROOT)
 
 
@@ -40,6 +40,8 @@ def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=
     """
     compute matches between features
     """
+    print(feature_source.shape)
+    print(feature_target.shape)
     tree_source = KDTree(feature_source)
     tree_target = KDTree(feature_target)
     _, nn_ind_source = tree_target.query(feature_source, k=1)
@@ -49,8 +51,12 @@ def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=
     if sym:
         indmatch = np.where(nn_ind_source.T[0][nn_ind_target.T[0]] == np.arange(len(feature_source)))[0]
     else:
-        indmatch = np.arange(len(feature_source))
-
+        indmatch = np.arange(len(feature_target))
+    print("indmatch", len(indmatch))
+    print("sym_size, ", nn_ind_source.T[0][nn_ind_target.T[0]].shape)
+    print("sym", nn_ind_source.T[0][nn_ind_target.T[0]])
+    print("nn_ind_source", nn_ind_source.shape)
+    print("nn_ind_target", nn_ind_target.shape)
     new_kp_source = np.copy(kp_source[nn_ind_target.T[0][indmatch]])
     new_kp_target = np.copy(kp_target[indmatch])
 
@@ -87,12 +93,20 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     data_source = np.load(path_descr_source)
     data_target = np.load(path_descr_target)
 
-    kp_source, kp_target = compute_matches(
-        data_source["feat"],
-        data_target["feat"],
-        data_source["pcd"][data_source["keypoints"]],
-        data_target["pcd"][data_target["keypoints"]],
-    )
+    if len(data_source["feat"]) == len(data_source["keypoints"]):
+
+        kp_source, kp_target = compute_matches(
+            data_source["feat"],
+            data_target["feat"],
+            data_source["pcd"][data_source["keypoints"]],
+            data_target["pcd"][data_target["keypoints"]],
+        )
+    else:
+        feat_s = data_source["feat"][data_source["keypoints"]]
+        feat_t = data_target["feat"][data_target["keypoints"]]
+        kp_source, kp_target = compute_matches(
+            feat_s, feat_t, data_source["pcd"][data_source["keypoints"]], data_target["pcd"][data_target["keypoints"]],
+        )
 
     dist = compute_dists(kp_source, kp_target, gt_trans)
 
@@ -122,7 +136,7 @@ def compute_recall_scene(scene_name, list_pair, list_trans, list_tau1, list_tau2
     for i, pair in enumerate(list_pair):
         dico = pair_evaluation(pair[0], pair[1], list_trans[i], list_tau1, res_path)
         list_frac_correct.append(dico["frac_correct"])
-        list_dico[dico]
+        list_dico.append(dico)
 
     list_recall = compute_mean_correct_matches(np.asarray(list_frac_correct), list_tau2, is_leq=False)
     print("Save the matches")

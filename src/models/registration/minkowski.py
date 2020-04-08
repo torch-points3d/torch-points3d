@@ -5,6 +5,8 @@ from src.modules.MinkowskiEngine import *
 from src.models.base_architectures import UnwrappedUnetBasedModel
 from src.models.base_model import BaseModel
 
+from torch.nn import Sequential, Linear, LeakyReLU, Dropout
+from src.core.common_modules import FastBatchNorm1d
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +22,28 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
         )
         self.num_pos_pairs = option.num_pos_pairs
         self.loss_names = ["loss_reg", "loss", "internal"]
+
+        # Last Layer
+        last_mlp_opt = option.mlp_cls
+        in_feat = last_mlp_opt.nn[0]
+        self.FC_layer = Sequential()
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.add_module(
+                str(i),
+                Sequential(
+                    *[
+                        Linear(in_feat, last_mlp_opt.nn[i], bias=False),
+                        FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
+                        LeakyReLU(0.2),
+                    ]
+                ),
+            )
+            in_feat = last_mlp_opt.nn[i]
+
+        if last_mlp_opt.dropout:
+            self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+
+        self.FC_layer.add_module("Class", Linear(in_feat, in_feat, bias=False))
 
     def set_input(self, data, device):
 
@@ -44,7 +68,7 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
     def apply_nn(self, input):
         output = self.model(self.input)
         return ME.SparseTensor(
-            output.F / torch.norm(output.F, p=2, dim=1, keepdim=True),
+            output.F / (torch.norm(output.F, p=2, dim=1, keepdim=True) + 1e-3),
             coords_key=output.coords_key,
             coords_manager=output.coords_man,
         )
@@ -69,7 +93,7 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
             self.apply_nn(self.input_target)
             self.output = torch.cat([self.output[self.ind], self.output_target[self.ind_target]], 0)
             self.compute_loss()
-            return
+            return self.output
 
     def backward(self):
         self.loss.backward()
@@ -82,6 +106,27 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         self.normalize_feature = option.normalize_feature
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self.loss_names = ["loss_reg", "loss"]
+        # Last Layer
+        last_mlp_opt = option.mlp_cls
+        in_feat = last_mlp_opt.nn[0]
+        self.FC_layer = Sequential()
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.add_module(
+                str(i),
+                Sequential(
+                    *[
+                        Linear(in_feat, last_mlp_opt.nn[i], bias=False),
+                        FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
+                        LeakyReLU(0.2),
+                    ]
+                ),
+            )
+            in_feat = last_mlp_opt.nn[i]
+
+        if last_mlp_opt.dropout:
+            self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+
+        self.FC_layer.add_module("Class", Linear(in_feat, in_feat, bias=False))
 
     def set_input(self, data, device):
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
@@ -114,10 +159,13 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
 
         for i in range(len(self.up_modules)):
             x = self.up_modules[i](x, stack_down.pop())
-
+        out_feat = self.FC_layer(x.F)
+        # out_feat = x.F
         if self.normalize_feature:
             return ME.SparseTensor(
-                x.F / torch.norm(x.F, p=2, dim=1, keepdim=True), coords_key=x.coords_key, coords_manager=x.coords_man
+                out_feat / (torch.norm(out_feat, p=2, dim=1, keepdim=True) + 1e-5),
+                coords_key=x.coords_key,
+                coords_manager=x.coords_man,
             )
         else:
             return x

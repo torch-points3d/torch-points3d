@@ -10,6 +10,7 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric, MockDataset
+from test.mockdatasets import PairMockDatasetGeometric
 
 from src.models.model_factory import instantiate_model
 from src.core.data_transform import ToSparseInput
@@ -26,7 +27,7 @@ def load_model_config(task, model_type, model_name):
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
     config = OmegaConf.load(models_conf)
     config.update("model_name", model_name)
-    config.update("data.task", "segmentation")
+    config.update("data.task", task)
     return config
 
 
@@ -109,6 +110,16 @@ class TestModelUtils(unittest.TestCase):
     def test_pointnet2ms(self):
         params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
         dataset = MockDatasetGeometric(5)
+        model = instantiate_model(params, dataset)
+        model.set_input(dataset[0], device)
+        model.forward()
+        model.backward()
+
+    @unittest.skip("The model is loading but Problem in the pairmockdataset...")
+    def test_siamese_minkowski(self):
+        params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
+        transform = ToSparseInput(grid_size=0.001, save_delta=False, mode="mean")
+        dataset = PairMockDatasetGeometric(5, transform=transform, num_points=1024, is_pair_ind=True)
         model = instantiate_model(params, dataset)
         model.set_input(dataset[0], device)
         model.forward()

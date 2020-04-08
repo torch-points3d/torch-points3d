@@ -197,7 +197,7 @@ class Testhelpers(unittest.TestCase):
         data = Data(pos=plane)
         pca = PCACompute()
         data = pca(data)
-        npt.assert_almost_equal(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1)
+        npt.assert_almost_equal(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1.0)
 
 
 if __name__ == "__main__":

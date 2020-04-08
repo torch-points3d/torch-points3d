@@ -172,14 +172,12 @@ class PairMultiScaleBatch(MultiScalePair):
         return pair.contiguous()
 
 
-class SimplePairBatch(Pair):
-    r""" A classic batch object wrapper with :class:`torch_geometric.data.Data` being the
-    base class, all its methods can also be used here.
-    Here it inherit from Pair instead of Data.
+class DensePairBatch(Pair):
+    r""" A classic batch object wrapper with :class:`Pair`. Used for Dense Pair Batch (ie pointcloud with fixed size).
     """
 
     def __init__(self, batch=None, **kwargs):
-        super(SimplePairBatch, self).__init__(**kwargs)
+        super(DensePairBatch, self).__init__(**kwargs)
 
         self.batch = batch
         self.__data_class__ = Data
@@ -198,7 +196,7 @@ class SimplePairBatch(Pair):
         #        for key in keys:
         #            assert data_list[0][key].shape == data[key].shape
 
-        batch = SimpleBatch()
+        batch = DensePairBatch()
         batch.__data_class__ = data_list[0].__class__
 
         for key in keys:
@@ -215,8 +213,9 @@ class SimplePairBatch(Pair):
                 torch.is_tensor(item)
                 or isinstance(item, int)
                 or isinstance(item, float)
-            ) and key != "pair_ind":
-                batch[key] = torch.stack(batch[key])
+            ):
+                if key != "pair_ind":
+                    batch[key] = torch.stack(batch[key])
             else:
                 raise ValueError("Unsupported attribute type")
         # add pair_ind for dense data too
