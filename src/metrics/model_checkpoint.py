@@ -42,7 +42,6 @@ class Checkpoint:
         """ Saves checkpoint with updated mdoels for the given stage
         """
         self.models = models_to_save
-        self.stats[stage].append(current_stat)
         self.optimizer = [optimizer.__class__.__name__, optimizer.state_dict()]
         self.schedulers = {
             scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
@@ -95,7 +94,12 @@ class Checkpoint:
             try:
                 optimizer_config = self.optimizer
                 optimizer_cls = getattr(torch.optim, optimizer_config[0])
-                optimizer = optimizer_cls(model.parameters())
+                optimizer_params = {}
+                try:
+                    optimizer_params = self.run_config.training.optim.optimizer.params
+                except:
+                    pass
+                optimizer = optimizer_cls(model.parameters(), **optimizer_params)
                 optimizer.load_state_dict(optimizer_config[1])
                 return optimizer
             except:
@@ -132,7 +136,7 @@ class Checkpoint:
                 try:
                     key_name = "best_{}".format(weight_name)
                     model = models[key_name]
-                    log.info("Model loaded from {}:{}".format(self._check_path, key_name))
+                    log.info("Model loaded from {}:{}.".format(self._check_path, key_name))
                     return model
                 except:
                     key_name = Checkpoint._LATEST
@@ -232,49 +236,49 @@ class ModelCheckpoint(object):
         epoch = metrics_holder["epoch"]
 
         stats = self._checkpoint.stats
-        state_dict = model.state_dict()
+        state_dict = copy.deepcopy(model.state_dict())
 
         current_stat = {}
         current_stat["epoch"] = epoch
 
         models_to_save = self._checkpoint.models
-
-        if stage == "train":
-            models_to_save[Checkpoint._LATEST] = state_dict
-
         if stage not in stats:
             stats[stage] = []
 
-        if len(stats[stage]) > 0:
-            latest_stats = stats[stage][-1]
+        if stage == "train":
+            models_to_save[Checkpoint._LATEST] = state_dict
+        else:
+            if len(stats[stage]) > 0:
+                latest_stats = stats[stage][-1]
 
-            msg = ""
-            improved_metric = 0
+                msg = ""
+                improved_metric = 0
 
-            for metric_name, current_metric_value in metrics.items():
-                current_stat[metric_name] = current_metric_value
+                for metric_name, current_metric_value in metrics.items():
+                    current_stat[metric_name] = current_metric_value
 
-                metric_func = self.find_func_from_metric_name(metric_name, DEFAULT_METRICS_FUNC)
-                best_metric_from_stats = latest_stats.get("best_{}".format(metric_name), current_metric_value)
-                best_value = metric_func(best_metric_from_stats, current_metric_value)
-                current_stat["best_{}".format(metric_name)] = best_value
+                    metric_func = self.find_func_from_metric_name(metric_name, DEFAULT_METRICS_FUNC)
+                    best_metric_from_stats = latest_stats.get("best_{}".format(metric_name), current_metric_value)
+                    best_value = metric_func(best_metric_from_stats, current_metric_value)
+                    current_stat["best_{}".format(metric_name)] = best_value
 
-                # This new value seems to be better under metric_func
-                if (self._selection_stage == stage) and (
-                    current_metric_value == best_value
-                ):  # Update the model weights
+                    # This new value seems to be better under metric_func
+                    if (self._selection_stage == stage) and (
+                        current_metric_value == best_value
+                    ):  # Update the model weights
+                        models_to_save["best_{}".format(metric_name)] = state_dict
+
+                        msg += "{}: {} -> {}, ".format(metric_name, best_metric_from_stats, best_value)
+                        improved_metric += 1
+
+                if improved_metric > 0:
+                    colored_print(COLORS.VAL_COLOR, msg[:-2])
+            else:
+                # stats[stage] is empty.
+                for metric_name, metric_value in metrics.items():
+                    current_stat[metric_name] = metric_value
+                    current_stat["best_{}".format(metric_name)] = metric_value
                     models_to_save["best_{}".format(metric_name)] = state_dict
 
-                    msg += "{}: {} -> {}, ".format(metric_name, best_metric_from_stats, best_value)
-                    improved_metric += 1
-
-            if improved_metric > 0:
-                colored_print(COLORS.VAL_COLOR, msg[:-2])
-        else:
-            # stats[stage] is empty.
-            for metric_name, metric_value in metrics.items():
-                current_stat[metric_name] = metric_value
-                current_stat["best_{}".format(metric_name)] = metric_value
-                models_to_save["best_{}".format(metric_name)] = state_dict
-
+        self._checkpoint.stats[stage].append(current_stat)
         self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
