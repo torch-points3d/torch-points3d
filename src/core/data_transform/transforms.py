@@ -146,7 +146,6 @@ class GridSphereSampling(object):
                         item -= t_center
                 setattr(new_data, key, item)
             new_data.center_label = grid_label
-            new_data.center = t_center.unsqueeze(0)
 
             datas.append(new_data)
         return datas
