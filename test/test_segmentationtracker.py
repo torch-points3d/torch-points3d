@@ -70,7 +70,7 @@ class TestSegmentationTracker(unittest.TestCase):
             self.assertAlmostEqual(metrics[k], 0, 5)
 
     def test_ignore_label(self):
-        tracker = SegmentationTracker(MockDataset())
+        tracker = SegmentationTracker(MockDataset(), ignore_label=-100)
         tracker.reset("test")
         model = MockModel()
         model.iter = 3

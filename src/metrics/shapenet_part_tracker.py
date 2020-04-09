@@ -37,7 +37,7 @@ class ShapenetPartTracker(BaseTracker):
         self._Imiou = 0
         self._miou_per_class = {}
 
-    def track(self, model):
+    def track(self, model, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

@@ -576,6 +576,10 @@ class S3DISFusedDataset(BaseDataset):
         else:
             self.train_sampler = None
 
+    @property
+    def test_data(self):
+        return self.test_dataset[0].raw_test_data
+
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker

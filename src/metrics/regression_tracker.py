@@ -28,7 +28,7 @@ class RegressionTracker(BaseTracker):
         self._mer = tnt.meter.AverageValueMeter()
         self._merp = tnt.meter.AverageValueMeter()
 
-    def track(self, model: BaseModel):
+    def track(self, model: BaseModel, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

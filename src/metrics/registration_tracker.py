@@ -21,7 +21,7 @@ class PatchRegistrationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
 
-    def track(self, model: BaseModel):
+    def track(self, model: BaseModel, **kwargs):
         """ Add model predictions (accuracy)
         """
         super().track(model)

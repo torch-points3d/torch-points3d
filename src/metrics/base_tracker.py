@@ -41,7 +41,7 @@ class BaseTracker:
                 metrics[key] = meter_value(loss_meter, dim=0)
         return metrics
 
-    def track(self, model):
+    def track(self, model, **kwargs):
         losses = self._convert(model.get_current_losses())
         self._append_losses(losses)
 
