@@ -112,7 +112,7 @@ def compute_sparse_delta(raw_pos, quantized_pos, grid_size, quantizing_func):
     torch.Tensor
         Error normalized between -1 and 1
     """
-    delta = raw_pos - quantized_pos
+    delta = raw_pos / grid_size - quantized_pos
     shift = 0
     if quantizing_func == torch.ceil:
         shift = 1
