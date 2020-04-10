@@ -45,7 +45,7 @@ class BaseTracker:
 
     def track(self, model, **kwargs):
         if self._finalised:
-            raise ValueError("Cannot track new values with a finalised tracker, you need to reset it first")
+            raise RuntimeError("Cannot track new values with a finalised tracker, you need to reset it first")
         losses = self._convert(model.get_current_losses())
         self._append_losses(losses)
 

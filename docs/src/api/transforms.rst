@@ -10,6 +10,8 @@ Transforms
 
 .. autoclass:: src.core.data_transform.RandomSphere
 
+.. autoclass:: src.core.data_transform.SphereSampling
+
 .. autoclass:: src.core.data_transform.GridSampling
 
 .. autoclass:: src.core.data_transform.RandomSymmetry

@@ -79,6 +79,16 @@ class TestSegmentationTracker(unittest.TestCase):
         for k in ["test_acc", "test_miou", "test_macc"]:
             self.assertAlmostEqual(metrics[k], 100, 5)
 
+    def test_finalise(self):
+        tracker = SegmentationTracker(MockDataset(), ignore_label=-100)
+        tracker.reset("test")
+        model = MockModel()
+        model.iter = 3
+        tracker.track(model)
+        tracker.finalise()
+        with self.assertRaises(RuntimeError):
+            tracker.track(model)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -30,6 +30,9 @@ class MockModel(BaseModel):
         self._channels = [12, 12, 12, 12]
         self.nn = MLP(self._channels)
 
+    def set_input(self, a):
+        self.input = a
+
 
 class TestSimpleBatch(unittest.TestCase):
     def test_enable_dropout_eval(self):
@@ -44,6 +47,16 @@ class TestSimpleBatch(unittest.TestCase):
         for i in range(len(model._channels) - 1):
             self.assertEqual(model.nn[i][1].training, True)
             self.assertEqual(model.nn[i][2].training, False)
+
+
+class TestBaseModel(unittest.TestCase):
+    def test_getinput(self):
+        model = MockModel()
+        with self.assertRaises(AttributeError):
+            model.get_input()
+
+        model.set_input(1)
+        self.assertEqual(model.get_input(), 1)
 
 
 if __name__ == "__main__":

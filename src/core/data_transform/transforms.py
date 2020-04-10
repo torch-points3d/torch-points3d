@@ -199,6 +199,8 @@ class RandomSphere(object):
     strategy: str
         choose between `random` and `freq_class_based`. The `freq_class_based` \
         favors points with low frequency class. This can be used to balance unbalanced datasets
+    center: bool
+        if True then the sphere will be moved to the origin
     """
 
     def __init__(self, radius, strategy="random", class_weight_method="sqrt", center=True):

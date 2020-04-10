@@ -30,6 +30,8 @@ from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
 from src.datasets.multiscale_data import MultiScaleBatch
 
+np.random.seed(0)
+
 
 class Testhelpers(unittest.TestCase):
     def test_Instantiate(self):
