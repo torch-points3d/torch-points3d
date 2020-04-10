@@ -7,6 +7,7 @@ import torch
 import h5py
 import torch
 import glob
+from plyfile import PlyData, PlyElement
 from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip, Dataset
 from torch_geometric.data.dataset import files_exist
 from torch_geometric.data import DataLoader
@@ -43,6 +44,25 @@ INV_OBJECT_LABEL = {
     11: "board",
     12: "clutter",
 }
+
+OBJECT_COLOR = np.asarray(
+    [
+        [233, 229, 107],  #'ceiling' .-> .yellow
+        [95, 156, 196],  #'floor' .-> . blue
+        [179, 116, 81],  #'wall'  ->  brown
+        [241, 149, 131],  #'beam'  ->  salmon
+        [81, 163, 148],  #'column'  ->  bluegreen
+        [77, 174, 84],  #'window'  ->  bright green
+        [108, 135, 75],  #'door'   ->  dark green
+        [41, 49, 101],  #'chair'  ->  darkblue
+        [79, 79, 76],  #'table'  ->  dark grey
+        [223, 52, 52],  #'bookcase'  ->  red
+        [89, 47, 95],  #'sofa'  ->  purple
+        [81, 109, 114],  #'board'   ->  grey
+        [233, 233, 229],  #'clutter'  ->  light grey
+        [0, 0, 0],  # unlabelled .->. black
+    ]
+)
 
 OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
 
@@ -108,6 +128,24 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             torch.from_numpy(room_labels),
             torch.from_numpy(room_object_indices),
         )
+
+
+def to_ply(pos, label, file):
+    assert len(label.shape) == 1
+    assert pos.shape[0] == label.shape[0]
+    pos = np.asarray(pos)
+    colors = OBJECT_COLOR[np.asarray(label)]
+    ply_array = np.ones(
+        pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1")]
+    )
+    ply_array["x"] = pos[:, 0]
+    ply_array["y"] = pos[:, 1]
+    ply_array["z"] = pos[:, 2]
+    ply_array["red"] = colors[:, 0]
+    ply_array["green"] = colors[:, 1]
+    ply_array["blue"] = colors[:, 2]
+    el = PlyElement.describe(ply_array, "S3DIS")
+    PlyData([el], byte_order=">").write(file)
 
 
 def add_weights(dataset, train, class_weight_method):
@@ -339,7 +377,7 @@ class S3DISOriginalFused(InMemoryDataset):
             return
 
         train_data_list = [data_list[i] for i in range(6) if (i != self.test_area - 1 and len(data_list[i]))]
-        test_data_list = [data_list[self.test_area - 1]]
+        test_data_list = data_list[self.test_area - 1]
 
         if self.pre_collate_transform:
             log.info("pre_collate_transform ...")
@@ -380,16 +418,19 @@ class S3DISSphere(S3DISOriginalFused):
 
     def _load_data(self, path):
         self._datas = torch.load(path)
+        if not isinstance(self._datas, list):
+            self._datas = [self._datas]
         self._centres_for_sampling = []
         for i, data in enumerate(self._datas):
             assert not hasattr(
                 data, cT.SphereSampling.KDTREE_KEY
             )  # Just to make we don't have some out of date data in there
-            low_res = self._grid_sphere_sampling(data)
+            low_res = self._grid_sphere_sampling(data.clone())
             centres = torch.empty((low_res.pos.shape[0], 4), dtype=torch.float)
             centres[:, :3] = low_res.pos
             centres[:, 3] = i
             self._centres_for_sampling.append(centres)
+
         self._centres_for_sampling = torch.cat(self._centres_for_sampling, 0)
 
 
@@ -417,14 +458,13 @@ class S3DISFusedDataset(BaseDataset):
         if dataset_opt.class_weight_method:
             self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
 
-        if dataset_opt.sampler:
-            self.train_sampler = BalancedRandomSampler(self.train_dataset.center_labels)
-        else:
-            self.train_sampler = None
-
     @property
     def test_data(self):
         return self.test_dataset[0].raw_test_data
+
+    @staticmethod
+    def to_ply(pos, label, file):
+        to_ply(pos, label, file)
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):

@@ -7,6 +7,6 @@ checkpoint_dir: "/home/nicolas/deeppointcloud-benchmarks/outputs/2020-04-05/13-3
 model_name: KPConvPaper
 precompute_multi_scale: True    # Compute multiscate features on cpu for faster training / inference
 enable_dropout: False
-voting_runs: 2
+voting_runs: 10
 tracker_options:                # Extra options for the tracker
     full_res: True

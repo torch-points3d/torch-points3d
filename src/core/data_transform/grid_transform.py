@@ -107,3 +107,6 @@ class SaveOriginalPosId:
         else:
             data = self._process(data)
         return data
+
+    def __repr__(self):
+        return self.__class__.__name__
