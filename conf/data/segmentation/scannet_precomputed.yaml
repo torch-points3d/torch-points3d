@@ -7,12 +7,19 @@ data:
     donotcare_class_ids: []
     max_num_point: None
     process_workers: 1
+    apply_rotation: True
     train_split: "train" # Could also be trainval
     pre_transform:
       - transform: GridSampling
         lparams: [0.02]
     train_transform:
       - transform: RandomDropout
+      - transform: RandomRotation
+        params:
+          apply_rotation : ${data.apply_rotation}
+          bound_x: [-np.pi, np.pi]
+          bound_y: [-np.pi, np.pi]
+          bound_z: [-np.pi / 64, np.pi / 64 ]
       - transform: XYZFeature
         params:
           add_x: False
@@ -29,6 +36,7 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "mean"
+      - transform: CoordsShift
       - transform: ShiftVoxels
       - transform: ChromaticJitter
       - transform: ChromaticAutoContrast
@@ -49,7 +57,7 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "mean"
-          quantizing_func: "round"
+      - transform: CoordsShift
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
