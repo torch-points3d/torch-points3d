@@ -98,7 +98,6 @@ def to_sparse_input(
 
 def compute_sparse_delta(raw_pos, quantized_pos, grid_size, quantizing_func):
     """ Computes the error between the raw position and the quantized position
-    Error is between -1 and 1
 
     Parameters
     ----------
@@ -110,7 +109,7 @@ def compute_sparse_delta(raw_pos, quantized_pos, grid_size, quantizing_func):
     Returns
     -------
     torch.Tensor
-        Error between -1 and 1
+        Error
     """
     delta = raw_pos / grid_size - quantized_pos
     
