@@ -39,3 +39,37 @@ class PointNet(BaseModel):
 
     def backward(self):
         self.loss.backward()
+
+
+class SegPointNetModel(BaseModel):
+    def __init__(self, opt, type, dataset, modules_lib):
+        super().__init__(opt)
+        self.pointnet_seg = MiniPointNet(
+            opt.pointnet.local_nn,
+            opt.pointnet.global_nn,
+            aggr=opt.pointnet.aggr,
+            return_local_out=opt.pointnet.return_local_out,
+        )
+        self.seg_nn = MLP(opt.seg_nn)
+
+    def set_input(self, data, device):
+        data = data.to(device)
+        self.pos = data.pos
+        self.labels = data.y
+        if not hasattr(data, "batch"):
+            self.batch_idx = torch.zeros(self.labels.shape[0]).long()
+        else:
+            self.batch_idx = data.batch
+
+    def get_local_feat(self):
+        return self.pointnet_seg.local_nn(self.pos)
+
+    def forward(self):
+        x = self.pointnet_seg.forward_embedding(self.pos, self.batch_idx)
+        x = self.seg_nn(x)
+        self.output = F.log_softmax(x, dim=-1)
+        self.loss = F.nll_loss(self.output, self.labels)
+        return self.output
+
+    def backward(self):
+        self.loss.backward()

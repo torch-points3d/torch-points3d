@@ -1,0 +1,58 @@
+data:
+    class: scannet.ScannetDatasetPreComputed
+    task: segmentation
+    dataroot: data
+    grid_size: 0.05
+    version: 'v2'
+    donotcare_class_ids: []
+    max_num_point: None
+    process_workers: 1
+    train_split: "train" # Could also be trainval
+    pre_transform:
+      - transform: GridSampling
+        lparams: [0.02]
+    train_transform:
+      - transform: RandomDropout
+      - transform: XYZFeature
+        params:
+          add_x: False
+          add_y: False
+          add_z: True
+      - transform: RandomNoise
+        params:
+          sigma: 0.01
+          clip: 0.05
+      - transform: RandomScaleAnisotropic
+        params:
+          scales: [0.8,1.2]
+      - transform: ToSparseInput
+        params:
+          grid_size: ${data.grid_size}
+          mode: "mean"
+      - transform: ShiftVoxels
+      - transform: ChromaticJitter
+      - transform: ChromaticAutoContrast
+      - transform: ChromaticTranslation
+      - transform: AddFeatsByKeys
+        params:
+          list_add_to_x: [True]
+          feat_names: ["rgb"]
+          input_nc_feats: [3]
+          delete_feats: [True]
+    val_transform:
+      - transform: XYZFeature
+        params:
+          add_x: False
+          add_y: False
+          add_z: True
+      - transform: ToSparseInput
+        params:
+          grid_size: ${data.grid_size}
+          mode: "mean"
+          quantizing_func: "round"
+      - transform: AddFeatsByKeys
+        params:
+          list_add_to_x: [True]
+          feat_names: ["rgb"]
+          input_nc_feats: [3]
+          delete_feats: [True]
