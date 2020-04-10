@@ -141,8 +141,6 @@ def add_weights(dataset, train, class_weight_method):
     return dataset
 
 
-################################### DATASETS ###################################
-
 ################################### 1m cylinder s3dis ###################################
 
 
@@ -218,7 +216,7 @@ class S3DISOriginalFused(InMemoryDataset):
         self.debug = debug
         super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
-        self.data, self.slices = torch.load(path)
+        self._load_data(path)
 
         if not train:
             self.raw_test_data = torch.load(self.raw_areas_paths[test_area - 1])
@@ -281,9 +279,7 @@ class S3DISOriginalFused(InMemoryDataset):
                 )
 
     def process(self):
-
         if not os.path.exists(self.pre_processed_path):
-
             train_areas = [f for f in self.folders if str(self.test_area) not in f]
             test_areas = [f for f in self.folders if str(self.test_area) in f]
 
@@ -300,9 +296,6 @@ class S3DISOriginalFused(InMemoryDataset):
                 for room_name in os.listdir(osp.join(self.raw_dir, f))
                 if os.path.isdir(osp.join(self.raw_dir, f, room_name))
             ]
-
-            train_files = train_files[1:10]
-            test_files = test_files[1:10]
 
             # Gather data per area
             data_list = [[] for _ in range(6)]
@@ -346,30 +339,75 @@ class S3DISOriginalFused(InMemoryDataset):
             return
 
         train_data_list = [data_list[i] for i in range(6) if (i != self.test_area - 1 and len(data_list[i]))]
-        test_data_list = data_list[self.test_area - 1]
+        test_data_list = [data_list[self.test_area - 1]]
 
         if self.pre_collate_transform:
             log.info("pre_collate_transform ...")
+            log.info(self.pre_collate_transform)
             train_data_list = self.pre_collate_transform(train_data_list)
             test_data_list = self.pre_collate_transform(test_data_list)
 
+        self._save_data(train_data_list, test_data_list)
+
+    def _save_data(self, train_data_list, test_data_list):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
         torch.save(self.collate(test_data_list), self.processed_paths[1])
+
+    def _load_data(self, path):
+        self.data, self.slices = torch.load(path)
+
+
+class S3DISSphere(S3DISOriginalFused):
+    def __init__(self, root, sample_per_epoch=100, radius=2, *args, **kwargs):
+        self._sample_per_epoch = sample_per_epoch
+        self._radius = radius
+        self._grid_sphere_sampling = cT.GridSampling(size=radius / 10.0)
+        super().__init__(root, *args, **kwargs)
+
+    def __len__(self):
+        return self._sample_per_epoch
+
+    def get(self, idx):
+        centre_idx = np.random.randint(0, self._centres_for_sampling.shape[0])
+        centre = self._centres_for_sampling[centre_idx]
+        area_data = self._datas[centre[3].int()]
+        sphere_sampler = cT.SphereSampling(self._radius, centre[:3])
+        return sphere_sampler(area_data)
+
+    def _save_data(self, train_data_list, test_data_list):
+        torch.save(train_data_list, self.processed_paths[0])
+        torch.save(test_data_list, self.processed_paths[1])
+
+    def _load_data(self, path):
+        self._datas = torch.load(path)
+        self._centres_for_sampling = []
+        for i, data in enumerate(self._datas):
+            assert not hasattr(
+                data, cT.SphereSampling.KDTREE_KEY
+            )  # Just to make we don't have some out of date data in there
+            low_res = self._grid_sphere_sampling(data)
+            centres = torch.empty((low_res.pos.shape[0], 4), dtype=torch.float)
+            centres[:, :3] = low_res.pos
+            centres[:, 3] = i
+            self._centres_for_sampling.append(centres)
+        self._centres_for_sampling = torch.cat(self._centres_for_sampling, 0)
 
 
 class S3DISFusedDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        self.train_dataset = S3DISOriginalFused(
+        self.train_dataset = S3DISSphere(
             self._data_path,
+            sample_per_epoch=4000,
             test_area=self.dataset_opt.fold,
             train=True,
             pre_collate_transform=self.pre_collate_transform,
             transform=self.train_transform,
         )
-        self.test_dataset = S3DISOriginalFused(
+        self.test_dataset = S3DISSphere(
             self._data_path,
+            sample_per_epoch=1000,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_collate_transform=self.pre_collate_transform,
