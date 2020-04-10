@@ -128,8 +128,8 @@ class BaseDataset:
                     log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
                 setattr(self, new_name, filt)
-
-    def _get_collate_function(self, conv_type, is_multiscale):
+    @staticmethod
+    def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
                 return lambda datalist: MultiScaleBatch.from_data_list(datalist)
@@ -169,7 +169,7 @@ class BaseDataset:
         """
         conv_type = model.conv_type
         self._batch_size = batch_size
-        batch_collate_function = self._get_collate_function(conv_type, precompute_multi_scale)
+        batch_collate_function = self.__class__()._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(torch.utils.data.DataLoader, collate_fn=batch_collate_function)
 
         if self.train_sampler:
