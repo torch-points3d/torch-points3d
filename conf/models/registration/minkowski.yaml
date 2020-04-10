@@ -34,7 +34,7 @@ models:
             dilation: [1, 1, 1, 1]
         mlp_cls:
             nn: [32]
-        num_pos_pairs: 4096
+        num_pos_pairs: 1024
         normalize_feature: True
         metric_loss:
           class: "ContrastiveLoss"

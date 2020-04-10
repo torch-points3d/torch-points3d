@@ -21,24 +21,26 @@ data:
       params:
         sigma: 0.005
         clip: 0.05
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}
         save_delta: False
         mode: "mean"
-  test_transforms:
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
         add_to_x: True
         feat_name: 'ones'
+
+  test_transforms:
     - transform: ToSparseInput
       params:
-        grid_size: ${data.grid_size}
+        grid_size: ${data.first_subsampling}
         save_delta: False
         mode: "mean"
+
+    - transform: AddOnes
+    - transform: AddFeatByKey
+      params:
+        add_to_x: True
+        feat_name: 'ones'
