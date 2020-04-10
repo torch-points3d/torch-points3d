@@ -98,7 +98,7 @@ def to_sparse_input(
 
 def compute_sparse_delta(raw_pos, quantized_pos, grid_size, quantizing_func):
     """ Computes the error between the raw position and the quantized position
-    Error is normalised between -1 and 1
+    Error is between -1 and 1
 
     Parameters
     ----------
@@ -110,16 +110,11 @@ def compute_sparse_delta(raw_pos, quantized_pos, grid_size, quantizing_func):
     Returns
     -------
     torch.Tensor
-        Error normalized between -1 and 1
+        Error between -1 and 1
     """
-    delta = raw_pos - quantized_pos
-    shift = 0
-    if quantizing_func == torch.ceil:
-        shift = 1
-    elif quantizing_func == torch.floor:
-        shift = -1
-
-    return 2 * delta / grid_size + shift  # normalise between -1 and 1 (roughly)
+    delta = raw_pos / grid_size - quantized_pos
+    
+    return delta
 
 
 class RemoveDuplicateCoords(object):
