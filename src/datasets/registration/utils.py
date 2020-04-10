@@ -162,7 +162,7 @@ def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=
     # print(pair)
 
     # print(path1, path2, "overlap=", overlap)
-    output = dict(pair=pair, overlap=overlap)
+    output = dict(pair=pair, pair2=pair2, overlap=overlap)
     return output
 
 

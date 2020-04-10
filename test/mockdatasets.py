@@ -83,16 +83,23 @@ class PairMockDaraset(MockDataset):
     @property
     def datalist(self):
         torch.manual_seed(0)
-        datalist = [
-            Pair(pos=torch.randn((self.num_points, 3)), x=self._feature,
-                 pos_target=torch.randn((self.num_points, 3)), x_target=self._feature,
+        datalist_source = [
+            Data(pos=torch.randn((self.num_points, 3)), x=self._feature,
+                 pair_ind=self._pair_ind)
+            for i in range(self.batch_size)
+        ]
+        datalist_target = [
+            Data(pos=torch.randn((self.num_points, 3)), x=self._feature,
                  pair_ind=self._pair_ind)
             for i in range(self.batch_size)
         ]
         if self._transform:
-            datalist = [self._transform(d.clone()) for d in datalist]
+            datalist_source = [self._transform(d.clone()) for d in datalist_source]
+            datalist_target = [self._transform(d.clone()) for d in datalist_target]
         if self._ms_transform:
-            datalist = [self._ms_transform(d.clone()) for d in datalist]
+            datalist_source = [self._ms_transform(d.clone()) for d in datalist_source]
+            datalist_target = [self._ms_transform(d.clone()) for d in datalist_target]
+        datalist = [Pair.make_pair(datalist_source[i], datalist_target[i]) for i in range(self.batch_size)]
         return datalist
 
     def __getitem__(self, index):

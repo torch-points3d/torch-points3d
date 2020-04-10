@@ -15,6 +15,7 @@ from test.mockdatasets import PairMockDatasetGeometric
 from src.models.model_factory import instantiate_model
 from src.core.data_transform import ToSparseInput
 from src.utils.model_building_utils.model_definition_resolver import resolve_model
+from src.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 
 # calls resolve_model, then find_model_using_name
 
@@ -115,13 +116,13 @@ class TestModelUtils(unittest.TestCase):
         model.forward()
         model.backward()
 
-    @unittest.skip("The model is loading but Problem in the pairmockdataset...")
     def test_siamese_minkowski(self):
         params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
-        transform = ToSparseInput(grid_size=0.001, save_delta=False, mode="mean")
+        transform = ToSparseInput(grid_size=0.01)
         dataset = PairMockDatasetGeometric(5, transform=transform, num_points=1024, is_pair_ind=True)
         model = instantiate_model(params, dataset)
-        model.set_input(dataset[0], device)
+        d = dataset[0]
+        model.set_input(d, device)
         model.forward()
         model.backward()
 

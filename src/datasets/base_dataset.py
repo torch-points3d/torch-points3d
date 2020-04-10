@@ -169,7 +169,7 @@ class BaseDataset:
         """
         conv_type = model.conv_type
         self._batch_size = batch_size
-        batch_collate_function = self.__class__()._get_collate_function(conv_type, precompute_multi_scale)
+        batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(torch.utils.data.DataLoader, collate_fn=batch_collate_function)
 
         if self.train_sampler:
