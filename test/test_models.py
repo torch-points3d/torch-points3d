@@ -10,7 +10,7 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric, MockDataset
-from test.mockdatasets import PairMockDatasetGeometric
+from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 
 from src.models.model_factory import instantiate_model
 from src.core.data_transform import ToSparseInput
@@ -57,13 +57,20 @@ class TestModelUtils(unittest.TestCase):
                     return True
             return False
 
-        def get_dataset(conv_type):
+        def get_dataset(conv_type, task):
             features = 2
-            if conv_type.lower() == "dense":
-                return MockDataset(features, num_points=2048)
-            if conv_type.lower() == "sparse":
-                return MockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
-            return MockDatasetGeometric(features)
+            if task == "registration":
+                if conv_type.lower() == "dense":
+                    return PairMockDataset(features, num_points=2048)
+                if conv_type.lower() == "sparse":
+                    return PairMockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
+                return PairMockDatasetGeometric(features)
+            else:
+                if conv_type.lower() == "dense":
+                    return MockDataset(features, num_points=2048)
+                if conv_type.lower() == "sparse":
+                    return MockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
+                return MockDatasetGeometric(features)
 
         for type_file in self.model_type_files:
             associated_task = type_file.split("/")[-2]
@@ -74,7 +81,7 @@ class TestModelUtils(unittest.TestCase):
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
                         models_config.update("model_name", model_name)
-                        dataset = get_dataset(models_config.models[model_name].conv_type)
+                        dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
                         model = instantiate_model(models_config, dataset)
                         model.set_input(dataset[0], device)
                         try:
