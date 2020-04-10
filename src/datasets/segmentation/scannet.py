@@ -65,7 +65,7 @@ RELEASE_NAME = RELEASES_NAMES[0]
 LABEL_MAP_FILE = LABEL_MAP_FILES[0]
 RELEASE_SIZE = "1.2TB"
 V1_IDX = 1
-
+NUM_CLASSES = 41
 CLASS_LABELS = (
     "wall",
     "floor",
@@ -138,7 +138,7 @@ SCANNET_COLOR_MAP = {
     40: (100.0, 85.0, 144.0),
 }
 
-SPLITS = ["train", "val", "trainval"]
+SPLITS = ["train", "val"]
 
 
 def get_release_scans(release_file):
@@ -623,7 +623,7 @@ class Scannet(InMemoryDataset):
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
-                    for arg in args:
+                    for arg in args[:10]:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
@@ -698,22 +698,23 @@ class ScannetPreprocessed(InMemoryDataset):
     def __init__(
         self,
         root,
-        split="trainval",
+        split="train",
         transform=None,
         pre_transform=None,
         pre_filter=None,
         version="v2",
-        donotcare_class_ids=None,
+        donotcare_class_ids=[],
         max_num_point=None,
         use_multiprocessing=True,
         process_workers=4,
-        types=["_vh_clean_2.ply'", "_vh_clean_2.labels.ply"]
+        types=["_vh_clean_2.ply'", "_vh_clean_2.labels.ply"],
+        normalize_rgb=True
     ):
 
-        if donotcare_class_ids:
-            self.donotcare_class_ids = np.asarray(donotcare_class_ids)
-        else:
-            self.donotcare_class_ids = np.array([])
+        if not isinstance(donotcare_class_ids, list):
+            raise Exception("donotcare_class_ids should be list with indices of class to ignore")
+        self.donotcare_class_ids = donotcare_class_ids
+
         assert version in ["v2", "v1"], "The version should be either v1 or v2"
         
         self.version = version
@@ -721,6 +722,7 @@ class ScannetPreprocessed(InMemoryDataset):
         self.use_multiprocessing = use_multiprocessing
         self.process_workers = process_workers
         self.types = types
+        self.normalize_rgb = normalize_rgb 
 
         super(ScannetPreprocessed, self).__init__(root, transform, pre_transform, pre_filter)
         if split == "train":
@@ -740,7 +742,7 @@ class ScannetPreprocessed(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ["{}.pt".format(s,) for s in Scannet.SPLITS]
+        return ["{}.pt".format(s) for s in self.SPLITS] + ["trainval.pt"]
 
     @property
     def num_classes(self):
@@ -788,17 +790,6 @@ class ScannetPreprocessed(InMemoryDataset):
         for url in self.URLS_METADATA:
             _ = download_url(url, metadata_path)
 
-    @staticmethod
-    def read_one_scan(
-        scannet_dir,
-        scan_name,
-        label_map_file,
-        donotcare_class_ids,
-        max_num_point,
-        obj_class_ids,
-    ):
-        return Data(**data)
-
     def read_from_metadata(self):
         metadata_path = osp.join(self.raw_dir, "metadata")
         split_files = ["scannetv2_{}.txt".format(s) for s in Scannet.SPLITS]
@@ -817,6 +808,8 @@ class ScannetPreprocessed(InMemoryDataset):
         scan_name, 
         scannet_dir,
         pre_transform,
+        mapping_func,
+        normalize_rgb,
         bugs,
     ):
         
@@ -828,17 +821,25 @@ class ScannetPreprocessed(InMemoryDataset):
         assert pointcloud.shape[0] == label.shape[0]
         assert np.allclose(pointcloud[:, :3], label[:, :3])
 
-        pos = torch.from_numpy(pointcloud[:, :3]).float()
-        rgb = torch.from_numpy(pointcloud[:, 3:6]).float()
-        y = torch.from_numpy(label[:, -1]).long()
-
-        data = Data(pos=pos, rgb=rgb, y=y)
+        y = label[:, -1].astype(np.int)
 
         if scan_name in list(bugs.keys()):
             bug_index = bugs[scan_name]
-            bug_mask = data.y == bug_index
+            bug_mask = y == bug_index
             log.info("Fixing scan: {} with {} errors".format(scan_name, bug_mask.sum()))
-            data.y[bug_mask] = 0
+            y[bug_mask] = 0
+
+        # This function maps indices between 0, num_valid_classes - 1
+        y = mapping_func(y)
+
+        pos = torch.from_numpy(pointcloud[:, :3]).float()
+        rgb = pointcloud[:, 3:6].astype(np.float)
+        if normalize_rgb:
+            rgb /= 255.
+        rgb = torch.from_numpy(rgb).float()
+        y = torch.from_numpy(y).long()
+
+        data = Data(pos=pos, rgb=rgb, y=y)
 
         if pre_transform:
             data = pre_transform(data)
@@ -848,6 +849,17 @@ class ScannetPreprocessed(InMemoryDataset):
     def process(self):
         self.read_from_metadata()
         scannet_dir = osp.join(self.raw_dir, "scans")
+
+        mapping_dict = {indice:idx for idx, indice in enumerate(self.VALID_CLASS_IDS)}
+        for idx in range(NUM_CLASSES):
+            if idx not in mapping_dict:
+                mapping_dict[idx] = IGNORE_LABEL
+        for idx in self.donotcare_class_ids:
+            mapping_dict[idx] = IGNORE_LABEL
+        print("MAPPING IDX: {}".format(mapping_dict))
+        mapping_func = np.vectorize(mapping_dict.get)
+    
+        all_datas = []
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
             if not os.path.exists(self.processed_paths[i]):
                 scannet_dir = osp.join(self.raw_dir, "scans" if split in ["train", "val"] else "scans_test")
@@ -857,6 +869,8 @@ class ScannetPreprocessed(InMemoryDataset):
                         scan_name,
                         scannet_dir,
                         self.pre_transform,
+                        mapping_func,
+                        self.normalize_rgb,
                         self.BUGS,
                     )
                     for id, scan_name in enumerate(scan_names)
@@ -869,8 +883,11 @@ class ScannetPreprocessed(InMemoryDataset):
                     for arg in args:
                         data = ScannetPreprocessed.process_func(*arg)
                         datas.append(data)
+                all_datas += datas
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
+        log.info("SAVING TO {}".format(self.processed_paths[-1]))
+        torch.save(self.collate(all_datas), self.processed_paths[-1])        
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, len(self))
@@ -880,10 +897,10 @@ class ScannetDatasetPreComputed(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids
+        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
         max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
         train_split: int = dataset_opt.train_split if dataset_opt.train_split else "train"
-        use_multiprocessing: int = dataset_opt.use_multiprocessing if dataset_opt.use_multiprocessing else True
+        use_multiprocessing: int = dataset_opt.use_multiprocessing if dataset_opt.use_multiprocessing else False
 
 
         self.train_dataset = ScannetPreprocessed(

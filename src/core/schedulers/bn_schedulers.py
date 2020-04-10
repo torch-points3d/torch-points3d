@@ -1,12 +1,15 @@
 from torch import nn
 import logging
+import MinkowskiEngine as ME
 
 log = logging.getLogger(__name__)
+
+BATCH_NORM_MODULES = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, ME.MinkowskiBatchNorm, ME.MinkowskiInstanceNorm)
 
 
 def set_bn_momentum_default(bn_momentum):
     def fn(m):
-        if isinstance(m, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+        if isinstance(m, BATCH_NORM_MODULES):
             m.momentum = bn_momentum
 
     return fn
