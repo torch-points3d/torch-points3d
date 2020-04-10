@@ -46,7 +46,6 @@ class BaseDataset:
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
 
-
     @staticmethod
     def add_transform(transform_list_to_be_added, out=[]):
         """[Add transforms to an existing list or not]
@@ -388,9 +387,11 @@ class BaseDataset:
         if current_transform is None:
             setattr(attr.dataset, "transform", transform)
         else:
-            if isinstance(current_transform, Compose):  # The transform contains several transformations
+            if (
+                isinstance(current_transform, Compose) and transform not in current_transform.transforms
+            ):  # The transform contains several transformations
                 current_transform.transforms += [transform]
-            else:
+            elif current_transform != transform:
                 setattr(
                     attr.dataset, "transform", Compose([current_transform, transform]),
                 )

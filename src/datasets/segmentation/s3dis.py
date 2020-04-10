@@ -18,6 +18,7 @@ from tqdm import tqdm as tq
 import csv
 import pandas as pd
 from src.metrics.segmentation_tracker import SegmentationTracker
+from src.metrics.s3dis_tracker import S3DISTracker
 from src.datasets.samplers import BalancedRandomSampler
 import src.core.data_transform as cT
 from src.datasets.base_dataset import BaseDataset
@@ -185,202 +186,6 @@ class S3DIS1x1Dataset(BaseDataset):
         return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
-################################### Used for s3dis radius sphere ###################################
-
-
-class S3DISOriginal(InMemoryDataset):
-
-    url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
-    zip_name = "Stanford3dDataset_v1.2_Aligned_Version.zip"
-    folders = ["Area_{}".format(i) for i in range(1, 7)]
-    num_classes = S3DIS_NUM_CLASSES
-
-    def __init__(
-        self,
-        root,
-        test_area=6,
-        train=True,
-        transform=None,
-        pre_transform=None,
-        pre_collate_transform=None,
-        pre_filter=None,
-        keep_instance=False,
-        verbose=False,
-        debug=False,
-    ):
-        assert test_area >= 1 and test_area <= 6
-        self.transform = transform
-        self.pre_collate_transform = pre_collate_transform
-        self.test_area = test_area
-        self.keep_instance = keep_instance
-        self.verbose = verbose
-        self.debug = debug
-        super(S3DISOriginal, self).__init__(root, transform, pre_transform, pre_filter)
-        path = self.processed_paths[0] if train else self.processed_paths[1]
-        self.data, self.slices = torch.load(path)
-        self.kd_trees = self.load_kd_trees("train" if train else "test")
-
-    def __getitem__(self, idx):
-        if isinstance(idx, int):
-            super_class = super(S3DISOriginal, self)
-            if hasattr(super_class, "indices"):
-                data = self.get(super_class.indices()[idx])
-            else:
-                data = self.get(idx)
-            data.kd_tree = self.kd_trees[str(np.asarray(data.id))]
-            data = data if self.transform is None else self.transform(data)
-            return data
-        else:
-            return self.index_select(idx)
-
-    @property
-    def raw_file_names(self):
-        return self.folders
-
-    @property
-    def processed_file_names(self):
-        test_area = self.test_area
-        return ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
-
-    def download(self):
-        raw_folders = os.listdir(self.raw_dir)
-        if len(raw_folders) == 0:
-            raise RuntimeError(
-                "Dataset not found. Please download {} from {} and move it to {} with {}".format(
-                    self.zip_name, self.url, self.raw_dir, self.folders
-                )
-            )
-        else:
-            intersection = len(set(self.folders).intersection(set(raw_folders)))
-            if intersection == 0:
-                log.info("The data seems properly downloaded")
-            else:
-                raise RuntimeError(
-                    "Dataset not found. Please download {} from {} and move it to {} with {}".format(
-                        self.zip_name, self.url, self.raw_dir, self.folders
-                    )
-                )
-
-    def extract_kd_trees(self, data_list):
-        kd_trees = {}
-        for data in data_list:
-            if hasattr(data, "kd_tree"):
-                kd_trees[str(np.asarray(data.id))] = getattr(data, "kd_tree")
-                delattr(data, "kd_tree")
-        return kd_trees
-
-    def save_kd_trees(self, split_name, kd_trees):
-        name = "{}_kd_trees.pt".format(split_name)
-        pickle_out = open(os.path.join(self.processed_dir, name), "wb")
-        pickle.dump(kd_trees, pickle_out)
-        pickle_out.close()
-
-    def load_kd_trees(self, split_name):
-        name = "{}_kd_trees.pt".format(split_name)
-        pickle_out = open(os.path.join(self.processed_dir, name), "rb")
-        kd_trees = pickle.load(pickle_out)
-        pickle_out.close()
-        return kd_trees
-
-    def process(self):
-
-        train_areas = [f for f in self.folders if str(self.test_area) not in f]
-        test_areas = [f for f in self.folders if str(self.test_area) in f]
-
-        train_files = [
-            (f, room_name, osp.join(self.raw_dir, f, room_name))
-            for f in train_areas
-            for room_name in os.listdir(osp.join(self.raw_dir, f))
-            if os.path.isdir(osp.join(self.raw_dir, f, room_name))
-        ]
-
-        test_files = [
-            (f, room_name, osp.join(self.raw_dir, f, room_name))
-            for f in test_areas
-            for room_name in os.listdir(osp.join(self.raw_dir, f))
-            if os.path.isdir(osp.join(self.raw_dir, f, room_name))
-        ]
-
-        train_data_list, test_data_list = [], []
-
-        data_count = 0
-        for (area, room_name, file_path) in tq(train_files + test_files):
-
-            if self.debug:
-                read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
-            else:
-                xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
-                    file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
-                )
-
-                data = Data(pos=xyz, x=rgb.float() / 255.0, y=room_labels, id=torch.ones(1).int() * data_count)
-
-                if self.keep_instance:
-                    data.room_object_indices = room_object_indices
-
-                if self.pre_filter is not None and not self.pre_filter(data):
-                    continue
-
-                if self.pre_transform is not None:
-                    data = self.pre_transform(data)
-
-                if (area, room_name, file_path) in train_files:
-                    train_data_list.append(data)
-                else:
-                    test_data_list.append(data)
-
-            data_count += 1
-
-        if self.pre_collate_transform:
-            train_data_list = self.pre_collate_transform.fit_transform(train_data_list)
-            test_data_list = self.pre_collate_transform.transform(test_data_list)
-
-        train_kd_trees = self.extract_kd_trees(train_data_list)
-        self.save_kd_trees("train", train_kd_trees)
-
-        test_kd_trees = self.extract_kd_trees(test_data_list)
-        self.save_kd_trees("test", test_kd_trees)
-
-        torch.save(self.collate(train_data_list), self.processed_paths[0])
-        torch.save(self.collate(test_data_list), self.processed_paths[1])
-
-
-class S3DISDataset(BaseDataset):
-    def __init__(self, dataset_opt):
-        super().__init__(dataset_opt)
-
-        pre_transform = self.pre_transform
-
-        self.train_dataset = S3DISOriginal(
-            self._data_path,
-            test_area=self.dataset_opt.fold,
-            train=True,
-            pre_transform=pre_transform,
-            transform=self.train_transform,
-        )
-        self.test_dataset = S3DISOriginal(
-            self._data_path,
-            test_area=self.dataset_opt.fold,
-            train=False,
-            pre_transform=pre_transform,
-            transform=self.test_transform,
-        )
-
-        self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
-
-    @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
-        """Factory method for the tracker
-
-        Arguments:
-            dataset {[type]}
-            wandb_log - Log using weight and biases
-        Returns:
-            [BaseTracker] -- tracker
-        """
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
-
-
 ################################### Used for fused s3dis radius sphere ###################################
 
 
@@ -496,6 +301,9 @@ class S3DISOriginalFused(InMemoryDataset):
                 if os.path.isdir(osp.join(self.raw_dir, f, room_name))
             ]
 
+            train_files = train_files[1:10]
+            test_files = test_files[1:10]
+
             # Gather data per area
             data_list = [[] for _ in range(6)]
             for (area, room_name, file_path) in tq(train_files + test_files):
@@ -591,4 +399,4 @@ class S3DISFusedDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        return S3DISTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
