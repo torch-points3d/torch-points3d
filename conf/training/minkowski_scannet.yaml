@@ -32,11 +32,11 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    entity: ""
+    entity: "thomas-chaton"
     project: scannet
     log: False
     notes:
-    name:
+    name: "Res16UNet34C "
     public: True # It will be display the model within wandb log, else not.
 
     # parameters for TensorBoard Visualization

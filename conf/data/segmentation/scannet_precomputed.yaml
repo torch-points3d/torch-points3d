@@ -9,9 +9,11 @@ data:
     process_workers: 1
     apply_rotation: True
     train_split: "train" # Could also be trainval
+
     pre_transform:
       - transform: GridSampling
         lparams: [0.02]
+
     train_transform:
       - transform: RandomDropout
       - transform: RandomRotation
@@ -19,7 +21,7 @@ data:
           apply_rotation : ${data.apply_rotation}
           bound_x: [-np.pi, np.pi]
           bound_y: [-np.pi, np.pi]
-          bound_z: [-np.pi / 64, np.pi / 64 ]
+          bound_z: [-np.pi / 64, np.pi / 64]
       - transform: XYZFeature
         params:
           add_x: False
@@ -36,8 +38,9 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "mean"
-      - transform: CoordsShift
       - transform: ShiftVoxels
+        params:
+          apply_shift: True
       - transform: ChromaticJitter
       - transform: ChromaticAutoContrast
       - transform: ChromaticTranslation
@@ -47,6 +50,7 @@ data:
           feat_names: ["rgb"]
           input_nc_feats: [3]
           delete_feats: [True]
+
     val_transform:
       - transform: XYZFeature
         params:
@@ -57,7 +61,6 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "mean"
-      - transform: CoordsShift
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]

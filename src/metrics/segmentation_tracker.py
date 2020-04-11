@@ -50,7 +50,7 @@ class SegmentationTracker(BaseTracker):
         outputs = outputs[mask]
         targets = targets[mask]
 
-        self._ap_meter.add(outputs, F.one_hot(targets, self._num_classes).bool())
+        self._ap_meter.add(outputs.detach(), F.one_hot(targets.detach(), self._num_classes).bool())
 
         outputs = self._convert(outputs)
         targets = self._convert(targets)
