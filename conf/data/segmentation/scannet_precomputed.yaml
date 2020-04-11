@@ -38,6 +38,11 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "mean"
+      - transform: ElasticDistortion
+        params:
+          apply_distorsion: True
+          granularity: [0.2, 0.4]
+          magnitude: [0.8, 1.6]
       - transform: ShiftVoxels
         params:
           apply_shift: True

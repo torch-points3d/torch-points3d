@@ -715,6 +715,8 @@ class ScannetPreprocessed(InMemoryDataset):
             raise Exception("donotcare_class_ids should be list with indices of class to ignore")
         self.donotcare_class_ids = donotcare_class_ids
 
+        self.valid_class_idx = [idx for idx in self.VALID_CLASS_IDS if idx not in donotcare_class_ids]
+
         assert version in ["v2", "v1"], "The version should be either v1 or v2"
         
         self.version = version
@@ -852,7 +854,7 @@ class ScannetPreprocessed(InMemoryDataset):
         self.read_from_metadata()
         scannet_dir = osp.join(self.raw_dir, "scans")
 
-        mapping_dict = {indice:idx for idx, indice in enumerate(self.VALID_CLASS_IDS)}
+        mapping_dict = {indice:idx for idx, indice in enumerate(self.valid_class_idx)}
         for idx in range(NUM_CLASSES):
             if idx not in mapping_dict:
                 mapping_dict[idx] = IGNORE_LABEL
