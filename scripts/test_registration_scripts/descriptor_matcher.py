@@ -87,20 +87,16 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     data_source = np.load(path_descr_source)
     data_target = np.load(path_descr_target)
 
-    if len(data_source["feat"]) == len(data_source["keypoints"]):
+    feat_s = data_source["feat"]
+    feat_t = data_target["feat"]
+    if len(data_source["feat"]) != len(data_source["keypoints"]):
+        # Sampled features using keypoints.
+        feat_s = feat_s[data_source["keypoints"]]
+        feat_t = feat_t[data_target["keypoints"]]
 
-        kp_source, kp_target = compute_matches(
-            data_source["feat"],
-            data_target["feat"],
-            data_source["pcd"][data_source["keypoints"]],
-            data_target["pcd"][data_target["keypoints"]],
-        )
-    else:
-        feat_s = data_source["feat"][data_source["keypoints"]]
-        feat_t = data_target["feat"][data_target["keypoints"]]
-        kp_source, kp_target = compute_matches(
-            feat_s, feat_t, data_source["pcd"][data_source["keypoints"]], data_target["pcd"][data_target["keypoints"]],
-        )
+    kp_source, kp_target = compute_matches(
+        feat_s, feat_t, data_source["pcd"][data_source["keypoints"]], data_target["pcd"][data_target["keypoints"]],
+    )
 
     dist = compute_dists(kp_source, kp_target, gt_trans)
 
@@ -108,6 +104,7 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     n_t = osp.split(path_descr_target)[-1].split(".")[0]
 
     frac_correct = compute_mean_correct_matches(dist, list_tau)
+
     dico = dict(
         kp_source=kp_source,
         kp_target=kp_target,
