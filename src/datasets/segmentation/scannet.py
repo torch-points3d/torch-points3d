@@ -733,6 +733,8 @@ class ScannetPreprocessed(InMemoryDataset):
             path = self.processed_paths[2]
         else:
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
+        
+        log.info("Loading data from {}".format(path))
 
         self.data, self.slices = torch.load(path)
 

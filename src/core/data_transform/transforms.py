@@ -506,7 +506,7 @@ class ShiftVoxels:
     def __call__(self, data):
         if self._apply_shift:
             if not isinstance(data.pos, torch.IntTensor):
-                raise Exception("The pos are expected to be coordinates")
+                raise Exception("The pos are expected to be coordinates, so torch.IntTensor")
             data.pos[:, :3] += (torch.rand(3) * 100).type_as(data.pos)
         return data
 

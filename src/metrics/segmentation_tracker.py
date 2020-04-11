@@ -1,5 +1,6 @@
 from typing import Dict
 import torchnet as tnt
+import torch
 import numpy as np
 from torch.nn import functional as F
 from src.models.base_model import BaseModel
@@ -33,6 +34,12 @@ class SegmentationTracker(BaseTracker):
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
         self._ap_meter = APMeter()
 
+    @staticmethod
+    def detach_tensor(tensor):
+        if torch.torch.is_tensor(tensor):
+            tensor = tensor.detach()
+        return tensor
+
     @property
     def confusion_matrix(self):
         return self._confusion_matrix.confusion_matrix
@@ -50,7 +57,11 @@ class SegmentationTracker(BaseTracker):
         outputs = outputs[mask]
         targets = targets[mask]
 
-        self._ap_meter.add(outputs.detach(), F.one_hot(targets.detach(), self._num_classes).bool())
+        outputs = SegmentationTracker.detach_tensor(outputs)
+        targets = SegmentationTracker.detach_tensor(targets)
+        if not torch.is_tensor(targets):
+            targets = torch.from_numpy(targets)
+        self._ap_meter.add(outputs, F.one_hot(targets, self._num_classes).bool())
 
         outputs = self._convert(outputs)
         targets = self._convert(targets)

@@ -10,7 +10,7 @@ class ResNetBase(nn.Module):
     INIT_DIM = 64
     PLANES = (64, 128, 256, 512)
 
-    def __init__(self, in_channels, out_channels, D=3):
+    def __init__(self, in_channels, out_channels, D=3, **kwargs):
         nn.Module.__init__(self)
         self.D = D
         assert self.BLOCK is not None, "BLOCK is not defined"
