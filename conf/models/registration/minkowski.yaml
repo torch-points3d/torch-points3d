@@ -1,6 +1,4 @@
 models:
-    # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngin
-    # STILL NOT FULLY WORKING !
     MinkUNet_Fragment:
         class: minkowski.MinkowskiFragment
         conv_type: "SPARSE"
