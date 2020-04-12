@@ -21,6 +21,9 @@ def shuffle_data(data):
     return data
 
 def sparse_coords_to_clusters(pos, batch):
+    """
+    This function is responsible to convert sparse coordinates into clusters using torch.unique.
+    """
     assert pos.dtype == torch.int or pos.dtype == torch.long
 
     # Build clusters
@@ -46,8 +49,9 @@ def group_data(data, cluster, unique_pos_indices=None, mode="last"):
     unique_pos_indices : torch.tensor
         Tensor containing one index per cluster
     mode : str
-        Option to select how the features and labels for each voxel is computed. Can be ``last`` or ``mean``.
-        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average.
+        Option to select how the features and labels for each voxel are computed. Can be ``keep_duplicate``, ``last`` or ``mean``.
+        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average. ``keep_duplicate``
+        keeps potential duplicate coordinates in cells
     """
 
     assert mode in ["mean", "last"]
@@ -76,9 +80,9 @@ class GridSampling:
 
     Parameters
     ----------
-    grid_size: float
+    size: float
         Size of a voxel (in each dimension).
-    to_sparse_coords: bool
+    quantize_coords: bool
         If True, it will convert the points into their associated sparse coordinates within the grid. \
     mode: string:
         The mode can be either `last` or `mean`.
@@ -86,15 +90,15 @@ class GridSampling:
         If mode is `last`, one random points per cell will be selected with its associated features
     """
 
-    def __init__(self, size, to_sparse_coords=False, mode="mean"):
+    def __init__(self, size, quantize_coords=False, mode="mean"):
         self._grid_size = size
-        self._to_sparse_coords = to_sparse_coords
+        self._quantize_coords = quantize_coords
         self._mode = mode
 
-        log.warn("If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling")
+        log.warning("If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling")
 
         if self._mode == "last":
-            log.warn("The data are going to be shuffled. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled")
+            log.warning("The data are going to be shuffled. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled")
 
     def _process(self, data):
         if self._mode == "last":
@@ -105,11 +109,11 @@ class GridSampling:
         cluster, unique_pos_indices = sparse_coords_to_clusters(coords, batch)
         
         # Delete pos for small speed up
-        if self._to_sparse_coords:
+        if self._quantize_coords:
             delattr(data, "pos")
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
         
-        if self._to_sparse_coords:
+        if self._quantize_coords:
             data.pos = coords[unique_pos_indices]
         return data
 
@@ -121,7 +125,7 @@ class GridSampling:
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, to_sparse_coords={}, mode={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords, self._mode)
+        return "{}(grid_size={}, quantize_coords={}, mode={})".format(self.__class__.__name__, self._grid_size, self._quantize_coords, self._mode)
 
 
 class SaveOriginalPosId:

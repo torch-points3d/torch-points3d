@@ -40,9 +40,7 @@ data:
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}
-        save_delta: False
-        mode: "mean"
-        keep_xyz: True
+        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -53,9 +51,7 @@ data:
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}
-        save_delta: False
-        mode: "mean"
-        keep_xyz: True
+        mode: "last"
 
     - transform: AddOnes
     - transform: AddFeatByKey

@@ -48,7 +48,7 @@ class BaseModel(torch.nn.Module):
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._bn_scheduler = None
         self._spatial_ops_dict: Dict = {}
-        self._iterations = 0
+        self._iterations = -1  # Start at -1 as we went the decay to be triggered iterations strictly superior to n
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None

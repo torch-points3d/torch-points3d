@@ -30,8 +30,6 @@ Transforms
 
 .. autoclass:: src.core.data_transform.RemoveAttributes
 
-.. autoclass:: src.core.data_transform.RemoveDuplicateCoords
-
 .. autoclass:: src.core.data_transform.ToSparseInput
 
 .. autoclass:: src.core.data_transform.ShuffleData
@@ -47,5 +45,9 @@ Transforms
 .. autoclass:: src.core.data_transform.RandomDropout
 
 .. autoclass:: src.core.data_transform.PCACompute
+
+.. autofunction:: src.core.data_transform.NormalizeRGB
+
+.. autofunction:: src.core.sparse_transforms.ElasticDistortion
 
 .. autofunction:: src.core.data_transform.compute_planarity
