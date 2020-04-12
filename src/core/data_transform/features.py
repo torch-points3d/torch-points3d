@@ -136,7 +136,7 @@ class AddFeatsByKeys(object):
     def __repr__(self):
         msg = ""
         for f, a in zip(self._feat_names, self._list_add_to_x):
-            msg += "{}:{}, ".format(f, a)
+            msg += "{}={}, ".format(f, a)
         return "{}({})".format(self.__class__.__name__, msg[:-2])
 
 

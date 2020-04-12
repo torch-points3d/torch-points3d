@@ -39,10 +39,6 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "last"
-      - transform: ElasticDistortion
-        params:
-          granularity: [0.2, 0.4]
-          magnitude: [0.8, 1.6]
       - transform: ShiftVoxels
       - transform: ChromaticJitter
       - transform: ChromaticAutoContrast
