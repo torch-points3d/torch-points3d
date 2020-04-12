@@ -21,7 +21,6 @@ from src.utils import is_iterable
 
 
 class Random3AxisRotation(object):
-
     """
     Rotate pointcloud with random angles along x, y, z axis
 
@@ -281,7 +280,7 @@ class AddOnes(object):
 
 class XYZFeature(object):
     """
-    add the X, Y and Z as a feature
+    Add the X, Y and Z as a feature
 
     Parameters
     -----------

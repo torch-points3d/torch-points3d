@@ -52,4 +52,6 @@ Transforms
 
 .. autofunction:: src.core.sparse_transforms.ElasticDistortion
 
+.. autofunction:: src.core.features.Random3AxisRotation
+
 .. autofunction:: src.core.data_transform.compute_planarity

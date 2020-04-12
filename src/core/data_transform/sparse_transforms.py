@@ -108,7 +108,6 @@ class ToSparseInput(object):
 
 
 class ElasticDistortion:
-
     """Apply elastic distortion on sparse coordinate space.
 
     Parameters
