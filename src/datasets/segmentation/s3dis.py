@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 import h5py
 import torch
+import random
 import glob
 from plyfile import PlyData, PlyElement
 from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip, Dataset
@@ -406,10 +407,13 @@ class S3DISSphere(S3DISOriginalFused):
         return self._sample_per_epoch
 
     def get(self, idx):
-        centre_idx = np.random.randint(0, self._centres_for_sampling.shape[0])
-        centre = self._centres_for_sampling[centre_idx]
+        np.random.seed()
+        chosen_label = np.random.choice(self._labels, p=self._label_counts)
+        valid_centres = self._centres_for_sampling[self._centres_for_sampling[:, 4] == chosen_label]
+        centre_idx = int(random.random() * (valid_centres.shape[0] - 1))
+        centre = valid_centres[centre_idx]
         area_data = self._datas[centre[3].int()]
-        sphere_sampler = cT.SphereSampling(self._radius, centre[:3])
+        sphere_sampler = cT.SphereSampling(self._radius, centre[:3], align_origin=False)
         return sphere_sampler(area_data)
 
     def _save_data(self, train_data_list, test_data_list):
@@ -426,12 +430,17 @@ class S3DISSphere(S3DISOriginalFused):
                 data, cT.SphereSampling.KDTREE_KEY
             )  # Just to make we don't have some out of date data in there
             low_res = self._grid_sphere_sampling(data.clone())
-            centres = torch.empty((low_res.pos.shape[0], 4), dtype=torch.float)
+            centres = torch.empty((low_res.pos.shape[0], 5), dtype=torch.float)
             centres[:, :3] = low_res.pos
             centres[:, 3] = i
+            centres[:, 4] = low_res.y
             self._centres_for_sampling.append(centres)
 
         self._centres_for_sampling = torch.cat(self._centres_for_sampling, 0)
+        uni, uni_counts = np.unique(np.asarray(self._centres_for_sampling[:, -1]), return_counts=True)
+        uni_counts = np.sqrt(uni_counts.mean() / uni_counts)
+        self._label_counts = uni_counts / np.sum(uni_counts)
+        self._labels = uni
 
 
 class S3DISFusedDataset(BaseDataset):
@@ -440,7 +449,7 @@ class S3DISFusedDataset(BaseDataset):
 
         self.train_dataset = S3DISSphere(
             self._data_path,
-            sample_per_epoch=4000,
+            sample_per_epoch=3000,
             test_area=self.dataset_opt.fold,
             train=True,
             pre_collate_transform=self.pre_collate_transform,

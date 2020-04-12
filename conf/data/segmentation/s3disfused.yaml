@@ -39,6 +39,7 @@ data:
         list_add_to_x: [True]
         feat_names: [rgb]
         delete_feats: [True]
+    - transform: Center
   test_transform:
     - transform: XYZFeature
       params:
@@ -50,3 +51,4 @@ data:
         list_add_to_x: [True]
         feat_names: [rgb]
         delete_feats: [True]
+    - transform: Center
