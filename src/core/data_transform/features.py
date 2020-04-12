@@ -14,8 +14,6 @@ from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
 from torch_geometric.data import Data, Batch
-from torch_geometric.transforms import Compose, RandomRotation
-
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
@@ -44,6 +42,8 @@ class Random3AxisRotation(object):
         self._rot_x = rot_x
         self._rot_y = rot_y
         self._rot_z = rot_z
+
+        from torch_geometric.transforms import Compose, RandomRotate
 
         self.rotations = Compose([RandomRotate(rot_x, axis=0), RandomRotate(rot_y, axis=1), RandomRotate(rot_z, axis=2)])
 

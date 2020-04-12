@@ -20,8 +20,7 @@ from src.datasets.registration.pair import Pair
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from src.utils import is_iterable
-from .grid_transform import group_data, GridSampling
-from .sparse_transforms import shuffle_data
+from .grid_transform import group_data, GridSampling, shuffle_data
 
 
 class RemoveAttributes(object):

@@ -30,8 +30,6 @@ Transforms
 
 .. autoclass:: src.core.data_transform.RemoveAttributes
 
-.. autoclass:: src.core.data_transform.RemoveDuplicateCoords
-
 .. autoclass:: src.core.data_transform.ToSparseInput
 
 .. autoclass:: src.core.data_transform.ShuffleData
