@@ -104,6 +104,7 @@ class GridSampling:
         batch = data.batch if hasattr(data, "batch") else None
         cluster, unique_pos_indices = sparse_coords_to_clusters(coords, batch)
         
+        # Delete pos for small speed up
         if self._to_sparse_coords:
             delattr(data, "pos")
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
@@ -120,7 +121,7 @@ class GridSampling:
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, to_sparse_coords={}, mode={}, save_cluster={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords, self._mode, self._save_cluster)
+        return "{}(grid_size={}, to_sparse_coords={}, mode={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords, self._mode)
 
 
 class SaveOriginalPosId:
