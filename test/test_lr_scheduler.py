@@ -2,7 +2,6 @@ import os
 import sys
 from omegaconf import OmegaConf
 import torch
-from torch import nn
 import unittest
 import logging
 from torch_geometric.data import Data
@@ -12,25 +11,9 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from src.models.base_model import BaseModel
+from mock_models import DifferentiableMockModel
 
 log = logging.getLogger(__name__)
-
-
-class MockModel(BaseModel):
-    def __init__(self, opt):
-        super(MockModel, self).__init__(opt)
-
-        self.nn = nn.Linear(3, 3)
-
-    def set_input(self, data, device):
-        self.pos = data.pos
-
-    def forward(self):
-        self.output = self.nn(self.pos)
-        self.loss = self.output.sum()
-
-    def backward(self):
-        self.loss.backward()
 
 
 def get_lr(optimizer):
@@ -46,7 +29,7 @@ class TestLrScheduler(unittest.TestCase):
         conf = os.path.join(DIR, "test_config/lr_scheduler.yaml")
         opt = OmegaConf.load(conf)
         opt.update_scheduler_on_epoch = True
-        model = MockModel(opt)
+        model = DifferentiableMockModel(opt)
         model.instantiate_optimizers(opt)
 
         data = Data(pos=torch.randn((1, 3)))
@@ -68,7 +51,7 @@ class TestLrScheduler(unittest.TestCase):
         conf = os.path.join(DIR, "test_config/lr_scheduler.yaml")
         opt = OmegaConf.load(conf)
         opt.update_scheduler_on_epoch = False
-        model = MockModel(opt)
+        model = DifferentiableMockModel(opt)
         model.instantiate_optimizers(opt)
 
         data = Data(pos=torch.randn((1, 3)))
