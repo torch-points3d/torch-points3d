@@ -2,7 +2,7 @@ import numpy as np
 import os
 import os.path as osp
 import torch
-from torch_geometric.data import Batch
+from torch_geometric.data import Batch, Data
 
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.base3dmatch import Base3DMatch
@@ -272,7 +272,14 @@ class Fragment3DMatch(Base3DMatch):
         batch = Pair.make_pair(data_source, data_target)
         if(self.is_online_matching):
 
-            new_match = compute_overlap_and_matches(data_source, data_target, self.max_dist_overlap)
+            if(hasattr(data_source, 'xyz')):
+                new_match = compute_overlap_and_matches(
+                    Data(pos=data_source.xyz), Data(pos=data_target.xyz),
+                    self.max_dist_overlap)
+            else:
+                new_match = compute_overlap_and_matches(
+                    Data(pos=data_source.pos), Data(pos=data_target.pos),
+                    self.max_dist_overlap)
             batch.pair_ind = torch.from_numpy(new_match['pair'].copy())
         else:
             batch.pair_ind = torch.from_numpy(match['pair'])

@@ -161,13 +161,9 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         out_feat = self.FC_layer(x.F)
         # out_feat = x.F
         if self.normalize_feature:
-            return ME.SparseTensor(
-                out_feat / (torch.norm(out_feat, p=2, dim=1, keepdim=True) + 1e-5),
-                coords_key=x.coords_key,
-                coords_manager=x.coords_man,
-            )
+            return out_feat / (torch.norm(out_feat, p=2, dim=1, keepdim=True) + 1e-5)
         else:
-            return x
+            return out_feat
 
     def compute_loss(self):
         # miner
@@ -180,14 +176,15 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         self.loss = self.loss_reg
 
     def forward(self):
-        out = self.apply_nn(self.input)
+        self.out = self.apply_nn(self.input)
         if self.labels is None:
-            self.output = out.F
+            self.output = self.out
             return self.output
 
-        out_target = self.apply_nn(self.input_target)
-        self.output = torch.cat([out.F[self.ind], out_target.F[self.ind_target]], 0)
+        self.out_target = self.apply_nn(self.input_target)
+        self.output = torch.cat([self.out[self.ind], self.out_target[self.ind_target]], 0)
         self.compute_loss()
+
         return self.output
 
     def backward(self):

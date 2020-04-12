@@ -6,6 +6,7 @@ import os
 import os.path as osp
 from omegaconf import OmegaConf
 import sys
+import matplotlib.pyplot as plt
 
 # Import building function for model and dataset
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -36,7 +37,7 @@ def read_gt_log(path):
     return list_pair, list_mat
 
 
-def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=False, sym=True):
+def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=False, sym=False):
     """
     compute matches between features
     """
@@ -63,6 +64,8 @@ def compute_dists(kp_source, kp_target, trans):
     """
     kp_target_t = kp_target.dot(trans[:3, :3].T) + trans[:3, 3]
     dist = np.linalg.norm(kp_source - kp_target_t, axis=1)
+    plt.hist(dist, bins=100)
+    plt.show()
     return dist
 
 
@@ -89,6 +92,7 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
 
     feat_s = data_source["feat"]
     feat_t = data_target["feat"]
+
     if len(data_source["feat"]) != len(data_source["keypoints"]):
         # Sampled features using keypoints.
         feat_s = feat_s[data_source["keypoints"]]
@@ -114,6 +118,7 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
         name_source=n_s,
         name_target=n_t,
     )
+    print(n_s, n_t, frac_correct)
     return dico
 
 
