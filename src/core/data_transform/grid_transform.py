@@ -20,33 +20,6 @@ def sparse_coords_to_clusters(pos, batch):
 
     return cluster, unique_pos_indices
 
-def voxel_grid_func(data, grid_size, start=None, end=None):
-    """
-    This function takes a data and clusters points into voxels with grid_size
-    """
-    if grid_size is None or grid_size <= 0:
-        raise Exception("Grid size should be provided and greater than 0")
-
-    num_nodes = data.num_nodes
-
-    if "batch" not in data:
-        batch = data.pos.new_zeros(num_nodes, dtype=torch.long)
-    else:
-        batch = data.batch
-
-    start = start if start else data.pos.min() - 1
-    end = end if end else data.pos.max() + 1
-
-    cluster = voxel_grid(data.pos, batch, grid_size, start, end)
-    cluster, perm = consecutive_cluster(cluster)    
-
-    return data, cluster, perm
-
-
-def grid_sampling(data, grid_size, start=None, end=None, mode="mean"):
-    data, cluster, perm = voxel_grid_func(data, grid_size, start=start, end=end)
-    return group_data(data, cluster, perm, mode=mode)
-
 def group_data(data, cluster, unique_pos_indices=None, mode="last"):
     """ Group data based on indices in cluster. 
     The option ``mode`` controls how data gets agregated within each cluster.
