@@ -407,12 +407,16 @@ class Scannet(InMemoryDataset):
         use_multiprocessing=False,
         process_workers=4,
         types=[".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"],
+        normalize_rgb=True,
     ):
 
-        if donotcare_class_ids:
-            self.donotcare_class_ids = np.asarray(donotcare_class_ids)
-        else:
-            self.donotcare_class_ids = np.array([])
+
+        if not isinstance(donotcare_class_ids, list):
+            raise Exception("donotcare_class_ids should be list with indices of class to ignore")
+        self.donotcare_class_ids = donotcare_class_ids
+
+        self.valid_class_idx = [idx for idx in self.VALID_CLASS_IDS if idx not in donotcare_class_ids]
+
         assert version in ["v2", "v1"], "The version should be either v1 or v2"
         self.version = version
         self.max_num_point = max_num_point
@@ -421,6 +425,7 @@ class Scannet(InMemoryDataset):
         self.use_multiprocessing = use_multiprocessing
         self.process_workers = process_workers
         self.types = types
+        self.normalize_rgb = normalize_rgb
 
         super(Scannet, self).__init__(root, transform, pre_transform, pre_filter)
         if split == "train":
@@ -505,6 +510,8 @@ class Scannet(InMemoryDataset):
         donotcare_class_ids,
         max_num_point,
         obj_class_ids,
+        mapping_func,
+        normalize_rgb,
         use_instance_labels=True,
         use_instance_bboxes=True,
     ):
@@ -537,20 +544,14 @@ class Scannet(InMemoryDataset):
                 instance_labels = instance_labels[choices]
 
         # Remap labels to [0-(len(valid_labels))]
-        count = 0
-        for i in range(max(Scannet.SCANNET_COLOR_MAP.keys()) + 1):
-            if i in Scannet.VALID_CLASS_IDS:
-                label = count
-                count += 1
-            else:
-                label = IGNORE_LABEL
-            mask = semantic_labels == i
-            semantic_labels[mask] = label
+        semantic_labels = mapping_func(semantic_labels)
 
         # Build data container
         data = {}
         data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
-        data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:]) / 255.0
+        data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:]) 
+        if normalize_rgb:
+            data["rgb"] =/ 255.0
         data["y"] = torch.from_numpy(semantic_labels)
         data["x"] = None
 
@@ -578,6 +579,8 @@ class Scannet(InMemoryDataset):
         donotcare_class_ids,
         max_num_point,
         obj_class_ids,
+        mapping_func,
+        normalize_rgb,
         use_instance_labels=True,
         use_instance_bboxes=True,
     ):
@@ -588,6 +591,8 @@ class Scannet(InMemoryDataset):
             donotcare_class_ids,
             max_num_point,
             obj_class_ids,
+            mapping_func,
+            normalize_rgb,
             use_instance_labels=use_instance_labels,
             use_instance_bboxes=use_instance_bboxes,
         )
@@ -598,6 +603,16 @@ class Scannet(InMemoryDataset):
 
     def process(self):
         self.read_from_metadata()
+
+        mapping_dict = {indice:idx for idx, indice in enumerate(self.valid_class_idx)}
+        for idx in range(NUM_CLASSES):
+            if idx not in mapping_dict:
+                mapping_dict[idx] = IGNORE_LABEL
+        for idx in self.donotcare_class_ids:
+            mapping_dict[idx] = IGNORE_LABEL
+        print("MAPPING IDX: {}".format(mapping_dict))
+        mapping_func = np.vectorize(mapping_dict.get)
+
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
             if not os.path.exists(self.processed_paths[i]):
@@ -613,6 +628,8 @@ class Scannet(InMemoryDataset):
                         self.donotcare_class_ids,
                         self.max_num_point,
                         self.VALID_CLASS_IDS,
+                        mapping_func,
+                        self.normalize_rgb,
                         self.use_instance_labels,
                         self.use_instance_bboxes,
                     )
@@ -623,7 +640,7 @@ class Scannet(InMemoryDataset):
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
-                    for arg in args[:10]:
+                    for arg in args:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
                 log.info("SAVING TO {}".format(self.processed_paths[i]))

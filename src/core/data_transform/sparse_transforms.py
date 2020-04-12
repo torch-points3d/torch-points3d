@@ -210,14 +210,14 @@ class ElasticDistortion:
     Parameters
     ----------
     granularity: float
-    Size of the noise grid (in same scale[m/cm] as the voxel grid)
+        Size of the noise grid (in same scale[m/cm] as the voxel grid)
     magnitude: bool
-    noise multiplier
+        Noise multiplier
 
     Returns
     -------
     data: Data
-    Returns the same data object with distorted grid
+        Returns the same data object with distorted grid
     """
 
     def __init__(self, apply_distorsion:bool, granularity: list = [0.2, 0.4], magnitude: list = [0.8, 1.6]):

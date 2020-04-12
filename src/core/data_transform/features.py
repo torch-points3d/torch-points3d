@@ -6,7 +6,6 @@ import math
 import re
 import torch
 import random
-from scipy.linalg import expm, norm
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
@@ -15,13 +14,15 @@ from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
 from torch_geometric.data import Data, Batch
+from torch_geometric.transforms import Compose, RandomRotation
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from src.utils import is_iterable
 
-class RandomRotation(object):
+
+class Random3AxisRotation(object):
 
     """
     Rotate pointcloud with random angles along x, y, z axis
@@ -30,49 +31,29 @@ class RandomRotation(object):
     -----------
     apply_rotation: bool:
         Whether to apply the rotation
-    bound_x: list[float]
-        Bounds for rotation on x axis
-    bound_y: list[float]
-        Bounds for rotation on y axis
-    bound_z: list[float]
-        Bounds for rotation on z axis
+    rot_x: float
+        Rotation angle on x axis
+    rot_y: float
+        Rotation angle on y axis
+    rot_z: float
+        Rotation angle on z axis
     """   
 
-    def __init__(self, apply_rotation:bool, bound_x=[-np.pi, np.pi], bound_y=[-np.pi, np.pi], bound_z=[-np.pi / 64, np.pi / 64]):
+    def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
-        self._bound_x = [eval(x) for x in bound_x]
-        self._bound_y = [eval(x) for x in bound_y]
-        self._bound_z = [eval(x) for x in bound_z]
+        self._rot_x = rot_x
+        self._rot_y = rot_y
+        self._rot_z = rot_z
 
-    @staticmethod
-    def create_random_rotation_matrix(bound_x, bound_y, bound_z):
-        rot_mat = np.eye(3)
-        rot_mats = []
-        for axis_ind, rot_bound in enumerate([bound_x, bound_y, bound_z]):
-            theta = 0
-            axis = np.zeros(3)
-            axis[axis_ind] = 1
-            if rot_bound is not None:
-                theta = np.random.uniform(*rot_bound)
-            rot_mats.append(RandomRotation.rotation_matrix(axis, theta))
-            # Use random order
-        np.random.shuffle(rot_mats)
-        rot_mat = rot_mats[0] @ rot_mats[1] @ rot_mats[2]
-        return torch.from_numpy(rot_mat).float()
-
-    @staticmethod
-    def rotation_matrix(axis, theta):
-        # Rotation matrix along axis with angle theta
-        return expm(np.cross(np.eye(3), axis / norm(axis) * theta))
+        self.rotations = Compose([RandomRotate(rot_x, axis=0), RandomRotate(rot_y, axis=1), RandomRotate(rot_z, axis=2)])
 
     def __call__(self, data):
         if self._apply_rotation:
-            rot_M = RandomRotation.create_random_rotation_matrix(self._bound_x, self._bound_y, self._bound_z)
-            data.pos = data.pos @ rot_M.t()
+            data = self.rotations(data)
         return data
 
     def __repr__(self):
-        return "{}(apply_rotation={}, bound_x={}, bound_y={}, bound_z={})".format(self.__class__.__name__, self._apply_rotation, self._bound_x, self._bound_y, self._bound_z)
+        return "{}(apply_rotation={}, rot_x={}, rot_y={}, rot_z={})".format(self.__class__.__name__, self._apply_rotation, self._rot_x, self._rot_y, self._rot_z)
 
 
 class AddFeatsByKeys(object):
