@@ -6,6 +6,14 @@ from torch_scatter import scatter_mean, scatter_add
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn import voxel_grid
 
+def shuffle_data(data):
+    num_points = data.pos.shape[0]
+    shuffle_idx = torch.randperm(num_points)
+    for key in set(data.keys):
+        item = data[key]
+        if num_points == item.shape[0]:
+            data[key] = item[shuffle_idx]
+    return data
 
 def sparse_coords_to_clusters(pos, batch):
     assert pos.dtype == torch.int or pos.dtype == torch.long
@@ -66,23 +74,36 @@ class GridSampling:
     grid_size: float
         Size of a voxel (in each dimension).
     to_sparse_coords: bool
-        Start coordinates of the grid (in each dimension). \
-        If set to `None`, will be set to the minimum coordinates found in `data.pos`. (default: `None`)
+        If True, it will convert the points into their associated sparse coordinates within the grid. \
+    mode: string:
+        The mode can be either `last` or `mean`.
+        If mode is `mean`, all the points and their features within a cell will be averaged
+        If mode is `last`, one random points per cell will be selected with its associated features
     """
 
-    def __init__(self, size, to_sparse_coords=False):
+    def __init__(self, size, to_sparse_coords=False, mode="mean", save_unique_pos_indices=False):
         self._grid_size = size
         self._to_sparse_coords = to_sparse_coords
+        self._mode = mode
+        self._save_unique_pos_indices = save_unique_pos_indices
 
     def _process(self, data):
+        if self._mode == "last":
+            data = shuffle_data(data)
+        
         coords = ((data.pos) / self._grid_size).int()
         batch = data.batch if hasattr(data, "batch") else None
         cluster, unique_pos_indices = sparse_coords_to_clusters(coords, batch)
+        
         if self._to_sparse_coords:
             delattr(data, "pos")
-        data = group_data(data, cluster, unique_pos_indices, mode="mean")
+        data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
+        
         if self._to_sparse_coords:
             data.pos = coords[unique_pos_indices]
+        
+        if self._save_unique_pos_indices:
+            data.unique_pos_indices = unique_pos_indices           
         return data
 
     def __call__(self, data):
@@ -93,7 +114,7 @@ class GridSampling:
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, to_sparse_coords={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords)
+        return "{}(grid_size={}, to_sparse_coords={}, mode={}, save_unique_pos_indices={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords, self._mode, self._save_unique_pos_indices)
 
 
 class SaveOriginalPosId:
