@@ -83,7 +83,7 @@ class ElasticDistortion:
         Returns the same data object with distorted grid
     """
 
-    def __init__(self, apply_distorsion:bool, granularity: list = [0.2, 0.4], magnitude: list = [0.8, 1.6]):
+    def __init__(self, apply_distorsion:bool, granularity: List = [0.2, 0.4], magnitude: List = [0.8, 1.6]):
         self._apply_distorsion = apply_distorsion
         self._granularity = granularity
         self._magnitude = magnitude
@@ -115,10 +115,10 @@ class ElasticDistortion:
         coords += interp(coords) * magnitude
         return coords
 
-    def __call__(self, coords, feats, labels):
+    def __call__(self, data):
         if self._apply_distorsion:
             if np.random.uniform(0, 1) < .5:
-                data.pos = ElasticDistortion.elastic_distortion(data.pos, granularity, magnitude)
+                data.pos = ElasticDistortion.elastic_distortion(data.pos, self._granularity, self._magnitude)
         return data
 
     def __repr__(self):

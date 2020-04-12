@@ -38,7 +38,11 @@ data:
       - transform: ToSparseInput
         params:
           grid_size: ${data.grid_size}
-          mode: "mean"
+          mode: "last"
+      - transform: ElasticDistortion
+        params:
+          granularity: [0.2, 0.4]
+          magnitude: [0.8, 1.6]
       - transform: ShiftVoxels
       - transform: ChromaticJitter
       - transform: ChromaticAutoContrast
@@ -59,7 +63,7 @@ data:
       - transform: ToSparseInput
         params:
           grid_size: ${data.grid_size}
-          mode: "mean"
+          mode: "last"
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
