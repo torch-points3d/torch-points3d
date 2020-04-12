@@ -182,7 +182,7 @@ class Testhelpers(unittest.TestCase):
 
     def test_shiftvoxels(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(pos=torch.from_numpy(indices))
+        data = Data(pos=torch.from_numpy(indices).int())
         tr = ShiftVoxels()
         tr_data = tr(data.clone())
         self.assertGreaterEqual(tr_data.pos[0][0], data.pos[0][0])

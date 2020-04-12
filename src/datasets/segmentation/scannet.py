@@ -16,6 +16,7 @@ from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 import multiprocessing
 from tqdm import tqdm
+import pandas as pd
 
 import tempfile
 import urllib
@@ -64,6 +65,80 @@ RELEASE_NAME = RELEASES_NAMES[0]
 LABEL_MAP_FILE = LABEL_MAP_FILES[0]
 RELEASE_SIZE = "1.2TB"
 V1_IDX = 1
+NUM_CLASSES = 41
+CLASS_LABELS = (
+    "wall",
+    "floor",
+    "cabinet",
+    "bed",
+    "chair",
+    "sofa",
+    "table",
+    "door",
+    "window",
+    "bookshelf",
+    "picture",
+    "counter",
+    "desk",
+    "curtain",
+    "refrigerator",
+    "shower curtain",
+    "toilet",
+    "sink",
+    "bathtub",
+    "otherfurniture",
+)
+URLS_METADATA = [
+    "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2-labels.combined.tsv",
+    "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_train.txt",
+    "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_test.txt",
+    "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_val.txt",
+]
+VALID_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
+
+SCANNET_COLOR_MAP = {
+    0: (0.0, 0.0, 0.0),
+    1: (174.0, 199.0, 232.0),
+    2: (152.0, 223.0, 138.0),
+    3: (31.0, 119.0, 180.0),
+    4: (255.0, 187.0, 120.0),
+    5: (188.0, 189.0, 34.0),
+    6: (140.0, 86.0, 75.0),
+    7: (255.0, 152.0, 150.0),
+    8: (214.0, 39.0, 40.0),
+    9: (197.0, 176.0, 213.0),
+    10: (148.0, 103.0, 189.0),
+    11: (196.0, 156.0, 148.0),
+    12: (23.0, 190.0, 207.0),
+    14: (247.0, 182.0, 210.0),
+    15: (66.0, 188.0, 102.0),
+    16: (219.0, 219.0, 141.0),
+    17: (140.0, 57.0, 197.0),
+    18: (202.0, 185.0, 52.0),
+    19: (51.0, 176.0, 203.0),
+    20: (200.0, 54.0, 131.0),
+    21: (92.0, 193.0, 61.0),
+    22: (78.0, 71.0, 183.0),
+    23: (172.0, 114.0, 82.0),
+    24: (255.0, 127.0, 14.0),
+    25: (91.0, 163.0, 138.0),
+    26: (153.0, 98.0, 156.0),
+    27: (140.0, 153.0, 101.0),
+    28: (158.0, 218.0, 229.0),
+    29: (100.0, 125.0, 154.0),
+    30: (178.0, 127.0, 135.0),
+    32: (146.0, 111.0, 194.0),
+    33: (44.0, 160.0, 44.0),
+    34: (112.0, 128.0, 144.0),
+    35: (96.0, 207.0, 209.0),
+    36: (227.0, 119.0, 194.0),
+    37: (213.0, 92.0, 176.0),
+    38: (94.0, 106.0, 211.0),
+    39: (82.0, 84.0, 163.0),
+    40: (100.0, 85.0, 144.0),
+}
+
+SPLITS = ["train", "val"]
 
 
 def get_release_scans(release_file):
@@ -311,79 +386,11 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
 class Scannet(InMemoryDataset):
 
-    CLASS_LABELS = (
-        "wall",
-        "floor",
-        "cabinet",
-        "bed",
-        "chair",
-        "sofa",
-        "table",
-        "door",
-        "window",
-        "bookshelf",
-        "picture",
-        "counter",
-        "desk",
-        "curtain",
-        "refrigerator",
-        "shower curtain",
-        "toilet",
-        "sink",
-        "bathtub",
-        "otherfurniture",
-    )
-    URLS_METADATA = [
-        "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2-labels.combined.tsv",
-        "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_train.txt",
-        "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_test.txt",
-        "https://raw.githubusercontent.com/facebookresearch/votenet/master/scannet/meta_data/scannetv2_val.txt",
-    ]
-    VALID_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
-
-    SCANNET_COLOR_MAP = {
-        0: (0.0, 0.0, 0.0),
-        1: (174.0, 199.0, 232.0),
-        2: (152.0, 223.0, 138.0),
-        3: (31.0, 119.0, 180.0),
-        4: (255.0, 187.0, 120.0),
-        5: (188.0, 189.0, 34.0),
-        6: (140.0, 86.0, 75.0),
-        7: (255.0, 152.0, 150.0),
-        8: (214.0, 39.0, 40.0),
-        9: (197.0, 176.0, 213.0),
-        10: (148.0, 103.0, 189.0),
-        11: (196.0, 156.0, 148.0),
-        12: (23.0, 190.0, 207.0),
-        14: (247.0, 182.0, 210.0),
-        15: (66.0, 188.0, 102.0),
-        16: (219.0, 219.0, 141.0),
-        17: (140.0, 57.0, 197.0),
-        18: (202.0, 185.0, 52.0),
-        19: (51.0, 176.0, 203.0),
-        20: (200.0, 54.0, 131.0),
-        21: (92.0, 193.0, 61.0),
-        22: (78.0, 71.0, 183.0),
-        23: (172.0, 114.0, 82.0),
-        24: (255.0, 127.0, 14.0),
-        25: (91.0, 163.0, 138.0),
-        26: (153.0, 98.0, 156.0),
-        27: (140.0, 153.0, 101.0),
-        28: (158.0, 218.0, 229.0),
-        29: (100.0, 125.0, 154.0),
-        30: (178.0, 127.0, 135.0),
-        32: (146.0, 111.0, 194.0),
-        33: (44.0, 160.0, 44.0),
-        34: (112.0, 128.0, 144.0),
-        35: (96.0, 207.0, 209.0),
-        36: (227.0, 119.0, 194.0),
-        37: (213.0, 92.0, 176.0),
-        38: (94.0, 106.0, 211.0),
-        39: (82.0, 84.0, 163.0),
-        40: (100.0, 85.0, 144.0),
-    }
-
-    SPLITS = ["train", "val"]
+    CLASS_LABELS = CLASS_LABELS
+    URLS_METADATA = URLS_METADATA
+    VALID_CLASS_IDS = VALID_CLASS_IDS
+    SCANNET_COLOR_MAP = SCANNET_COLOR_MAP
+    SPLITS = SPLITS
 
     def __init__(
         self,
@@ -420,7 +427,7 @@ class Scannet(InMemoryDataset):
             path = self.processed_paths[0]
         elif split == "val":
             path = self.processed_paths[1]
-        elif split == "test":
+        elif split == "trainval":
             path = self.processed_paths[2]
         else:
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
@@ -616,7 +623,7 @@ class Scannet(InMemoryDataset):
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
-                    for arg in args:
+                    for arg in args[:10]:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
@@ -657,6 +664,269 @@ class ScannetDataset(BaseDataset):
             use_instance_bboxes=use_instance_bboxes,
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
+        )
+
+    @staticmethod
+    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            dataset {[type]}
+            wandb_log - Log using weight and biases
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(
+            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
+        )
+
+
+class ScannetPreprocessed(InMemoryDataset):
+
+    CLASS_LABELS = CLASS_LABELS
+    URLS_METADATA = URLS_METADATA
+    VALID_CLASS_IDS = VALID_CLASS_IDS
+    SCANNET_COLOR_MAP = SCANNET_COLOR_MAP
+    SPLITS = SPLITS
+
+    BUGS = {
+        'scene0270_00': 50,
+        'scene0270_02': 50,
+        'scene0384_00': 149,
+    }
+
+    def __init__(
+        self,
+        root,
+        split="train",
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        version="v2",
+        donotcare_class_ids=[],
+        max_num_point=None,
+        use_multiprocessing=True,
+        process_workers=4,
+        types=["_vh_clean_2.ply'", "_vh_clean_2.labels.ply"],
+        normalize_rgb=True
+    ):
+
+        if not isinstance(donotcare_class_ids, list):
+            raise Exception("donotcare_class_ids should be list with indices of class to ignore")
+        self.donotcare_class_ids = donotcare_class_ids
+
+        self.valid_class_idx = [idx for idx in self.VALID_CLASS_IDS if idx not in donotcare_class_ids]
+
+        assert version in ["v2", "v1"], "The version should be either v1 or v2"
+        
+        self.version = version
+        self.max_num_point = max_num_point
+        self.use_multiprocessing = use_multiprocessing
+        self.process_workers = process_workers
+        self.types = types
+        self.normalize_rgb = normalize_rgb 
+
+        super(ScannetPreprocessed, self).__init__(root, transform, pre_transform, pre_filter)
+        if split == "train":
+            path = self.processed_paths[0]
+        elif split == "val":
+            path = self.processed_paths[1]
+        elif split == "trainval":
+            path = self.processed_paths[2]
+        else:
+            raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
+        
+        log.info("Loading data from {}".format(path))
+
+        self.data, self.slices = torch.load(path)
+
+    @property
+    def raw_file_names(self):
+        return ["metadata", "scans", "scannetv2-labels.combined.tsv"]
+
+    @property
+    def processed_file_names(self):
+        return ["{}.pt".format(s) for s in self.SPLITS] + ["trainval.pt"]
+
+    @property
+    def num_classes(self):
+        return len(Scannet.VALID_CLASS_IDS)
+
+    def download_scans(self):
+        release_file = BASE_URL + RELEASE + ".txt"
+        release_scans = get_release_scans(release_file)
+        out_dir_scans = os.path.join(self.raw_dir, "scans")
+
+        if self.types:  # download file type
+            file_types = self.types
+            for file_type in file_types:
+                if file_type not in FILETYPES:
+                    log.error("ERROR: Invalid file type: " + file_type)
+                    return
+            file_types_test = []
+            for file_type in file_types:
+                if file_type not in FILETYPES_TEST:
+                    file_types_test.append(file_type)
+        download_label_map(self.raw_dir)
+        log.info("WARNING: You are downloading all ScanNet " + RELEASE_NAME + " scans of type " + file_types[0])
+        log.info(
+            "Note that existing scan directories will be skipped. Delete partially downloaded directories to re-download."
+        )
+        log.info("***")
+        log.info("Press any key to continue, or CTRL-C to exit.")
+        key = input("")
+        download_release(release_scans, out_dir_scans, file_types, use_v1_sens=True)
+        if self.version == "v2":
+            download_label_map(self.raw_dir)
+
+    def download(self):
+        log.info(
+            "By pressing any key to continue you confirm that you have agreed to the ScanNet terms of use as described at:"
+        )
+        log.info(TOS_URL)
+        log.info("***")
+        log.info("Press any key to continue, or CTRL-C to exit.")
+        key = input("")
+        self.download_scans()
+        metadata_path = osp.join(self.raw_dir, "metadata")
+        if not os.path.exists(metadata_path):
+            os.makedirs(metadata_path)
+        for url in self.URLS_METADATA:
+            _ = download_url(url, metadata_path)
+
+    def read_from_metadata(self):
+        metadata_path = osp.join(self.raw_dir, "metadata")
+        split_files = ["scannetv2_{}.txt".format(s) for s in Scannet.SPLITS]
+        self.scan_names = [[line.rstrip() for line in open(osp.join(metadata_path, sf))] for sf in split_files]
+
+    @staticmethod
+    def read_plyfile(filepath):
+        """Read ply file and return it as numpy array. Returns None if emtpy."""
+        with open(filepath, 'rb') as f:
+            plydata = PlyData.read(f)
+        if plydata.elements:
+            return pd.DataFrame(plydata.elements[0].data).values
+
+    @staticmethod
+    def process_func(
+        scan_name, 
+        scannet_dir,
+        pre_transform,
+        mapping_func,
+        normalize_rgb,
+        bugs,
+    ):
+        
+        path_pointcloud = os.path.join(scannet_dir, scan_name, "{}_vh_clean_2.labels.ply".format(scan_name))
+        path_labels = os.path.join(scannet_dir, scan_name, "{}_vh_clean_2.labels.ply".format(scan_name))
+
+        pointcloud = ScannetPreprocessed.read_plyfile(path_pointcloud)
+        label = ScannetPreprocessed.read_plyfile(path_labels)
+        assert pointcloud.shape[0] == label.shape[0]
+        assert np.allclose(pointcloud[:, :3], label[:, :3])
+
+        y = label[:, -1].astype(np.int)
+
+        if scan_name in list(bugs.keys()):
+            bug_index = bugs[scan_name]
+            bug_mask = y == bug_index
+            log.info("Fixing scan: {} with {} errors".format(scan_name, bug_mask.sum()))
+            y[bug_mask] = 0
+
+        # This function maps indices between 0, num_valid_classes - 1
+        y = mapping_func(y)
+
+        pos = torch.from_numpy(pointcloud[:, :3]).float()
+        rgb = pointcloud[:, 3:6].astype(np.float)
+        if normalize_rgb:
+            rgb /= 255.
+        rgb = torch.from_numpy(rgb).float()
+        y = torch.from_numpy(y).long()
+
+        data = Data(pos=pos, rgb=rgb, y=y)
+
+        if pre_transform:
+            data = pre_transform(data)
+        log.info("scan_name: {}, data: {}".format(scan_name, data))
+        return data
+
+    def process(self):
+        self.read_from_metadata()
+        scannet_dir = osp.join(self.raw_dir, "scans")
+
+        mapping_dict = {indice:idx for idx, indice in enumerate(self.valid_class_idx)}
+        for idx in range(NUM_CLASSES):
+            if idx not in mapping_dict:
+                mapping_dict[idx] = IGNORE_LABEL
+        for idx in self.donotcare_class_ids:
+            mapping_dict[idx] = IGNORE_LABEL
+        print("MAPPING IDX: {}".format(mapping_dict))
+        mapping_func = np.vectorize(mapping_dict.get)
+    
+        all_datas = []
+        for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
+            if not os.path.exists(self.processed_paths[i]):
+                scannet_dir = osp.join(self.raw_dir, "scans" if split in ["train", "val"] else "scans_test")
+                total = len(scan_names)
+                args = [
+                    (
+                        scan_name,
+                        scannet_dir,
+                        self.pre_transform,
+                        mapping_func,
+                        self.normalize_rgb,
+                        self.BUGS,
+                    )
+                    for id, scan_name in enumerate(scan_names)
+                ]
+                if self.use_multiprocessing:
+                    with multiprocessing.Pool(processes=self.process_workers) as pool:
+                        datas = pool.starmap(ScannetPreprocessed.process_func, args)
+                else:
+                    datas = []
+                    for arg in args:
+                        data = ScannetPreprocessed.process_func(*arg)
+                        datas.append(data)
+                all_datas += datas
+                log.info("SAVING TO {}".format(self.processed_paths[i]))
+                torch.save(self.collate(datas), self.processed_paths[i])
+        log.info("SAVING TO {}".format(self.processed_paths[-1]))
+        torch.save(self.collate(all_datas), self.processed_paths[-1])        
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, len(self))
+
+
+class ScannetDatasetPreComputed(BaseDataset):
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
+
+        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
+        max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
+        train_split: int = dataset_opt.train_split if dataset_opt.train_split else "train"
+        use_multiprocessing: int = dataset_opt.use_multiprocessing if dataset_opt.use_multiprocessing else False
+
+
+        self.train_dataset = ScannetPreprocessed(
+            self._data_path,
+            split=train_split,
+            pre_transform=self.pre_transform,
+            transform=self.train_transform,
+            version=dataset_opt.version,
+            donotcare_class_ids=donotcare_class_ids,
+            max_num_point=max_num_point,
+            use_multiprocessing=use_multiprocessing,
+        )
+
+        self.val_dataset = ScannetPreprocessed(
+            self._data_path,
+            split="val",
+            transform=self.val_transform,
+            pre_transform=self.pre_transform,
+            version=dataset_opt.version,
+            donotcare_class_ids=donotcare_class_ids,
+            max_num_point=max_num_point,
+            use_multiprocessing=use_multiprocessing,
         )
 
     @staticmethod

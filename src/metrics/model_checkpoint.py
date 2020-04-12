@@ -18,6 +18,7 @@ DEFAULT_METRICS_FUNC = {
     "acc": max,
     "loss": min,
     "mer": min,
+    "ap": max,
 }  # Those map subsentences to their optimization functions
 
 

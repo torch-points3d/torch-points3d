@@ -55,6 +55,7 @@ class BaseModel(torch.nn.Module):
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
+        self._update_scheduler_on_epoch = None
 
     @property
     def schedulers(self):
@@ -153,11 +154,13 @@ class BaseModel(torch.nn.Module):
         if make_optimizer_step:
             self._optimizer.step()  # update parameters
 
+        scheduler_step = epoch if self._update_scheduler_on_epoch else self._iterations
+
         if self._lr_scheduler:
-            self._lr_scheduler.step(epoch)
+            self._lr_scheduler.step(scheduler_step)
 
         if self._bn_scheduler:
-            self._bn_scheduler.step(epoch)
+            self._bn_scheduler.step(scheduler_step)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -188,7 +191,8 @@ class BaseModel(torch.nn.Module):
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
-            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
+            self._update_scheduler_on_epoch = config.update_scheduler_on_epoch
+            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt, self._update_scheduler_on_epoch)
             self.add_scheduler("lr_scheduler", lr_scheduler)
 
         # BN Scheduler

@@ -155,3 +155,5 @@ models:
         conv_type: "SPARSE"
         model_name: "Res16UNet34C"
         D: 3 
+        conv1_kernel_size: 3
+        dilations: [1, 1, 1, 1]
