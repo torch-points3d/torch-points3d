@@ -1,10 +1,15 @@
 import numpy
 import re
+import logging
 import torch
 import torch.nn.functional as F
 from torch_scatter import scatter_mean, scatter_add
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn import voxel_grid
+
+
+log = logging.getLogger(__name__)
+
 
 def shuffle_data(data):
     num_points = data.pos.shape[0]
@@ -81,11 +86,15 @@ class GridSampling:
         If mode is `last`, one random points per cell will be selected with its associated features
     """
 
-    def __init__(self, size, to_sparse_coords=False, mode="mean", save_unique_pos_indices=False):
+    def __init__(self, size, to_sparse_coords=False, mode="mean"):
         self._grid_size = size
         self._to_sparse_coords = to_sparse_coords
         self._mode = mode
-        self._save_unique_pos_indices = save_unique_pos_indices
+
+        log.warn("If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling")
+
+        if self._mode == "last":
+            log.warn("The data are going to be shuffled. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled")
 
     def _process(self, data):
         if self._mode == "last":
@@ -101,9 +110,6 @@ class GridSampling:
         
         if self._to_sparse_coords:
             data.pos = coords[unique_pos_indices]
-        
-        if self._save_unique_pos_indices:
-            data.unique_pos_indices = unique_pos_indices           
         return data
 
     def __call__(self, data):
@@ -114,7 +120,7 @@ class GridSampling:
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, to_sparse_coords={}, mode={}, save_unique_pos_indices={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords, self._mode, self._save_unique_pos_indices)
+        return "{}(grid_size={}, to_sparse_coords={}, mode={}, save_cluster={})".format(self.__class__.__name__, self._grid_size, self._to_sparse_coords, self._mode, self._save_cluster)
 
 
 class SaveOriginalPosId:
