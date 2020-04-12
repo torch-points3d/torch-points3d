@@ -402,7 +402,7 @@ class Scannet(InMemoryDataset):
         version="v2",
         use_instance_labels=False,
         use_instance_bboxes=False,
-        donotcare_class_ids=None,
+        donotcare_class_ids=[],
         max_num_point=None,
         use_multiprocessing=False,
         process_workers=4,
@@ -551,7 +551,7 @@ class Scannet(InMemoryDataset):
         data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
         data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:]) 
         if normalize_rgb:
-            data["rgb"] =/ 255.0
+            data["rgb"] /= 255.0
         data["y"] = torch.from_numpy(semantic_labels)
         data["x"] = None
 
@@ -656,7 +656,7 @@ class ScannetDataset(BaseDataset):
 
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
-        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids
+        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
         max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
 
         self.train_dataset = Scannet(

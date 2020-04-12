@@ -60,7 +60,6 @@ data:
         params:
           grid_size: ${data.grid_size}
           mode: "mean"
-          quantizing_func: "round"
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
