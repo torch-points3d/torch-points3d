@@ -11,12 +11,12 @@ data:
   limit_size: 850
   depth_thresh: 4.5
   first_subsampling: 0.02
-  is_online_matching: True
-  pre_transforms:
+  is_online_matching: False
+  pre_transform:
     - transform: GridSampling
       params:
         size: ${data.first_subsampling}
-  train_transforms:
+  train_transform:
     - transform: SaveOriginalPosId
     - transform: RandomNoise
       params:
@@ -24,19 +24,19 @@ data:
         clip: 0.05
     - transform: RandomRotate
       params:
-        degree: 360
+        degrees: 180
         axis: 0
     - transform: RandomRotate
       params:
-        degree: 360
+        degrees: 180
         axis: 1
     - transform: RandomRotate
       params:
-        degree: 360
+        degrees: 180
         axis: 2
     - transform: RandomScaleAnisotropic
       params:
-        scales: [0.8,1.2]
+        scales: [0.9,1.2]
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}
@@ -47,7 +47,7 @@ data:
         add_to_x: True
         feat_name: 'ones'
 
-  test_transforms:
+  test_transform:
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}
