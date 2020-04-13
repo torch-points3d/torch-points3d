@@ -21,7 +21,6 @@ from src.utils import is_iterable
 
 
 class Random3AxisRotation(object):
-
     """
     Rotate pointcloud with random angles along x, y, z axis
 
@@ -136,7 +135,7 @@ class AddFeatsByKeys(object):
     def __repr__(self):
         msg = ""
         for f, a in zip(self._feat_names, self._list_add_to_x):
-            msg += "{}:{}, ".format(f, a)
+            msg += "{}={}, ".format(f, a)
         return "{}({})".format(self.__class__.__name__, msg[:-2])
 
 
@@ -281,7 +280,7 @@ class AddOnes(object):
 
 class XYZFeature(object):
     """
-    add the X, Y and Z as a feature
+    Add the X, Y and Z as a feature
 
     Parameters
     -----------

@@ -278,3 +278,26 @@ class PatchExtractor:
                     patch[key] = data[key][col]
 
         return patch
+
+
+def tracked_matches(data_s, data_t, pair):
+    """
+    allow to keep the index that are still present after a sparse input
+    Parameters:
+    pair : P x 2 indices of the matched points before any transformation
+    """
+    pair_np = pair.numpy()
+    mask_s = np.isin(pair_np[:, 0], data_s.origin_id.numpy())
+    mask_t = np.isin(pair_np[:, 1], data_t.origin_id.numpy())
+
+    mask = np.logical_and(mask_s, mask_t)
+    filtered_pair = pair_np[mask]
+
+    table_s = dict(zip(data_s.origin_id.numpy(),
+                       np.arange(0, len(data_s.pos))))
+    table_t = dict(zip(data_t.origin_id.numpy(),
+                       np.arange(0, len(data_t.pos))))
+    print(len(pair_np))
+    print(len(filtered_pair))
+    res = torch.tensor([[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]).to(torch.long)
+    return res

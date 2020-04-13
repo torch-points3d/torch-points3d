@@ -7,6 +7,7 @@ from torch_geometric.data import Batch, Data
 from src.datasets.base_dataset import BaseDataset
 from src.datasets.registration.base3dmatch import Base3DMatch
 from src.datasets.registration.utils import PatchExtractor
+from src.datasets.registration.utils import tracked_matches
 from src.datasets.registration.pair import Pair
 from src.metrics.registration_tracker import PatchRegistrationTracker
 from src.core.data_transform.transforms import GridSampling
@@ -272,17 +273,17 @@ class Fragment3DMatch(Base3DMatch):
         batch = Pair.make_pair(data_source, data_target)
         if(self.is_online_matching):
 
-            if(hasattr(data_source, 'xyz')):
-                new_match = compute_overlap_and_matches(
-                    Data(pos=data_source.xyz), Data(pos=data_target.xyz),
-                    self.max_dist_overlap)
-            else:
-                new_match = compute_overlap_and_matches(
-                    Data(pos=data_source.pos), Data(pos=data_target.pos),
-                    self.max_dist_overlap)
+            new_match = compute_overlap_and_matches(
+                Data(pos=data_source.pos), Data(pos=data_target.pos),
+                self.max_dist_overlap)
             batch.pair_ind = torch.from_numpy(new_match['pair'].copy())
         else:
-            batch.pair_ind = torch.from_numpy(match['pair'])
+            print(data_source)
+            batch.pair_ind = tracked_matches(
+                data_source,
+                data_target,
+                torch.from_numpy(match['pair']))
+
         return batch.contiguous().to(torch.float)
 
     def get(self, idx):

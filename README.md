@@ -226,6 +226,27 @@ docker run -v /test_data:/in -v /test_data/out:/out pointnet2_charlesssg:latest 
 
 The `-v` option mounts a local directory to the container's file system. For example in the command line above, `/test_data/out` will be mounted at the location `/out`. As a consequence, all files written in `/out` will be available in the folder `/test_data/out` on your machine.
 
+
+## Profiling
+
+We advice to use [``snakeviz``](https://jiffyclub.github.io/snakeviz/) and [``cProfile``](https://docs.python.org/2/library/profile.html)
+
+Use cProfile to profile your code
+```
+poetry run python -m cProfile -o {your_name}.prof train.py ... debugging.profiling=True
+```
+
+And visualize results using snakeviz.
+```
+snakeviz {your_name}.prof
+```
+
+It is also possible to use [```torch.utils.bottleneck```](https://pytorch.org/docs/stable/bottleneck.html)
+
+```
+python -m torch.utils.bottleneck /path/to/source/script.py [args]
+```
+
 ## Troubleshooting
 #### Undefined symbol / Updating Pytorch
 When we update the version of Pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
