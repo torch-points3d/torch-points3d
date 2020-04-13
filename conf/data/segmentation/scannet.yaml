@@ -35,10 +35,13 @@ data:
           rot_x: 5
           rot_y: 5
           rot_z: 180
-      - transform: ToSparseInput
+      - transform: GridSampling
         params:
-          grid_size: ${data.grid_size}
-          mode: "last"
+          size: ${data.grid_size}
+          quantize_coords: True
+          mode: "mean"
+          elastic_distorsion: False
+          granularity: [.2, .4]
       - transform: ShiftVoxels
       - transform: ChromaticJitter
       - transform: ChromaticAutoContrast
@@ -56,10 +59,11 @@ data:
           add_x: False
           add_y: False
           add_z: True
-      - transform: ToSparseInput
+      - transform: GridSampling
         params:
-          grid_size: ${data.grid_size}
-          mode: "last"
+          size: ${data.grid_size}
+          quantize_coords: True
+          mode: "mean"
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
