@@ -5,8 +5,8 @@ data:
   name: 3DMatch
   is_patch: False
   num_frame_per_fragment: 101
-  max_dist_overlap: 0.04
-  min_overlap_ratio: 0.2
+  max_dist_overlap: 0.05
+  min_overlap_ratio: 0.3
   tsdf_voxel_size: 0.006
   limit_size: 850
   depth_thresh: 4.5
@@ -48,6 +48,7 @@ data:
         feat_name: 'ones'
 
   test_transform:
+    - transform: SaveOriginalPosId
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}

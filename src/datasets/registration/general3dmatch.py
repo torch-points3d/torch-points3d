@@ -278,7 +278,7 @@ class Fragment3DMatch(Base3DMatch):
                 self.max_dist_overlap)
             batch.pair_ind = torch.from_numpy(new_match['pair'].copy())
         else:
-            print(data_source)
+
             batch.pair_ind = tracked_matches(
                 data_source,
                 data_target,

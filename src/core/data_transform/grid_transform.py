@@ -40,9 +40,9 @@ def sparse_coords_to_clusters(pos, batch):
     return cluster, unique_pos_indices
 
 def group_data(data, cluster, unique_pos_indices=None, mode="last"):
-    """ Group data based on indices in cluster. 
+    """ Group data based on indices in cluster.
     The option ``mode`` controls how data gets agregated within each cluster.
-    
+
     Parameters
     ----------
     data : Data
@@ -63,7 +63,6 @@ def group_data(data, cluster, unique_pos_indices=None, mode="last"):
     for key, item in data:
         if bool(re.search("edge", key)):
             raise ValueError("Edges not supported. Wrong data type.")
-
         if torch.is_tensor(item) and item.size(0) == num_nodes:
             if mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
                 data[key] = item[unique_pos_indices]
@@ -109,20 +108,22 @@ class GridSampling:
             log.warning("The data are going to be shuffled. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled")
 
     def _process(self, data):
+
         if self._mode == "last":
             data = shuffle_data(data)
-        
+
+
         coords = ((data.pos) / self._grid_size).int()
         if self._elastic_distorsion:
             coords = self._distorsion(Data(pos=coords)).pos
         batch = data.batch if hasattr(data, "batch") else None
         cluster, unique_pos_indices = sparse_coords_to_clusters(coords, batch)
-        
+
         # Delete pos for small speed up
-        if self._quantize_coords:
-            delattr(data, "pos")
+        # if self._quantize_coords:
+        #     delattr(data, "pos")
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
-        
+
         if self._quantize_coords:
             data.pos = coords[unique_pos_indices]
         return data
@@ -135,7 +136,7 @@ class GridSampling:
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, quantize_coords={}, mode={}, elastic_distorsion={}, granularity={})".format(self.__class__.__name__, 
+        return "{}(grid_size={}, quantize_coords={}, mode={}, elastic_distorsion={}, granularity={})".format(self.__class__.__name__,
         self._grid_size, self._quantize_coords, self._mode, self._elastic_distorsion, self._granularity)
 
 

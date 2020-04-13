@@ -182,8 +182,8 @@ def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, l
         list_max[:, i] = np.amax(view_frust_pts, axis=1)
     # take the quantile instead of the min to be more robust to outilers frames
 
-    vol_bnds[:, 0] = np.quantile(list_min, 0.1, axis=1)
-    vol_bnds[:, 1] = np.quantile(list_max, 0.9, axis=1)
+    vol_bnds[:, 0] = np.quantile(list_min, 0.0, axis=1)
+    vol_bnds[:, 1] = np.quantile(list_max, 1.0, axis=1)
 
     # remove some voxel that are on the edge to control the size of the tsdf.
     vol_dim = (vol_bnds[:, 1] - vol_bnds[:, 0]) / voxel_size
@@ -231,7 +231,7 @@ def rgbd2fragment_fine(
         if (i + 1) % num_frame_per_fragment == 0:
 
             if save_pc:
-                pcd = tsdf_vol.get_point_cloud(0.2, 0.0)
+                pcd = tsdf_vol.get_point_cloud(0.35, 0.0)
                 torch_data = Data(pos=torch.from_numpy(pcd.copy()))
             else:
                 verts, faces, norms = tsdf_vol.get_mesh()
@@ -286,6 +286,7 @@ def tracked_matches(data_s, data_t, pair):
     Parameters:
     pair : P x 2 indices of the matched points before any transformation
     """
+
     pair_np = pair.numpy()
     mask_s = np.isin(pair_np[:, 0], data_s.origin_id.numpy())
     mask_t = np.isin(pair_np[:, 1], data_t.origin_id.numpy())
@@ -297,7 +298,6 @@ def tracked_matches(data_s, data_t, pair):
                        np.arange(0, len(data_s.pos))))
     table_t = dict(zip(data_t.origin_id.numpy(),
                        np.arange(0, len(data_t.pos))))
-    print(len(pair_np))
-    print(len(filtered_pair))
+
     res = torch.tensor([[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]).to(torch.long)
     return res
