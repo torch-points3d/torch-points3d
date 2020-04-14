@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 
 Filters

@@ -18,7 +18,7 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
-project = "Deep Point Cloud Benchmark"
+project = "Torch Points 3D"
 copyright = "2020, Thomas Chaton and Nicolas Chaulet"
 author = "Thomas Chaton and Nicolas Chaulet"
 
