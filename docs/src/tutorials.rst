@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 Tutorials
 ===========
@@ -145,7 +145,7 @@ Let's create a ``conf/data/segmentation/s3dis.yaml`` file with our own setting t
  * ``task`` needs to be specified. Currently, the arguments provided by the command line are lost and therefore we need the extra information.
  * ``class`` needs to be specified. In that case, since we solve a classification task, the code will look for a class named ``S3DISDataset`` within the ``src/datasets/segmentation/s3dis.py`` file.
 
-For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/metrics/regression_tracker.py>`_
+For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/metrics/regression_tracker.py>`_
 
 Create a new model
 --------------------
@@ -273,7 +273,7 @@ Let's create a new file ``/src/models/segmentation/pointnet2.py`` with its assoc
 .. note::
 
     * Make sure that you import all the required modules
-    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/models/base_model.py>`_ for more details)
+    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/models/base_model.py>`_ for more details)
 
 Create a new configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -310,7 +310,7 @@ When I say optional, I mean those parameters could be defined differently for yo
 We don't want to force any particular configuration format however, the simpler is always better !
 
 The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class 
-`src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/models/base_architectures/unet.py>`_ 
+`src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/models/base_architectures/unet.py>`_ 
 with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
 The following arguments are required by those classes:
 
@@ -470,4 +470,4 @@ This would look like the following for our pointnet++ example above:
 
 .. note::
 
-    We already provide a tracker for regression `here <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/metrics/regression_tracker.py>`_.
+    We already provide a tracker for regression `here <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/metrics/regression_tracker.py>`_.
