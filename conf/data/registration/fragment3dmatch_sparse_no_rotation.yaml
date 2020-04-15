@@ -11,7 +11,7 @@ data:
   limit_size: 850
   depth_thresh: 4.5
   first_subsampling: 0.02
-  is_online_matching: True
+  is_online_matching: False
   num_pos_pairs: 1024
   pre_transform:
     - transform: GridSampling
