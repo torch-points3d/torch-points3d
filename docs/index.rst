@@ -5,16 +5,19 @@
 
 :github_url: https://github.com/nicolas-chaulet/torch-points3d
 
-Torch Points 3D
-======================================================
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+.. raw:: html
+
+   <p style="height:22px">
+      <img src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.svg?sanitize=true"/>
+   </p>
 
 .. image:: logo.png
    :target: logo.png
+   :width: 300
    :alt: Screenshot
 
 

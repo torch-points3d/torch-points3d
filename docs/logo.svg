@@ -7,8 +7,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   inkscape:export-ydpi="147.60098"
-   inkscape:export-xdpi="147.60098"
+   inkscape:export-ydpi="180.49295"
+   inkscape:export-xdpi="180.49295"
    inkscape:export-filename="/Users/nicolas/bitmap.png"
    sodipodi:docname="logo.svg"
    inkscape:version="1.0rc1 (09960d6, 2020-04-09)"
@@ -21,8 +21,8 @@
      id="defs2">
     <rect
        id="rect3802"
-       height="47.630444"
-       width="167.82289"
+       height="28.721518"
+       width="58.384245"
        y="87.074402"
        x="39.443958" />
   </defs>
@@ -40,10 +40,10 @@
      inkscape:snap-page="false"
      showgrid="false"
      inkscape:document-rotation="0"
-     inkscape:current-layer="g6728"
+     inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="52.638914"
-     inkscape:cx="183.53569"
+     inkscape:cy="139.76968"
+     inkscape:cx="210.61823"
      inkscape:zoom="2.0429065"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
@@ -69,16 +69,25 @@
      inkscape:groupmode="layer"
      inkscape:label="Layer 1">
     <text
+       y="0"
+       x="52.487457"
        inkscape:export-ydpi="147.60098"
        inkscape:export-xdpi="147.60098"
-       transform="translate(-8.7152838,6.735715)"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11.28889999999999993px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:sans-serif;white-space:pre;shape-inside:url(#rect3802);fill:#000000;fill-opacity:1;stroke:none;"
+       transform="translate(-16.745102,2.5549853)"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667000000000058px;line-height:1.25;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:center;white-space:pre;shape-inside:url(#rect3802);fill:#000000;fill-opacity:1;stroke:none"
        id="text3800"
        xml:space="preserve"><tspan
          sodipodi:role="line"
-         x="39.443359"
-         y="97.373425"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif">Torch Points 3D</tspan></tspan></text>
+         x="52.983978"
+         y="95.051239"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Helvetica Neue';-inkscape-font-specification:'Helvetica Neue'">Py</tspan><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:center;text-anchor:middle">Torch</tspan><tspan
+           dx="4.630209"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:center;text-anchor:middle" /></tspan><tspan
+         sodipodi:role="line"
+         x="50.991334"
+         y="105.63457"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Trebuchet MS';-inkscape-font-specification:'Trebuchet MS';text-align:center;text-anchor:middle">Points 3D</tspan></tspan></text>
     <g
        inkscape:export-ydpi="147.60098"
        inkscape:export-xdpi="147.60098"
