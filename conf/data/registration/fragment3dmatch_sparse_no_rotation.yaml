@@ -12,6 +12,7 @@ data:
   depth_thresh: 4.5
   first_subsampling: 0.02
   is_online_matching: True
+  num_pos_pairs: 1024
   pre_transform:
     - transform: GridSampling
       params:

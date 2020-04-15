@@ -147,7 +147,7 @@ def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=
     pair, dist = ball_query(data2.pos.to(torch.float),
                             data1.pos.to(torch.float) @ rot_gt.T,
                             radius=max_distance_overlap,
-                            max_num=num_pos, mode=1)
+                            max_num=num_pos, mode=1, sorted=True)
     pair = filter_pair(pair, dist)
     pair2 = []
     overlap = [pair.shape[0] / len(data1.pos)]
@@ -155,7 +155,7 @@ def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=
         pair2, dist2 = ball_query(data1.pos.to(torch.float) @ rot_gt.T,
                                   data2.pos.to(torch.float),
                                   radius=max_distance_overlap,
-                                  max_num=num_pos, mode=1)
+                                  max_num=num_pos, mode=1, sorted=True)
         pair2 = filter_pair(pair2, dist2)
         overlap.append(pair2.shape[0] / len(data2.pos))
     # overlap = pair.shape[0] / \

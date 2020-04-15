@@ -101,7 +101,6 @@ class Minkowski_Baseline_Model_Fragment(BaseModel):
 class MinkowskiFragment(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
-        self.num_pos_pairs = option.num_pos_pairs
         self.normalize_feature = option.normalize_feature
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self.loss_names = ["loss_reg", "loss"]
@@ -134,14 +133,9 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
         if hasattr(data, "pos_target"):
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
-
-            num_pos_pairs = len(data.pair_ind)
-            if self.num_pos_pairs < len(data.pair_ind):
-                num_pos_pairs = self.num_pos_pairs
-            rand_ind = torch.randperm(len(data.pair_ind))[:num_pos_pairs]
-            self.ind = data.pair_ind[rand_ind, 0].to(torch.long).to(device)
-            self.ind_target = data.pair_ind[rand_ind, 1].to(torch.long).to(device)
-            rang = torch.arange(0, num_pos_pairs)
+            self.ind = data.pair_ind[:, 0].to(torch.long).to(device)
+            self.ind_target = data.pair_ind[:, 1].to(torch.long).to(device)
+            rang = torch.arange(0, data.pair_ind.shape[0])
             self.labels = torch.cat([rang, rang], 0).to(device)
         else:
             self.labels = None
