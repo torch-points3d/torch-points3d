@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 Advanced
 ==========
@@ -20,7 +20,7 @@ As per their website
 Configuration architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All configurations leave in the `conf <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/conf>`_ folder and it is organised as follow:
+All configurations leave in the `conf <https://github.com/nicolas-chaulet/torch-points3d/tree/master/conf>`_ folder and it is organised as follow:
 
 .. code-block:: bash
 
@@ -317,7 +317,7 @@ Raw S3DIS
 
 The dataset used for `S3DIS <http://buildingparser.stanford.edu>`_ is the original dataset without any pre-processing applied.
 Here is the `area_1 <http://buildingparser.stanford.edu/rendered/raw_examples/Area%201.ply.html>`_ if you want to visualize it.
-We provide some data transform for combining each area back together and split the dataset into digestible chunks. Please refer to `code base <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/datasets/segmentation/s3dis.py>`_ and associated configuration file for more details:
+We provide some data transform for combining each area back together and split the dataset into digestible chunks. Please refer to `code base <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/datasets/segmentation/s3dis.py>`_ and associated configuration file for more details:
 
 .. literalinclude:: ../../conf/data/segmentation/s3disfused.yaml
    :language: yaml
