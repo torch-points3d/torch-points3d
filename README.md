@@ -128,7 +128,7 @@ poetry install -E MinkowskiEngine --no-root
 ## Train pointnet++ on part segmentation task for dataset shapenet
 
 ```bash
-poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
+poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet-fixed
 ```
 
 And you should see something like that
