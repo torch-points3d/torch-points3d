@@ -11,14 +11,8 @@
 
 .. raw:: html
 
-   <p style="height:22px">
-      <img src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.svg?sanitize=true"/>
-   </p>
-
-.. image:: logo.png
-   :target: logo.png
-   :width: 300
-   :alt: Screenshot
+   <img src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" style="width: 40%; display: block; margin-left: auto; margin-right: auto;"/>
+   <p/>
 
 
 **Torch Points 3D** is a framework for developing and testing common
