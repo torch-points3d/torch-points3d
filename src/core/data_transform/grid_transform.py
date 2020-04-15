@@ -92,7 +92,7 @@ class GridSampling:
         If mode is `last`, one random points per cell will be selected with its associated features
     """
 
-    def __init__(self, size, quantize_coords=False, mode="mean", elastic_distorsion: bool = False, granularity: List = [0.2, 0.4]):
+    def __init__(self, size, quantize_coords=False, mode="mean", elastic_distorsion: bool = False, granularity: List = [0.2, 0.4], warn: bool = True):
         self._grid_size = size
         self._quantize_coords = quantize_coords
         self._mode = mode
@@ -102,10 +102,12 @@ class GridSampling:
         if self._elastic_distorsion:
             self._distorsion = ElasticDistortion(apply_distorsion=True, granularity=granularity)
 
-        log.warning("If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling")
+        if(warn):
+            log.warning("If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling")
 
         if self._mode == "last":
-            log.warning("The data are going to be shuffled. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled")
+            if(warn):
+                log.warning("The data are going to be shuffled. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled")
 
     def _process(self, data):
 

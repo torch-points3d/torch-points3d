@@ -14,7 +14,7 @@ from src.datasets.registration.pair import Pair
 from src.metrics.registration_tracker import PatchRegistrationTracker
 from src.core.data_transform.transforms import GridSampling
 from src.datasets.registration.base_siamese_dataset import BaseSiameseDataset
-from src.datasets.registration.utils import compute_overlap_and_matches
+from src.datasets.registration.utils import compute_overlap_and_matches, compute_subsampled_matches
 
 
 class Patch3DMatch(Base3DMatch):
@@ -241,7 +241,7 @@ class Fragment3DMatch(Base3DMatch):
                  debug=False,
                  is_online_matching=False,
                  num_pos_pairs=1024,
-                 pos_pairs_multiplier_search=0.9):
+                 voxel_size_search=0.1):
         super(Fragment3DMatch, self).__init__(root,
                                               num_frame_per_fragment,
                                               mode,
@@ -262,7 +262,7 @@ class Fragment3DMatch(Base3DMatch):
         self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
         self.is_online_matching = is_online_matching
         self.num_pos_pairs = num_pos_pairs
-        self.voxel_size_search = self.max_dist_overlap * pos_pairs_multiplier_search
+        self.voxel_size_search = voxel_size_search
 
     def get_fragment(self, idx):
 
@@ -272,9 +272,9 @@ class Fragment3DMatch(Base3DMatch):
             allow_pickle=True).item()
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
-        new_match = compute_overlap_and_matches(
-            Data(pos=data_source.pos), Data(pos=data_target.pos),
-            self.voxel_size_search)
+        new_pair = compute_subsampled_matches(data_source, data_target,
+                                              self.voxel_size_search,
+                                              self.max_dist_overlap)
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
@@ -286,9 +286,8 @@ class Fragment3DMatch(Base3DMatch):
                 self.max_dist_overlap)
             batch.pair_ind = torch.from_numpy(new_match['pair'].copy())
         else:
-            pair = torch.from_numpy(new_match['pair'].copy())
-            new_pair = tracked_matches(data_source, data_target, pair)
-            batch.pair_ind = new_pair
+            pair = tracked_matches(data_source, data_target, new_pair)
+            batch.pair_ind = pair
 
         num_pos_pairs = len(batch.pair_ind)
         if self.num_pos_pairs < len(batch.pair_ind):

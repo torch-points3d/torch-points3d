@@ -10,7 +10,8 @@ import imageio
 from tqdm import tqdm
 
 import src.datasets.registration.fusion as fusion
-
+from src.core.data_transform import GridSampling, SaveOriginalPosId
+from torch_geometric.transforms import Compose
 
 def to_list(x):
     """
@@ -166,6 +167,16 @@ def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=
     output = dict(pair=pair, pair2=pair2, overlap=overlap)
     return output
 
+def compute_subsampled_matches(data1, data2, voxel_size=0.1, max_distance_overlap=0.02):
+    """
+    compute matches on subsampled version of data and track ind
+    """
+    grid_sampling = Compose([SaveOriginalPosId(), GridSampling(voxel_size, mode='last', warn=False)])
+    subsampled_data = grid_sampling(data1.clone())
+    origin_id = subsampled_data.origin_id.numpy()
+    pair = compute_overlap_and_matches(subsampled_data, data2, max_distance_overlap)['pair']
+    pair[:, 0] = origin_id[pair[:, 0]]
+    return torch.from_numpy(pair.copy())
 
 def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, limit_size=600, voxel_size=0.01):
     vol_bnds = np.zeros((3, 2))
