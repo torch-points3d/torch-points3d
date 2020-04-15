@@ -1,5 +1,6 @@
-![Project Logo](/docs/logo.png)
-
+<p align="center">
+  <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/rename-repo/docs/logo.png" />
+</p>
 
 [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
 

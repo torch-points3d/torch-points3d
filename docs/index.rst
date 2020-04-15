@@ -5,17 +5,14 @@
 
 :github_url: https://github.com/nicolas-chaulet/torch-points3d
 
-Torch Points 3D
-======================================================
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+.. raw:: html
 
-.. image:: logo.png
-   :target: logo.png
-   :alt: Screenshot
+   <img src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" style="width: 40%; display: block; margin-left: auto; margin-right: auto;"/>
+   <p/>
 
 
 **Torch Points 3D** is a framework for developing and testing common
