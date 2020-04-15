@@ -375,7 +375,7 @@ class General3DMatchDataset(BaseSiameseDataset):
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=test_transform,
-                is_online_matching=dataset_opt.is_online_matching,
+                is_online_matching=False,
                 num_pos_pairs=dataset_opt.num_pos_pairs)
 
     @staticmethod
