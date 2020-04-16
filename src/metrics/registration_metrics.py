@@ -21,3 +21,23 @@ def compute_accuracy(embedded_ref_features, embedded_val_features):
     wrong_matches = np.count_nonzero(ind_neigh_normal - reference_neighbors)
     accuracy = (1 - wrong_matches / number_of_test_points) * 100
     return accuracy
+
+
+def estimate_transfo(xyz, xyz_target, match):
+    pass
+
+
+def get_matches(feat, feat_target, num_matches):
+    pass
+
+
+def fast_global_registration(xyz, xyz_target, match):
+    pass
+
+
+def compute_hit_ratio(xyz, xyz_target, matches, T_gt, tau_1):
+    pass
+
+
+def compute_transfo_error(T_gt, T_pred):
+    pass
