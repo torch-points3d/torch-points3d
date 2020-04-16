@@ -1,4 +1,3 @@
-import open3d
 import random
 import numpy as np
 import os
