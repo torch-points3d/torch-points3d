@@ -23,11 +23,15 @@ def compute_accuracy(embedded_ref_features, embedded_val_features):
     return accuracy
 
 
+def compute_accuracy_gpu(embedded_ref_features, embedded_val_features):
+    pass
+
+
 def estimate_transfo(xyz, xyz_target, match):
     pass
 
 
-def get_matches(feat, feat_target, num_matches):
+def get_matches(feat, feat_target, num_matches=None):
     pass
 
 
