@@ -75,3 +75,7 @@ class TestRegistrationMetrics(unittest.TestCase):
         rte, rre = compute_transfo_error(torch.eye(4), T)
         npt.assert_allclose(rte.item(), 1)
         npt.assert_allclose(rre.item(), 30, rtol=1e-3)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,11 +1,12 @@
 from typing import Dict
 import torchnet as tnt
 import torch
+from torch_geometric.nn import knn
+
 from src.models.base_model import BaseModel
 from .base_tracker import BaseTracker
 from .registration_metrics import compute_accuracy
 from .registration_metrics import estimate_transfo
-from .registration_metrics import get_matches
 from .registration_metrics import fast_global_registration
 from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
@@ -62,6 +63,7 @@ class FragmentRegistrationTracker(BaseTracker):
 it measures loss, feature match recall, hit ratio, rotation error, translation error.
         """
         super(FragmentRegistrationTracker, self).__init__(stage, wandb_log, use_tensorboard)
+        self.stage = stage
         self.reset(stage)
         self.num_points = num_points
         self.tau_1 = tau_1
@@ -69,29 +71,51 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
+        self.stage = stage
+        self._rot_error = tnt.meter.AverageValueMeter()
+        self._trans_error = tnt.meter.AverageValueMeter()
+        self._hit_ratio = tnt.meter.AverageValueMeter()
+        self._feat_match_ratio = tnt.meter.AverageValueMeter()
 
     def track(self, model: BaseModel):
+        super().track(model)
+        if self.stage != "train":
+            batch_idx, batch_idx_target = model.get_batch_idx()
+            batch_xyz, batch_xyz_target = model.get_xyz()
+            batch_ind, batch_ind_target = model.get_ind()
+            batch_feat, batch_feat_target = model.get_outputs()
 
-        xyz = model.xyz
-        xyz_target = model.xyz_target
-        matches_gt = torch.stack([model.ind, model.ind_target]).T
-        feat = model.outputs
-        feat_target = model.outputs_target
+            nb_batches = batch_idx.max() + 1
 
-        T_gt = estimate_transfo(xyz, xyz_target, matches_gt)
-        match_pred = get_matches(feat, feat_target, num_matches=self.num_matches)
-        T_pred = fast_global_registration(xyz, xyz_target, match_pred)
+            for b in range(nb_batches):
+                xyz = batch_xyz[batch_idx == b]
+                xyz_target = batch_xyz_target[batch_idx_target == b]
+                feat = batch_feat[batch_idx == b]
+                feat_target = batch_feat_target[batch_idx_target == b]
+                # as we have concatenated ind,
+                # we need to substract the cum_sum because we deal
+                # with each batch independently
+                ind = batch_ind[batch_idx == b] - cum_sum[b]
+                ind_target = batch_ind_target[batch_idx_target == b] - cum_sum_target[b]
 
-        self._hit_ratio = compute_hit_ratio(xyz, xyz_target, match_pred, T_gt, self.tau_1).item()
-        trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
-        self._trans_error = trans_error.item()
-        self._rot_error = rot_error.item()
+                matches_gt = torch.stack([ind, ind_target]).T
+                T_gt = estimate_transfo(xyz[matches_gt[:, 0]], xyz_target[matches_gt[:, 1]])
+            # match_pred = get_matches(feat, feat_target, num_matches=self.num_matches)
+            matches_pred = knn(feat[matches_gt[:, 0]], feat_target[matches_gt[:, 1]]).T
+            T_pred = fast_global_registration(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 1]])
+
+            hit_ratio = compute_hit_ratio(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 0]], T_gt, self.tau_1)
+            trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
+            self._hit_ratio.add(hit_ratio.item())
+            self._feat_match_ratio.add(float(hit_ratio.item() > self.tau_2))
+            self._trans_error.add(trans_error.item())
+            self._rot_error.add(rot_error.item())
 
     def get_metrics(self, verbose=False):
         metrics = super().get_metrics(verbose)
         if self.stage != "train":
             metrics["{}_hit_ratio".format(self._stage)] = self._hit_ratio
-            # metrics["{}_feat_match_ratio".format(self._stage)] = self._feat_match_ratio
+            metrics["{}_feat_match_ratio".format(self._stage)] = self._feat_match_ratio
             metrics["{}_trans_error".format(self._stage)] = self._trans_error
             metrics["{}_rot_error".format(self._stage)] = self._rot_error
         return metrics
