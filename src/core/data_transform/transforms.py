@@ -451,7 +451,6 @@ class MultiScaleTransform(object):
         return "{}".format(self.__class__.__name__)
 
 
-
 class ShuffleData(object):
     """ This transform allow to shuffle feature, pos and label tensors within data
     """
@@ -468,16 +467,13 @@ class ShuffleData(object):
         return data
 
 
-
 class PairTransform(object):
-
     def __init__(self, transform):
         """
         apply the transform for a pair of data
         (as defined in src/datasets/registration/pair.py)
         """
         self.transform = transform
-
 
     def __call__(self, data):
         data_source, data_target = data.to_data()
@@ -497,8 +493,7 @@ class ShiftVoxels:
     -----------
     apply_shift: bool:
         Whether to apply the shift on indices
-    """   
-
+    """
     def __init__(self, apply_shift=True):
         self._apply_shift = apply_shift
 
@@ -511,6 +506,7 @@ class ShiftVoxels:
 
     def __repr__(self):
         return "{}(apply_shift={})".format(self.__class__.__name__, self._apply_shift)
+      
 
 class RandomDropout:
     """ Randomly drop points from the input data
@@ -534,4 +530,6 @@ class RandomDropout:
         return data
 
     def __repr__(self):
-        return "{}(dropout_ratio={}, dropout_application_ratio={})".format(self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio)
+        return "{}(dropout_ratio={}, dropout_application_ratio={})".format(
+            self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio
+        )

@@ -72,7 +72,7 @@ def train_epoch(
                 break
 
             if profiling:
-                if i > 20:
+                if i > getattr(debugging, "num_batches", 50):
                     return 0
 
     metrics = tracker.publish(epoch)

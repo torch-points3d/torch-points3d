@@ -23,6 +23,27 @@ class NormalizeRGB(object):
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self._normalize)
 
+class NormalizeRGB(object):
+    """Normalize rgb between 0 and 1
+
+    Parameters
+    ----------
+    normalize: bool: Whether to normalize the rgb attributes
+    """
+
+    def __init__(self, normalize=True):
+        self._normalize = normalize
+
+    def __call__(self, data):
+        assert hasattr(data, "rgb")
+        if not (data.rgb.max() <= 1 and data.rgb.min() >= 0):
+            data.rgb = data.rgb.float() / 255.0
+        return data
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, self._normalize)
+
+
 class ChromaticTranslation(object):
     """Add random color to the image, data must contain an rgb attribute between 0 and 1
 
@@ -79,7 +100,9 @@ class ChromaticAutoContrast(object):
         return data
 
     def __repr__(self):
-        return "{}(randomize_blend_factor={}, blend_factor={})".format(self.__class__.__name__, self.randomize_blend_factor, self.blend_factor)
+        return "{}(randomize_blend_factor={}, blend_factor={})".format(
+            self.__class__.__name__, self.randomize_blend_factor, self.blend_factor
+        )
 
 
 class ChromaticJitter:

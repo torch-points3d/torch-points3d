@@ -15,25 +15,27 @@ from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_scatter import scatter_add, scatter_mean
+from torch_cluster import grid_cluster
 
 from src.datasets.multiscale_data import MultiScaleData
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from src.utils import is_iterable
-from .grid_transform import group_data, GridSampling, shuffle_data, sparse_coords_to_clusters
+from .grid_transform import group_data, GridSampling, shuffle_data
 
 
 class RemoveDuplicateCoords(object):
     """ This transform allow sto remove duplicated coords within ``indices`` from data.
-    Selects the last point within each voxel to set the features and labels.
+    Takes the average or selects the last point to set the features and labels of each voxel
+
     Parameters
     ----------
-    shuffle: bool
-        If True, the data will be suffled before removing the extra points
+    mode : str
+        Option to select how the features and labels for each voxel is computed. Can be ``last`` or ``mean``.
+        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average.
     """
 
-    def __init__(self, shuffle=False, mode="last"):
-        self._shuffle = shuffle
+    def __init__(self, mode="last"):
         self._mode = mode
 
     def _process(self, data):
@@ -41,15 +43,17 @@ class RemoveDuplicateCoords(object):
             data = shuffle_data(data)
         
         coords = data.pos
-        batch = data.batch if hasattr(data, "batch") else None
-        cluster, unique_pos_indices = sparse_coords_to_clusters(coords, batch)
+        if "batch" not in data:
+            cluster = grid_cluster(coords, torch.tensor([1, 1, 1]))
+        else:
+            cluster = voxel_grid(coords, data.batch, 1)
+        cluster, unique_pos_indices = consecutive_cluster(cluster)
         
+        skip_keys=[]
         if self._mode == "last":
-            delattr(data, "pos")
-        data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
-        
-        if self._mode == "last":
-            data.pos = coords[unique_pos_indices]
+           skip_keys.append("pos")
+           data.pos = coords[unique_pos_indices]
+        data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)            
         return data
 
     def __call__(self, data):
@@ -61,7 +65,7 @@ class RemoveDuplicateCoords(object):
         return data
 
     def __repr__(self):
-        return "{}(shuffle={}, mode={})".format(self.__class__.__name__, self._shuffle, self._mode)
+        return "{}(mode={})".format(self.__class__.__name__, self._mode)
 
 class ToSparseInput(object):
     """This transform allows to prepare data for sparse model as SparseConv / Minkowski Engine.
@@ -75,9 +79,8 @@ class ToSparseInput(object):
     grid_size: float
         Grid voxel size
     mode : str
-        Option to select how the features and labels for each voxel are computed. Can be ``last`` or ``mean``.
-        ``last`` selects the last point falling in a voxel as the representent, 
-        ``mean`` takes the average. 
+        Option to select how the features and labels for each voxel is computed. Can be ``last`` or ``mean``.
+        ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average.
 
     Returns
     -------

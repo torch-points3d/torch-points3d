@@ -253,6 +253,7 @@ class NormalFeature(object):
     add normal as feature. if it doesn't exist, compute normals
     using PCA
     """
+
     def __call__(self, data):
         if data.norm is None:
             raise NotImplementedError("TODO: Implement normal computation")

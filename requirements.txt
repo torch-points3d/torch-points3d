@@ -15,7 +15,7 @@ docutils==0.16
 future==0.18.2
 gitdb==4.0.4
 gitpython==3.1.1
-google-auth==1.13.1
+google-auth==1.14.0
 google-auth-oauthlib==0.4.1
 googledrivedownloader==0.4
 gql==0.2.0
@@ -26,7 +26,7 @@ hydra-core==0.11.3
 idna==2.9
 imagesize==1.2.0
 isodate==0.6.0
-jinja2==2.11.1
+jinja2==2.11.2
 joblib==0.14.1
 jsonpatch==1.25
 jsonpointer==2.0
@@ -52,11 +52,11 @@ pyasn1-modules==0.2.8
 pygments==2.6.1
 pyparsing==2.4.7
 python-dateutil==2.8.1
-pytorch-metric-learning==0.9.82
+pytorch-metric-learning==0.9.84
 pytz==2019.3
 pyyaml==5.3.1
 pyzmq==19.0.0
-rdflib==4.2.2
+rdflib==5.0.0
 requests==2.23.0
 requests-oauthlib==1.3.0
 rsa==4.0
@@ -77,7 +77,7 @@ sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.4
 statistics==1.0.3.5
 subprocess32==3.5.4
-tensorboard==2.2.0
+tensorboard==2.2.1
 tensorboard-plugin-wit==1.6.0.post3
 torch==1.3.1
 torch-cluster==1.4.5
@@ -90,9 +90,9 @@ torchnet==0.0.4
 torchvision==0.4.2
 tornado==6.0.4
 tqdm==4.45.0
-urllib3==1.25.8
+urllib3==1.25.9
 visdom==0.1.8.9
-wandb==0.8.31
+wandb==0.8.32
 watchdog==0.10.2
 websocket-client==0.57.0
 werkzeug==1.0.1
