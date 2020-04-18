@@ -2,7 +2,7 @@ data:
     class: scannet.ScannetDataset
     task: segmentation
     dataroot: data
-    grid_size: 0.02
+    grid_size: 0.05
     version: 'v2'
     use_instance_labels: False
     use_instance_bboxes: False

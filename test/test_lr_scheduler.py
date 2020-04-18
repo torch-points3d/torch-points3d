@@ -92,5 +92,6 @@ class TestLrScheduler(unittest.TestCase):
                 model.optimize_parameters(epoch, batch_size)
         self.assertEqual(get_lr(model._optimizer), base_lr * gamma ** (count_batch))
 
+
 if __name__ == "__main__":
     unittest.main()
