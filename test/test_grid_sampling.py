@@ -48,7 +48,7 @@ class TestGridSampling(unittest.TestCase):
         self.assertEqual(shapes, [shapes[0] for _ in range(len(shapes))])
 
     def test_double_grid_sampling(self):
-        data_random = Data(pos=torch.randn(100000, 3) * 0.1)
+        data_random = Data(pos=torch.randn(1000, 3) * 0.1)
         print(DIR_PATH)
         data_fragment = torch.load(os.path.join(DIR_PATH, "test_data/fragment_000003.pt"))
 
