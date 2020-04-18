@@ -108,7 +108,7 @@ class ToSparseInput(object):
 class RandomHorizontalFlip(object):
 
     def __init__(self, ignored_axis, is_temporal=False, p=0.95):
-        """This transform is used to flip coords using a given axis. Usually, it would be x or y
+        """This transform is used to flip sparse coords using a given axis. Usually, it would be x or y
 
         Parameters
         ----------
