@@ -1,5 +1,5 @@
 # https://github.com/Yochengliu/Relation-Shape-CNN/blob/master/models/rscnn_msn_seg.py
-
+```
 RSCNN_MSN(
   (SA_modules): ModuleList(
     (0): PointnetSAModuleMSG(
@@ -697,3 +697,4 @@ PointnetFPModule(
   )
 ) size = 1443840
 Model size = %i 3488705
+```

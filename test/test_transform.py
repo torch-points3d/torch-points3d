@@ -18,12 +18,14 @@ from src.core.data_transform import (
     instantiate_transforms,
     GridSampling,
     MultiScaleTransform,
+    Random3AxisRotation,
     AddFeatByKey,
     AddFeatsByKeys,
     RemoveAttributes,
     RandomDropout,
     ShiftVoxels,
     PCACompute,
+    RandomHorizontalFlip,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -190,6 +192,45 @@ class Testhelpers(unittest.TestCase):
         pca = PCACompute()
         data = pca(data)
         npt.assert_almost_equal(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1)
+
+    def test_Random3AxisRotation(self):
+
+        pos = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).astype(np.float)
+        data = Data(pos=torch.from_numpy(pos).float())
+        t = Random3AxisRotation(apply_rotation=True, rot_x=0, rot_y=0, rot_z=180)
+
+        u, v, w = data.pos
+        u2, v2, w2 = t(data.clone()).pos
+
+        self.assertEqual(np.array_equal(u, u2), False)
+        self.assertEqual(np.array_equal(v, v2), False)
+        npt.assert_array_equal(w, w2)
+
+        t = Random3AxisRotation(apply_rotation=True, rot_x=180, rot_y=180, rot_z=180)
+
+        u2, v2, w2 = t(data.clone()).pos
+
+        self.assertEqual(np.array_equal(u, u2), False)
+        self.assertEqual(np.array_equal(v, v2), False)
+        self.assertEqual(np.array_equal(w, w2), False)
+
+        t = Random3AxisRotation(apply_rotation=True, rot_x=None, rot_y=None, rot_z=None)
+
+        with self.assertRaises(Exception):
+            _ = t(data.clone())
+
+    def test_RandomHorizontalFlip(self):
+
+        pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        pos_target = torch.from_numpy(np.asarray([[6, 2, 3], [3, 5, 6], [0, 8, 9]]))
+        data = Data(pos=pos)
+
+        upright_axis = ["y", "z"]
+        t = RandomHorizontalFlip(upright_axis, p=1)
+
+        pos_out = t(data.clone()).pos
+
+        self.assertEqual(np.array_equal(pos_out, pos_target), True)
 
 
 if __name__ == "__main__":

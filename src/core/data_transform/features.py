@@ -2,6 +2,7 @@ from typing import List
 from tqdm import tqdm as tq
 import itertools
 import numpy as np
+from scipy.linalg import expm, norm
 import math
 import re
 import torch
@@ -24,6 +25,8 @@ class Random3AxisRotation(object):
     """
     Rotate pointcloud with random angles along x, y, z axis
 
+    The angles should be given into degree.
+
     Parameters
     -----------
     apply_rotation: bool:
@@ -38,17 +41,45 @@ class Random3AxisRotation(object):
 
     def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
-        self._rot_x = rot_x
-        self._rot_y = rot_y
-        self._rot_z = rot_z
+        self._rot_x = np.abs(rot_x) if rot_x else rot_x
+        self._rot_y = np.abs(rot_y) if rot_y else rot_y
+        self._rot_z = np.abs(rot_z) if rot_z else rot_z
 
-        from torch_geometric.transforms import Compose, RandomRotate
+        self._degree_angles = [self._rot_x, self._rot_y, self._rot_z]
 
-        self.rotations = Compose([RandomRotate(rot_x, axis=0), RandomRotate(rot_y, axis=1), RandomRotate(rot_z, axis=2)])
+    def generate_random_rotation_matrix(self):
+        rot_mats = []
+        for axis_ind, deg_angle in enumerate(self._degree_angles):
+            if deg_angle:
+                rand_deg_angle = np.random.uniform(0, deg_angle)
+                rand_radian_angle = float(rand_deg_angle * np.pi) / 180.
+                axis = np.zeros(3)
+                axis[axis_ind] = 1
+                rot_mats.append(Random3AxisRotation.rotation_matrix(axis, rand_radian_angle))
+                
+        if self._apply_rotation and len(rot_mats) == 0:
+            raise Exception("The rotation can't be applied if rotations {} aren't defined.".format(self._degree_angles))
+
+        np.random.shuffle(rot_mats)
+
+        return torch.FloatTensor(Random3AxisRotation.make_rotation(rot_mats))
+
+    @staticmethod
+    def make_rotation(rot_mats):
+        if len(rot_mats) == 1:
+            return rot_mats[0]
+        else:
+            return rot_mats[0] * Random3AxisRotation.make_rotation(rot_mats[1:])
+
+    @staticmethod
+    def rotation_matrix(axis, theta):
+        return expm(np.cross(np.eye(3), axis / norm(axis) * theta))
 
     def __call__(self, data):
         if self._apply_rotation:
-            data = self.rotations(data)
+            pos = data.pos
+            M = self.generate_random_rotation_matrix()
+            data.pos = M @ pos
         return data
 
     def __repr__(self):

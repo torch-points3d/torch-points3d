@@ -43,9 +43,9 @@ data:
           elastic_distorsion: False
           granularity: [.2, .4]
       - transform: ShiftVoxels
-      - transform: ChromaticJitter
       - transform: ChromaticAutoContrast
       - transform: ChromaticTranslation
+      - transform: ChromaticJitter
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
