@@ -45,7 +45,7 @@ class ChromaticTranslation(object):
             data.rgb = torch.clamp(tr + data.rgb, 0, 1)
         return data
 
-   def __repr__(self):
+    def __repr__(self):
         return "{}(trans_range_ratio={})".format(self.__class__.__name__, self.trans_range_ratio)
 
 
@@ -80,9 +80,11 @@ class ChromaticAutoContrast(object):
             blend_factor = random.random() if self.randomize_blend_factor else self.blend_factor
             data.rgb = (1 - blend_factor) * feats + blend_factor * contrast_feats
         return data
-    
+
     def __repr__(self):
-        return "{}(randomize_blend_factor={}, blend_factor={})".format(self.__class__.__name__, self.randomize_blend_factor, self.blend_factor)
+        return "{}(randomize_blend_factor={}, blend_factor={})".format(
+            self.__class__.__name__, self.randomize_blend_factor, self.blend_factor
+        )
 
 
 class ChromaticJitter:
