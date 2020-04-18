@@ -93,18 +93,19 @@ class GridSampling:
         If mode is `last`, one random points per cell will be selected with its associated features
     """
 
-    def __init__(self, size, quantize_coords=False, mode="mean"):
+    def __init__(self, size, quantize_coords=False, mode="mean", verbose=False):
         self._grid_size = size
         self._quantize_coords = quantize_coords
         self._mode = mode
-        log.warning(
-            "If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling"
-        )
-
-        if self._mode == "last":
+        if verbose:
             log.warning(
-                "The tensors within data will be shuffled each time this transform is applied. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled"
+                "If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling"
             )
+
+            if self._mode == "last":
+                log.warning(
+                    "The tensors within data will be shuffled each time this transform is applied. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled"
+                )
 
     def _process(self, data):
         if self._mode == "last":
@@ -146,3 +147,6 @@ class SaveOriginalPosId:
     def __call__(self, data):
         setattr(data, self.KEY, torch.arange(0, data.pos.shape[0]))
         return data
+
+    def __repr__(self):
+        return self.__class__.__name__
