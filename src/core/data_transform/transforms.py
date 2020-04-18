@@ -296,7 +296,7 @@ class RandomNoise(object):
         return data
 
     def __repr__(self):
-        return "Random noise of sigma={}".format(self.sigma)
+        return "{}(sigma={}, clip={})".format(self.__class__.__name__, self.sigma, self.clip)
 
 
 class RandomScaleAnisotropic:
@@ -452,7 +452,6 @@ class MultiScaleTransform(object):
         return "{}".format(self.__class__.__name__)
 
 
-
 class ShuffleData(object):
     """ This transform allow to shuffle feature, pos and label tensors within data
     """
@@ -469,16 +468,13 @@ class ShuffleData(object):
         return data
 
 
-
 class PairTransform(object):
-
     def __init__(self, transform):
         """
         apply the transform for a pair of data
         (as defined in src/datasets/registration/pair.py)
         """
         self.transform = transform
-
 
     def __call__(self, data):
         data_source, data_target = data.to_data()
@@ -493,11 +489,25 @@ class PairTransform(object):
 class ShiftVoxels:
     """ Trick to make Sparse conv invariant to even and odds coordinates
     https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/train.py#L78
+
+    Parameters
+    -----------
+    apply_shift: bool:
+        Whether to apply the shift on indices
     """
 
+    def __init__(self, apply_shift=True):
+        self._apply_shift = apply_shift
+
     def __call__(self, data):
-        data.pos += (torch.rand(3) * 100).type_as(data.pos)
+        if self._apply_shift:
+            if not isinstance(data.pos, torch.IntTensor):
+                raise Exception("The pos are expected to be coordinates, so torch.IntTensor")
+            data.pos[:, :3] += (torch.rand(3) * 100).type_as(data.pos)
         return data
+
+    def __repr__(self):
+        return "{}(apply_shift={})".format(self.__class__.__name__, self._apply_shift)
 
 
 class RandomDropout:
@@ -520,3 +530,9 @@ class RandomDropout:
             N = len(data.pos)
             data = FP(int(N * (1 - self.dropout_ratio)))(data)
         return data
+
+    def __repr__(self):
+        return "{}(dropout_ratio={}, dropout_application_ratio={})".format(
+            self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio
+        )
+
