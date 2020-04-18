@@ -4,20 +4,40 @@ from omegaconf.dictconfig import DictConfig
 import logging
 from torch.optim.lr_scheduler import LambdaLR
 
+from src.utils.enums import SchedulerUpdateOn
+
 log = logging.getLogger(__name__)
 
 _custom_lr_scheduler = sys.modules[__name__]
 
 
-def collect_params(params, update_scheduler_on_epoch):
+def collect_params(params, update_scheduler_on):
     """
     This function enable to handle if params contains on_epoch and on_iter or not.
     """
     on_epoch_params = params.get("on_epoch")
-    on_iter_params = params.get("on_iter")
+    on_batch_params = params.get("on_num_batch")
+    on_sample_params = params.get("on_num_sample")
 
-    if on_epoch_params or on_iter_params:
-        return on_epoch_params if update_scheduler_on_epoch else on_iter_params
+    def check_params(params):
+        if params is not None:
+            return params
+        else:
+            raise Exception(
+                "The lr_scheduler doesn't have policy {}. Options: {}".format(update_scheduler_on, SchedulerUpdateOn)
+            )
+
+    if on_epoch_params or on_batch_params or on_sample_params:
+        if update_scheduler_on == SchedulerUpdateOn.ON_EPOCH.value:
+            return check_params(on_epoch_params)
+        elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_BATCH.value:
+            return check_params(on_batch_params)
+        elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_SAMPLE.value:
+            return check_params(on_sample_params)
+        else:
+            raise Exception(
+                "The provided update_scheduler_on {} isn't within {}".format(update_scheduler_on, SchedulerUpdateOn)
+            )
     else:
         return params
 
@@ -40,7 +60,9 @@ class PolyLR(LambdaStepLR):
     """DeepLab learning rate policy"""
 
     def __init__(self, optimizer, max_iter, power=0.9, last_step=-1):
-        super(PolyLR, self).__init__(optimizer, lambda s: (1 - s / (max_iter + 1)) ** power, last_step)
+        lambda_func = lambda s: (1 - s / (max_iter + 1)) ** power
+        composite_func = lambda s: lambda_func(max_iter) if s > max_iter else lambda_func(s)
+        super(PolyLR, self).__init__(optimizer, lambda s: composite_func(s), last_step)
 
 
 class SquaredLR(LambdaStepLR):
@@ -63,10 +85,10 @@ def repr(self, scheduler_params={}):
 
 
 class LRScheduler:
-    def __init__(self, scheduler, scheduler_params, update_scheduler_on_epoch):
+    def __init__(self, scheduler, scheduler_params, update_scheduler_on):
         self._scheduler = scheduler
         self._scheduler_params = scheduler_params
-        self._update_scheduler_on_epoch = update_scheduler_on_epoch
+        self._update_scheduler_on = update_scheduler_on
 
     @property
     def scheduler(self):
@@ -77,8 +99,8 @@ class LRScheduler:
         return self._scheduler._scheduler_opt
 
     def __repr__(self):
-        return "{}({}, update_scheduler_on_epoch={})".format(
-            self._scheduler.__class__.__name__, self._scheduler_params, self._update_scheduler_on_epoch
+        return "{}({}, update_scheduler_on={})".format(
+            self._scheduler.__class__.__name__, self._scheduler_params, self._update_scheduler_on
         )
 
     def step(self, *args, **kwargs):
@@ -91,7 +113,7 @@ class LRScheduler:
         self._scheduler.load_state_dict(state_dict)
 
 
-def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on_epoch=True):
+def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on=None):
     """Return a learning rate scheduler
     Parameters:
         optimizer          -- the optimizer of the network
@@ -101,7 +123,7 @@ def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on_epoch=Tr
     See https://pytorch.org/docs/stable/optim.html for more details.
     """
     scheduler_cls_name = getattr(scheduler_opt, "class")
-    scheduler_params = collect_params(scheduler_opt.params, update_scheduler_on_epoch)
+    scheduler_params = collect_params(scheduler_opt.params, update_scheduler_on)
 
     try:
         scheduler_cls = getattr(lr_scheduler, scheduler_cls_name)
@@ -115,4 +137,4 @@ def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on_epoch=Tr
     scheduler = scheduler_cls(optimizer, **scheduler_params)
     # used to re_create the scheduler
     setattr(scheduler, "_scheduler_opt", scheduler_opt)
-    return LRScheduler(scheduler, scheduler_params, update_scheduler_on_epoch)
+    return LRScheduler(scheduler, scheduler_params, update_scheduler_on)

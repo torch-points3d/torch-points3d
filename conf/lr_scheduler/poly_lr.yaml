@@ -4,6 +4,6 @@ lr_scheduler:
       on_epoch:
         max_iter: 150
         power: 0.9
-      on_iter:
+      on_num_batch:
         max_iter: 60000
         power: 0.9

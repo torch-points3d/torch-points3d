@@ -2272,7 +2272,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 MinkowskiEngine = ["MinkowskiEngine"]
 
 [metadata]
-content-hash = "4300a268e408c54d967d3ab97d2cf87ccf274d8c5386f3dfde7ebd9c1253aeca"
+content-hash = "3f087aa846af8a5a500b4e72ef7b49ba34df7a556a387de3026f2e947513a16e"
 python-versions = "^3.6"
 
 [metadata.files]

@@ -2,7 +2,7 @@ data:
     class: scannet.ScannetDataset
     task: segmentation
     dataroot: data
-    grid_size: 0.05
+    grid_size: 0.02
     version: 'v2'
     use_instance_labels: False
     use_instance_bboxes: False
@@ -39,7 +39,7 @@ data:
         params:
           size: ${data.grid_size}
           quantize_coords: True
-          mode: "mean"
+          mode: "last"
           elastic_distorsion: False
           granularity: [.2, .4]
       - transform: ShiftVoxels
@@ -63,7 +63,7 @@ data:
         params:
           size: ${data.grid_size}
           quantize_coords: True
-          mode: "mean"
+          mode: "last"
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True]
