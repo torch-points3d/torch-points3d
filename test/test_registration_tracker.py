@@ -92,26 +92,24 @@ class TestSegmentationTracker(unittest.TestCase):
     def test_track(self):
         tracker = FragmentRegistrationTracker(MockDataset(), stage="test", tau_2=0.83, num_points=100)
         model = MockModel()
-        tracker.track(model)
-        metrics = tracker.get_metrics()
-        # the most important metrics in registration
-        self.assertAlmostEqual(metrics["test_hit_ratio"], 1.0)
-        self.assertAlmostEqual(metrics["test_feat_match_ratio"], 1.0)
-
-        model.iter += 1
-        tracker.track(model)
-        metrics = tracker.get_metrics()
-        for k in ["train_acc", "train_macc"]:
-            self.assertEqual(metrics[k], 50)
-        self.assertAlmostEqual(metrics["train_miou"], 25, 5)
-        self.assertEqual(metrics["train_loss_1"], 1.5)
-
+        list_hit_ratio = [1.0, 0.9, 0.8, (0.9 + 0.85 + 0.8 + 0.7) / 4]
+        list_feat_match_ratio = [1.0, 1.0, 0.0, 0.5]
+        for i in range(4):
+            tracker.track(model)
+            metrics = tracker.get_metrics()
+            # the most important metrics in registration
+            self.assertAlmostEqual(metrics["test_hit_ratio"], list_hit_ratio[i])
+            self.assertAlmostEqual(metrics["test_feat_match_ratio"], list_feat_match_ratio[i])
+            tracker.reset("test")
+            model.iter += 1
         tracker.reset("test")
-        model.iter += 1
-        tracker.track(model)
+        model.iter = 0
+        for i in range(4):
+            tracker.track(model)
+            model.iter += 1
         metrics = tracker.get_metrics()
-        for k in ["test_acc", "test_miou", "test_macc"]:
-            self.assertAlmostEqual(metrics[k], 0, 5)
+        self.assertAlmostEqual(metrics["test_hit_ratio"], (4 * 1.0 + 4 * 0.9 + 4 * 0.8 + 0.9 + 0.85 + 0.8 + 0.7) / 16)
+        self.assertAlmostEqual(metrics["test_feat_match_ratio"], (4 * 1 + 4 * 1 + 4 * 0 + 2 * 1 + 2 * 0) / 16)
 
 
 if __name__ == "__main__":
