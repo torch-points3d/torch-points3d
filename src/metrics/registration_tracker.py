@@ -77,7 +77,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
 
     def track(self, model: BaseModel):
         super().track(model)
-        if self.stage != "train":
+        if self._stage != "train":
             batch_idx, batch_idx_target = model.get_batch_idx()
             batch_xyz, batch_xyz_target = model.get_xyz()
             batch_ind, batch_ind_target = model.get_ind()
@@ -98,15 +98,16 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 ind_target = batch_ind_target[batch_idx_target == b] - cum_sum_target
                 cum_sum += len(xyz)
                 cum_sum_target += len(xyz_target)
-                rand = torch.randperm(len(ind))[self.num_points]
+                rand = torch.randperm(len(ind))[: self.num_points]
 
                 matches_gt = torch.stack([ind[rand], ind_target[rand]]).T
                 T_gt = estimate_transfo(xyz[matches_gt[:, 0]], xyz_target[matches_gt[:, 1]])
-                matches_pred = knn(feat[matches_gt[:, 0]], feat_target[matches_gt[:, 1]]).T
+                matches_pred = knn(feat[matches_gt[:, 0]], feat_target[matches_gt[:, 1]], k=1).T
                 T_pred = fast_global_registration(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 1]])
 
                 hit_ratio = compute_hit_ratio(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 0]], T_gt, self.tau_1)
                 trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
+
                 self._hit_ratio.add(hit_ratio.item())
                 self._feat_match_ratio.add(float(hit_ratio.item() > self.tau_2))
                 self._trans_error.add(trans_error.item())
@@ -115,8 +116,8 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
     def get_metrics(self, verbose=False):
         metrics = super().get_metrics(verbose)
         if self._stage != "train":
-            metrics["{}_hit_ratio".format(self._stage)] = self._hit_ratio
-            metrics["{}_feat_match_ratio".format(self._stage)] = self._feat_match_ratio
-            metrics["{}_trans_error".format(self._stage)] = self._trans_error
-            metrics["{}_rot_error".format(self._stage)] = self._rot_error
+            metrics["{}_hit_ratio".format(self._stage)] = float(self._hit_ratio.value()[0])
+            metrics["{}_feat_match_ratio".format(self._stage)] = float(self._feat_match_ratio.value()[0])
+            metrics["{}_trans_error".format(self._stage)] = float(self._trans_error.value()[0])
+            metrics["{}_rot_error".format(self._stage)] = float(self._rot_error.value()[0])
         return metrics

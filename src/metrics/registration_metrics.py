@@ -151,5 +151,10 @@ def compute_transfo_error(T_gt, T_pred):
     http://jlyang.org/tpami16_go-icp_preprint.pdf
     """
     rte = torch.norm(T_gt[:3, 3] - T_pred[:3, 3])
-    rre = torch.acos((torch.trace(T_gt[:3, :3].mm(T_pred[:3, :3].T)) - 1) * 0.5) * 180 / np.pi
+    cos_theta = (torch.trace(T_gt[:3, :3].mm(T_pred[:3, :3].T)) - 1) * 0.5
+    if cos_theta > 1:
+        cos_theta = torch.tensor([1.0])
+    if cos_theta < -1:
+        cos_theta = torch.tensor([-1.0])
+    rre = torch.acos(cos_theta) * 180 / np.pi
     return rte, rre
