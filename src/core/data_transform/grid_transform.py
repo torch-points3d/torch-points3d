@@ -36,7 +36,7 @@ def sparse_coords_to_clusters(pos, batch):
     return cluster, unique_pos_indices
 
 
-def group_data(data, cluster, unique_pos_indices=None, mode="last", skip_keys=[]):
+def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[]):
     """ Group data based on indices in cluster. 
     The option ``mode`` controls how data gets agregated within each cluster.
     
@@ -56,6 +56,10 @@ def group_data(data, cluster, unique_pos_indices=None, mode="last", skip_keys=[]
     """
 
     assert mode in ["mean", "last"]
+    if mode == "mean" and cluster is None:
+        raise ValueError("In mean mode the cluster argument needs to be specified")
+    if mode == "last" and unique_pos_indices is None:
+        raise ValueError("In last mode the unique_pos_indices argument needs to be specified")
 
     num_nodes = data.num_nodes
     for key, item in data:
