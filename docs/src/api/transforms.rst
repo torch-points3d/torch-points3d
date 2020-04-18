@@ -48,4 +48,10 @@ Transforms
 
 .. autoclass:: src.core.data_transform.PCACompute
 
+.. autofunction:: src.core.data_transform.NormalizeRGB
+
+.. autofunction:: src.core.data_transform.ElasticDistortion
+
+.. autofunction:: src.core.data_transform.Random3AxisRotation
+
 .. autofunction:: src.core.data_transform.compute_planarity
