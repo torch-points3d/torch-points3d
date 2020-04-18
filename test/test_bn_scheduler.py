@@ -23,7 +23,7 @@ class TestBNMomentumScheduler(unittest.TestCase):
             bn_scheduler_params.bn_clip,
         )
         model = MLP([3, 3, 3], bn_momentum=0.2)
-        bn_scheduler = instantiate_bn_scheduler(model, bn_scheduler_config.bn_scheduler)
+        bn_scheduler = instantiate_bn_scheduler(model, bn_scheduler_config.bn_scheduler, "on_epoch")
         self.assertEqual(model[0][1].__dict__["momentum"], bn_momentum)
         for epoch in range(100):
             bn_scheduler.step(epoch)

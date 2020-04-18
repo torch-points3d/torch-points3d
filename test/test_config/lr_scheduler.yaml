@@ -23,8 +23,12 @@ training:
                     step_size: 1
                     gamma: 0.9
                     last_epoch: -1
-                on_iter:
+                on_num_sample:
                     step_size: 32
+                    gamma: 0.9
+                    last_epoch: -1
+                on_num_batch:
+                    step_size: 1
                     gamma: 0.9
                     last_epoch: -1
         bn_scheduler:
@@ -37,3 +41,4 @@ training:
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""
+update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]
