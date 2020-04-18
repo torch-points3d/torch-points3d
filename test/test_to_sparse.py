@@ -26,8 +26,6 @@ class TestSparse(unittest.TestCase):
         transform = ToSparseInput(grid_size=1, mode="last")
         data_out = transform(data.clone())
 
-        self.assertIn("delta_norm", data_out.keys)
-        self.assertIn("delta", data_out.keys)
         self.assertEqual(data_out.pos.dtype, torch.int)
         self.assertEqual(2, data_out.pos.shape[0])
 
