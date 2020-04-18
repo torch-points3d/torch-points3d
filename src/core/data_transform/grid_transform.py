@@ -19,7 +19,7 @@ def shuffle_data(data):
             data[key] = item[shuffle_idx]
     return data
 
-
+  
 def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[]):
     """ Group data based on indices in cluster. 
     The option ``mode`` controls how data gets agregated within each cluster.
@@ -105,7 +105,7 @@ class GridSampling:
         else:
             cluster = voxel_grid(coords, data.batch, 1)
         cluster, unique_pos_indices = consecutive_cluster(cluster)
-
+        
         skip_keys = []
         if self._quantize_coords:
             data.pos = coords[unique_pos_indices]
