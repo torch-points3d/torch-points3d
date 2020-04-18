@@ -1,5 +1,6 @@
-![Project Logo](/docs/logo.png)
-
+<p align="center">
+  <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
+</p>
 
 [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
 
@@ -127,7 +128,7 @@ poetry install -E MinkowskiEngine --no-root
 ## Train pointnet++ on part segmentation task for dataset shapenet
 
 ```bash
-poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
+poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet-fixed
 ```
 
 And you should see something like that
@@ -225,6 +226,27 @@ docker run -v /test_data:/in -v /test_data/out:/out pointnet2_charlesssg:latest 
 ```
 
 The `-v` option mounts a local directory to the container's file system. For example in the command line above, `/test_data/out` will be mounted at the location `/out`. As a consequence, all files written in `/out` will be available in the folder `/test_data/out` on your machine.
+
+
+## Profiling
+
+We advice to use [``snakeviz``](https://jiffyclub.github.io/snakeviz/) and [``cProfile``](https://docs.python.org/2/library/profile.html)
+
+Use cProfile to profile your code
+```
+poetry run python -m cProfile -o {your_name}.prof train.py ... debugging.profiling=True
+```
+
+And visualize results using snakeviz.
+```
+snakeviz {your_name}.prof
+```
+
+It is also possible to use [```torch.utils.bottleneck```](https://pytorch.org/docs/stable/bottleneck.html)
+
+```
+python -m torch.utils.bottleneck /path/to/source/script.py [args]
+```
 
 ## Troubleshooting
 #### Undefined symbol / Updating Pytorch
