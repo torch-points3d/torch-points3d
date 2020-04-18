@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch_scatter import scatter_mean, scatter_add
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn import voxel_grid
+from torch_cluster import grid_cluster
 
 log = logging.getLogger(__name__)
 
@@ -14,28 +15,11 @@ def shuffle_data(data):
     shuffle_idx = torch.randperm(num_points)
     for key in set(data.keys):
         item = data[key]
-        if num_points == item.shape[0]:
+        if torch.is_tensor(item) and num_points == item.shape[0]:
             data[key] = item[shuffle_idx]
     return data
 
-
-def sparse_coords_to_clusters(pos, batch):
-    """
-    This function is responsible to convert sparse coordinates into clusters using torch.unique.
-    """
-    assert pos.dtype == torch.int or pos.dtype == torch.long
-
-    # Build clusters
-    if batch is not None:
-        pos = torch.cat([batch.unsqueeze(-1), pos.long()], dim=-1)
-
-    unique_pos, cluster = torch.unique(pos, return_inverse=True, dim=0)
-    unique_pos_indices = torch.arange(cluster.size(0), dtype=cluster.dtype, device=cluster.device)
-    unique_pos_indices = cluster.new_empty(unique_pos.size(0)).scatter_(0, cluster, unique_pos_indices)
-
-    return cluster, unique_pos_indices
-
-
+  
 def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[]):
     """ Group data based on indices in cluster. 
     The option ``mode`` controls how data gets agregated within each cluster.
@@ -116,10 +100,12 @@ class GridSampling:
             data = shuffle_data(data)
 
         coords = ((data.pos) / self._grid_size).int()
-        batch = data.batch if hasattr(data, "batch") else None
-        cluster, unique_pos_indices = sparse_coords_to_clusters(coords, batch)
-
-        # Delete pos for small speed up
+        if "batch" not in data:
+            cluster = grid_cluster(coords, torch.tensor([1, 1, 1]))
+        else:
+            cluster = voxel_grid(coords, data.batch, 1)
+        cluster, unique_pos_indices = consecutive_cluster(cluster)
+        
         skip_keys = []
         if self._quantize_coords:
             data.pos = coords[unique_pos_indices]
