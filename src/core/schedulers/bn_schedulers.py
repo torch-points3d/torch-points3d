@@ -16,7 +16,7 @@ def set_bn_momentum_default(bn_momentum):
 
 
 class BNMomentumScheduler(object):
-    def __init__(self, model, bn_lambda, update_bn_scheduler_on, last_epoch=-1, setter=set_bn_momentum_default):
+    def __init__(self, model, bn_lambda, update_scheduler_on, last_epoch=-1, setter=set_bn_momentum_default):
         if not isinstance(model, nn.Module):
             raise RuntimeError("Class '{}' is not a PyTorch nn Module".format(type(model).__name__))
 
@@ -26,7 +26,11 @@ class BNMomentumScheduler(object):
         self.step(last_epoch + 1)
         self.last_epoch = last_epoch
         self._scheduler_opt = None
-        self._update_bn_scheduler_on = update_bn_scheduler_on
+        self._update_scheduler_on = update_scheduler_on
+
+    @property
+    def update_scheduler_on(self):
+        return self._update_scheduler_on
 
     @property
     def scheduler_opt(self):
@@ -62,8 +66,8 @@ class BNMomentumScheduler(object):
         self.current_momemtum = state_dict["current_momemtum"]
 
     def __repr__(self):
-        return "{}(base_momentum: {}, update_bn_scheduler_on={})".format(
-            self.__class__.__name__, self.bn_lambda(self.last_epoch), self._update_bn_scheduler_on
+        return "{}(base_momentum: {}, update_scheduler_on={})".format(
+            self.__class__.__name__, self.bn_lambda(self.last_epoch), self._update_scheduler_on
         )
 
 

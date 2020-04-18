@@ -58,7 +58,7 @@ class BaseModel(torch.nn.Module):
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
-        self._update_lr_scheduler_on = None
+        self._update_lr_scheduler_on = "on_epoch"
         self._update_bn_scheduler_on = "on_epoch"
 
     @property
@@ -212,7 +212,9 @@ class BaseModel(torch.nn.Module):
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
-            self._update_lr_scheduler_on = config.update_lr_scheduler_on
+            update_lr_scheduler_on = config.update_lr_scheduler_on
+            if update_lr_scheduler_on:
+                self._update_lr_scheduler_on = update_lr_scheduler_on
             lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt, self._update_lr_scheduler_on)
             self.add_scheduler("lr_scheduler", lr_scheduler)
 

@@ -95,6 +95,10 @@ class LRScheduler:
         return self._scheduler
 
     @property
+    def update_scheduler_on(self):
+        return self._update_scheduler_on
+
+    @property
     def scheduler_opt(self):
         return self._scheduler._scheduler_opt
 
