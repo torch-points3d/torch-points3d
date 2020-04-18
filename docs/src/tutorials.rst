@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 Tutorials
 ===========
@@ -29,7 +29,7 @@ Create a dataset that the framework recognises
 
 The framework provides a base class for datasets that needs to be sub classed when you add your own. 
 We also follow the convention that the ``.py`` file that describes a dataset for segmentation will leave in the ``src/datasets/segmentation`` folder.
-For another task such as regression it would go in ``src/datasets/regression``. 
+For another task such as classification it would go in ``src/datasets/classification``. 
 
 Start by creating a new file ``src/datasets/segmentation/s3dis.py`` with the class ``S3DISDataset``, it should inherit from ``BaseDataset``.
 
@@ -145,7 +145,7 @@ Let's create a ``conf/data/segmentation/s3dis.yaml`` file with our own setting t
  * ``task`` needs to be specified. Currently, the arguments provided by the command line are lost and therefore we need the extra information.
  * ``class`` needs to be specified. In that case, since we solve a classification task, the code will look for a class named ``S3DISDataset`` within the ``src/datasets/segmentation/s3dis.py`` file.
 
-For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/metrics/regression_tracker.py>`_
+For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/metrics/segmentation_tracker.py>`_
 
 Create a new model
 --------------------
@@ -273,7 +273,7 @@ Let's create a new file ``/src/models/segmentation/pointnet2.py`` with its assoc
 .. note::
 
     * Make sure that you import all the required modules
-    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/models/base_model.py>`_ for more details)
+    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/models/base_model.py>`_ for more details)
 
 Create a new configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -310,7 +310,7 @@ When I say optional, I mean those parameters could be defined differently for yo
 We don't want to force any particular configuration format however, the simpler is always better !
 
 The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class 
-`src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/models/base_architectures/unet.py>`_ 
+`src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/models/base_architectures/unet.py>`_ 
 with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
 The following arguments are required by those classes:
 
@@ -399,75 +399,3 @@ Your terminal should contain:
 .. image:: ../imgs/logging.png
    :target: ../imgs/logging.png
    :alt: logging
-
-Adding a model for regression
---------------------------------
-
-Now that we have a good understanding about how to add new datasets and models, let's conclude with adding a new task.
-Let's say that you want to do solve a regression task. The steps you will have to take are as follow:
-
-- Add a new dataset within the ``src/datasets/regression`` folder
-- Add a new model within the ``src/models/regression`` folder
-- Add the dataset and model configurations to the conf folder. Similarly, those new config will go into a regression folder.
-
-Finally, converting a model for regression is rather straightforward, you only need to change the last layer of your network and change the loss as well.
-This would look like the following for our pointnet++ example above:
-
-.. code-block:: python
-
-   import torch
-
-   import torch.nn.functional as F
-   from torch_geometric.data import Data
-   import etw_pytorch_utils as pt_utils
-   import logging
-
-   from src.modules.pointnet2 import * # This part is extremely important. Always important the associated modules within your this file
-   from src.core.base_conv.dense import DenseFPModule
-   from src.models.base_architectures import UnetBasedModel
-
-   log = logging.getLogger(__name__)
-
-   class PointNet2_D(UnetBasedModel):
-       def __init__(self, option, model_type, dataset, modules):
-           """Initialize this model class.
-           Parameters:
-               opt -- training/test options
-           A few things can be done here.
-           - (required) call the initialization function of BaseModel
-           - define loss function, visualization images, model names, and optimizers
-           """
-           UnetBasedModel.__init__(
-               self, option, model_type, dataset, modules
-           )  # call the initialization method of UnetBasedModel
-
-           # Create the mlp to classify data
-           nn = option.mlp_cls.nn
-           self.dropout = option.mlp_cls.get("dropout")
-           self.lin1 = torch.nn.Linear(nn[0], nn[1])
-           self.lin2 = torch.nn.Linear(nn[2], nn[3])
-           self.lin3 = torch.nn.Linear(nn[4], 1)
-
-           self.loss_names = ["loss_reg"] # This will be used the automatically get loss_seg from self
-
-        def forward(self) -> Any:
-            """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-            data = self.model(self.input)
-            x = F.relu(self.lin1(data.x))
-            x = F.dropout(x, p=self.dropout, training=self.training)
-            x = self.lin2(x)
-            x = F.dropout(x, p=self.dropout, training=self.training)
-            self.output = self.lin3(x)
-            return self.output
-
-        def backward(self):
-            """Calculate losses, gradients, and update network weights; called in every training iteration"""
-            # calculate the intermediate results if necessary; here self.output has been computed during function <forward>
-            # calculate loss given the input and intermediate results
-            self.loss_reg = F.mse_loss(self.output, self.labels)
-
-            self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
-
-.. note::
-
-    We already provide a tracker for regression `here <https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/metrics/regression_tracker.py>`_.

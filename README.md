@@ -1,7 +1,8 @@
-![Project Logo](/docs/logo.png)
+<p align="center">
+  <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
+</p>
 
-
-[![codecov](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/deeppointcloud-benchmarks) [![Actions Status](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/actions) [![Documentation Status](https://readthedocs.org/projects/deeppointcloud-benchmarks/badge/?version=latest)](https://deeppointcloud-benchmarks.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
 
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) and [Facebook Hydra](https://hydra.cc/).
@@ -43,13 +44,13 @@ where each folder contains the dataset related to each task.
 
 ## Methods currently implemented
 
-* **[PointNet](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/blob/master/src/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
-* **[PointNet++](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
-* **[RSConv](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
-* **[RandLA-Net](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
-* **[PointCNN](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
-* **[KPConv](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
-* **[MinkowskiEngine](https://github.com/nicolas-chaulet/deeppointcloud-benchmarks/tree/master/src/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
+* **[PointNet](https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
+* **[PointNet++](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
+* **[RSConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
+* **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
+* **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
+* **[KPConv](https://github.com/nicolas-chaulet/dtorch-points3d/tree/master/src/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
+* **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
 
 
 ## Available datasets
@@ -127,7 +128,7 @@ poetry install -E MinkowskiEngine --no-root
 ## Train pointnet++ on part segmentation task for dataset shapenet
 
 ```bash
-poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet
+poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet-fixed
 ```
 
 And you should see something like that
