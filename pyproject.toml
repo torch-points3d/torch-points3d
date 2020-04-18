@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "deeppointcloud_benchmark"
+name = "torch-points3d"
 version = "0.1.0"
 description = ""
 authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
@@ -38,6 +38,7 @@ codecov = "^2.0.16"
 sphinx = "^2.4.4"
 sphinx-autobuild = "^0.7.1"
 gpustat = "^0.6.0"
+snakeviz = "^2.0.1"
 
 [tool.poetry.extras]
 MinkowskiEngine = ["MinkowskiEngine"]

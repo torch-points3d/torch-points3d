@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 
 Transforms
@@ -24,11 +24,15 @@ Transforms
 
 .. autoclass:: src.core.data_transform.MultiScaleTransform
 
+.. autofunction:: src.core.data_transform.NormalizeRGB
+
 .. autoclass:: src.core.data_transform.PCACompute
 
 .. autoclass:: src.core.data_transform.PointCloudFusion
 
 .. autoclass:: src.core.data_transform.PointNetForward
+
+.. autofunction:: src.core.data_transform.Random3AxisRotation
 
 .. autoclass:: src.core.data_transform.RandomDropout
 
@@ -53,7 +57,3 @@ Transforms
 .. autoclass:: src.core.data_transform.SphereSampling
 
 .. autoclass:: src.core.data_transform.ToSparseInput
-
-
-
-
