@@ -21,6 +21,45 @@ from src.utils.config import is_list
 from src.utils import is_iterable
 
 
+class Random3AxisRotation(object):
+    """
+    Rotate pointcloud with random angles along x, y, z axis
+
+    Parameters
+    -----------
+    apply_rotation: bool:
+        Whether to apply the rotation
+    rot_x: float
+        Rotation angle on x axis in degrees
+    rot_y: float
+        Rotation angle on y axis in degrees
+    rot_z: float
+        Rotation angle on z axis in degrees
+    """
+
+    def __init__(self, apply_rotation: bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
+        self._apply_rotation = apply_rotation
+        self._rot_x = rot_x
+        self._rot_y = rot_y
+        self._rot_z = rot_z
+
+        from torch_geometric.transforms import Compose, RandomRotate
+
+        self.rotations = Compose(
+            [RandomRotate(rot_x, axis=0), RandomRotate(rot_y, axis=1), RandomRotate(rot_z, axis=2)]
+        )
+
+    def __call__(self, data):
+        if self._apply_rotation:
+            data = self.rotations(data)
+        return data
+
+    def __repr__(self):
+        return "{}(apply_rotation={}, rot_x={}, rot_y={}, rot_z={})".format(
+            self.__class__.__name__, self._apply_rotation, self._rot_x, self._rot_y, self._rot_z
+        )
+
+
 class AddFeatsByKeys(object):
     """This transform takes a list of attributes names and if allowed, add them to x
 
@@ -101,7 +140,7 @@ class AddFeatsByKeys(object):
     def __repr__(self):
         msg = ""
         for f, a in zip(self._feat_names, self._list_add_to_x):
-            msg += "{}:{}, ".format(f, a)
+            msg += "{}={}, ".format(f, a)
         return "{}({})".format(self.__class__.__name__, msg[:-2])
 
 
@@ -188,6 +227,7 @@ class NormalFeature(object):
     add normal as feature. if it doesn't exist, compute normals
     using PCA
     """
+
     def __call__(self, data):
         if data.norm is None:
             raise NotImplementedError("TODO: Implement normal computation")
@@ -246,7 +286,7 @@ class AddOnes(object):
 
 class XYZFeature(object):
     """
-    add the X, Y and Z as a feature
+    Add the X, Y and Z as a feature
 
     Parameters
     -----------
@@ -283,4 +323,4 @@ class XYZFeature(object):
             if len(coords):
                 coords += ", "
             coords += axis[a]
-        return "XYZFeature: " + coords
+        return "{}({})".format(self.__class__.__name__, coords)

@@ -2,3 +2,4 @@ debugging:
   find_neighbour_dist: False
   num_batches: 20
   early_break: False
+  profiling: False

@@ -1,24 +1,21 @@
-.. Deep Point Cloud Benchmark documentation master file, created by
+.. Torch Points 3D documentation master file, created by
    sphinx-quickstart on Wed Mar 18 08:19:48 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
-
-Deep Point Cloud Benchmark
-======================================================
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+.. raw:: html
 
-.. image:: logo.png
-   :target: logo.png
-   :alt: Screenshot
+   <img src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" style="width: 40%; display: block; margin-left: auto; margin-right: auto;"/>
+   <p/>
 
 
-**Deep Point Cloud Benchmark** is a framework for developing and testing common
+**Torch Points 3D** is a framework for developing and testing common
 deep learning models to solve tasks related to unstructured 3D spatial data
 i.e. Point Clouds. The framework currently integrates some of the best published
 architectures and it  integrates the most common public datasests for ease of

@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/deeppointcloud-benchmarks
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 
 Transforms
@@ -47,5 +47,11 @@ Transforms
 .. autoclass:: src.core.data_transform.RandomDropout
 
 .. autoclass:: src.core.data_transform.PCACompute
+
+.. autofunction:: src.core.data_transform.NormalizeRGB
+
+.. autofunction:: src.core.data_transform.ElasticDistortion
+
+.. autofunction:: src.core.data_transform.Random3AxisRotation
 
 .. autofunction:: src.core.data_transform.compute_planarity
