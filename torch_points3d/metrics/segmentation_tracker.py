@@ -3,10 +3,10 @@ import torchnet as tnt
 import torch
 import numpy as np
 from torch.nn import functional as F
-from src.models.base_model import BaseModel
-from src.metrics.confusion_matrix import ConfusionMatrix
-from src.metrics.base_tracker import BaseTracker, meter_value
-from src.metrics.meters import APMeter
+from torch_points3d.models.base_model import BaseModel
+from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
+from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
+from torch_points3d.metrics.meters import APMeter
 
 
 class SegmentationTracker(BaseTracker):

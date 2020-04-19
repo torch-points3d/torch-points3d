@@ -145,7 +145,7 @@ Let's create a ``conf/data/segmentation/s3dis.yaml`` file with our own setting t
  * ``task`` needs to be specified. Currently, the arguments provided by the command line are lost and therefore we need the extra information.
  * ``class`` needs to be specified. In that case, since we solve a classification task, the code will look for a class named ``S3DISDataset`` within the ``torch_points3d/datasets/segmentation/s3dis.py`` file.
 
-For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/torch_points3d/blob/master/torch_points3d/metrics/segmentation_tracker.py>`_
+For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/metrics/segmentation_tracker.py>`_
 
 Create a new model
 --------------------

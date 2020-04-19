@@ -4,14 +4,14 @@ import os.path as osp
 import torch
 from torch_geometric.data import Batch
 
-from src.datasets.base_dataset import BaseDataset
-from src.datasets.registration.base3dmatch import Base3DMatch
-from src.datasets.registration.utils import PatchExtractor
-from src.datasets.registration.pair import Pair
-from src.metrics.registration_tracker import PatchRegistrationTracker
-from src.metrics.registration_tracker import FragmentRegistrationTracker
-from src.core.data_transform.transforms import GridSampling
-from src.datasets.registration.base_siamese_dataset import BaseSiameseDataset
+from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.datasets.registration.base3dmatch import Base3DMatch
+from torch_points3d.datasets.registration.utils import PatchExtractor
+from torch_points3d.datasets.registration.pair import Pair
+from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
+from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
+from torch_points3d.core.data_transform.transforms import GridSampling
+from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 
 
 class Patch3DMatch(Base3DMatch):
