@@ -219,6 +219,12 @@ class Testhelpers(unittest.TestCase):
         with self.assertRaises(Exception):
             _ = t(data.clone())
 
+        pos = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 1]]).astype(np.float)
+        data = Data(pos=torch.from_numpy(pos).float())
+        t = Random3AxisRotation(apply_rotation=True, rot_x=0, rot_y=0, rot_z=180)
+
+        self.assertEqual(t(data.clone()).pos.shape, torch.Size([4, 3]))
+
     def test_RandomHorizontalFlip(self):
 
         pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))

@@ -55,7 +55,7 @@ class Random3AxisRotation(object):
                 rand_radian_angle = float(rand_deg_angle * np.pi) / 180.
                 axis = np.zeros(3)
                 axis[axis_ind] = 1
-                rot_mats.append(Random3AxisRotation.rotation_matrix(axis, rand_radian_angle))
+                rot_mats.append(Random3AxisRotation.euler_angle_to_rotation_matrix(axis, rand_radian_angle))
                 
         if self._apply_rotation and len(rot_mats) == 0:
             raise Exception("The rotation can't be applied if rotations {} aren't defined.".format(self._degree_angles))
@@ -69,17 +69,17 @@ class Random3AxisRotation(object):
         if len(rot_mats) == 1:
             return rot_mats[0]
         else:
-            return rot_mats[0] * Random3AxisRotation.make_rotation(rot_mats[1:])
+            return rot_mats[0] @ Random3AxisRotation.make_rotation(rot_mats[1:])
 
     @staticmethod
-    def rotation_matrix(axis, theta):
+    def euler_angle_to_rotation_matrix(axis, theta):
         return expm(np.cross(np.eye(3), axis / norm(axis) * theta))
 
     def __call__(self, data):
         if self._apply_rotation:
             pos = data.pos
             M = self.generate_random_rotation_matrix()
-            data.pos = M @ pos
+            data.pos = pos @ M.T
         return data
 
     def __repr__(self):
