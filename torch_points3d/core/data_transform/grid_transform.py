@@ -112,6 +112,7 @@ class GridSampling:
 
         skip_keys = []
         if self._quantize_coords:
+            data.xyz = data.pos  # Store the coordinates of points
             data.pos = coords[unique_pos_indices]
             skip_keys.append("pos")
 

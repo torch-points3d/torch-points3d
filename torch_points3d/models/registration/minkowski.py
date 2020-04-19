@@ -182,3 +182,15 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
     def backward(self):
         if hasattr(self, "loss"):
             self.loss.backward()
+
+    def get_outputs(self):
+        return self.output, self.output_target
+
+    def get_ind(self):
+        return self.ind, self.ind_target
+
+    def get_xyz(self):
+        pass
+
+    def get_batch_idx(self):
+        pass
