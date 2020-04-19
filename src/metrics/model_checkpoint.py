@@ -18,6 +18,7 @@ DEFAULT_METRICS_FUNC = {
     "acc": max,
     "loss": min,
     "mer": min,
+    "ap": max,
 }  # Those map subsentences to their optimization functions
 
 
@@ -47,7 +48,6 @@ class Checkpoint:
             scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
             for scheduler_name, scheduler in schedulers.items()
         }
-
         to_save = kwargs
         for key, value in self.__dict__.items():
             if not key.startswith("_"):

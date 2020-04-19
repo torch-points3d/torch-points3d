@@ -1,0 +1,1602 @@
+```
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 16:27:17 ===> Configurations
+thomas 04/09 16:27:17     model: Res16UNet34C
+thomas 04/09 16:27:17     conv1_kernel_size: 3
+thomas 04/09 16:27:17     weights: None
+thomas 04/09 16:27:17     weights_for_inner_model: False
+thomas 04/09 16:27:17     dilations: [1, 1, 1, 1]
+thomas 04/09 16:27:17     wrapper_type: None
+thomas 04/09 16:27:17     wrapper_region_type: 1
+thomas 04/09 16:27:17     wrapper_kernel_size: 3
+thomas 04/09 16:27:17     wrapper_lr: 0.1
+thomas 04/09 16:27:17     meanfield_iterations: 10
+thomas 04/09 16:27:17     crf_spatial_sigma: 1
+thomas 04/09 16:27:17     crf_chromatic_sigma: 12
+thomas 04/09 16:27:17     optimizer: SGD
+thomas 04/09 16:27:17     lr: 0.1
+thomas 04/09 16:27:17     sgd_momentum: 0.9
+thomas 04/09 16:27:17     sgd_dampening: 0.1
+thomas 04/09 16:27:17     adam_beta1: 0.9
+thomas 04/09 16:27:17     adam_beta2: 0.999
+thomas 04/09 16:27:17     weight_decay: 0.0001
+thomas 04/09 16:27:17     param_histogram_freq: 100
+thomas 04/09 16:27:17     save_param_histogram: False
+thomas 04/09 16:27:17     iter_size: 1
+thomas 04/09 16:27:17     bn_momentum: 0.02
+thomas 04/09 16:27:17     scheduler: PolyLR
+thomas 04/09 16:27:17     max_iter: 120000
+thomas 04/09 16:27:17     step_size: 20000.0
+thomas 04/09 16:27:17     step_gamma: 0.1
+thomas 04/09 16:27:17     poly_power: 0.9
+thomas 04/09 16:27:17     exp_gamma: 0.95
+thomas 04/09 16:27:17     exp_step_size: 445
+thomas 04/09 16:27:17     log_dir: ./outputs/ScanNet/2020-04-09_16-27-14
+thomas 04/09 16:27:17     data_dir: data
+thomas 04/09 16:27:17     dataset: ScannetVoxelizationDataset
+thomas 04/09 16:27:17     temporal_dilation: 30
+thomas 04/09 16:27:17     temporal_numseq: 3
+thomas 04/09 16:27:17     point_lim: -1
+thomas 04/09 16:27:17     pre_point_lim: -1
+thomas 04/09 16:27:17     batch_size: 8
+thomas 04/09 16:27:17     val_batch_size: 1
+thomas 04/09 16:27:17     test_batch_size: 1
+thomas 04/09 16:27:17     cache_data: False
+thomas 04/09 16:27:17     num_workers: 4
+thomas 04/09 16:27:17     num_val_workers: 1
+thomas 04/09 16:27:17     ignore_label: 255
+thomas 04/09 16:27:17     return_transformation: False
+thomas 04/09 16:27:17     ignore_duplicate_class: False
+thomas 04/09 16:27:17     partial_crop: 0.0
+thomas 04/09 16:27:17     train_limit_numpoints: 120000000
+thomas 04/09 16:27:17     synthia_path: /home/chrischoy/datasets/Synthia/Synthia4D
+thomas 04/09 16:27:17     synthia_camera_path: /home/chrischoy/datasets/Synthia/%s/CameraParams/
+thomas 04/09 16:27:17     synthia_camera_intrinsic_file: intrinsics.txt
+thomas 04/09 16:27:17     synthia_camera_extrinsics_file: Stereo_Right/Omni_F/%s.txt
+thomas 04/09 16:27:17     temporal_rand_dilation: False
+thomas 04/09 16:27:17     temporal_rand_numseq: False
+thomas 04/09 16:27:17     scannet_path: /home/tcn02/SpatioTemporalSegmentation/data/scannet/processed/train
+thomas 04/09 16:27:17     stanford3d_path: /home/chrischoy/datasets/Stanford3D
+thomas 04/09 16:27:17     is_train: True
+thomas 04/09 16:27:17     stat_freq: 40
+thomas 04/09 16:27:17     test_stat_freq: 100
+thomas 04/09 16:27:17     save_freq: 1000
+thomas 04/09 16:27:17     val_freq: 1000
+thomas 04/09 16:27:17     empty_cache_freq: 1
+thomas 04/09 16:27:17     train_phase: train
+thomas 04/09 16:27:17     val_phase: val
+thomas 04/09 16:27:17     overwrite_weights: True
+thomas 04/09 16:27:17     resume: None
+thomas 04/09 16:27:17     resume_optimizer: True
+thomas 04/09 16:27:17     eval_upsample: False
+thomas 04/09 16:27:17     lenient_weight_loading: False
+thomas 04/09 16:27:17     use_feat_aug: True
+thomas 04/09 16:27:17     data_aug_color_trans_ratio: 0.1
+thomas 04/09 16:27:17     data_aug_color_jitter_std: 0.05
+thomas 04/09 16:27:17     normalize_color: True
+thomas 04/09 16:27:17     data_aug_scale_min: 0.9
+thomas 04/09 16:27:17     data_aug_scale_max: 1.1
+thomas 04/09 16:27:17     data_aug_hue_max: 0.5
+thomas 04/09 16:27:17     data_aug_saturation_max: 0.2
+thomas 04/09 16:27:17     visualize: False
+thomas 04/09 16:27:17     test_temporal_average: False
+thomas 04/09 16:27:17     visualize_path: outputs/visualize
+thomas 04/09 16:27:17     save_prediction: False
+thomas 04/09 16:27:17     save_pred_dir: outputs/pred
+thomas 04/09 16:27:17     test_phase: test
+thomas 04/09 16:27:17     evaluate_original_pointcloud: False
+thomas 04/09 16:27:17     test_original_pointcloud: False
+thomas 04/09 16:27:17     is_cuda: True
+thomas 04/09 16:27:17     load_path: 
+thomas 04/09 16:27:17     log_step: 50
+thomas 04/09 16:27:17     log_level: INFO
+thomas 04/09 16:27:17     num_gpu: 1
+thomas 04/09 16:27:17     seed: 123
+thomas 04/09 16:27:17 ===> Initializing dataloader
+thomas 04/09 16:27:17 Loading ScannetVoxelizationDataset: scannetv2_train.txt
+thomas 04/09 16:27:17 Loading ScannetVoxelizationDataset: scannetv2_val.txt
+thomas 04/09 16:27:17 ===> Building model
+thomas 04/09 16:27:17 ===> Number of trainable parameters: Res16UNet34C: 37846644
+thomas 04/09 16:27:17 Res16UNet34C(
+  (conv0p1s1): MinkowskiConvolution(in=3, out=32, region_type=RegionType.HYPERCUBE, kernel_size=[3, 3, 3], stride=[1, 1, 1], dilation=[1, 1, 1])
+  (bn0): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (conv1p1s2): MinkowskiConvolution(in=32, out=32, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bn1): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block1): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=32, out=32, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=32, out=32, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=32, out=32, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=32, out=32, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (conv2p2s2): MinkowskiConvolution(in=32, out=32, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bn2): MinkowskiBatchNorm(32, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block2): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=32, out=64, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=64, out=64, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=32, out=64, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=64, out=64, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=64, out=64, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (2): BasicBlock(
+      (conv1): MinkowskiConvolution(in=64, out=64, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=64, out=64, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (conv3p4s2): MinkowskiConvolution(in=64, out=64, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bn3): MinkowskiBatchNorm(64, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block3): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=64, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=64, out=128, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (2): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (3): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (conv4p8s2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bn4): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block4): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=128, out=256, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (2): BasicBlock(
+      (conv1): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (3): BasicBlock(
+      (conv1): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (4): BasicBlock(
+      (conv1): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+    (5): BasicBlock(
+      (conv1): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (convtr4p16s2): MinkowskiConvolutionTranspose(in=256, out=256, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bntr4): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block5): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=384, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=384, out=256, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=256, out=256, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (convtr5p8s2): MinkowskiConvolutionTranspose(in=256, out=128, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bntr5): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block6): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=192, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=192, out=128, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=128, out=128, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (convtr6p4s2): MinkowskiConvolutionTranspose(in=128, out=96, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bntr6): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block7): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=96, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=128, out=96, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=96, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=96, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (convtr7p2s2): MinkowskiConvolutionTranspose(in=96, out=96, region_type=RegionType.HYPERCUBE, kernel_size=[2, 2, 2], stride=[2, 2, 2], dilation=[1, 1, 1])
+  (bntr7): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+  (block8): Sequential(
+    (0): BasicBlock(
+      (conv1): MinkowskiConvolution(in=128, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=96, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+      (downsample): Sequential(
+        (0): MinkowskiConvolution(in=128, out=96, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+        (1): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.02, affine=True, track_running_stats=True)
+      )
+    )
+    (1): BasicBlock(
+      (conv1): MinkowskiConvolution(in=96, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm1): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (conv2): MinkowskiConvolution(in=96, out=96, region_type=RegionType.HYBRID, kernel_volume=27, stride=[1, 1, 1], dilation=[1, 1, 1])
+      (norm2): MinkowskiBatchNorm(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (relu): MinkowskiReLU()
+    )
+  )
+  (final): MinkowskiConvolution(in=96, out=20, region_type=RegionType.HYPERCUBE, kernel_size=[1, 1, 1], stride=[1, 1, 1], dilation=[1, 1, 1])
+  (relu): MinkowskiReLU()
+)
+thomas 04/09 16:27:20 ===> Start training
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 16:27:30 ===> Epoch[1](1/151): Loss 3.0608	LR: 1.000e-01	Score 5.415	Data time: 6.7538, Total iter time: 9.0705
+thomas 04/09 16:29:18 ===> Epoch[1](40/151): Loss 1.6836	LR: 9.997e-02	Score 57.488	Data time: 0.2522, Total iter time: 2.7288
+thomas 04/09 16:31:03 ===> Epoch[1](80/151): Loss 1.3631	LR: 9.994e-02	Score 63.212	Data time: 0.2210, Total iter time: 2.5687
+thomas 04/09 16:32:51 ===> Epoch[1](120/151): Loss 1.2555	LR: 9.991e-02	Score 65.215	Data time: 0.2471, Total iter time: 2.6253
+thomas 04/09 16:34:39 ===> Epoch[2](160/151): Loss 1.2095	LR: 9.988e-02	Score 65.911	Data time: 0.2292, Total iter time: 2.6691
+thomas 04/09 16:36:27 ===> Epoch[2](200/151): Loss 1.1866	LR: 9.985e-02	Score 65.864	Data time: 0.2383, Total iter time: 2.6325
+thomas 04/09 16:38:10 ===> Epoch[2](240/151): Loss 1.1562	LR: 9.982e-02	Score 67.593	Data time: 0.2216, Total iter time: 2.5219
+thomas 04/09 16:39:59 ===> Epoch[2](280/151): Loss 1.1593	LR: 9.979e-02	Score 67.024	Data time: 0.2331, Total iter time: 2.6797
+thomas 04/09 16:41:44 ===> Epoch[3](320/151): Loss 1.1379	LR: 9.976e-02	Score 66.245	Data time: 0.2334, Total iter time: 2.5691
+thomas 04/09 16:43:26 ===> Epoch[3](360/151): Loss 1.0875	LR: 9.973e-02	Score 67.858	Data time: 0.2220, Total iter time: 2.4861
+thomas 04/09 16:45:11 ===> Epoch[3](400/151): Loss 1.0406	LR: 9.970e-02	Score 69.480	Data time: 0.2273, Total iter time: 2.5631
+thomas 04/09 16:46:54 ===> Epoch[3](440/151): Loss 1.1035	LR: 9.967e-02	Score 67.746	Data time: 0.2403, Total iter time: 2.5240
+thomas 04/09 16:48:37 ===> Epoch[4](480/151): Loss 1.0934	LR: 9.964e-02	Score 67.677	Data time: 0.2405, Total iter time: 2.5050
+thomas 04/09 16:50:18 ===> Epoch[4](520/151): Loss 1.0448	LR: 9.961e-02	Score 68.949	Data time: 0.2138, Total iter time: 2.4852
+thomas 04/09 16:51:59 ===> Epoch[4](560/151): Loss 0.9993	LR: 9.958e-02	Score 70.001	Data time: 0.2300, Total iter time: 2.4794
+thomas 04/09 16:53:41 ===> Epoch[4](600/151): Loss 0.9702	LR: 9.955e-02	Score 71.358	Data time: 0.2375, Total iter time: 2.4831
+thomas 04/09 16:55:24 ===> Epoch[5](640/151): Loss 1.0020	LR: 9.952e-02	Score 69.651	Data time: 0.2266, Total iter time: 2.5081
+thomas 04/09 16:57:06 ===> Epoch[5](680/151): Loss 0.9361	LR: 9.949e-02	Score 72.049	Data time: 0.2341, Total iter time: 2.5108
+thomas 04/09 16:58:46 ===> Epoch[5](720/151): Loss 0.9645	LR: 9.946e-02	Score 70.988	Data time: 0.2400, Total iter time: 2.4440
+thomas 04/09 17:00:30 ===> Epoch[6](760/151): Loss 0.9414	LR: 9.943e-02	Score 71.333	Data time: 0.2486, Total iter time: 2.5273
+thomas 04/09 17:02:10 ===> Epoch[6](800/151): Loss 0.9005	LR: 9.940e-02	Score 72.731	Data time: 0.2254, Total iter time: 2.4628
+thomas 04/09 17:03:49 ===> Epoch[6](840/151): Loss 0.9013	LR: 9.937e-02	Score 72.816	Data time: 0.2193, Total iter time: 2.4278
+thomas 04/09 17:05:30 ===> Epoch[6](880/151): Loss 0.9540	LR: 9.934e-02	Score 71.038	Data time: 0.2493, Total iter time: 2.4647
+thomas 04/09 17:07:17 ===> Epoch[7](920/151): Loss 0.8273	LR: 9.931e-02	Score 74.257	Data time: 0.2275, Total iter time: 2.6120
+thomas 04/09 17:08:58 ===> Epoch[7](960/151): Loss 0.8765	LR: 9.928e-02	Score 73.439	Data time: 0.2456, Total iter time: 2.4567
+thomas 04/09 17:10:40 ===> Epoch[7](1000/151): Loss 0.8388	LR: 9.925e-02	Score 74.005	Data time: 0.2180, Total iter time: 2.5059
+thomas 04/09 17:10:40 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 17:10:40 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 17:11:22 101/312: Data time: 0.0021, Iter time: 0.2311	Loss 0.839 (AVG: 1.055)	Score 76.579 (AVG: 69.568)	mIOU 21.556 mAP 42.482 mAcc 30.756
+IOU: 63.230 95.480 29.143 40.481 64.270 32.700 46.326 13.472 0.043 0.888 0.000 14.125 4.874 8.821 0.000 0.000 0.000 0.000 0.000 17.264
+mAP: 66.449 96.138 35.376 72.164 76.174 64.424 57.354 26.044 23.054 29.999 9.684 40.333 40.464 38.649 21.100 28.490 44.340 32.327 25.479 21.590
+mAcc: 83.512 98.503 42.385 77.754 77.951 88.452 51.326 24.989 0.043 0.894 0.000 18.856 4.960 13.747 0.000 0.000 0.000 0.000 0.000 31.738
+
+thomas 04/09 17:12:06 201/312: Data time: 0.0022, Iter time: 0.2375	Loss 1.199 (AVG: 1.088)	Score 67.008 (AVG: 68.793)	mIOU 21.353 mAP 41.190 mAcc 30.699
+IOU: 62.628 96.076 28.692 36.119 64.472 31.791 48.487 16.661 0.037 0.970 0.000 11.424 4.860 12.082 0.000 0.000 0.000 0.000 0.000 12.753
+mAP: 66.078 95.896 38.982 68.848 76.492 61.957 56.778 28.575 20.620 29.205 9.945 36.450 36.877 36.080 16.936 34.962 37.635 27.515 24.198 19.765
+mAcc: 82.667 98.732 43.007 75.293 78.943 87.294 53.460 31.532 0.037 0.975 0.000 14.719 4.997 20.366 0.000 0.000 0.000 0.000 0.000 21.967
+
+thomas 04/09 17:12:46 301/312: Data time: 0.0026, Iter time: 0.3853	Loss 0.864 (AVG: 1.070)	Score 76.138 (AVG: 69.240)	mIOU 21.682 mAP 42.526 mAcc 31.114
+IOU: 63.219 95.885 32.489 32.123 64.483 30.481 49.071 17.019 0.026 0.959 0.000 18.421 5.537 11.257 0.000 0.000 0.000 0.000 0.000 12.666
+mAP: 67.570 96.175 41.346 64.802 76.476 61.610 59.172 27.914 21.989 28.689 11.031 43.706 39.248 36.889 20.448 38.395 38.330 28.314 28.517 19.898
+mAcc: 82.985 98.614 46.473 72.092 78.098 88.757 53.803 32.066 0.026 0.964 0.000 21.665 5.674 18.854 0.000 0.000 0.000 0.000 0.000 22.217
+
+thomas 04/09 17:12:51 312/312: Data time: 0.0023, Iter time: 0.3222	Loss 1.357 (AVG: 1.073)	Score 58.057 (AVG: 69.181)	mIOU 21.752 mAP 42.205 mAcc 31.108
+IOU: 63.172 95.895 32.824 31.865 64.919 30.998 49.459 16.837 0.025 0.959 0.000 18.730 5.426 11.396 0.000 0.000 0.000 0.000 0.000 12.531
+mAP: 67.607 96.238 42.042 62.540 76.565 61.639 58.875 28.062 21.889 28.689 10.885 42.984 38.433 36.616 20.695 36.569 37.904 28.438 27.706 19.726
+mAcc: 82.884 98.631 46.656 71.188 78.505 88.911 54.151 31.682 0.025 0.964 0.000 21.986 5.555 18.750 0.000 0.000 0.000 0.000 0.000 22.276
+
+thomas 04/09 17:12:51 Finished test. Elapsed time: 130.5012
+thomas 04/09 17:12:51 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 17:12:51 Current best mIoU: 21.752 at iter 1000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 17:14:29 ===> Epoch[7](1040/151): Loss 0.8600	LR: 9.922e-02	Score 73.501	Data time: 0.2353, Total iter time: 2.3995
+thomas 04/09 17:16:11 ===> Epoch[8](1080/151): Loss 0.8592	LR: 9.919e-02	Score 73.802	Data time: 0.2271, Total iter time: 2.4920
+thomas 04/09 17:17:55 ===> Epoch[8](1120/151): Loss 0.8133	LR: 9.916e-02	Score 74.354	Data time: 0.2115, Total iter time: 2.5319
+thomas 04/09 17:19:35 ===> Epoch[8](1160/151): Loss 0.8096	LR: 9.913e-02	Score 74.978	Data time: 0.2294, Total iter time: 2.4463
+thomas 04/09 17:21:18 ===> Epoch[8](1200/151): Loss 0.8081	LR: 9.910e-02	Score 75.334	Data time: 0.2225, Total iter time: 2.5132
+thomas 04/09 17:22:56 ===> Epoch[9](1240/151): Loss 0.8345	LR: 9.907e-02	Score 74.246	Data time: 0.2182, Total iter time: 2.3973
+thomas 04/09 17:24:39 ===> Epoch[9](1280/151): Loss 0.7724	LR: 9.904e-02	Score 75.696	Data time: 0.2219, Total iter time: 2.5164
+thomas 04/09 17:26:21 ===> Epoch[9](1320/151): Loss 0.7874	LR: 9.901e-02	Score 75.842	Data time: 0.2342, Total iter time: 2.4900
+thomas 04/09 17:28:09 ===> Epoch[10](1360/151): Loss 0.7665	LR: 9.898e-02	Score 76.181	Data time: 0.2351, Total iter time: 2.6441
+thomas 04/09 17:29:54 ===> Epoch[10](1400/151): Loss 0.7755	LR: 9.895e-02	Score 75.801	Data time: 0.2331, Total iter time: 2.5628
+thomas 04/09 17:31:37 ===> Epoch[10](1440/151): Loss 0.7671	LR: 9.892e-02	Score 75.929	Data time: 0.2365, Total iter time: 2.5195
+thomas 04/09 17:33:21 ===> Epoch[10](1480/151): Loss 0.7461	LR: 9.889e-02	Score 76.996	Data time: 0.2245, Total iter time: 2.5501
+thomas 04/09 17:35:05 ===> Epoch[11](1520/151): Loss 0.7371	LR: 9.886e-02	Score 77.407	Data time: 0.2503, Total iter time: 2.5410
+thomas 04/09 17:36:51 ===> Epoch[11](1560/151): Loss 0.7208	LR: 9.883e-02	Score 77.265	Data time: 0.2530, Total iter time: 2.5831
+thomas 04/09 17:38:40 ===> Epoch[11](1600/151): Loss 0.7237	LR: 9.880e-02	Score 77.434	Data time: 0.2372, Total iter time: 2.6689
+thomas 04/09 17:40:19 ===> Epoch[11](1640/151): Loss 0.7360	LR: 9.877e-02	Score 77.984	Data time: 0.2461, Total iter time: 2.4291
+thomas 04/09 17:42:05 ===> Epoch[12](1680/151): Loss 0.6632	LR: 9.874e-02	Score 79.137	Data time: 0.2441, Total iter time: 2.5891
+thomas 04/09 17:43:47 ===> Epoch[12](1720/151): Loss 0.6913	LR: 9.871e-02	Score 78.510	Data time: 0.2325, Total iter time: 2.4762
+thomas 04/09 17:45:26 ===> Epoch[12](1760/151): Loss 0.7127	LR: 9.868e-02	Score 77.780	Data time: 0.2329, Total iter time: 2.4476
+thomas 04/09 17:47:10 ===> Epoch[12](1800/151): Loss 0.7244	LR: 9.865e-02	Score 77.142	Data time: 0.2432, Total iter time: 2.5184
+thomas 04/09 17:48:51 ===> Epoch[13](1840/151): Loss 0.6606	LR: 9.862e-02	Score 78.887	Data time: 0.2211, Total iter time: 2.4749
+thomas 04/09 17:50:38 ===> Epoch[13](1880/151): Loss 0.6714	LR: 9.859e-02	Score 79.286	Data time: 0.2185, Total iter time: 2.6157
+thomas 04/09 17:52:17 ===> Epoch[13](1920/151): Loss 0.6962	LR: 9.856e-02	Score 78.114	Data time: 0.2148, Total iter time: 2.4268
+thomas 04/09 17:53:56 ===> Epoch[13](1960/151): Loss 0.6848	LR: 9.853e-02	Score 78.278	Data time: 0.2252, Total iter time: 2.4172
+thomas 04/09 17:55:35 ===> Epoch[14](2000/151): Loss 0.6431	LR: 9.850e-02	Score 79.816	Data time: 0.2379, Total iter time: 2.4075
+thomas 04/09 17:55:36 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 17:55:36 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 17:56:23 101/312: Data time: 0.0035, Iter time: 0.4126	Loss 1.318 (AVG: 0.887)	Score 60.403 (AVG: 69.392)	mIOU 30.832 mAP 54.122 mAcc 41.013
+IOU: 52.430 96.729 36.155 48.075 75.854 69.193 60.414 18.877 20.106 25.242 1.341 36.931 26.078 11.945 10.687 0.458 6.979 0.482 8.639 10.021
+mAP: 69.186 96.227 52.700 57.395 80.818 80.949 62.721 33.133 34.342 36.765 13.971 52.969 45.484 50.458 45.695 51.177 62.607 56.380 74.008 25.453
+mAcc: 60.123 98.974 72.478 66.791 91.622 77.009 65.265 72.824 22.863 29.569 1.854 51.119 44.144 23.765 12.008 0.460 6.983 0.482 8.639 13.284
+
+thomas 04/09 17:57:01 201/312: Data time: 0.0025, Iter time: 0.2519	Loss 0.690 (AVG: 0.892)	Score 79.169 (AVG: 69.278)	mIOU 31.248 mAP 54.157 mAcc 41.581
+IOU: 52.093 96.426 34.139 56.161 72.345 68.769 58.631 19.085 18.553 24.268 1.505 37.528 26.421 13.248 14.936 2.060 7.618 0.480 8.715 11.983
+mAP: 69.388 96.447 51.889 63.276 81.277 78.332 65.626 30.812 32.124 39.192 13.455 50.318 47.492 46.960 44.855 49.522 72.517 58.837 64.874 25.944
+mAcc: 59.439 98.774 71.454 73.230 89.792 77.940 63.052 75.801 20.903 26.855 1.892 52.343 41.587 26.317 16.517 2.063 7.626 0.480 8.716 16.850
+
+thomas 04/09 17:57:43 301/312: Data time: 0.0022, Iter time: 0.1855	Loss 0.104 (AVG: 0.924)	Score 96.852 (AVG: 68.424)	mIOU 31.099 mAP 53.276 mAcc 41.545
+IOU: 51.978 96.438 34.697 53.838 71.216 65.064 54.393 18.934 18.635 24.024 2.389 36.424 29.261 14.413 13.453 1.553 11.548 0.436 10.048 13.232
+mAP: 68.370 96.187 50.775 63.467 79.821 73.196 61.571 29.092 30.663 42.843 13.171 49.629 47.174 46.117 38.342 48.713 72.976 58.428 68.116 26.867
+mAcc: 59.721 98.819 72.898 71.408 88.832 74.888 60.229 75.570 20.882 26.109 2.783 49.903 43.573 28.066 14.769 1.560 11.555 0.436 10.049 18.859
+
+thomas 04/09 17:57:47 312/312: Data time: 0.0025, Iter time: 0.1939	Loss 0.765 (AVG: 0.924)	Score 75.016 (AVG: 68.352)	mIOU 31.058 mAP 53.263 mAcc 41.494
+IOU: 51.897 96.471 34.226 54.587 70.796 65.511 54.124 18.724 18.294 24.115 2.325 36.090 29.222 14.300 13.443 1.553 12.002 0.426 10.048 12.998
+mAP: 68.080 96.219 50.317 64.251 79.730 72.711 61.660 28.844 30.341 43.398 13.092 48.658 47.267 46.420 38.342 48.713 73.835 58.804 68.116 26.457
+mAcc: 59.678 98.837 72.177 72.147 88.759 75.394 59.884 75.213 20.457 26.123 2.699 49.771 43.490 27.699 14.769 1.560 12.010 0.426 10.049 18.739
+
+thomas 04/09 17:57:47 Finished test. Elapsed time: 130.8309
+thomas 04/09 17:57:49 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 17:57:49 Current best mIoU: 31.058 at iter 2000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 17:59:29 ===> Epoch[14](2040/151): Loss 0.7056	LR: 9.847e-02	Score 77.892	Data time: 0.2405, Total iter time: 2.4592
+thomas 04/09 18:01:11 ===> Epoch[14](2080/151): Loss 0.6493	LR: 9.844e-02	Score 79.299	Data time: 0.2430, Total iter time: 2.4867
+thomas 04/09 18:02:54 ===> Epoch[15](2120/151): Loss 0.6329	LR: 9.841e-02	Score 79.900	Data time: 0.2352, Total iter time: 2.5141
+thomas 04/09 18:04:38 ===> Epoch[15](2160/151): Loss 0.6406	LR: 9.838e-02	Score 79.794	Data time: 0.2277, Total iter time: 2.5556
+thomas 04/09 18:06:23 ===> Epoch[15](2200/151): Loss 0.6555	LR: 9.835e-02	Score 79.493	Data time: 0.2263, Total iter time: 2.5677
+thomas 04/09 18:08:05 ===> Epoch[15](2240/151): Loss 0.6474	LR: 9.832e-02	Score 79.586	Data time: 0.2438, Total iter time: 2.4865
+thomas 04/09 18:09:47 ===> Epoch[16](2280/151): Loss 0.6040	LR: 9.829e-02	Score 80.693	Data time: 0.2401, Total iter time: 2.5033
+thomas 04/09 18:11:30 ===> Epoch[16](2320/151): Loss 0.6390	LR: 9.826e-02	Score 79.915	Data time: 0.2218, Total iter time: 2.5050
+thomas 04/09 18:13:10 ===> Epoch[16](2360/151): Loss 0.6288	LR: 9.823e-02	Score 80.280	Data time: 0.2232, Total iter time: 2.4455
+thomas 04/09 18:14:54 ===> Epoch[16](2400/151): Loss 0.6402	LR: 9.820e-02	Score 79.471	Data time: 0.2379, Total iter time: 2.5572
+thomas 04/09 18:16:35 ===> Epoch[17](2440/151): Loss 0.6104	LR: 9.817e-02	Score 80.674	Data time: 0.2248, Total iter time: 2.4550
+thomas 04/09 18:18:19 ===> Epoch[17](2480/151): Loss 0.6054	LR: 9.814e-02	Score 80.716	Data time: 0.2355, Total iter time: 2.5366
+thomas 04/09 18:20:00 ===> Epoch[17](2520/151): Loss 0.6352	LR: 9.811e-02	Score 79.969	Data time: 0.2231, Total iter time: 2.4704
+thomas 04/09 18:21:41 ===> Epoch[17](2560/151): Loss 0.6086	LR: 9.808e-02	Score 80.702	Data time: 0.2130, Total iter time: 2.4698
+thomas 04/09 18:23:27 ===> Epoch[18](2600/151): Loss 0.5999	LR: 9.805e-02	Score 81.031	Data time: 0.2306, Total iter time: 2.5960
+thomas 04/09 18:25:09 ===> Epoch[18](2640/151): Loss 0.6297	LR: 9.802e-02	Score 79.907	Data time: 0.2242, Total iter time: 2.4948
+thomas 04/09 18:26:52 ===> Epoch[18](2680/151): Loss 0.5876	LR: 9.799e-02	Score 81.217	Data time: 0.2321, Total iter time: 2.5388
+thomas 04/09 18:28:34 ===> Epoch[19](2720/151): Loss 0.6103	LR: 9.796e-02	Score 80.629	Data time: 0.2152, Total iter time: 2.4825
+thomas 04/09 18:30:18 ===> Epoch[19](2760/151): Loss 0.6069	LR: 9.793e-02	Score 81.417	Data time: 0.2333, Total iter time: 2.5445
+thomas 04/09 18:31:58 ===> Epoch[19](2800/151): Loss 0.5918	LR: 9.790e-02	Score 81.326	Data time: 0.2313, Total iter time: 2.4414
+thomas 04/09 18:33:40 ===> Epoch[19](2840/151): Loss 0.5986	LR: 9.787e-02	Score 80.911	Data time: 0.2417, Total iter time: 2.5028
+thomas 04/09 18:35:26 ===> Epoch[20](2880/151): Loss 0.5742	LR: 9.784e-02	Score 81.470	Data time: 0.2209, Total iter time: 2.5958
+thomas 04/09 18:37:04 ===> Epoch[20](2920/151): Loss 0.5718	LR: 9.781e-02	Score 81.348	Data time: 0.2342, Total iter time: 2.4037
+thomas 04/09 18:38:43 ===> Epoch[20](2960/151): Loss 0.5805	LR: 9.778e-02	Score 81.087	Data time: 0.2205, Total iter time: 2.4171
+thomas 04/09 18:40:28 ===> Epoch[20](3000/151): Loss 0.5966	LR: 9.775e-02	Score 81.587	Data time: 0.2236, Total iter time: 2.5501
+thomas 04/09 18:40:29 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 18:40:29 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 18:41:12 101/312: Data time: 0.0029, Iter time: 0.2045	Loss 1.466 (AVG: 0.851)	Score 56.353 (AVG: 73.162)	mIOU 38.523 mAP 56.796 mAcc 49.466
+IOU: 62.742 95.904 43.384 54.561 72.543 49.496 51.840 20.342 13.141 53.187 1.341 45.982 38.516 25.996 18.018 2.241 50.446 10.927 38.487 21.374
+mAP: 67.695 96.484 55.792 55.531 82.317 78.155 62.043 32.342 37.872 42.810 13.404 60.676 51.444 49.341 39.408 57.257 81.758 71.496 67.902 32.196
+mAcc: 80.584 98.348 50.751 61.381 78.878 95.785 59.377 54.145 13.295 61.021 1.436 72.219 73.920 30.648 18.666 2.252 50.568 10.944 38.687 36.423
+
+thomas 04/09 18:41:54 201/312: Data time: 0.0026, Iter time: 0.3223	Loss 0.622 (AVG: 0.807)	Score 78.566 (AVG: 74.615)	mIOU 39.636 mAP 57.469 mAcc 50.148
+IOU: 64.768 96.462 41.302 55.933 70.962 53.445 57.935 21.357 12.597 47.901 0.861 41.605 40.732 23.758 11.367 8.487 60.133 12.817 47.008 23.286
+mAP: 69.269 97.214 55.195 58.286 79.469 76.647 61.386 33.804 34.775 45.794 15.530 58.311 52.646 50.545 33.579 61.855 85.551 74.396 71.887 33.243
+mAcc: 81.459 98.579 48.759 64.606 77.916 95.312 65.247 54.646 12.709 54.992 0.906 70.937 70.658 27.241 11.734 8.701 60.762 12.830 47.296 37.679
+
+thomas 04/09 18:42:35 301/312: Data time: 0.0021, Iter time: 0.3116	Loss 0.679 (AVG: 0.781)	Score 83.257 (AVG: 75.380)	mIOU 39.589 mAP 57.618 mAcc 50.097
+IOU: 65.676 96.577 40.921 59.344 71.893 52.417 59.068 22.744 11.567 51.324 1.415 39.168 41.125 21.340 10.776 9.038 57.374 11.091 45.146 23.777
+mAP: 70.656 97.218 53.624 61.444 80.017 75.448 61.384 33.667 34.304 50.613 16.679 53.208 52.296 47.972 31.516 62.743 86.733 73.736 74.441 34.652
+mAcc: 81.781 98.649 49.344 67.074 79.515 95.331 65.024 55.521 11.795 59.138 1.583 69.213 68.092 25.018 11.045 9.249 57.927 11.101 45.417 40.126
+
+thomas 04/09 18:42:39 312/312: Data time: 0.0029, Iter time: 0.1899	Loss 1.600 (AVG: 0.792)	Score 54.209 (AVG: 75.047)	mIOU 39.261 mAP 57.434 mAcc 49.779
+IOU: 65.230 96.579 40.493 58.747 71.405 51.422 58.878 22.658 11.205 51.324 1.359 39.825 41.252 20.312 11.468 8.501 55.372 10.524 45.146 23.511
+mAP: 70.306 97.259 52.787 61.181 79.649 75.465 60.901 33.755 34.672 53.500 16.305 51.999 52.522 46.400 32.052 61.006 86.441 73.485 74.441 34.550
+mAcc: 81.627 98.653 48.721 66.243 78.932 95.333 64.778 56.015 11.416 58.355 1.516 69.295 68.644 23.797 11.781 8.689 55.873 10.533 45.417 39.966
+
+thomas 04/09 18:42:39 Finished test. Elapsed time: 129.4097
+thomas 04/09 18:42:40 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 18:42:40 Current best mIoU: 39.261 at iter 3000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 18:44:24 ===> Epoch[21](3040/151): Loss 0.5902	LR: 9.772e-02	Score 81.106	Data time: 0.2151, Total iter time: 2.5438
+thomas 04/09 18:46:01 ===> Epoch[21](3080/151): Loss 0.5834	LR: 9.769e-02	Score 81.618	Data time: 0.2172, Total iter time: 2.3694
+thomas 04/09 18:47:39 ===> Epoch[21](3120/151): Loss 0.5506	LR: 9.766e-02	Score 82.407	Data time: 0.2143, Total iter time: 2.3953
+thomas 04/09 18:49:17 ===> Epoch[21](3160/151): Loss 0.5693	LR: 9.763e-02	Score 81.718	Data time: 0.2208, Total iter time: 2.3966
+thomas 04/09 18:50:58 ===> Epoch[22](3200/151): Loss 0.5531	LR: 9.760e-02	Score 82.392	Data time: 0.2344, Total iter time: 2.4642
+thomas 04/09 18:52:39 ===> Epoch[22](3240/151): Loss 0.5636	LR: 9.757e-02	Score 82.049	Data time: 0.2481, Total iter time: 2.4636
+thomas 04/09 18:54:18 ===> Epoch[22](3280/151): Loss 0.5540	LR: 9.754e-02	Score 82.230	Data time: 0.2274, Total iter time: 2.4399
+thomas 04/09 18:55:57 ===> Epoch[22](3320/151): Loss 0.5631	LR: 9.751e-02	Score 82.079	Data time: 0.2145, Total iter time: 2.4018
+thomas 04/09 18:57:37 ===> Epoch[23](3360/151): Loss 0.5580	LR: 9.748e-02	Score 81.947	Data time: 0.2454, Total iter time: 2.4478
+thomas 04/09 18:59:21 ===> Epoch[23](3400/151): Loss 0.5443	LR: 9.745e-02	Score 82.623	Data time: 0.2326, Total iter time: 2.5555
+thomas 04/09 19:00:56 ===> Epoch[23](3440/151): Loss 0.5416	LR: 9.742e-02	Score 82.750	Data time: 0.2144, Total iter time: 2.3181
+thomas 04/09 19:02:38 ===> Epoch[24](3480/151): Loss 0.5439	LR: 9.739e-02	Score 82.385	Data time: 0.2242, Total iter time: 2.4946
+thomas 04/09 19:04:14 ===> Epoch[24](3520/151): Loss 0.5554	LR: 9.736e-02	Score 82.351	Data time: 0.2169, Total iter time: 2.3329
+thomas 04/09 19:05:52 ===> Epoch[24](3560/151): Loss 0.5522	LR: 9.733e-02	Score 82.248	Data time: 0.2196, Total iter time: 2.3949
+thomas 04/09 19:07:34 ===> Epoch[24](3600/151): Loss 0.5668	LR: 9.730e-02	Score 82.161	Data time: 0.2176, Total iter time: 2.4986
+thomas 04/09 19:09:14 ===> Epoch[25](3640/151): Loss 0.5344	LR: 9.727e-02	Score 82.918	Data time: 0.2412, Total iter time: 2.4377
+thomas 04/09 19:10:50 ===> Epoch[25](3680/151): Loss 0.5581	LR: 9.724e-02	Score 82.315	Data time: 0.2296, Total iter time: 2.3549
+thomas 04/09 19:12:33 ===> Epoch[25](3720/151): Loss 0.5006	LR: 9.721e-02	Score 83.796	Data time: 0.2404, Total iter time: 2.5105
+thomas 04/09 19:14:16 ===> Epoch[25](3760/151): Loss 0.5436	LR: 9.718e-02	Score 82.496	Data time: 0.2323, Total iter time: 2.5142
+thomas 04/09 19:15:55 ===> Epoch[26](3800/151): Loss 0.5115	LR: 9.715e-02	Score 83.496	Data time: 0.2304, Total iter time: 2.4249
+thomas 04/09 19:17:37 ===> Epoch[26](3840/151): Loss 0.5241	LR: 9.712e-02	Score 83.054	Data time: 0.2514, Total iter time: 2.4894
+thomas 04/09 19:19:18 ===> Epoch[26](3880/151): Loss 0.5326	LR: 9.709e-02	Score 83.287	Data time: 0.2319, Total iter time: 2.4877
+thomas 04/09 19:21:01 ===> Epoch[26](3920/151): Loss 0.5442	LR: 9.706e-02	Score 83.048	Data time: 0.2309, Total iter time: 2.5058
+thomas 04/09 19:22:41 ===> Epoch[27](3960/151): Loss 0.5415	LR: 9.703e-02	Score 82.815	Data time: 0.2154, Total iter time: 2.4350
+thomas 04/09 19:24:25 ===> Epoch[27](4000/151): Loss 0.5313	LR: 9.699e-02	Score 83.199	Data time: 0.2435, Total iter time: 2.5409
+thomas 04/09 19:24:26 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 19:24:26 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 19:25:11 101/312: Data time: 0.0024, Iter time: 0.2443	Loss 0.358 (AVG: 0.777)	Score 84.642 (AVG: 77.077)	mIOU 39.298 mAP 58.660 mAcc 49.372
+IOU: 68.913 96.884 38.687 49.930 79.764 66.176 57.242 27.428 8.280 40.973 0.000 36.491 49.198 17.612 25.548 27.140 39.804 17.315 15.560 23.012
+mAP: 71.445 97.059 41.703 55.726 81.123 81.371 61.836 38.149 33.496 60.597 12.931 59.748 56.691 47.691 35.435 64.714 84.093 75.771 75.481 38.152
+mAcc: 86.110 98.943 60.215 73.733 83.646 69.028 68.572 55.723 8.300 44.640 0.000 56.699 80.326 20.537 42.934 29.168 39.818 17.456 15.560 36.028
+
+thomas 04/09 19:25:50 201/312: Data time: 0.0031, Iter time: 0.2667	Loss 0.181 (AVG: 0.781)	Score 96.788 (AVG: 76.817)	mIOU 38.283 mAP 58.565 mAcc 49.104
+IOU: 69.178 96.659 41.955 52.249 78.586 70.356 55.610 26.610 7.826 29.812 0.032 39.289 44.213 15.341 27.981 17.479 37.889 20.466 13.715 20.410
+mAP: 72.789 96.956 46.439 63.287 82.493 79.559 61.893 41.409 32.573 54.350 14.036 52.226 53.263 43.806 45.120 70.377 84.016 71.539 71.426 33.742
+mAcc: 86.393 98.816 60.975 81.482 82.904 75.486 67.575 52.017 7.858 33.035 0.033 68.693 73.544 18.328 53.304 17.982 37.903 20.597 13.720 31.441
+
+thomas 04/09 19:26:31 301/312: Data time: 0.0046, Iter time: 0.2452	Loss 0.528 (AVG: 0.787)	Score 81.770 (AVG: 76.502)	mIOU 38.742 mAP 58.706 mAcc 49.653
+IOU: 68.228 96.469 42.825 51.026 79.713 69.357 56.603 25.197 8.250 37.962 0.016 43.495 43.753 15.479 28.578 14.408 37.339 20.478 14.318 21.340
+mAP: 71.835 96.994 48.067 65.841 84.068 78.438 60.342 39.133 33.281 54.454 15.529 52.311 56.829 44.291 43.646 72.554 82.650 71.529 69.854 32.463
+mAcc: 86.030 98.815 61.816 80.735 84.080 75.902 67.438 51.915 8.290 40.272 0.017 73.094 73.612 18.178 53.160 14.830 37.389 20.645 14.321 32.515
+
+thomas 04/09 19:26:36 312/312: Data time: 0.0023, Iter time: 0.2581	Loss 0.810 (AVG: 0.782)	Score 76.702 (AVG: 76.632)	mIOU 38.739 mAP 58.837 mAcc 49.683
+IOU: 68.199 96.523 42.405 50.755 79.881 69.204 57.368 24.784 8.602 38.156 0.015 43.044 43.754 15.090 28.577 14.408 37.339 20.580 14.318 21.781
+mAP: 71.766 96.994 48.113 65.959 84.209 78.522 61.470 38.452 33.863 54.832 15.193 52.311 56.538 45.389 43.646 72.554 82.650 71.858 69.854 32.572
+mAcc: 86.031 98.826 61.288 80.562 84.074 75.776 68.523 51.370 8.648 40.437 0.016 73.094 73.828 17.625 53.160 14.830 37.389 20.746 14.321 33.120
+
+thomas 04/09 19:26:36 Finished test. Elapsed time: 129.3577
+thomas 04/09 19:26:36 Current best mIoU: 39.261 at iter 3000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 19:28:12 ===> Epoch[27](4040/151): Loss 0.5317	LR: 9.696e-02	Score 83.318	Data time: 0.2163, Total iter time: 2.3489
+thomas 04/09 19:29:57 ===> Epoch[28](4080/151): Loss 0.5043	LR: 9.693e-02	Score 83.752	Data time: 0.2500, Total iter time: 2.5809
+thomas 04/09 19:31:38 ===> Epoch[28](4120/151): Loss 0.5211	LR: 9.690e-02	Score 83.277	Data time: 0.2293, Total iter time: 2.4599
+thomas 04/09 19:33:20 ===> Epoch[28](4160/151): Loss 0.5322	LR: 9.687e-02	Score 83.250	Data time: 0.2262, Total iter time: 2.4977
+thomas 04/09 19:34:57 ===> Epoch[28](4200/151): Loss 0.5132	LR: 9.684e-02	Score 83.298	Data time: 0.2231, Total iter time: 2.3721
+thomas 04/09 19:36:36 ===> Epoch[29](4240/151): Loss 0.5178	LR: 9.681e-02	Score 83.491	Data time: 0.2237, Total iter time: 2.4305
+thomas 04/09 19:38:23 ===> Epoch[29](4280/151): Loss 0.5294	LR: 9.678e-02	Score 83.054	Data time: 0.2152, Total iter time: 2.6101
+thomas 04/09 19:40:00 ===> Epoch[29](4320/151): Loss 0.4829	LR: 9.675e-02	Score 84.485	Data time: 0.2305, Total iter time: 2.3641
+thomas 04/09 19:41:37 ===> Epoch[29](4360/151): Loss 0.5303	LR: 9.672e-02	Score 83.230	Data time: 0.2169, Total iter time: 2.3739
+thomas 04/09 19:43:14 ===> Epoch[30](4400/151): Loss 0.5102	LR: 9.669e-02	Score 83.811	Data time: 0.2159, Total iter time: 2.3670
+thomas 04/09 19:45:00 ===> Epoch[30](4440/151): Loss 0.4879	LR: 9.666e-02	Score 84.587	Data time: 0.2578, Total iter time: 2.5990
+thomas 04/09 19:46:47 ===> Epoch[30](4480/151): Loss 0.5137	LR: 9.663e-02	Score 83.693	Data time: 0.2460, Total iter time: 2.6309
+thomas 04/09 19:48:34 ===> Epoch[30](4520/151): Loss 0.5317	LR: 9.660e-02	Score 83.093	Data time: 0.2462, Total iter time: 2.6178
+thomas 04/09 19:50:20 ===> Epoch[31](4560/151): Loss 0.4781	LR: 9.657e-02	Score 84.583	Data time: 0.2645, Total iter time: 2.5938
+thomas 04/09 19:52:01 ===> Epoch[31](4600/151): Loss 0.5286	LR: 9.654e-02	Score 83.162	Data time: 0.2418, Total iter time: 2.4666
+thomas 04/09 19:53:41 ===> Epoch[31](4640/151): Loss 0.4897	LR: 9.651e-02	Score 84.227	Data time: 0.2343, Total iter time: 2.4355
+thomas 04/09 19:55:20 ===> Epoch[31](4680/151): Loss 0.4960	LR: 9.648e-02	Score 84.269	Data time: 0.2066, Total iter time: 2.4203
+thomas 04/09 19:56:55 ===> Epoch[32](4720/151): Loss 0.4569	LR: 9.645e-02	Score 85.345	Data time: 0.2025, Total iter time: 2.3289
+thomas 04/09 19:58:39 ===> Epoch[32](4760/151): Loss 0.5093	LR: 9.642e-02	Score 83.811	Data time: 0.2324, Total iter time: 2.5374
+thomas 04/09 20:00:21 ===> Epoch[32](4800/151): Loss 0.5353	LR: 9.639e-02	Score 83.349	Data time: 0.2466, Total iter time: 2.4884
+thomas 04/09 20:02:02 ===> Epoch[33](4840/151): Loss 0.4593	LR: 9.636e-02	Score 85.313	Data time: 0.2327, Total iter time: 2.4838
+thomas 04/09 20:03:40 ===> Epoch[33](4880/151): Loss 0.5060	LR: 9.633e-02	Score 83.892	Data time: 0.2281, Total iter time: 2.3754
+thomas 04/09 20:05:22 ===> Epoch[33](4920/151): Loss 0.4842	LR: 9.630e-02	Score 84.740	Data time: 0.2253, Total iter time: 2.5066
+thomas 04/09 20:07:05 ===> Epoch[33](4960/151): Loss 0.4939	LR: 9.627e-02	Score 84.262	Data time: 0.2274, Total iter time: 2.5146
+thomas 04/09 20:08:44 ===> Epoch[34](5000/151): Loss 0.4921	LR: 9.624e-02	Score 84.509	Data time: 0.2234, Total iter time: 2.4029
+thomas 04/09 20:08:45 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 20:08:45 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 20:09:33 101/312: Data time: 0.0025, Iter time: 0.4066	Loss 0.965 (AVG: 0.813)	Score 63.472 (AVG: 75.721)	mIOU 38.764 mAP 56.461 mAcc 51.671
+IOU: 65.253 96.500 39.432 47.140 67.499 50.859 54.347 28.152 29.337 42.990 0.300 55.745 39.125 23.524 14.428 35.168 9.218 2.311 49.118 24.840
+mAP: 67.607 96.506 44.211 61.269 76.360 83.274 56.806 38.840 43.037 43.673 12.620 48.915 57.980 55.419 30.905 81.204 76.542 47.035 67.279 39.734
+mAcc: 77.895 99.102 48.921 72.885 88.359 98.738 56.130 57.376 33.107 45.439 0.305 67.490 57.841 66.149 28.161 35.238 9.218 2.311 56.104 32.642
+
+thomas 04/09 20:10:11 201/312: Data time: 0.0024, Iter time: 0.3370	Loss 0.711 (AVG: 0.775)	Score 81.994 (AVG: 76.494)	mIOU 42.286 mAP 60.234 mAcc 55.579
+IOU: 66.928 96.554 45.368 49.950 66.446 47.266 52.950 28.114 29.116 46.941 0.694 53.727 41.442 32.497 26.286 46.610 16.632 4.380 69.589 24.232
+mAP: 70.329 96.846 50.437 54.768 77.610 79.549 61.569 40.386 42.987 49.899 16.889 52.717 61.594 65.008 43.580 82.326 78.219 58.155 83.405 38.404
+mAcc: 78.440 99.048 55.065 70.000 87.478 98.240 56.365 56.379 32.914 51.452 0.718 63.780 59.036 78.200 46.275 51.194 16.635 4.388 73.206 32.766
+
+thomas 04/09 20:10:51 301/312: Data time: 0.0029, Iter time: 0.3344	Loss 1.264 (AVG: 0.797)	Score 55.492 (AVG: 75.965)	mIOU 41.926 mAP 59.708 mAcc 54.940
+IOU: 66.153 96.440 45.748 52.290 65.688 45.255 52.805 27.716 29.915 54.029 0.458 50.822 42.004 30.390 29.520 36.764 15.967 6.495 66.540 23.513
+mAP: 69.975 97.015 51.988 57.407 77.218 80.005 61.154 40.793 42.433 52.318 18.162 50.229 60.066 61.316 48.257 76.597 78.574 58.675 74.535 37.435
+mAcc: 78.020 99.014 56.229 71.705 87.356 97.857 56.187 54.351 34.788 58.896 0.476 59.867 56.811 73.503 50.031 40.096 15.979 6.504 69.699 31.441
+
+thomas 04/09 20:10:54 312/312: Data time: 0.0044, Iter time: 0.1671	Loss 1.195 (AVG: 0.796)	Score 57.127 (AVG: 75.989)	mIOU 41.843 mAP 59.723 mAcc 54.932
+IOU: 66.286 96.396 45.988 52.235 65.945 44.720 53.416 27.365 29.886 53.845 0.450 49.594 41.574 30.670 28.894 36.699 16.283 6.281 66.907 23.423
+mAP: 70.141 96.873 52.696 57.272 77.112 80.005 61.750 40.657 41.791 52.318 17.623 50.229 59.976 61.325 47.587 76.597 78.951 58.633 75.478 37.441
+mAcc: 78.027 99.022 56.405 70.753 87.596 97.857 56.706 53.951 34.774 58.896 0.467 59.867 56.936 73.807 49.630 40.096 16.298 6.290 69.946 31.317
+
+thomas 04/09 20:10:54 Finished test. Elapsed time: 129.1112
+thomas 04/09 20:10:56 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 20:10:56 Current best mIoU: 41.843 at iter 5000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 20:12:38 ===> Epoch[34](5040/151): Loss 0.4872	LR: 9.621e-02	Score 84.604	Data time: 0.2487, Total iter time: 2.5040
+thomas 04/09 20:14:21 ===> Epoch[34](5080/151): Loss 0.4893	LR: 9.618e-02	Score 84.313	Data time: 0.2437, Total iter time: 2.5057
+thomas 04/09 20:15:58 ===> Epoch[34](5120/151): Loss 0.5062	LR: 9.615e-02	Score 83.684	Data time: 0.1989, Total iter time: 2.3683
+thomas 04/09 20:17:41 ===> Epoch[35](5160/151): Loss 0.4966	LR: 9.612e-02	Score 84.262	Data time: 0.2250, Total iter time: 2.5303
+thomas 04/09 20:19:23 ===> Epoch[35](5200/151): Loss 0.4664	LR: 9.609e-02	Score 84.911	Data time: 0.2245, Total iter time: 2.4775
+thomas 04/09 20:20:59 ===> Epoch[35](5240/151): Loss 0.4587	LR: 9.606e-02	Score 85.349	Data time: 0.2102, Total iter time: 2.3647
+thomas 04/09 20:22:42 ===> Epoch[35](5280/151): Loss 0.4652	LR: 9.603e-02	Score 85.290	Data time: 0.2317, Total iter time: 2.5017
+thomas 04/09 20:24:22 ===> Epoch[36](5320/151): Loss 0.4607	LR: 9.600e-02	Score 85.147	Data time: 0.2315, Total iter time: 2.4476
+thomas 04/09 20:26:01 ===> Epoch[36](5360/151): Loss 0.4780	LR: 9.597e-02	Score 84.854	Data time: 0.2199, Total iter time: 2.4249
+thomas 04/09 20:27:44 ===> Epoch[36](5400/151): Loss 0.4870	LR: 9.594e-02	Score 84.660	Data time: 0.2246, Total iter time: 2.5196
+thomas 04/09 20:29:25 ===> Epoch[37](5440/151): Loss 0.4581	LR: 9.591e-02	Score 85.454	Data time: 0.2265, Total iter time: 2.4672
+thomas 04/09 20:31:07 ===> Epoch[37](5480/151): Loss 0.4606	LR: 9.588e-02	Score 85.334	Data time: 0.2292, Total iter time: 2.5023
+thomas 04/09 20:32:52 ===> Epoch[37](5520/151): Loss 0.4800	LR: 9.585e-02	Score 84.478	Data time: 0.2319, Total iter time: 2.5495
+thomas 04/09 20:34:27 ===> Epoch[37](5560/151): Loss 0.4967	LR: 9.582e-02	Score 84.550	Data time: 0.2132, Total iter time: 2.3252
+thomas 04/09 20:36:04 ===> Epoch[38](5600/151): Loss 0.4362	LR: 9.579e-02	Score 86.101	Data time: 0.2187, Total iter time: 2.3798
+thomas 04/09 20:37:48 ===> Epoch[38](5640/151): Loss 0.4956	LR: 9.576e-02	Score 84.279	Data time: 0.2322, Total iter time: 2.5383
+thomas 04/09 20:39:31 ===> Epoch[38](5680/151): Loss 0.4632	LR: 9.573e-02	Score 84.944	Data time: 0.2257, Total iter time: 2.5260
+thomas 04/09 20:41:11 ===> Epoch[38](5720/151): Loss 0.4435	LR: 9.570e-02	Score 85.725	Data time: 0.2339, Total iter time: 2.4381
+thomas 04/09 20:42:48 ===> Epoch[39](5760/151): Loss 0.4730	LR: 9.567e-02	Score 85.155	Data time: 0.2113, Total iter time: 2.3828
+thomas 04/09 20:44:33 ===> Epoch[39](5800/151): Loss 0.4545	LR: 9.564e-02	Score 85.715	Data time: 0.2261, Total iter time: 2.5522
+thomas 04/09 20:46:16 ===> Epoch[39](5840/151): Loss 0.4592	LR: 9.561e-02	Score 85.363	Data time: 0.2210, Total iter time: 2.5201
+thomas 04/09 20:47:56 ===> Epoch[39](5880/151): Loss 0.4531	LR: 9.558e-02	Score 85.334	Data time: 0.2461, Total iter time: 2.4421
+thomas 04/09 20:49:40 ===> Epoch[40](5920/151): Loss 0.4583	LR: 9.555e-02	Score 85.203	Data time: 0.2221, Total iter time: 2.5365
+thomas 04/09 20:51:18 ===> Epoch[40](5960/151): Loss 0.4396	LR: 9.552e-02	Score 85.940	Data time: 0.2254, Total iter time: 2.4077
+thomas 04/09 20:52:58 ===> Epoch[40](6000/151): Loss 0.4561	LR: 9.549e-02	Score 85.589	Data time: 0.2237, Total iter time: 2.4400
+thomas 04/09 20:52:59 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 20:52:59 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 20:53:43 101/312: Data time: 0.0039, Iter time: 0.2370	Loss 0.419 (AVG: 0.718)	Score 83.659 (AVG: 77.426)	mIOU 45.957 mAP 60.082 mAcc 56.719
+IOU: 65.629 96.545 52.128 74.317 78.344 75.130 59.095 24.974 9.934 52.873 0.186 53.640 50.607 38.404 31.811 25.413 50.515 16.076 44.990 18.526
+mAP: 74.028 95.992 60.384 67.553 80.752 77.665 64.725 42.478 35.849 51.390 12.793 61.402 51.909 56.525 53.450 65.785 82.532 68.638 63.390 34.402
+mAcc: 75.868 98.953 68.154 79.684 88.762 93.983 65.911 77.185 10.235 55.411 0.191 56.356 61.293 60.616 62.042 26.902 50.532 16.190 45.076 41.031
+
+thomas 04/09 20:54:23 201/312: Data time: 0.0023, Iter time: 0.3782	Loss 1.074 (AVG: 0.748)	Score 67.276 (AVG: 76.910)	mIOU 45.586 mAP 60.663 mAcc 56.117
+IOU: 65.500 96.419 49.456 70.910 79.537 71.150 59.237 25.993 14.263 49.536 0.675 47.011 47.327 33.091 25.971 27.622 55.321 18.306 52.437 21.965
+mAP: 72.610 96.549 56.446 64.428 83.436 79.870 66.106 41.921 37.453 53.898 11.938 57.152 51.714 53.508 49.122 72.617 87.041 73.080 69.896 34.473
+mAcc: 77.120 99.037 64.626 76.097 88.392 93.346 65.305 71.826 14.509 52.990 0.711 50.438 65.354 52.237 55.085 29.479 55.515 18.400 52.619 39.261
+
+thomas 04/09 20:55:05 301/312: Data time: 0.0022, Iter time: 0.2283	Loss 0.660 (AVG: 0.727)	Score 80.646 (AVG: 77.369)	mIOU 46.332 mAP 61.261 mAcc 57.235
+IOU: 65.553 96.552 49.067 70.646 80.613 71.847 60.638 26.920 15.722 53.530 0.420 48.205 46.425 31.958 28.782 27.637 53.706 17.608 55.619 25.183
+mAP: 72.596 96.552 57.268 65.123 83.945 81.159 66.199 42.199 38.493 52.522 12.649 54.750 51.483 54.966 52.750 71.572 86.062 72.724 76.716 35.484
+mAcc: 76.752 99.111 64.657 76.153 88.832 93.593 66.448 74.346 15.962 57.824 0.437 53.301 65.637 53.221 58.704 30.461 53.838 17.695 55.825 41.896
+
+thomas 04/09 20:55:10 312/312: Data time: 0.0030, Iter time: 0.3136	Loss 1.206 (AVG: 0.735)	Score 57.614 (AVG: 77.119)	mIOU 45.935 mAP 61.016 mAcc 56.897
+IOU: 65.313 96.570 47.536 68.535 80.642 71.487 61.320 26.696 15.351 52.745 0.404 46.108 46.513 31.285 28.195 27.637 53.706 17.083 55.619 25.960
+mAP: 72.144 96.628 57.291 63.972 83.925 80.748 66.751 42.694 38.377 52.094 12.536 53.881 51.496 53.779 51.890 71.572 86.062 72.522 76.716 35.234
+mAcc: 76.814 99.073 64.844 74.541 88.678 93.578 67.084 74.829 15.584 56.859 0.420 51.549 66.100 51.936 58.466 30.461 53.838 17.164 55.825 40.295
+
+thomas 04/09 20:55:10 Finished test. Elapsed time: 130.3805
+thomas 04/09 20:55:11 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 20:55:11 Current best mIoU: 45.935 at iter 6000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 20:56:50 ===> Epoch[40](6040/151): Loss 0.4331	LR: 9.546e-02	Score 86.023	Data time: 0.2295, Total iter time: 2.4055
+thomas 04/09 20:58:31 ===> Epoch[41](6080/151): Loss 0.4393	LR: 9.543e-02	Score 85.689	Data time: 0.2204, Total iter time: 2.4711
+thomas 04/09 21:00:14 ===> Epoch[41](6120/151): Loss 0.4789	LR: 9.540e-02	Score 85.070	Data time: 0.2353, Total iter time: 2.5164
+thomas 04/09 21:01:53 ===> Epoch[41](6160/151): Loss 0.4520	LR: 9.537e-02	Score 85.687	Data time: 0.2189, Total iter time: 2.4185
+thomas 04/09 21:03:35 ===> Epoch[42](6200/151): Loss 0.4224	LR: 9.534e-02	Score 86.635	Data time: 0.2306, Total iter time: 2.4881
+thomas 04/09 21:05:11 ===> Epoch[42](6240/151): Loss 0.4489	LR: 9.531e-02	Score 85.675	Data time: 0.2492, Total iter time: 2.3477
+thomas 04/09 21:06:52 ===> Epoch[42](6280/151): Loss 0.4381	LR: 9.528e-02	Score 85.763	Data time: 0.2262, Total iter time: 2.4636
+thomas 04/09 21:08:36 ===> Epoch[42](6320/151): Loss 0.4465	LR: 9.525e-02	Score 85.732	Data time: 0.2192, Total iter time: 2.5542
+thomas 04/09 21:10:19 ===> Epoch[43](6360/151): Loss 0.4436	LR: 9.522e-02	Score 85.823	Data time: 0.2309, Total iter time: 2.5202
+thomas 04/09 21:12:02 ===> Epoch[43](6400/151): Loss 0.4397	LR: 9.519e-02	Score 86.075	Data time: 0.2374, Total iter time: 2.5043
+thomas 04/09 21:13:44 ===> Epoch[43](6440/151): Loss 0.4366	LR: 9.516e-02	Score 86.408	Data time: 0.2428, Total iter time: 2.5029
+thomas 04/09 21:15:21 ===> Epoch[43](6480/151): Loss 0.4425	LR: 9.513e-02	Score 85.880	Data time: 0.2148, Total iter time: 2.3832
+thomas 04/09 21:17:03 ===> Epoch[44](6520/151): Loss 0.4197	LR: 9.510e-02	Score 86.605	Data time: 0.2121, Total iter time: 2.4717
+thomas 04/09 21:18:44 ===> Epoch[44](6560/151): Loss 0.4523	LR: 9.507e-02	Score 85.731	Data time: 0.2424, Total iter time: 2.4772
+thomas 04/09 21:20:24 ===> Epoch[44](6600/151): Loss 0.4343	LR: 9.504e-02	Score 86.070	Data time: 0.2393, Total iter time: 2.4377
+thomas 04/09 21:22:03 ===> Epoch[44](6640/151): Loss 0.4284	LR: 9.501e-02	Score 86.450	Data time: 0.2232, Total iter time: 2.4202
+thomas 04/09 21:23:44 ===> Epoch[45](6680/151): Loss 0.4385	LR: 9.498e-02	Score 85.746	Data time: 0.2089, Total iter time: 2.4662
+thomas 04/09 21:25:24 ===> Epoch[45](6720/151): Loss 0.4553	LR: 9.495e-02	Score 85.285	Data time: 0.2152, Total iter time: 2.4517
+thomas 04/09 21:27:01 ===> Epoch[45](6760/151): Loss 0.4206	LR: 9.492e-02	Score 86.557	Data time: 0.2062, Total iter time: 2.3801
+thomas 04/09 21:28:40 ===> Epoch[46](6800/151): Loss 0.4333	LR: 9.489e-02	Score 86.182	Data time: 0.2257, Total iter time: 2.3963
+thomas 04/09 21:30:24 ===> Epoch[46](6840/151): Loss 0.4039	LR: 9.486e-02	Score 86.924	Data time: 0.2380, Total iter time: 2.5532
+thomas 04/09 21:32:03 ===> Epoch[46](6880/151): Loss 0.4304	LR: 9.482e-02	Score 86.609	Data time: 0.2277, Total iter time: 2.4239
+thomas 04/09 21:33:43 ===> Epoch[46](6920/151): Loss 0.4195	LR: 9.479e-02	Score 86.741	Data time: 0.2173, Total iter time: 2.4319
+thomas 04/09 21:35:23 ===> Epoch[47](6960/151): Loss 0.4304	LR: 9.476e-02	Score 86.240	Data time: 0.2312, Total iter time: 2.4550
+thomas 04/09 21:37:03 ===> Epoch[47](7000/151): Loss 0.4090	LR: 9.473e-02	Score 87.187	Data time: 0.2326, Total iter time: 2.4537
+thomas 04/09 21:37:05 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 21:37:05 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 21:37:47 101/312: Data time: 0.0028, Iter time: 0.2017	Loss 0.445 (AVG: 0.639)	Score 86.207 (AVG: 80.955)	mIOU 45.850 mAP 62.657 mAcc 56.027
+IOU: 74.028 96.770 35.148 69.217 80.671 69.024 62.001 27.703 18.314 60.502 0.305 37.664 33.601 36.800 20.697 31.519 67.720 4.455 60.622 30.230
+mAP: 74.067 95.411 41.007 71.568 87.003 78.372 77.400 47.105 35.640 67.767 12.575 46.808 45.801 60.713 40.406 80.295 94.495 72.069 82.242 42.398
+mAcc: 91.820 98.506 54.017 80.044 83.580 95.462 85.210 34.955 19.480 65.911 0.323 44.288 43.338 62.255 50.918 32.568 68.256 4.455 62.444 42.704
+
+thomas 04/09 21:38:28 201/312: Data time: 0.0024, Iter time: 0.2465	Loss 1.080 (AVG: 0.677)	Score 62.240 (AVG: 79.988)	mIOU 45.846 mAP 61.089 mAcc 56.234
+IOU: 72.543 96.856 43.048 60.013 78.890 62.778 65.505 26.858 16.202 58.374 0.210 47.634 31.946 34.005 24.340 39.409 64.468 3.485 62.543 27.814
+mAP: 73.805 95.727 42.817 60.503 85.205 75.691 72.420 46.440 37.488 61.878 11.220 55.435 47.562 52.830 45.466 81.018 88.469 67.186 83.563 37.050
+mAcc: 91.626 98.694 60.939 72.863 81.963 93.725 85.034 35.595 16.861 62.310 0.228 55.917 41.578 52.570 62.715 41.031 64.881 3.485 63.685 38.973
+
+thomas 04/09 21:39:10 301/312: Data time: 0.0025, Iter time: 0.2701	Loss 0.715 (AVG: 0.689)	Score 74.349 (AVG: 79.623)	mIOU 45.420 mAP 60.535 mAcc 55.485
+IOU: 72.648 96.715 42.408 61.367 77.690 60.615 62.761 25.641 19.017 56.923 0.302 44.362 35.113 34.223 24.425 38.005 62.258 3.388 63.339 27.190
+mAP: 74.420 95.843 43.745 63.814 84.758 77.457 68.096 43.637 38.950 59.126 10.823 52.863 49.065 54.170 45.005 76.566 87.563 66.990 79.554 38.250
+mAcc: 92.369 98.811 61.512 74.387 80.721 93.276 81.560 34.640 19.613 61.368 0.324 50.058 45.886 49.358 57.948 40.597 62.525 3.388 64.178 37.189
+
+thomas 04/09 21:39:14 312/312: Data time: 0.0025, Iter time: 0.1663	Loss 0.648 (AVG: 0.689)	Score 78.284 (AVG: 79.563)	mIOU 45.484 mAP 60.394 mAcc 55.625
+IOU: 72.541 96.724 43.324 61.229 77.627 60.413 62.419 25.415 19.504 56.916 0.293 45.409 35.532 34.542 24.532 37.282 62.063 3.042 63.609 27.267
+mAP: 74.169 95.815 44.720 63.527 84.704 77.046 67.209 43.333 38.626 59.126 10.753 51.932 49.115 54.417 46.088 75.030 88.185 65.818 80.033 38.235
+mAcc: 92.369 98.809 62.086 74.048 80.661 93.367 81.293 34.226 20.102 61.368 0.314 51.844 46.191 49.927 58.655 39.765 62.583 3.042 64.433 37.425
+
+thomas 04/09 21:39:14 Finished test. Elapsed time: 129.1476
+thomas 04/09 21:39:14 Current best mIoU: 45.935 at iter 6000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 21:40:56 ===> Epoch[47](7040/151): Loss 0.4094	LR: 9.470e-02	Score 86.917	Data time: 0.2217, Total iter time: 2.4870
+thomas 04/09 21:42:34 ===> Epoch[47](7080/151): Loss 0.4319	LR: 9.467e-02	Score 86.422	Data time: 0.2341, Total iter time: 2.4100
+thomas 04/09 21:44:13 ===> Epoch[48](7120/151): Loss 0.4322	LR: 9.464e-02	Score 86.379	Data time: 0.2208, Total iter time: 2.4098
+thomas 04/09 21:45:54 ===> Epoch[48](7160/151): Loss 0.4176	LR: 9.461e-02	Score 86.470	Data time: 0.2111, Total iter time: 2.4739
+thomas 04/09 21:47:37 ===> Epoch[48](7200/151): Loss 0.4442	LR: 9.458e-02	Score 85.773	Data time: 0.2317, Total iter time: 2.5235
+thomas 04/09 21:49:23 ===> Epoch[48](7240/151): Loss 0.4096	LR: 9.455e-02	Score 87.011	Data time: 0.2373, Total iter time: 2.5857
+thomas 04/09 21:51:05 ===> Epoch[49](7280/151): Loss 0.4292	LR: 9.452e-02	Score 86.461	Data time: 0.2206, Total iter time: 2.4745
+thomas 04/09 21:52:45 ===> Epoch[49](7320/151): Loss 0.4269	LR: 9.449e-02	Score 86.355	Data time: 0.2343, Total iter time: 2.4572
+thomas 04/09 21:54:28 ===> Epoch[49](7360/151): Loss 0.4311	LR: 9.446e-02	Score 86.372	Data time: 0.2259, Total iter time: 2.5069
+thomas 04/09 21:56:14 ===> Epoch[50](7400/151): Loss 0.4231	LR: 9.443e-02	Score 86.767	Data time: 0.2582, Total iter time: 2.6133
+thomas 04/09 21:57:58 ===> Epoch[50](7440/151): Loss 0.4246	LR: 9.440e-02	Score 86.539	Data time: 0.2372, Total iter time: 2.5417
+thomas 04/09 21:59:40 ===> Epoch[50](7480/151): Loss 0.3861	LR: 9.437e-02	Score 87.361	Data time: 0.2306, Total iter time: 2.4998
+thomas 04/09 22:01:26 ===> Epoch[50](7520/151): Loss 0.4140	LR: 9.434e-02	Score 86.798	Data time: 0.2413, Total iter time: 2.5753
+thomas 04/09 22:03:05 ===> Epoch[51](7560/151): Loss 0.4127	LR: 9.431e-02	Score 86.876	Data time: 0.2253, Total iter time: 2.4386
+thomas 04/09 22:04:45 ===> Epoch[51](7600/151): Loss 0.4304	LR: 9.428e-02	Score 86.247	Data time: 0.2337, Total iter time: 2.4294
+thomas 04/09 22:06:28 ===> Epoch[51](7640/151): Loss 0.4077	LR: 9.425e-02	Score 87.192	Data time: 0.2433, Total iter time: 2.5313
+thomas 04/09 22:08:06 ===> Epoch[51](7680/151): Loss 0.4145	LR: 9.422e-02	Score 86.689	Data time: 0.2167, Total iter time: 2.3915
+thomas 04/09 22:09:50 ===> Epoch[52](7720/151): Loss 0.4279	LR: 9.419e-02	Score 86.279	Data time: 0.2392, Total iter time: 2.5383
+thomas 04/09 22:11:33 ===> Epoch[52](7760/151): Loss 0.3982	LR: 9.416e-02	Score 87.478	Data time: 0.2198, Total iter time: 2.5085
+thomas 04/09 22:13:10 ===> Epoch[52](7800/151): Loss 0.4239	LR: 9.413e-02	Score 86.385	Data time: 0.2327, Total iter time: 2.3694
+thomas 04/09 22:14:52 ===> Epoch[52](7840/151): Loss 0.4087	LR: 9.410e-02	Score 86.847	Data time: 0.2444, Total iter time: 2.4919
+thomas 04/09 22:16:32 ===> Epoch[53](7880/151): Loss 0.4231	LR: 9.407e-02	Score 86.675	Data time: 0.2164, Total iter time: 2.4570
+thomas 04/09 22:18:13 ===> Epoch[53](7920/151): Loss 0.4132	LR: 9.404e-02	Score 86.642	Data time: 0.2285, Total iter time: 2.4514
+thomas 04/09 22:19:54 ===> Epoch[53](7960/151): Loss 0.4317	LR: 9.401e-02	Score 86.247	Data time: 0.2292, Total iter time: 2.4735
+thomas 04/09 22:21:35 ===> Epoch[53](8000/151): Loss 0.3997	LR: 9.398e-02	Score 87.234	Data time: 0.2204, Total iter time: 2.4648
+thomas 04/09 22:21:36 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 22:21:36 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 22:22:20 101/312: Data time: 0.0025, Iter time: 0.2229	Loss 0.255 (AVG: 0.765)	Score 91.943 (AVG: 78.218)	mIOU 44.351 mAP 60.385 mAcc 54.582
+IOU: 72.288 96.092 31.887 61.300 82.515 71.367 59.661 28.065 31.546 53.385 0.000 40.723 46.922 18.437 19.867 22.927 60.246 8.164 65.263 16.357
+mAP: 72.541 96.830 55.016 64.922 88.698 78.781 65.615 39.819 49.166 57.953 9.962 52.268 59.621 61.066 29.890 75.150 73.047 67.459 74.060 35.836
+mAcc: 88.987 99.164 76.674 64.856 88.462 88.774 67.639 39.078 33.686 78.755 0.000 53.508 91.744 18.929 23.943 24.194 60.327 8.169 65.330 19.424
+
+thomas 04/09 22:23:01 201/312: Data time: 0.0021, Iter time: 0.4997	Loss 1.221 (AVG: 0.701)	Score 57.605 (AVG: 79.616)	mIOU 46.960 mAP 61.702 mAcc 57.162
+IOU: 74.401 96.461 36.004 63.951 83.795 71.897 59.627 26.905 32.389 52.329 0.006 53.772 48.766 16.144 31.634 34.846 70.909 5.109 64.101 16.147
+mAP: 75.158 97.239 51.510 64.137 87.636 75.201 64.660 43.036 45.577 57.419 11.179 54.370 55.378 54.626 42.295 78.303 83.606 74.871 81.820 36.023
+mAcc: 89.558 99.151 77.175 67.104 89.212 88.820 69.253 37.002 35.062 79.541 0.006 66.090 87.608 17.994 41.273 38.052 71.327 5.114 64.222 19.674
+
+thomas 04/09 22:23:42 301/312: Data time: 0.0022, Iter time: 0.2592	Loss 0.291 (AVG: 0.699)	Score 86.674 (AVG: 79.845)	mIOU 47.024 mAP 61.627 mAcc 57.229
+IOU: 73.578 96.672 39.680 63.493 84.926 72.937 61.437 26.710 29.602 48.716 0.003 54.261 44.851 22.259 35.483 31.445 68.542 8.678 60.647 16.563
+mAP: 74.434 96.600 54.061 62.517 87.368 77.777 65.205 43.497 43.179 56.762 10.923 54.398 54.728 55.076 46.213 78.806 85.868 69.773 80.922 34.429
+mAcc: 88.694 99.069 80.428 66.640 90.457 87.635 70.027 36.706 32.294 77.741 0.003 64.813 88.519 24.614 44.190 33.797 68.960 8.688 60.779 20.516
+
+thomas 04/09 22:23:46 312/312: Data time: 0.0036, Iter time: 0.3073	Loss 1.442 (AVG: 0.709)	Score 52.597 (AVG: 79.591)	mIOU 46.857 mAP 61.373 mAcc 57.051
+IOU: 73.434 96.596 39.290 62.704 84.984 73.710 61.313 26.907 29.072 47.839 0.003 55.026 44.395 21.868 34.907 31.445 68.235 8.477 60.647 16.284
+mAP: 74.501 96.530 53.352 62.234 87.518 78.231 64.985 43.501 42.479 56.460 10.626 54.488 54.437 53.458 44.893 78.806 86.096 69.884 80.922 34.064
+mAcc: 88.458 99.063 79.586 65.739 90.485 87.995 69.964 37.113 31.765 77.395 0.003 65.824 88.395 24.179 43.120 33.797 68.641 8.486 60.779 20.227
+
+thomas 04/09 22:23:46 Finished test. Elapsed time: 130.1038
+thomas 04/09 22:23:48 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 22:23:48 Current best mIoU: 46.857 at iter 8000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 22:25:30 ===> Epoch[54](8040/151): Loss 0.4017	LR: 9.395e-02	Score 87.394	Data time: 0.2237, Total iter time: 2.4980
+thomas 04/09 22:27:11 ===> Epoch[54](8080/151): Loss 0.4061	LR: 9.392e-02	Score 87.048	Data time: 0.2188, Total iter time: 2.4715
+thomas 04/09 22:28:51 ===> Epoch[54](8120/151): Loss 0.3862	LR: 9.389e-02	Score 87.570	Data time: 0.2374, Total iter time: 2.4477
+thomas 04/09 22:30:31 ===> Epoch[55](8160/151): Loss 0.4050	LR: 9.386e-02	Score 86.998	Data time: 0.2300, Total iter time: 2.4401
+thomas 04/09 22:32:14 ===> Epoch[55](8200/151): Loss 0.3758	LR: 9.383e-02	Score 88.126	Data time: 0.2230, Total iter time: 2.5070
+thomas 04/09 22:33:56 ===> Epoch[55](8240/151): Loss 0.3911	LR: 9.380e-02	Score 87.363	Data time: 0.2365, Total iter time: 2.4888
+thomas 04/09 22:35:36 ===> Epoch[55](8280/151): Loss 0.4214	LR: 9.377e-02	Score 86.703	Data time: 0.2518, Total iter time: 2.4500
+thomas 04/09 22:37:15 ===> Epoch[56](8320/151): Loss 0.3802	LR: 9.374e-02	Score 87.829	Data time: 0.2123, Total iter time: 2.4356
+thomas 04/09 22:38:57 ===> Epoch[56](8360/151): Loss 0.4128	LR: 9.371e-02	Score 86.789	Data time: 0.2183, Total iter time: 2.4883
+thomas 04/09 22:40:39 ===> Epoch[56](8400/151): Loss 0.4064	LR: 9.368e-02	Score 87.137	Data time: 0.2448, Total iter time: 2.4974
+thomas 04/09 22:42:18 ===> Epoch[56](8440/151): Loss 0.3967	LR: 9.365e-02	Score 86.956	Data time: 0.2166, Total iter time: 2.4038
+thomas 04/09 22:43:58 ===> Epoch[57](8480/151): Loss 0.4007	LR: 9.362e-02	Score 87.573	Data time: 0.2198, Total iter time: 2.4506
+thomas 04/09 22:45:41 ===> Epoch[57](8520/151): Loss 0.4049	LR: 9.359e-02	Score 87.042	Data time: 0.2346, Total iter time: 2.5160
+thomas 04/09 22:47:21 ===> Epoch[57](8560/151): Loss 0.3694	LR: 9.356e-02	Score 88.005	Data time: 0.2375, Total iter time: 2.4544
+thomas 04/09 22:49:03 ===> Epoch[57](8600/151): Loss 0.3842	LR: 9.353e-02	Score 87.363	Data time: 0.2371, Total iter time: 2.4842
+thomas 04/09 22:50:42 ===> Epoch[58](8640/151): Loss 0.3887	LR: 9.350e-02	Score 87.654	Data time: 0.2193, Total iter time: 2.4390
+thomas 04/09 22:52:25 ===> Epoch[58](8680/151): Loss 0.3979	LR: 9.347e-02	Score 87.339	Data time: 0.2172, Total iter time: 2.5072
+thomas 04/09 22:54:06 ===> Epoch[58](8720/151): Loss 0.3836	LR: 9.344e-02	Score 87.805	Data time: 0.2335, Total iter time: 2.4666
+thomas 04/09 22:55:50 ===> Epoch[59](8760/151): Loss 0.4046	LR: 9.341e-02	Score 86.910	Data time: 0.2185, Total iter time: 2.5396
+thomas 04/09 22:57:32 ===> Epoch[59](8800/151): Loss 0.4330	LR: 9.338e-02	Score 86.234	Data time: 0.2318, Total iter time: 2.4857
+thomas 04/09 22:59:11 ===> Epoch[59](8840/151): Loss 0.4223	LR: 9.334e-02	Score 86.608	Data time: 0.2198, Total iter time: 2.4372
+thomas 04/09 23:00:49 ===> Epoch[59](8880/151): Loss 0.3911	LR: 9.331e-02	Score 87.244	Data time: 0.2227, Total iter time: 2.3856
+thomas 04/09 23:02:28 ===> Epoch[60](8920/151): Loss 0.4132	LR: 9.328e-02	Score 86.927	Data time: 0.2278, Total iter time: 2.4059
+thomas 04/09 23:04:10 ===> Epoch[60](8960/151): Loss 0.4047	LR: 9.325e-02	Score 87.435	Data time: 0.2224, Total iter time: 2.5096
+thomas 04/09 23:05:50 ===> Epoch[60](9000/151): Loss 0.3891	LR: 9.322e-02	Score 87.605	Data time: 0.2289, Total iter time: 2.4385
+thomas 04/09 23:05:52 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 23:05:52 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 23:06:36 101/312: Data time: 0.0038, Iter time: 0.2690	Loss 0.176 (AVG: 0.635)	Score 94.839 (AVG: 81.480)	mIOU 50.975 mAP 64.776 mAcc 62.451
+IOU: 74.395 96.436 54.947 63.257 83.071 67.032 63.150 26.228 31.615 42.721 1.318 59.903 48.076 40.873 39.185 54.019 50.490 27.094 67.592 28.096
+mAP: 73.966 97.443 53.089 65.529 88.620 78.099 66.260 48.629 47.103 57.995 13.855 48.350 50.349 70.146 63.734 87.380 88.371 75.633 82.191 38.790
+mAcc: 90.697 98.583 81.236 75.612 87.044 92.268 77.197 31.454 37.143 46.696 1.368 71.114 69.435 67.600 75.449 64.807 50.524 27.396 67.874 35.526
+
+thomas 04/09 23:07:17 201/312: Data time: 0.0359, Iter time: 0.2637	Loss 0.344 (AVG: 0.625)	Score 88.194 (AVG: 81.449)	mIOU 49.459 mAP 62.626 mAcc 60.742
+IOU: 74.818 96.851 50.047 55.372 82.040 63.109 65.814 24.911 35.316 49.148 0.937 54.060 50.009 42.949 29.733 47.786 46.426 26.643 65.922 27.296
+mAP: 75.020 97.493 52.907 59.560 87.912 75.314 67.325 47.411 44.313 50.881 12.081 51.853 51.497 70.916 51.152 80.178 88.063 72.971 77.276 38.402
+mAcc: 90.819 98.826 78.740 65.168 86.367 89.724 79.459 30.907 41.922 52.438 0.990 66.855 70.423 69.668 62.077 56.396 46.448 27.163 66.493 33.953
+
+thomas 04/09 23:07:57 301/312: Data time: 0.0028, Iter time: 0.3530	Loss 0.607 (AVG: 0.654)	Score 80.741 (AVG: 80.413)	mIOU 48.465 mAP 62.551 mAcc 60.230
+IOU: 73.900 96.768 43.351 55.194 82.448 65.690 65.876 24.117 32.721 47.239 0.660 48.361 48.771 38.661 28.487 48.918 50.693 25.662 66.367 25.408
+mAP: 74.238 97.231 53.453 58.411 87.239 77.844 66.915 48.643 44.422 55.436 12.972 52.562 50.669 65.871 51.751 79.778 87.446 70.125 76.374 39.640
+mAcc: 90.365 98.797 75.838 65.193 86.588 91.298 79.035 29.762 38.415 51.132 0.693 66.002 70.752 68.060 60.887 56.879 50.714 26.194 66.941 31.065
+
+thomas 04/09 23:08:02 312/312: Data time: 0.0024, Iter time: 0.1712	Loss 0.080 (AVG: 0.658)	Score 98.643 (AVG: 80.250)	mIOU 48.353 mAP 62.652 mAcc 60.202
+IOU: 73.639 96.792 42.076 55.481 82.702 65.532 66.048 24.953 31.942 46.759 0.645 47.207 47.842 38.532 28.613 49.764 51.323 25.461 67.017 24.742
+mAP: 74.019 97.277 52.901 59.726 87.349 77.965 66.912 49.257 44.189 54.521 13.442 52.562 50.152 65.541 51.758 80.519 87.608 70.415 76.994 39.923
+mAcc: 90.395 98.805 75.589 66.167 86.824 91.337 79.106 30.782 37.299 50.590 0.676 66.002 69.419 67.553 61.061 57.696 51.343 25.991 67.581 29.832
+
+thomas 04/09 23:08:02 Finished test. Elapsed time: 130.1471
+thomas 04/09 23:08:03 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/09 23:08:04 Current best mIoU: 48.353 at iter 9000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 23:09:44 ===> Epoch[60](9040/151): Loss 0.3847	LR: 9.319e-02	Score 87.490	Data time: 0.2257, Total iter time: 2.4472
+thomas 04/09 23:11:27 ===> Epoch[61](9080/151): Loss 0.3830	LR: 9.316e-02	Score 87.651	Data time: 0.2296, Total iter time: 2.5242
+thomas 04/09 23:13:05 ===> Epoch[61](9120/151): Loss 0.3979	LR: 9.313e-02	Score 87.064	Data time: 0.2398, Total iter time: 2.3925
+thomas 04/09 23:14:46 ===> Epoch[61](9160/151): Loss 0.3935	LR: 9.310e-02	Score 87.539	Data time: 0.2355, Total iter time: 2.4773
+thomas 04/09 23:16:30 ===> Epoch[61](9200/151): Loss 0.3728	LR: 9.307e-02	Score 88.031	Data time: 0.2543, Total iter time: 2.5281
+thomas 04/09 23:18:12 ===> Epoch[62](9240/151): Loss 0.3696	LR: 9.304e-02	Score 87.996	Data time: 0.2317, Total iter time: 2.5116
+thomas 04/09 23:19:50 ===> Epoch[62](9280/151): Loss 0.3839	LR: 9.301e-02	Score 87.780	Data time: 0.2139, Total iter time: 2.4023
+thomas 04/09 23:21:27 ===> Epoch[62](9320/151): Loss 0.3733	LR: 9.298e-02	Score 88.181	Data time: 0.2170, Total iter time: 2.3429
+thomas 04/09 23:23:11 ===> Epoch[62](9360/151): Loss 0.3513	LR: 9.295e-02	Score 88.558	Data time: 0.2412, Total iter time: 2.5674
+thomas 04/09 23:24:52 ===> Epoch[63](9400/151): Loss 0.3639	LR: 9.292e-02	Score 88.314	Data time: 0.2493, Total iter time: 2.4629
+thomas 04/09 23:26:33 ===> Epoch[63](9440/151): Loss 0.3856	LR: 9.289e-02	Score 87.922	Data time: 0.2290, Total iter time: 2.4699
+thomas 04/09 23:28:17 ===> Epoch[63](9480/151): Loss 0.3917	LR: 9.286e-02	Score 87.449	Data time: 0.2349, Total iter time: 2.5334
+thomas 04/09 23:30:00 ===> Epoch[64](9520/151): Loss 0.3645	LR: 9.283e-02	Score 88.287	Data time: 0.2361, Total iter time: 2.5234
+thomas 04/09 23:31:41 ===> Epoch[64](9560/151): Loss 0.3905	LR: 9.280e-02	Score 87.543	Data time: 0.2225, Total iter time: 2.4711
+thomas 04/09 23:33:19 ===> Epoch[64](9600/151): Loss 0.3675	LR: 9.277e-02	Score 87.898	Data time: 0.2171, Total iter time: 2.3968
+thomas 04/09 23:34:56 ===> Epoch[64](9640/151): Loss 0.3703	LR: 9.274e-02	Score 88.076	Data time: 0.2041, Total iter time: 2.3564
+thomas 04/09 23:36:34 ===> Epoch[65](9680/151): Loss 0.3599	LR: 9.271e-02	Score 88.279	Data time: 0.2373, Total iter time: 2.3945
+thomas 04/09 23:38:18 ===> Epoch[65](9720/151): Loss 0.4048	LR: 9.268e-02	Score 87.434	Data time: 0.2371, Total iter time: 2.5518
+thomas 04/09 23:40:01 ===> Epoch[65](9760/151): Loss 0.3868	LR: 9.265e-02	Score 87.587	Data time: 0.2336, Total iter time: 2.5236
+thomas 04/09 23:41:43 ===> Epoch[65](9800/151): Loss 0.3935	LR: 9.262e-02	Score 87.484	Data time: 0.2404, Total iter time: 2.4920
+thomas 04/09 23:43:21 ===> Epoch[66](9840/151): Loss 0.3690	LR: 9.259e-02	Score 87.997	Data time: 0.2202, Total iter time: 2.3910
+thomas 04/09 23:45:05 ===> Epoch[66](9880/151): Loss 0.3899	LR: 9.256e-02	Score 87.764	Data time: 0.2307, Total iter time: 2.5468
+thomas 04/09 23:46:41 ===> Epoch[66](9920/151): Loss 0.3563	LR: 9.253e-02	Score 88.736	Data time: 0.2262, Total iter time: 2.3363
+thomas 04/09 23:48:22 ===> Epoch[66](9960/151): Loss 0.3632	LR: 9.250e-02	Score 88.482	Data time: 0.2189, Total iter time: 2.4682
+thomas 04/09 23:50:02 ===> Epoch[67](10000/151): Loss 0.3850	LR: 9.247e-02	Score 87.873	Data time: 0.2140, Total iter time: 2.4618
+thomas 04/09 23:50:04 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/09 23:50:04 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/09 23:50:51 101/312: Data time: 0.0023, Iter time: 0.3511	Loss 0.782 (AVG: 0.656)	Score 75.547 (AVG: 81.623)	mIOU 49.146 mAP 62.368 mAcc 58.349
+IOU: 73.997 96.945 43.752 64.611 81.255 68.030 65.000 21.325 20.625 62.290 0.000 54.992 44.018 43.266 33.189 30.387 73.536 12.994 63.021 29.694
+mAP: 72.701 97.154 56.437 64.387 85.903 81.299 62.459 42.590 38.832 68.192 6.238 52.242 59.331 62.926 46.329 75.360 85.735 64.608 86.114 38.514
+mAcc: 91.321 98.859 86.333 68.474 91.298 81.678 83.029 24.297 21.764 86.250 0.000 60.226 55.861 53.540 39.147 34.640 74.430 13.047 66.873 35.915
+
+thomas 04/09 23:51:30 201/312: Data time: 0.0034, Iter time: 0.2907	Loss 0.507 (AVG: 0.684)	Score 83.905 (AVG: 80.726)	mIOU 47.417 mAP 61.603 mAcc 56.457
+IOU: 72.953 96.943 42.003 53.312 82.552 65.109 63.430 20.405 19.827 61.341 0.000 54.585 42.817 39.382 41.608 15.341 72.085 18.011 58.681 27.947
+mAP: 73.265 97.304 56.255 58.401 86.671 80.656 67.171 41.426 43.001 63.168 5.631 53.272 55.535 59.436 53.904 68.750 82.157 68.330 80.453 37.268
+mAcc: 91.170 98.863 82.344 56.746 92.422 83.547 81.524 24.061 20.513 79.221 0.000 61.548 53.008 50.859 50.681 16.037 73.056 18.163 60.745 34.635
+
+thomas 04/09 23:52:10 301/312: Data time: 0.0023, Iter time: 0.2015	Loss 0.452 (AVG: 0.709)	Score 85.349 (AVG: 80.094)	mIOU 46.723 mAP 60.722 mAcc 56.013
+IOU: 72.456 96.759 41.789 50.484 83.161 66.705 64.980 19.960 20.541 60.579 0.000 50.072 43.027 35.199 37.598 13.962 75.447 17.809 57.447 26.486
+mAP: 72.888 97.184 54.245 54.638 86.303 77.899 68.272 40.511 44.299 61.946 5.668 51.034 54.359 56.641 51.479 65.455 86.434 68.052 80.825 36.307
+mAcc: 90.693 98.828 81.959 53.690 92.722 86.203 81.686 24.010 21.306 79.134 0.000 58.145 55.962 48.332 46.290 14.383 77.443 17.921 59.079 32.479
+
+thomas 04/09 23:52:14 312/312: Data time: 0.0039, Iter time: 0.2643	Loss 0.446 (AVG: 0.703)	Score 89.709 (AVG: 80.215)	mIOU 47.017 mAP 60.991 mAcc 56.252
+IOU: 72.599 96.785 41.865 51.154 83.131 67.034 64.959 20.358 21.932 60.505 0.000 49.802 42.903 35.051 38.621 13.662 76.364 18.012 58.844 26.746
+mAP: 72.851 97.088 54.264 55.555 86.526 77.876 68.635 41.319 44.488 61.643 5.741 50.622 55.000 56.325 52.458 65.532 86.685 68.900 81.473 36.847
+mAcc: 90.757 98.836 81.494 54.412 92.745 86.024 81.894 24.425 22.734 78.875 0.000 58.078 55.327 48.134 47.507 14.071 78.347 18.124 60.444 32.818
+
+thomas 04/09 23:52:14 Finished test. Elapsed time: 130.1443
+thomas 04/09 23:52:14 Current best mIoU: 48.353 at iter 9000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/09 23:53:55 ===> Epoch[67](10040/151): Loss 0.3777	LR: 9.244e-02	Score 87.647	Data time: 0.2266, Total iter time: 2.4621
+thomas 04/09 23:55:34 ===> Epoch[67](10080/151): Loss 0.3847	LR: 9.241e-02	Score 87.633	Data time: 0.1995, Total iter time: 2.4152
+thomas 04/09 23:57:17 ===> Epoch[68](10120/151): Loss 0.3659	LR: 9.238e-02	Score 88.170	Data time: 0.2281, Total iter time: 2.5185
+thomas 04/09 23:58:56 ===> Epoch[68](10160/151): Loss 0.3778	LR: 9.235e-02	Score 88.128	Data time: 0.2422, Total iter time: 2.4174
+thomas 04/10 00:00:37 ===> Epoch[68](10200/151): Loss 0.3895	LR: 9.232e-02	Score 87.578	Data time: 0.2258, Total iter time: 2.4663
+thomas 04/10 00:02:20 ===> Epoch[68](10240/151): Loss 0.3637	LR: 9.229e-02	Score 88.345	Data time: 0.2394, Total iter time: 2.5230
+thomas 04/10 00:03:59 ===> Epoch[69](10280/151): Loss 0.3907	LR: 9.226e-02	Score 87.761	Data time: 0.2165, Total iter time: 2.4300
+thomas 04/10 00:05:43 ===> Epoch[69](10320/151): Loss 0.3709	LR: 9.223e-02	Score 88.050	Data time: 0.2521, Total iter time: 2.5312
+thomas 04/10 00:07:25 ===> Epoch[69](10360/151): Loss 0.3758	LR: 9.220e-02	Score 87.711	Data time: 0.2396, Total iter time: 2.5131
+thomas 04/10 00:09:11 ===> Epoch[69](10400/151): Loss 0.3830	LR: 9.217e-02	Score 87.725	Data time: 0.2536, Total iter time: 2.5910
+thomas 04/10 00:10:54 ===> Epoch[70](10440/151): Loss 0.3416	LR: 9.213e-02	Score 89.125	Data time: 0.2617, Total iter time: 2.5180
+thomas 04/10 00:12:41 ===> Epoch[70](10480/151): Loss 0.4030	LR: 9.210e-02	Score 87.205	Data time: 0.2390, Total iter time: 2.5968
+thomas 04/10 00:14:20 ===> Epoch[70](10520/151): Loss 0.3632	LR: 9.207e-02	Score 88.461	Data time: 0.2288, Total iter time: 2.4369
+thomas 04/10 00:16:01 ===> Epoch[70](10560/151): Loss 0.3632	LR: 9.204e-02	Score 88.590	Data time: 0.2220, Total iter time: 2.4718
+thomas 04/10 00:17:42 ===> Epoch[71](10600/151): Loss 0.3614	LR: 9.201e-02	Score 88.164	Data time: 0.2312, Total iter time: 2.4578
+thomas 04/10 00:19:20 ===> Epoch[71](10640/151): Loss 0.3604	LR: 9.198e-02	Score 88.631	Data time: 0.2478, Total iter time: 2.4059
+thomas 04/10 00:21:00 ===> Epoch[71](10680/151): Loss 0.3487	LR: 9.195e-02	Score 88.977	Data time: 0.2198, Total iter time: 2.4368
+thomas 04/10 00:22:41 ===> Epoch[71](10720/151): Loss 0.3422	LR: 9.192e-02	Score 88.896	Data time: 0.2196, Total iter time: 2.4712
+thomas 04/10 00:24:19 ===> Epoch[72](10760/151): Loss 0.3749	LR: 9.189e-02	Score 87.963	Data time: 0.2298, Total iter time: 2.4042
+thomas 04/10 00:25:59 ===> Epoch[72](10800/151): Loss 0.3553	LR: 9.186e-02	Score 88.487	Data time: 0.2285, Total iter time: 2.4269
+thomas 04/10 00:27:41 ===> Epoch[72](10840/151): Loss 0.3714	LR: 9.183e-02	Score 88.184	Data time: 0.2374, Total iter time: 2.5075
+thomas 04/10 00:29:23 ===> Epoch[73](10880/151): Loss 0.3547	LR: 9.180e-02	Score 88.461	Data time: 0.2270, Total iter time: 2.4837
+thomas 04/10 00:31:05 ===> Epoch[73](10920/151): Loss 0.3734	LR: 9.177e-02	Score 88.210	Data time: 0.2329, Total iter time: 2.4878
+thomas 04/10 00:32:46 ===> Epoch[73](10960/151): Loss 0.3515	LR: 9.174e-02	Score 88.890	Data time: 0.2330, Total iter time: 2.4850
+thomas 04/10 00:34:28 ===> Epoch[73](11000/151): Loss 0.3473	LR: 9.171e-02	Score 88.774	Data time: 0.2299, Total iter time: 2.4808
+thomas 04/10 00:34:29 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 00:34:30 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 00:35:13 101/312: Data time: 0.0048, Iter time: 0.1975	Loss 1.278 (AVG: 0.700)	Score 56.652 (AVG: 79.614)	mIOU 50.544 mAP 63.957 mAcc 61.794
+IOU: 71.697 96.528 45.063 70.287 74.063 48.170 62.055 28.451 13.195 68.558 0.000 46.281 52.703 44.254 30.465 35.599 70.965 50.136 68.123 34.291
+mAP: 72.522 97.484 56.302 69.971 85.240 75.807 65.180 48.905 44.290 58.201 8.106 52.355 57.092 64.678 46.303 81.011 88.751 78.700 86.657 41.592
+mAcc: 90.472 98.472 54.063 81.240 76.869 95.162 69.417 40.412 13.418 79.305 0.000 71.990 80.822 71.015 32.949 37.929 71.246 53.628 68.683 48.777
+
+thomas 04/10 00:35:53 201/312: Data time: 0.0027, Iter time: 0.2578	Loss 0.377 (AVG: 0.689)	Score 87.122 (AVG: 79.770)	mIOU 50.736 mAP 64.306 mAcc 62.338
+IOU: 71.220 96.641 47.424 63.160 74.807 52.000 61.903 28.774 16.074 63.166 0.000 53.391 52.136 45.269 36.996 38.569 68.240 42.686 67.803 34.456
+mAP: 72.396 97.304 59.212 65.492 84.903 80.294 61.673 50.136 43.365 60.822 10.050 55.383 58.007 60.696 57.117 81.349 87.108 78.834 80.151 41.830
+mAcc: 90.697 98.327 55.820 78.322 77.357 95.954 67.756 41.031 16.508 78.679 0.000 82.059 85.502 68.636 40.433 40.740 68.461 44.399 68.287 47.796
+
+thomas 04/10 00:36:36 301/312: Data time: 0.0027, Iter time: 0.5067	Loss 0.542 (AVG: 0.660)	Score 83.092 (AVG: 80.525)	mIOU 50.694 mAP 64.422 mAcc 62.091
+IOU: 72.082 96.696 48.649 65.032 77.004 59.814 62.280 29.071 14.581 62.429 0.006 51.660 48.001 39.081 37.426 42.291 67.151 39.932 64.975 35.709
+mAP: 72.478 97.379 59.121 65.540 85.302 79.731 63.914 49.118 40.088 64.244 10.968 54.983 56.923 60.141 58.564 82.405 86.941 76.425 81.022 43.160
+mAcc: 91.156 98.310 56.930 79.752 79.481 96.391 68.227 41.114 15.077 75.754 0.006 82.611 84.302 59.267 41.313 47.168 67.346 41.578 65.292 50.735
+
+thomas 04/10 00:36:40 312/312: Data time: 0.0024, Iter time: 0.1726	Loss 0.130 (AVG: 0.661)	Score 96.330 (AVG: 80.458)	mIOU 50.492 mAP 64.172 mAcc 61.993
+IOU: 72.141 96.755 48.690 64.838 77.146 59.437 61.648 28.803 14.554 62.389 0.006 50.282 47.254 39.458 36.624 42.291 67.599 38.870 65.462 35.586
+mAP: 72.605 97.315 58.690 64.784 85.321 79.686 63.410 48.860 39.976 64.244 10.968 53.326 57.324 59.591 57.722 82.405 87.090 75.624 81.465 43.037
+mAcc: 91.148 98.336 57.020 79.603 79.624 96.402 67.355 40.703 15.036 75.754 0.006 82.224 84.547 59.839 40.339 47.168 67.793 40.419 65.774 50.767
+
+thomas 04/10 00:36:40 Finished test. Elapsed time: 130.3862
+thomas 04/10 00:36:41 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/10 00:36:42 Current best mIoU: 50.492 at iter 11000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 00:38:22 ===> Epoch[74](11040/151): Loss 0.3416	LR: 9.168e-02	Score 89.000	Data time: 0.2123, Total iter time: 2.4513
+thomas 04/10 00:40:01 ===> Epoch[74](11080/151): Loss 0.3544	LR: 9.165e-02	Score 88.659	Data time: 0.2277, Total iter time: 2.4190
+thomas 04/10 00:41:44 ===> Epoch[74](11120/151): Loss 0.3655	LR: 9.162e-02	Score 88.467	Data time: 0.2388, Total iter time: 2.5160
+thomas 04/10 00:43:22 ===> Epoch[74](11160/151): Loss 0.3466	LR: 9.159e-02	Score 88.645	Data time: 0.2349, Total iter time: 2.4018
+thomas 04/10 00:45:01 ===> Epoch[75](11200/151): Loss 0.3675	LR: 9.156e-02	Score 88.217	Data time: 0.2258, Total iter time: 2.4231
+thomas 04/10 00:46:42 ===> Epoch[75](11240/151): Loss 0.3529	LR: 9.153e-02	Score 88.884	Data time: 0.2269, Total iter time: 2.4616
+thomas 04/10 00:48:21 ===> Epoch[75](11280/151): Loss 0.3430	LR: 9.150e-02	Score 88.929	Data time: 0.2103, Total iter time: 2.4431
+thomas 04/10 00:50:01 ===> Epoch[75](11320/151): Loss 0.3528	LR: 9.147e-02	Score 88.900	Data time: 0.2250, Total iter time: 2.4456
+thomas 04/10 00:51:41 ===> Epoch[76](11360/151): Loss 0.3702	LR: 9.144e-02	Score 87.986	Data time: 0.2197, Total iter time: 2.4385
+thomas 04/10 00:53:20 ===> Epoch[76](11400/151): Loss 0.3588	LR: 9.141e-02	Score 88.327	Data time: 0.2377, Total iter time: 2.4239
+thomas 04/10 00:55:03 ===> Epoch[76](11440/151): Loss 0.3486	LR: 9.138e-02	Score 89.040	Data time: 0.2309, Total iter time: 2.5131
+thomas 04/10 00:56:45 ===> Epoch[77](11480/151): Loss 0.3510	LR: 9.135e-02	Score 88.861	Data time: 0.2366, Total iter time: 2.4942
+thomas 04/10 00:58:24 ===> Epoch[77](11520/151): Loss 0.3627	LR: 9.132e-02	Score 88.458	Data time: 0.2252, Total iter time: 2.4035
+thomas 04/10 01:00:01 ===> Epoch[77](11560/151): Loss 0.3488	LR: 9.129e-02	Score 88.793	Data time: 0.2134, Total iter time: 2.3689
+thomas 04/10 01:01:46 ===> Epoch[77](11600/151): Loss 0.3325	LR: 9.126e-02	Score 89.291	Data time: 0.2208, Total iter time: 2.5708
+thomas 04/10 01:03:25 ===> Epoch[78](11640/151): Loss 0.3552	LR: 9.123e-02	Score 88.454	Data time: 0.2294, Total iter time: 2.4349
+thomas 04/10 01:05:03 ===> Epoch[78](11680/151): Loss 0.3513	LR: 9.120e-02	Score 88.876	Data time: 0.2398, Total iter time: 2.3853
+thomas 04/10 01:06:40 ===> Epoch[78](11720/151): Loss 0.3379	LR: 9.117e-02	Score 89.213	Data time: 0.2244, Total iter time: 2.3689
+thomas 04/10 01:08:20 ===> Epoch[78](11760/151): Loss 0.3453	LR: 9.114e-02	Score 88.925	Data time: 0.2094, Total iter time: 2.4415
+thomas 04/10 01:10:03 ===> Epoch[79](11800/151): Loss 0.3539	LR: 9.110e-02	Score 88.705	Data time: 0.2301, Total iter time: 2.5220
+thomas 04/10 01:11:42 ===> Epoch[79](11840/151): Loss 0.3566	LR: 9.107e-02	Score 88.744	Data time: 0.2345, Total iter time: 2.4305
+thomas 04/10 01:13:20 ===> Epoch[79](11880/151): Loss 0.3729	LR: 9.104e-02	Score 87.993	Data time: 0.2285, Total iter time: 2.3895
+thomas 04/10 01:15:00 ===> Epoch[79](11920/151): Loss 0.3569	LR: 9.101e-02	Score 88.682	Data time: 0.2214, Total iter time: 2.4355
+thomas 04/10 01:16:41 ===> Epoch[80](11960/151): Loss 0.3517	LR: 9.098e-02	Score 88.572	Data time: 0.2228, Total iter time: 2.4929
+thomas 04/10 01:18:22 ===> Epoch[80](12000/151): Loss 0.3348	LR: 9.095e-02	Score 89.239	Data time: 0.2374, Total iter time: 2.4573
+thomas 04/10 01:18:24 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 01:18:24 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 01:19:07 101/312: Data time: 0.0026, Iter time: 0.2601	Loss 0.223 (AVG: 0.621)	Score 95.164 (AVG: 82.134)	mIOU 49.610 mAP 63.863 mAcc 59.365
+IOU: 73.879 96.795 46.027 77.191 81.131 66.861 68.813 29.461 37.019 49.122 0.000 44.085 59.982 34.625 29.036 31.143 76.112 11.116 45.817 33.989
+mAP: 72.996 97.754 56.651 90.458 86.782 77.397 71.985 48.090 46.492 66.909 14.959 52.513 63.454 44.202 42.567 74.242 93.877 66.501 64.058 45.373
+mAcc: 89.643 98.949 75.517 91.851 87.666 93.792 72.235 39.538 43.057 54.271 0.000 53.429 71.874 47.960 36.224 33.155 88.684 11.166 46.399 51.888
+
+thomas 04/10 01:19:47 201/312: Data time: 0.0256, Iter time: 0.1965	Loss 0.241 (AVG: 0.661)	Score 91.782 (AVG: 81.099)	mIOU 50.879 mAP 63.961 mAcc 61.269
+IOU: 72.344 96.576 50.690 67.827 81.305 68.456 68.425 30.794 33.371 48.341 0.000 55.171 52.472 31.819 36.885 37.240 73.650 15.867 62.645 33.702
+mAP: 72.870 97.247 54.205 73.851 86.039 81.034 72.368 47.765 41.858 58.345 14.125 53.178 62.923 55.067 52.697 79.553 92.216 65.403 73.500 44.981
+mAcc: 88.360 98.927 77.344 81.559 89.076 95.000 72.295 40.843 38.597 54.317 0.000 66.124 62.276 53.713 47.631 40.172 89.592 15.966 64.115 49.468
+
+thomas 04/10 01:20:30 301/312: Data time: 0.0023, Iter time: 0.3333	Loss 0.610 (AVG: 0.653)	Score 80.190 (AVG: 81.361)	mIOU 50.522 mAP 63.280 mAcc 60.929
+IOU: 73.129 96.816 48.842 65.405 81.550 67.429 64.713 29.924 36.414 57.500 0.003 52.001 50.175 35.402 32.337 35.389 70.605 15.096 64.617 33.101
+mAP: 73.575 97.403 53.269 69.588 85.840 82.676 69.233 46.994 43.374 60.510 14.479 50.948 61.640 59.111 45.473 80.917 89.158 64.061 73.873 43.486
+mAcc: 88.630 99.014 75.400 75.703 89.860 95.241 69.636 38.850 43.531 64.584 0.003 63.844 61.378 55.993 41.843 38.301 84.258 15.234 66.374 50.901
+
+thomas 04/10 01:20:34 312/312: Data time: 0.0021, Iter time: 0.2437	Loss 0.661 (AVG: 0.657)	Score 80.706 (AVG: 81.285)	mIOU 50.323 mAP 63.185 mAcc 60.678
+IOU: 73.097 96.742 48.488 66.085 81.382 68.238 64.840 29.954 35.976 55.753 0.003 51.378 50.102 35.636 32.251 34.563 70.816 15.306 62.946 32.901
+mAP: 73.302 97.350 52.261 69.895 85.627 83.165 68.909 46.902 43.393 60.947 14.489 50.928 61.497 58.434 45.473 80.607 88.796 64.443 73.855 43.418
+mAcc: 88.649 98.959 75.301 76.354 89.814 95.592 69.850 38.895 42.926 62.368 0.003 63.266 61.238 55.858 41.843 37.336 84.304 15.444 64.598 50.970
+
+thomas 04/10 01:20:34 Finished test. Elapsed time: 129.9142
+thomas 04/10 01:20:34 Current best mIoU: 50.492 at iter 11000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 01:22:12 ===> Epoch[80](12040/151): Loss 0.3403	LR: 9.092e-02	Score 89.125	Data time: 0.2228, Total iter time: 2.4171
+thomas 04/10 01:23:53 ===> Epoch[80](12080/151): Loss 0.3441	LR: 9.089e-02	Score 88.995	Data time: 0.2172, Total iter time: 2.4659
+thomas 04/10 01:25:36 ===> Epoch[81](12120/151): Loss 0.3332	LR: 9.086e-02	Score 89.456	Data time: 0.2412, Total iter time: 2.5035
+thomas 04/10 01:27:16 ===> Epoch[81](12160/151): Loss 0.3561	LR: 9.083e-02	Score 88.454	Data time: 0.2316, Total iter time: 2.4611
+thomas 04/10 01:29:03 ===> Epoch[81](12200/151): Loss 0.3266	LR: 9.080e-02	Score 89.608	Data time: 0.2441, Total iter time: 2.6093
+thomas 04/10 01:30:49 ===> Epoch[82](12240/151): Loss 0.3278	LR: 9.077e-02	Score 89.509	Data time: 0.2408, Total iter time: 2.5879
+thomas 04/10 01:32:28 ===> Epoch[82](12280/151): Loss 0.3362	LR: 9.074e-02	Score 89.411	Data time: 0.2335, Total iter time: 2.4300
+thomas 04/10 01:34:01 ===> Epoch[82](12320/151): Loss 0.3440	LR: 9.071e-02	Score 88.728	Data time: 0.2221, Total iter time: 2.2580
+thomas 04/10 01:35:44 ===> Epoch[82](12360/151): Loss 0.3381	LR: 9.068e-02	Score 89.220	Data time: 0.2123, Total iter time: 2.5142
+thomas 04/10 01:37:26 ===> Epoch[83](12400/151): Loss 0.3607	LR: 9.065e-02	Score 88.354	Data time: 0.2297, Total iter time: 2.5033
+thomas 04/10 01:39:04 ===> Epoch[83](12440/151): Loss 0.3202	LR: 9.062e-02	Score 89.618	Data time: 0.2298, Total iter time: 2.4002
+thomas 04/10 01:40:47 ===> Epoch[83](12480/151): Loss 0.3730	LR: 9.059e-02	Score 88.092	Data time: 0.2420, Total iter time: 2.5213
+thomas 04/10 01:42:28 ===> Epoch[83](12520/151): Loss 0.3385	LR: 9.056e-02	Score 89.415	Data time: 0.2294, Total iter time: 2.4588
+thomas 04/10 01:44:08 ===> Epoch[84](12560/151): Loss 0.3338	LR: 9.053e-02	Score 89.498	Data time: 0.2456, Total iter time: 2.4412
+thomas 04/10 01:45:52 ===> Epoch[84](12600/151): Loss 0.3370	LR: 9.050e-02	Score 89.133	Data time: 0.2513, Total iter time: 2.5545
+thomas 04/10 01:47:32 ===> Epoch[84](12640/151): Loss 0.3436	LR: 9.047e-02	Score 88.809	Data time: 0.2242, Total iter time: 2.4309
+thomas 04/10 01:49:13 ===> Epoch[84](12680/151): Loss 0.3475	LR: 9.044e-02	Score 88.928	Data time: 0.2270, Total iter time: 2.4814
+thomas 04/10 01:50:53 ===> Epoch[85](12720/151): Loss 0.3378	LR: 9.041e-02	Score 89.149	Data time: 0.2241, Total iter time: 2.4328
+thomas 04/10 01:52:33 ===> Epoch[85](12760/151): Loss 0.3417	LR: 9.038e-02	Score 88.975	Data time: 0.2302, Total iter time: 2.4599
+thomas 04/10 01:54:17 ===> Epoch[85](12800/151): Loss 0.3237	LR: 9.035e-02	Score 89.501	Data time: 0.2430, Total iter time: 2.5232
+thomas 04/10 01:55:55 ===> Epoch[86](12840/151): Loss 0.3724	LR: 9.032e-02	Score 88.216	Data time: 0.2278, Total iter time: 2.3973
+thomas 04/10 01:57:35 ===> Epoch[86](12880/151): Loss 0.3539	LR: 9.029e-02	Score 88.706	Data time: 0.2253, Total iter time: 2.4440
+thomas 04/10 01:59:16 ===> Epoch[86](12920/151): Loss 0.3341	LR: 9.026e-02	Score 89.180	Data time: 0.2296, Total iter time: 2.4897
+thomas 04/10 02:00:56 ===> Epoch[86](12960/151): Loss 0.3149	LR: 9.023e-02	Score 89.879	Data time: 0.2114, Total iter time: 2.4350
+thomas 04/10 02:02:35 ===> Epoch[87](13000/151): Loss 0.3287	LR: 9.020e-02	Score 89.537	Data time: 0.2173, Total iter time: 2.4303
+thomas 04/10 02:02:37 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 02:02:37 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 02:03:22 101/312: Data time: 0.0022, Iter time: 0.4130	Loss 0.279 (AVG: 0.641)	Score 91.781 (AVG: 81.540)	mIOU 50.131 mAP 63.037 mAcc 61.981
+IOU: 71.254 96.603 51.436 50.685 82.965 58.910 64.387 29.114 30.302 81.488 0.000 51.177 45.651 38.269 34.223 32.333 45.681 37.720 67.515 32.899
+mAP: 69.596 97.446 52.164 64.898 88.588 82.663 68.921 46.376 40.004 58.764 16.947 54.035 52.106 62.450 51.426 72.895 87.204 72.733 76.836 44.689
+mAcc: 86.821 98.601 64.988 73.169 86.735 95.236 90.080 45.929 32.772 92.743 0.000 58.085 62.424 82.277 46.177 33.571 45.681 39.771 67.928 36.642
+
+thomas 04/10 02:04:02 201/312: Data time: 0.0031, Iter time: 0.2584	Loss 0.291 (AVG: 0.623)	Score 90.736 (AVG: 81.998)	mIOU 51.385 mAP 63.664 mAcc 63.130
+IOU: 73.801 96.763 51.344 55.442 84.134 64.954 63.014 29.056 38.529 68.392 0.000 53.075 51.384 37.029 32.484 32.162 48.350 41.132 71.458 35.194
+mAP: 72.569 96.932 52.145 61.425 89.156 81.369 69.046 46.490 42.599 58.600 14.653 57.276 54.317 65.626 54.988 73.115 84.627 72.841 80.200 45.302
+mAcc: 87.237 98.833 63.187 71.534 88.744 95.727 87.052 46.167 41.903 88.798 0.000 62.546 67.714 74.289 48.566 36.470 48.375 44.017 71.821 39.620
+
+thomas 04/10 02:04:43 301/312: Data time: 0.0030, Iter time: 0.2309	Loss 0.595 (AVG: 0.640)	Score 76.362 (AVG: 81.513)	mIOU 51.084 mAP 63.162 mAcc 62.794
+IOU: 73.411 96.809 51.180 58.759 83.643 64.820 63.035 30.037 35.965 66.059 0.000 55.222 48.989 35.582 32.918 36.173 48.844 40.088 66.438 33.709
+mAP: 73.076 97.173 49.568 60.554 88.221 82.898 67.669 46.422 41.658 56.486 14.764 56.204 53.988 64.552 55.166 71.945 87.602 71.269 80.345 43.687
+mAcc: 86.989 98.868 61.837 71.713 88.671 95.218 86.843 48.051 39.499 84.397 0.000 67.561 66.534 71.271 50.689 39.987 48.867 42.848 66.791 39.248
+
+thomas 04/10 02:04:47 312/312: Data time: 0.0029, Iter time: 0.2547	Loss 0.806 (AVG: 0.639)	Score 77.257 (AVG: 81.551)	mIOU 51.297 mAP 63.331 mAcc 63.014
+IOU: 73.592 96.826 52.028 58.975 83.197 64.618 63.254 30.556 35.865 65.497 0.000 55.510 49.160 36.305 35.516 35.793 48.804 40.979 66.204 33.263
+mAP: 73.343 97.182 49.831 60.979 87.994 82.916 67.553 46.842 41.232 57.255 14.915 56.077 54.101 64.485 55.472 72.223 87.985 72.065 80.666 43.507
+mAcc: 87.078 98.891 62.982 71.800 88.108 95.225 86.945 48.541 39.317 84.422 0.000 67.132 66.789 72.384 53.149 39.405 48.825 43.717 66.551 39.027
+
+thomas 04/10 02:04:47 Finished test. Elapsed time: 129.7234
+thomas 04/10 02:04:48 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/10 02:04:48 Current best mIoU: 51.297 at iter 13000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 02:06:26 ===> Epoch[87](13040/151): Loss 0.3385	LR: 9.016e-02	Score 89.143	Data time: 0.2086, Total iter time: 2.3933
+thomas 04/10 02:08:07 ===> Epoch[87](13080/151): Loss 0.3385	LR: 9.013e-02	Score 89.214	Data time: 0.2431, Total iter time: 2.4766
+thomas 04/10 02:09:50 ===> Epoch[87](13120/151): Loss 0.3225	LR: 9.010e-02	Score 89.619	Data time: 0.2355, Total iter time: 2.5074
+thomas 04/10 02:11:30 ===> Epoch[88](13160/151): Loss 0.3563	LR: 9.007e-02	Score 88.876	Data time: 0.2162, Total iter time: 2.4335
+thomas 04/10 02:13:06 ===> Epoch[88](13200/151): Loss 0.3119	LR: 9.004e-02	Score 90.121	Data time: 0.2233, Total iter time: 2.3694
+thomas 04/10 02:14:47 ===> Epoch[88](13240/151): Loss 0.3252	LR: 9.001e-02	Score 89.538	Data time: 0.2372, Total iter time: 2.4597
+thomas 04/10 02:16:26 ===> Epoch[88](13280/151): Loss 0.3311	LR: 8.998e-02	Score 89.414	Data time: 0.2224, Total iter time: 2.4166
+thomas 04/10 02:18:07 ===> Epoch[89](13320/151): Loss 0.3271	LR: 8.995e-02	Score 89.387	Data time: 0.2414, Total iter time: 2.4844
+thomas 04/10 02:19:54 ===> Epoch[89](13360/151): Loss 0.3331	LR: 8.992e-02	Score 89.347	Data time: 0.2439, Total iter time: 2.5991
+thomas 04/10 02:21:38 ===> Epoch[89](13400/151): Loss 0.3244	LR: 8.989e-02	Score 89.419	Data time: 0.2321, Total iter time: 2.5496
+thomas 04/10 02:23:20 ===> Epoch[90](13440/151): Loss 0.3099	LR: 8.986e-02	Score 90.126	Data time: 0.2707, Total iter time: 2.5064
+thomas 04/10 02:25:07 ===> Epoch[90](13480/151): Loss 0.3340	LR: 8.983e-02	Score 88.922	Data time: 0.2632, Total iter time: 2.6154
+thomas 04/10 02:26:47 ===> Epoch[90](13520/151): Loss 0.3410	LR: 8.980e-02	Score 89.255	Data time: 0.2354, Total iter time: 2.4285
+thomas 04/10 02:28:28 ===> Epoch[90](13560/151): Loss 0.3017	LR: 8.977e-02	Score 90.180	Data time: 0.2166, Total iter time: 2.4784
+thomas 04/10 02:30:10 ===> Epoch[91](13600/151): Loss 0.3267	LR: 8.974e-02	Score 89.318	Data time: 0.2483, Total iter time: 2.4862
+thomas 04/10 02:31:48 ===> Epoch[91](13640/151): Loss 0.3298	LR: 8.971e-02	Score 89.440	Data time: 0.2312, Total iter time: 2.3909
+thomas 04/10 02:33:27 ===> Epoch[91](13680/151): Loss 0.3339	LR: 8.968e-02	Score 89.344	Data time: 0.2243, Total iter time: 2.4167
+thomas 04/10 02:35:04 ===> Epoch[91](13720/151): Loss 0.3304	LR: 8.965e-02	Score 89.517	Data time: 0.2247, Total iter time: 2.3855
+thomas 04/10 02:36:47 ===> Epoch[92](13760/151): Loss 0.3202	LR: 8.962e-02	Score 89.807	Data time: 0.2434, Total iter time: 2.5220
+thomas 04/10 02:38:29 ===> Epoch[92](13800/151): Loss 0.3305	LR: 8.959e-02	Score 89.397	Data time: 0.2168, Total iter time: 2.4920
+thomas 04/10 02:40:13 ===> Epoch[92](13840/151): Loss 0.3137	LR: 8.956e-02	Score 89.973	Data time: 0.2331, Total iter time: 2.5406
+thomas 04/10 02:41:52 ===> Epoch[92](13880/151): Loss 0.3297	LR: 8.953e-02	Score 89.434	Data time: 0.2228, Total iter time: 2.4069
+thomas 04/10 02:43:26 ===> Epoch[93](13920/151): Loss 0.3370	LR: 8.950e-02	Score 89.126	Data time: 0.2215, Total iter time: 2.3173
+thomas 04/10 02:45:14 ===> Epoch[93](13960/151): Loss 0.3223	LR: 8.947e-02	Score 89.572	Data time: 0.2560, Total iter time: 2.6209
+thomas 04/10 02:47:01 ===> Epoch[93](14000/151): Loss 0.3158	LR: 8.944e-02	Score 89.693	Data time: 0.2252, Total iter time: 2.6415
+thomas 04/10 02:47:03 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 02:47:03 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 02:47:48 101/312: Data time: 0.0027, Iter time: 0.2443	Loss 0.371 (AVG: 0.748)	Score 87.321 (AVG: 78.822)	mIOU 51.707 mAP 64.726 mAcc 65.508
+IOU: 64.093 97.182 44.529 64.078 88.458 74.595 72.192 22.360 16.362 53.645 4.764 50.142 45.821 50.469 19.228 37.244 84.314 33.538 80.574 30.550
+mAP: 72.857 97.732 59.659 65.930 90.351 82.155 72.462 42.108 43.992 65.898 18.936 46.529 56.583 59.317 62.776 73.083 87.730 71.490 83.201 41.728
+mAcc: 74.898 98.860 82.367 73.299 96.778 95.268 75.952 25.515 16.737 93.741 8.240 61.869 76.885 65.447 63.318 41.594 86.102 34.829 82.762 55.689
+
+thomas 04/10 02:48:31 201/312: Data time: 0.0023, Iter time: 0.2658	Loss 0.974 (AVG: 0.805)	Score 68.666 (AVG: 77.657)	mIOU 49.961 mAP 62.829 mAcc 63.845
+IOU: 65.800 96.462 41.824 61.179 84.710 70.923 63.256 21.727 14.136 53.262 5.078 56.000 47.704 45.319 20.707 40.632 76.808 30.835 71.867 30.989
+mAP: 73.416 97.140 53.016 58.389 87.942 80.233 67.860 45.319 41.346 63.075 16.566 46.747 53.177 58.929 60.240 73.440 85.866 66.777 81.490 45.602
+mAcc: 77.004 98.674 79.075 68.428 94.681 89.208 67.314 24.149 14.344 90.950 9.280 70.224 73.734 62.928 64.669 45.728 80.096 31.695 73.431 61.294
+
+thomas 04/10 02:49:13 301/312: Data time: 0.0029, Iter time: 0.2242	Loss 0.284 (AVG: 0.783)	Score 94.644 (AVG: 78.025)	mIOU 50.064 mAP 62.506 mAcc 63.404
+IOU: 66.903 96.658 41.521 62.994 81.809 67.493 63.535 20.991 12.801 57.702 4.235 52.393 47.726 44.123 23.015 44.844 76.686 35.684 69.072 31.092
+mAP: 72.861 97.230 53.224 60.641 86.121 79.055 68.449 43.936 38.972 61.354 14.344 48.596 53.052 59.188 56.195 76.302 88.149 67.965 80.647 43.837
+mAcc: 78.070 98.715 77.956 71.588 93.609 83.092 67.689 23.188 13.058 90.712 8.190 65.710 73.485 60.860 62.801 49.847 81.064 36.425 70.912 61.119
+
+thomas 04/10 02:49:17 312/312: Data time: 0.0030, Iter time: 0.1454	Loss 0.824 (AVG: 0.784)	Score 72.417 (AVG: 78.122)	mIOU 49.923 mAP 62.538 mAcc 63.159
+IOU: 66.924 96.677 42.062 62.722 82.416 67.490 64.370 21.024 13.101 57.737 3.956 52.951 48.164 42.682 23.506 40.735 77.014 35.281 68.502 31.150
+mAP: 73.044 97.267 53.825 60.177 86.364 79.306 68.880 44.091 38.525 61.150 14.278 50.223 53.652 57.756 57.678 76.390 88.357 67.880 78.111 43.804
+mAcc: 78.166 98.717 78.592 71.237 93.868 83.497 68.478 23.292 13.446 90.772 7.612 65.872 73.757 58.518 63.676 44.662 81.398 36.006 70.340 61.268
+
+thomas 04/10 02:49:17 Finished test. Elapsed time: 134.2140
+thomas 04/10 02:49:17 Current best mIoU: 51.297 at iter 13000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 02:51:01 ===> Epoch[93](14040/151): Loss 0.3145	LR: 8.941e-02	Score 90.090	Data time: 0.2519, Total iter time: 2.5427
+thomas 04/10 02:52:45 ===> Epoch[94](14080/151): Loss 0.3607	LR: 8.938e-02	Score 88.374	Data time: 0.2349, Total iter time: 2.5403
+thomas 04/10 02:54:26 ===> Epoch[94](14120/151): Loss 0.3169	LR: 8.934e-02	Score 89.883	Data time: 0.2294, Total iter time: 2.4671
+thomas 04/10 02:56:13 ===> Epoch[94](14160/151): Loss 0.3220	LR: 8.931e-02	Score 89.502	Data time: 0.2623, Total iter time: 2.6113
+thomas 04/10 02:57:57 ===> Epoch[95](14200/151): Loss 0.3444	LR: 8.928e-02	Score 88.985	Data time: 0.2142, Total iter time: 2.5530
+thomas 04/10 02:59:45 ===> Epoch[95](14240/151): Loss 0.3202	LR: 8.925e-02	Score 89.660	Data time: 0.2305, Total iter time: 2.6492
+thomas 04/10 03:01:25 ===> Epoch[95](14280/151): Loss 0.3161	LR: 8.922e-02	Score 89.780	Data time: 0.2356, Total iter time: 2.4330
+thomas 04/10 03:03:06 ===> Epoch[95](14320/151): Loss 0.3077	LR: 8.919e-02	Score 89.940	Data time: 0.2382, Total iter time: 2.4884
+thomas 04/10 03:04:53 ===> Epoch[96](14360/151): Loss 0.3387	LR: 8.916e-02	Score 89.358	Data time: 0.2419, Total iter time: 2.6096
+thomas 04/10 03:06:42 ===> Epoch[96](14400/151): Loss 0.3348	LR: 8.913e-02	Score 89.261	Data time: 0.2368, Total iter time: 2.6754
+thomas 04/10 03:08:27 ===> Epoch[96](14440/151): Loss 0.3317	LR: 8.910e-02	Score 89.656	Data time: 0.2481, Total iter time: 2.5635
+thomas 04/10 03:10:16 ===> Epoch[96](14480/151): Loss 0.3223	LR: 8.907e-02	Score 89.671	Data time: 0.2480, Total iter time: 2.6670
+thomas 04/10 03:12:02 ===> Epoch[97](14520/151): Loss 0.3305	LR: 8.904e-02	Score 89.393	Data time: 0.2372, Total iter time: 2.5799
+thomas 04/10 03:13:46 ===> Epoch[97](14560/151): Loss 0.3376	LR: 8.901e-02	Score 89.182	Data time: 0.2440, Total iter time: 2.5396
+thomas 04/10 03:15:29 ===> Epoch[97](14600/151): Loss 0.3130	LR: 8.898e-02	Score 89.873	Data time: 0.2366, Total iter time: 2.5388
+thomas 04/10 03:17:14 ===> Epoch[97](14640/151): Loss 0.3146	LR: 8.895e-02	Score 89.776	Data time: 0.2395, Total iter time: 2.5687
+thomas 04/10 03:19:01 ===> Epoch[98](14680/151): Loss 0.3059	LR: 8.892e-02	Score 90.095	Data time: 0.2225, Total iter time: 2.6043
+thomas 04/10 03:20:45 ===> Epoch[98](14720/151): Loss 0.3395	LR: 8.889e-02	Score 89.246	Data time: 0.2520, Total iter time: 2.5498
+thomas 04/10 03:22:29 ===> Epoch[98](14760/151): Loss 0.3130	LR: 8.886e-02	Score 89.921	Data time: 0.2375, Total iter time: 2.5411
+thomas 04/10 03:24:15 ===> Epoch[99](14800/151): Loss 0.3240	LR: 8.883e-02	Score 89.780	Data time: 0.2189, Total iter time: 2.6101
+thomas 04/10 03:26:01 ===> Epoch[99](14840/151): Loss 0.2995	LR: 8.880e-02	Score 90.367	Data time: 0.2477, Total iter time: 2.5888
+thomas 04/10 03:27:44 ===> Epoch[99](14880/151): Loss 0.3151	LR: 8.877e-02	Score 89.820	Data time: 0.2512, Total iter time: 2.5222
+thomas 04/10 03:29:32 ===> Epoch[99](14920/151): Loss 0.2910	LR: 8.874e-02	Score 90.648	Data time: 0.2208, Total iter time: 2.6353
+thomas 04/10 03:31:16 ===> Epoch[100](14960/151): Loss 0.3194	LR: 8.871e-02	Score 89.771	Data time: 0.2216, Total iter time: 2.5578
+thomas 04/10 03:33:00 ===> Epoch[100](15000/151): Loss 0.3208	LR: 8.868e-02	Score 89.870	Data time: 0.2555, Total iter time: 2.5276
+thomas 04/10 03:33:01 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 03:33:01 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 03:33:47 101/312: Data time: 0.0023, Iter time: 0.3882	Loss 0.411 (AVG: 0.637)	Score 87.320 (AVG: 81.603)	mIOU 55.732 mAP 66.049 mAcc 69.681
+IOU: 72.121 96.267 51.824 68.681 83.530 72.882 70.783 29.797 35.476 57.157 0.744 52.073 56.081 28.306 38.467 51.159 83.503 36.083 89.346 40.367
+mAP: 74.061 96.044 53.851 66.459 87.127 84.952 66.483 47.699 44.501 61.411 19.446 50.116 59.450 55.209 70.631 82.895 90.613 78.715 84.785 46.520
+mAcc: 83.636 99.169 76.268 76.705 87.467 96.206 79.023 45.740 42.520 67.261 0.789 85.272 73.051 52.781 74.526 82.933 85.905 36.336 91.432 56.598
+
+thomas 04/10 03:34:30 201/312: Data time: 0.0024, Iter time: 0.3257	Loss 0.802 (AVG: 0.628)	Score 78.894 (AVG: 81.639)	mIOU 54.901 mAP 65.160 mAcc 67.982
+IOU: 73.264 96.339 51.068 69.155 82.674 68.214 66.147 31.180 34.863 63.619 0.517 52.681 50.062 33.971 38.108 53.782 81.338 33.053 79.329 38.645
+mAP: 73.025 96.337 57.047 67.589 86.280 83.129 64.995 48.698 44.585 59.980 16.757 50.164 60.710 56.273 63.823 78.539 88.306 76.967 83.692 46.311
+mAcc: 84.979 99.059 77.732 77.211 86.672 96.724 75.448 47.590 40.311 78.161 0.544 79.563 71.670 60.862 63.466 72.463 83.499 33.245 81.778 48.664
+
+thomas 04/10 03:35:11 301/312: Data time: 0.0046, Iter time: 0.2452	Loss 0.504 (AVG: 0.624)	Score 85.073 (AVG: 81.786)	mIOU 54.279 mAP 65.526 mAcc 67.215
+IOU: 73.162 96.753 48.995 66.375 83.189 67.683 67.919 32.649 34.514 62.132 0.383 51.702 48.483 35.222 38.003 50.002 79.672 32.700 78.939 37.103
+mAP: 74.055 96.008 57.778 68.432 87.030 81.116 69.296 49.015 45.818 61.416 17.149 50.809 57.118 59.770 63.427 79.240 88.357 76.947 81.122 46.617
+mAcc: 85.735 99.141 76.728 75.963 87.100 97.128 77.879 48.894 39.700 73.844 0.400 78.194 70.407 62.621 63.978 63.711 82.247 32.929 82.060 45.642
+
+thomas 04/10 03:35:16 312/312: Data time: 0.0025, Iter time: 0.2103	Loss 0.566 (AVG: 0.626)	Score 78.125 (AVG: 81.680)	mIOU 54.122 mAP 65.357 mAcc 67.129
+IOU: 73.274 96.719 49.010 66.402 83.545 67.227 68.076 32.547 34.376 61.227 0.378 51.669 48.510 34.544 37.492 49.962 79.672 32.260 78.939 36.616
+mAP: 74.392 96.018 57.852 67.354 86.889 81.449 68.669 48.925 45.904 61.416 17.124 51.066 56.390 60.460 62.123 79.240 88.357 76.336 81.122 46.061
+mAcc: 85.823 99.129 76.744 76.046 87.444 97.166 77.876 48.133 39.240 73.844 0.395 78.445 70.740 63.107 62.757 63.711 82.247 32.480 82.060 45.188
+
+thomas 04/10 03:35:16 Finished test. Elapsed time: 134.3144
+thomas 04/10 03:35:17 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/10 03:35:17 Current best mIoU: 54.122 at iter 15000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 03:36:59 ===> Epoch[100](15040/151): Loss 0.3070	LR: 8.865e-02	Score 90.004	Data time: 0.2329, Total iter time: 2.4950
+thomas 04/10 03:38:45 ===> Epoch[100](15080/151): Loss 0.3043	LR: 8.862e-02	Score 90.255	Data time: 0.2397, Total iter time: 2.5955
+thomas 04/10 03:40:30 ===> Epoch[101](15120/151): Loss 0.3201	LR: 8.859e-02	Score 89.663	Data time: 0.2452, Total iter time: 2.5577
+thomas 04/10 03:42:15 ===> Epoch[101](15160/151): Loss 0.3311	LR: 8.855e-02	Score 89.648	Data time: 0.2416, Total iter time: 2.5758
+thomas 04/10 03:44:04 ===> Epoch[101](15200/151): Loss 0.3240	LR: 8.852e-02	Score 89.757	Data time: 0.2284, Total iter time: 2.6650
+thomas 04/10 03:45:45 ===> Epoch[101](15240/151): Loss 0.3100	LR: 8.849e-02	Score 89.865	Data time: 0.2367, Total iter time: 2.4829
+thomas 04/10 03:47:29 ===> Epoch[102](15280/151): Loss 0.3031	LR: 8.846e-02	Score 90.427	Data time: 0.2254, Total iter time: 2.5289
+thomas 04/10 03:49:05 ===> Epoch[102](15320/151): Loss 0.3362	LR: 8.843e-02	Score 89.522	Data time: 0.2271, Total iter time: 2.3660
+thomas 04/10 03:50:47 ===> Epoch[102](15360/151): Loss 0.3202	LR: 8.840e-02	Score 89.659	Data time: 0.2251, Total iter time: 2.4773
+thomas 04/10 03:52:28 ===> Epoch[102](15400/151): Loss 0.3046	LR: 8.837e-02	Score 90.047	Data time: 0.2346, Total iter time: 2.4702
+thomas 04/10 03:54:06 ===> Epoch[103](15440/151): Loss 0.3202	LR: 8.834e-02	Score 89.850	Data time: 0.2122, Total iter time: 2.4031
+thomas 04/10 03:55:53 ===> Epoch[103](15480/151): Loss 0.3299	LR: 8.831e-02	Score 89.349	Data time: 0.2325, Total iter time: 2.6161
+thomas 04/10 03:57:34 ===> Epoch[103](15520/151): Loss 0.3345	LR: 8.828e-02	Score 89.045	Data time: 0.2304, Total iter time: 2.4847
+thomas 04/10 03:59:17 ===> Epoch[104](15560/151): Loss 0.3272	LR: 8.825e-02	Score 89.784	Data time: 0.2377, Total iter time: 2.5066
+thomas 04/10 04:00:59 ===> Epoch[104](15600/151): Loss 0.3038	LR: 8.822e-02	Score 90.217	Data time: 0.2468, Total iter time: 2.5034
+thomas 04/10 04:02:48 ===> Epoch[104](15640/151): Loss 0.3120	LR: 8.819e-02	Score 90.133	Data time: 0.2415, Total iter time: 2.6655
+thomas 04/10 04:04:31 ===> Epoch[104](15680/151): Loss 0.2978	LR: 8.816e-02	Score 90.295	Data time: 0.2353, Total iter time: 2.5235
+thomas 04/10 04:06:17 ===> Epoch[105](15720/151): Loss 0.3175	LR: 8.813e-02	Score 89.838	Data time: 0.2377, Total iter time: 2.5947
+thomas 04/10 04:07:59 ===> Epoch[105](15760/151): Loss 0.3304	LR: 8.810e-02	Score 89.360	Data time: 0.2427, Total iter time: 2.4950
+thomas 04/10 04:09:42 ===> Epoch[105](15800/151): Loss 0.3061	LR: 8.807e-02	Score 90.382	Data time: 0.2369, Total iter time: 2.5253
+thomas 04/10 04:11:29 ===> Epoch[105](15840/151): Loss 0.3124	LR: 8.804e-02	Score 89.768	Data time: 0.2332, Total iter time: 2.6215
+thomas 04/10 04:13:10 ===> Epoch[106](15880/151): Loss 0.3137	LR: 8.801e-02	Score 89.755	Data time: 0.2225, Total iter time: 2.4712
+thomas 04/10 04:14:53 ===> Epoch[106](15920/151): Loss 0.3466	LR: 8.798e-02	Score 89.221	Data time: 0.2316, Total iter time: 2.5207
+thomas 04/10 04:16:40 ===> Epoch[106](15960/151): Loss 0.3071	LR: 8.795e-02	Score 90.337	Data time: 0.2305, Total iter time: 2.6027
+thomas 04/10 04:18:24 ===> Epoch[106](16000/151): Loss 0.3097	LR: 8.792e-02	Score 90.343	Data time: 0.2205, Total iter time: 2.5514
+thomas 04/10 04:18:26 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 04:18:26 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 04:19:12 101/312: Data time: 0.0026, Iter time: 0.2455	Loss 0.258 (AVG: 0.746)	Score 90.605 (AVG: 78.508)	mIOU 52.560 mAP 64.078 mAcc 65.917
+IOU: 67.227 96.600 45.001 52.274 78.078 49.738 63.133 32.703 38.589 73.778 0.000 56.658 51.529 38.081 44.207 56.401 77.268 33.911 62.639 33.384
+mAP: 70.921 96.947 53.053 66.104 84.114 72.583 63.325 49.749 44.154 63.994 11.675 51.468 61.370 68.016 61.181 75.353 82.765 79.069 75.987 49.737
+mAcc: 76.861 99.065 70.877 82.939 79.745 98.562 72.501 57.958 45.531 85.819 0.000 69.094 64.062 68.439 47.801 74.807 79.430 34.219 63.028 47.600
+
+thomas 04/10 04:19:55 201/312: Data time: 0.0025, Iter time: 0.2719	Loss 0.762 (AVG: 0.719)	Score 75.231 (AVG: 79.470)	mIOU 51.885 mAP 64.127 mAcc 65.463
+IOU: 68.288 96.637 46.983 57.318 74.773 45.840 68.143 36.947 32.224 67.915 0.000 53.645 53.224 45.198 36.548 52.721 70.751 36.156 61.114 33.271
+mAP: 70.254 97.243 54.430 67.477 81.819 75.374 65.083 52.733 42.658 59.457 10.219 52.440 63.454 71.519 59.887 74.785 85.122 76.855 75.357 46.371
+mAcc: 76.761 99.119 72.288 85.256 76.684 98.790 76.844 62.823 36.496 85.652 0.000 64.177 65.743 78.392 40.361 66.546 72.078 36.485 61.595 53.169
+
+thomas 04/10 04:20:36 301/312: Data time: 0.0024, Iter time: 0.2611	Loss 0.528 (AVG: 0.764)	Score 84.296 (AVG: 78.541)	mIOU 50.381 mAP 63.408 mAcc 64.099
+IOU: 67.848 96.502 46.117 53.824 75.126 44.628 67.389 35.690 29.246 65.069 0.000 53.516 51.455 38.256 35.801 49.816 72.808 36.193 56.259 32.083
+mAP: 71.080 96.933 53.908 65.368 81.729 75.732 65.611 50.867 42.177 58.382 11.325 53.354 61.183 68.609 52.484 74.908 87.291 76.660 74.018 46.544
+mAcc: 76.606 99.100 70.507 82.763 76.894 98.238 76.050 60.975 32.427 83.952 0.000 66.496 64.312 73.459 39.438 61.699 74.378 36.526 56.897 51.259
+
+thomas 04/10 04:20:41 312/312: Data time: 0.0023, Iter time: 0.1840	Loss 1.156 (AVG: 0.765)	Score 75.968 (AVG: 78.584)	mIOU 50.292 mAP 63.470 mAcc 64.001
+IOU: 67.939 96.434 45.533 54.109 74.525 44.775 67.542 35.935 29.049 64.743 0.000 53.323 50.952 38.188 35.452 49.816 73.239 37.311 54.925 32.056
+mAP: 70.965 96.820 53.509 65.818 81.828 76.090 65.870 50.838 42.206 58.534 11.648 53.354 60.517 69.142 52.484 74.908 87.620 77.458 73.438 46.357
+mAcc: 76.744 99.122 70.471 82.609 76.258 98.238 76.227 61.098 32.304 82.008 0.000 66.496 64.124 73.584 39.438 61.699 75.008 37.669 55.542 51.370
+
+thomas 04/10 04:20:41 Finished test. Elapsed time: 134.7875
+thomas 04/10 04:20:41 Current best mIoU: 54.122 at iter 15000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 04:22:25 ===> Epoch[107](16040/151): Loss 0.3332	LR: 8.789e-02	Score 89.245	Data time: 0.2321, Total iter time: 2.5545
+thomas 04/10 04:24:02 ===> Epoch[107](16080/151): Loss 0.2984	LR: 8.786e-02	Score 90.081	Data time: 0.2314, Total iter time: 2.3734
+thomas 04/10 04:25:40 ===> Epoch[107](16120/151): Loss 0.3061	LR: 8.782e-02	Score 90.202	Data time: 0.2109, Total iter time: 2.4046
+thomas 04/10 04:27:20 ===> Epoch[108](16160/151): Loss 0.3240	LR: 8.779e-02	Score 89.574	Data time: 0.2428, Total iter time: 2.4420
+thomas 04/10 04:29:07 ===> Epoch[108](16200/151): Loss 0.3367	LR: 8.776e-02	Score 89.261	Data time: 0.2338, Total iter time: 2.6206
+thomas 04/10 04:30:50 ===> Epoch[108](16240/151): Loss 0.3143	LR: 8.773e-02	Score 89.965	Data time: 0.2207, Total iter time: 2.5206
+thomas 04/10 04:32:34 ===> Epoch[108](16280/151): Loss 0.3008	LR: 8.770e-02	Score 90.424	Data time: 0.2281, Total iter time: 2.5287
+thomas 04/10 04:34:19 ===> Epoch[109](16320/151): Loss 0.2846	LR: 8.767e-02	Score 90.878	Data time: 0.2596, Total iter time: 2.5793
+thomas 04/10 04:36:08 ===> Epoch[109](16360/151): Loss 0.3280	LR: 8.764e-02	Score 89.534	Data time: 0.2667, Total iter time: 2.6730
+thomas 04/10 04:37:53 ===> Epoch[109](16400/151): Loss 0.2979	LR: 8.761e-02	Score 90.467	Data time: 0.2321, Total iter time: 2.5655
+thomas 04/10 04:39:41 ===> Epoch[109](16440/151): Loss 0.3125	LR: 8.758e-02	Score 89.872	Data time: 0.2399, Total iter time: 2.6300
+thomas 04/10 04:41:28 ===> Epoch[110](16480/151): Loss 0.3122	LR: 8.755e-02	Score 90.143	Data time: 0.2353, Total iter time: 2.6306
+thomas 04/10 04:43:12 ===> Epoch[110](16520/151): Loss 0.2930	LR: 8.752e-02	Score 90.675	Data time: 0.2379, Total iter time: 2.5338
+thomas 04/10 04:44:49 ===> Epoch[110](16560/151): Loss 0.3432	LR: 8.749e-02	Score 88.702	Data time: 0.2291, Total iter time: 2.3887
+thomas 04/10 04:46:37 ===> Epoch[110](16600/151): Loss 0.3057	LR: 8.746e-02	Score 89.921	Data time: 0.2471, Total iter time: 2.6337
+thomas 04/10 04:48:19 ===> Epoch[111](16640/151): Loss 0.2986	LR: 8.743e-02	Score 90.476	Data time: 0.2310, Total iter time: 2.4781
+thomas 04/10 04:50:07 ===> Epoch[111](16680/151): Loss 0.3005	LR: 8.740e-02	Score 90.321	Data time: 0.2503, Total iter time: 2.6473
+thomas 04/10 04:51:51 ===> Epoch[111](16720/151): Loss 0.3189	LR: 8.737e-02	Score 89.846	Data time: 0.2359, Total iter time: 2.5459
+thomas 04/10 04:53:33 ===> Epoch[111](16760/151): Loss 0.3231	LR: 8.734e-02	Score 89.620	Data time: 0.2374, Total iter time: 2.4932
+thomas 04/10 04:55:17 ===> Epoch[112](16800/151): Loss 0.3051	LR: 8.731e-02	Score 90.261	Data time: 0.2151, Total iter time: 2.5529
+thomas 04/10 04:56:57 ===> Epoch[112](16840/151): Loss 0.3130	LR: 8.728e-02	Score 89.900	Data time: 0.2389, Total iter time: 2.4465
+thomas 04/10 04:58:38 ===> Epoch[112](16880/151): Loss 0.2985	LR: 8.725e-02	Score 90.323	Data time: 0.2400, Total iter time: 2.4702
+thomas 04/10 05:00:20 ===> Epoch[113](16920/151): Loss 0.2919	LR: 8.722e-02	Score 90.699	Data time: 0.2147, Total iter time: 2.4819
+thomas 04/10 05:02:02 ===> Epoch[113](16960/151): Loss 0.2959	LR: 8.719e-02	Score 90.474	Data time: 0.2197, Total iter time: 2.4914
+thomas 04/10 05:03:39 ===> Epoch[113](17000/151): Loss 0.2936	LR: 8.715e-02	Score 90.790	Data time: 0.2245, Total iter time: 2.3845
+thomas 04/10 05:03:41 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 05:03:41 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 05:04:25 101/312: Data time: 0.0034, Iter time: 0.2515	Loss 0.419 (AVG: 0.655)	Score 84.648 (AVG: 81.626)	mIOU 47.978 mAP 61.063 mAcc 58.009
+IOU: 74.050 96.450 40.262 64.923 87.754 71.138 69.240 29.136 18.394 43.662 0.000 31.904 55.204 47.151 38.502 27.905 65.102 8.218 60.355 30.219
+mAP: 72.921 96.906 54.036 68.020 87.651 73.638 69.192 48.482 31.052 38.884 13.622 54.367 61.315 70.795 58.178 71.676 81.433 57.824 73.037 38.236
+mAcc: 89.175 98.787 83.354 74.992 92.479 93.717 79.830 35.418 18.984 50.247 0.000 33.554 79.267 79.307 49.371 28.883 65.606 8.275 60.798 38.130
+
+thomas 04/10 05:05:05 201/312: Data time: 0.0023, Iter time: 0.2890	Loss 0.569 (AVG: 0.643)	Score 84.290 (AVG: 81.688)	mIOU 48.814 mAP 62.892 mAcc 59.019
+IOU: 75.068 96.895 41.424 61.892 85.198 73.081 68.338 29.655 15.881 49.803 0.000 27.566 52.669 44.098 36.753 35.546 68.697 14.940 67.404 31.371
+mAP: 74.175 97.128 55.103 69.823 87.315 77.345 70.484 45.721 33.479 50.512 14.362 49.386 58.154 70.801 57.129 76.859 84.380 65.692 78.010 41.990
+mAcc: 89.894 98.833 83.664 78.517 90.620 92.930 80.362 36.698 16.481 56.583 0.000 29.121 77.059 73.884 47.579 38.275 69.466 15.008 67.846 37.556
+
+thomas 04/10 05:05:46 301/312: Data time: 0.0026, Iter time: 0.3915	Loss 0.732 (AVG: 0.673)	Score 81.238 (AVG: 81.099)	mIOU 48.647 mAP 62.663 mAcc 58.846
+IOU: 74.154 96.631 41.185 63.609 85.200 72.847 68.931 27.841 14.736 52.766 0.000 28.637 54.045 40.851 37.674 31.873 68.134 16.140 67.132 30.559
+mAP: 73.932 96.845 53.377 70.163 87.076 78.798 70.006 42.989 36.169 55.559 14.442 45.950 60.758 67.396 55.846 72.497 86.788 66.045 77.383 41.237
+mAcc: 89.579 98.831 83.936 76.818 90.477 92.180 80.885 34.701 15.243 60.968 0.000 30.715 78.412 70.968 49.464 33.978 68.967 16.209 67.619 36.963
+
+thomas 04/10 05:05:51 312/312: Data time: 0.0022, Iter time: 0.2489	Loss 1.661 (AVG: 0.685)	Score 60.736 (AVG: 80.790)	mIOU 48.321 mAP 62.709 mAcc 58.612
+IOU: 73.499 96.658 41.817 62.981 85.154 72.585 68.983 27.169 14.852 53.129 0.000 27.756 53.847 37.755 37.659 31.178 68.375 16.093 66.084 30.845
+mAP: 73.660 96.883 53.967 68.872 87.089 79.073 70.078 42.726 36.342 55.373 14.593 46.372 60.696 67.242 55.846 73.153 87.041 66.399 77.529 41.237
+mAcc: 88.959 98.822 84.513 75.910 90.334 92.443 80.677 33.876 15.437 61.489 0.000 29.666 78.700 69.541 49.464 33.149 69.197 16.162 66.563 37.329
+
+thomas 04/10 05:05:51 Finished test. Elapsed time: 130.2952
+thomas 04/10 05:05:51 Current best mIoU: 54.122 at iter 15000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 05:07:35 ===> Epoch[113](17040/151): Loss 0.3062	LR: 8.712e-02	Score 90.174	Data time: 0.2477, Total iter time: 2.5229
+thomas 04/10 05:09:14 ===> Epoch[114](17080/151): Loss 0.2996	LR: 8.709e-02	Score 90.316	Data time: 0.2285, Total iter time: 2.4328
+thomas 04/10 05:10:58 ===> Epoch[114](17120/151): Loss 0.3007	LR: 8.706e-02	Score 90.399	Data time: 0.2282, Total iter time: 2.5357
+thomas 04/10 05:12:37 ===> Epoch[114](17160/151): Loss 0.2971	LR: 8.703e-02	Score 90.418	Data time: 0.2345, Total iter time: 2.4197
+thomas 04/10 05:14:14 ===> Epoch[114](17200/151): Loss 0.3077	LR: 8.700e-02	Score 90.174	Data time: 0.2338, Total iter time: 2.3808
+thomas 04/10 05:15:59 ===> Epoch[115](17240/151): Loss 0.3147	LR: 8.697e-02	Score 89.839	Data time: 0.2239, Total iter time: 2.5686
+thomas 04/10 05:17:43 ===> Epoch[115](17280/151): Loss 0.3135	LR: 8.694e-02	Score 89.897	Data time: 0.2458, Total iter time: 2.5425
+thomas 04/10 05:19:21 ===> Epoch[115](17320/151): Loss 0.3057	LR: 8.691e-02	Score 90.350	Data time: 0.2241, Total iter time: 2.3919
+thomas 04/10 05:21:00 ===> Epoch[115](17360/151): Loss 0.3008	LR: 8.688e-02	Score 90.397	Data time: 0.2281, Total iter time: 2.4216
+thomas 04/10 05:22:40 ===> Epoch[116](17400/151): Loss 0.2846	LR: 8.685e-02	Score 90.872	Data time: 0.2278, Total iter time: 2.4455
+thomas 04/10 05:24:18 ===> Epoch[116](17440/151): Loss 0.2908	LR: 8.682e-02	Score 90.728	Data time: 0.2269, Total iter time: 2.3918
+thomas 04/10 05:26:00 ===> Epoch[116](17480/151): Loss 0.2880	LR: 8.679e-02	Score 90.768	Data time: 0.2242, Total iter time: 2.4977
+thomas 04/10 05:27:39 ===> Epoch[117](17520/151): Loss 0.3096	LR: 8.676e-02	Score 90.120	Data time: 0.2327, Total iter time: 2.4262
+thomas 04/10 05:29:19 ===> Epoch[117](17560/151): Loss 0.3230	LR: 8.673e-02	Score 89.931	Data time: 0.2247, Total iter time: 2.4280
+thomas 04/10 05:30:57 ===> Epoch[117](17600/151): Loss 0.3027	LR: 8.670e-02	Score 90.130	Data time: 0.2401, Total iter time: 2.3969
+thomas 04/10 05:32:39 ===> Epoch[117](17640/151): Loss 0.2940	LR: 8.667e-02	Score 90.551	Data time: 0.2295, Total iter time: 2.4905
+thomas 04/10 05:34:21 ===> Epoch[118](17680/151): Loss 0.2980	LR: 8.664e-02	Score 90.676	Data time: 0.2472, Total iter time: 2.4936
+thomas 04/10 05:36:01 ===> Epoch[118](17720/151): Loss 0.2952	LR: 8.661e-02	Score 90.657	Data time: 0.2148, Total iter time: 2.4580
+thomas 04/10 05:37:41 ===> Epoch[118](17760/151): Loss 0.2858	LR: 8.658e-02	Score 90.735	Data time: 0.2114, Total iter time: 2.4480
+thomas 04/10 05:39:24 ===> Epoch[118](17800/151): Loss 0.3014	LR: 8.655e-02	Score 90.344	Data time: 0.2331, Total iter time: 2.5131
+thomas 04/10 05:41:09 ===> Epoch[119](17840/151): Loss 0.2938	LR: 8.651e-02	Score 90.557	Data time: 0.2280, Total iter time: 2.5722
+thomas 04/10 05:42:44 ===> Epoch[119](17880/151): Loss 0.3170	LR: 8.648e-02	Score 89.876	Data time: 0.2382, Total iter time: 2.3000
+thomas 04/10 05:44:18 ===> Epoch[119](17920/151): Loss 0.3256	LR: 8.645e-02	Score 89.512	Data time: 0.2253, Total iter time: 2.3117
+thomas 04/10 05:46:03 ===> Epoch[119](17960/151): Loss 0.3148	LR: 8.642e-02	Score 89.956	Data time: 0.2305, Total iter time: 2.5663
+thomas 04/10 05:47:44 ===> Epoch[120](18000/151): Loss 0.3031	LR: 8.639e-02	Score 90.298	Data time: 0.2287, Total iter time: 2.4557
+thomas 04/10 05:47:45 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 05:47:45 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 05:48:29 101/312: Data time: 0.0025, Iter time: 0.2281	Loss 0.549 (AVG: 0.605)	Score 81.226 (AVG: 84.045)	mIOU 55.149 mAP 66.702 mAcc 64.247
+IOU: 75.138 96.692 56.708 72.838 85.695 75.300 73.842 23.700 22.238 62.447 0.000 45.520 55.264 42.482 42.483 52.683 81.402 25.235 74.278 39.037
+mAP: 74.822 97.018 66.929 73.822 86.079 83.219 70.960 43.018 49.023 62.966 6.098 45.481 54.735 72.128 58.371 83.451 96.853 75.935 85.770 47.358
+mAcc: 91.960 98.760 75.581 83.307 89.665 90.589 84.028 31.889 22.973 90.958 0.000 60.583 64.577 59.160 48.511 56.933 82.782 25.462 74.503 52.715
+
+thomas 04/10 05:49:11 201/312: Data time: 0.0023, Iter time: 0.1928	Loss 0.013 (AVG: 0.636)	Score 99.841 (AVG: 83.112)	mIOU 55.421 mAP 65.474 mAcc 64.035
+IOU: 73.317 96.918 54.557 68.574 85.219 79.664 72.220 28.057 27.296 69.772 0.000 45.060 56.073 36.607 42.337 50.414 77.830 30.790 76.046 37.668
+mAP: 72.882 97.053 60.480 71.084 86.757 79.889 70.038 47.437 50.393 63.089 6.923 46.760 59.697 60.098 52.561 82.203 91.520 74.481 88.850 47.284
+mAcc: 91.916 98.646 73.308 83.020 91.347 91.761 83.169 36.152 28.279 88.696 0.000 55.656 66.088 51.724 47.338 57.984 78.904 31.028 76.296 49.391
+
+thomas 04/10 05:49:51 301/312: Data time: 0.0022, Iter time: 0.2516	Loss 0.491 (AVG: 0.648)	Score 79.433 (AVG: 82.844)	mIOU 54.684 mAP 64.587 mAcc 63.467
+IOU: 74.047 96.831 54.325 70.879 85.014 75.915 70.403 27.927 24.406 67.969 0.000 49.349 55.799 38.728 40.319 51.023 76.581 31.122 68.386 34.651
+mAP: 73.303 97.123 59.576 70.786 86.592 79.133 68.836 47.854 45.533 59.610 6.938 49.412 59.950 59.760 54.498 79.652 90.872 73.901 83.333 45.083
+mAcc: 92.237 98.641 74.348 83.637 90.616 89.756 82.881 35.903 25.328 88.305 0.000 59.934 65.439 51.329 47.397 58.320 78.161 31.430 68.619 47.055
+
+thomas 04/10 05:49:55 312/312: Data time: 0.0043, Iter time: 0.1921	Loss 0.839 (AVG: 0.646)	Score 79.381 (AVG: 82.847)	mIOU 54.497 mAP 64.362 mAcc 63.259
+IOU: 74.066 96.859 54.199 71.181 85.213 75.989 70.243 27.849 24.082 67.658 0.000 48.762 54.254 38.140 40.280 51.023 77.244 32.205 66.156 34.531
+mAP: 73.259 97.120 59.393 71.516 86.808 79.377 68.368 47.505 44.884 59.222 6.845 49.412 58.543 60.099 54.498 79.652 91.145 73.627 81.717 44.244
+mAcc: 92.283 98.652 74.049 83.644 90.763 89.752 82.952 35.880 25.021 87.562 0.000 59.934 64.561 49.824 47.397 58.320 78.746 32.516 66.374 46.943
+
+thomas 04/10 05:49:55 Finished test. Elapsed time: 129.4030
+thomas 04/10 05:49:56 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34Cbest_val.pth
+thomas 04/10 05:49:56 Current best mIoU: 54.497 at iter 18000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 05:51:39 ===> Epoch[120](18040/151): Loss 0.2939	LR: 8.636e-02	Score 90.772	Data time: 0.2169, Total iter time: 2.5010
+thomas 04/10 05:53:21 ===> Epoch[120](18080/151): Loss 0.2796	LR: 8.633e-02	Score 90.946	Data time: 0.2151, Total iter time: 2.4909
+thomas 04/10 05:54:57 ===> Epoch[120](18120/151): Loss 0.3143	LR: 8.630e-02	Score 90.198	Data time: 0.2182, Total iter time: 2.3503
+thomas 04/10 05:56:40 ===> Epoch[121](18160/151): Loss 0.2887	LR: 8.627e-02	Score 90.696	Data time: 0.2120, Total iter time: 2.5308
+thomas 04/10 05:58:21 ===> Epoch[121](18200/151): Loss 0.2707	LR: 8.624e-02	Score 91.262	Data time: 0.2272, Total iter time: 2.4610
+thomas 04/10 06:00:00 ===> Epoch[121](18240/151): Loss 0.3257	LR: 8.621e-02	Score 89.654	Data time: 0.2185, Total iter time: 2.4332
+thomas 04/10 06:01:43 ===> Epoch[122](18280/151): Loss 0.3316	LR: 8.618e-02	Score 89.357	Data time: 0.2253, Total iter time: 2.5113
+thomas 04/10 06:03:23 ===> Epoch[122](18320/151): Loss 0.3163	LR: 8.615e-02	Score 90.067	Data time: 0.2299, Total iter time: 2.4266
+thomas 04/10 06:05:05 ===> Epoch[122](18360/151): Loss 0.2927	LR: 8.612e-02	Score 90.653	Data time: 0.2400, Total iter time: 2.5024
+thomas 04/10 06:06:46 ===> Epoch[122](18400/151): Loss 0.2794	LR: 8.609e-02	Score 91.012	Data time: 0.2169, Total iter time: 2.4789
+thomas 04/10 06:08:24 ===> Epoch[123](18440/151): Loss 0.3440	LR: 8.606e-02	Score 89.046	Data time: 0.2297, Total iter time: 2.3872
+thomas 04/10 06:10:08 ===> Epoch[123](18480/151): Loss 0.3050	LR: 8.603e-02	Score 90.046	Data time: 0.2477, Total iter time: 2.5345
+thomas 04/10 06:11:53 ===> Epoch[123](18520/151): Loss 0.3045	LR: 8.600e-02	Score 90.375	Data time: 0.2314, Total iter time: 2.5819
+thomas 04/10 06:13:31 ===> Epoch[123](18560/151): Loss 0.2931	LR: 8.597e-02	Score 90.857	Data time: 0.2329, Total iter time: 2.4051
+thomas 04/10 06:15:12 ===> Epoch[124](18600/151): Loss 0.2983	LR: 8.594e-02	Score 90.381	Data time: 0.2083, Total iter time: 2.4492
+thomas 04/10 06:16:53 ===> Epoch[124](18640/151): Loss 0.2844	LR: 8.590e-02	Score 90.806	Data time: 0.2216, Total iter time: 2.4816
+thomas 04/10 06:18:37 ===> Epoch[124](18680/151): Loss 0.2947	LR: 8.587e-02	Score 90.456	Data time: 0.2301, Total iter time: 2.5436
+thomas 04/10 06:20:18 ===> Epoch[124](18720/151): Loss 0.2749	LR: 8.584e-02	Score 91.150	Data time: 0.2439, Total iter time: 2.4582
+thomas 04/10 06:21:56 ===> Epoch[125](18760/151): Loss 0.3174	LR: 8.581e-02	Score 90.210	Data time: 0.2239, Total iter time: 2.4205
+thomas 04/10 06:23:44 ===> Epoch[125](18800/151): Loss 0.3201	LR: 8.578e-02	Score 89.628	Data time: 0.2284, Total iter time: 2.6251
+thomas 04/10 06:25:25 ===> Epoch[125](18840/151): Loss 0.2775	LR: 8.575e-02	Score 91.059	Data time: 0.2309, Total iter time: 2.4744
+thomas 04/10 06:27:04 ===> Epoch[126](18880/151): Loss 0.2795	LR: 8.572e-02	Score 90.911	Data time: 0.2181, Total iter time: 2.4125
+thomas 04/10 06:28:47 ===> Epoch[126](18920/151): Loss 0.2850	LR: 8.569e-02	Score 90.831	Data time: 0.2442, Total iter time: 2.5249
+thomas 04/10 06:30:24 ===> Epoch[126](18960/151): Loss 0.2710	LR: 8.566e-02	Score 91.228	Data time: 0.2092, Total iter time: 2.3801
+thomas 04/10 06:32:05 ===> Epoch[126](19000/151): Loss 0.3009	LR: 8.563e-02	Score 90.305	Data time: 0.2256, Total iter time: 2.4612
+thomas 04/10 06:32:06 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 06:32:06 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 06:32:50 101/312: Data time: 0.0025, Iter time: 0.2842	Loss 0.330 (AVG: 0.879)	Score 91.208 (AVG: 75.488)	mIOU 46.353 mAP 63.937 mAcc 58.270
+IOU: 64.466 95.456 38.712 70.490 83.604 67.708 63.267 23.149 31.353 62.671 0.000 41.487 52.015 11.934 32.089 38.454 52.164 31.167 36.450 30.427
+mAP: 71.284 96.342 43.969 68.120 86.622 76.351 66.950 43.863 50.665 64.468 11.323 42.658 61.328 54.984 63.595 77.444 88.297 77.980 81.518 50.969
+mAcc: 74.406 98.820 51.461 83.044 87.914 72.134 71.489 32.477 33.557 84.802 0.000 49.368 70.673 77.806 56.174 39.925 52.231 31.825 36.474 60.814
+
+thomas 04/10 06:33:32 201/312: Data time: 0.0024, Iter time: 0.4562	Loss 0.763 (AVG: 0.797)	Score 74.970 (AVG: 76.812)	mIOU 46.416 mAP 63.319 mAcc 58.549
+IOU: 66.053 96.483 42.249 70.467 83.432 69.264 62.948 24.644 28.771 61.508 0.012 44.942 50.831 15.750 31.416 30.277 46.972 29.820 43.326 29.155
+mAP: 72.968 96.767 47.999 70.108 86.136 80.240 65.639 42.230 44.231 62.032 12.897 50.182 63.096 56.130 63.386 70.668 86.108 73.487 76.387 45.693
+mAcc: 76.187 99.038 56.178 84.411 87.902 72.703 71.791 34.099 32.010 82.586 0.012 55.319 73.018 78.237 57.281 32.882 47.014 30.264 43.362 56.689
+
+thomas 04/10 06:34:13 301/312: Data time: 0.0046, Iter time: 0.2159	Loss 0.475 (AVG: 0.773)	Score 86.526 (AVG: 77.351)	mIOU 47.394 mAP 63.276 mAcc 59.914
+IOU: 66.068 96.446 46.254 68.581 83.325 70.336 61.761 25.638 32.893 67.561 0.010 51.483 50.455 15.858 36.471 30.880 46.055 26.279 41.271 30.260
+mAP: 72.029 96.982 49.163 70.092 87.202 78.465 66.794 44.182 43.826 62.919 12.059 51.441 62.108 58.251 64.604 68.869 85.335 69.860 77.509 43.834
+mAcc: 75.710 98.963 60.916 84.186 87.651 73.537 69.904 34.779 36.705 85.118 0.010 61.108 75.777 82.261 67.516 34.364 46.087 26.607 41.301 55.775
+
+thomas 04/10 06:34:17 312/312: Data time: 0.0032, Iter time: 0.1985	Loss 0.437 (AVG: 0.777)	Score 87.701 (AVG: 77.261)	mIOU 47.158 mAP 63.293 mAcc 59.654
+IOU: 65.850 96.489 45.344 67.180 83.342 69.927 62.490 25.404 32.476 67.392 0.009 51.047 51.439 15.616 35.881 30.771 46.029 25.267 40.281 30.924
+mAP: 72.011 97.025 48.948 70.521 87.397 77.414 67.512 43.415 43.977 62.919 11.716 52.118 62.815 58.251 64.336 68.869 85.429 70.231 77.323 43.634
+mAcc: 75.666 98.977 60.521 84.348 87.811 73.060 70.559 34.744 36.217 85.118 0.009 60.729 76.264 82.261 66.017 34.364 46.060 25.565 40.309 54.482
+
+thomas 04/10 06:34:17 Finished test. Elapsed time: 130.5156
+thomas 04/10 06:34:17 Current best mIoU: 54.497 at iter 18000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 06:36:00 ===> Epoch[127](19040/151): Loss 0.2959	LR: 8.560e-02	Score 90.435	Data time: 0.2421, Total iter time: 2.5189
+thomas 04/10 06:37:47 ===> Epoch[127](19080/151): Loss 0.3162	LR: 8.557e-02	Score 89.953	Data time: 0.2362, Total iter time: 2.6142
+thomas 04/10 06:39:30 ===> Epoch[127](19120/151): Loss 0.2955	LR: 8.554e-02	Score 90.670	Data time: 0.2184, Total iter time: 2.5398
+thomas 04/10 06:41:11 ===> Epoch[127](19160/151): Loss 0.3188	LR: 8.551e-02	Score 90.010	Data time: 0.2440, Total iter time: 2.4515
+thomas 04/10 06:42:48 ===> Epoch[128](19200/151): Loss 0.3065	LR: 8.548e-02	Score 90.244	Data time: 0.2193, Total iter time: 2.3754
+thomas 04/10 06:44:29 ===> Epoch[128](19240/151): Loss 0.2866	LR: 8.545e-02	Score 90.573	Data time: 0.2358, Total iter time: 2.4764
+thomas 04/10 06:46:11 ===> Epoch[128](19280/151): Loss 0.3096	LR: 8.542e-02	Score 90.008	Data time: 0.2385, Total iter time: 2.5071
+thomas 04/10 06:47:57 ===> Epoch[128](19320/151): Loss 0.2809	LR: 8.539e-02	Score 91.057	Data time: 0.2420, Total iter time: 2.5945
+thomas 04/10 06:49:45 ===> Epoch[129](19360/151): Loss 0.2884	LR: 8.536e-02	Score 90.962	Data time: 0.2588, Total iter time: 2.6234
+thomas 04/10 06:51:33 ===> Epoch[129](19400/151): Loss 0.2684	LR: 8.532e-02	Score 91.407	Data time: 0.2594, Total iter time: 2.6370
+thomas 04/10 06:53:15 ===> Epoch[129](19440/151): Loss 0.2828	LR: 8.529e-02	Score 91.070	Data time: 0.2474, Total iter time: 2.5045
+thomas 04/10 06:54:59 ===> Epoch[130](19480/151): Loss 0.3075	LR: 8.526e-02	Score 90.049	Data time: 0.2299, Total iter time: 2.5353
+thomas 04/10 06:56:37 ===> Epoch[130](19520/151): Loss 0.2758	LR: 8.523e-02	Score 91.100	Data time: 0.2220, Total iter time: 2.3962
+thomas 04/10 06:58:14 ===> Epoch[130](19560/151): Loss 0.2892	LR: 8.520e-02	Score 90.703	Data time: 0.2246, Total iter time: 2.3814
+thomas 04/10 06:59:53 ===> Epoch[130](19600/151): Loss 0.2686	LR: 8.517e-02	Score 91.260	Data time: 0.2248, Total iter time: 2.4037
+thomas 04/10 07:01:36 ===> Epoch[131](19640/151): Loss 0.2731	LR: 8.514e-02	Score 91.177	Data time: 0.2461, Total iter time: 2.5379
+thomas 04/10 07:03:18 ===> Epoch[131](19680/151): Loss 0.2727	LR: 8.511e-02	Score 91.302	Data time: 0.2256, Total iter time: 2.4728
+thomas 04/10 07:04:58 ===> Epoch[131](19720/151): Loss 0.2648	LR: 8.508e-02	Score 91.217	Data time: 0.2495, Total iter time: 2.4373
+thomas 04/10 07:06:37 ===> Epoch[131](19760/151): Loss 0.2757	LR: 8.505e-02	Score 91.045	Data time: 0.2274, Total iter time: 2.4270
+thomas 04/10 07:08:17 ===> Epoch[132](19800/151): Loss 0.2740	LR: 8.502e-02	Score 91.251	Data time: 0.2156, Total iter time: 2.4412
+thomas 04/10 07:09:58 ===> Epoch[132](19840/151): Loss 0.2911	LR: 8.499e-02	Score 90.490	Data time: 0.2269, Total iter time: 2.4702
+thomas 04/10 07:11:39 ===> Epoch[132](19880/151): Loss 0.2666	LR: 8.496e-02	Score 91.218	Data time: 0.2292, Total iter time: 2.4684
+thomas 04/10 07:13:18 ===> Epoch[132](19920/151): Loss 0.2888	LR: 8.493e-02	Score 90.717	Data time: 0.2290, Total iter time: 2.4259
+thomas 04/10 07:15:00 ===> Epoch[133](19960/151): Loss 0.2993	LR: 8.490e-02	Score 90.519	Data time: 0.2285, Total iter time: 2.4735
+thomas 04/10 07:16:38 ===> Epoch[133](20000/151): Loss 0.2879	LR: 8.487e-02	Score 90.667	Data time: 0.2228, Total iter time: 2.3941
+thomas 04/10 07:16:39 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 07:16:39 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 07:17:24 101/312: Data time: 0.0025, Iter time: 0.1899	Loss 0.128 (AVG: 0.721)	Score 96.336 (AVG: 80.548)	mIOU 45.976 mAP 60.374 mAcc 54.870
+IOU: 72.421 96.930 34.622 67.376 81.121 73.062 61.746 30.276 31.872 66.128 0.000 51.867 41.784 22.076 27.709 16.993 48.978 16.539 48.720 29.295
+mAP: 72.917 97.634 59.510 63.832 85.576 81.271 64.988 47.175 43.181 59.593 12.181 53.302 54.616 55.216 38.205 47.205 85.065 61.680 76.668 47.669
+mAcc: 84.594 98.548 79.081 70.270 92.704 88.970 74.178 41.031 33.295 83.081 0.000 58.942 53.827 26.906 31.341 16.998 49.030 16.594 48.862 49.159
+
+thomas 04/10 07:18:05 201/312: Data time: 0.0342, Iter time: 0.2743	Loss 0.833 (AVG: 0.710)	Score 71.943 (AVG: 80.674)	mIOU 47.079 mAP 60.709 mAcc 56.356
+IOU: 71.841 96.933 35.870 63.602 84.020 71.711 67.665 34.453 31.319 66.038 0.000 54.529 47.110 31.287 34.062 11.667 45.995 16.675 50.053 26.744
+mAP: 73.301 97.239 57.060 64.186 87.568 79.693 64.616 48.622 46.799 58.436 10.424 54.918 56.769 57.438 41.764 51.119 85.325 65.280 73.821 39.811
+mAcc: 83.532 98.762 80.779 68.550 94.721 90.070 79.054 45.586 33.008 83.815 0.000 61.164 59.876 36.901 39.544 11.675 46.097 16.823 50.154 47.009
+
+thomas 04/10 07:18:45 301/312: Data time: 0.0045, Iter time: 0.2445	Loss 1.093 (AVG: 0.716)	Score 70.385 (AVG: 80.337)	mIOU 49.150 mAP 62.260 mAcc 58.646
+IOU: 71.207 96.743 39.284 65.558 83.695 73.096 67.999 34.534 30.836 62.576 0.000 56.075 48.887 38.356 42.233 15.470 49.163 18.553 59.366 29.358
+mAP: 73.051 97.198 56.932 64.148 87.370 79.577 66.391 49.382 46.133 59.221 10.593 53.481 57.372 59.650 51.794 62.467 81.386 67.948 79.064 42.041
+mAcc: 83.300 98.631 79.729 70.947 95.397 89.500 79.988 44.517 32.236 84.874 0.000 65.861 61.364 44.018 50.098 15.871 49.244 18.699 59.520 49.119
+
+thomas 04/10 07:18:49 312/312: Data time: 0.0023, Iter time: 0.1853	Loss 2.368 (AVG: 0.721)	Score 64.332 (AVG: 80.279)	mIOU 48.887 mAP 62.305 mAcc 58.438
+IOU: 71.241 96.691 39.156 65.948 83.644 72.747 67.421 34.232 29.957 62.006 0.000 55.589 48.443 37.497 41.277 15.470 49.189 18.420 59.366 29.444
+mAP: 73.022 97.104 56.780 64.734 87.419 79.665 66.589 49.036 45.843 59.620 10.912 53.840 57.230 59.861 51.288 62.467 80.979 68.021 79.064 42.618
+mAcc: 83.356 98.626 79.790 71.261 95.414 89.527 79.212 44.857 31.323 84.164 0.000 65.179 61.735 42.961 49.143 15.871 49.275 18.557 59.520 48.995
+
+thomas 04/10 07:18:49 Finished test. Elapsed time: 129.7934
+thomas 04/10 07:18:49 Current best mIoU: 54.497 at iter 18000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 07:20:28 ===> Epoch[133](20040/151): Loss 0.2929	LR: 8.484e-02	Score 90.602	Data time: 0.2260, Total iter time: 2.4325
+thomas 04/10 07:22:15 ===> Epoch[133](20080/151): Loss 0.2679	LR: 8.481e-02	Score 91.381	Data time: 0.2324, Total iter time: 2.6114
+thomas 04/10 07:23:57 ===> Epoch[134](20120/151): Loss 0.2976	LR: 8.478e-02	Score 90.274	Data time: 0.2417, Total iter time: 2.4999
+thomas 04/10 07:25:43 ===> Epoch[134](20160/151): Loss 0.2692	LR: 8.474e-02	Score 91.454	Data time: 0.2433, Total iter time: 2.6008
+thomas 04/10 07:27:17 ===> Epoch[134](20200/151): Loss 0.2855	LR: 8.471e-02	Score 90.739	Data time: 0.2096, Total iter time: 2.2965
+thomas 04/10 07:28:55 ===> Epoch[135](20240/151): Loss 0.2863	LR: 8.468e-02	Score 90.627	Data time: 0.2269, Total iter time: 2.3885
+thomas 04/10 07:30:38 ===> Epoch[135](20280/151): Loss 0.2884	LR: 8.465e-02	Score 90.885	Data time: 0.2338, Total iter time: 2.5038
+thomas 04/10 07:32:19 ===> Epoch[135](20320/151): Loss 0.2716	LR: 8.462e-02	Score 91.351	Data time: 0.2268, Total iter time: 2.4768
+thomas 04/10 07:33:58 ===> Epoch[135](20360/151): Loss 0.2759	LR: 8.459e-02	Score 91.028	Data time: 0.2389, Total iter time: 2.4230
+thomas 04/10 07:35:42 ===> Epoch[136](20400/151): Loss 0.2684	LR: 8.456e-02	Score 91.364	Data time: 0.2191, Total iter time: 2.5444
+thomas 04/10 07:37:23 ===> Epoch[136](20440/151): Loss 0.2617	LR: 8.453e-02	Score 91.617	Data time: 0.2397, Total iter time: 2.4670
+thomas 04/10 07:39:04 ===> Epoch[136](20480/151): Loss 0.2804	LR: 8.450e-02	Score 90.972	Data time: 0.2206, Total iter time: 2.4841
+thomas 04/10 07:40:49 ===> Epoch[136](20520/151): Loss 0.2879	LR: 8.447e-02	Score 90.633	Data time: 0.2147, Total iter time: 2.5543
+thomas 04/10 07:42:26 ===> Epoch[137](20560/151): Loss 0.2984	LR: 8.444e-02	Score 90.504	Data time: 0.2366, Total iter time: 2.3831
+thomas 04/10 07:44:08 ===> Epoch[137](20600/151): Loss 0.2679	LR: 8.441e-02	Score 91.540	Data time: 0.2098, Total iter time: 2.4725
+thomas 04/10 07:45:49 ===> Epoch[137](20640/151): Loss 0.2668	LR: 8.438e-02	Score 91.463	Data time: 0.2137, Total iter time: 2.4710
+thomas 04/10 07:47:30 ===> Epoch[137](20680/151): Loss 0.2664	LR: 8.435e-02	Score 91.646	Data time: 0.2403, Total iter time: 2.4703
+thomas 04/10 07:49:10 ===> Epoch[138](20720/151): Loss 0.2803	LR: 8.432e-02	Score 90.934	Data time: 0.2275, Total iter time: 2.4381
+thomas 04/10 07:50:51 ===> Epoch[138](20760/151): Loss 0.2740	LR: 8.429e-02	Score 91.039	Data time: 0.2301, Total iter time: 2.4776
+thomas 04/10 07:52:29 ===> Epoch[138](20800/151): Loss 0.2660	LR: 8.426e-02	Score 91.594	Data time: 0.2199, Total iter time: 2.3977
+thomas 04/10 07:54:14 ===> Epoch[139](20840/151): Loss 0.3053	LR: 8.422e-02	Score 90.412	Data time: 0.2353, Total iter time: 2.5691
+thomas 04/10 07:55:53 ===> Epoch[139](20880/151): Loss 0.2855	LR: 8.419e-02	Score 90.847	Data time: 0.2279, Total iter time: 2.4302
+thomas 04/10 07:57:37 ===> Epoch[139](20920/151): Loss 0.2853	LR: 8.416e-02	Score 90.952	Data time: 0.2425, Total iter time: 2.5409
+thomas 04/10 07:59:15 ===> Epoch[139](20960/151): Loss 0.2754	LR: 8.413e-02	Score 91.240	Data time: 0.2265, Total iter time: 2.3924
+thomas 04/10 08:00:53 ===> Epoch[140](21000/151): Loss 0.2751	LR: 8.410e-02	Score 91.097	Data time: 0.2351, Total iter time: 2.3950
+thomas 04/10 08:00:55 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 08:00:55 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 08:01:38 101/312: Data time: 0.0038, Iter time: 0.2477	Loss 0.275 (AVG: 0.677)	Score 88.485 (AVG: 81.717)	mIOU 50.574 mAP 62.733 mAcc 59.909
+IOU: 71.759 96.287 49.827 54.590 88.746 76.735 68.308 34.487 31.397 63.137 0.000 50.522 54.354 39.796 44.129 27.738 43.516 19.505 55.413 41.235
+mAP: 71.918 95.295 53.502 59.199 88.495 76.655 73.479 46.855 47.492 62.568 9.181 45.205 65.016 61.855 62.379 66.055 87.710 69.610 69.567 42.620
+mAcc: 88.100 99.295 65.522 69.399 94.363 85.531 76.054 50.033 37.647 80.905 0.000 65.986 66.045 54.574 57.550 28.072 43.551 19.795 55.542 60.212
+
+thomas 04/10 08:02:19 201/312: Data time: 0.0233, Iter time: 0.2570	Loss 0.802 (AVG: 0.651)	Score 76.660 (AVG: 81.994)	mIOU 51.550 mAP 63.058 mAcc 60.866
+IOU: 73.073 96.013 50.498 65.110 85.766 76.811 70.047 34.339 38.868 59.118 0.000 54.471 54.023 35.906 41.172 29.417 50.175 18.903 60.639 36.654
+mAP: 72.799 95.626 51.767 62.904 87.490 80.085 69.779 50.225 44.190 61.033 8.538 51.915 61.612 56.124 59.760 70.851 85.722 68.848 77.753 44.145
+mAcc: 88.610 99.239 64.395 76.794 91.735 88.518 78.710 47.824 46.682 79.645 0.000 69.506 63.861 47.286 54.410 31.439 50.378 19.183 60.717 58.381
+
+thomas 04/10 08:03:02 301/312: Data time: 0.0023, Iter time: 0.2702	Loss 0.406 (AVG: 0.635)	Score 88.594 (AVG: 82.588)	mIOU 51.939 mAP 62.727 mAcc 60.885
+IOU: 73.572 95.847 50.993 67.417 86.567 79.689 69.370 33.511 39.989 65.446 0.000 56.660 51.533 38.027 34.476 29.365 51.203 19.629 58.950 36.529
+mAP: 72.233 95.479 53.911 66.250 87.914 82.079 68.611 49.895 43.664 58.072 9.068 53.198 60.330 55.942 53.012 72.079 84.433 67.097 77.755 43.523
+mAcc: 89.266 99.200 64.968 77.768 92.166 91.171 78.260 46.944 47.395 83.184 0.000 70.684 62.538 49.731 47.850 31.368 51.483 19.913 59.020 54.792
+
+thomas 04/10 08:03:06 312/312: Data time: 0.0023, Iter time: 0.1137	Loss 0.496 (AVG: 0.632)	Score 83.629 (AVG: 82.635)	mIOU 51.930 mAP 62.871 mAcc 60.982
+IOU: 73.915 95.865 51.090 67.456 86.374 79.656 68.370 33.260 39.818 65.136 0.000 55.866 51.521 37.932 35.106 28.975 51.977 20.690 58.950 36.641
+mAP: 72.260 95.530 54.395 66.068 87.842 82.079 68.686 50.010 43.250 58.072 8.903 53.890 60.110 55.942 54.002 71.444 85.029 68.845 77.755 43.301
+mAcc: 89.399 99.201 64.898 77.877 92.206 91.171 76.902 46.736 47.193 83.184 0.000 71.253 62.638 49.731 48.985 30.927 52.242 21.016 59.020 55.071
+
+thomas 04/10 08:03:06 Finished test. Elapsed time: 131.2619
+thomas 04/10 08:03:06 Current best mIoU: 54.497 at iter 18000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 08:04:45 ===> Epoch[140](21040/151): Loss 0.2600	LR: 8.407e-02	Score 91.736	Data time: 0.2355, Total iter time: 2.4081
+thomas 04/10 08:06:26 ===> Epoch[140](21080/151): Loss 0.2673	LR: 8.404e-02	Score 91.213	Data time: 0.2249, Total iter time: 2.4761
+thomas 04/10 08:08:07 ===> Epoch[140](21120/151): Loss 0.2675	LR: 8.401e-02	Score 91.345	Data time: 0.2372, Total iter time: 2.4675
+thomas 04/10 08:09:46 ===> Epoch[141](21160/151): Loss 0.2574	LR: 8.398e-02	Score 91.642	Data time: 0.2324, Total iter time: 2.4286
+thomas 04/10 08:11:28 ===> Epoch[141](21200/151): Loss 0.2955	LR: 8.395e-02	Score 90.598	Data time: 0.2328, Total iter time: 2.4995
+thomas 04/10 08:13:07 ===> Epoch[141](21240/151): Loss 0.3074	LR: 8.392e-02	Score 90.217	Data time: 0.2271, Total iter time: 2.4083
+thomas 04/10 08:14:50 ===> Epoch[141](21280/151): Loss 0.2925	LR: 8.389e-02	Score 90.806	Data time: 0.2260, Total iter time: 2.5151
+thomas 04/10 08:16:28 ===> Epoch[142](21320/151): Loss 0.3042	LR: 8.386e-02	Score 90.244	Data time: 0.2220, Total iter time: 2.4088
+thomas 04/10 08:18:07 ===> Epoch[142](21360/151): Loss 0.2975	LR: 8.383e-02	Score 90.413	Data time: 0.2158, Total iter time: 2.4112
+thomas 04/10 08:19:47 ===> Epoch[142](21400/151): Loss 0.2768	LR: 8.380e-02	Score 90.974	Data time: 0.2269, Total iter time: 2.4379
+thomas 04/10 08:21:26 ===> Epoch[142](21440/151): Loss 0.2978	LR: 8.377e-02	Score 90.520	Data time: 0.2393, Total iter time: 2.4277
+thomas 04/10 08:23:07 ===> Epoch[143](21480/151): Loss 0.2897	LR: 8.374e-02	Score 90.927	Data time: 0.2290, Total iter time: 2.4754
+thomas 04/10 08:24:44 ===> Epoch[143](21520/151): Loss 0.2742	LR: 8.370e-02	Score 91.073	Data time: 0.2171, Total iter time: 2.3612
+thomas 04/10 08:26:28 ===> Epoch[143](21560/151): Loss 0.2805	LR: 8.367e-02	Score 91.079	Data time: 0.2213, Total iter time: 2.5557
+thomas 04/10 08:28:05 ===> Epoch[144](21600/151): Loss 0.2665	LR: 8.364e-02	Score 91.407	Data time: 0.2193, Total iter time: 2.3570
+thomas 04/10 08:29:49 ===> Epoch[144](21640/151): Loss 0.2750	LR: 8.361e-02	Score 91.264	Data time: 0.2324, Total iter time: 2.5447
+thomas 04/10 08:31:29 ===> Epoch[144](21680/151): Loss 0.2584	LR: 8.358e-02	Score 91.521	Data time: 0.2298, Total iter time: 2.4597
+thomas 04/10 08:33:08 ===> Epoch[144](21720/151): Loss 0.2642	LR: 8.355e-02	Score 91.440	Data time: 0.2340, Total iter time: 2.4118
+thomas 04/10 08:34:47 ===> Epoch[145](21760/151): Loss 0.2753	LR: 8.352e-02	Score 91.091	Data time: 0.2355, Total iter time: 2.4210
+thomas 04/10 08:36:30 ===> Epoch[145](21800/151): Loss 0.2495	LR: 8.349e-02	Score 91.759	Data time: 0.2336, Total iter time: 2.5172
+thomas 04/10 08:38:13 ===> Epoch[145](21840/151): Loss 0.2748	LR: 8.346e-02	Score 91.001	Data time: 0.2382, Total iter time: 2.5326
+thomas 04/10 08:39:52 ===> Epoch[145](21880/151): Loss 0.2668	LR: 8.343e-02	Score 91.341	Data time: 0.2271, Total iter time: 2.4028
+thomas 04/10 08:41:37 ===> Epoch[146](21920/151): Loss 0.2931	LR: 8.340e-02	Score 90.524	Data time: 0.2580, Total iter time: 2.5787
+thomas 04/10 08:43:15 ===> Epoch[146](21960/151): Loss 0.2675	LR: 8.337e-02	Score 91.199	Data time: 0.2207, Total iter time: 2.3910
+thomas 04/10 08:44:57 ===> Epoch[146](22000/151): Loss 0.2895	LR: 8.334e-02	Score 90.806	Data time: 0.2305, Total iter time: 2.4938
+thomas 04/10 08:44:59 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 08:44:59 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 08:45:42 101/312: Data time: 0.0046, Iter time: 0.2597	Loss 1.960 (AVG: 0.732)	Score 67.887 (AVG: 79.974)	mIOU 50.224 mAP 65.354 mAcc 62.161
+IOU: 72.038 96.651 38.050 59.130 84.636 77.224 66.941 30.308 20.367 46.866 0.053 64.128 31.951 35.338 46.771 51.589 83.178 19.800 56.982 22.476
+mAP: 72.269 96.228 63.081 60.973 87.694 87.093 71.360 46.540 38.502 73.026 16.896 67.698 60.649 63.403 53.865 75.736 87.082 64.958 73.667 46.363
+mAcc: 83.554 98.846 80.142 63.313 95.310 93.532 70.117 39.378 21.333 96.465 0.053 69.279 88.499 40.818 51.234 54.970 91.632 19.868 58.420 26.467
+
+thomas 04/10 08:46:25 201/312: Data time: 0.0025, Iter time: 0.2629	Loss 0.547 (AVG: 0.799)	Score 85.289 (AVG: 78.906)	mIOU 48.023 mAP 62.425 mAcc 59.780
+IOU: 71.585 96.376 40.087 54.439 82.254 75.099 62.014 29.738 23.717 42.078 0.033 49.154 34.115 30.332 26.201 49.304 81.215 21.023 69.646 22.054
+mAP: 72.029 96.897 56.059 56.548 86.970 80.466 66.009 48.187 40.042 66.582 15.633 54.771 61.135 58.375 43.843 72.786 89.030 59.598 81.269 42.272
+mAcc: 84.082 98.875 74.718 58.514 95.323 89.867 67.492 38.015 24.890 95.830 0.034 53.706 85.483 36.422 27.677 58.862 87.428 21.518 70.927 25.946
+
+thomas 04/10 08:47:05 301/312: Data time: 0.0026, Iter time: 0.2574	Loss 1.787 (AVG: 0.816)	Score 60.316 (AVG: 78.495)	mIOU 47.611 mAP 61.529 mAcc 59.184
+IOU: 71.132 96.608 38.554 49.493 81.185 73.534 60.897 31.573 19.928 44.033 0.024 46.272 32.069 32.334 32.658 49.707 82.194 17.179 69.053 23.799
+mAP: 71.877 96.864 54.534 52.014 85.727 78.974 64.048 48.146 37.134 64.954 15.565 47.588 58.256 59.841 46.752 77.485 89.206 59.284 79.713 42.621
+mAcc: 83.618 98.981 72.741 53.897 95.248 88.609 65.352 41.405 20.992 92.884 0.024 50.549 84.233 37.512 35.177 58.142 87.889 17.516 70.158 28.755
+
+thomas 04/10 08:47:10 312/312: Data time: 0.0023, Iter time: 0.2717	Loss 1.848 (AVG: 0.816)	Score 65.351 (AVG: 78.498)	mIOU 47.785 mAP 61.521 mAcc 59.349
+IOU: 70.994 96.620 39.537 49.196 81.537 73.695 61.434 31.097 20.047 44.006 0.022 47.434 32.292 31.235 32.890 49.707 82.194 18.113 69.053 24.599
+mAP: 71.618 96.933 55.081 51.196 85.952 79.285 63.944 47.821 37.404 63.985 15.403 47.922 58.272 59.932 46.408 77.485 89.206 59.739 79.713 43.115
+mAcc: 83.465 98.970 73.437 53.560 95.297 88.644 65.842 40.979 21.339 92.845 0.022 51.907 84.412 36.392 35.464 58.142 87.889 18.472 70.158 29.740
+
+thomas 04/10 08:47:10 Finished test. Elapsed time: 130.9223
+thomas 04/10 08:47:10 Current best mIoU: 54.497 at iter 18000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 08:48:50 ===> Epoch[146](22040/151): Loss 0.3086	LR: 8.331e-02	Score 90.222	Data time: 0.2149, Total iter time: 2.4566
+thomas 04/10 08:50:31 ===> Epoch[147](22080/151): Loss 0.2606	LR: 8.328e-02	Score 91.562	Data time: 0.2152, Total iter time: 2.4577
+thomas 04/10 08:52:14 ===> Epoch[147](22120/151): Loss 0.2688	LR: 8.325e-02	Score 91.290	Data time: 0.2209, Total iter time: 2.5301
+thomas 04/10 08:53:54 ===> Epoch[147](22160/151): Loss 0.2708	LR: 8.322e-02	Score 91.356	Data time: 0.2364, Total iter time: 2.4509
+thomas 04/10 08:55:34 ===> Epoch[148](22200/151): Loss 0.2764	LR: 8.318e-02	Score 91.144	Data time: 0.2163, Total iter time: 2.4232
+thomas 04/10 08:57:13 ===> Epoch[148](22240/151): Loss 0.2665	LR: 8.315e-02	Score 91.547	Data time: 0.2429, Total iter time: 2.4253
+thomas 04/10 08:58:58 ===> Epoch[148](22280/151): Loss 0.2680	LR: 8.312e-02	Score 91.226	Data time: 0.2353, Total iter time: 2.5833
+thomas 04/10 09:00:46 ===> Epoch[148](22320/151): Loss 0.2755	LR: 8.309e-02	Score 90.973	Data time: 0.2545, Total iter time: 2.6403
+thomas 04/10 09:02:33 ===> Epoch[149](22360/151): Loss 0.2779	LR: 8.306e-02	Score 91.001	Data time: 0.2548, Total iter time: 2.6095
+thomas 04/10 09:04:16 ===> Epoch[149](22400/151): Loss 0.2778	LR: 8.303e-02	Score 90.996	Data time: 0.2561, Total iter time: 2.5208
+thomas 04/10 09:05:57 ===> Epoch[149](22440/151): Loss 0.2860	LR: 8.300e-02	Score 90.726	Data time: 0.2458, Total iter time: 2.4728
+thomas 04/10 09:07:40 ===> Epoch[149](22480/151): Loss 0.2738	LR: 8.297e-02	Score 91.330	Data time: 0.2252, Total iter time: 2.5153
+thomas 04/10 09:09:24 ===> Epoch[150](22520/151): Loss 0.2724	LR: 8.294e-02	Score 91.103	Data time: 0.2381, Total iter time: 2.5392
+thomas 04/10 09:11:00 ===> Epoch[150](22560/151): Loss 0.2487	LR: 8.291e-02	Score 91.897	Data time: 0.2238, Total iter time: 2.3497
+thomas 04/10 09:12:39 ===> Epoch[150](22600/151): Loss 0.2937	LR: 8.288e-02	Score 90.543	Data time: 0.2220, Total iter time: 2.4248
+thomas 04/10 09:14:22 ===> Epoch[150](22640/151): Loss 0.2806	LR: 8.285e-02	Score 90.944	Data time: 0.2229, Total iter time: 2.5111
+thomas 04/10 09:16:09 ===> Epoch[151](22680/151): Loss 0.2719	LR: 8.282e-02	Score 91.319	Data time: 0.2450, Total iter time: 2.5997
+thomas 04/10 09:17:55 ===> Epoch[151](22720/151): Loss 0.2784	LR: 8.279e-02	Score 91.062	Data time: 0.2347, Total iter time: 2.5992
+thomas 04/10 09:19:35 ===> Epoch[151](22760/151): Loss 0.2721	LR: 8.276e-02	Score 91.333	Data time: 0.2298, Total iter time: 2.4562
+thomas 04/10 09:21:14 ===> Epoch[151](22800/151): Loss 0.2849	LR: 8.273e-02	Score 91.048	Data time: 0.2274, Total iter time: 2.4252
+thomas 04/10 09:22:57 ===> Epoch[152](22840/151): Loss 0.2587	LR: 8.269e-02	Score 91.599	Data time: 0.2540, Total iter time: 2.4917
+thomas 04/10 09:24:42 ===> Epoch[152](22880/151): Loss 0.2830	LR: 8.266e-02	Score 90.843	Data time: 0.2256, Total iter time: 2.5681
+thomas 04/10 09:26:22 ===> Epoch[152](22920/151): Loss 0.2797	LR: 8.263e-02	Score 90.920	Data time: 0.2242, Total iter time: 2.4595
+thomas 04/10 09:28:05 ===> Epoch[153](22960/151): Loss 0.3081	LR: 8.260e-02	Score 90.299	Data time: 0.2184, Total iter time: 2.5032
+thomas 04/10 09:29:47 ===> Epoch[153](23000/151): Loss 0.3086	LR: 8.257e-02	Score 90.327	Data time: 0.2469, Total iter time: 2.5012
+thomas 04/10 09:29:49 Checkpoint saved to ./outputs/ScanNet/2020-04-09_16-27-14/checkpoint_NoneRes16UNet34C.pth
+thomas 04/10 09:29:49 ===> Start testing
+/home/tcn02/SpatioTemporalSegmentation/lib/datasets
+thomas 04/10 09:30:32 101/312: Data time: 0.0030, Iter time: 0.2152	Loss 0.539 (AVG: 0.731)	Score 79.512 (AVG: 80.913)	mIOU 45.093 mAP 62.061 mAcc 55.173
+IOU: 73.909 96.885 43.812 59.864 81.919 72.886 64.162 32.878 25.474 51.605 0.000 27.359 44.303 40.452 8.328 19.656 58.560 12.792 62.036 24.980
+mAP: 73.958 97.441 49.303 63.117 86.763 86.628 66.227 46.251 44.607 55.179 6.340 46.965 54.310 67.774 44.734 84.944 88.818 71.925 67.076 38.852
+mAcc: 88.488 99.121 69.616 69.055 95.970 92.582 70.560 46.718 27.400 94.999 0.000 28.567 81.346 45.110 8.515 20.309 59.197 12.792 62.851 30.260
+
+thomas 04/10 09:31:14 201/312: Data time: 0.0027, Iter time: 0.2591	Loss 0.894 (AVG: 0.740)	Score 74.426 (AVG: 80.420)	mIOU 45.866 mAP 61.462 mAcc 55.949
+IOU: 72.969 96.826 44.516 64.363 82.722 74.306 66.263 31.205 29.176 51.411 0.000 27.569 39.038 33.541 18.321 25.609 57.864 10.281 67.473 23.870
+mAP: 74.249 97.149 52.398 64.726 85.473 84.056 65.600 47.837 41.877 59.774 9.990 43.916 52.256 57.591 49.882 80.062 80.216 70.068 72.702 39.410
+mAcc: 88.641 99.066 68.749 73.134 95.310 94.079 72.885 41.604 31.265 92.478 0.000 28.745 82.923 38.716 18.823 27.525 58.301 10.284 68.016 28.439
+
+thomas 04/10 09:31:55 301/312: Data time: 0.0038, Iter time: 0.2718	Loss 0.778 (AVG: 0.715)	Score 77.200 (AVG: 80.892)	mIOU 47.454 mAP 62.078 mAcc 57.299
+IOU: 73.125 96.703 45.656 64.778 82.851 76.153 66.374 32.418 31.115 53.066 0.022 38.066 42.035 30.381 29.897 24.555 57.624 10.283 69.497 24.485
+mAP: 74.569 97.182 52.644 62.450 86.212 84.394 64.472 48.560 43.284 58.066 11.880 48.549 56.090 53.578 55.876 76.900 79.250 68.873 78.128 40.603
+mAcc: 88.453 98.966 69.873 73.686 94.900 93.463 73.459 43.763 33.208 91.346 0.022 40.138 83.557 36.150 31.211 26.207 57.968 10.286 69.964 29.359
+
+thomas 04/10 09:31:59 312/312: Data time: 0.0023, Iter time: 0.1705	Loss 0.851 (AVG: 0.714)	Score 75.909 (AVG: 80.877)	mIOU 47.313 mAP 62.065 mAcc 57.172
+IOU: 73.229 96.757 45.791 64.844 82.564 76.412 65.425 32.694 30.545 53.103 0.022 37.295 41.923 29.829 29.467 24.555 57.719 10.111 69.497 24.472
+mAP: 74.590 97.239 53.118 62.253 86.334 84.153 63.438 49.055 43.035 59.472 11.788 48.102 56.132 52.926 55.950 76.900 79.563 68.580 78.128 40.551
+mAcc: 88.496 98.986 70.307 73.805 94.918 93.481 72.567 43.953 32.571 91.557 0.022 39.358 83.461 35.469 30.861 26.207 58.053 10.114 69.964 29.296
+
+thomas 04/10 09:31:59 Finished test. Elapsed time: 130.4676
+thomas 04/10 09:31:59 Current best mIoU: 54.497 at iter 18000
+/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/optim/lr_scheduler.py:224: UserWarning: To get the last learning rate computed by the scheduler, please use `get_last_lr()`.
+  warnings.warn("To get the last learning rate computed by the scheduler, "
+thomas 04/10 09:33:39 ===> Epoch[153](23040/151): Loss 0.2660	LR: 8.254e-02	Score 91.119	Data time: 0.2328, Total iter time: 2.4332
+thomas 04/10 09:35:18 ===> Epoch[153](23080/151): Loss 0.2867	LR: 8.251e-02	Score 90.944	Data time: 0.2296, Total iter time: 2.4348
+thomas 04/10 09:37:00 ===> Epoch[154](23120/151): Loss 0.2995	LR: 8.248e-02	Score 90.414	Data time: 0.2245, Total iter time: 2.4953
+thomas 04/10 09:38:41 ===> Epoch[154](23160/151): Loss 0.2792	LR: 8.245e-02	Score 91.172	Data time: 0.2173, Total iter time: 2.4572
+thomas 04/10 09:40:22 ===> Epoch[154](23200/151): Loss 0.2680	LR: 8.242e-02	Score 91.191	Data time: 0.2412, Total iter time: 2.4815
+thomas 04/10 09:42:04 ===> Epoch[154](23240/151): Loss 0.2638	LR: 8.239e-02	Score 91.665	Data time: 0.2504, Total iter time: 2.4756
+thomas 04/10 09:43:43 ===> Epoch[155](23280/151): Loss 0.2868	LR: 8.236e-02	Score 90.741	Data time: 0.2269, Total iter time: 2.4313
+thomas 04/10 09:45:28 ===> Epoch[155](23320/151): Loss 0.2684	LR: 8.233e-02	Score 91.203	Data time: 0.2404, Total iter time: 2.5469
+thomas 04/10 09:47:09 ===> Epoch[155](23360/151): Loss 0.2629	LR: 8.230e-02	Score 91.625	Data time: 0.2125, Total iter time: 2.4891
+thomas 04/10 09:48:48 ===> Epoch[155](23400/151): Loss 0.2788	LR: 8.227e-02	Score 91.115	Data time: 0.2262, Total iter time: 2.4241
+thomas 04/10 09:50:24 ===> Epoch[156](23440/151): Loss 0.2677	LR: 8.223e-02	Score 91.486	Data time: 0.2078, Total iter time: 2.3353
+thomas 04/10 09:52:03 ===> Epoch[156](23480/151): Loss 0.2406	LR: 8.220e-02	Score 92.208	Data time: 0.2124, Total iter time: 2.4178
+thomas 04/10 09:53:44 ===> Epoch[156](23520/151): Loss 0.2556	LR: 8.217e-02	Score 91.745	Data time: 0.2460, Total iter time: 2.4861
+Traceback (most recent call last):
+  File "/home/tcn02/.pyenv/versions/3.6.10/lib/python3.6/runpy.py", line 193, in _run_module_as_main
+    "__main__", mod_spec)
+  File "/home/tcn02/.pyenv/versions/3.6.10/lib/python3.6/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/home/tcn02/SpatioTemporalSegmentation/main.py", line 159, in <module>
+    main()
+  File "/home/tcn02/SpatioTemporalSegmentation/main.py", line 152, in main
+    train(model, train_data_loader, val_data_loader, config)
+  File "/home/tcn02/SpatioTemporalSegmentation/lib/train.py", line 100, in train
+    soutput = model(*inputs)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/nn/modules/module.py", line 532, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/tcn02/SpatioTemporalSegmentation/models/res16unet.py", line 252, in forward
+    out = self.block8(out)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/nn/modules/module.py", line 532, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/nn/modules/container.py", line 100, in forward
+    input = module(input)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/nn/modules/module.py", line 532, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/tcn02/SpatioTemporalSegmentation/models/modules/resnet_block.py", line 42, in forward
+    out = self.conv1(x)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/nn/modules/module.py", line 532, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/MinkowskiEngine/MinkowskiConvolution.py", line 278, in forward
+    out_coords_key, input.coords_man)
+  File "/home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/MinkowskiEngine/MinkowskiConvolution.py", line 93, in forward
+    ctx.coords_man.CPPCoordsManager)
+RuntimeError: CUDA out of memory. Tried to allocate 86.00 MiB (GPU 0; 15.90 GiB total capacity; 1.92 GiB already allocated; 18.38 MiB free; 2.04 GiB reserved in total by PyTorch) (malloc at /pytorch/c10/cuda/CUDACachingAllocator.cpp:289)
+frame #0: c10::Error::Error(c10::SourceLocation, std::string const&) + 0x33 (0x7f2a28c3f193 in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0x1bccc (0x7f2a28e80ccc in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libc10_cuda.so)
+frame #2: <unknown function> + 0x1cd5e (0x7f2a28e81d5e in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libc10_cuda.so)
+frame #3: THCStorage_resize + 0xa3 (0x7f2a2d73d6f3 in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #4: <unknown function> + 0x5b2b38a (0x7f2a2ebbd38a in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #5: at::native::resize_cuda_(at::Tensor&, c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>) + 0x19c (0x7f2a2ebbc34c in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #6: <unknown function> + 0x45bc37a (0x7f2a2d64e37a in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #7: <unknown function> + 0x1f4fc43 (0x7f2a2afe1c43 in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #8: <unknown function> + 0x437149d (0x7f2a2d40349d in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #9: <unknown function> + 0x1f4fc43 (0x7f2a2afe1c43 in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch.so)
+frame #10: at::Tensor::resize_(c10::ArrayRef<long>, c10::optional<c10::MemoryFormat>) const + 0x1a6 (0x7f2a15705226 in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/MinkowskiEngineBackend.cpython-36m-x86_64-linux-gnu.so)
+frame #11: <unknown function> + 0x5a519 (0x7f2a15713519 in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/MinkowskiEngineBackend.cpython-36m-x86_64-linux-gnu.so)
+frame #12: <unknown function> + 0x431eb (0x7f2a156fc1eb in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/MinkowskiEngineBackend.cpython-36m-x86_64-linux-gnu.so)
+frame #13: <unknown function> + 0x3c2dc (0x7f2a156f52dc in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/MinkowskiEngineBackend.cpython-36m-x86_64-linux-gnu.so)
+<omitting python frames>
+frame #21: THPFunction_apply(_object*, _object*) + 0xa8f (0x7f2a73c9982f in /home/tcn02/.cache/pypoetry/virtualenvs/spatiotemporalsegmentation-m5BOK7Dg-py3.6/lib/python3.6/site-packages/torch/lib/libtorch_python.so)
+
+```

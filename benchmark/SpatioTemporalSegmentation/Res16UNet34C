@@ -1,0 +1,120 @@
+
+
+https://github.com/chrischoy/SpatioTemporalSegmentation/issues/8
+
+0-10k: https://pastebin.com/eej7Vg7D
+10k-20k: https://pastebin.com/X04fhLYW
+20k-30k: https://pastebin.com/qPJEpKU0
+30k-40k: https://pastebin.com/H20w7W5K
+40k-50k: https://pastebin.com/5fbCnQxp
+50k-60k: https://pastebin.com/kHeYE1d7
+
+0-10k: https://pastebin.com/eej7Vg7D
+
+napoli115 09/11 14:59:47     model: Res16UNet34C
+napoli115 09/11 14:59:47     conv1_kernel_size: 3
+napoli115 09/11 14:59:47     weights: None
+napoli115 09/11 14:59:47     weights_for_inner_model: False
+napoli115 09/11 14:59:47     dilations: [1, 1, 1, 1]
+napoli115 09/11 14:59:47     wrapper_type: None
+napoli115 09/11 14:59:47     wrapper_region_type: 1
+napoli115 09/11 14:59:47     wrapper_kernel_size: 3
+napoli115 09/11 14:59:47     wrapper_lr: 0.1
+napoli115 09/11 14:59:47     meanfield_iterations: 10
+napoli115 09/11 14:59:47     crf_spatial_sigma: 1
+napoli115 09/11 14:59:47     crf_chromatic_sigma: 12
+napoli115 09/11 14:59:47     nonlinearity: ReLU
+napoli115 09/11 14:59:47     optimizer: SGD
+napoli115 09/11 14:59:47     lr: 0.1
+napoli115 09/11 14:59:47     sgd_momentum: 0.9
+napoli115 09/11 14:59:47     sgd_dampening: 0.1
+napoli115 09/11 14:59:47     adam_beta1: 0.9
+napoli115 09/11 14:59:47     adam_beta2: 0.999
+napoli115 09/11 14:59:47     weight_decay: 0.0001
+napoli115 09/11 14:59:47     param_histogram_freq: 100
+napoli115 09/11 14:59:47     save_param_histogram: False
+napoli115 09/11 14:59:47     iter_size: 1
+napoli115 09/11 14:59:47     bn_momentum: 0.02
+napoli115 09/11 14:59:47     scheduler: PolyLR
+napoli115 09/11 14:59:47     max_iter: 60000
+napoli115 09/11 14:59:47     step_size: 20000.0
+napoli115 09/11 14:59:47     step_gamma: 0.1
+napoli115 09/11 14:59:47     poly_power: 0.9
+napoli115 09/11 14:59:47     exp_gamma: 0.95
+napoli115 09/11 14:59:47     exp_step_size: 445
+napoli115 09/11 14:59:47     log_dir: ./outputs/ScannetSparseVoxelization2cmDataset/Res16UNet34C/SGD-l1e-1-b8-PolyLR-i60000--test/2019-09-11_14-59-43
+napoli115 09/11 14:59:47     data_dir: data
+napoli115 09/11 14:59:47     dataset: ScannetSparseVoxelization2cmDataset
+napoli115 09/11 14:59:47     temporal_dilation: 30
+napoli115 09/11 14:59:47     temporal_numseq: 3
+napoli115 09/11 14:59:47     point_lim: -1
+napoli115 09/11 14:59:47     pre_point_lim: -1
+napoli115 09/11 14:59:47     batch_size: 8
+napoli115 09/11 14:59:47     val_batch_size: 1
+napoli115 09/11 14:59:47     test_batch_size: 1
+napoli115 09/11 14:59:47     cache_data: False
+napoli115 09/11 14:59:47     threads: 1
+napoli115 09/11 14:59:47     val_threads: 1
+napoli115 09/11 14:59:47     ignore_label: 255
+napoli115 09/11 14:59:47     use_loc_feat: False
+napoli115 09/11 14:59:47     train_elastic_distortion: True
+napoli115 09/11 14:59:47     test_elastic_distortion: False
+napoli115 09/11 14:59:47     return_transformation: True
+napoli115 09/11 14:59:47     ignore_duplicate_class: False
+napoli115 09/11 14:59:47     partial_crop: 0.0
+napoli115 09/11 14:59:47     train_limit_numpoints: 1200000
+napoli115 09/11 14:59:47     varcity3d_path: /cvgl2/u/jgwak/Datasets/varcity3d
+napoli115 09/11 14:59:47     synthia_path: /cvgl/group/Synthia/synthia-processed/raw-pc-upright
+napoli115 09/11 14:59:47     synthia_online_path: /cvgl2/u/jgwak/Datasets/synthia_subsampled
+napoli115 09/11 14:59:47     scannet_path: /cvgl2/u/jgwak/Datasets/scannet
+napoli115 09/11 14:59:47     synthia_camera_path: /cvgl/group/Synthia/%s/CameraParams/
+napoli115 09/11 14:59:47     synthia_camera_intrinsic_file: intrinsics.txt
+napoli115 09/11 14:59:47     synthia_camera_extrinsics_file: Stereo_Right/Omni_F/%s.txt
+napoli115 09/11 14:59:47     stanford3d_path: /cvgl/group/Stanford3dDataset_v1.2/Parsed
+napoli115 09/11 14:59:47     stanford3d_online_path: /cvgl2/u/jgwak/Datasets/stanford_subsampled
+napoli115 09/11 14:59:47     pc_type: voxel
+napoli115 09/11 14:59:47     is_train: True
+napoli115 09/11 14:59:47     stat_freq: 10
+napoli115 09/11 14:59:47     test_stat_freq: 100
+napoli115 09/11 14:59:47     save_freq: 1000
+napoli115 09/11 14:59:47     val_freq: 1000
+napoli115 09/11 14:59:47     empty_cache_freq: 10
+napoli115 09/11 14:59:47     train_phase: train
+napoli115 09/11 14:59:47     val_phase: val
+napoli115 09/11 14:59:47     overwrite_weights: True
+napoli115 09/11 14:59:47     resume: None
+napoli115 09/11 14:59:47     resume_optimizer: True
+napoli115 09/11 14:59:47     eval_upsample: False
+napoli115 09/11 14:59:47     use_feat_aug: True
+napoli115 09/11 14:59:47     data_aug_color_trans_ratio: 0.1
+napoli115 09/11 14:59:47     data_aug_color_jitter_std: 0.05
+napoli115 09/11 14:59:47     data_aug_height_trans_std: 1
+napoli115 09/11 14:59:47     data_aug_height_jitter_std: 0.1
+napoli115 09/11 14:59:47     data_aug_normal_jitter_std: 0.01
+napoli115 09/11 14:59:47     normalize_color: True
+napoli115 09/11 14:59:47     data_aug_scale_min: 0.8
+napoli115 09/11 14:59:47     data_aug_scale_max: 1.2
+napoli115 09/11 14:59:47     data_aug_hue_max: 0.5
+napoli115 09/11 14:59:47     data_aug_saturation_max: 0.2
+napoli115 09/11 14:59:47     temporal_rand_dilation: False
+napoli115 09/11 14:59:47     temporal_rand_numseq: False
+napoli115 09/11 14:59:47     test_config: None
+napoli115 09/11 14:59:47     visualize: False
+napoli115 09/11 14:59:47     test_temporal_average: False
+napoli115 09/11 14:59:47     visualize_path: outputs/visualize
+napoli115 09/11 14:59:47     test_rotation: 1
+napoli115 09/11 14:59:47     test_rotation_save: False
+napoli115 09/11 14:59:47     test_rotation_save_dir: outputs/rotation_fulleval
+napoli115 09/11 14:59:47     save_prediction: False
+napoli115 09/11 14:59:47     save_pred_dir: outputs/pred
+napoli115 09/11 14:59:47     test_phase: val
+napoli115 09/11 14:59:47     evaluate_original_pointcloud: True
+napoli115 09/11 14:59:47     test_original_pointcloud: False
+napoli115 09/11 14:59:47     is_cuda: True
+napoli115 09/11 14:59:47     load_path:
+napoli115 09/11 14:59:47     log_step: 50
+napoli115 09/11 14:59:47     log_level: INFO
+napoli115 09/11 14:59:47     num_gpu: 1
+napoli115 09/11 14:59:47     seed: 123
+napoli115 09/11 14:59:47     debug: True
+napoli115 09/11 14:59:47     lenient_weight_loading: False

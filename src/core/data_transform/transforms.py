@@ -20,8 +20,7 @@ from src.datasets.registration.pair import Pair
 from src.utils.transform_utils import SamplingStrategy
 from src.utils.config import is_list
 from src.utils import is_iterable
-from .grid_transform import group_data, GridSampling
-from .sparse_transforms import shuffle_data
+from .grid_transform import group_data, GridSampling, shuffle_data
 
 
 class RemoveAttributes(object):
@@ -495,7 +494,6 @@ class ShiftVoxels:
     apply_shift: bool:
         Whether to apply the shift on indices
     """
-
     def __init__(self, apply_shift=True):
         self._apply_shift = apply_shift
 
@@ -508,7 +506,7 @@ class ShiftVoxels:
 
     def __repr__(self):
         return "{}(apply_shift={})".format(self.__class__.__name__, self._apply_shift)
-
+      
 
 class RandomDropout:
     """ Randomly drop points from the input data
@@ -535,4 +533,3 @@ class RandomDropout:
         return "{}(dropout_ratio={}, dropout_application_ratio={})".format(
             self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio
         )
-

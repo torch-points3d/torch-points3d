@@ -3,7 +3,6 @@ import torch
 
 # Those Transformation are adapted from https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/transforms.py
 
-
 class NormalizeRGB(object):
     """Normalize rgb between 0 and 1
 
@@ -18,11 +17,11 @@ class NormalizeRGB(object):
     def __call__(self, data):
         assert hasattr(data, "rgb")
         if not (data.rgb.max() <= 1 and data.rgb.min() >= 0):
-            data.rgb = data.rgb.float() / 255.0
+            data.rgb = data.rgb.float() / 255.
         return data
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, self._normalize)
+        return '{}({})'.format(self.__class__.__name__, self._normalize)
 
 
 class ChromaticTranslation(object):
@@ -47,7 +46,6 @@ class ChromaticTranslation(object):
 
     def __repr__(self):
         return "{}(trans_range_ratio={})".format(self.__class__.__name__, self.trans_range_ratio)
-
 
 class ChromaticAutoContrast(object):
     """ Rescale colors between 0 and 1 to enhance contrast

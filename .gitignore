@@ -21,3 +21,5 @@ docs_old
 /test/kernels/dispositions
 *.egg-info*
 *.prof
+build/*
+dist/*
