@@ -25,7 +25,8 @@ from src.core.data_transform import (
     RandomDropout,
     ShiftVoxels,
     PCACompute,
-    RandomHorizontalFlip,
+    RandomCoordsFlip,
+    RemoveDuplicateCoords,
 )
 from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from src.utils.enums import ConvolutionFormat
@@ -167,6 +168,13 @@ class Testhelpers(unittest.TestCase):
         for key in keys[mask]:
             self.assertNotIn(key, list(data_out.keys))
 
+    def test_RemoveDuplicateCoords(self):
+        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
+        data = Data(pos=torch.from_numpy(indices))
+        transform = RemoveDuplicateCoords()
+        data_out = transform(data)
+        self.assertEqual(data_out.pos.shape[0], 5)
+
     def test_dropout(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
         data = Data(pos=torch.from_numpy(indices))
@@ -223,14 +231,14 @@ class Testhelpers(unittest.TestCase):
 
         self.assertEqual(t(data.clone()).pos.shape, torch.Size([4, 3]))
 
-    def test_RandomHorizontalFlip(self):
+    def test_RandomCoordsFlip(self):
 
         pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
         pos_target = torch.from_numpy(np.asarray([[6, 2, 3], [3, 5, 6], [0, 8, 9]]))
         data = Data(pos=pos)
 
         upright_axis = ["y", "z"]
-        t = RandomHorizontalFlip(upright_axis, p=1)
+        t = RandomCoordsFlip(upright_axis, p=1)
 
         pos_out = t(data.clone()).pos
 

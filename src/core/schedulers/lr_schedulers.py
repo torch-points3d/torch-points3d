@@ -95,10 +95,6 @@ class LRScheduler:
         return self._scheduler
 
     @property
-    def update_scheduler_on(self):
-        return self._update_scheduler_on
-
-    @property
     def scheduler_opt(self):
         return self._scheduler._scheduler_opt
 
@@ -117,7 +113,7 @@ class LRScheduler:
         self._scheduler.load_state_dict(state_dict)
 
 
-def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on=None):
+def instantiate_scheduler(optimizer, scheduler_opt):
     """Return a learning rate scheduler
     Parameters:
         optimizer          -- the optimizer of the network
@@ -126,6 +122,8 @@ def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on=None):
                               opt.params contains the scheduler_params to construct the scheduler
     See https://pytorch.org/docs/stable/optim.html for more details.
     """
+
+    update_scheduler_on = scheduler_opt.update_scheduler_on
     scheduler_cls_name = getattr(scheduler_opt, "class")
     scheduler_params = collect_params(scheduler_opt.params, update_scheduler_on)
 
@@ -140,5 +138,6 @@ def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on=None):
 
     scheduler = scheduler_cls(optimizer, **scheduler_params)
     # used to re_create the scheduler
+
     setattr(scheduler, "_scheduler_opt", scheduler_opt)
     return LRScheduler(scheduler, scheduler_params, update_scheduler_on)

@@ -6,7 +6,6 @@ from torch.nn import functional as F
 from src.models.base_model import BaseModel
 from src.metrics.confusion_matrix import ConfusionMatrix
 from src.metrics.base_tracker import BaseTracker, meter_value
-from src.utils.np_utils import to_categorical
 from src.metrics.meters import APMeter
 
 

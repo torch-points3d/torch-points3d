@@ -54,6 +54,6 @@ Transforms
 
 .. autofunction:: src.core.data_transform.Random3AxisRotation
 
-.. autofunction:: src.core.data_transform.RandomHorizontalFlip
+.. autofunction:: src.core.data_transform.RandomCoordsFlip
 
 .. autofunction:: src.core.data_transform.compute_planarity

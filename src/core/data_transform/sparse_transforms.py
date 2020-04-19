@@ -108,7 +108,7 @@ class ToSparseInput(object):
         return "{}(grid_size={}, mode={})"\
             .format(self.__class__.__name__, self._grid_size, self._mode)
 
-class RandomHorizontalFlip(object):
+class RandomCoordsFlip(object):
 
     def __init__(self, ignored_axis, is_temporal=False, p=0.95):
         """This transform is used to flip sparse coords using a given axis. Usually, it would be x or y

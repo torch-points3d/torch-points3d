@@ -215,7 +215,8 @@ class BaseModel(torch.nn.Module):
             update_lr_scheduler_on = config.update_lr_scheduler_on
             if update_lr_scheduler_on:
                 self._update_lr_scheduler_on = update_lr_scheduler_on
-            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt, self._update_lr_scheduler_on)
+            scheduler_opt.update_scheduler_on = self._update_lr_scheduler_on
+            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
             self.add_scheduler("lr_scheduler", lr_scheduler)
 
         # BN Scheduler
@@ -224,7 +225,8 @@ class BaseModel(torch.nn.Module):
             update_bn_scheduler_on = config.update_bn_scheduler_on
             if update_bn_scheduler_on:
                 self._update_bn_scheduler_on = update_bn_scheduler_on
-            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt, self._update_bn_scheduler_on)
+            bn_scheduler_opt.update_scheduler_on = self._update_bn_scheduler_on
+            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
             self.add_scheduler("bn_scheduler", bn_scheduler)
 
         # Accumulated gradients
