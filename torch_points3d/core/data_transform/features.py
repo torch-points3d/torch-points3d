@@ -329,28 +329,23 @@ class XYZFeature(object):
     """
 
     def __init__(self, add_x=True, add_y=True, add_z=True):
-        self.axis = []
+        self._axis = []
+        axis_names = ["x", "y", "z"]
         if add_x:
-            self.axis.append(0)
+            self._axis.append(0)
         if add_y:
-            self.axis.append(1)
+            self._axis.append(1)
         if add_z:
-            self.axis.append(2)
+            self._axis.append(2)
+        
+        self._axis_names = [axis_names[idx_axis] for idx_axis in self._axis]
 
     def __call__(self, data):
         assert data.pos is not None
-        xyz = data.pos[:, self.axis]
-        if data.x is None:
-            data.x = xyz
-        else:
-            data.x = torch.cat([data.x, xyz], -1)
+        for axis_name, id_axis in enumerate(self._axis_names, self._axis):
+            f = data.pos[:, id_axis]
+            setattr(data, axis_name, f)
         return data
 
     def __repr__(self):
-        coords = ""
-        axis = ["x", "y", "z"]
-        for a in self.axis:
-            if len(coords):
-                coords += ", "
-            coords += axis[a]
-        return "{}({})".format(self.__class__.__name__, coords)
+        return "{}(axis={})".format(self.__class__.__name__, self._axis_names)

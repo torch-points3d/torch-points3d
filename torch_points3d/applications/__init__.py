@@ -3,8 +3,10 @@ from typing import *
 from omegaconf import DictConfig
 import logging
 import importlib
+from torch_points3d.models.base_model import BaseModel
 from torch_geometric.transforms import Compose
 from torch_points3d.core.data_transform import XYZFeature, AddFeatsByKeys
+from torch_points3d.utils.model_building_utils.model_definition_resolver import _resolve
 
 log = logging.getLogger(__name__)
 
@@ -16,8 +18,13 @@ class ModelArchitectures(Enum):
 
 
 def get_module_lib(module_name):
-    model_module = ".".join(["torch_points3d.modules", module_name])
+    model_module = ".".join(["torch_points3d.applications", module_name])
     return importlib.import_module(model_module)
+
+
+class Options:
+    def __init__(self):
+        pass
 
 
 class ModelFactory:
@@ -42,6 +49,9 @@ class ModelFactory:
         config: DictConfig = None,
         **kwargs
     ):
+        # opt = Options()
+        # opt.conv_type = self.CONV_TYPE
+        # super(ModelFactory, self).__init__(opt)
 
         self._architecture = architecture.lower()
         assert self._architecture in self.MODEL_ARCHITECTURES, ModelFactory.raise_enum_error(
@@ -61,7 +71,7 @@ class ModelFactory:
         if self._config:
             log.info("The config will be used to build the model")
 
-        self._modellib = get_module_lib(self.MODULE_NAME)
+        self._modules_lib = get_module_lib(self.MODULE_NAME)
 
         self._transform = self._build_transform()
 
@@ -81,6 +91,14 @@ class ModelFactory:
             self._feat_names = []
             self._input_nc_feats = []
             self._delete_feats = []
+
+    @property
+    def modules_lib(self):
+        return self._modules_lib
+
+    @property
+    def kwargs(self):
+        return self._kwargs
 
     @property
     def num_layers(self):
@@ -118,13 +136,13 @@ class ModelFactory:
         return Compose(self._transforms)
 
     def _build_unet(self):
-        return self._modellib.build_unet(self)
+        self._modules_lib.build_unet(self)
 
     def _build_encoder(self):
-        return self._modellib.build_encoder(self)
+        self._model_name, self._model = self._modules_lib.build_encoder(self)
 
     def _build_decoder(self):
-        return self._modellib.build_decoder(self)
+        self._model_name, self._model = self._modules_lib.build_decoder(self)
 
     def _build(self):
         if self._architecture == ModelArchitectures.UNET.value:
@@ -135,3 +153,24 @@ class ModelFactory:
             self._build_decoder()
         else:
             raise NotImplementedError
+
+    @staticmethod
+    def resolve_model(model_config, num_features, kwargs):
+        """ Parses the model config and evaluates any expression that may contain constants
+        """
+        # placeholders to subsitute
+        constants = {
+            "FEAT": max(num_features, 0),
+            "TASK": "segmentation",
+        }
+
+        # user defined contants to subsitute
+        if "define_constants" in model_config.keys():
+            constants.update(dict(model_config.define_constants))
+            define_constants = model_config.define_constants
+            for key in define_constants.keys():
+                value = kwargs.get(key)
+                if value:
+                    constants[key] = value
+
+        _resolve(model_config, constants)
