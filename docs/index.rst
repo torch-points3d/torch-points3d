@@ -90,9 +90,9 @@ Supported tasks
    :caption: Contents
    :hidden:
 
-   torch_points3d/gettingstarted
-   torch_points3d/tutorials
-   torch_points3d/advanced
+   src/gettingstarted
+   src/tutorials
+   src/advanced
 
 .. toctree::
    :glob:
@@ -100,5 +100,5 @@ Supported tasks
    :caption: API
    :hidden:
 
-   torch_points3d/api/transforms
-   torch_points3d/api/filters
+   src/api/transforms
+   src/api/filters
