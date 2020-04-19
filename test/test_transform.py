@@ -199,7 +199,7 @@ class Testhelpers(unittest.TestCase):
         data = Data(pos=plane)
         pca = PCACompute()
         data = pca(data)
-        npt.assert_allclose(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1.0)
+        npt.assert_allclose(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1.0, atol=1e-5)
 
     def test_Random3AxisRotation(self):
 

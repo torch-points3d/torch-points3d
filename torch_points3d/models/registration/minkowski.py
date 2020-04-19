@@ -161,22 +161,20 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
 
     def compute_loss(self):
         # miner
-
+        output = torch.cat([self.output[self.ind], self.output_target[self.ind_target]], 0)
         hard_pairs = None
         if self.miner_module is not None:
-            hard_pairs = self.miner_module(self.output, self.labels)
+            hard_pairs = self.miner_module(output, self.labels)
         # loss
-        self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(output, self.labels, hard_pairs)
         self.loss = self.loss_reg
 
     def forward(self):
-        self.out = self.apply_nn(self.input)
+        self.output = self.apply_nn(self.input)
         if self.labels is None:
-            self.output = self.out
             return self.output
 
-        self.out_target = self.apply_nn(self.input_target)
-        self.output = torch.cat([self.out[self.ind], self.out_target[self.ind_target]], 0)
+        self.output_target = self.apply_nn(self.input_target)
         self.compute_loss()
 
         return self.output
