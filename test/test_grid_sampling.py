@@ -11,7 +11,7 @@ from torch_geometric.data import Data
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-import src.core.data_transform as cT
+import torch_points3d.core.data_transform as cT
 
 
 class TestGridSampling(unittest.TestCase):
@@ -48,7 +48,6 @@ class TestGridSampling(unittest.TestCase):
         self.assertEqual(shapes, [shapes[0] for _ in range(len(shapes))])
 
     def test_double_grid_sampling(self):
-
         data_random = Data(pos=torch.randn(1000, 3) * 0.1)
         print(DIR_PATH)
         data_fragment = torch.load(os.path.join(DIR_PATH, "test_data/fragment_000003.pt"))

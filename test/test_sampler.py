@@ -1,7 +1,7 @@
 import unittest
 import torch
 
-from src.core.spatial_ops import (
+from torch_points3d.core.spatial_ops import (
     FPSSampler,
     RandomSampler,
     RadiusNeighbourFinder,

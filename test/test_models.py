@@ -12,10 +12,10 @@ sys.path.insert(0, ROOT)
 from test.mockdatasets import MockDatasetGeometric, MockDataset
 from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 
-from src.models.model_factory import instantiate_model
-from src.core.data_transform import ToSparseInput
-from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
+from torch_points3d.models.model_factory import instantiate_model
+from torch_points3d.core.data_transform import ToSparseInput
+from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 
 # calls resolve_model, then find_model_using_name
 

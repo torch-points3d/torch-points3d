@@ -11,7 +11,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR, ".."))
 
 from test.mock_models import MockModel
-from src.datasets.segmentation.forward.shapenet import _ForwardShapenet, ForwardShapenetDataset
+from torch_points3d.datasets.segmentation.forward.shapenet import _ForwardShapenet, ForwardShapenetDataset
 
 
 class TestForwardData(unittest.TestCase):

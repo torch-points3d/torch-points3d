@@ -28,17 +28,17 @@ Create a dataset that the framework recognises
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The framework provides a base class for datasets that needs to be sub classed when you add your own. 
-We also follow the convention that the ``.py`` file that describes a dataset for segmentation will leave in the ``src/datasets/segmentation`` folder.
-For another task such as classification it would go in ``src/datasets/classification``. 
+We also follow the convention that the ``.py`` file that describes a dataset for segmentation will leave in the ``torch_points3d/datasets/segmentation`` folder.
+For another task such as classification it would go in ``torch_points3d/datasets/classification``. 
 
-Start by creating a new file ``src/datasets/segmentation/s3dis.py`` with the class ``S3DISDataset``, it should inherit from ``BaseDataset``.
+Start by creating a new file ``torch_points3d/datasets/segmentation/s3dis.py`` with the class ``S3DISDataset``, it should inherit from ``BaseDataset``.
 
 .. code-block:: python
     
     from torch_geometric.datasets import S3DIS
 
-    from src.datasets.base_dataset import BaseDataset
-    from src.metrics.segmentation_tracker import SegmentationTracker
+    from torch_points3d.datasets.base_dataset import BaseDataset
+    from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 
     class S3DISDataset(BaseDataset):
         def __init__(self, dataset_opt):
@@ -143,9 +143,9 @@ Let's create a ``conf/data/segmentation/s3dis.yaml`` file with our own setting t
 
 .. note:: 
  * ``task`` needs to be specified. Currently, the arguments provided by the command line are lost and therefore we need the extra information.
- * ``class`` needs to be specified. In that case, since we solve a classification task, the code will look for a class named ``S3DISDataset`` within the ``src/datasets/segmentation/s3dis.py`` file.
+ * ``class`` needs to be specified. In that case, since we solve a classification task, the code will look for a class named ``S3DISDataset`` within the ``torch_points3d/datasets/segmentation/s3dis.py`` file.
 
-For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/metrics/segmentation_tracker.py>`_
+For more details about the tracker please refer to the `source code <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/metrics/segmentation_tracker.py>`_
 
 Create a new model
 --------------------
@@ -166,12 +166,12 @@ Create the basic modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-Let's create ``src/modules/pointnet2/`` directory and ``dense.py`` file within.
+Let's create ``torch_points3d/modules/pointnet2/`` directory and ``dense.py`` file within.
 
 .. note::
  Remember to create a ``__init__.py`` file within that directory that will contain the multiscale convolution proposed in pointnet++.
 
-.. literalinclude:: ../../src/modules/pointnet2/dense.py
+.. literalinclude:: ../../torch_points3d/modules/pointnet2/dense.py
    :language: python
 
 
@@ -201,7 +201,7 @@ Let's dig in.
 Assemble all the basic blocks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Let's create a new file ``/src/models/segmentation/pointnet2.py`` with its associated class 
+Let's create a new file ``/torch_points3d/models/segmentation/pointnet2.py`` with its associated class 
 ``PointNet2_D``
 
 .. code-block:: python
@@ -213,9 +213,9 @@ Let's create a new file ``/src/models/segmentation/pointnet2.py`` with its assoc
    import etw_pytorch_utils as pt_utils
    import logging
 
-   from src.modules.pointnet2 import * # This part is extremely important. Always important the associated modules within your this file
-   from src.core.base_conv.dense import DenseFPModule
-   from src.models.base_architectures import UnetBasedModel
+   from torch_points3d.modules.pointnet2 import * # This part is extremely important. Always important the associated modules within your this file
+   from torch_points3d.core.base_conv.dense import DenseFPModule
+   from torch_points3d.models.base_architectures import UnetBasedModel
 
    log = logging.getLogger(__name__)
 
@@ -273,7 +273,7 @@ Let's create a new file ``/src/models/segmentation/pointnet2.py`` with its assoc
 .. note::
 
     * Make sure that you import all the required modules
-    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/models/base_model.py>`_ for more details)
+    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/models/base_model.py>`_ for more details)
 
 Create a new configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -297,7 +297,7 @@ Let's dig in the definition.
 
 * 
   ``architecture: pointnet2.PointNet2_D``. It indicates where to find the Model Logic.
-  The framework backend will look for the file ``/src/models/segmentation/pointnet2.py`` and the ``PointNet2_D`` class.
+  The framework backend will look for the file ``/torch_points3d/models/segmentation/pointnet2.py`` and the ``PointNet2_D`` class.
 
 * 
   ``conv_type: "DENSE"``
@@ -310,7 +310,7 @@ When I say optional, I mean those parameters could be defined differently for yo
 We don't want to force any particular configuration format however, the simpler is always better !
 
 The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class 
-`src/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/models/base_architectures/unet.py>`_ 
+`torch_points3d/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/models/base_architectures/unet.py>`_ 
 with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
 The following arguments are required by those classes:
 

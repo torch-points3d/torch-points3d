@@ -13,7 +13,7 @@ from omegaconf import OmegaConf
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-from src.core.data_transform import (
+from torch_points3d.core.data_transform import (
     instantiate_transform,
     instantiate_transforms,
     GridSampling,
@@ -28,9 +28,9 @@ from src.core.data_transform import (
     RandomCoordsFlip,
     RemoveDuplicateCoords,
 )
-from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
-from src.utils.enums import ConvolutionFormat
-from src.datasets.multiscale_data import MultiScaleBatch
+from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
+from torch_points3d.utils.enums import ConvolutionFormat
+from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 
 
 class Testhelpers(unittest.TestCase):
@@ -167,6 +167,13 @@ class Testhelpers(unittest.TestCase):
         data_out = transform(data)
         for key in keys[mask]:
             self.assertNotIn(key, list(data_out.keys))
+
+    def test_RemoveDuplicateCoords(self):
+        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
+        data = Data(pos=torch.from_numpy(indices))
+        transform = RemoveDuplicateCoords()
+        data_out = transform(data)
+        self.assertEqual(data_out.pos.shape[0], 5)
 
     def test_dropout(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])

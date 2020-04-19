@@ -5,7 +5,11 @@ import sys
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
-from src.core.losses.dirichlet_loss import _variance_estimator_dense, dirichlet_loss, _variance_estimator_sparse
+from torch_points3d.core.losses.dirichlet_loss import (
+    _variance_estimator_dense,
+    dirichlet_loss,
+    _variance_estimator_sparse,
+)
 
 
 class TestDirichletLoss(unittest.TestCase):

@@ -8,7 +8,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.datasets.batch import SimpleBatch
+from torch_points3d.datasets.batch import SimpleBatch
 
 
 class TestSimpleBatch(unittest.TestCase):
