@@ -175,8 +175,6 @@ class BaseModel(torch.nn.Module):
         if make_optimizer_step:
             self._optimizer.step()  # update parameters
 
-        epoch if self._update_scheduler_on_epoch else self._iterations
-
         if self._lr_scheduler:
             lr_scheduler_step = self._collect_scheduler_step("_update_lr_scheduler_on")
             self._lr_scheduler.step(lr_scheduler_step)

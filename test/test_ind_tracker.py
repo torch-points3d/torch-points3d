@@ -11,7 +11,7 @@ from torch_geometric.data import Data
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-from src.datasets.registration.utils import tracked_matches
+from torch_points3d.datasets.registration.utils import tracked_matches
 
 
 class TestTrackedMatches(unittest.TestCase):
