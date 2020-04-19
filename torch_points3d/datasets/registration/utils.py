@@ -194,8 +194,8 @@ def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, l
         list_max[:, i] = np.amax(view_frust_pts, axis=1)
     # take the quantile instead of the min to be more robust to outilers frames
 
-    vol_bnds[:, 0] = np.quantile(list_min, 0.0, axis=1)
-    vol_bnds[:, 1] = np.quantile(list_max, 1.0, axis=1)
+    vol_bnds[:, 0] = np.quantile(list_min, 0.1, axis=1)
+    vol_bnds[:, 1] = np.quantile(list_max, 0.9, axis=1)
 
     # remove some voxel that are on the edge to control the size of the tsdf.
     vol_dim = (vol_bnds[:, 1] - vol_bnds[:, 0]) / voxel_size
