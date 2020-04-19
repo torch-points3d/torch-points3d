@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/torch_points3d
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 
 Transforms

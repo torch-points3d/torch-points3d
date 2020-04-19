@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/torch_points3d
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 Tutorials
 ===========
@@ -310,7 +310,7 @@ When I say optional, I mean those parameters could be defined differently for yo
 We don't want to force any particular configuration format however, the simpler is always better !
 
 The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class 
-`torch_points3d/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch_points3d/blob/master/torch_points3d/models/base_architectures/unet.py>`_ 
+`torch_points3d/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/models/base_architectures/unet.py>`_ 
 with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
 The following arguments are required by those classes:
 
