@@ -21,8 +21,11 @@ docs_old
 /test/kernels/dispositions
 *.egg-info*
 *.prof
+<<<<<<< HEAD
 
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg
+=======
+>>>>>>> f1a916ab926f21c9b7bc3ae4cc674b57ac4e5c2d
 build/*
 dist/*
