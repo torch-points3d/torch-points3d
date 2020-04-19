@@ -41,39 +41,43 @@ class Random3AxisRotation(object):
 
     def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
-        self._rot_x = np.abs(rot_x) if rot_x else rot_x
-        self._rot_y = np.abs(rot_y) if rot_y else rot_y
-        self._rot_z = np.abs(rot_z) if rot_z else rot_z
+        if apply_rotation:
+            if  (rot_x is None) and (rot_y is None) and (rot_z is None):
+                raise Exception("At least one rot_ should be defined")
+        
+        self._rot_x = np.abs(rot_x) if rot_x else 0
+        self._rot_y = np.abs(rot_y) if rot_y else 0
+        self._rot_z = np.abs(rot_z) if rot_z else 0
 
         self._degree_angles = [self._rot_x, self._rot_y, self._rot_z]
 
+    @staticmethod
+    def euler_angles_to_rotation_matrix(thetas):
+        R_x = torch.tensor(
+            [[1, 0, 0], [0, torch.cos(thetas[0]), -torch.sin(thetas[0])], [0, torch.sin(thetas[0]), torch.cos(thetas[0])]]
+        )
+
+        R_y = torch.tensor(
+            [[torch.cos(thetas[1]), 0, torch.sin(thetas[1])], [0, 1, 0], [-torch.sin(thetas[1]), 0, torch.cos(thetas[1])]]
+        )
+
+        R_z = torch.tensor(
+            [[torch.cos(thetas[2]), -torch.sin(thetas[2]), 0], [torch.sin(thetas[2]), torch.cos(thetas[2]), 0], [0, 0, 1]]
+        )
+
+        R = torch.mm(R_z, torch.mm(R_y, R_x))
+        return R
+
     def generate_random_rotation_matrix(self):
-        rot_mats = []
+        thetas = []
         for axis_ind, deg_angle in enumerate(self._degree_angles):
-            if deg_angle:
+            if deg_angle > 0:
                 rand_deg_angle = np.random.uniform(0, deg_angle)
                 rand_radian_angle = float(rand_deg_angle * np.pi) / 180.
-                axis = np.zeros(3)
-                axis[axis_ind] = 1
-                rot_mats.append(Random3AxisRotation.euler_angle_to_rotation_matrix(axis, rand_radian_angle))
-                
-        if self._apply_rotation and len(rot_mats) == 0:
-            raise Exception("The rotation can't be applied if rotations {} aren't defined.".format(self._degree_angles))
-
-        np.random.shuffle(rot_mats)
-
-        return torch.FloatTensor(Random3AxisRotation.make_rotation(rot_mats))
-
-    @staticmethod
-    def make_rotation(rot_mats):
-        if len(rot_mats) == 1:
-            return rot_mats[0]
-        else:
-            return rot_mats[0] @ Random3AxisRotation.make_rotation(rot_mats[1:])
-
-    @staticmethod
-    def euler_angle_to_rotation_matrix(axis, theta):
-        return expm(np.cross(np.eye(3), axis / norm(axis) * theta))
+                thetas.append(torch.tensor(rand_radian_angle))
+            else:
+                thetas.append(torch.tensor(0.))
+        return self.euler_angles_to_rotation_matrix(thetas)
 
     def __call__(self, data):
         if self._apply_rotation:

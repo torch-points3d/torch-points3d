@@ -214,10 +214,8 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(np.array_equal(v, v2), False)
         self.assertEqual(np.array_equal(w, w2), False)
 
-        t = Random3AxisRotation(apply_rotation=True, rot_x=None, rot_y=None, rot_z=None)
-
         with self.assertRaises(Exception):
-            _ = t(data.clone())
+            t = Random3AxisRotation(apply_rotation=True, rot_x=None, rot_y=None, rot_z=None)
 
         pos = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 1]]).astype(np.float)
         data = Data(pos=torch.from_numpy(pos).float())
