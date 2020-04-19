@@ -26,3 +26,4 @@ docs_old
 /*.egg-info
 /*.egg
 build
+dist/*
