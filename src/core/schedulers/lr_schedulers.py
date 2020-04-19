@@ -3,8 +3,8 @@ from torch.optim import lr_scheduler
 from omegaconf.dictconfig import DictConfig
 import logging
 from torch.optim.lr_scheduler import LambdaLR
-
 from src.utils.enums import SchedulerUpdateOn
+
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +12,7 @@ _custom_lr_scheduler = sys.modules[__name__]
 
 
 def collect_params(params, update_scheduler_on):
+
     """
     This function enable to handle if params contains on_epoch and on_iter or not.
     """
@@ -38,6 +39,7 @@ def collect_params(params, update_scheduler_on):
             raise Exception(
                 "The provided update_scheduler_on {} isn't within {}".format(update_scheduler_on, SchedulerUpdateOn)
             )
+
     else:
         return params
 
@@ -113,7 +115,7 @@ class LRScheduler:
         self._scheduler.load_state_dict(state_dict)
 
 
-def instantiate_scheduler(optimizer, scheduler_opt):
+def instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on_epoch=True):
     """Return a learning rate scheduler
     Parameters:
         optimizer          -- the optimizer of the network

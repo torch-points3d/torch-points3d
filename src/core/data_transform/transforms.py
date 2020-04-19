@@ -488,7 +488,6 @@ class PairTransform(object):
 class ShiftVoxels:
     """ Trick to make Sparse conv invariant to even and odds coordinates
     https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/train.py#L78
-
     Parameters
     -----------
     apply_shift: bool:
@@ -506,11 +505,10 @@ class ShiftVoxels:
 
     def __repr__(self):
         return "{}(apply_shift={})".format(self.__class__.__name__, self._apply_shift)
-      
+
 
 class RandomDropout:
     """ Randomly drop points from the input data
-
     Parameters
     ----------
     dropout_ratio : float, optional

@@ -32,19 +32,21 @@ class Random3AxisRotation(object):
     apply_rotation: bool:
         Whether to apply the rotation
     rot_x: float
+
         Rotation angle in degrees on x axis
     rot_y: float
         Rotation anglei n degrees on y axis
     rot_z: float
         Rotation angle in degrees on z axis
-    """   
+
+    """
 
     def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
         if apply_rotation:
             if  (rot_x is None) and (rot_y is None) and (rot_z is None):
                 raise Exception("At least one rot_ should be defined")
-        
+
         self._rot_x = np.abs(rot_x) if rot_x else 0
         self._rot_y = np.abs(rot_y) if rot_y else 0
         self._rot_z = np.abs(rot_z) if rot_z else 0

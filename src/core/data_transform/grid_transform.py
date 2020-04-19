@@ -13,6 +13,7 @@ from torch_geometric.nn import voxel_grid
 from torch_geometric.data import Data
 from torch_cluster import grid_cluster
 
+
 log = logging.getLogger(__name__)
 
 
@@ -25,11 +26,11 @@ def shuffle_data(data):
             data[key] = item[shuffle_idx]
     return data
 
-  
+
 def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[]):
-    """ Group data based on indices in cluster. 
+    """ Group data based on indices in cluster.
     The option ``mode`` controls how data gets agregated within each cluster.
-    
+
     Parameters
     ----------
     data : Data
@@ -74,7 +75,6 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
 
 class GridSampling:
     """ Clusters points into voxels with size :attr:`size`.
-
     Parameters
     ----------
     size: float
@@ -110,7 +110,7 @@ class GridSampling:
         else:
             cluster = voxel_grid(coords, data.batch, 1)
         cluster, unique_pos_indices = consecutive_cluster(cluster)
-        
+
         skip_keys = []
         if self._quantize_coords:
             data.pos = coords[unique_pos_indices]
@@ -144,14 +144,12 @@ class SaveOriginalPosId:
 
 class ElasticDistortion:
     """Apply elastic distortion on sparse coordinate space.
-
     Parameters
     ----------
     granularity: float
         Size of the noise grid (in same scale[m/cm] as the voxel grid)
     magnitude: bool
         Noise multiplier
-
     Returns
     -------
     data: Data

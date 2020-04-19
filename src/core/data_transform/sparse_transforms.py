@@ -55,6 +55,7 @@ class RemoveDuplicateCoords(object):
             skip_keys.append("pos")
             data.pos = coords[unique_pos_indices]
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)
+
         return data
 
     def __call__(self, data):
@@ -67,6 +68,7 @@ class RemoveDuplicateCoords(object):
 
     def __repr__(self):
         return "{}(mode={})".format(self.__class__.__name__, self._mode)
+
 
 class ToSparseInput(object):
     """This transform allows to prepare data for sparse model as SparseConv / Minkowski Engine.
@@ -82,6 +84,7 @@ class ToSparseInput(object):
     mode : str
         Option to select how the features and labels for each voxel is computed. Can be ``last`` or ``mean``.
         ``last`` selects the last point falling in a voxel as the representent, ``mean`` takes the average.
+
 
     Returns
     -------
@@ -111,8 +114,7 @@ class ToSparseInput(object):
     def __repr__(self):
         return "{}(grid_size={}, mode={})"\
             .format(self.__class__.__name__, self._grid_size, self._mode)
-<<<<<<< HEAD
-=======
+
 
 class RandomCoordsFlip(object):
 
@@ -151,4 +153,3 @@ class RandomCoordsFlip(object):
     def __repr__(self):
         return "{}(flip_axis={}, prob={}, is_temporal={})"\
             .format(self.__class__.__name__, self._horz_axes, self._p, self._is_temporal)
->>>>>>> upstream/master
