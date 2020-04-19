@@ -4,8 +4,8 @@
 Filters
 ==========
 
-.. autoclass:: src.core.data_transform.PlanarityFilter
+.. autoclass:: torch_points3d.core.data_transform.PlanarityFilter
 
-.. autoclass:: src.core.data_transform.RandomFilter
+.. autoclass:: torch_points3d.core.data_transform.RandomFilter
 
-.. autoclass:: src.core.data_transform.FCompose
+.. autoclass:: torch_points3d.core.data_transform.FCompose

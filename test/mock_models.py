@@ -1,4 +1,4 @@
-from src.models.base_model import BaseModel
+from torch_points3d.models.base_model import BaseModel
 from torch import nn
 
 

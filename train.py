@@ -6,22 +6,22 @@ import logging
 from omegaconf import OmegaConf
 
 # Import building function for model and dataset
-from src.datasets.dataset_factory import instantiate_dataset
-from src.models.model_factory import instantiate_model
+from torch_points3d.datasets.dataset_factory import instantiate_dataset
+from torch_points3d.models.model_factory import instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
-from src.models.base_model import BaseModel
-from src.datasets.base_dataset import BaseDataset
+from torch_points3d.models.base_model import BaseModel
+from torch_points3d.datasets.base_dataset import BaseDataset
 
 # Import from metrics
-from src.metrics.base_tracker import BaseTracker
-from src.metrics.colored_tqdm import Coloredtqdm as Ctq
-from src.metrics.model_checkpoint import ModelCheckpoint
+from torch_points3d.metrics.base_tracker import BaseTracker
+from torch_points3d.metrics.colored_tqdm import Coloredtqdm as Ctq
+from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
-from src.utils.colors import COLORS
-from src.utils.config import launch_wandb
-from src.visualization import Visualizer
+from torch_points3d.utils.colors import COLORS
+from torch_points3d.utils.config import launch_wandb
+from torch_points3d.visualization import Visualizer
 
 log = logging.getLogger(__name__)
 

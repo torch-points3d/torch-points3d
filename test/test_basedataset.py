@@ -13,10 +13,10 @@ sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDataset, MockDatasetConfig
 from test.mock_models import MockModel, MockModelConfig
-from src.datasets.base_dataset import BaseDataset
-from src.models.model_factory import instantiate_model
-from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.utils.enums import ConvolutionFormat
+from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.models.model_factory import instantiate_model
+from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from torch_points3d.utils.enums import ConvolutionFormat
 
 
 class Options:

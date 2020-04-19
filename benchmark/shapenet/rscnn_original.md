@@ -205,7 +205,7 @@ Parameter Group 0
 Model size = 3488417
 Access tensorboard with the following command <tensorboard --logdir=/home/thomas/HELIX/research/deeppointcloud-benchmarks/outputs/2020-01-19/22-39-50/tensorboard>
 EPOCH 1 / 100
-  0%|                                                                                                                                                                              | 0/1168 [00:00<?, ?it/s]THCudaCheck FAIL file=/pytorch/aten/src/THC/THCGeneral.cpp line=383 error=11 : invalid argument
+  0%|                                                                                                                                                                              | 0/1168 [00:00<?, ?it/s]THCudaCheck FAIL file=/pytorch/aten/torch_points3d/THC/THCGeneral.cpp line=383 error=11 : invalid argument
 100%|██████████████████████████████████████████████████████████████████| 1168/1168 [05:40<00:00,  3.43it/s, data_loading=0.006, iteration=0.133, train_Cmiou=56.47, train_Imiou=71.21, train_loss_seg=0.573]
 Learning rate = 0.001000
 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████| 240/240 [00:24<00:00,  9.92it/s, test_Cmiou=65.98, test_Imiou=77.52, test_loss_seg=0.267]

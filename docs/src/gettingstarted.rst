@@ -171,7 +171,7 @@ scalable and also ensure that components could be reused. Below is the overall s
    ├── forward_scripts           # Script that runs a forward pass on possibly non annotated data
    ├── outputs                   # All outputs from your runs sorted by date
    ├── scripts                   # Some scripts to help manage the project
-   ├── src                       
+   ├── torch_points3d                       
    │   ├── core                  # Core components
    │   ├── datasets              # All code related to datasets
    │   ├── metrics               # All metrics and trackers
