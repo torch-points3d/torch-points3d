@@ -11,7 +11,7 @@ import numpy.matlib
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-from src.metrics.confusion_matrix import ConfusionMatrix
+from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 
 
 class TestConfusionMatrix(unittest.TestCase):

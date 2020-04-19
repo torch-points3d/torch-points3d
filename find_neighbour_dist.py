@@ -7,24 +7,24 @@ from omegaconf import OmegaConf
 import pickle
 
 # Import building function for model and dataset
-from src.datasets.dataset_factory import instantiate_dataset
-from src.models.model_factory import instantiate_model
+from torch_points3d.datasets.dataset_factory import instantiate_dataset
+from torch_points3d.models.model_factory import instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
-from src.models.base_model import BaseModel
-from src.datasets.base_dataset import BaseDataset
+from torch_points3d.models.base_model import BaseModel
+from torch_points3d.datasets.base_dataset import BaseDataset
 
 # Import from metrics
-from src.metrics.base_tracker import BaseTracker
-from src.metrics.colored_tqdm import Coloredtqdm as Ctq
-from src.metrics.model_checkpoint import ModelCheckpoint
+from torch_points3d.metrics.base_tracker import BaseTracker
+from torch_points3d.metrics.colored_tqdm import Coloredtqdm as Ctq
+from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
-from src.utils.colors import COLORS
-from src.utils.config import determine_stage, launch_wandb
-from src.visualization import Visualizer
-from src.utils.config import set_debugging_vars_to_global
-from src.utils.debugging_vars import extract_histogram
+from torch_points3d.utils.colors import COLORS
+from torch_points3d.utils.config import determine_stage, launch_wandb
+from torch_points3d.visualization import Visualizer
+from torch_points3d.utils.config import set_debugging_vars_to_global
+from torch_points3d.utils.debugging_vars import extract_histogram
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger(__name__)

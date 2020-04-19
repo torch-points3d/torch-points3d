@@ -1,5 +1,5 @@
 [run]
-source = src
+source = torch_points3d
 branch = True
 
 [report]

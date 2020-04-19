@@ -10,7 +10,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from src.models.base_model import BaseModel
+from torch_points3d.models.base_model import BaseModel
 from mock_models import DifferentiableMockModel
 
 log = logging.getLogger(__name__)

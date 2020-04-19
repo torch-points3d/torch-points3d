@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/torch-points3d
+:github_url: https://github.com/nicolas-chaulet/torch_points3d
 
 Advanced
 ==========
@@ -20,7 +20,7 @@ As per their website
 Configuration architecture
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All configurations leave in the `conf <https://github.com/nicolas-chaulet/torch-points3d/tree/master/conf>`_ folder and it is organised as follow:
+All configurations leave in the `conf <https://github.com/nicolas-chaulet/torch_points3d/tree/master/conf>`_ folder and it is organised as follow:
 
 .. code-block:: bash
 
@@ -317,7 +317,7 @@ Raw S3DIS
 
 The dataset used for `S3DIS <http://buildingparser.stanford.edu>`_ is the original dataset without any pre-processing applied.
 Here is the `area_1 <http://buildingparser.stanford.edu/rendered/raw_examples/Area%201.ply.html>`_ if you want to visualize it.
-We provide some data transform for combining each area back together and split the dataset into digestible chunks. Please refer to `code base <https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/datasets/segmentation/s3dis.py>`_ and associated configuration file for more details:
+We provide some data transform for combining each area back together and split the dataset into digestible chunks. Please refer to `code base <https://github.com/nicolas-chaulet/torch_points3d/blob/master/torch_points3d/datasets/segmentation/s3dis.py>`_ and associated configuration file for more details:
 
 .. literalinclude:: ../../conf/data/segmentation/s3disfused.yaml
    :language: yaml
@@ -395,7 +395,7 @@ If the checkpoint contains weight with the key "miou", it will set the model sta
 Adding a new metric
 ^^^^^^^^^^^^^^^^^^^^
 
-Within the file ``src/metrics/model_checkpoint.py``\ ,
+Within the file ``torch_points3d/metrics/model_checkpoint.py``\ ,
 It contains a mapping dictionnary between a sub ``metric_name`` and an ``optimization function``.
 
 Currently, we support the following metrics.

@@ -1,9 +1,9 @@
 import torch
 from torch_geometric.data import Data, Batch
 
-from src.datasets.batch import SimpleBatch
-from src.core.data_transform import MultiScaleTransform
-from src.datasets.multiscale_data import MultiScaleBatch
+from torch_points3d.datasets.batch import SimpleBatch
+from torch_points3d.core.data_transform import MultiScaleTransform
+from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 
 
 class MockDatasetConfig(object):

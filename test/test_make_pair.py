@@ -1,6 +1,6 @@
 import unittest
 import torch
-from src.datasets.registration.pair import Pair
+from torch_points3d.datasets.registration.pair import Pair
 
 
 class TestMakePair(unittest.TestCase):

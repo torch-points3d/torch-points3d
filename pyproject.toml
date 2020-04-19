@@ -1,8 +1,11 @@
 [tool.poetry]
-name = "torch-points3d"
+name = "torch_points3d"
 version = "0.1.0"
 description = ""
-authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
+authors = ["Thomas Chaton <thomas.chaton.ai@gmail.com>", "Nicolas Chaulet <nicolas.chaulet@gmail.com>"]
+packages = [
+    { include = "torch_points3d" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"

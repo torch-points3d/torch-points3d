@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/torch-points3d
+:github_url: https://github.com/nicolas-chaulet/torch_points3d
 
 Getting Started
 ================
@@ -43,8 +43,8 @@ You can clone the repository and install all the required dependencies as follow
 
 .. code-block:: bash
 
-   git clone https://github.com/nicolas-chaulet/torch-points3d.git
-   cd torch-points3d
+   git clone https://github.com/nicolas-chaulet/torch_points3d.git
+   cd torch_points3d
    pyenv local 3.6.10
    poetry install --no-root
 
@@ -90,8 +90,8 @@ We try to maintain a ``requirements.txt`` file for those who want to use plain o
 
 .. code-block:: bash
 
-   git clone https://github.com/nicolas-chaulet/torch-points3d.git
-   cd torch-points3d
+   git clone https://github.com/nicolas-chaulet/torch_points3d.git
+   cd torch_points3d
 
 We still recommend that you first create a virtual environment and activate it before installing the dependencies:
 
@@ -131,7 +131,7 @@ And you should see something like that
    :alt: logging
 
 
-The `config <https://github.com/nicolas-chaulet/torch-points3d/blob/master/conf/models/segmentation/pointnet2.yaml>`_ for pointnet++ is a good example starting point to understand how models are defined:
+The `config <https://github.com/nicolas-chaulet/torch_points3d/blob/master/conf/models/segmentation/pointnet2.yaml>`_ for pointnet++ is a good example starting point to understand how models are defined:
 
 .. literalinclude:: ../../conf/models/segmentation/pointnet2.yaml
    :language: yaml
@@ -171,7 +171,7 @@ scalable and also ensure that components could be reused. Below is the overall s
    ├── forward_scripts           # Script that runs a forward pass on possibly non annotated data
    ├── outputs                   # All outputs from your runs sorted by date
    ├── scripts                   # Some scripts to help manage the project
-   ├── src                       
+   ├── torch_points3d                       
    │   ├── core                  # Core components
    │   ├── datasets              # All code related to datasets
    │   ├── metrics               # All metrics and trackers

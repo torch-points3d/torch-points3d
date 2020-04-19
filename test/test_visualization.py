@@ -10,7 +10,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from src.visualization import Visualizer
+from torch_points3d.visualization import Visualizer
 
 batch_size = 2
 epochs = 5

@@ -8,8 +8,8 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from src.core.schedulers import instantiate_bn_scheduler
-from src.core.common_modules import MLP
+from torch_points3d.core.schedulers import instantiate_bn_scheduler
+from torch_points3d.core.common_modules import MLP
 
 
 class TestBNMomentumScheduler(unittest.TestCase):

@@ -7,7 +7,7 @@ from torch_geometric.data import Data
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 
-from src.core.data_transform.transforms import MeshToNormal
+from torch_points3d.core.data_transform.transforms import MeshToNormal
 
 
 class TestModelUtils(unittest.TestCase):

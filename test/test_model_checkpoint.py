@@ -11,9 +11,9 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from mockdatasets import MockDatasetGeometric
-from src.models.model_factory import instantiate_model
-from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.metrics.model_checkpoint import ModelCheckpoint
+from torch_points3d.models.model_factory import instantiate_model
+from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 
 def load_config(task, model_type) -> DictConfig:

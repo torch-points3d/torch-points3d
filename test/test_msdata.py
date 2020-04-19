@@ -4,7 +4,7 @@ import torch.testing as tt
 from torch_geometric.data import Data
 
 
-from src.datasets.multiscale_data import MultiScaleBatch, MultiScaleData
+from torch_points3d.datasets.multiscale_data import MultiScaleBatch, MultiScaleData
 
 
 class TestMSData(unittest.TestCase):
