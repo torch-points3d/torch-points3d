@@ -6,22 +6,22 @@ import logging
 from omegaconf import OmegaConf
 
 # Import building function for model and dataset
-from src.datasets.dataset_factory import instantiate_dataset
-from src.models.model_factory import instantiate_model
+from torch_points3d.datasets.dataset_factory import instantiate_dataset
+from torch_points3d.models.model_factory import instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
-from src.models.base_model import BaseModel
-from src.datasets.base_dataset import BaseDataset
+from torch_points3d.models.base_model import BaseModel
+from torch_points3d.datasets.base_dataset import BaseDataset
 
 # Import from metrics
-from src.metrics.base_tracker import BaseTracker
-from src.metrics.colored_tqdm import Coloredtqdm as Ctq
-from src.metrics.model_checkpoint import ModelCheckpoint
+from torch_points3d.metrics.base_tracker import BaseTracker
+from torch_points3d.metrics.colored_tqdm import Coloredtqdm as Ctq
+from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
-from src.utils.colors import COLORS
-from src.utils.config import launch_wandb
-from src.visualization import Visualizer
+from torch_points3d.utils.colors import COLORS
+from torch_points3d.utils.config import launch_wandb
+from torch_points3d.visualization import Visualizer
 
 log = logging.getLogger(__name__)
 
@@ -34,8 +34,12 @@ def train_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
-    early_break: bool,
+    debugging,
 ):
+
+    early_break = getattr(debugging, "early_break", False)
+    profiling = getattr(debugging, "profiling", False)
+
     model.train()
     tracker.reset("train")
     visualizer.reset(epoch, "train")
@@ -67,6 +71,10 @@ def train_epoch(
             if early_break:
                 break
 
+            if profiling:
+                if i > getattr(debugging, "num_batches", 50):
+                    return 0
+
     metrics = tracker.publish(epoch)
     checkpoint.save_best_models_under_current_metrics(model, metrics)
     log.info("Learning rate = %f" % model.learning_rate)
@@ -80,8 +88,11 @@ def eval_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
-    early_break: bool,
+    debugging,
 ):
+
+    early_break = getattr(debugging, "early_break", False)
+
     model.eval()
     tracker.reset("val")
     visualizer.reset(epoch, "val")
@@ -114,8 +125,9 @@ def test_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
-    early_break: bool,
+    debugging,
 ):
+    early_break = getattr(debugging, "early_break", False)
     model.eval()
 
     loaders = dataset.test_dataloaders
@@ -148,20 +160,23 @@ def run(
     cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint, visualizer: Visualizer
 ):
 
-    early_break = getattr(cfg.debugging, "early_break", False)
+    profiling = getattr(cfg.debugging, "profiling", False)
+
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
-        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
+        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
+        if profiling:
+            return 0
         if dataset.has_val_loader:
-            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
+            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
 
         if dataset.has_test_loaders:
-            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
+            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
         if dataset.has_test_loaders:
-            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, early_break)
+            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -176,6 +191,12 @@ def main(cfg):
 
     # Enable CUDNN BACKEND
     torch.backends.cudnn.enabled = cfg.training.enable_cudnn
+
+    # Profiling
+    profiling = getattr(cfg.debugging, "profiling", False)
+    if profiling:
+        # Set the num_workers as torch.utils.bottleneck doesn't work well with it
+        cfg.training.num_workers = 0
 
     # Start Wandb if public
     launch_wandb(cfg, cfg.wandb.public and cfg.wandb.log)
@@ -222,6 +243,10 @@ def main(cfg):
     model = model.to(device)
     visualizer = Visualizer(cfg.visualization, dataset.num_batches, dataset.batch_size, os.getcwd())
     run(cfg, model, dataset, device, tracker, checkpoint, visualizer)
+
+    # https://github.com/facebookresearch/hydra/issues/440
+    hydra._internal.hydra.GlobalHydra.get_state().clear()
+    return 0
 
 
 if __name__ == "__main__":

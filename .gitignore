@@ -20,3 +20,9 @@ _build
 docs_old
 /test/kernels/dispositions
 *.egg-info*
+*.prof
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg
+build/*
+dist/*

@@ -8,7 +8,7 @@ import torch
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
 
-from src.modules.KPConv.losses import repulsion_loss, fitting_loss, permissive_loss
+from torch_points3d.modules.KPConv.losses import repulsion_loss, fitting_loss, permissive_loss
 
 
 class TestKPConvLosses(unittest.TestCase):

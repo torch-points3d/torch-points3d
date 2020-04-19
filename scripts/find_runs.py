@@ -10,7 +10,7 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from src.utils.colors import COLORS
+from torch_points3d.utils.colors import COLORS
 
 
 def colored_print(color, msg):

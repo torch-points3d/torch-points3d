@@ -8,7 +8,7 @@ from torch_geometric.data import Data
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
 
-from src.utils.transform_utils import SamplingStrategy
+from torch_points3d.utils.transform_utils import SamplingStrategy
 
 
 class TestSamplingStrategy(unittest.TestCase):

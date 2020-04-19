@@ -13,22 +13,24 @@ from omegaconf import OmegaConf
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-from src.core.data_transform import (
+from torch_points3d.core.data_transform import (
     instantiate_transform,
     instantiate_transforms,
     GridSampling,
     MultiScaleTransform,
+    Random3AxisRotation,
     AddFeatByKey,
     AddFeatsByKeys,
     RemoveAttributes,
-    RemoveDuplicateCoords,
     RandomDropout,
     ShiftVoxels,
     PCACompute,
+    RandomCoordsFlip,
+    RemoveDuplicateCoords,
 )
-from src.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
-from src.utils.enums import ConvolutionFormat
-from src.datasets.multiscale_data import MultiScaleBatch
+from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
+from torch_points3d.utils.enums import ConvolutionFormat
+from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 
 
 class Testhelpers(unittest.TestCase):
@@ -182,7 +184,7 @@ class Testhelpers(unittest.TestCase):
 
     def test_shiftvoxels(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(pos=torch.from_numpy(indices))
+        data = Data(pos=torch.from_numpy(indices).int())
         tr = ShiftVoxels()
         tr_data = tr(data.clone())
         self.assertGreaterEqual(tr_data.pos[0][0], data.pos[0][0])
@@ -198,6 +200,49 @@ class Testhelpers(unittest.TestCase):
         pca = PCACompute()
         data = pca(data)
         npt.assert_almost_equal(np.abs(data.eigenvectors[:, 0].dot(norm).item()), 1)
+
+    def test_Random3AxisRotation(self):
+
+        pos = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).astype(np.float)
+        data = Data(pos=torch.from_numpy(pos).float())
+        t = Random3AxisRotation(apply_rotation=True, rot_x=0, rot_y=0, rot_z=180)
+
+        u, v, w = data.pos
+        u2, v2, w2 = t(data.clone()).pos
+
+        self.assertEqual(np.array_equal(u, u2), False)
+        self.assertEqual(np.array_equal(v, v2), False)
+        npt.assert_array_equal(w, w2)
+
+        t = Random3AxisRotation(apply_rotation=True, rot_x=180, rot_y=180, rot_z=180)
+
+        u2, v2, w2 = t(data.clone()).pos
+
+        self.assertEqual(np.array_equal(u, u2), False)
+        self.assertEqual(np.array_equal(v, v2), False)
+        self.assertEqual(np.array_equal(w, w2), False)
+
+        with self.assertRaises(Exception):
+            t = Random3AxisRotation(apply_rotation=True, rot_x=None, rot_y=None, rot_z=None)
+
+        pos = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 1]]).astype(np.float)
+        data = Data(pos=torch.from_numpy(pos).float())
+        t = Random3AxisRotation(apply_rotation=True, rot_x=0, rot_y=0, rot_z=180)
+
+        self.assertEqual(t(data.clone()).pos.shape, torch.Size([4, 3]))
+
+    def test_RandomCoordsFlip(self):
+
+        pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        pos_target = torch.from_numpy(np.asarray([[6, 2, 3], [3, 5, 6], [0, 8, 9]]))
+        data = Data(pos=pos)
+
+        upright_axis = ["y", "z"]
+        t = RandomCoordsFlip(upright_axis, p=1)
+
+        pos_out = t(data.clone()).pos
+
+        self.assertEqual(np.array_equal(pos_out, pos_target), True)
 
 
 if __name__ == "__main__":

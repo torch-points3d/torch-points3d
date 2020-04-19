@@ -1,8 +1,11 @@
 [tool.poetry]
-name = "torch-points3d"
+name = "torch_points3d"
 version = "0.1.0"
 description = ""
-authors = ["Nicolas <nicolas.chaulet@gmail.com>"]
+authors = ["Thomas Chaton <thomas.chaton.ai@gmail.com>", "Nicolas Chaulet <nicolas.chaulet@gmail.com>"]
+packages = [
+    { include = "torch_points3d" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -22,6 +25,7 @@ pytorch_metric_learning = "^0.9.75"
 sphinx_rtd_theme = "^0.4.3"
 MinkowskiEngine = {version = "^0.4.2", optional = true}
 torch-points-kernels = "^0.5.2"
+numpy = "^1.18.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
@@ -38,6 +42,7 @@ codecov = "^2.0.16"
 sphinx = "^2.4.4"
 sphinx-autobuild = "^0.7.1"
 gpustat = "^0.6.0"
+snakeviz = "^2.0.1"
 
 [tool.poetry.extras]
 MinkowskiEngine = ["MinkowskiEngine"]
