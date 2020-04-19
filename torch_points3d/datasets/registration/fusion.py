@@ -62,7 +62,7 @@ class TSDFVolume:
             cuda.memcpy_htod(self._weight_vol_gpu, self._weight_vol_cpu)
 
             # Cuda kernel function (C++)
-            self._cuda_torch_points3d_mod = SourceModule("""
+            self._cuda_src_mod = SourceModule("""
             __global__ void integrate(float * tsdf_vol,
                                   float * weight_vol,
                                   float * vol_dim,
@@ -123,7 +123,7 @@ class TSDFVolume:
 
             }""")
 
-            self._cuda_integrate = self._cuda_torch_points3d_mod.get_function("integrate")
+            self._cuda_integrate = self._cuda_src_mod.get_function("integrate")
 
             # Determine block/grid size on GPU
             gpu_dev = cuda.Device(0)

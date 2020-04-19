@@ -1,4 +1,4 @@
-:github_url: https://github.com/nicolas-chaulet/torch_points3d
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 
 Transforms
@@ -54,6 +54,6 @@ Transforms
 
 .. autofunction:: torch_points3d.core.data_transform.Random3AxisRotation
 
-.. autofunction:: torch_points3d.core.data_transform.RandomHorizontalFlip
+.. autofunction:: src.core.data_transform.RandomCoordsFlip
 
 .. autofunction:: torch_points3d.core.data_transform.compute_planarity

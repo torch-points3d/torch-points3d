@@ -25,18 +25,18 @@ class Random3AxisRotation(object):
     """
     Rotate pointcloud with random angles along x, y, z axis
 
-    The angles should be given into degree.
+    The angles should be given `in degrees`.
 
     Parameters
     -----------
     apply_rotation: bool:
         Whether to apply the rotation
     rot_x: float
-        Rotation angle on x axis
+        Rotation angle in degrees on x axis
     rot_y: float
-        Rotation angle on y axis
+        Rotation anglei n degrees on y axis
     rot_z: float
-        Rotation angle on z axis
+        Rotation angle in degrees on z axis
     """   
 
     def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
@@ -72,7 +72,7 @@ class Random3AxisRotation(object):
         thetas = []
         for axis_ind, deg_angle in enumerate(self._degree_angles):
             if deg_angle > 0:
-                rand_deg_angle = np.random.uniform(0, deg_angle)
+                rand_deg_angle = random.random() * deg_angle
                 rand_radian_angle = float(rand_deg_angle * np.pi) / 180.
                 thetas.append(torch.tensor(rand_radian_angle))
             else:

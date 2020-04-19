@@ -4,7 +4,7 @@ from omegaconf.dictconfig import DictConfig
 import logging
 from torch.optim.lr_scheduler import LambdaLR
 
-from torch_points3d.utils.enums import SchedulerUpdateOn
+from src.utils.enums import SchedulerUpdateOn
 
 log = logging.getLogger(__name__)
 

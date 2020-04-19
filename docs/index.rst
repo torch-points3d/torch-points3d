@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-:github_url: https://github.com/nicolas-chaulet/torch_points3d
+:github_url: https://github.com/nicolas-chaulet/torch-points3d
 
 .. toctree::
    :maxdepth: 2
@@ -11,7 +11,7 @@
 
 .. raw:: html
 
-   <img torch_points3d="https://raw.githubusercontent.com/nicolas-chaulet/torch_points3d/master/docs/logo.png" style="width: 40%; display: block; margin-left: auto; margin-right: auto;"/>
+   <img src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" style="width: 40%; display: block; margin-left: auto; margin-right: auto;"/>
    <p/>
 
 
@@ -90,9 +90,9 @@ Supported tasks
    :caption: Contents
    :hidden:
 
-   torch_points3d/gettingstarted
-   torch_points3d/tutorials
-   torch_points3d/advanced
+   src/gettingstarted
+   src/tutorials
+   src/advanced
 
 .. toctree::
    :glob:
@@ -100,5 +100,5 @@ Supported tasks
    :caption: API
    :hidden:
 
-   torch_points3d/api/transforms
-   torch_points3d/api/filters
+   src/api/transforms
+   src/api/filters

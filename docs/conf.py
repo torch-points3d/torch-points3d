@@ -52,6 +52,8 @@ autodoc_mock_imports = [
     "hydra",
     "matplotlib",
     "pytorch_metric_learning",
+    "scipy",
+    "MinkowskiEngine"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
