@@ -273,7 +273,7 @@ Let's create a new file ``/torch_points3d/models/segmentation/pointnet2.py`` wit
 .. note::
 
     * Make sure that you import all the required modules
-    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/torch_points3d/blob/master/torch_points3d/models/base_model.py>`_ for more details)
+    * You need to inherit from ``BaseModel``. That class contains all the core logic that enables training (see `base_model.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/models/base_model.py>`_ for more details)
 
 Create a new configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
