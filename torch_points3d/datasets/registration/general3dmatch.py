@@ -4,13 +4,14 @@ import os.path as osp
 import torch
 from torch_geometric.data import Batch
 
-from torch_points3d.datasets.base_dataset import BaseDataset
-from torch_points3d.datasets.registration.base3dmatch import Base3DMatch
-from torch_points3d.datasets.registration.utils import PatchExtractor
-from torch_points3d.datasets.registration.pair import Pair
-from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
-from torch_points3d.core.data_transform.transforms import GridSampling
-from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
+from src.datasets.base_dataset import BaseDataset
+from src.datasets.registration.base3dmatch import Base3DMatch
+from src.datasets.registration.utils import PatchExtractor
+from src.datasets.registration.pair import Pair
+from src.metrics.registration_tracker import PatchRegistrationTracker
+from src.metrics.registration_tracker import FragmentRegistrationTracker
+from src.core.data_transform.transforms import GridSampling
+from src.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 
 
 class Patch3DMatch(Base3DMatch):
@@ -89,7 +90,7 @@ class Patch3DMatch(Base3DMatch):
                 final dataset. (default: :obj:`None`)
             num_random_pt: number of point we select
         """
-
+        self.is_patch = True
         super(Patch3DMatch, self).__init__(root,
                                            num_frame_per_fragment,
                                            mode,
@@ -235,6 +236,7 @@ class Fragment3DMatch(Base3DMatch):
                  pre_filter=None,
                  verbose=False,
                  debug=False):
+        self.is_patch = False
         super(Fragment3DMatch, self).__init__(root,
                                               num_frame_per_fragment,
                                               mode,
@@ -357,5 +359,9 @@ class General3DMatchDataset(BaseSiameseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return PatchRegistrationTracker(dataset, wandb_log=wandb_log,
-                                        use_tensorboard=tensorboard_log)
+        if(dataset.is_patch):
+            return PatchRegistrationTracker(dataset, wandb_log=wandb_log,
+                                            use_tensorboard=tensorboard_log)
+        else:
+            return FragmentRegistrationTracker(dataset, wandb_log=wandb_log,
+                                               use_tensorboard=tensorboard_log)

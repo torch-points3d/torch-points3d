@@ -8,6 +8,10 @@ BATCH_NORM_MODULES = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d, ME.Minkows
 
 
 def set_bn_momentum_default(bn_momentum):
+    """
+    This function return a function which will assign `bn_momentum` to every module instance within `BATCH_NORM_MODULES`.
+    """
+
     def fn(m):
         if isinstance(m, BATCH_NORM_MODULES):
             m.momentum = bn_momentum
@@ -71,7 +75,7 @@ class BNMomentumScheduler(object):
         )
 
 
-def instantiate_bn_scheduler(model, bn_scheduler_opt, update_bn_scheduler_on):
+def instantiate_bn_scheduler(model, bn_scheduler_opt):
     """Return a batch normalization scheduler
     Parameters:
         model          -- the nn network
@@ -80,6 +84,7 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, update_bn_scheduler_on):
                               opt.params contains the scheduler_params to construct the scheduler
     See https://pytorch.org/docs/stable/optim.html for more details.
     """
+    update_scheduler_on = bn_scheduler_opt.update_scheduler_on
     bn_scheduler_params = bn_scheduler_opt.params
     if bn_scheduler_opt.bn_policy == "step_decay":
         bn_lambda = lambda e: max(
@@ -91,6 +96,6 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt, update_bn_scheduler_on):
     else:
         return NotImplementedError("bn_policy [%s] is not implemented", bn_scheduler_opt.bn_policy)
 
-    bn_scheduler = BNMomentumScheduler(model, bn_lambda, update_bn_scheduler_on)
+    bn_scheduler = BNMomentumScheduler(model, bn_lambda, update_scheduler_on)
     bn_scheduler.scheduler_opt = bn_scheduler_opt
     return bn_scheduler

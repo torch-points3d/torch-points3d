@@ -31,6 +31,7 @@ class TestLrScheduler(unittest.TestCase):
         opt.update_lr_scheduler_on = "on_epoch"
         model = DifferentiableMockModel(opt)
         model.instantiate_optimizers(opt)
+        model.schedulers.__repr__()
 
         data = Data(pos=torch.randn((1, 3)))
         model.set_input(data, torch.device("cpu"))

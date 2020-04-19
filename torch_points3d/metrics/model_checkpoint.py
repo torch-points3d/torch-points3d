@@ -45,7 +45,7 @@ class Checkpoint:
         self.models = models_to_save
         self.optimizer = [optimizer.__class__.__name__, optimizer.state_dict()]
         self.schedulers = {
-            scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict(), scheduler.update_scheduler_on]
+            scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
             for scheduler_name, scheduler in schedulers.items()
         }
         to_save = kwargs
@@ -110,14 +110,14 @@ class Checkpoint:
             try:
                 schedulers_out = {}
                 schedulers_config = self.schedulers
-                for scheduler_type, (scheduler_opt, scheduler_state, update_scheduler_on) in schedulers_config.items():
+                for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
-                        scheduler = instantiate_scheduler(optimizer, scheduler_opt, update_scheduler_on)
+                        scheduler = instantiate_scheduler(optimizer, scheduler_opt)
                         scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
                     elif scheduler_type == "bn_scheduler":
-                        scheduler = instantiate_bn_scheduler(model, scheduler_opt, update_scheduler_on)
+                        scheduler = instantiate_bn_scheduler(model, scheduler_opt)
                         scheduler.load_state_dict(scheduler_state)
                         schedulers_out["bn_scheduler"] = scheduler
                     else:

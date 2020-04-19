@@ -40,8 +40,6 @@ data:
           size: ${data.grid_size}
           quantize_coords: True
           mode: "last"
-          elastic_distorsion: False
-          granularity: [.2, .4]
       - transform: ShiftVoxels
       - transform: ChromaticAutoContrast
       - transform: ChromaticTranslation
