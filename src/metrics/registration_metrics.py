@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+from torch_geometric.nn import knn
 
 
 def compute_accuracy(embedded_ref_features, embedded_val_features):
@@ -152,9 +153,17 @@ def compute_transfo_error(T_gt, T_pred):
     """
     rte = torch.norm(T_gt[:3, 3] - T_pred[:3, 3])
     cos_theta = (torch.trace(T_gt[:3, :3].mm(T_pred[:3, :3].T)) - 1) * 0.5
-    if cos_theta > 1:
-        cos_theta = torch.tensor([1.0])
-    if cos_theta < -1:
-        cos_theta = torch.tensor([-1.0])
+    cos_theta = torch.clamp(cos_theta, -1.0, 1.0)
     rre = torch.acos(cos_theta) * 180 / np.pi
     return rte, rre
+
+
+def get_matches(feat_source, feat_target, sym=False):
+
+    matches = knn(feat_source, feat_target, k=1).T
+    if sym:
+        match_inv = knn(feat_target, feat_source, k=1).T
+        mask = match_inv[matches[:, 1], 1] == torch.arange(matches.shape[0])
+        return matches[mask]
+    else:
+        return matches

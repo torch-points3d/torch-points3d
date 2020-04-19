@@ -1,7 +1,6 @@
 from typing import Dict
 import torchnet as tnt
 import torch
-from torch_geometric.nn import knn
 
 from src.models.base_model import BaseModel
 from .base_tracker import BaseTracker
@@ -10,6 +9,7 @@ from .registration_metrics import estimate_transfo
 from .registration_metrics import fast_global_registration
 from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
+from .registration_metrics import get_matches
 
 
 class PatchRegistrationTracker(BaseTracker):
@@ -98,14 +98,17 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 ind_target = batch_ind_target[batch_idx_target == b] - cum_sum_target
                 cum_sum += len(xyz)
                 cum_sum_target += len(xyz_target)
-                rand = torch.randperm(len(ind))[: self.num_points]
+                rand = torch.randperm(len(feat))[: self.num_points]
+                rand_target = torch.randperm(len(feat_target))[: self.num_points]
 
-                matches_gt = torch.stack([ind[rand], ind_target[rand]]).T
+                matches_gt = torch.stack([ind, ind_target]).T
                 T_gt = estimate_transfo(xyz[matches_gt[:, 0]], xyz_target[matches_gt[:, 1]])
-                matches_pred = knn(feat[matches_gt[:, 0]], feat_target[matches_gt[:, 1]], k=1).T
-                T_pred = fast_global_registration(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 1]])
+                matches_pred = get_matches(feat[rand], feat_target[rand_target])
+                T_pred = fast_global_registration(xyz[rand][matches_pred[:, 0]], xyz_target[rand][matches_pred[:, 1]])
 
-                hit_ratio = compute_hit_ratio(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 0]], T_gt, self.tau_1)
+                hit_ratio = compute_hit_ratio(
+                    xyz[rand][matches_pred[:, 0]], xyz_target[rand_target][matches_pred[:, 0]], T_gt, self.tau_1
+                )
                 trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
 
                 self._hit_ratio.add(hit_ratio.item())
