@@ -135,12 +135,13 @@ class ResNetBase(MinkowskiNetwork):
     OUT_PIXEL_DIST = 32
     HAS_LAST_BLOCK = False
     CONV_TYPE = ConvType.HYPERCUBE
-    CONV1_KERNEL_SIZE = 3
 
-    def __init__(self, in_channels, out_channels, D, **kwargs):
+    def __init__(self, in_channels, out_channels, D, conv1_kernel_size=3, dilations=[1, 1, 1, 1], **kwargs):
         super(ResNetBase, self).__init__(D)
         self.in_channels = in_channels
         self.out_channels = out_channels
+        self.conv1_kernel_size = conv1_kernel_size
+        self.dilations = dilations
         assert self.BLOCK is not None
         assert self.OUT_PIXEL_DIST > 0
 
@@ -154,11 +155,11 @@ class ResNetBase(MinkowskiNetwork):
         if D == 4:
             self.OUT_PIXEL_DIST = space_n_time_m(self.OUT_PIXEL_DIST, 1)
 
-        dilations = [1, 1, 1, 1]
-        bn_momentum = 0.02
+        dilations = self.dilations
+        bn_momentum = 1
         self.inplanes = self.INIT_DIM
         self.conv1 = conv(
-            in_channels, self.inplanes, kernel_size=space_n_time_m(self.CONV1_KERNEL_SIZE, 1), stride=1, D=D
+            in_channels, self.inplanes, kernel_size=space_n_time_m(self.conv1_kernel_size, 1), stride=1, D=D
         )
 
         self.bn1 = get_norm(NormType.BATCH_NORM, self.inplanes, D=self.D, bn_momentum=bn_momentum)

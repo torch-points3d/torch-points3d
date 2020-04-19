@@ -1,4 +1,5 @@
 from src.models.base_model import BaseModel
+from torch import nn
 
 
 class MockModelConfig(object):
@@ -21,3 +22,20 @@ class MockModel(BaseModel):
 
     def backward(self):
         pass
+
+
+class DifferentiableMockModel(BaseModel):
+    def __init__(self, opt):
+        super(DifferentiableMockModel, self).__init__(opt)
+
+        self.nn = nn.Linear(3, 3)
+
+    def set_input(self, data, device):
+        self.pos = data.pos
+
+    def forward(self):
+        self.output = self.nn(self.pos)
+        self.loss = self.output.sum()
+
+    def backward(self):
+        self.loss.backward()

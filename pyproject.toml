@@ -22,6 +22,7 @@ pytorch_metric_learning = "^0.9.75"
 sphinx_rtd_theme = "^0.4.3"
 MinkowskiEngine = {version = "^0.4.2", optional = true}
 torch-points-kernels = "^0.5.2"
+numpy = "^1.18.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"

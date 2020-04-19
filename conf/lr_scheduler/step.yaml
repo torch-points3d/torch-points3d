@@ -2,5 +2,5 @@ lr_scheduler:
   class: StepLR
   params:
     step_size: 10
-    gamma: 0.1
-    last_epoch: 200
+    gamma: 0.9
+    last_epoch: -1

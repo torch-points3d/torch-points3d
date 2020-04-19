@@ -1,10 +1,12 @@
 from typing import Dict
 import torchnet as tnt
+import torch
 import numpy as np
-
+from torch.nn import functional as F
 from src.models.base_model import BaseModel
 from src.metrics.confusion_matrix import ConfusionMatrix
 from src.metrics.base_tracker import BaseTracker, meter_value
+from src.metrics.meters import APMeter
 
 
 class SegmentationTracker(BaseTracker):
@@ -23,12 +25,19 @@ class SegmentationTracker(BaseTracker):
         """
         super(SegmentationTracker, self).__init__(stage, wandb_log, use_tensorboard)
         self._num_classes = dataset.num_classes
-        self._ignore_label = -100
+        self._ignore_label = ignore_label
         self.reset(stage)
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
+        self._ap_meter = APMeter()
+
+    @staticmethod
+    def detach_tensor(tensor):
+        if torch.torch.is_tensor(tensor):
+            tensor = tensor.detach()
+        return tensor
 
     @property
     def confusion_matrix(self):
@@ -39,13 +48,22 @@ class SegmentationTracker(BaseTracker):
         """
         super().track(model)
 
-        outputs = self._convert(model.get_output())
-        targets = self._convert(model.get_labels())
+        outputs = model.get_output()
+        targets = model.get_labels()
 
         # Mask ignored label
         mask = targets != self._ignore_label
         outputs = outputs[mask]
         targets = targets[mask]
+
+        outputs = SegmentationTracker.detach_tensor(outputs)
+        targets = SegmentationTracker.detach_tensor(targets)
+        if not torch.is_tensor(targets):
+            targets = torch.from_numpy(targets)
+        self._ap_meter.add(outputs, F.one_hot(targets, self._num_classes).bool())
+
+        outputs = self._convert(outputs)
+        targets = self._convert(targets)
 
         if len(targets) == 0:
             return
@@ -56,6 +74,7 @@ class SegmentationTracker(BaseTracker):
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
+        self._map = 100 * self._ap_meter.value().mean().item()
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
@@ -65,5 +84,5 @@ class SegmentationTracker(BaseTracker):
         metrics["{}_acc".format(self._stage)] = self._acc
         metrics["{}_macc".format(self._stage)] = self._macc
         metrics["{}_miou".format(self._stage)] = self._miou
-
+        metrics["{}_map".format(self._stage)] = self._map
         return metrics

@@ -8,6 +8,7 @@ import logging
 from collections import defaultdict
 from src.core.schedulers.lr_schedulers import instantiate_scheduler
 from src.core.schedulers.bn_schedulers import instantiate_bn_scheduler
+from src.utils.enums import SchedulerUpdateOn
 
 from src.core.regularizer import *
 from src.core.losses import instantiate_loss_or_miner
@@ -48,13 +49,17 @@ class BaseModel(torch.nn.Module):
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._bn_scheduler = None
         self._spatial_ops_dict: Dict = {}
-        self._iterations = 0
+        self._num_epochs = None
+        self._num_batches = 0
+        self._num_samples = -1
         self._latest_metrics = None
         self._latest_stage = None
         self._latest_epoch = None
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
+        self._update_lr_scheduler_on = "on_epoch"
+        self._update_bn_scheduler_on = "on_epoch"
 
     @property
     def schedulers(self):
@@ -139,9 +144,26 @@ class BaseModel(torch.nn.Module):
             self._accumulated_gradient_count += 1
             return False
 
+    def _collect_scheduler_step(self, update_scheduler_on):
+        if hasattr(self, update_scheduler_on):
+            update_scheduler_on = getattr(self, update_scheduler_on)
+            if update_scheduler_on is None:
+                raise Exception("The function instantiate_optimizers doesn't look like called")
+
+            if update_scheduler_on == SchedulerUpdateOn.ON_EPOCH.value:
+                return self._num_epochs
+            elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_BATCH.value:
+                return self._num_batches
+            elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_SAMPLE.value:
+                return self._num_samples
+        else:
+            raise Exception("The attributes {} should be defined within self".format(update_scheduler_on))
+
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        self._iterations += batch_size
+        self._num_epochs = epoch
+        self._num_batches += 1
+        self._num_samples += batch_size
 
         self.forward()  # first call forward to calculate intermediate results
         make_optimizer_step = self.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
@@ -154,10 +176,12 @@ class BaseModel(torch.nn.Module):
             self._optimizer.step()  # update parameters
 
         if self._lr_scheduler:
-            self._lr_scheduler.step(epoch)
+            lr_scheduler_step = self._collect_scheduler_step("_update_lr_scheduler_on")
+            self._lr_scheduler.step(lr_scheduler_step)
 
         if self._bn_scheduler:
-            self._bn_scheduler.step(epoch)
+            bn_scheduler_step = self._collect_scheduler_step("_update_bn_scheduler_on")
+            self._bn_scheduler.step(bn_scheduler_step)
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
@@ -188,12 +212,20 @@ class BaseModel(torch.nn.Module):
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
+            update_lr_scheduler_on = config.update_lr_scheduler_on
+            if update_lr_scheduler_on:
+                self._update_lr_scheduler_on = update_lr_scheduler_on
+            scheduler_opt.update_scheduler_on = self._update_lr_scheduler_on
             lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
             self.add_scheduler("lr_scheduler", lr_scheduler)
 
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
+            update_bn_scheduler_on = config.update_bn_scheduler_on
+            if update_bn_scheduler_on:
+                self._update_bn_scheduler_on = update_bn_scheduler_on
+            bn_scheduler_opt.update_scheduler_on = self._update_bn_scheduler_on
             bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
             self.add_scheduler("bn_scheduler", bn_scheduler)
 

@@ -1,8 +1,7 @@
-# Ref: https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/config.py
 training:
     epochs: 500
     num_workers: 4
-    batch_size: 8 
+    batch_size: 8
     shuffle: True
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
@@ -16,8 +15,22 @@ training:
                 lr: ${training.optim.base_lr} # The path is cut from training
                 momentum: 0.9
                 dampening: 0.1
-                weight_decay: 0.0001
-        lr_scheduler: ${lr_scheduler}
+                weight_decay: 1
+        lr_scheduler:
+            class: StepLR
+            params:
+                on_epoch:
+                    step_size: 1
+                    gamma: 0.9
+                    last_epoch: -1
+                on_num_sample:
+                    step_size: 32
+                    gamma: 0.9
+                    last_epoch: -1
+                on_num_batch:
+                    step_size: 1
+                    gamma: 0.9
+                    last_epoch: -1
         bn_scheduler:
             bn_policy: "step_decay"
             params:
@@ -28,17 +41,4 @@ training:
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""
-
-# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
-# parameters for Weights and Biases
-wandb:
-    entity: "thomas-chaton"
-    project: scannet
-    log: False
-    notes:
-    name: "Res16UNet34C "
-    public: True # It will be display the model within wandb log, else not.
-
-    # parameters for TensorBoard Visualization
-tensorboard:
-    log: True
+update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]
