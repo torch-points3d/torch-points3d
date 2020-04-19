@@ -104,10 +104,12 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 matches_gt = torch.stack([ind, ind_target]).T
                 T_gt = estimate_transfo(xyz[matches_gt[:, 0]], xyz_target[matches_gt[:, 1]])
                 matches_pred = get_matches(feat[rand], feat_target[rand_target])
-                T_pred = fast_global_registration(xyz[rand][matches_pred[:, 0]], xyz_target[rand][matches_pred[:, 1]])
+                T_pred = fast_global_registration(
+                    xyz[rand][matches_pred[:, 0]], xyz_target[rand_target][matches_pred[:, 1]]
+                )
 
                 hit_ratio = compute_hit_ratio(
-                    xyz[rand][matches_pred[:, 0]], xyz_target[rand_target][matches_pred[:, 0]], T_gt, self.tau_1
+                    xyz[rand][matches_pred[:, 0]], xyz_target[rand_target][matches_pred[:, 1]], T_gt, self.tau_1
                 )
                 trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
 

@@ -160,9 +160,9 @@ def compute_transfo_error(T_gt, T_pred):
 
 def get_matches(feat_source, feat_target, sym=False):
 
-    matches = knn(feat_source, feat_target, k=1).T
+    matches = knn(feat_target, feat_source, k=1).T
     if sym:
-        match_inv = knn(feat_target, feat_source, k=1).T
+        match_inv = knn(feat_source, feat_target, k=1).T
         mask = match_inv[matches[:, 1], 1] == torch.arange(matches.shape[0])
         return matches[mask]
     else:
