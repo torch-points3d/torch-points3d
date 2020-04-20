@@ -152,6 +152,7 @@ class SaveOriginalPosId:
             data = [self._process(d) for d in data]
         else:
             data = self._process(data)
+        return data
 
 
 class ElasticDistortion:
