@@ -342,7 +342,7 @@ class XYZFeature(object):
 
     def __call__(self, data):
         assert data.pos is not None
-        for axis_name, id_axis in enumerate(self._axis_names, self._axis):
+        for axis_name, id_axis in zip(self._axis_names, self._axis):
             f = data.pos[:, id_axis]
             setattr(data, axis_name, f)
         return data
