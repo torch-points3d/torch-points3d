@@ -15,16 +15,17 @@ from torch_geometric.data import DataLoader
 from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
 import logging
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KDTree
 from tqdm import tqdm as tq
 import csv
 import pandas as pd
+import pickle
+
 from src.metrics.segmentation_tracker import SegmentationTracker
 from src.metrics.s3dis_tracker import S3DISTracker
 from src.datasets.samplers import BalancedRandomSampler
 import src.core.data_transform as cT
 from src.datasets.base_dataset import BaseDataset
-import pickle
 
 log = logging.getLogger(__name__)
 
@@ -253,6 +254,7 @@ class S3DISOriginalFused(InMemoryDataset):
         self.keep_instance = keep_instance
         self.verbose = verbose
         self.debug = debug
+        self._train = train
         super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
         path = self.processed_paths[0] if train else self.processed_paths[1]
         self._load_data(path)
@@ -404,10 +406,21 @@ class S3DISSphere(S3DISOriginalFused):
         super().__init__(root, *args, **kwargs)
 
     def __len__(self):
-        return self._sample_per_epoch
+        if self._train:
+            return self._sample_per_epoch
+        else:
+            return len(self._test_spheres)
 
     def get(self, idx):
+        if self._train:
+            return self._get_random()
+        else:
+            return self._test_spheres[idx]
+
+    def _get_random(self):
         np.random.seed()
+
+        # Random spheres biased towards getting more low frequency classes
         chosen_label = np.random.choice(self._labels, p=self._label_counts)
         valid_centres = self._centres_for_sampling[self._centres_for_sampling[:, 4] == chosen_label]
         centre_idx = int(random.random() * (valid_centres.shape[0] - 1))
@@ -424,26 +437,34 @@ class S3DISSphere(S3DISOriginalFused):
         self._datas = torch.load(path)
         if not isinstance(self._datas, list):
             self._datas = [self._datas]
-        self._centres_for_sampling = []
-        for i, data in enumerate(self._datas):
-            assert not hasattr(
-                data, cT.SphereSampling.KDTREE_KEY
-            )  # Just to make we don't have some out of date data in there
-            low_res = self._grid_sphere_sampling(data.clone())
-            centres = torch.empty((low_res.pos.shape[0], 5), dtype=torch.float)
-            centres[:, :3] = low_res.pos
-            centres[:, 3] = i
-            centres[:, 4] = low_res.y
-            self._centres_for_sampling.append(centres)
+        if True:
+            self._centres_for_sampling = []
+            for i, data in enumerate(self._datas):
+                assert not hasattr(
+                    data, cT.SphereSampling.KDTREE_KEY
+                )  # Just to make we don't have some out of date data in there
+                low_res = self._grid_sphere_sampling(data.clone())
+                centres = torch.empty((low_res.pos.shape[0], 5), dtype=torch.float)
+                centres[:, :3] = low_res.pos
+                centres[:, 3] = i
+                centres[:, 4] = low_res.y
+                self._centres_for_sampling.append(centres)
+                tree = KDTree(np.asarray(data.pos), leaf_size=10)
+                setattr(data, cT.SphereSampling.KDTREE_KEY, tree)
 
-        self._centres_for_sampling = torch.cat(self._centres_for_sampling, 0)
-        uni, uni_counts = np.unique(np.asarray(self._centres_for_sampling[:, -1]), return_counts=True)
-        uni_counts = np.sqrt(uni_counts.mean() / uni_counts)
-        self._label_counts = uni_counts / np.sum(uni_counts)
-        self._labels = uni
+            self._centres_for_sampling = torch.cat(self._centres_for_sampling, 0)
+            uni, uni_counts = np.unique(np.asarray(self._centres_for_sampling[:, -1]), return_counts=True)
+            uni_counts = np.sqrt(uni_counts.mean() / uni_counts)
+            self._label_counts = uni_counts / np.sum(uni_counts)
+            self._labels = uni
+        else:
+            grid_sampler = cT.GridSphereSampling(2, 2, center=False)
+            self._test_spheres = grid_sampler(self._datas)
 
 
 class S3DISFusedDataset(BaseDataset):
+    INV_OBJECT_LABEL = INV_OBJECT_LABEL
+
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 

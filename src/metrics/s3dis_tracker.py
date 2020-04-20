@@ -62,12 +62,31 @@ class S3DISTracker(SegmentationTracker):
         if self._full_vote_miou is not None:
             return
 
+        self._dataset.to_ply(
+            self._test_area.pos[self._test_area.has_prediction].cpu(),
+            torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).cpu().numpy(),
+            "test.ply",
+        )
+
         log.info(
             "Computing full res mIoU, we have predictions for %.2f%% of the points."
             % (torch.sum(self._test_area.has_prediction) / (1.0 * self._test_area.has_prediction.shape[0]) * 100)
         )
 
         self._test_area = self._test_area.to("cpu")
+
+        # Complete for points that have a prediction
+        print("Start confusion matrix")
+        t = time.time()
+        c = ConfusionMatrix(self._num_classes)
+        gt = self._test_area.y[self._test_area.has_prediction].numpy()
+        pred = torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).numpy()
+        c.count_predicted_batch(gt, pred)
+        self._vote_miou = c.get_average_intersection_union() * 100
+        per_class_iou = c.get_intersection_union_per_class()[0]
+        per_class_iou = {self._dataset.INV_OBJECT_LABEL[k]: v for k, v in enumerate(per_class_iou)}
+        print(per_class_iou)
+        print("Low res timing: %.2f" % (time.time() - t))
 
         # Full res interpolation
         t = time.time()
@@ -78,16 +97,6 @@ class S3DISTracker(SegmentationTracker):
             k=1,
         )
         print("knn timing: %.2f" % (time.time() - t))
-
-        # Complete for points that have a prediction
-        print("Start confusion matrix")
-        t = time.time()
-        c = ConfusionMatrix(self._num_classes)
-        gt = self._test_area.y[self._test_area.has_prediction].numpy()
-        pred = torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).numpy()
-        c.count_predicted_batch(gt, pred)
-        self._vote_miou = c.get_average_intersection_union() * 100
-        print("Low res timing: %.2f" % (time.time() - t))
 
         # Full res pred
         t = time.time()
@@ -101,7 +110,7 @@ class S3DISTracker(SegmentationTracker):
         """
         metrics = super().get_metrics(verbose)
 
-        if verbose and self._full_vote_miou:
+        if verbose and self._vote_miou:
             metrics["{}_full_vote_miou".format(self._stage)] = self._full_vote_miou
             metrics["{}_vote_miou".format(self._stage)] = self._vote_miou
         return metrics

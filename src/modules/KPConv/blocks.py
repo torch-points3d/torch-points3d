@@ -58,7 +58,7 @@ class SimpleBlock(BaseModule):
 
         is_strided = prev_grid_size != grid_size
         if is_strided:
-            self.sampler = GridSampling(grid_size)
+            self.sampler = GridSampling(grid_size, mode="last")
         else:
             self.sampler = None
 

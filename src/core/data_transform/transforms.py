@@ -103,8 +103,8 @@ class GridSphereSampling(object):
 
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
-
-        self._grid_sampling = GridSampling(size=eval(grid_size) if grid_size else self._radius)
+        grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
+        self._grid_sampling = GridSampling(size=grid_size if grid_size else self._radius)
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 
@@ -135,16 +135,8 @@ class GridSphereSampling(object):
             # Find neighbours within the original data
             t_center = torch.FloatTensor(grid_center)
             ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
-
-            # Create a new data holder.
-            new_data = Data()
-            for key in set(data.keys):
-                item = data[key].clone()
-                if num_points == item.shape[0]:
-                    item = item[ind]
-                    if self._center and key == "pos":  # Center the sphere.
-                        item -= t_center
-                setattr(new_data, key, item)
+            sampler = SphereSampling(self._radius, grid_center, align_origin=self._center)
+            new_data = sampler(data)
             new_data.center_label = grid_label
 
             datas.append(new_data)
@@ -264,11 +256,13 @@ class SphereSampling:
         for key in set(data.keys):
             if key == self.KDTREE_KEY:
                 continue
-            item = data[key].clone()
+            item = data[key]
             if num_points == item.shape[0]:
                 item = item[ind]
                 if self._align_origin and key == "pos":  # Center the sphere.
                     item -= t_center
+            else:
+                item = item.clone()
             setattr(new_data, key, item)
         return new_data
 
@@ -563,4 +557,3 @@ class RandomDropout:
         return "{}(dropout_ratio={}, dropout_application_ratio={})".format(
             self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio
         )
-
