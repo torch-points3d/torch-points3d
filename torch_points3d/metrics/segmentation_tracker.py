@@ -3,6 +3,7 @@ import torchnet as tnt
 import torch
 import numpy as np
 from torch.nn import functional as F
+
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
