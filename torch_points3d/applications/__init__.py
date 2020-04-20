@@ -139,10 +139,10 @@ class ModelFactory:
         self._modules_lib.build_unet(self)
 
     def _build_encoder(self):
-        self._model_name, self._model = self._modules_lib.build_encoder(self)
+        self._modules_lib.build_encoder(self)
 
     def _build_decoder(self):
-        self._model_name, self._model = self._modules_lib.build_decoder(self)
+        self._modules_lib.build_decoder(self)
 
     def _build(self):
         if self._architecture == ModelArchitectures.UNET.value:

@@ -2,7 +2,6 @@ from . import ModelFactory
 from torch_points3d.core.data_transform import AddOnes
 from torch_points3d.modules.KPConv import *
 from torch_points3d.core.common_modules import FastBatchNorm1d
-from torch_points3d.modules.KPConv import *
 from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
