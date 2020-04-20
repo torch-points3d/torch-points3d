@@ -4,7 +4,7 @@ import torch.testing as tt
 from torch_geometric.data import Data
 
 
-from src.datasets.registration.pair import Pair, MultiScalePair, PairBatch, PairMultiScaleBatch
+from torch_points3d.datasets.registration.pair import Pair, MultiScalePair, PairBatch, PairMultiScaleBatch
 
 
 class TestMSPair(unittest.TestCase):

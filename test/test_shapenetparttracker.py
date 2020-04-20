@@ -6,7 +6,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.metrics.shapenet_part_tracker import ShapenetPartTracker
+from torch_points3d.metrics.shapenet_part_tracker import ShapenetPartTracker
 
 
 class MockDataset:

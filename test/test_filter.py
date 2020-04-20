@@ -8,7 +8,7 @@ from torch_geometric.data import Data
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
-from src.core.data_transform import FCompose, PlanarityFilter, euler_angles_to_rotation_matrix
+from torch_points3d.core.data_transform import FCompose, PlanarityFilter, euler_angles_to_rotation_matrix
 
 
 class TestFilter(unittest.TestCase):

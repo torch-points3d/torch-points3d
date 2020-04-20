@@ -2,8 +2,8 @@ import unittest
 import torch
 from torch_geometric.data import Data
 
-from src.core.spatial_ops import KNNInterpolate
-from src.core.data_transform import GridSampling
+from torch_points3d.core.spatial_ops import KNNInterpolate
+from torch_points3d.core.data_transform import GridSampling
 
 
 class TestInterpolate(unittest.TestCase):

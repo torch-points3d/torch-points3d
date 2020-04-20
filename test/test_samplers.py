@@ -7,7 +7,7 @@ import numpy as np
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(ROOT)
 
-from src.datasets.samplers import BalancedRandomSampler
+from torch_points3d.datasets.samplers import BalancedRandomSampler
 
 
 class TestBalancedRandomSampler(unittest.TestCase):

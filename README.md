@@ -22,7 +22,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ├─ forward_scripts         # Script that runs a forward pass on possibly non annotated data
 ├─ outputs                 # All outputs from your runs sorted by date
 ├─ scripts                 # Some scripts to help manage the project
-├─ src  
+├─ torch_points3d  
     ├─ core                # Core components
     ├─ datasets            # All code related to datasets
     ├─ metrics             # All metrics and trackers
@@ -44,13 +44,13 @@ where each folder contains the dataset related to each task.
 
 ## Methods currently implemented
 
-* **[PointNet](https://github.com/nicolas-chaulet/torch-points3d/blob/master/src/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
-* **[PointNet++](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
-* **[RSConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
-* **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
-* **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
-* **[KPConv](https://github.com/nicolas-chaulet/dtorch-points3d/tree/master/src/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
-* **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/src/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
+* **[PointNet](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
+* **[PointNet++](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
+* **[RSConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
+* **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
+* **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
+* **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
+* **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
 
 
 ## Available datasets

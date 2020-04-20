@@ -14,7 +14,7 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.models.base_model import BaseModel
+from torch_points3d.models.base_model import BaseModel
 
 
 def MLP(channels):

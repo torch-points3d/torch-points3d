@@ -7,8 +7,8 @@ import sys
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
-from src.utils.model_building_utils.model_definition_resolver import resolve_model
-from src.models.base_architectures import UnwrappedUnetBasedModel
+from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 
 from test.mockdatasets import MockDataset
 
