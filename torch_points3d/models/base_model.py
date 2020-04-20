@@ -1,3 +1,4 @@
+import numpy as np
 from collections import OrderedDict
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
@@ -170,7 +171,10 @@ class BaseModel(torch.nn.Module):
         self.backward()  # calculate gradients
 
         if self._grad_clip > 0:
-            torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
+            std_ = np.std(
+                [p.detach().std().cpu().numpy() for p in self.parameters() if (p.requires_grad and p.std() > 0)]
+            )
+            torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip * std_)
 
         if make_optimizer_step:
             self._optimizer.step()  # update parameters

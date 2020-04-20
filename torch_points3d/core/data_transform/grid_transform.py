@@ -26,7 +26,7 @@ def shuffle_data(data):
     return data
 
   
-def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[]):
+def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[], num_nodes=None):
     """ Group data based on indices in cluster. 
     The option ``mode`` controls how data gets agregated within each cluster.
     
@@ -51,7 +51,7 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
     if mode == "last" and unique_pos_indices is None:
         raise ValueError("In last mode the unique_pos_indices argument needs to be specified")
 
-    num_nodes = data.num_nodes
+    num_nodes = num_nodes if num_nodes else data.num_nodes
     for key, item in data:
         if bool(re.search("edge", key)):
             raise ValueError("Edges not supported. Wrong data type.")
@@ -112,11 +112,13 @@ class GridSampling:
         cluster, unique_pos_indices = consecutive_cluster(cluster)
         
         skip_keys = []
+        num_nodes = None
         if self._quantize_coords:
+            num_nodes = data.num_nodes
             data.pos = coords[unique_pos_indices]
             skip_keys.append("pos")
 
-        data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)
+        data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys, num_nodes=num_nodes)
         return data
 
     def __call__(self, data):

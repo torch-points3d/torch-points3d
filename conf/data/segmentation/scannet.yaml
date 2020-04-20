@@ -40,6 +40,9 @@ data:
           size: ${data.grid_size}
           quantize_coords: True
           mode: "last"
+      - transform: RandomCoordsFlip
+        params:
+          ignored_axis: ['z'] 
       - transform: ShiftVoxels
       - transform: ChromaticAutoContrast
       - transform: ChromaticTranslation

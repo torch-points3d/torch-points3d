@@ -9,13 +9,12 @@ training:
     optim:
         base_lr: 0.1
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
-        grad_clip: 100
+        grad_clip: 5
         optimizer:
-            class: SGD
+            class: Adam
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
-                momentum: 0.98
-                weight_decay: 1e-3
+                weight_decay: 1e-2
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"
