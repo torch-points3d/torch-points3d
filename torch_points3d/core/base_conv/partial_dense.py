@@ -65,7 +65,7 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         x, pos, batch = data.x, data.pos, data.batch
         idx_sampler = self.sampler(pos=pos, x=x, batch=batch)
 
-        idx_neighbour, _ = self.neighbour_finder(pos, pos, batch_x=batch, batch_y=batch)
+        idx_neighbour = self.neighbour_finder(pos, pos, batch_x=batch, batch_y=batch)
 
         shadow_x = torch.full((1,) + x.shape[1:], self.shadow_features_fill).to(x.device)
         shadow_points = torch.full((1,) + pos.shape[1:], self.shadow_points_fill_).to(x.device)
