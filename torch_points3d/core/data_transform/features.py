@@ -37,14 +37,14 @@ class Random3AxisRotation(object):
         Rotation anglei n degrees on y axis
     rot_z: float
         Rotation angle in degrees on z axis
-    """   
+    """
 
     def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
         if apply_rotation:
             if  (rot_x is None) and (rot_y is None) and (rot_z is None):
                 raise Exception("At least one rot_ should be defined")
-        
+
         self._rot_x = np.abs(rot_x) if rot_x else 0
         self._rot_y = np.abs(rot_y) if rot_y else 0
         self._rot_z = np.abs(rot_z) if rot_z else 0
@@ -246,9 +246,11 @@ def compute_planarity(eigenvalues):
         \lambda_1 \leq \lambda_2 \leq \lambda_3
 
     then planarity is defined as:
+
     .. math::
         planarity = \frac{\lambda_2 - \lambda_1}{\lambda_3}
     """
+
     return (eigenvalues[1] - eigenvalues[0]) / eigenvalues[2]
 
 

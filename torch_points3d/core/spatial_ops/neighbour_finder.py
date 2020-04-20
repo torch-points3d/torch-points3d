@@ -34,7 +34,7 @@ class RadiusNeighbourFinder(BaseNeighbourFinder):
         elif self._conv_type == ConvolutionFormat.DENSE.value or ConvolutionFormat.PARTIAL_DENSE.value:
             return tp.ball_query(
                 self._radius, self._max_num_neighbors, x, y, mode=self._conv_type, batch_x=batch_x, batch_y=batch_y
-            )
+            )[0]
         else:
             raise NotImplementedError
 
