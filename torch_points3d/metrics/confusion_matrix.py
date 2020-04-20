@@ -46,7 +46,7 @@ class ConfusionMatrix:
         TP = np.diagonal(self.confusion_matrix)
         union = TP_plus_FN + TP_plus_FP - TP
         iou = 1e-8 + TP / (union + 1e-8)
-        existing_class_mask = union != 0
+        existing_class_mask = union > 1e-3
         return iou, existing_class_mask
 
     def get_overall_accuracy(self):

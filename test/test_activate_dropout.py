@@ -30,6 +30,9 @@ class MockModel(BaseModel):
         self._channels = [12, 12, 12, 12]
         self.nn = MLP(self._channels)
 
+    def set_input(self, a):
+        self.input = a
+
 
 class TestSimpleBatch(unittest.TestCase):
     def test_enable_dropout_eval(self):
