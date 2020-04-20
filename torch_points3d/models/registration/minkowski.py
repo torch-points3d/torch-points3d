@@ -184,10 +184,16 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
             self.loss.backward()
 
     def get_outputs(self):
-        return self.output, self.output_target
+        if self.labels is not None:
+            return self.output, self.output_target
+        else:
+            return self.output
 
     def get_ind(self):
-        return self.ind, self.ind_target
+        if self.labels is not None:
+            return self.ind, self.ind_target
+        else:
+            return None
 
     def get_xyz(self):
         pass
