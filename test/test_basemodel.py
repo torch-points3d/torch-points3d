@@ -49,5 +49,15 @@ class TestSimpleBatch(unittest.TestCase):
             self.assertEqual(model.nn[i][2].training, False)
 
 
+class TestBaseModel(unittest.TestCase):
+    def test_getinput(self):
+        model = MockModel()
+        with self.assertRaises(AttributeError):
+            model.get_input()
+
+        model.set_input(1)
+        self.assertEqual(model.get_input(), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
