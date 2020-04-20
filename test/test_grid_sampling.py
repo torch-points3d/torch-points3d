@@ -48,8 +48,7 @@ class TestGridSampling(unittest.TestCase):
         self.assertEqual(shapes, [shapes[0] for _ in range(len(shapes))])
 
     def test_double_grid_sampling(self):
-        data_random = Data(pos=torch.randn(1000, 3) * 0.1)
-        print(DIR_PATH)
+        data_random = Data(pos=torch.randn(1000, 3) * 0.1, x=torch.ones((1000, 1)))
         data_fragment = torch.load(os.path.join(DIR_PATH, "test_data/fragment_000003.pt"))
 
         sparse = cT.ToSparseInput(0.02)
@@ -57,6 +56,14 @@ class TestGridSampling(unittest.TestCase):
 
         self.loop(data_random, gr, sparse, "random")
         self.loop(data_fragment, gr, sparse, "fragment")
+
+    def test_quantize(self):
+        data_random = Data(pos=torch.randn(100, 3) * 0.1, x=torch.ones((100, 1)))
+        gr = cT.GridSampling(0.2, quantize_coords=True)
+        quantized = gr(data_random)
+        self.assertEqual(quantized.x.shape[0], quantized.pos.shape[0])
+        self.assertEqual(quantized.num_nodes, quantized.pos.shape[0])
+        self.assertEqual(quantized.pos.dtype, torch.int)
 
 
 if __name__ == "__main__":
