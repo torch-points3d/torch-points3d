@@ -436,7 +436,7 @@ class MultiScaleTransform(object):
                     torch.zeros((q_pos.shape[0]), dtype=torch.long),
                 )
 
-            idx_neighboors, _ = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
+            idx_neighboors = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
             special_params = {}
             special_params["idx_neighboors"] = s_pos.shape[0]
             setattr(query, "idx_neighboors", idx_neighboors)
@@ -494,6 +494,7 @@ class ShiftVoxels:
     apply_shift: bool:
         Whether to apply the shift on indices
     """
+
     def __init__(self, apply_shift=True):
         self._apply_shift = apply_shift
 
@@ -506,7 +507,7 @@ class ShiftVoxels:
 
     def __repr__(self):
         return "{}(apply_shift={})".format(self.__class__.__name__, self._apply_shift)
-      
+
 
 class RandomDropout:
     """ Randomly drop points from the input data

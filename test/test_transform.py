@@ -78,7 +78,7 @@ class Testhelpers(unittest.TestCase):
         npt.assert_almost_equal(ms[2].pos.numpy(), samplers[2](ms[0].clone()).pos.numpy())
 
         self.assertEqual(ms[0].__inc__("idx_neighboors", 0), pos.shape[0])
-        idx, _ = search[0](
+        idx = search[0](
             d.pos,
             ms[0].pos,
             torch.zeros((d.pos.shape[0]), dtype=torch.long),

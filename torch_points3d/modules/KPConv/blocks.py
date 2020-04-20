@@ -79,7 +79,7 @@ class SimpleBlock(BaseModule):
             q_pos = query_data.pos
         else:
             q_pos, q_batch = query_data.pos, query_data.batch
-            idx_neighboors, _ = self.neighbour_finder(data.pos, q_pos, batch_x=data.batch, batch_y=q_batch)
+            idx_neighboors = self.neighbour_finder(data.pos, q_pos, batch_x=data.batch, batch_y=q_batch)
             query_data.idx_neighboors = idx_neighboors
 
         x = self.kp_conv(q_pos, data.pos, idx_neighboors, data.x,)
