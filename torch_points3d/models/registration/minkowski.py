@@ -129,10 +129,12 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
     def set_input(self, data, device):
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
-
+        self.xyz = data.xyz.to(device)
         if hasattr(data, "pos_target"):
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
+            self.xyz_target = data.xyz_target.to(device)
+
             self.ind = data.pair_ind[:, 0].to(torch.long).to(device)
             self.ind_target = data.pair_ind[:, 1].to(torch.long).to(device)
             rang = torch.arange(0, data.pair_ind.shape[0])
@@ -196,7 +198,15 @@ class MinkowskiFragment(UnwrappedUnetBasedModel):
             return None
 
     def get_xyz(self):
-        pass
+        if self.labels is not None:
+            return self.xyz, self.xyz_target
+        else:
+            return self.xyz
 
     def get_batch_idx(self):
-        pass
+        if self.labels is not None:
+            batch = self.input.C[:, 0]
+            batch_target = self.input_target.C[:, 0]
+            return batch, batch_target
+        else:
+            return None
