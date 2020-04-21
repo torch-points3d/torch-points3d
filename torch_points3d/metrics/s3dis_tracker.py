@@ -5,12 +5,12 @@ import torch
 import time
 from torch_geometric.nn.unpool import knn_interpolate
 
-from src.models.base_model import BaseModel
-from src.metrics.confusion_matrix import ConfusionMatrix
-from src.metrics.segmentation_tracker import SegmentationTracker
-from src.metrics.base_tracker import BaseTracker, meter_value
-from src.datasets.segmentation import IGNORE_LABEL
-from src.core.data_transform import SaveOriginalPosId
+from torch_points3d.models.base_model import BaseModel
+from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
+from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
+from torch_points3d.datasets.segmentation import IGNORE_LABEL
+from torch_points3d.core.data_transform import SaveOriginalPosId
 
 log = logging.getLogger(__name__)
 
