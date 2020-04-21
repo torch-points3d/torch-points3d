@@ -152,6 +152,7 @@ class SaveOriginalPosId:
             data = [self._process(d) for d in data]
         else:
             data = self._process(data)
+        return data
 
 
 class ElasticDistortion:
@@ -214,4 +215,3 @@ class ElasticDistortion:
         return "{}(apply_distorsion={}, granularity={})".format(
             self.__class__.__name__, self._apply_distorsion, self._granularity
         )
-

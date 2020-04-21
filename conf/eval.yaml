@@ -8,5 +8,6 @@ model_name: KPConvPaper
 precompute_multi_scale: True    # Compute multiscate features on cpu for faster training / inference
 enable_dropout: False
 voting_runs: 1
+
 tracker_options:                # Extra options for the tracker
     full_res: True
