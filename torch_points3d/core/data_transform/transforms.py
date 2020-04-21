@@ -458,7 +458,7 @@ class MultiScaleTransform(object):
                     torch.zeros((q_pos.shape[0]), dtype=torch.long),
                 )
 
-            idx_neighboors, _ = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
+            idx_neighboors = neighbour_finder(s_pos, q_pos, batch_x=s_batch, batch_y=q_batch)
             special_params = {}
             special_params["idx_neighboors"] = s_pos.shape[0]
             setattr(query, "idx_neighboors", idx_neighboors)
