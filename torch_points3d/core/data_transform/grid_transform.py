@@ -25,7 +25,7 @@ def shuffle_data(data):
             data[key] = item[shuffle_idx]
     return data
 
-  
+
 def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_keys=[]):
     """ Group data based on indices in cluster. 
     The option ``mode`` controls how data gets agregated within each cluster.
@@ -86,6 +86,7 @@ class GridSampling:
         If mode is `mean`, all the points and their features within a cell will be averaged
         If mode is `last`, one random points per cell will be selected with its associated features
     """
+
     def __init__(self, size, quantize_coords=False, mode="mean", verbose=False):
         self._grid_size = size
         self._quantize_coords = quantize_coords
@@ -110,7 +111,7 @@ class GridSampling:
         else:
             cluster = voxel_grid(coords, data.batch, 1)
         cluster, unique_pos_indices = consecutive_cluster(cluster)
-        
+
         skip_keys = []
         if self._quantize_coords:
             data.pos = coords[unique_pos_indices]
@@ -131,6 +132,7 @@ class GridSampling:
             self.__class__.__name__, self._grid_size, self._quantize_coords, self._mode
         )
 
+
 class SaveOriginalPosId:
     """ Transform that adds the index of the point to the data object
     This allows us to track this point from the output back to the input data object
@@ -138,9 +140,20 @@ class SaveOriginalPosId:
 
     KEY = "origin_id"
 
-    def __call__(self, data):
+    def _process(self, data):
+        if hasattr(data, self.KEY):
+            return data
+
         setattr(data, self.KEY, torch.arange(0, data.pos.shape[0]))
         return data
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
+        return data
+
 
 class ElasticDistortion:
     """Apply elastic distortion on sparse coordinate space.
@@ -158,15 +171,15 @@ class ElasticDistortion:
         Returns the same data object with distorted grid
     """
 
-    def __init__(self, apply_distorsion:bool = True, granularity: List = [0.2, 0.4]):
+    def __init__(self, apply_distorsion: bool = True, granularity: List = [0.2, 0.4]):
         self._apply_distorsion = apply_distorsion
         self._granularity = list(granularity)
 
     @staticmethod
     def elastic_distortion(coords, granularity):
-        blurx = np.ones((3, 1, 1, 1)).astype('float32') / 3
-        blury = np.ones((1, 3, 1, 1)).astype('float32') / 3
-        blurz = np.ones((1, 1, 3, 1)).astype('float32') / 3
+        blurx = np.ones((3, 1, 1, 1)).astype("float32") / 3
+        blury = np.ones((1, 3, 1, 1)).astype("float32") / 3
+        blurz = np.ones((1, 1, 3, 1)).astype("float32") / 3
         coords_min = coords.min(0)[0]
 
         # Create Gaussian noise tensor of the size given by granularity.
@@ -177,25 +190,28 @@ class ElasticDistortion:
 
         # Smoothing.
         for _ in range(2):
-            noise = scipy.ndimage.filters.convolve(noise, blurx, mode='constant', cval=0)
-            noise = scipy.ndimage.filters.convolve(noise, blury, mode='constant', cval=0)
-            noise = scipy.ndimage.filters.convolve(noise, blurz, mode='constant', cval=0)
+            noise = scipy.ndimage.filters.convolve(noise, blurx, mode="constant", cval=0)
+            noise = scipy.ndimage.filters.convolve(noise, blury, mode="constant", cval=0)
+            noise = scipy.ndimage.filters.convolve(noise, blurz, mode="constant", cval=0)
 
         # Trilinear interpolate noise filters for each spatial dimensions.
         granularity_shift = granularity[1]
         ax = [
             np.linspace(d_min, d_max, d)
-            for d_min, d_max, d in zip(coords_min - granularity_shift, coords_min + granularity_shift *
-                                    (noise_dim - 2), noise_dim)
+            for d_min, d_max, d in zip(
+                coords_min - granularity_shift, coords_min + granularity_shift * (noise_dim - 2), noise_dim
+            )
         ]
         interp = scipy.interpolate.RegularGridInterpolator(ax, noise, bounds_error=0, fill_value=0)
         return (coords + torch.Tensor(interp(coords))).int()
 
     def __call__(self, data):
         if self._apply_distorsion:
-            if np.random.uniform(0, 1) < .5:
+            if np.random.uniform(0, 1) < 0.5:
                 data.pos = ElasticDistortion.elastic_distortion(data.pos, torch.Tensor(self._granularity))
         return data
 
     def __repr__(self):
-        return "{}(apply_distorsion={}, granularity={})".format(self.__class__.__name__, self._apply_distorsion, self._granularity)
+        return "{}(apply_distorsion={}, granularity={})".format(
+            self.__class__.__name__, self._apply_distorsion, self._granularity
+        )

@@ -32,6 +32,8 @@ from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolat
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 
+np.random.seed(0)
+
 
 class Testhelpers(unittest.TestCase):
     def test_Instantiate(self):
@@ -146,7 +148,7 @@ class Testhelpers(unittest.TestCase):
             d=torch.randn((N, 4)),
             pos=torch.randn((N)),
         )
-        mask = np.random.uniform(0, 1, (4)) > 0.5
+        mask = np.random.uniform(0, 1, (4)) > 0.1
         transform = AddFeatsByKeys(mask, keys)
         data_out = transform(data)
         self.assertEqual(data_out.x.shape[-1], np.sum(values[mask]))

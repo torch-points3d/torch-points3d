@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os import makedirs
 from os.path import join, exists
+import os
 import logging
 
 from .plyutils import read_ply, write_ply
@@ -39,6 +40,7 @@ from .plyutils import read_ply, write_ply
 #
 #
 log = logging.getLogger(__name__)
+DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def kernel_point_optimization_debug(
@@ -190,7 +192,7 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
     num_tries = 100
 
     # Kernel directory
-    kernel_dir = "kernels/dispositions"
+    kernel_dir = join(DIR, "kernels/dispositions")
     if not exists(kernel_dir):
         makedirs(kernel_dir)
 
