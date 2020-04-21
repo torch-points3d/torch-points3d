@@ -274,9 +274,9 @@ class Fragment3DMatch(Base3DMatch):
             allow_pickle=True).item()
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
-        new_pair = compute_subsampled_matches(data_source, data_target,
-                                              self.voxel_size_search,
-                                              self.max_dist_overlap)
+        # new_pair = compute_subsampled_matches(data_source, data_target,self.voxel_size_search,self.max_dist_overlap)
+        new_pair = torch.from_numpy(match['pair'])
+
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)

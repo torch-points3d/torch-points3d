@@ -2,7 +2,7 @@ from torch_points3d.core.data_transform import MultiScaleTransform
 from torch_points3d.core.data_transform import PairTransform
 from torch_points3d.datasets.registration.pair import DensePairBatch
 from torch_points3d.utils.enums import ConvolutionFormat
-from src.utils.config import ConvolutionFormatFactory
+from torch_points3d.utils.config import ConvolutionFormatFactory
 from torch_points3d.datasets.registration.pair import PairMultiScaleBatch, PairBatch
 from torch_points3d.datasets.base_dataset import BaseDataset
 

@@ -22,6 +22,7 @@ class BaseTracker:
         self._use_tensorboard = use_tensorboard
         self._tensorboard_dir = os.path.join(os.getcwd(), "tensorboard")
         self._n_iter = 0
+        self._finalised = False
 
         if self._use_tensorboard:
             log.info(
@@ -32,6 +33,7 @@ class BaseTracker:
     def reset(self, stage="train"):
         self._stage = stage
         self._loss_meters = {}
+        self._finalised = False
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         metrics = {}
@@ -41,9 +43,17 @@ class BaseTracker:
                 metrics[key] = meter_value(loss_meter, dim=0)
         return metrics
 
-    def track(self, model):
+    def track(self, model, **kwargs):
+        if self._finalised:
+            raise RuntimeError("Cannot track new values with a finalised tracker, you need to reset it first")
         losses = self._convert(model.get_current_losses())
         self._append_losses(losses)
+
+    def finalise(self, *args, **kwargs):
+        """ Lifcycle method that is called at the end of an epoch. Use this to compute
+        end of epoch metrics.
+        """
+        self._finalised = True
 
     def _append_losses(self, losses):
         for key, loss in losses.items():

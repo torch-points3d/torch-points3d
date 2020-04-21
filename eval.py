@@ -23,45 +23,79 @@ from torch_points3d.utils.colors import COLORS
 log = logging.getLogger(__name__)
 
 
-def eval_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def eval_epoch(
+    model: BaseModel,
+    dataset,
+    device,
+    tracker: BaseTracker,
+    checkpoint: ModelCheckpoint,
+    voting_runs=1,
+    tracker_options={},
+):
     tracker.reset("val")
     loader = dataset.val_dataloader
-    with Ctq(loader) as tq_val_loader:
-        for data in tq_val_loader:
-            with torch.no_grad():
-                model.set_input(data, device)
-                model.forward()
+    for i in range(voting_runs):
+        with Ctq(loader) as tq_val_loader:
+            for data in tq_val_loader:
+                with torch.no_grad():
+                    model.set_input(data, device)
+                    model.forward()
 
-            tracker.track(model)
-            tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
+                tracker.track(model, **tracker_options)
+                tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
+    tracker.finalise(**tracker_options)
     tracker.print_summary()
 
 
-def test_epoch(model: BaseModel, dataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def test_epoch(
+    model: BaseModel,
+    dataset,
+    device,
+    tracker: BaseTracker,
+    checkpoint: ModelCheckpoint,
+    voting_runs=1,
+    tracker_options={},
+):
 
     loaders = dataset.test_dataloaders
 
     for loader in loaders:
         stage_name = loader.dataset.name
         tracker.reset(stage_name)
-        with Ctq(loader) as tq_test_loader:
-            for data in tq_test_loader:
-                with torch.no_grad():
-                    model.set_input(data, device)
-                    model.forward()
+        for i in range(voting_runs):
+            with Ctq(loader) as tq_test_loader:
+                for data in tq_test_loader:
+                    with torch.no_grad():
+                        model.set_input(data, device)
+                        model.forward()
 
-                tracker.track(model)
-                tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+                    tracker.track(model, **tracker_options)
+                    tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
-            tracker.print_summary()
+        tracker.finalise(**tracker_options)
+        tracker.print_summary()
 
 
-def run(cfg, model, dataset: BaseDataset, device, tracker: BaseTracker, checkpoint: ModelCheckpoint):
+def run(
+    cfg,
+    model,
+    dataset: BaseDataset,
+    device,
+    tracker: BaseTracker,
+    checkpoint: ModelCheckpoint,
+    voting_runs=1,
+    tracker_options={},
+):
     if dataset.has_val_loader:
-        eval_epoch(model, dataset, device, tracker, checkpoint)
+        eval_epoch(
+            model, dataset, device, tracker, checkpoint, voting_runs=voting_runs, tracker_options=tracker_options
+        )
 
-    test_epoch(model, dataset, device, tracker, checkpoint)
+    if dataset.has_test_loaders:
+        test_epoch(
+            model, dataset, device, tracker, checkpoint, voting_runs=voting_runs, tracker_options=tracker_options
+        )
 
 
 @hydra.main(config_path="conf/eval.yaml")
@@ -98,7 +132,16 @@ def main(cfg):
     tracker: BaseTracker = dataset.get_tracker(model, dataset, False, False)
 
     # Run training / evaluation
-    run(cfg, model, dataset, device, tracker, checkpoint)
+    run(
+        cfg,
+        model,
+        dataset,
+        device,
+        tracker,
+        checkpoint,
+        voting_runs=cfg.voting_runs,
+        tracker_options=cfg.tracker_options,
+    )
 
 
 if __name__ == "__main__":

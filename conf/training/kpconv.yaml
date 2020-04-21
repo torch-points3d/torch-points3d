@@ -1,9 +1,8 @@
 # Those arguments defines the training hyper-parameters
 training:
-    epochs: 200
-    num_workers: 10
-    batch_size: 10
-    shuffle: True
+    epochs: 550
+    num_workers: 8
+    batch_size: 8
     cuda: 1
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     optim:
@@ -33,7 +32,7 @@ wandb:
     project: s3dis
     log: True
     notes: "Fixed labels"
-    name: "kpconv-fixedlabels"
+    name: "kpconv-dynamicdataset-6"
     public: True # It will be display the model within wandb log, else not.
 
 

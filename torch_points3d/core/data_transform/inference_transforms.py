@@ -2,7 +2,9 @@ import os
 import sys
 import logging
 
-from torch_points3d.utils.mock import MockDataset
+ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..")
+sys.path.insert(0, os.path.join(ROOT))
+
 from .grid_transform import GridSampling
 import torch_points3d.metrics.model_checkpoint as model_checkpoint
 
@@ -26,6 +28,7 @@ class ModelInference(object):
         # Checkpoint
         from torch_points3d.datasets.base_dataset import BaseDataset
         from torch_points3d.datasets.dataset_factory import instantiate_dataset
+        from torch_points3d.utils.mock import MockDataset
 
         checkpoint = model_checkpoint.ModelCheckpoint(checkpoint_dir, model_name, weight_name, strict=True)
         if mock_dataset:

@@ -3,14 +3,18 @@ import torchnet as tnt
 import torch
 import numpy as np
 from torch.nn import functional as F
+
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.metrics.meters import APMeter
+from torch_points3d.datasets.segmentation import IGNORE_LABEL
 
 
 class SegmentationTracker(BaseTracker):
-    def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label=-100):
+    def __init__(
+        self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label=IGNORE_LABEL
+    ):
         """ This is a generic tracker for segmentation tasks.
         It uses a confusion matrix in the back-end to track results.
         Use the tracker to track an epoch.
@@ -26,6 +30,7 @@ class SegmentationTracker(BaseTracker):
         super(SegmentationTracker, self).__init__(stage, wandb_log, use_tensorboard)
         self._num_classes = dataset.num_classes
         self._ignore_label = ignore_label
+        self._dataset = dataset
         self.reset(stage)
 
     def reset(self, stage="train"):
@@ -43,7 +48,7 @@ class SegmentationTracker(BaseTracker):
     def confusion_matrix(self):
         return self._confusion_matrix.confusion_matrix
 
-    def track(self, model: BaseModel):
+    def track(self, model: BaseModel, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

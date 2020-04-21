@@ -172,7 +172,7 @@ def compute_subsampled_matches(data1, data2, voxel_size=0.1, max_distance_overla
     """
     compute matches on subsampled version of data and track ind
     """
-    grid_sampling = Compose([SaveOriginalPosId(), GridSampling(voxel_size, mode='last', warn=False)])
+    grid_sampling = Compose([SaveOriginalPosId(), GridSampling(voxel_size, mode='last')])
     subsampled_data = grid_sampling(data1.clone())
     origin_id = subsampled_data.origin_id.numpy()
     pair = compute_overlap_and_matches(subsampled_data, data2, max_distance_overlap)['pair']
@@ -302,7 +302,9 @@ def tracked_matches(data_s, data_t, pair):
     pair_np = pair.numpy()
     mask_s = np.isin(pair_np[:, 0], data_s.origin_id.numpy())
     mask_t = np.isin(pair_np[:, 1], data_t.origin_id.numpy())
-
+    print(data_s.origin_id.shape)
+    print(data_s.pos.shape)
+    print(data_s.xyz.shape)
     mask = np.logical_and(mask_s, mask_t)
     filtered_pair = pair_np[mask]
 
@@ -310,6 +312,5 @@ def tracked_matches(data_s, data_t, pair):
                        np.arange(0, len(data_s.pos))))
     table_t = dict(zip(data_t.origin_id.numpy(),
                        np.arange(0, len(data_t.pos))))
-
     res = torch.tensor([[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]).to(torch.long)
     return res
