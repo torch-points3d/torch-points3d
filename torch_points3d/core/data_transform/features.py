@@ -319,40 +319,34 @@ class AddOnes(object):
 class XYZFeature(object):
     """
     Add the X, Y and Z as a feature
-
     Parameters
     -----------
-    add_x: bool
+    add_x: bool [default: False]
         whether we add the x position or not
-    add_y: bool
+    add_y: bool [default: False]
         whether we add the y position or not
-    add_z: bool
+    add_z: bool [default: True]
         whether we add the z position or not
     """
 
-    def __init__(self, add_x=True, add_y=True, add_z=True):
-        self.axis = []
+    def __init__(self, add_x=False, add_y=False, add_z=True):
+        self._axis = []
+        axis_names = ["x", "y", "z"]
         if add_x:
-            self.axis.append(0)
+            self._axis.append(0)
         if add_y:
-            self.axis.append(1)
+            self._axis.append(1)
         if add_z:
-            self.axis.append(2)
+            self._axis.append(2)
+        
+        self._axis_names = [axis_names[idx_axis] for idx_axis in self._axis]
 
     def __call__(self, data):
         assert data.pos is not None
-        xyz = data.pos[:, self.axis]
-        if data.x is None:
-            data.x = xyz
-        else:
-            data.x = torch.cat([data.x, xyz], -1)
+        for axis_name, id_axis in zip(self._axis_names, self._axis):
+            f = data.pos[:, id_axis].clone()
+            setattr(data, axis_name, f)
         return data
 
     def __repr__(self):
-        coords = ""
-        axis = ["x", "y", "z"]
-        for a in self.axis:
-            if len(coords):
-                coords += ", "
-            coords += axis[a]
-        return "{}({})".format(self.__class__.__name__, coords)
+        return "{}(axis={})".format(self.__class__.__name__, self._axis_names)
