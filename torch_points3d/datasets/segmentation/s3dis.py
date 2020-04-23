@@ -437,7 +437,7 @@ class S3DISSphere(S3DISOriginalFused):
         self._datas = torch.load(path)
         if not isinstance(self._datas, list):
             self._datas = [self._datas]
-        if True:
+        if self._train:
             self._centres_for_sampling = []
             for i, data in enumerate(self._datas):
                 assert not hasattr(
