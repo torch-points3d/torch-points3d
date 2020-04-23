@@ -48,10 +48,9 @@ def train_epoch(
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
-            model.set_input(data, device)
             t_data = time.time() - iter_data_time
-
             iter_start_time = time.time()
+            model.set_input(data, device)
             model.optimize_parameters(epoch, dataset.batch_size)
             if i % 10 == 0:
                 tracker.track(model)
