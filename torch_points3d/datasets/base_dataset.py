@@ -368,12 +368,6 @@ class BaseDataset:
                 stage_name = loader.dataset.name
                 out[stage_name] = len(loader)
         return out
-    
-    @property
-    def test_data(self):
-        """ Use this property to return raw test data. It can be full res data for example.
-        """
-        raise NotImplementedError()
 
     def get_dataset(self, name):
         """ Get a dataset by name. Raises an exception if no dataset was found

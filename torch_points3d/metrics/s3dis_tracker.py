@@ -2,7 +2,6 @@ from typing import Dict
 import torchnet as tnt
 import logging
 import torch
-import time
 from torch_geometric.nn.unpool import knn_interpolate
 
 from torch_points3d.models.base_model import BaseModel
@@ -21,6 +20,7 @@ class S3DISTracker(SegmentationTracker):
         self._test_area = None
         self._full_vote_miou = None
         self._vote_miou = None
+        self._iou_per_class = {}
 
     def track(self, model: BaseModel, full_res=False, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
@@ -54,19 +54,32 @@ class S3DISTracker(SegmentationTracker):
         self._test_area.votes[inputs[SaveOriginalPosId.KEY]] += outputs
         self._test_area.has_prediction[inputs[SaveOriginalPosId.KEY]] = True
 
-    def finalise(self, full_res=False, **kwargs):
+    def finalise(self, full_res=False, vote_miou=True, ply_output="", **kwargs):
+        per_class_iou = self._confusion_matrix.get_intersection_union_per_class()[0]
+        self._iou_per_class = {self._dataset.INV_OBJECT_LABEL[k]: v for k, v in enumerate(per_class_iou)}
+
+        if vote_miou:
+            # Complete for points that have a prediction
+            self._test_area = self._test_area.to("cpu")
+            c = ConfusionMatrix(self._num_classes)
+            gt = self._test_area.y[self._test_area.has_prediction].numpy()
+            pred = torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).numpy()
+            c.count_predicted_batch(gt, pred)
+            self._vote_miou = c.get_average_intersection_union() * 100
+
         if full_res:
             self._compute_full_miou()
+
+        if ply_output:
+            self._dataset.to_ply(
+                self._test_area.pos[self._test_area.has_prediction].cpu(),
+                torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).cpu().numpy(),
+                ply_output,
+            )
 
     def _compute_full_miou(self):
         if self._full_vote_miou is not None:
             return
-
-        self._dataset.to_ply(
-            self._test_area.pos[self._test_area.has_prediction].cpu(),
-            torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).cpu().numpy(),
-            "test.ply",
-        )
 
         log.info(
             "Computing full res mIoU, we have predictions for %.2f%% of the points."
@@ -75,42 +88,27 @@ class S3DISTracker(SegmentationTracker):
 
         self._test_area = self._test_area.to("cpu")
 
-        # Complete for points that have a prediction
-        print("Start confusion matrix")
-        t = time.time()
-        c = ConfusionMatrix(self._num_classes)
-        gt = self._test_area.y[self._test_area.has_prediction].numpy()
-        pred = torch.argmax(self._test_area.votes[self._test_area.has_prediction], 1).numpy()
-        c.count_predicted_batch(gt, pred)
-        self._vote_miou = c.get_average_intersection_union() * 100
-        per_class_iou = c.get_intersection_union_per_class()[0]
-        per_class_iou = {self._dataset.INV_OBJECT_LABEL[k]: v for k, v in enumerate(per_class_iou)}
-        print(per_class_iou)
-        print("Low res timing: %.2f" % (time.time() - t))
-
         # Full res interpolation
-        t = time.time()
         full_pred = knn_interpolate(
             self._test_area.votes[self._test_area.has_prediction],
             self._test_area.pos[self._test_area.has_prediction],
             self._test_area.pos,
             k=1,
         )
-        print("knn timing: %.2f" % (time.time() - t))
 
         # Full res pred
-        t = time.time()
         c = ConfusionMatrix(self._num_classes)
         c.count_predicted_batch(self._test_area.y.numpy(), torch.argmax(full_pred, 1).numpy())
         self._full_vote_miou = c.get_average_intersection_union() * 100
-        print("Full res timing: %.2f" % (time.time() - t))
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
 
-        if verbose and self._vote_miou:
-            metrics["{}_full_vote_miou".format(self._stage)] = self._full_vote_miou
-            metrics["{}_vote_miou".format(self._stage)] = self._vote_miou
+        if verbose:
+            metrics["{}_iou_per_class".format(self._stage)] = self._iou_per_class
+            if self._vote_miou:
+                metrics["{}_full_vote_miou".format(self._stage)] = self._full_vote_miou
+                metrics["{}_vote_miou".format(self._stage)] = self._vote_miou
         return metrics
