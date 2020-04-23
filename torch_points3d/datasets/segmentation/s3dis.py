@@ -228,6 +228,10 @@ class S3DIS1x1Dataset(BaseDataset):
 
 
 class S3DISOriginalFused(InMemoryDataset):
+    """ Original S3DIS dataset. Each area is loaded individually and can be processed using a pre_collate transform. 
+    This transform can be used for example to fuse the area into a single space and split it into 
+    spheres or smaller regions. If no fusion is applied, each element in the dataset is a single room by default.
+    """
 
     url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
     zip_name = "Stanford3dDataset_v1.2_Version.zip"
@@ -399,6 +403,10 @@ class S3DISOriginalFused(InMemoryDataset):
 
 
 class S3DISSphere(S3DISOriginalFused):
+    """ Small variation of S3DISOriginalFused that allows random sampling of spheres 
+    within an Area during training. During test, spheres are taken on a 2m grid.
+    """
+
     def __init__(self, root, sample_per_epoch=100, radius=2, *args, **kwargs):
         self._sample_per_epoch = sample_per_epoch
         self._radius = radius
@@ -494,6 +502,17 @@ class S3DISFusedDataset(BaseDataset):
 
     @staticmethod
     def to_ply(pos, label, file):
+        """ Allows to save s3dis predictions to disk using s3dis color scheme
+
+        Parameters
+        ----------
+        pos : torch.Tensor
+            tensor that contains the positions of the points
+        label : torch.Tensor
+            predicted label
+        file : string
+            Save location
+        """
         to_ply(pos, label, file)
 
     @staticmethod

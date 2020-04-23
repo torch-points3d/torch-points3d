@@ -37,7 +37,7 @@ data:
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
-        feat_names: [rgb]
+        feat_names: [rgb, z]
         delete_feats: [True]
     - transform: Center
   test_transform:
