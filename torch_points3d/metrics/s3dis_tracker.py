@@ -57,7 +57,6 @@ class S3DISTracker(SegmentationTracker):
     def finalise(self, full_res=False, vote_miou=True, ply_output="", **kwargs):
         per_class_iou = self._confusion_matrix.get_intersection_union_per_class()[0]
         self._iou_per_class = {self._dataset.INV_OBJECT_LABEL[k]: v for k, v in enumerate(per_class_iou)}
-
         if vote_miou:
             # Complete for points that have a prediction
             self._test_area = self._test_area.to("cpu")
