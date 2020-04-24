@@ -35,17 +35,6 @@ models:
             module_name: ConvMockUp
             up_conv_nn: [4]
 
-    TestBroken:
-        architecture: MockModel
-        conv_type: "DENSE"
-        use_category: True
-        down_conv:
-            module_name: ConvMockDown
-            down_conv_nn: [0,1]
-        up_conv:
-            module_name: ConvMockUp
-            up_conv_nn: [4,2]
-
     TestPrecompute:
         architecture: MockModel
         conv_type: "DENSE"

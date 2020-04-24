@@ -101,13 +101,6 @@ class TestUnwrapperUnet(unittest.TestCase):
         d = model(data, precomputed_up="Hey", precomputed_down="Yay")
         self.assertEqual(d, [0, 1, 2, 3, 4])
 
-    def test_broken(self):
-        models_conf = os.path.join(ROOT, "test/config_unwrapped_unet_base/test_models.yaml")
-        models_conf = OmegaConf.load(models_conf).models
-        modellib = MockModelLib()
-        with self.assertRaises(ValueError):
-            MockModel(models_conf["TestBroken"], "", None, modellib)
-
 
 if __name__ == "__main__":
     unittest.main()

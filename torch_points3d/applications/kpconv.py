@@ -70,5 +70,10 @@ class KPConvUnet(UnwrappedUnetBasedModel):
         self.input = data
 
     def forward(self):
-        """Run forward pass."""
+        """Run forward pass.
+        Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
+                   |      |_________|     |
+                   |______________________|
+
+        """
         return super().forward(self.input, precomputed_down=self.pre_computed, precomputed_up=self.upsample)

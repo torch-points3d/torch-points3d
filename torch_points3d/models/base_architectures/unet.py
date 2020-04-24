@@ -352,13 +352,6 @@ class UnwrappedUnetBasedModel(BaseModel):
         else:
             self._init_from_compact_format(opt, model_type, dataset, modules_lib)
 
-        if len(self.inner_modules) == 1 and (
-            len(self.down_modules) < (len(self.up_modules) + isinstance(self.inner_modules[0], Identity))
-        ):
-            raise ValueError(
-                "Too many up modules, it should always be smaller than the number of down + number of inner"
-            )
-
     def _get_from_kwargs(self, kwargs, name):
         module = kwargs[name]
         kwargs.pop(name)
