@@ -34,8 +34,11 @@ def KPConv(
 
 class KPConvFactory(ModelFactory):
     def _build_unet(self):
-        path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
-        model_config = OmegaConf.load(path_to_model)
+        if self._config:
+            model_config = self._config
+        else:
+            path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
+            model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
         return KPConvUnet(model_config, None, None, modules_lib)
@@ -55,7 +58,6 @@ class KPConvUnet(UnwrappedUnetBasedModel):
             Device on which to run the code. cpu or cuda
         """
         data = data.to(device)
-
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
             self.upsample = data.upsample
@@ -66,35 +68,7 @@ class KPConvUnet(UnwrappedUnetBasedModel):
             self.pre_computed = None
 
         self.input = data
-        self.labels = data.y
-        self.batch_idx = data.batch
 
     def forward(self):
         """Run forward pass."""
-
-        stack_down = []
-
-        data = self.input
-        for i in range(len(self.down_modules) - 1):
-            data = self.down_modules[i](data, pre_computed=self.pre_computed)
-            stack_down.append(data)
-
-        data = self.down_modules[-1](data, pre_computed=self.pre_computed)
-        innermost = False
-
-        if not isinstance(self.inner_modules[0], Identity):
-            stack_down.append(data)
-            data = self.inner_modules[0](data)
-            innermost = True
-
-        for i in range(len(self.up_modules)):
-            if i == 0 and innermost:
-                data = self.up_modules[i]((data, stack_down.pop()))
-            else:
-                data = self.up_modules[i]((data, stack_down.pop()), precomputed_up=self.upsample)
-
-        return data.x
-
-    @property
-    def num_features(self):
-        return sum(self._input_nc_feats)
+        return super().forward(self.input, precomputed_down=self.pre_computed, precomputed_up=self.upsample)

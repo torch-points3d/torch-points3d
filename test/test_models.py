@@ -83,19 +83,6 @@ class TestModelUtils(unittest.TestCase):
                             print(model)
                             raise e
 
-    def test_kpconvpretransform(self):
-        params = load_model_config("segmentation", "kpconv", "SimpleKPConv")
-        dataset = MockDatasetGeometric(5)
-        model = instantiate_model(params, dataset)
-        model.eval()
-        dataset_transform = MockDatasetGeometric(5)
-        dataset_transform.set_strategies(model)
-        model.set_input(dataset[0], device)
-        model.forward()
-        model.get_output()
-
-        torch.testing.assert_allclose(dataset_transform[0].pos, dataset[0].pos)
-
     def test_largekpconv(self):
         params = load_model_config("segmentation", "kpconv", "KPConvPaper")
         params.update("data.use_category", True)

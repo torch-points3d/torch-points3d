@@ -18,25 +18,24 @@ device = "cpu"
 class TestAPI(unittest.TestCase):
     def test_api_arguments(self):
         input_nc = 3
+        num_layers = 4
+        grid_sampling = 0.02
         model = KPConv(
             architecture="unet",
             input_nc=input_nc,
             output_nc=5,
             in_feat=32,
-            in_grid_size=0.02,
-            num_layers=4,
-            use_rgb=True,
-            use_normal=True,
-            use_z=True,
+            in_grid_size=grid_sampling,
+            num_layers=num_layers,
             weights=False,
             config=None,
         )
-
         dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=1024)
-
-        print(dataset[0])
-
         model.set_input(dataset[0], device)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
+        self.assertEqual(len(model._modules["inner_modules"]), 1)
+        self.assertEqual(len(model._modules["up_modules"]), 4)
+
         try:
             model.forward()
         except Exception as e:

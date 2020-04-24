@@ -1,11 +1,8 @@
 from enum import Enum
-from typing import *
+from typing import List
 from omegaconf import DictConfig
 import logging
-import importlib
-from torch_points3d.models.base_model import BaseModel
-from torch_geometric.transforms import Compose
-from torch_points3d.core.data_transform import XYZFeature, AddFeatsByKeys
+
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve
 
 log = logging.getLogger(__name__)
@@ -17,19 +14,7 @@ class ModelArchitectures(Enum):
     DECODER = "decoder"
 
 
-def get_module_lib(module_name):
-    # model_module = ".".join(["torch_points3d.applications", module_name])
-    model_module = "torch_points3d.modules.KPConv"
-    return importlib.import_module(model_module)
-
-
-class Options:
-    def __init__(self):
-        pass
-
-
 class ModelFactory:
-
     MODEL_ARCHITECTURES = [e.value for e in ModelArchitectures]
 
     @staticmethod
