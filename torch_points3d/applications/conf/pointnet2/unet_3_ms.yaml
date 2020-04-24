@@ -1,4 +1,3 @@
-class: pointnet2.PointNet2_D
 conv_type: "DENSE"
 down_conv:
     module_name: PointNetMSGDown

@@ -64,6 +64,27 @@ class TestAPI(unittest.TestCase):
             print(model)
             raise e
 
+    def test_rsconv(self):
+        from torch_points3d.applications.rsconv import RSConv
+
+        input_nc = 2
+        num_layers = 4
+        model = RSConv(
+            architecture="unet", input_nc=input_nc, output_nc=5, num_layers=num_layers, multiscale=True, config=None,
+        )
+        dataset = MockDataset(input_nc, num_points=1024)
+        model.set_input(dataset[0], device)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["inner_modules"]), 2)
+        self.assertEqual(len(model._modules["up_modules"]), num_layers + 1)
+
+        try:
+            model.forward()
+        except Exception as e:
+            print("Model failing:")
+            print(model)
+            raise e
+
 
 if __name__ == "__main__":
     unittest.main()
