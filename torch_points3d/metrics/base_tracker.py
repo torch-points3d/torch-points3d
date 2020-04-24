@@ -43,6 +43,11 @@ class BaseTracker:
                 metrics[key] = meter_value(loss_meter, dim=0)
         return metrics
 
+    @property
+    def metric_func(self):
+        self._metric_func = {"loss": min}
+        return self._metric_func
+
     def track(self, model, **kwargs):
         if self._finalised:
             raise RuntimeError("Cannot track new values with a finalised tracker, you need to reset it first")

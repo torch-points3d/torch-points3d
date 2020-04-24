@@ -45,6 +45,11 @@ class PatchRegistrationTracker(BaseTracker):
         metrics["{}_acc".format(self._stage)] = self._acc
         return metrics
 
+    @property
+    def metric_func(self):
+        self._metric_func = {"loss": min, "acc": max}
+        return self._metric_func
+
 
 class FragmentRegistrationTracker(BaseTracker):
     def __init__(
@@ -126,3 +131,14 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
             metrics["{}_trans_error".format(self._stage)] = float(self._trans_error.value()[0])
             metrics["{}_rot_error".format(self._stage)] = float(self._rot_error.value()[0])
         return metrics
+
+    @property
+    def metric_func(self):
+        self._metric_func = {
+            "loss": min,
+            "hit_ratio": max,
+            "feat_match_ratio": max,
+            "trans_error": min,
+            "rot_error": min,
+        }
+        return self._metric_func
