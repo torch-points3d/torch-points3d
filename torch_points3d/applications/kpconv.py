@@ -2,7 +2,13 @@ import os
 from omegaconf import DictConfig, OmegaConf
 
 from . import ModelFactory
+from torch_points3d.core.common_modules import FastBatchNorm1d
+from torch_points3d.modules.KPConv import *
+from torch_points3d.core.base_conv.partial_dense import *
+from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
+from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 
+CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/kpconv")
 
@@ -31,7 +37,8 @@ class KPConvFactory(ModelFactory):
         path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
         model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
-        return KPConvUnet(model_config, model_config.conv_type, None, self.modules_lib)
+        modules_lib = sys.modules[__name__]
+        return KPConvUnet(model_config, None, None, modules_lib)
 
 
 class KPConvUnet(UnwrappedUnetBasedModel):

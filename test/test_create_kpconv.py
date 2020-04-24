@@ -17,10 +17,10 @@ device = "cpu"
 
 class TestAPI(unittest.TestCase):
     def test_api_arguments(self):
-
+        input_nc = 3
         model = KPConv(
             architecture="unet",
-            input_nc=3,
+            input_nc=input_nc,
             output_nc=5,
             in_feat=32,
             in_grid_size=0.02,
@@ -32,7 +32,7 @@ class TestAPI(unittest.TestCase):
             config=None,
         )
 
-        dataset = MockDatasetGeometric(model.num_features + 1, transform=GridSampling(0.01), num_points=1024)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=1024)
 
         print(dataset[0])
 
