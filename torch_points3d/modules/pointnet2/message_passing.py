@@ -7,9 +7,7 @@ from torch_points3d.core.spatial_ops import FPSSampler, RandomSampler, Multiscal
 
 
 class SAModule(BaseMSConvolutionDown):
-    def __init__(
-        self, ratio=None, radius=None, radius_num_point=None, down_conv_nn=None, nb_feature=None, *args, **kwargs
-    ):
+    def __init__(self, ratio=None, radius=None, radius_num_point=None, down_conv_nn=None, *args, **kwargs):
         super(SAModule, self).__init__(
             FPSSampler(ratio=ratio),
             MultiscaleRadiusNeighbourFinder(radius, max_num_neighbors=radius_num_point),

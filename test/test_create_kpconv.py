@@ -4,10 +4,10 @@ import unittest
 import torch
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-sys.path.append(ROOT)
+sys.path.insert(0, ROOT)
 
 from torch_points3d.applications.kpconv import KPConv
-from mockdatasets import MockDatasetGeometric, MockDataset
+from test.mockdatasets import MockDatasetGeometric
 from torch_points3d.core.data_transform import GridSampling
 
 seed = 0

@@ -1,32 +1,51 @@
+import os
+from omegaconf import DictConfig, OmegaConf
+
 from . import ModelFactory
-from torch_points3d.core.data_transform import AddOnes
-from torch_points3d.modules.KPConv import *
-from torch_points3d.core.common_modules import FastBatchNorm1d
-from torch_points3d.core.base_conv.partial_dense import *
-from torch_points3d.datasets.multiscale_data import MultiScaleBatch
-from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
+
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/kpconv")
 
 
-class KPConv(ModelFactory, UnwrappedUnetBasedModel):
+def KPConv(
+    architecture: str = None,
+    input_nc: int = None,
+    output_nc: int = None,
+    num_layers: int = None,
+    config: DictConfig = None,
+    **kwargs
+):
+    factory = KPConvFactory(
+        architecture=architecture,
+        num_layers=num_layers,
+        input_nc=input_nc,
+        output_nc=output_nc,
+        config=config,
+        **kwargs
+    )
+    return factory.build()
 
-    MODULE_NAME = "kpconv"
+
+class KPConvFactory(ModelFactory):
+    def _build_unet(self):
+        path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
+        model_config = OmegaConf.load(path_to_model)
+        self.resolve_model(model_config)
+        return KPConvUnet(model_config, model_config.conv_type, None, self.modules_lib)
+
+
+class KPConvUnet(UnwrappedUnetBasedModel):
     CONV_TYPE = "partial_dense"
-
-    _transforms = [AddOnes()]
-    _list_add_to_x = [True]
-    _feat_names = ["ones"]
-    _input_nc_feats = [1]
-    _delete_feats = [True]
-
-    def __init__(self, *args, **kwargs):
-        super(KPConv, self).__init__(*args, **kwargs)
-
-        self._build()
 
     def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
-        Parameters:
-            input: a dictionary that contains the data itself and its metadata information.
+
+        Parameters
+        -----------
+        data:
+            a dictionary that contains the data itself and its metadata information.
+        device
+            Device on which to run the code. cpu or cuda
         """
         data = data.to(device)
 
@@ -43,8 +62,8 @@ class KPConv(ModelFactory, UnwrappedUnetBasedModel):
         self.labels = data.y
         self.batch_idx = data.batch
 
-    def forward(self) -> Any:
-        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
+    def forward(self):
+        """Run forward pass."""
 
         stack_down = []
 

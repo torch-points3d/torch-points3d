@@ -128,8 +128,6 @@ class UnetBasedModel(BaseModel):
 
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
-        args_down["nb_feature"] = dataset.feature_dimension
-        args_up["nb_feature"] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(
             args_up=args_up, args_down=args_down, submodule=unet_block, outermost=True
         )  # add the outermost layer
@@ -175,8 +173,6 @@ class UnetBasedModel(BaseModel):
         down_layer = dict(down_conv_layers[0])
         down_layer["down_conv_cls"] = getattr(modules_lib, down_layer["module_name"])
         up_layer["up_conv_cls"] = getattr(modules_lib, up_layer["module_name"])
-        up_layer["nb_feature"] = dataset.feature_dimension
-        down_layer["nb_feature"] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(
             args_up=up_layer, args_down=down_layer, submodule=unet_block, outermost=True
         )

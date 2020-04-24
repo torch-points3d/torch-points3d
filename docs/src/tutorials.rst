@@ -347,7 +347,7 @@ Here is an example with the ``RSConv`` implementation in ``MESSAGE_TYPE ConvType
 .. code-block:: python
 
    class RSConv(BaseConvolutionDown):
-       def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, nb_feature=None, *args, **kwargs):
+       def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, *args, **kwargs):
            super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
            self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
@@ -359,7 +359,7 @@ We can see this convolution needs the followings arguments
 
 .. code-block:: python
 
-   ratio=None, radius=None, local_nn=None, down_conv_nn=None, nb_feature=None
+   ratio=None, radius=None, local_nn=None, down_conv_nn=None
 
 Here is an extract from the model architecture config:
 

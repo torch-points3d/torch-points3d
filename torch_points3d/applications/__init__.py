@@ -6,7 +6,7 @@ import importlib
 from torch_points3d.models.base_model import BaseModel
 from torch_geometric.transforms import Compose
 from torch_points3d.core.data_transform import XYZFeature, AddFeatsByKeys
-from torch_points3d.utils.model_building_utils.model_definition_resolver import _resolve
+from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +18,8 @@ class ModelArchitectures(Enum):
 
 
 def get_module_lib(module_name):
-    model_module = ".".join(["torch_points3d.applications", module_name])
+    # model_module = ".".join(["torch_points3d.applications", module_name])
+    model_module = "torch_points3d.modules.KPConv"
     return importlib.import_module(model_module)
 
 
@@ -42,17 +43,9 @@ class ModelFactory:
         output_nc: int = None,
         num_layers: int = None,
         channel_nn: List[int] = None,
-        weights: str = False,
-        use_rgb: bool = False,
-        use_normal: bool = False,
-        use_z: bool = False,
         config: DictConfig = None,
         **kwargs
     ):
-        # opt = Options()
-        # opt.conv_type = self.CONV_TYPE
-        # super(ModelFactory, self).__init__(opt)
-
         self._architecture = architecture.lower()
         assert self._architecture in self.MODEL_ARCHITECTURES, ModelFactory.raise_enum_error(
             "model_architecture", self._architecture, self.MODEL_ARCHITECTURES
@@ -61,40 +54,15 @@ class ModelFactory:
         self._output_nc = output_nc
         self._num_layers = num_layers
         self._channel_nn = channel_nn
-        self._weights = weights
         self._config = config
-        self._use_rgb = use_rgb
-        self._use_normal = use_normal
-        self._use_z = use_z
         self._kwargs = kwargs
 
         if self._config:
             log.info("The config will be used to build the model")
 
-        self._modules_lib = get_module_lib(self.MODULE_NAME)
-
-        self._transform = self._build_transform()
-
-        print(self._transform)
-
-    def _check_init_transform(self):
-        cnd_1 = hasattr(self, "_transforms")
-        cnd_2 = hasattr(self, "_list_add_to_x")
-        hasattr(self, "_feat_names")
-        cnd_4 = hasattr(self, "_delete_feats")
-
-        if not cnd_1:
-            self._transforms = []
-
-        if not (cnd_1 and cnd_2 and cnd_4):
-            self._list_add_to_x = []
-            self._feat_names = []
-            self._input_nc_feats = []
-            self._delete_feats = []
-
     @property
     def modules_lib(self):
-        return self._modules_lib
+        raise NotImplementedError
 
     @property
     def kwargs(self):
@@ -106,61 +74,34 @@ class ModelFactory:
 
     @property
     def num_features(self):
-        raise NotImplementedError
-
-    def _build_transform(self):
-        if self._use_z:
-            self._transforms.append(XYZFeature(add_x=False, add_y=False, add_z=True))
-
-        if self._use_rgb:
-            self._list_add_to_x += [True]
-            self._feat_names += ["rgb"]
-            self._input_nc_feats += [3]
-            self._delete_feats += [True]
-
-        if self._use_normal:
-            self._list_add_to_x += [True]
-            self._feat_names += ["normal"]
-            self._input_nc_feats += [3]
-            self._delete_feats += [True]
-
-        self._transforms.append(
-            AddFeatsByKeys(
-                list_add_to_x=self._list_add_to_x,
-                feat_names=self._feat_names,
-                input_nc_feats=self._input_nc_feats,
-                delete_feats=self._delete_feats,
-            )
-        )
-
-        return Compose(self._transforms)
+        return self._input_nc
 
     def _build_unet(self):
-        self._modules_lib.build_unet(self)
+        raise NotImplementedError
 
     def _build_encoder(self):
-        self._modules_lib.build_encoder(self)
+        raise NotImplementedError
 
     def _build_decoder(self):
-        self._modules_lib.build_decoder(self)
+        raise NotImplementedError
 
-    def _build(self):
+    def build(self):
         if self._architecture == ModelArchitectures.UNET.value:
-            self._build_unet()
+            return self._build_unet()
         elif self._architecture == ModelArchitectures.ENCODER.value:
-            self._build_encoder()
+            return self._build_encoder()
         elif self._architecture == ModelArchitectures.DECODER.value:
-            self._build_decoder()
+            return self._build_decoder()
         else:
             raise NotImplementedError
 
-    @staticmethod
-    def resolve_model(model_config, num_features, kwargs):
+    def resolve_model(self, model_config):
         """ Parses the model config and evaluates any expression that may contain constants
+        Overrides any argument in the `define_constants` with keywords wrgument to the constructor
         """
         # placeholders to subsitute
         constants = {
-            "FEAT": max(num_features, 0),
+            "FEAT": max(self.num_features, 0),
             "TASK": "segmentation",
         }
 
@@ -169,8 +110,8 @@ class ModelFactory:
             constants.update(dict(model_config.define_constants))
             define_constants = model_config.define_constants
             for key in define_constants.keys():
-                value = kwargs.get(key)
+                value = self.kwargs.get(key)
                 if value:
                     constants[key] = value
 
-        _resolve(model_config, constants)
+        resolve(model_config, constants)
