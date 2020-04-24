@@ -122,9 +122,9 @@ class BaseModel(torch.nn.Module):
         return self.output
 
     def get_input(self):
-        """ returns the last input that was given to the model or ``None``
+        """ returns the last input that was given to the model or raises error
         """
-        return getattr(self, "input", None)
+        return getattr(self, "input")
 
     @abstractmethod
     def forward(self) -> Any:

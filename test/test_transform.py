@@ -27,10 +27,13 @@ from torch_points3d.core.data_transform import (
     PCACompute,
     RandomCoordsFlip,
     RemoveDuplicateCoords,
+    XYZFeature,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
+
+np.random.seed(0)
 
 
 class Testhelpers(unittest.TestCase):
@@ -146,7 +149,7 @@ class Testhelpers(unittest.TestCase):
             d=torch.randn((N, 4)),
             pos=torch.randn((N)),
         )
-        mask = np.random.uniform(0, 1, (4)) > 0.5
+        mask = np.random.uniform(0, 1, (4)) > 0.1
         transform = AddFeatsByKeys(mask, keys)
         data_out = transform(data)
         self.assertEqual(data_out.x.shape[-1], np.sum(values[mask]))
@@ -243,6 +246,28 @@ class Testhelpers(unittest.TestCase):
         pos_out = t(data.clone()).pos
 
         self.assertEqual(np.array_equal(pos_out, pos_target), True)
+
+    def test_XYZFeature(self):
+
+        pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+
+        data = Data(pos=pos)
+        t = XYZFeature()
+
+        data_out = t(data.clone())
+
+        x = data_out.z
+
+        self.assertEqual(np.array_equal(x, pos[:, -1]), True)
+
+        pos += 1
+
+        self.assertEqual(np.array_equal(x, pos[:, -1]), False)
+
+        self.assertIn("z", data_out.keys)
+        self.assertIn("pos", data_out.keys)
+        self.assertNotIn("x", data_out.keys)
+        self.assertNotIn("y", data_out.keys)
 
 
 if __name__ == "__main__":
