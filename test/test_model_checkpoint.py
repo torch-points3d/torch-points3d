@@ -65,7 +65,8 @@ class TestModelCheckpoint(unittest.TestCase):
         model.instantiate_optimizers(self.config)
 
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        metric_func = {"acc": max}
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
 
         # Load checkpoint and initialize model
         model_checkpoint = ModelCheckpoint(self.run_path, self.model_name, "test", self.config, resume=True)
@@ -87,15 +88,16 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint = ModelCheckpoint(self.run_path, self.model_name, "test", run_config=self.config, resume=False)
         model = MockModel()
         optimal_state = model.state.item()
+        metric_func = {"acc": max}
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
         model.state[0] = 2
         mock_metrics = {"current_metrics": {"acc": 0}, "stage": "test", "epoch": 11}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
         mock_metrics = {"current_metrics": {"acc": 10}, "stage": "train", "epoch": 11}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
         mock_metrics = {"current_metrics": {"acc": 15}, "stage": "train", "epoch": 11}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics)
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
 
         ckp = torch.load(os.path.join(self.run_path, self.model_name + ".pt"))
 
