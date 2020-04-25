@@ -16,10 +16,10 @@ def resolve_model(model_config, dataset, tested_task):
     if "define_constants" in model_config.keys():
         constants.update(dict(model_config.define_constants))
 
-    _resolve(model_config, constants)
+    resolve(model_config, constants)
 
 
-def _resolve(obj, constants):
+def resolve(obj, constants):
     """ Resolves expressions and constants in obj.
     returns False if obj is a ListConfig or DictConfig, True is obj is a primative type.
     """
@@ -35,7 +35,7 @@ def _resolve(obj, constants):
     for k in it:
 
         # if obj[k] is a primative type, evalulate it
-        if _resolve(obj[k], constants):
+        if resolve(obj[k], constants):
             if type(obj[k]) is str:
                 try:
                     obj[k] = eval(obj[k], constants)

@@ -1,0 +1,30 @@
+conv_type: "DENSE"
+down_conv:
+    module_name: PointNetMSGDown
+    npoint: [512, 128]
+    radii: [[0.1, 0.2, 0.4], [0.4, 0.8]]
+    nsamples: [[32, 64, 128], [64, 128]]
+    down_conv_nn:
+        [
+            [
+                [FEAT+3, 32, 32, 64],
+                [FEAT+3, 64, 64, 128],
+                [FEAT+3, 64, 96, 128],
+            ],
+            [
+                [64 + 128 + 128+3, 128, 128, 256],
+                [64 + 128 + 128+3, 128, 196, 256],
+            ],
+        ]
+innermost:
+    module_name: GlobalDenseBaseModule
+    nn: [256 * 2 + 3, 256, 512, 1024]
+up_conv:
+    module_name: DenseFPModule
+    up_conv_nn:
+        [
+            [1024 + 256*2, 256, 256],
+            [256 + 128 * 2 + 64, 256, 128],
+            [128 + FEAT, 128, 128],
+        ]
+    skip: True
