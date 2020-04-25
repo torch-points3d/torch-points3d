@@ -407,7 +407,7 @@ class Scannet(InMemoryDataset):
         use_multiprocessing=False,
         process_workers=4,
         types=[".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"],
-        normalize_rgb=True,
+        normalize_rgb=True
     ):
 
 

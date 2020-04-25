@@ -1,0 +1,16 @@
+data:
+    class: scannet.ScannetDataset
+    dataset_name: "scannet_boxes"
+    task: object_detection
+    dataroot: data
+    grid_size: 0.05
+    version: 'v2'
+    use_instance_labels: False
+    use_instance_bboxes: True
+    donotcare_class_ids: []
+    max_num_point: None
+    process_workers: 1
+    
+    pre_transform:
+      - transform: GridSampling
+        lparams: [0.05]

@@ -1,0 +1,26 @@
+models:
+    VoteNet:
+        class: votenet.VoteNet
+        define_constants:
+            in_feat: 64
+            model_type: "pointnet2"
+            num_layers_down: 4
+            num_layers_up: 2
+        backbone:
+            model_type: model_type
+            input_nc: ${data.input_nc}
+            output_nc: 3 + in_feat
+            num_layers_down: num_layers_down
+            num_layers_up: num_layers_upd
+        voting:
+            module_name: VotingModule
+            vote_factor: 1
+            feat_dim: in_feat
+        proposal:
+            module_name: ProposalModule
+            num_class: ${data.num_classes}
+            num_heading_bin: ${data.num_classes}
+            num_size_cluster: ${data.num_classes}
+            mean_size_arr: ${data.num_classes}
+            num_proposal: ${data.num_classes}
+            sampling: "seed_fps"
