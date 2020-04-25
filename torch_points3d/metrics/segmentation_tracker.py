@@ -91,3 +91,14 @@ class SegmentationTracker(BaseTracker):
         metrics["{}_miou".format(self._stage)] = self._miou
         metrics["{}_map".format(self._stage)] = self._map
         return metrics
+
+    @property
+    def metric_func(self):
+        self._metric_func = {
+            "miou": max,
+            "macc": max,
+            "acc": max,
+            "loss": min,
+            "map": max,
+        }  # Those map subsentences to their optimization functions
+        return self._metric_func

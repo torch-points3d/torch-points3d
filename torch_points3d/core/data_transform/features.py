@@ -39,10 +39,10 @@ class Random3AxisRotation(object):
         Rotation angle in degrees on z axis
     """
 
-    def __init__(self, apply_rotation:bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
+    def __init__(self, apply_rotation: bool = True, rot_x: float = None, rot_y: float = None, rot_z: float = None):
         self._apply_rotation = apply_rotation
         if apply_rotation:
-            if  (rot_x is None) and (rot_y is None) and (rot_z is None):
+            if (rot_x is None) and (rot_y is None) and (rot_z is None):
                 raise Exception("At least one rot_ should be defined")
 
         self._rot_x = np.abs(rot_x) if rot_x else 0
@@ -54,15 +54,27 @@ class Random3AxisRotation(object):
     @staticmethod
     def euler_angles_to_rotation_matrix(thetas):
         R_x = torch.tensor(
-            [[1, 0, 0], [0, torch.cos(thetas[0]), -torch.sin(thetas[0])], [0, torch.sin(thetas[0]), torch.cos(thetas[0])]]
+            [
+                [1, 0, 0],
+                [0, torch.cos(thetas[0]), -torch.sin(thetas[0])],
+                [0, torch.sin(thetas[0]), torch.cos(thetas[0])],
+            ]
         )
 
         R_y = torch.tensor(
-            [[torch.cos(thetas[1]), 0, torch.sin(thetas[1])], [0, 1, 0], [-torch.sin(thetas[1]), 0, torch.cos(thetas[1])]]
+            [
+                [torch.cos(thetas[1]), 0, torch.sin(thetas[1])],
+                [0, 1, 0],
+                [-torch.sin(thetas[1]), 0, torch.cos(thetas[1])],
+            ]
         )
 
         R_z = torch.tensor(
-            [[torch.cos(thetas[2]), -torch.sin(thetas[2]), 0], [torch.sin(thetas[2]), torch.cos(thetas[2]), 0], [0, 0, 1]]
+            [
+                [torch.cos(thetas[2]), -torch.sin(thetas[2]), 0],
+                [torch.sin(thetas[2]), torch.cos(thetas[2]), 0],
+                [0, 0, 1],
+            ]
         )
 
         R = torch.mm(R_z, torch.mm(R_y, R_x))
@@ -73,10 +85,10 @@ class Random3AxisRotation(object):
         for axis_ind, deg_angle in enumerate(self._degree_angles):
             if deg_angle > 0:
                 rand_deg_angle = random.random() * deg_angle
-                rand_radian_angle = float(rand_deg_angle * np.pi) / 180.
+                rand_radian_angle = float(rand_deg_angle * np.pi) / 180.0
                 thetas.append(torch.tensor(rand_radian_angle))
             else:
-                thetas.append(torch.tensor(0.))
+                thetas.append(torch.tensor(0.0))
         return self.euler_angles_to_rotation_matrix(thetas)
 
     def __call__(self, data):
@@ -87,7 +99,9 @@ class Random3AxisRotation(object):
         return data
 
     def __repr__(self):
-        return "{}(apply_rotation={}, rot_x={}, rot_y={}, rot_z={})".format(self.__class__.__name__, self._apply_rotation, self._rot_x, self._rot_y, self._rot_z)
+        return "{}(apply_rotation={}, rot_x={}, rot_y={}, rot_z={})".format(
+            self.__class__.__name__, self._apply_rotation, self._rot_x, self._rot_y, self._rot_z
+        )
 
 
 class AddFeatsByKeys(object):
@@ -338,7 +352,7 @@ class XYZFeature(object):
             self._axis.append(1)
         if add_z:
             self._axis.append(2)
-        
+
         self._axis_names = [axis_names[idx_axis] for idx_axis in self._axis]
 
     def __call__(self, data):

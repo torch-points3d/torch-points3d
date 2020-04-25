@@ -55,7 +55,7 @@ class PatchSiamese(BackboneBasedModel):
 
         data = self.input
         for i in range(len(self.down_modules)):
-            data = self.down_modules[i](data, pre_computed=self.pre_computed)
+            data = self.down_modules[i](data, precomputed=self.pre_computed)
 
         x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)

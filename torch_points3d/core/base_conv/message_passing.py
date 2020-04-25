@@ -161,7 +161,7 @@ class FPModule(BaseConvolutionUp):
         up_conv_nn [List[int]] -- list of feature sizes for the uplconv mlp
     """
 
-    def __init__(self, up_k, up_conv_nn, nb_feature=None, *args, **kwargs):
+    def __init__(self, up_k, up_conv_nn, *args, **kwargs):
         super(FPModule, self).__init__(None)
 
         self.k = up_k
