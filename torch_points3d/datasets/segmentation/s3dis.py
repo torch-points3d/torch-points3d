@@ -414,13 +414,13 @@ class S3DISSphere(S3DISOriginalFused):
         super().__init__(root, *args, **kwargs)
 
     def __len__(self):
-        if self._train:
+        if self._sample_per_epoch > 0:
             return self._sample_per_epoch
         else:
             return len(self._test_spheres)
 
     def get(self, idx):
-        if self._train:
+        if self._sample_per_epoch > 0:
             return self._get_random()
         else:
             return self._test_spheres[idx]
@@ -445,7 +445,7 @@ class S3DISSphere(S3DISOriginalFused):
         self._datas = torch.load(path)
         if not isinstance(self._datas, list):
             self._datas = [self._datas]
-        if self._train:
+        if self._sample_per_epoch > 0:
             self._centres_for_sampling = []
             for i, data in enumerate(self._datas):
                 assert not hasattr(
@@ -486,7 +486,7 @@ class S3DISFusedDataset(BaseDataset):
         )
         self.test_dataset = S3DISSphere(
             self._data_path,
-            sample_per_epoch=1000,
+            sample_per_epoch=-1,
             test_area=self.dataset_opt.fold,
             train=False,
             pre_collate_transform=self.pre_collate_transform,
