@@ -1,38 +1,64 @@
 data:
-    task: segmentation
-    class: s3dis.S3DISFusedDataset
-    dataroot: data
-    fold: 5
-    class_weight_method: "sqrt"
-    first_subsampling: 0.04
-    use_category: False
-    sampler: 
-      name: BalancedSampler
-    pre_collate_transform:
-        - transform: PointCloudFusion
-        - transform: GridSampling
-          params:
-              size: ${data.first_subsampling}
-        - transform: ComputeKDTree
-          params:
-              leaf_size: 200
-        - transform: GridSphereSampling
-          params:
-              radius: 50 * ${data.first_subsampling}
-    train_transforms:
-        - transform: FixedPoints
-          lparams: [4096]
-        - transform: RandomNoise
-          params:
-            sigma: 0.01
-        - transform: RandomRotate
-          params:
-              degrees: 180
-              axis: 2
-        - transform: RandomScaleAnisotropic
-          params:
-              scales: [0.95, 1.05]
-    test_transform:
-        - transform: FixedPoints
-          lparams: [4096]
-        
+  task: segmentation
+  class: s3dis.S3DISFusedDataset
+  dataroot: data
+  fold: 5
+  first_subsampling: 0.04
+  use_category: False
+  pre_collate_transform:
+      - transform: PointCloudFusion   # One point cloud per area
+      - transform: SaveOriginalPosId    # Required so that one can recover the original point in the fused point cloud
+      - transform: GridSampling       # Samples on a grid
+        params:
+            size: ${data.first_subsampling}
+  train_transforms:
+    - transform: FixedPoints
+      lparams: [4096]
+    - transform: RandomNoise
+      params:
+        sigma: 0.001
+    - transform: RandomRotate
+      params:
+        degrees: 180
+        axis: 2
+    - transform: RandomScaleAnisotropic
+      params:
+        scales: [0.8, 1.2]
+    - transform: RandomSymmetry
+      params:
+        axis: [True, False, False]
+    - transform: DropFeature
+      params:
+        drop_proba: 0.2
+        feature_name: rgb
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: [rgb, z]
+        delete_feats: [True, True]
+    - transform: Center
+    - transform: ScalePos
+      params:
+        scale: 0.5
+  test_transform:
+    - transform: FixedPoints
+      lparams: [4096]
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: [rgb, z]
+        delete_feats: [True, True]
+    - transform: Center
+    - transform: ScalePos
+      params:
+        scale: 0.5

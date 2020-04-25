@@ -36,9 +36,9 @@ data:
         add_z: True
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True]
+        list_add_to_x: [True, True]
         feat_names: [rgb, z]
-        delete_feats: [True]
+        delete_feats: [True, True]
     - transform: Center
   test_transform:
     - transform: XYZFeature
@@ -48,7 +48,7 @@ data:
         add_z: True
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True]
+        list_add_to_x: [True, True]
         feat_names: [rgb, z]
-        delete_feats: [True]
+        delete_feats: [True, True]
     - transform: Center
