@@ -116,20 +116,20 @@ class FPModule_PD(BaseModule):
         bn_momentum = kwargs.get("bn_momentum", 0.1)
         self.nn = MLP(up_conv_nn, bn_momentum=bn_momentum, bias=False)
 
-    def forward(self, data, precomputed_up=None, **kwargs):
+    def forward(self, data, precomputed=None, **kwargs):
         data, data_skip = data
         batch_out = data_skip.clone()
         x_skip = data_skip.x
 
         has_innermost = len(data.x) == data.batch.max() + 1
 
-        if precomputed_up:
+        if precomputed and not has_innermost:
             if not hasattr(data, "up_idx"):
                 setattr(batch_out, "up_idx", 0)
             else:
                 setattr(batch_out, "up_idx", data.up_idx)
 
-            pre_data = precomputed_up[batch_out.up_idx]
+            pre_data = precomputed[batch_out.up_idx]
             batch_out.up_idx = batch_out.up_idx + 1
         else:
             pre_data = None
