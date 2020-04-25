@@ -69,7 +69,7 @@ class PatchKPConv(BackboneBasedModel):
     def apply_nn(self, input, pre_computed, batch):
         data = input
         for i in range(len(self.down_modules)):
-            data = self.down_modules[i](data, pre_computed=pre_computed)
+            data = self.down_modules[i](data, precomputed=pre_computed)
 
         last_feature = global_mean_pool(data.x, batch)
         output = self.FC_layer(last_feature)

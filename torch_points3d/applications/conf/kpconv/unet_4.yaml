@@ -1,0 +1,77 @@
+class: kpconv.KPConvPaper
+conv_type: "PARTIAL_DENSE"
+define_constants:
+    in_grid_size: 0.02
+    in_feat: 64
+    bn_momentum: 0.2
+down_conv:
+    down_conv_nn:
+        [
+            [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
+            [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
+            [[4*in_feat, 4*in_feat], [4*in_feat, 8*in_feat]],
+            [[8*in_feat, 8*in_feat], [8*in_feat, 16*in_feat]],
+            [[16*in_feat, 16*in_feat], [16*in_feat, 32*in_feat]],
+        ]
+    grid_size:
+        [
+            [in_grid_size, in_grid_size],
+            [2*in_grid_size, 2*in_grid_size],
+            [4*in_grid_size, 4*in_grid_size],
+            [8*in_grid_size, 8*in_grid_size],
+            [16*in_grid_size, 16*in_grid_size],
+        ]
+    prev_grid_size:
+        [
+            [in_grid_size, in_grid_size],
+            [in_grid_size, 2*in_grid_size],
+            [2*in_grid_size, 4*in_grid_size],
+            [4*in_grid_size, 8*in_grid_size],
+            [8*in_grid_size, 16*in_grid_size],
+        ]
+    block_names:
+        [
+            ["SimpleBlock", "ResnetBBlock"],
+            ["ResnetBBlock", "ResnetBBlock"],
+            ["ResnetBBlock", "ResnetBBlock"],
+            ["ResnetBBlock", "ResnetBBlock"],
+            ["ResnetBBlock", "ResnetBBlock"],
+        ]
+    has_bottleneck:
+        [
+            [False, True],
+            [True, True],
+            [True, True],
+            [True, True],
+            [True, True],
+        ]
+    deformable:
+        [
+            [False, False],
+            [False, False],
+            [False, False],
+            [False, False],
+            [False, False],
+        ]
+    max_num_neighbors:
+        [[25, 25], [25, 30], [30, 38], [38, 38], [38, 38]]
+    module_name: KPDualBlock
+up_conv:
+    module_name: FPModule_PD
+    up_conv_nn:
+        [
+            [32*in_feat + 16*in_feat, 8*in_feat],
+            [8*in_feat + 8*in_feat, 4*in_feat],
+            [4*in_feat + 4*in_feat, 2*in_feat],
+            [2*in_feat + 2*in_feat, in_feat],
+        ]
+    skip: True
+    up_k: [1,1,1,1]
+    bn_momentum:
+        [
+            bn_momentum,
+            bn_momentum,
+            bn_momentum,
+            bn_momentum,
+            bn_momentum,
+        ]

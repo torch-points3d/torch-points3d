@@ -114,10 +114,13 @@ class GridSampling:
 
         skip_keys = []
         if self._quantize_coords:
-            data.pos = coords[unique_pos_indices]
             skip_keys.append("pos")
 
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)
+
+        if self._quantize_coords:
+            data.pos = coords[unique_pos_indices]
+
         return data
 
     def __call__(self, data):
