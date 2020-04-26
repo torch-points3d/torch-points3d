@@ -263,7 +263,7 @@ This can happen for the following libraries:
 
 An easy way to fix this is to run the following command with the virtual env activated:
 ```
-pip uninstall torch-scatter torch-sparse torch-cluster torch-points -y
+pip uninstall torch-scatter torch-sparse torch-cluster torch-points-kernels -y
 rm -rf ~/.cache/pip
 poetry install
 ```
