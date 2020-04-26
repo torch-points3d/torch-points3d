@@ -1,5 +1,5 @@
 models:
-    VoteNet:
+    VoteNetPaper:
         class: votenet.VoteNetModel
         conv_type: "DENSE"
         define_constants:
@@ -7,6 +7,7 @@ models:
             num_layers_down: 4
             num_layers_up: 2
             num_proposal: 256
+            num_features: 256
         backbone:
             model_type: "PointNet2"
             down_conv:
@@ -14,25 +15,31 @@ models:
                 npoint: [2048, 1024, 512, 256]
                 radii: [[0.2], [0.4], [0.8], [1.2]]
                 nsamples: [[64], [32], [16], [16]]
-                down_conv_nn: [[[FEAT + 3, 64, 64, 128]], 
-                               [[128 + 3, 128, 128, 256]], 
-                               [[256 + 3, 128, 128, 256]], 
-                               [[256 + 3, 128, 128, 256]]]
+                down_conv_nn: [[[FEAT + 3, in_feat, in_feat, in_feat * 2]], 
+                               [[in_feat * 2 + 3, in_feat * 2, in_feat * 2, in_feat * 4]], 
+                               [[in_feat * 4 + 3, in_feat * 2, in_feat * 2, in_feat * 4]], 
+                               [[in_feat * 4 + 3, in_feat * 2, in_feat * 2, in_feat * 4]]]
                 save_sampling_id: [False, True, False, False]
             up_conv:
                 module_name: DenseFPModule
                 up_conv_nn:
                     [
-                        [256 + 256, 256, 256],
-                        [256 + 256, 256, num_proposal]
+                        [in_feat * 4 + in_feat * 4, in_feat * 4, in_feat * 4],
+                        [in_feat * 4 + in_feat * 4, in_feat * 4, num_features]
                     ]
                 skip: True
         voting:
             module_name: VotingModule
             vote_factor: 1
-            feat_dim: num_proposal
+            feat_dim: num_features
         proposal:
             module_name: ProposalModule
+            vote_aggregation:
+                module_name: PointNetMSGDown
+                npoint: [num_proposal]
+                radii: [0.3]
+                nsample: [16]
+                down_conv_nn: [[num_features, in_feat * 2, in_feat * 2, in_feat * 2]]
             num_class: ${data.num_classes}
             num_heading_bin: 1
             num_size_cluster: ${data.num_classes}

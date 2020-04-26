@@ -10,11 +10,8 @@ import numpy as np
 import os
 import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(os.path.join(ROOT_DIR, "pointnet2"))
-from pointnet2_modules import PointnetSAModuleVotes
-import pointnet2_utils
+from torch_points3d.modules.pointnet2 import PointNetMSGDown
+import torch_points_kernels as tp
 
 
 def decode_scores(net, end_points, num_class, num_heading_bin, num_size_cluster, mean_size_arr):
@@ -58,7 +55,15 @@ def decode_scores(net, end_points, num_class, num_heading_bin, num_size_cluster,
 
 class ProposalModule(nn.Module):
     def __init__(
-        self, num_class, num_heading_bin, num_size_cluster, mean_size_arr, num_proposal, sampling, seed_feat_dim=256
+        self,
+        num_class,
+        vote_aggregation_config,
+        num_heading_bin,
+        num_size_cluster,
+        mean_size_arr,
+        num_proposal,
+        sampling,
+        seed_feat_dim=256,
     ):
         super().__init__()
 
@@ -70,15 +75,14 @@ class ProposalModule(nn.Module):
         self.sampling = sampling
         self.seed_feat_dim = seed_feat_dim
 
-        # Vote clustering
-        self.vote_aggregation = PointnetSAModuleVotes(
-            npoint=self.num_proposal,
-            radius=0.3,
-            nsample=16,
-            mlp=[self.seed_feat_dim, 128, 128, 128],
-            use_xyz=True,
-            normalize_xyz=True,
-        )
+        assert (
+            vote_aggregation_config.module_name == "PointNetMSGDown"
+        ), "Proposal Module support only PointNet2 for now"
+        params = vote_aggregation_config.to_container()
+        import pdb
+
+        pdb.set_trace()
+        self.vote_aggregation = PointNetMSGDown(**params)
 
         # Object proposal/detection
         # Objectness scores (2), center residual (3),
@@ -89,7 +93,7 @@ class ProposalModule(nn.Module):
         self.bn1 = torch.nn.BatchNorm1d(128)
         self.bn2 = torch.nn.BatchNorm1d(128)
 
-    def forward(self, xyz, features, end_points):
+    def forward(self, data_votes):
         """
         Args:
             xyz: (B,K,3)
@@ -104,7 +108,7 @@ class ProposalModule(nn.Module):
         elif self.sampling == "seed_fps":
             # FPS on seed and choose the votes corresponding to the seeds
             # This gets us a slightly better coverage of *object* votes than vote_fps (which tends to get more cluster votes)
-            sample_inds = pointnet2_utils.furthest_point_sample(end_points["seed_xyz"], self.num_proposal)
+            sample_inds = tp.furthest_point_sample(end_points["seed_xyz"], self.num_proposal)
             xyz, features, _ = self.vote_aggregation(xyz, features, sample_inds)
         elif self.sampling == "random":
             # Random sampling from the votes

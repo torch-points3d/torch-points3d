@@ -33,6 +33,19 @@ class VoteNetModel(BaseModel):
         voting_cls = getattr(votenet_module, voting_option.module_name)
         self.voting_module = voting_cls(vote_factor=voting_option.vote_factor, seed_feature_dim=voting_option.feat_dim)
 
+        # 3 - CREATE PROPOSAL MODULE
+        proposal_option = option.proposal
+        proposal_cls = getattr(votenet_module, proposal_option.module_name)
+        self.proposal_cls_module = proposal_cls(
+            num_class=proposal_option.num_class,
+            vote_aggregation_config=proposal_option.vote_aggregation,
+            num_heading_bin=proposal_option.num_heading_bin,
+            num_size_cluster=proposal_option.num_size_cluster,
+            mean_size_arr=proposal_option.mean_size_arr,
+            num_proposal=proposal_option.num_proposal,
+            sampling=proposal_option.sampling,
+        )
+
     def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -46,7 +59,8 @@ class VoteNetModel(BaseModel):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
 
         data_features = self.backbone_model.forward()
-        self.voting_module(data_features)
+        data_votes = self.voting_module(data_features)
+        self.proposal_cls_module(data_votes)
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
