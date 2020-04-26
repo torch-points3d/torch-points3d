@@ -1,5 +1,6 @@
 from torch_geometric.data import InMemoryDataset
 from torch_points3d.datasets.segmentation.scannet import *
+from torch_points3d.metrics.object_detection_tracker import ObjectDetectionTracker
 
 class ScannetObjectDetection(Scannet):
 
@@ -127,6 +128,6 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(
-            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
+        return ObjectDetectionTracker(
+            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log
         )

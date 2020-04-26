@@ -6,6 +6,7 @@ from torch_points3d.utils.colors import COLORS
 
 class Coloredtqdm(tqdm):
     def set_postfix(self, ordered_dict=None, refresh=True, color=None, round=4, **kwargs):
+
         postfix = std._OrderedDict([] if ordered_dict is None else ordered_dict)
 
         for key in sorted(kwargs.keys()):

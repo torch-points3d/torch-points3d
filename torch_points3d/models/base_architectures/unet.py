@@ -353,11 +353,17 @@ class UnwrappedUnetBasedModel(BaseModel):
             self._init_from_compact_format(opt, model_type, dataset, modules_lib)
 
     def _collect_sampling_ids(self, list_data):
+        def extract_matching_key(keys, start_token):
+            for key in keys:
+                if key.startswith(start_token):
+                    return key
+            return None
+
         d = {}
         if self.save_sampling_id:
             for idx, data in enumerate(list_data):
-                if self.save_sampling_id[idx]:
-                    key = "sampling_id_{}".format(idx)
+                key = extract_matching_key(data.keys, "sampling_id")
+                if key:
                     d[key] = getattr(data, key)
         return d
 

@@ -12,6 +12,7 @@ data:
     process_workers: 1
     input_nc: 3 + 1
     num_classes: 18
+    num_points: 20000
     
     pre_transform:
       - transform: GridSampling
@@ -19,7 +20,7 @@ data:
 
     train_transform:
       - transform: FixedPoints
-        lparams: [2048] 
+        lparams: [20000] 
       - transform: XYZFeature
         params:
           add_x: False
@@ -35,12 +36,12 @@ data:
 
     test_transform:
       - transform: FixedPoints
-        lparams: [2048]   
+        lparams: [20000] 
       - transform: XYZFeature
         params:
           add_x: False
           add_y: False
-          add_z: True
+          add_z: True  
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True, True]

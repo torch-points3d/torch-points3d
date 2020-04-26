@@ -19,7 +19,7 @@ models:
                                [[in_feat * 2 + 3, in_feat * 2, in_feat * 2, in_feat * 4]], 
                                [[in_feat * 4 + 3, in_feat * 2, in_feat * 2, in_feat * 4]], 
                                [[in_feat * 4 + 3, in_feat * 2, in_feat * 2, in_feat * 4]]]
-                save_sampling_id: [False, True, False, False]
+                save_sampling_id: [True, False, False, False]
             up_conv:
                 module_name: DenseFPModule
                 up_conv_nn:

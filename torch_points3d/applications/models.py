@@ -1,3 +1,3 @@
-from .kpconv import *
-from .pointnet2 import *
-from .rsconv import *
+from .kpconv import KPConv
+from .pointnet2 import PointNet2
+from .rsconv import RSConv
