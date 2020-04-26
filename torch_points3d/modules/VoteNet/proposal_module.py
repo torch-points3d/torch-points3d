@@ -7,8 +7,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import os
-import sys
 
 from torch_points3d.modules.pointnet2 import PointNetMSGDown
 import torch_points_kernels as tp
@@ -112,16 +110,3 @@ class ProposalModule(nn.Module):
         x = self.conv3(x)  # (batch_size, 2+3+num_heading_bin*2+num_size_cluster*4, num_proposal)
 
         return decode_scores(data, x, self.num_class, self.num_heading_bin, self.num_size_cluster, self.mean_size_arr)
-
-
-if __name__ == "__main__":
-    sys.path.append(os.path.join(ROOT_DIR, "sunrgbd"))
-    from sunrgbd_detection_dataset import SunrgbdDetectionVotesDataset, DC
-
-    net = ProposalModule(
-        DC.num_class, DC.num_heading_bin, DC.num_size_cluster, DC.mean_size_arr, 128, "seed_fps"
-    ).cuda()
-    end_points = {"seed_xyz": torch.rand(8, 1024, 3).cuda()}
-    out = net(torch.rand(8, 1024, 3).cuda(), torch.rand(8, 256, 1024).cuda(), end_points)
-    for key in out:
-        print(key, out[key].shape)

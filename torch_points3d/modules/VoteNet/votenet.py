@@ -10,17 +10,9 @@ Author: Charles R. Qi and Or Litany
 
 import torch
 import torch.nn as nn
-import numpy as np
-import sys
-import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(BASE_DIR)
-from backbone_module import Pointnet2Backbone
 from voting_module import VotingModule
 from proposal_module import ProposalModule
-from dump_helper import dump_results
 from loss_helper import get_loss
 
 
@@ -111,39 +103,3 @@ class VoteNet(nn.Module):
         end_points = self.pnet(xyz, features, end_points)
 
         return end_points
-
-
-if __name__ == "__main__":
-    sys.path.append(os.path.join(ROOT_DIR, "sunrgbd"))
-    from sunrgbd_detection_dataset import SunrgbdDetectionVotesDataset, DC
-    from loss_helper import get_loss
-
-    # Define model
-    model = VoteNet(10, 12, 10, np.random.random((10, 3))).cuda()
-
-    try:
-        # Define dataset
-        TRAIN_DATASET = SunrgbdDetectionVotesDataset("train", num_points=20000, use_v1=True)
-
-        # Model forward pass
-        sample = TRAIN_DATASET[5]
-        inputs = {"point_clouds": torch.from_numpy(sample["point_clouds"]).unsqueeze(0).cuda()}
-    except:
-        print("Dataset has not been prepared. Use a random sample.")
-        inputs = {"point_clouds": torch.rand((20000, 3)).unsqueeze(0).cuda()}
-
-    end_points = model(inputs)
-    for key in end_points:
-        print(key, end_points[key])
-
-    try:
-        # Compute loss
-        for key in sample:
-            end_points[key] = torch.from_numpy(sample[key]).unsqueeze(0).cuda()
-        loss, end_points = get_loss(end_points, DC)
-        print("loss", loss)
-        end_points["point_clouds"] = inputs["point_clouds"]
-        end_points["pred_mask"] = np.ones((1, 128))
-        dump_results(end_points, "tmp", DC)
-    except:
-        print("Dataset has not been prepared. Skip loss and dump.")
