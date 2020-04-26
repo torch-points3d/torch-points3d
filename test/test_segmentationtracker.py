@@ -1,17 +1,27 @@
 import unittest
-import numpy as np
 import os
+import torch
 import sys
+from torch_geometric.data import Data
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+from torch_points3d.metrics.s3dis_tracker import S3DISTracker
 
 
 class MockDataset:
+    INV_OBJECT_LABEL = {0: "first", 1: "wall", 2: "not", 3: "here", 4: "hoy"}
+    pos = torch.tensor([[1, 0, 0], [2, 0, 0], [3, 0, 0], [-1, 0, 0]]).float()
+    test_label = torch.tensor([1, 1, 0, 0])
+
     def __init__(self):
         self.num_classes = 2
+
+    @property
+    def test_data(self):
+        return Data(pos=self.pos, y=self.test_label)
 
 
 class MockModel:
@@ -24,16 +34,19 @@ class MockModel:
             {"loss_1": 1, "loss_2": 2},
         ]
         self.outputs = [
-            np.asarray([[0, 1], [0, 1]]),
-            np.asarray([[1, 0], [1, 0]]),
-            np.asarray([[1, 0], [1, 0]]),
-            np.asarray([[1, 0], [1, 0], [1, 0]]),
+            torch.tensor([[0, 1], [0, 1]]),
+            torch.tensor([[1, 0], [1, 0]]),
+            torch.tensor([[1, 0], [1, 0]]),
+            torch.tensor([[1, 0], [1, 0], [1, 0]]),
         ]
-        self.labels = [np.asarray([1, 1]), np.asarray([1, 1]), np.asarray([1, 1]), np.asarray([0, 0, -100])]
-        self.batch_idx = [np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0, 0, 1])]
+        self.labels = [torch.tensor([1, 1]), torch.tensor([1, 1]), torch.tensor([1, 1]), torch.tensor([0, 0, -100])]
+        self.batch_idx = [torch.tensor([0, 1]), torch.tensor([0, 1]), torch.tensor([0, 1]), torch.tensor([0, 0, 1])]
+
+    def get_input(self):
+        return Data(pos=MockDataset.pos[:2, :], origin_id=torch.tensor([0, 1]))
 
     def get_output(self):
-        return self.outputs[self.iter]
+        return self.outputs[self.iter].float()
 
     def get_labels(self):
         return self.labels[self.iter]
@@ -43,6 +56,10 @@ class MockModel:
 
     def get_batch_idx(self):
         return self.batch_idx[self.iter]
+
+    @property
+    def device(self):
+        return "cpu"
 
 
 class TestSegmentationTracker(unittest.TestCase):
@@ -88,6 +105,19 @@ class TestSegmentationTracker(unittest.TestCase):
         tracker.finalise()
         with self.assertRaises(RuntimeError):
             tracker.track(model)
+
+
+class TestS3DISTarcker(unittest.TestCase):
+    def test_fullres(self):
+        tracker = S3DISTracker(MockDataset())
+        tracker.reset("test")
+        model = MockModel()
+        tracker.track(model, full_res=True)
+        tracker.track(model, full_res=True)
+        tracker.finalise(full_res=True)
+        metrics = tracker.get_metrics(verbose=True)
+        self.assertAlmostEqual(metrics["test_full_vote_miou"], 25, 5)
+        self.assertAlmostEqual(metrics["test_vote_miou"], 100, 5)
 
 
 if __name__ == "__main__":

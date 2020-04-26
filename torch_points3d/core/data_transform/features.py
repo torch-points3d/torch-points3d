@@ -19,6 +19,7 @@ from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
+from torch_points3d.core.data_transform.transforms import euler_angles_to_rotation_matrix
 
 
 class Random3AxisRotation(object):
@@ -51,35 +52,6 @@ class Random3AxisRotation(object):
 
         self._degree_angles = [self._rot_x, self._rot_y, self._rot_z]
 
-    @staticmethod
-    def euler_angles_to_rotation_matrix(thetas):
-        R_x = torch.tensor(
-            [
-                [1, 0, 0],
-                [0, torch.cos(thetas[0]), -torch.sin(thetas[0])],
-                [0, torch.sin(thetas[0]), torch.cos(thetas[0])],
-            ]
-        )
-
-        R_y = torch.tensor(
-            [
-                [torch.cos(thetas[1]), 0, torch.sin(thetas[1])],
-                [0, 1, 0],
-                [-torch.sin(thetas[1]), 0, torch.cos(thetas[1])],
-            ]
-        )
-
-        R_z = torch.tensor(
-            [
-                [torch.cos(thetas[2]), -torch.sin(thetas[2]), 0],
-                [torch.sin(thetas[2]), torch.cos(thetas[2]), 0],
-                [0, 0, 1],
-            ]
-        )
-
-        R = torch.mm(R_z, torch.mm(R_y, R_x))
-        return R
-
     def generate_random_rotation_matrix(self):
         thetas = []
         for axis_ind, deg_angle in enumerate(self._degree_angles):
@@ -89,7 +61,7 @@ class Random3AxisRotation(object):
                 thetas.append(torch.tensor(rand_radian_angle))
             else:
                 thetas.append(torch.tensor(0.0))
-        return self.euler_angles_to_rotation_matrix(thetas)
+        return euler_angles_to_rotation_matrix(thetas)
 
     def __call__(self, data):
         if self._apply_rotation:
