@@ -51,7 +51,7 @@ where each folder contains the dataset related to each task.
 * **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
 * **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
 * **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
-
+* **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi *et al.*: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664)
 
 ## Available datasets
 ### Segmentation
@@ -74,9 +74,6 @@ where each folder contains the dataset related to each task.
 
 ### Classification
 * **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu *et al.*: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
-
-### Object Detection
-* **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi *et al.*: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664)
 
 ## Getting started
 ### Requirements:
