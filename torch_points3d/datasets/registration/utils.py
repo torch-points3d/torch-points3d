@@ -302,9 +302,9 @@ def tracked_matches(data_s, data_t, pair):
     pair_np = pair.numpy()
     mask_s = np.isin(pair_np[:, 0], data_s.origin_id.numpy())
     mask_t = np.isin(pair_np[:, 1], data_t.origin_id.numpy())
-    print(data_s.origin_id.shape)
-    print(data_s.pos.shape)
-    print(data_s.xyz.shape)
+    # print(data_s.origin_id.shape)
+    # print(data_s.pos.shape)
+    # print(data_s.xyz.shape)
     mask = np.logical_and(mask_s, mask_t)
     filtered_pair = pair_np[mask]
 

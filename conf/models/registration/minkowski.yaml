@@ -2,7 +2,7 @@ models:
     MinkUNet_Fragment:
         class: minkowski.MinkowskiFragment
         conv_type: "SPARSE"
-        mode: "match"
+        loss_mode: "match"
         down_conv:
             module_name: SimpleBlockDown
             dimension: 3
@@ -46,7 +46,7 @@ models:
         class: minkowski.Minkowski_Baseline_Model_Fragment
         conv_type: "SPARSE"
         model_name: "Res16UNet14A"
-        mode: "match"
+        loss_mode: "match"
         feature_dimension: 1
         conv1_kernel_size: 5
         out_channels: 32
@@ -64,7 +64,7 @@ models:
         class: minkowski.Minkowski_Baseline_Model_Fragment
         conv_type: "SPARSE"
         model_name: "ResUNetBN2C"
-        mode: "match"
+        loss_mode: "match"
         in_channels: 1
         conv1_kernel_size: 5
         out_channels: 32

@@ -11,9 +11,9 @@ from torch_points3d.core.common_modules import FastBatchNorm1d
 log = logging.getLogger(__name__)
 
 
-class BaseMinkowski(UnwrappedUnetBasedModel):
+class BaseMinkowski(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
-        super(BaseMinkowski, self).__init__(self, option, model_type, dataset, modules)
+        super(BaseMinkowski, self).__init__(option)
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
         self.loss_names = ["loss_reg", "loss"]
@@ -21,7 +21,7 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
         # Last Layer
-        if hasattr(option, mlp_cls):
+        if option.mlp_cls is not None:
             last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
             self.FC_layer = Sequential()
@@ -106,7 +106,7 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
 
     def get_ind(self):
         if self.match is not None:
-            return self.ind, self.ind_target
+            return self.match[:, 0], self.match[:, 1]
         else:
             return None
 
@@ -127,7 +127,7 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
 
 class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
     def __init__(self, option, model_type, dataset, modules):
-        super(Minkowski_Baseline_Model_Fragment, self).__init__(self, option, model_type, dataset, modules)
+        super(Minkowski_Baseline_Model_Fragment, self).__init__(option, model_type, dataset, modules)
 
         self.model = initialize_minkowski_unet(
             option.model_name, dataset.feature_dimension, option.out_channels, option.D
@@ -142,7 +142,10 @@ class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
             return output
 
 
-class MinkowskiFragment(BaseMinkowski):
+class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
+    def __init__(self, option, model_type, dataset, modules):
+        super(MinkowskiFragment, self).__init__(option, model_type, dataset, modules)
+
     def apply_nn(self, input):
         x = input
         stack_down = []
