@@ -88,3 +88,8 @@ class ShapenetPartTracker(BaseTracker):
         if verbose:
             metrics["{}_Imiou_per_class".format(self._stage)] = self._miou_per_class
         return metrics
+
+    @property
+    def metric_func(self):
+        self._metric_func = {"Cmiou": max, "Imiou": max, "loss": min}
+        return self._metric_func

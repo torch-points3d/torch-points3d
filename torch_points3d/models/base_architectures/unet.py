@@ -127,8 +127,6 @@ class UnetBasedModel(BaseModel):
 
         index -= 1
         args_up, args_down = self._fetch_arguments_up_and_down(opt, index)
-        args_down["nb_feature"] = dataset.feature_dimension
-        args_up["nb_feature"] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(
             args_up=args_up, args_down=args_down, submodule=unet_block, outermost=True
         )  # add the outermost layer
@@ -174,8 +172,6 @@ class UnetBasedModel(BaseModel):
         down_layer = dict(down_conv_layers[0])
         down_layer["down_conv_cls"] = getattr(modules_lib, down_layer["module_name"])
         up_layer["up_conv_cls"] = getattr(modules_lib, up_layer["module_name"])
-        up_layer["nb_feature"] = dataset.feature_dimension
-        down_layer["nb_feature"] = dataset.feature_dimension
         self.model = UnetSkipConnectionBlock(
             args_up=up_layer, args_down=down_layer, submodule=unet_block, outermost=True
         )
@@ -473,3 +469,30 @@ class UnwrappedUnetBasedModel(BaseModel):
                 break
 
         return flattenedOpts
+
+    def forward(self, data, precomputed_down=None, precomputed_up=None):
+        """ This method does a forward on the Unet assuming symmetrical skip connections
+
+        Parameters
+        ----------
+        data: torch.geometric.Data
+            Data object that contains all info required by the modules
+        precomputed_down: torch.geometric.Data
+            Precomputed data that will be passed to the down convs
+        precomputed_up: torch.geometric.Data
+            Precomputed data that will be passed to the up convs
+        """
+        stack_down = []
+        data = self.input
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data, precomputed=precomputed_down)
+            stack_down.append(data)
+        data = self.down_modules[-1](data, precomputed=precomputed_down)
+
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            data = self.inner_modules[0](data)
+
+        for i in range(len(self.up_modules)):
+            data = self.up_modules[i]((data, stack_down.pop()), precomputed=precomputed_up)
+        return data
