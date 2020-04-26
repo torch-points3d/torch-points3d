@@ -320,6 +320,18 @@ class RandomNoise(object):
         return "{}(sigma={}, clip={})".format(self.__class__.__name__, self.sigma, self.clip)
 
 
+class ScalePos:
+    def __init__(self, scale=None):
+        self.scale = scale
+
+    def __call__(self, data):
+        data.pos *= self.scale
+        return data
+
+    def __repr__(self):
+        return "{}(scale={})".format(self.__class__.__name__, self.scale)
+
+
 class RandomScaleAnisotropic:
     r""" Scales node positions by a randomly sampled factor ``s1, s2, s3`` within a
     given interval, *e.g.*, resulting in the transformation matrix

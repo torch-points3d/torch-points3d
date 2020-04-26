@@ -74,6 +74,7 @@ def train_epoch(
                 if i > getattr(debugging, "num_batches", 50):
                     return 0
 
+    tracker.finalise()
     metrics = tracker.publish(epoch)
     checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
     log.info("Learning rate = %f" % model.learning_rate)
@@ -111,6 +112,7 @@ def eval_epoch(
             if early_break:
                 break
 
+    tracker.finalise()
     metrics = tracker.publish(epoch)
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
@@ -150,6 +152,7 @@ def test_epoch(
                 if early_break:
                     break
 
+        tracker.finalise()
         metrics = tracker.publish(epoch)
         tracker.print_summary()
         checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
