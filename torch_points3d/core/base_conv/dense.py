@@ -66,7 +66,10 @@ class BaseDenseConvolutionDown(BaseConvolution):
             pos -- Previous positions [B, N, 3]
         """
         x, pos = data.x, data.pos
-        idx = self.sampler(pos)
+        if "idx" in data:
+            idx = data.idx
+        else:
+            idx = self.sampler(pos)
         idx = idx.unsqueeze(-1).repeat(1, 1, pos.shape[-1]).long()
         new_pos = pos.gather(1, idx)
 

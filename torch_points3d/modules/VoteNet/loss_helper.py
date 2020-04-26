@@ -6,13 +6,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import sys
-import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(BASE_DIR)
-sys.path.append(os.path.join(ROOT_DIR, "utils"))
-from nn_distance import nn_distance, huber_loss
 
 FAR_THRESHOLD = 0.6
 NEAR_THRESHOLD = 0.3
@@ -20,7 +13,57 @@ GT_VOTE_FACTOR = 3  # number of GT votes per point
 OBJECTNESS_CLS_WEIGHTS = [0.2, 0.8]  # put larger weights on positive objectness
 
 
-def compute_vote_loss(end_points):
+def huber_loss(error, delta=1.0):
+    """
+    Args:
+        error: Torch tensor (d1,d2,...,dk)
+    Returns:
+        loss: Torch tensor (d1,d2,...,dk)
+
+    x = error = pred - gt or dist(pred,gt)
+    0.5 * |x|^2                 if |x|<=d
+    0.5 * d^2 + d * (|x|-d)     if |x|>d
+    Ref: https://github.com/charlesq34/frustum-pointnets/blob/master/models/model_util.py
+    """
+    abs_error = torch.abs(error)
+    # quadratic = torch.min(abs_error, torch.FloatTensor([delta]))
+    quadratic = torch.clamp(abs_error, max=delta)
+    linear = abs_error - quadratic
+    loss = 0.5 * quadratic ** 2 + delta * linear
+    return loss
+
+
+def nn_distance(pc1, pc2, l1smooth=False, delta=1.0, l1=False):
+    """
+    Input:
+        pc1: (B,N,C) torch tensor
+        pc2: (B,M,C) torch tensor
+        l1smooth: bool, whether to use l1smooth loss
+        delta: scalar, the delta used in l1smooth loss
+    Output:
+        dist1: (B,N) torch float32 tensor
+        idx1: (B,N) torch int64 tensor
+        dist2: (B,M) torch float32 tensor
+        idx2: (B,M) torch int64 tensor
+    """
+    N = pc1.shape[1]
+    M = pc2.shape[1]
+    pc1_expand_tile = pc1.unsqueeze(2).repeat(1, 1, M, 1)
+    pc2_expand_tile = pc2.unsqueeze(1).repeat(1, N, 1, 1)
+    pc_diff = pc1_expand_tile - pc2_expand_tile
+
+    if l1smooth:
+        pc_dist = torch.sum(huber_loss(pc_diff, delta), dim=-1)  # (B,N,M)
+    elif l1:
+        pc_dist = torch.sum(torch.abs(pc_diff), dim=-1)  # (B,N,M)
+    else:
+        pc_dist = torch.sum(pc_diff ** 2, dim=-1)  # (B,N,M)
+    dist1, idx1 = torch.min(pc_dist, dim=2)  # (B,N)
+    dist2, idx2 = torch.min(pc_dist, dim=1)  # (B,M)
+    return dist1, idx1, dist2, idx2
+
+
+def compute_vote_loss(input, output):
     """ Compute vote loss: Match predicted votes to GT votes.
 
     Args:
@@ -42,20 +85,23 @@ def compute_vote_loss(end_points):
     """
 
     # Load ground truth votes and assign them to seed points
-    batch_size = end_points["seed_xyz"].shape[0]
-    num_seed = end_points["seed_xyz"].shape[1]  # B,num_seed,3
-    vote_xyz = end_points["vote_xyz"]  # B,num_seed*vote_factor,3
-    seed_inds = end_points["seed_inds"].long()  # B,num_seed in [0,num_points-1]
+    batch_size = output["seed_pos"].shape[0]
+    num_seed = output["seed_pos"].shape[1]  # B,num_seed,3
+    vote_xyz = output["vote_xyz"]  # B,num_seed*vote_factor,3
+    seed_inds = output["seed_inds"].long()  # B,num_seed in [0,num_points-1]
 
     # Get groundtruth votes for the seed points
     # vote_label_mask: Use gather to select B,num_seed from B,num_point
     #   non-object point has no GT vote mask = 0, object point has mask = 1
     # vote_label: Use gather to select B,num_seed,9 from B,num_point,9
     #   with inds in shape B,num_seed,9 and 9 = GT_VOTE_FACTOR * 3
-    seed_gt_votes_mask = torch.gather(end_points["vote_label_mask"], 1, seed_inds)
+    import pdb
+
+    pdb.set_trace()
+    seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 1, seed_inds)
     seed_inds_expand = seed_inds.view(batch_size, num_seed, 1).repeat(1, 1, 3 * GT_VOTE_FACTOR)
-    seed_gt_votes = torch.gather(end_points["vote_label"], 1, seed_inds_expand)
-    seed_gt_votes += end_points["seed_xyz"].repeat(1, 1, 3)
+    seed_gt_votes = torch.gather(input["vote_label"], 1, seed_inds_expand)
+    seed_gt_votes += output["seed_pos"].repeat(1, 1, 3)
 
     # Compute the min of min of distance
     vote_xyz_reshape = vote_xyz.view(
@@ -221,32 +267,11 @@ def compute_box_and_sem_cls_loss(end_points, config):
     )
 
 
-def get_loss(end_points, config):
-    """ Loss functions
-
-    Args:
-        end_points: dict
-            {
-                seed_xyz, seed_inds, vote_xyz,
-                center,
-                heading_scores, heading_residuals_normalized,
-                size_scores, size_residuals_normalized,
-                sem_cls_scores, #seed_logits,#
-                center_label,
-                heading_class_label, heading_residual_label,
-                size_class_label, size_residual_label,
-                sem_cls_label,
-                box_label_mask,
-                vote_label, vote_label_mask
-            }
-        config: dataset config instance
-    Returns:
-        loss: pytorch scalar tensor
-        end_points: dict
-    """
+def get_loss(inputs, outputs, loss_params):
 
     # Vote loss
-    vote_loss = compute_vote_loss(end_points)
+    vote_loss = compute_vote_loss(inputs, outputs)
+    return vote_loss
     end_points["vote_loss"] = vote_loss
 
     # Obj loss

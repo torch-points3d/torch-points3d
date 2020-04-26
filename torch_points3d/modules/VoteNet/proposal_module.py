@@ -14,43 +14,41 @@ from torch_points3d.modules.pointnet2 import PointNetMSGDown
 import torch_points_kernels as tp
 
 
-def decode_scores(net, end_points, num_class, num_heading_bin, num_size_cluster, mean_size_arr):
-    net_transposed = net.transpose(2, 1)  # (batch_size, 1024, ..)
-    batch_size = net_transposed.shape[0]
-    num_proposal = net_transposed.shape[1]
+def decode_scores(data, x, num_class, num_heading_bin, num_size_cluster, mean_size_arr):
+    x_transposed = x.transpose(2, 1)  # (batch_size, 1024, ..)
+    batch_size = x_transposed.shape[0]
+    num_proposal = x_transposed.shape[1]
 
-    objectness_scores = net_transposed[:, :, 0:2]
-    end_points["objectness_scores"] = objectness_scores
+    objectness_scores = x_transposed[:, :, 0:2]
+    data.objectness_scores = objectness_scores
 
-    base_xyz = end_points["aggregated_vote_xyz"]  # (batch_size, num_proposal, 3)
-    center = base_xyz + net_transposed[:, :, 2:5]  # (batch_size, num_proposal, 3)
-    end_points["center"] = center
+    base_xyz = data.aggregated_vote_xyz  # (batch_size, num_proposal, 3)
+    center = base_xyz + x_transposed[:, :, 2:5]  # (batch_size, num_proposal, 3)
+    data.center = center
 
-    heading_scores = net_transposed[:, :, 5 : 5 + num_heading_bin]
-    heading_residuals_normalized = net_transposed[:, :, 5 + num_heading_bin : 5 + num_heading_bin * 2]
-    end_points["heading_scores"] = heading_scores  # Bxnum_proposalxnum_heading_bin
-    end_points[
-        "heading_residuals_normalized"
-    ] = heading_residuals_normalized  # Bxnum_proposalxnum_heading_bin (should be -1 to 1)
-    end_points["heading_residuals"] = heading_residuals_normalized * (
-        np.pi / num_heading_bin
-    )  # Bxnum_proposalxnum_heading_bin
+    heading_scores = x_transposed[:, :, 5 : 5 + num_heading_bin]
+    heading_residuals_normalized = x_transposed[:, :, 5 + num_heading_bin : 5 + num_heading_bin * 2]
+    data.heading_scores = heading_scores  # Bxnum_proposalxnum_heading_bin
+    data.heading_residuals_normalized = (
+        heading_residuals_normalized  # Bxnum_proposalxnum_heading_bin (should be -1 to 1)
+    )
+    data.heading_residuals = heading_residuals_normalized * (np.pi / num_heading_bin)  # Bxnum_proposalxnum_heading_bin
 
-    size_scores = net_transposed[:, :, 5 + num_heading_bin * 2 : 5 + num_heading_bin * 2 + num_size_cluster]
-    size_residuals_normalized = net_transposed[
+    size_scores = x_transposed[:, :, 5 + num_heading_bin * 2 : 5 + num_heading_bin * 2 + num_size_cluster]
+    size_residuals_normalized = x_transposed[
         :, :, 5 + num_heading_bin * 2 + num_size_cluster : 5 + num_heading_bin * 2 + num_size_cluster * 4
     ].view(
         [batch_size, num_proposal, num_size_cluster, 3]
     )  # Bxnum_proposalxnum_size_clusterx3
-    end_points["size_scores"] = size_scores
-    end_points["size_residuals_normalized"] = size_residuals_normalized
-    end_points["size_residuals"] = size_residuals_normalized * torch.from_numpy(
-        mean_size_arr.astype(np.float32)
-    ).cuda().unsqueeze(0).unsqueeze(0)
+    data.size_scores = size_scores
+    data.size_residuals_normalized = size_residuals_normalized
+    # data.size_residuals = size_residuals_normalized * torch.from_numpy(
+    #    mean_size_arr.astype(np.float32)
+    # ).cuda().unsqueeze(0).unsqueeze(0)
 
-    sem_cls_scores = net_transposed[:, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :]  # Bxnum_proposalx10
-    end_points["sem_cls_scores"] = sem_cls_scores
-    return end_points
+    sem_cls_scores = x_transposed[:, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :]  # Bxnum_proposalx10
+    data.sem_cls_scores = sem_cls_scores
+    return data
 
 
 class ProposalModule(nn.Module):
@@ -79,9 +77,6 @@ class ProposalModule(nn.Module):
             vote_aggregation_config.module_name == "PointNetMSGDown"
         ), "Proposal Module support only PointNet2 for now"
         params = vote_aggregation_config.to_container()
-        import pdb
-
-        pdb.set_trace()
         self.vote_aggregation = PointNetMSGDown(**params)
 
         # Object proposal/detection
@@ -93,7 +88,7 @@ class ProposalModule(nn.Module):
         self.bn1 = torch.nn.BatchNorm1d(128)
         self.bn2 = torch.nn.BatchNorm1d(128)
 
-    def forward(self, data_votes):
+    def forward(self, data):
         """
         Args:
             xyz: (B,K,3)
@@ -101,38 +96,22 @@ class ProposalModule(nn.Module):
         Returns:
             scores: (B,num_proposal,2+3+NH*2+NS*4)
         """
-        if self.sampling == "vote_fps":
-            # Farthest point sampling (FPS) on votes
-            xyz, features, fps_inds = self.vote_aggregation(xyz, features)
-            sample_inds = fps_inds
-        elif self.sampling == "seed_fps":
-            # FPS on seed and choose the votes corresponding to the seeds
-            # This gets us a slightly better coverage of *object* votes than vote_fps (which tends to get more cluster votes)
-            sample_inds = tp.furthest_point_sample(end_points["seed_xyz"], self.num_proposal)
-            xyz, features, _ = self.vote_aggregation(xyz, features, sample_inds)
-        elif self.sampling == "random":
-            # Random sampling from the votes
-            num_seed = end_points["seed_xyz"].shape[1]
-            batch_size = end_points["seed_xyz"].shape[0]
-            sample_inds = torch.randint(0, num_seed, (batch_size, self.num_proposal), dtype=torch.int).cuda()
-            xyz, features, _ = self.vote_aggregation(xyz, features, sample_inds)
+        if self.sampling == "seed_fps":
+            data.idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
+            data_features = self.vote_aggregation(data)
         else:
             log_string("Unknown sampling strategy: %s. Exiting!" % (self.sampling))
             exit()
-        end_points["aggregated_vote_xyz"] = xyz  # (batch_size, num_proposal, 3)
-        end_points[
-            "aggregated_vote_inds"
-        ] = sample_inds  # (batch_size, num_proposal,) # should be 0,1,2,...,num_proposal
+
+        data.aggregated_vote_xyz = data_features.pos  # (batch_size, num_proposal, 3)
+        data.aggregated_vote_inds = data.idx  # (batch_size, num_proposal,) # should be 0,1,2,...,num_proposal
 
         # --------- PROPOSAL GENERATION ---------
-        net = F.relu(self.bn1(self.conv1(features)))
-        net = F.relu(self.bn2(self.conv2(net)))
-        net = self.conv3(net)  # (batch_size, 2+3+num_heading_bin*2+num_size_cluster*4, num_proposal)
+        x = F.relu(self.bn1(self.conv1(data_features.x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = self.conv3(x)  # (batch_size, 2+3+num_heading_bin*2+num_size_cluster*4, num_proposal)
 
-        end_points = decode_scores(
-            net, end_points, self.num_class, self.num_heading_bin, self.num_size_cluster, self.mean_size_arr
-        )
-        return end_points
+        return decode_scores(data, x, self.num_class, self.num_heading_bin, self.num_size_cluster, self.mean_size_arr)
 
 
 if __name__ == "__main__":

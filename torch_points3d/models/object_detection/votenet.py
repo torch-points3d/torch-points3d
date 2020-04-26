@@ -25,6 +25,7 @@ class VoteNetModel(BaseModel):
         input_nc = dataset.feature_dimension
 
         backbone_option = option.backbone
+        self.num_up_layers = len(backbone_option.up_conv.up_conv_nn) - 1
         backbone_cls = getattr(models, backbone_option.model_type)
         self.backbone_model = backbone_cls(architecture="unet", input_nc=input_nc, config=option.backbone)
 
@@ -46,13 +47,18 @@ class VoteNetModel(BaseModel):
             sampling=proposal_option.sampling,
         )
 
+        self.loss_params = option.loss_params
+        self.loss_params.num_heading_bin = proposal_option.num_heading_bin
+
+        self.loss_names = ["bbox_reg"]
+
     def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
         # Forward through backbone model
-
+        self.input = data
         self.backbone_model.set_input(data, device)
 
     def forward(self) -> Any:
@@ -60,7 +66,13 @@ class VoteNetModel(BaseModel):
 
         data_features = self.backbone_model.forward()
         data_votes = self.voting_module(data_features)
-        self.proposal_cls_module(data_votes)
+        self.output = self.proposal_cls_module(data_votes)
+
+        sampling_id_key = "sampling_id_{}".format(self.num_up_layers)
+        setattr(self.output, "seed_inds", getattr(data_features, sampling_id_key, None))
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
+
+        self.loss_bbox_reg = votenet_module.get_loss(self.input, self.output, self.loss_params)
+        self.loss_bbox_reg.backward()

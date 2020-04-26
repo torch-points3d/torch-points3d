@@ -56,11 +56,11 @@ class VotingModule(nn.Module):
         vote_x = vote_x.contiguous().view(batch_size, num_votes, self.out_dim)
         vote_x = vote_x.transpose(2, 1).contiguous()
 
-        return Data(vote_pos=vote_pos, vote_x=vote_x)
+        return Data(pos=vote_pos, x=vote_x, seed_pos=data.pos)
 
 
 if __name__ == "__main__":
     net = VotingModule(2, 256).cuda()
     data_votes = net(Data(pox=torch.rand(8, 1024, 3).cuda(), x=torch.rand(8, 256, 1024).cuda()))
-    print("vote_pos", data_votes.vote_pos.shape)
-    print("vote_x", data_votes.vote_x.shape)
+    print("vote_pos", data_votes.pos.shape)
+    print("vote_x", data_votes.x.shape)
