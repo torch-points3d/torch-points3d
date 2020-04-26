@@ -5,6 +5,7 @@ import torch_geometric
 from torch_geometric.data import Data
 from torch_geometric.data import Batch
 
+
 class MultiScaleData(Data):
     def __init__(
         self,
@@ -124,7 +125,7 @@ def from_data_list_token(data_list, follow_batch=[]):
     for i, data in enumerate(data_list):
         for key in data.keys:
             item = data[key]
-            if torch.is_tensor(item) and item.dtype != torch.bool:
+            if torch.is_tensor(item) and item.dtype != torch.bool and cumsum[key] > 0:
                 mask = item >= 0
                 item[mask] = item[mask] + cumsum[key]
             if torch.is_tensor(item):

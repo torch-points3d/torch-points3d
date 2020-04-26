@@ -320,6 +320,18 @@ class RandomNoise(object):
         return "{}(sigma={}, clip={})".format(self.__class__.__name__, self.sigma, self.clip)
 
 
+class ScalePos:
+    def __init__(self, scale=None):
+        self.scale = scale
+
+    def __call__(self, data):
+        data.pos *= self.scale
+        return data
+
+    def __repr__(self):
+        return "{}(scale={})".format(self.__class__.__name__, self.scale)
+
+
 class RandomScaleAnisotropic:
     r""" Scales node positions by a randomly sampled factor ``s1, s2, s3`` within a
     given interval, *e.g.*, resulting in the transformation matrix
@@ -424,14 +436,15 @@ class MultiScaleTransform(object):
         # Compute sequentially multi_scale indexes on cpu
         data.contiguous()
         ms_data = MultiScaleData.from_data(data)
-        precomputed = [data]
+        precomputed = [Data(pos=data.pos)]
         upsample = []
         upsample_index = 0
         for index in range(self.num_layers):
             sampler, neighbour_finder = self.strategies["sampler"][index], self.strategies["neighbour_finder"][index]
             support = precomputed[index]
+            new_data = Data(pos=support.pos)
             if sampler:
-                query = sampler(support.clone())
+                query = sampler(new_data.clone())
                 query.contiguous()
 
                 if len(self.strategies["upsample_op"]):
@@ -447,7 +460,7 @@ class MultiScaleTransform(object):
                     special_params["y_idx"] = support.num_nodes
                     setattr(pre_up, "__inc__", self.__inc__wrapper(pre_up.__inc__, special_params))
             else:
-                query = support.clone()
+                query = new_data
 
             s_pos, q_pos = support.pos, query.pos
             if hasattr(query, "batch"):

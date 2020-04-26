@@ -48,10 +48,9 @@ def train_epoch(
     iter_data_time = time.time()
     with Ctq(train_loader) as tq_train_loader:
         for i, data in enumerate(tq_train_loader):
-            model.set_input(data, device)
             t_data = time.time() - iter_data_time
-
             iter_start_time = time.time()
+            model.set_input(data, device)
             model.optimize_parameters(epoch, dataset.batch_size)
             if i % 10 == 0:
                 tracker.track(model)
@@ -75,6 +74,7 @@ def train_epoch(
                 if i > getattr(debugging, "num_batches", 50):
                     return 0
 
+    tracker.finalise()
     metrics = tracker.publish(epoch)
     checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
     log.info("Learning rate = %f" % model.learning_rate)
@@ -112,6 +112,7 @@ def eval_epoch(
             if early_break:
                 break
 
+    tracker.finalise()
     metrics = tracker.publish(epoch)
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
@@ -151,6 +152,7 @@ def test_epoch(
                 if early_break:
                     break
 
+        tracker.finalise()
         metrics = tracker.publish(epoch)
         tracker.print_summary()
         checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)

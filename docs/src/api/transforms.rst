@@ -56,4 +56,6 @@ Transforms
 
 .. autofunction:: torch_points3d.core.data_transform.RandomCoordsFlip
 
+.. autofunction:: torch_points3d.core.data_transform.ScalePos
+
 .. autofunction:: torch_points3d.core.data_transform.compute_planarity

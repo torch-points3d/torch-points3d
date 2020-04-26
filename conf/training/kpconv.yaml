@@ -1,7 +1,7 @@
 # Those arguments defines the training hyper-parameters
 training:
     epochs: 550
-    num_workers: 8
+    num_workers: 7
     batch_size: 8
     cuda: 1
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
@@ -18,9 +18,9 @@ training:
         bn_scheduler:
             bn_policy: "step_decay"
             params:
-                bn_momentum: 0.1
+                bn_momentum: 0.02
                 bn_decay: 0.9
-                decay_step : 10
+                decay_step : 1000
                 bn_clip : 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
@@ -31,8 +31,8 @@ training:
 wandb:
     project: s3dis
     log: True
-    notes: "Fixed labels"
-    name: "kpconv-dynamicdataset-6"
+    notes: "Fixed batch norm to 0.02"
+    name: "kpconv-bn02"
     public: True # It will be display the model within wandb log, else not.
 
 
