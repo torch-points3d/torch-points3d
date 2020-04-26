@@ -317,7 +317,7 @@ class XYZFeature(object):
 
     def __init__(self, add_x=False, add_y=False, add_z=True):
         self._axis = []
-        axis_names = ["x", "y", "z"]
+        axis_names = ["pos_x", "pos_y", "pos_z"]
         if add_x:
             self._axis.append(0)
         if add_y:

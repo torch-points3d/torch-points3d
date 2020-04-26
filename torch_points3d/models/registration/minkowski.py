@@ -21,8 +21,8 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
         # Last Layer
-        last_mlp_opt = option.mlp_cls
-        if hasattr(last_mlp_opt, "nn") and len(last_mlp_opt.nn) > 1:
+        if hasattr(option, mlp_cls):
+            last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
             self.FC_layer = Sequential()
             for i in range(1, len(last_mlp_opt.nn)):
@@ -48,11 +48,11 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
     def set_input(self, data, device):
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
-        self.xyz = data.xyz.to(device)
+        self.xyz = torch.stack((data.pos_x, data.pos_y, data.pos_z), 0).T.to(device)
         if hasattr(data, "pos_target"):
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
-            self.xyz_target = data.xyz_target.to(device)
+            self.xyz_target = torch.stack((data.pos_x_target, data.pos_y_target, data.pos_z_target), 0).T.to(device)
             self.match = data.pair_ind.to(torch.long).to(device)
         else:
             self.match = None

@@ -316,7 +316,7 @@ class General3DMatchDataset(BaseSiameseDataset):
         test_transform = self.test_transform
         pre_filter = self.pre_filter
         test_pre_filter = getattr(self, 'test_pre_filter', None)
-
+        self.is_patch = dataset_opt.is_patch
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(

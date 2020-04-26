@@ -145,7 +145,7 @@ class Jitter:
 
     def __call__(self, data):
         if(random.random() < 0.95):
-            data.x = torch.randn_like(data.x) * self.sigma + self.mu
+            data.x += torch.randn_like(data.x) * self.sigma + self.mu
         return data
 
     def __repr__(self):

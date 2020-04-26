@@ -38,10 +38,14 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: ToSparseInput
       params:
         grid_size: ${data.first_subsampling}
-        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -51,10 +55,6 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
-    - transform: ToSparseInput
-      params:
-        grid_size: ${data.first_subsampling}
-        mode: "last"
     - transform: RandomRotate
       params:
         degrees: 180
@@ -67,6 +67,14 @@ data:
       params:
         degrees: 180
         axis: 2
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
+    - transform: ToSparseInput
+      params:
+        grid_size: ${data.first_subsampling}
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
