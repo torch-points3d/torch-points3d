@@ -42,6 +42,49 @@ As a general philosophy we have split datasets and models by task. For example, 
 
 where each folder contains the dataset related to each task.
 
+## API
+### KPConv
+```
+from torch_points3d.applications.kpconv import KPConv
+
+model = KPConv(
+    architecture="unet",
+    input_nc=3,
+    output_nc=5,
+    in_feat=32,
+    num_layers=4,
+)
+```
+### PointNet2
+
+```
+from torch_points3d.applications.pointnet2 import PointNet2
+
+model = PointNet2(
+   architecture="unet", 
+   input_nc=3, 
+   output_nc=5, 
+   num_layers=3, 
+   multiscale=True, 
+   config=None,
+)
+```
+
+### RSConv
+
+```
+from torch_points3d.applications.rsconv import RSConv
+
+model = RSConv(
+   architecture="unet", 
+   input_nc=3, 
+   output_nc=5, 
+   num_layers=3, 
+   multiscale=True, 
+   config=None,
+)
+```
+
 ## Methods currently implemented
 
 * **[PointNet](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
