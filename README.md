@@ -55,7 +55,6 @@ where each folder contains the dataset related to each task.
 
 ## Available datasets
 ### Segmentation
-* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 
 * **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni *et al.*: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105)
 ```
@@ -66,11 +65,18 @@ where each folder contains the dataset related to each task.
 
 * **[Shapenet](https://www.shapenet.org/)** from Iro Armeni *et al.*: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
 
+### Segmentation + Object Detection
+* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
+
+
 ### Registration
 * **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng *et al.*: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
 
 ### Classification
 * **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu *et al.*: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
+
+### Object Detection
+* **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi *et al.*: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664)
 
 ## Getting started
 ### Requirements:
