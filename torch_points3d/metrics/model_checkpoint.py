@@ -218,7 +218,7 @@ class ModelCheckpoint(object):
         )
 
     def save_best_models_under_current_metrics(
-        self, model: BaseModel, metrics_holder: dict, metric_func: dict, **kwargs
+        self, model: BaseModel, metrics_holder: dict, metric_func_dict: dict, **kwargs
     ):
         """[This function is responsible to save checkpoint under the current metrics and their associated DEFAULT_METRICS_FUNC]
         Arguments:
@@ -251,7 +251,7 @@ class ModelCheckpoint(object):
                 for metric_name, current_metric_value in metrics.items():
                     current_stat[metric_name] = current_metric_value
 
-                    metric_func = self.find_func_from_metric_name(metric_name, metric_func)
+                    metric_func = self.find_func_from_metric_name(metric_name, metric_func_dict)
                     best_metric_from_stats = latest_stats.get("best_{}".format(metric_name), current_metric_value)
                     best_value = metric_func(best_metric_from_stats, current_metric_value)
                     current_stat["best_{}".format(metric_name)] = best_value
