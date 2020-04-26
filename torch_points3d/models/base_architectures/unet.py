@@ -352,6 +352,15 @@ class UnwrappedUnetBasedModel(BaseModel):
         else:
             self._init_from_compact_format(opt, model_type, dataset, modules_lib)
 
+    def _collect_sampling_ids(self, list_data):
+        d = {}
+        if self.save_sampling_id:
+            for idx, data in enumerate(list_data):
+                if self.save_sampling_id[idx]:
+                    key = "sampling_id_{}".format(idx)
+                    d[key] = getattr(data, key)
+        return d
+
     def _get_from_kwargs(self, kwargs, name):
         module = kwargs[name]
         kwargs.pop(name)
@@ -380,6 +389,8 @@ class UnwrappedUnetBasedModel(BaseModel):
         self.down_modules = nn.ModuleList()
         self.inner_modules = nn.ModuleList()
         self.up_modules = nn.ModuleList()
+
+        self.save_sampling_id = opt.down_conv.save_sampling_id
 
         # Factory for creating up and down modules
         factory_module_cls = self._get_factory(model_type, modules_lib)
@@ -470,7 +481,7 @@ class UnwrappedUnetBasedModel(BaseModel):
 
         return flattenedOpts
 
-    def forward(self, data, precomputed_down=None, precomputed_up=None):
+    def forward(self, precomputed_down=None, precomputed_up=None):
         """ This method does a forward on the Unet assuming symmetrical skip connections
 
         Parameters
@@ -493,6 +504,11 @@ class UnwrappedUnetBasedModel(BaseModel):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
+        sampling_ids = self._collect_sampling_ids(stack_down)
+
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((data, stack_down.pop()), precomputed=precomputed_up)
+
+        for key, value in sampling_ids.items():
+            setattr(data, key, value)
         return data

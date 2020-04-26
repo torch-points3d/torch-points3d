@@ -67,34 +67,3 @@ class PointNet2Unet(UnwrappedUnetBasedModel):
         else:
             x = None
         self.input = Data(x=x, pos=data.pos)
-
-    def forward(self, precomputed_down=None, precomputed_up=None):
-        """ This method does a forward on the Unet assuming symmetrical skip connections
-        Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
-           |       |      |________|      |    |
-           |       |______________________|    |
-           |___________________________________|
-
-        Parameters
-        ----------
-        data: torch.geometric.Data
-            Data object that contains all info required by the modules
-        precomputed_down: torch.geometric.Data
-            Precomputed data that will be passed to the down convs
-        precomputed_up: torch.geometric.Data
-            Precomputed data that will be passed to the up convs
-        """
-        data = self.input
-        stack_down = [data]
-        for i in range(len(self.down_modules) - 1):
-            data = self.down_modules[i](data, precomputed=precomputed_down)
-            stack_down.append(data)
-        data = self.down_modules[-1](data, precomputed=precomputed_down)
-
-        if not isinstance(self.inner_modules[0], Identity):
-            stack_down.append(data)
-            data = self.inner_modules[0](data)
-
-        for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((data, stack_down.pop()), precomputed=precomputed_up)
-        return data

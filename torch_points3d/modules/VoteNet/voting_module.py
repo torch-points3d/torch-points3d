@@ -12,6 +12,7 @@ Author: Charles R. Qi and Or Litany
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch_geometric.data import Data
 
 
 class VotingModule(nn.Module):
@@ -36,38 +37,30 @@ class VotingModule(nn.Module):
         self.bn1 = torch.nn.BatchNorm1d(self.in_dim)
         self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
 
-    def forward(self, seed_xyz, seed_features):
-        """ Forward pass.
+    def forward(self, data):
 
-        Arguments:
-            seed_xyz: (batch_size, num_seed, 3) Pytorch tensor
-            seed_features: (batch_size, feature_dim, num_seed) Pytorch tensor
-        Returns:
-            vote_xyz: (batch_size, num_seed*vote_factor, 3)
-            vote_features: (batch_size, vote_feature_dim, num_seed*vote_factor)
-        """
-        batch_size = seed_xyz.shape[0]
-        num_seed = seed_xyz.shape[1]
-        num_vote = num_seed * self.vote_factor
-        net = F.relu(self.bn1(self.conv1(seed_features)))
-        net = F.relu(self.bn2(self.conv2(net)))
-        net = self.conv3(net)  # (batch_size, (3+out_dim)*vote_factor, num_seed)
+        batch_size = data.pos.shape[0]
+        num_points = data.pos.shape[1]
+        num_votes = num_points * self.vote_factor
+        x = F.relu(self.bn1(self.conv1(data.x)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = self.conv3(x)  # (batch_size, (3+out_dim)*vote_factor, num_seed)
 
-        net = net.transpose(2, 1).view(batch_size, num_seed, self.vote_factor, 3 + self.out_dim)
-        offset = net[:, :, :, 0:3]
-        vote_xyz = seed_xyz.unsqueeze(2) + offset
-        vote_xyz = vote_xyz.contiguous().view(batch_size, num_vote, 3)
+        x = x.transpose(2, 1).view(batch_size, num_points, self.vote_factor, 3 + self.out_dim)
+        offset = x[:, :, :, 0:3]
+        vote_pos = data.pos.unsqueeze(2) + offset
+        vote_pos = vote_pos.contiguous().view(batch_size, num_votes, 3)
 
-        residual_features = net[:, :, :, 3:]  # (batch_size, num_seed, vote_factor, out_dim)
-        vote_features = seed_features.transpose(2, 1).unsqueeze(2) + residual_features
-        vote_features = vote_features.contiguous().view(batch_size, num_vote, self.out_dim)
-        vote_features = vote_features.transpose(2, 1).contiguous()
+        res_x = x[:, :, :, 3:]  # (batch_size, num_seed, vote_factor, out_dim)
+        vote_x = data.x.transpose(2, 1).unsqueeze(2) + res_x
+        vote_x = vote_x.contiguous().view(batch_size, num_votes, self.out_dim)
+        vote_x = vote_x.transpose(2, 1).contiguous()
 
-        return vote_xyz, vote_features
+        return Data(vote_pos=vote_pos, vote_x=vote_x)
 
 
 if __name__ == "__main__":
     net = VotingModule(2, 256).cuda()
-    xyz, features = net(torch.rand(8, 1024, 3).cuda(), torch.rand(8, 256, 1024).cuda())
-    print("xyz", xyz.shape)
-    print("features", features.shape)
+    data_votes = net(Data(pox=torch.rand(8, 1024, 3).cuda(), x=torch.rand(8, 256, 1024).cuda()))
+    print("vote_pos", data_votes.vote_pos.shape)
+    print("vote_x", data_votes.vote_x.shape)

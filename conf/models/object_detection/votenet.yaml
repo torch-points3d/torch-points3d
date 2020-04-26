@@ -1,26 +1,41 @@
 models:
     VoteNet:
-        class: votenet.VoteNet
+        class: votenet.VoteNetModel
+        conv_type: "DENSE"
         define_constants:
             in_feat: 64
-            model_type: "pointnet2"
             num_layers_down: 4
             num_layers_up: 2
+            num_proposal: 256
         backbone:
-            model_type: model_type
-            input_nc: ${data.input_nc}
-            output_nc: 3 + in_feat
-            num_layers_down: num_layers_down
-            num_layers_up: num_layers_upd
+            model_type: "PointNet2"
+            down_conv:
+                module_name: PointNetMSGDown
+                npoint: [2048, 1024, 512, 256]
+                radii: [[0.2], [0.4], [0.8], [1.2]]
+                nsamples: [[64], [32], [16], [16]]
+                down_conv_nn: [[[FEAT + 3, 64, 64, 128]], 
+                               [[128 + 3, 128, 128, 256]], 
+                               [[256 + 3, 128, 128, 256]], 
+                               [[256 + 3, 128, 128, 256]]]
+                save_sampling_id: [False, True, False, False]
+            up_conv:
+                module_name: DenseFPModule
+                up_conv_nn:
+                    [
+                        [256 + 256, 256, 256],
+                        [256 + 256, 256, num_proposal]
+                    ]
+                skip: True
         voting:
             module_name: VotingModule
             vote_factor: 1
-            feat_dim: in_feat
+            feat_dim: num_proposal
         proposal:
             module_name: ProposalModule
             num_class: ${data.num_classes}
-            num_heading_bin: ${data.num_classes}
+            num_heading_bin: 1
             num_size_cluster: ${data.num_classes}
-            mean_size_arr: ${data.num_classes}
-            num_proposal: ${data.num_classes}
+            mean_size_arr: 3
+            num_proposal: num_proposal
             sampling: "seed_fps"

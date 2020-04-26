@@ -43,6 +43,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
         self._index = kwargs.get("index", None)
+        self._save_sampling_id = kwargs.get("save_sampling_id", None)
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
@@ -74,7 +75,11 @@ class BaseDenseConvolutionDown(BaseConvolution):
             radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
             ms_x.append(self.conv(x, pos, new_pos, radius_idx, scale_idx))
         new_x = torch.cat(ms_x, 1)
-        return Data(pos=new_pos, x=new_x)
+
+        new_data = Data(pos=new_pos, x=new_x)
+        if self._save_sampling_id:
+            setattr(new_data, "sampling_id_{}".format(self._index), idx)
+        return new_data
 
 
 class BaseDenseConvolutionUp(BaseConvolution):

@@ -544,7 +544,8 @@ class Scannet(InMemoryDataset):
                 instance_labels = instance_labels[choices]
 
         # Remap labels to [0-(len(valid_labels))]
-        semantic_labels = mapping_func(semantic_labels)
+        if not (use_instance_labels or use_instance_bboxes):
+            semantic_labels = mapping_func(semantic_labels)
 
         # Build data container
         data = {}
@@ -556,10 +557,10 @@ class Scannet(InMemoryDataset):
         data["x"] = None
 
         if use_instance_labels:
-            data["iy"] = torch.from_numpy(instance_labels)
+            data["instance_labels"] = torch.from_numpy(instance_labels)
 
         if use_instance_bboxes:
-            data["bbox"] = torch.from_numpy(instance_bboxes)
+            data["instance_bboxes"] = torch.from_numpy(instance_bboxes)
 
         return Data(**data)
 
