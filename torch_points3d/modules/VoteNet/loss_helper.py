@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+import numpy as np
 
 FAR_THRESHOLD = 0.6
 NEAR_THRESHOLD = 0.3
@@ -173,12 +174,13 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
         sem_cls_loss
     """
 
-    loss_params.num_heading_bin
-    loss_params.num_size_cluster
-    loss_params.mean_size_arr
+    num_heading_bin = loss_params.num_heading_bin
+    num_size_cluster = loss_params.num_size_cluster
+    num_size_cluster = loss_params.num_size_cluster
+    mean_size_arr = np.asarray(loss_params.mean_size_arr)
 
     object_assignment = inputs["object_assignment"]
-    object_assignment.shape[0]
+    batch_size = object_assignment.shape[0]
 
     # Compute center loss
     pred_center = outputs["center"]
@@ -190,13 +192,10 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     centroid_reg_loss2 = torch.sum(dist2 * box_label_mask) / (torch.sum(box_label_mask) + 1e-6)
     center_loss = centroid_reg_loss1 + centroid_reg_loss2
 
-    """
     # Compute heading loss
-    heading_class_label = torch.gather(
-        inputs["heading_class_label"], 1, object_assignment
-    )  # select (B,K) from (B,K2)
+    heading_class_label = torch.gather(inputs["heading_class_label"], 1, object_assignment)  # select (B,K) from (B,K2)
     criterion_heading_class = nn.CrossEntropyLoss(reduction="none")
-    import pdb; pdb.set_trace()
+
     heading_class_loss = criterion_heading_class(
         outputs["heading_scores"].transpose(2, 1), heading_class_label.long()
     )  # (B,K)
@@ -210,7 +209,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     # Ref: https://discuss.pytorch.org/t/convert-int-into-one-hot-format/507/3
     heading_label_one_hot = torch.cuda.FloatTensor(batch_size, heading_class_label.shape[1], num_heading_bin).zero_()
     heading_label_one_hot.scatter_(
-        2, heading_class_label.unsqueeze(-1), 1
+        2, heading_class_label.unsqueeze(-1).long(), 1
     )  # src==1 so it's *one-hot* (B,K,num_heading_bin)
     heading_residual_normalized_loss = huber_loss(
         torch.sum(outputs["heading_residuals_normalized"] * heading_label_one_hot, -1)
@@ -224,17 +223,20 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     # Compute size loss
     size_class_label = torch.gather(inputs["size_class_label"], 1, object_assignment)  # select (B,K) from (B,K2)
     criterion_size_class = nn.CrossEntropyLoss(reduction="none")
-    size_class_loss = criterion_size_class(outputs["size_scores"].transpose(2, 1), size_class_label)  # (B,K)
+    size_class_loss = criterion_size_class(outputs["size_scores"].transpose(2, 1), size_class_label.long())  # (B,K)
     size_class_loss = torch.sum(size_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
 
     size_residual_label = torch.gather(
         inputs["size_residual_label"], 1, object_assignment.unsqueeze(-1).repeat(1, 1, 3)
     )  # select (B,K,3) from (B,K2,3)
+
     size_label_one_hot = torch.cuda.FloatTensor(batch_size, size_class_label.shape[1], num_size_cluster).zero_()
-    size_label_one_hot.scatter_(2, size_class_label.unsqueeze(-1), 1)  # src==1 so it's *one-hot* (B,K,num_size_cluster)
+    size_label_one_hot.scatter_(
+        2, size_class_label.unsqueeze(-1).long(), 1
+    )  # src==1 so it's *one-hot* (B,K,num_size_cluster)
     size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
     predicted_size_residual_normalized = torch.sum(
-        inputs["size_residuals_normalized"] * size_label_one_hot_tiled, 2
+        outputs["size_residuals_normalized"] * size_label_one_hot_tiled, 2
     )  # (B,K,3)
 
     mean_size_arr_expanded = (
@@ -248,7 +250,6 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     size_residual_normalized_loss = torch.sum(size_residual_normalized_loss * objectness_label) / (
         torch.sum(objectness_label) + 1e-6
     )
-    """
 
     # 3.4 Semantic cls loss
     sem_cls_label = torch.gather(inputs["sem_cls_label"], 1, object_assignment)  # select (B,K) from (B,K2)
@@ -258,10 +259,10 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
 
     return (
         center_loss,
-        0,
-        0,
-        0,
-        0,
+        heading_class_loss,
+        heading_residual_normalized_loss,
+        size_class_loss,
+        size_residual_normalized_loss,
         sem_cls_loss,
     )
 

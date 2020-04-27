@@ -14,10 +14,6 @@ data:
     num_classes: 18
     num_points: 20000
     
-    pre_transform:
-      - transform: GridSampling
-        lparams: [0.05]
-
     train_transform:
       - transform: FixedPoints
         lparams: [20000] 
@@ -34,7 +30,7 @@ data:
           delete_feats: [True, True]
           stricts: [False, True]
 
-    test_transform:
+    val_transform:
       - transform: FixedPoints
         lparams: [20000] 
       - transform: XYZFeature

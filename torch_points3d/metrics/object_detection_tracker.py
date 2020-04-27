@@ -26,6 +26,7 @@ class ObjectDetectionTracker(BaseTracker):
         self._num_classes = dataset.num_classes
         self._dataset = dataset
         self.reset(stage)
+        self._metric_func = {"loss": min, "acc": max}
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
@@ -64,7 +65,4 @@ class ObjectDetectionTracker(BaseTracker):
 
     @property
     def metric_func(self):
-        self._metric_func = {
-            "acc": max,
-        }  # Those map subsentences to their optimization functions
         return self._metric_func

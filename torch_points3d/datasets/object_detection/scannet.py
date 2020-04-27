@@ -1,6 +1,10 @@
+import os
+import numpy as np
 from torch_geometric.data import InMemoryDataset
 from torch_points3d.datasets.segmentation.scannet import *
 from torch_points3d.metrics.object_detection_tracker import ObjectDetectionTracker
+
+DIR = os.path.dirname(os.path.realpath(__file__))
 
 class ScannetObjectDetection(Scannet):
 
@@ -19,6 +23,10 @@ class ScannetObjectDetection(Scannet):
 
         self.CLASS2TYPE = {self.TYPE2CLASS[t]:t for t in self.TYPE2CLASS}
         self.NYU40ID2CLASS = {nyu40id: i for i,nyu40id in enumerate(list(self.NYU40IDS))}
+        self.MEAN_SIZE_ARR = np.load(os.path.join(DIR, "scannet_metadata/scannet_means.npz"))['arr_0']
+        self.TYPE_MEAN_SIZE = {}
+        for i in range(self.NUM_SIZE_CLUSTER):
+            self.TYPE_MEAN_SIZE[self.CLASS2TYPE[i]] = self.MEAN_SIZE_ARR[i,:]
 
     def get(self, idx):
         data = super(ScannetObjectDetection, self).get(idx)
@@ -61,9 +69,12 @@ class ScannetObjectDetection(Scannet):
 
         # NOTE: set size class as semantic class. Consider use size2class.
         size_classes[0:instance_bboxes.shape[0]] = torch.from_numpy(class_ind)
-        #size_residuals[0:instance_bboxes.shape[0], :] = \
-        #    target_bboxes[0:instance_bboxes.shape[0], 3:6] - DC.mean_size_arr[class_ind,:]
-            
+        try:
+            size_residuals[0:instance_bboxes.shape[0], :] = \
+                target_bboxes[0:instance_bboxes.shape[0], 3:6] - torch.from_numpy(self.MEAN_SIZE_ARR[class_ind,:])
+        except:
+            # instance_bboxes is empty
+            pass
 
         target_bboxes_semcls = np.zeros((self.MAX_NUM_OBJ))                                
         target_bboxes_semcls[0:instance_bboxes.shape[0]] = \
@@ -117,6 +128,10 @@ class ScannetDataset(BaseDataset):
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
         )
+
+    @property
+    def mean_size_arr(self):
+        return self.train_dataset.MEAN_SIZE_ARR.copy()
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):

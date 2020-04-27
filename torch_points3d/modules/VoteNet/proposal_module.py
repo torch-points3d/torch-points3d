@@ -40,9 +40,9 @@ def decode_scores(data, x, num_class, num_heading_bin, num_size_cluster, mean_si
     )  # Bxnum_proposalxnum_size_clusterx3
     data.size_scores = size_scores
     data.size_residuals_normalized = size_residuals_normalized
-    # data.size_residuals = size_residuals_normalized * torch.from_numpy(
-    #    mean_size_arr.astype(np.float32)
-    # ).cuda().unsqueeze(0).unsqueeze(0)
+    data.size_residuals = size_residuals_normalized * torch.from_numpy(
+        mean_size_arr.astype(np.float32)
+    ).cuda().unsqueeze(0).unsqueeze(0)
 
     sem_cls_scores = x_transposed[:, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :]  # Bxnum_proposalx10
     data.sem_cls_scores = sem_cls_scores

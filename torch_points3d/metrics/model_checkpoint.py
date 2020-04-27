@@ -212,8 +212,8 @@ class ModelCheckpoint(object):
             if token_name in metric_name:
                 return func
         raise Exception(
-            'The metric name {} doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}'.format(
-                token_name
+            'The metric name {} doesn t have a func to measure which one is best in {}. Example: For best_train_iou, {"iou":max}'.format(
+                metric_name, default_metrics_func
             )
         )
 
