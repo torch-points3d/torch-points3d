@@ -15,6 +15,7 @@ from torch_points3d.metrics.registration_tracker import FragmentRegistrationTrac
 from torch_points3d.core.data_transform.transforms import GridSampling
 from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 from torch_points3d.datasets.registration.utils import compute_overlap_and_matches, compute_subsampled_matches
+from torch_points_kernels.points_cpu import ball_query
 
 
 class Patch3DMatch(Base3DMatch):
@@ -240,8 +241,7 @@ class Fragment3DMatch(Base3DMatch):
                  verbose=False,
                  debug=False,
                  is_online_matching=False,
-                 num_pos_pairs=1024,
-                 voxel_size_search=0.1):
+                 num_pos_pairs=1024):
 
         self.is_patch = False
         super(Fragment3DMatch, self).__init__(root,
@@ -264,7 +264,6 @@ class Fragment3DMatch(Base3DMatch):
         self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
         self.is_online_matching = is_online_matching
         self.num_pos_pairs = num_pos_pairs
-        self.voxel_size_search = voxel_size_search
 
     def get_fragment(self, idx):
 
@@ -274,7 +273,6 @@ class Fragment3DMatch(Base3DMatch):
             allow_pickle=True).item()
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
-        # new_pair = compute_subsampled_matches(data_source, data_target,self.voxel_size_search,self.max_dist_overlap)
         new_pair = torch.from_numpy(match['pair'])
 
         if(self.transform is not None):
@@ -305,6 +303,151 @@ class Fragment3DMatch(Base3DMatch):
     def __len__(self):
         return len(self.list_fragment)
 
+
+class SelfSupervisedFragment3DMatch(Base3DMatch):
+    r"""
+        Fragment extracted from :the Princeton 3DMatch dataset\n
+        `"3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions"
+        <https://arxiv.org/pdf/1603.08182.pdf>`_
+        paper, containing rgbd frames of the following dataset:
+        `" SUN3D: A Database of Big Spaces Reconstructed using SfM and Object Labels
+        "<http://sun3d.cs.princeton.edu/>`
+        `"Scene Coordinate Regression Forests for Camera Relocalization in RGB-D Images
+        "<https://www.microsoft.com/en-us/research/publication/scene-coordinate-regression-forests-for-camera-relocalization-in-rgb-d-images/>`
+        `"Unsupervised Feature Learning for 3D Scene Labeling
+        "<http://rgbd-dataset.cs.washington.edu/dataset/rgbd-scenes-v2/>`
+        `"BundleFusion: Real-time Globally Consistent 3D Reconstruction using Online
+        Surface Re-integration
+        "<http://graphics.stanford.edu/projects/bundlefusion/>`
+        `"Learning to Navigate the Energy Landscape
+        "<http://graphics.stanford.edu/projects/reloc/>`
+
+        Args:
+
+            root (string): Root directory where the dataset should be saved
+
+            num_frame_per_fragment (int, optional): indicate the number of frames
+                we use to build fragments. If it is equal to 0, then we don't
+                build fragments and use the raw frames.
+
+            mode (string, optional): If :obj:`True`, loads the training dataset,
+            otherwise the test dataset. (default: :obj:`True`)
+
+            min_overlap_ratio(float, optional): the minimum overlap we should have to match two fragments (overlap is the number of points in a fragment that matches in an other fragment divided by the number of points)
+            max_overlap_ratio(float, optional): the maximum overlap we should have to match two fragments
+            max_dist_overlap(float, optional): minimum distance to consider that a point match with an other.
+            tsdf_voxel_size(float, optional): the size of the tsdf voxel grid to perform fine RGBD fusion to create fine fragments
+            depth_thresh: threshold to remove depth pixel that are two far.
+
+            is_fine: fine mode for the fragment fusion
+
+
+            transform (callable, optional): A function/transform that takes in
+                an :obj:`torch_geometric.data.Data` object and returns a
+                transformed version. The data object will be transformed before
+                every access. (default: :obj:`None`)
+
+            pre_transform (callable, optional): A function/transform that takes in
+                an :obj:`torch_geometric.data.Data` object and returns a
+                transformed version. The data object will be transformed before
+                being saved to disk. (default: :obj:`None`)
+            pre_filter (callable, optional): A function that takes in an
+                :obj:`torch_geometric.data.Data` object and returns a boolean
+                value, indicating whether the data object should be included in the
+                final dataset. (default: :obj:`None`)
+            num_random_pt: number of point we select when we test
+        """
+    def __init__(self, root,
+                 num_frame_per_fragment=50,
+                 mode='train_small',
+                 min_overlap_ratio=0.3,
+                 max_overlap_ratio=1.0,
+                 max_dist_overlap=0.01,
+                 tsdf_voxel_size=0.02,
+                 limit_size=700,
+                 depth_thresh=6,
+                 is_fine=True,
+                 transform=None,
+                 pre_transform=None,
+                 pre_transform_fragment=None,
+                 pre_filter=None,
+                 verbose=False,
+                 debug=False,
+                 is_online_matching=False,
+                 num_pos_pairs=1024,
+                 size_block=0.1):
+
+        self.is_patch = False
+        super(Fragment3DMatch, self).__init__(root,
+                                              num_frame_per_fragment,
+                                              mode,
+                                              min_overlap_ratio,
+                                              max_overlap_ratio,
+                                              max_dist_overlap,
+                                              tsdf_voxel_size,
+                                              limit_size,
+                                              depth_thresh,
+                                              is_fine,
+                                              transform,
+                                              pre_transform,
+                                              pre_transform_fragment,
+                                              pre_filter,
+                                              verbose,
+                                              debug)
+        self.path_match = osp.join(self.processed_dir, self.mode, 'matches')
+        self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
+        self.is_online_matching = is_online_matching
+        self.num_pos_pairs = num_pos_pairs
+        self.size_block = size_block
+
+    def get_fragment(self, idx):
+
+        match = np.load(
+            osp.join(self.path_match,
+                     'matches{:06d}.npy'.format(idx)),
+            allow_pickle=True).item()
+        if(random.random() < 0.5):
+            data_source = torch.load(match['path_source'])
+            data_target = torch.load(match['path_source'])
+        else:
+            data_source = torch.load(match['path_target'])
+            data_target = torch.load(match['path_target'])
+
+        # new_pair = torch.from_numpy(match['pair'])
+
+        pos = data_source.pos
+        i = torch.randint(0, len(pos))
+        point = pos[i].view(1, 3)
+        ind, dist = ball_query(point,
+                               pos,
+                               radius=self.size_block,
+                               max_num=-1,
+                               mode=1)
+        _, col = ind[dist[:, 0] > 0].t()
+        new_pair = torch.stack((col, col)).T
+
+        if(self.transform is not None):
+            data_source = self.transform(data_source)
+            data_target = self.transform(data_target)
+
+        batch = Pair.make_pair(data_source, data_target)
+
+        pair = tracked_matches(data_source, data_target, new_pair)
+        batch.pair_ind = pair
+
+        num_pos_pairs = len(batch.pair_ind)
+        if self.num_pos_pairs < len(batch.pair_ind):
+            num_pos_pairs = self.num_pos_pairs
+
+        rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
+        batch.pair_ind = batch.pair_ind[rand_ind]
+        return batch.contiguous().to(torch.float)
+
+    def get(self, idx):
+        return self.get_fragment(idx)
+
+    def __len__(self):
+        return len(self.list_fragment)
 
 
 class General3DMatchDataset(BaseSiameseDataset):
@@ -351,20 +494,37 @@ class General3DMatchDataset(BaseSiameseDataset):
                 is_offline=dataset_opt.is_offline,
                 pre_filter=test_pre_filter)
         else:
-            self.train_dataset = Fragment3DMatch(
-                root=self._data_path,
-                mode='train',
-                num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
-                max_dist_overlap=dataset_opt.max_dist_overlap,
-                min_overlap_ratio=dataset_opt.min_overlap_ratio,
-                tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
-                limit_size=dataset_opt.limit_size,
-                depth_thresh=dataset_opt.depth_thresh,
-                pre_transform=pre_transform,
-                transform=train_transform,
-                pre_filter=pre_filter,
-                is_online_matching=dataset_opt.is_online_matching,
-                num_pos_pairs=dataset_opt.num_pos_pairs)
+            if(dataset_opt.is_self_supervised):
+                self.train_dataset = SelfSupervisedFragment3DMatch(
+                    root=self._data_path,
+                    mode='train',
+                    num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                    max_dist_overlap=dataset_opt.max_dist_overlap,
+                    min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                    tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                    limit_size=dataset_opt.limit_size,
+                    depth_thresh=dataset_opt.depth_thresh,
+                    pre_transform=pre_transform,
+                    transform=train_transform,
+                    pre_filter=pre_filter,
+                    is_online_matching=dataset_opt.is_online_matching,
+                    num_pos_pairs=dataset_opt.num_pos_pairs
+                )
+            else:
+                self.train_dataset = Fragment3DMatch(
+                    root=self._data_path,
+                    mode='train',
+                    num_frame_per_fragment=dataset_opt.num_frame_per_fragment,
+                    max_dist_overlap=dataset_opt.max_dist_overlap,
+                    min_overlap_ratio=dataset_opt.min_overlap_ratio,
+                    tsdf_voxel_size=dataset_opt.tsdf_voxel_size,
+                    limit_size=dataset_opt.limit_size,
+                    depth_thresh=dataset_opt.depth_thresh,
+                    pre_transform=pre_transform,
+                    transform=train_transform,
+                    pre_filter=pre_filter,
+                    is_online_matching=dataset_opt.is_online_matching,
+                    num_pos_pairs=dataset_opt.num_pos_pairs)
 
             self.test_dataset = Fragment3DMatch(
                 root=self._data_path,
