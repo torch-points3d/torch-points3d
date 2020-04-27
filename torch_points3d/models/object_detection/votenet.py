@@ -62,12 +62,11 @@ class VoteNetModel(BaseModel):
         """
         # Forward through backbone model
         self.input = data
-        self.backbone_model.set_input(data, device)
 
     def forward(self) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
 
-        data_features = self.backbone_model.forward()
+        data_features = self.backbone_model.forward(self.input)
         data_votes = self.voting_module(data_features)
         outputs = self.proposal_cls_module(data_votes)
 

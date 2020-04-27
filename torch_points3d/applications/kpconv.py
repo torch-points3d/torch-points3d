@@ -98,4 +98,4 @@ class KPConvUnet(UnwrappedUnetBasedModel):
 
         """
         self._set_input(data)
-        return super().forward(self.input, precomputed_down=self.pre_computed, precomputed_up=self.upsample)
+        return super().forward(precomputed_down=self.pre_computed, precomputed_up=self.upsample)

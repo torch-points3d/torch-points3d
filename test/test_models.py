@@ -49,7 +49,7 @@ class TestModelUtils(unittest.TestCase):
 
     def test_runall(self):
         def is_known_to_fail(model_name):
-            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
+            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet", "VoteNetPaper"]
             for failing in forward_failing:
                 if failing.lower() in model_name.lower():
                     return True

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
 
@@ -32,6 +33,7 @@ class MockDataset(torch.utils.data.Dataset):
         self._category = torch.ones((self.num_points,), dtype=torch.long)
         self._ms_transform = None
         self._transform = transform
+        self.mean_size_arr = np.array([1])
 
     def __len__(self):
         return self.num_points
