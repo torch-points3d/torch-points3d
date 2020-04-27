@@ -1,9 +1,11 @@
 import logging
 import torch.nn.functional as F
 from typing import Any
-import etw_pytorch_utils as pt_utils
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.models.base_architectures import BackboneBasedModel
+
+from torch_points3d.core.common_modules.dense_modules import Conv1D
+from torch_points3d.core.common_modules.base_modules import Seq
 
 log = logging.getLogger(__name__)
 
@@ -43,9 +45,9 @@ class PatchSiamese(BackboneBasedModel):
         self.batch_idx = create_batch_siamese(data.pair, data.batch)
 
     def set_last_mlp(self, last_mlp_opt):
-        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0])
+        self.FC_layer = Seq()
         for i in range(1, len(last_mlp_opt.nn)):
-            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True)
+            self.FC_layer.append(Conv1D(last_mlp_opt.nn[i - 1], last_mlp_opt.nn[i], bn=True, bias=False))
 
     def set_loss(self):
         raise NotImplementedError("Choose a loss for the metric learning")

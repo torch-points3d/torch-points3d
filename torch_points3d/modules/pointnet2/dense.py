@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch_points_kernels as tp
-import etw_pytorch_utils as pt_utils
 
 from torch_points3d.core.base_conv.dense import *
 from torch_points3d.core.spatial_ops import DenseRadiusNeighbourFinder, DenseFPSSampler
@@ -17,7 +16,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         nsample=None,
         down_conv_nn=None,
         bn=True,
-        activation="LeakyReLU",
+        activation=torch.nn.LeakyReLU(negative_slope=0.1),
         use_xyz=True,
         **kwargs
     ):
@@ -29,7 +28,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         self.npoint = npoint
         self.mlps = nn.ModuleList()
         for i in range(len(radii)):
-            self.mlps.append(pt_utils.SharedMLP(down_conv_nn[i], bn=bn, activation=get_activation(activation)))
+            self.mlps.append(MLP2D(down_conv_nn[i], bn=bn, activation=activation, bias=False))
 
     def _prepare_features(self, x, pos, new_pos, idx):
         new_pos_trans = pos.transpose(1, 2).contiguous()

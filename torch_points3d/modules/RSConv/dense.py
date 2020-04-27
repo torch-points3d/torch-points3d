@@ -6,10 +6,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Conv1d
 import torch_points_kernels as tp
-import etw_pytorch_utils as pt_utils
 from typing import Tuple
 
 from torch_points3d.core.base_conv.dense import *
+from torch_points3d.core.common_modules.dense_modules import MLP2D
 from torch_points3d.core.spatial_ops import DenseFPSSampler, DenseRadiusNeighbourFinder
 from torch_points3d.utils.colors import COLORS
 
@@ -21,7 +21,7 @@ class RSConvMapper(nn.Module):
         and the features of RSConv]
     """
 
-    def __init__(self, down_conv_nn, use_xyz, bn=True, activation=nn.ReLU(), *args, **kwargs):
+    def __init__(self, down_conv_nn, use_xyz, bn=True, activation=nn.LeakyReLU(negative_slope=0.1), *args, **kwargs):
         super(RSConvMapper, self).__init__()
 
         self._down_conv_nn = down_conv_nn
@@ -32,13 +32,13 @@ class RSConvMapper(nn.Module):
         if len(self._down_conv_nn) == 2:  # First layer
             self._first_layer = True
             f_in, f_intermediate, f_out = self._down_conv_nn[0]
-            self.nn["features_nn"] = pt_utils.SharedMLP(self._down_conv_nn[1], bn=bn)
+            self.nn["features_nn"] = MLP2D(self._down_conv_nn[1], bn=bn, bias=False)
 
         else:
             self._first_layer = False
             f_in, f_intermediate, f_out = self._down_conv_nn
 
-        self.nn["mlp_msg"] = pt_utils.SharedMLP([f_in, f_intermediate, f_out], bn=bn)
+        self.nn["mlp_msg"] = MLP2D([f_in, f_intermediate, f_out], bn=bn, bias=False)
 
         self.nn["norm"] = Seq(*[nn.BatchNorm2d(f_out), activation])
 
@@ -120,7 +120,7 @@ class RSConvSharedMSGDown(BaseDenseConvolutionDown):
     ):
         assert len(radii) == len(nsample)
         if len(radii) != len(down_conv_nn):
-            log.warn("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
+            log.warn("The down_conv_nn has a different size as radii. Make sure of have SharedRSConv")
         super(RSConvSharedMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
@@ -275,7 +275,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
     ):
         assert len(radii) == len(nsample)
         if len(radii) != len(down_conv_nn):
-            log.warning("The down_conv_nn has a different size as radii. Make sure of have sharedMLP")
+            log.warning("The down_conv_nn has a different size as radii. Make sure of have SharedRSConv")
         super(RSConvOriginalMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )

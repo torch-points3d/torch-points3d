@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Optional, Dict, Any
 import torch
 from torch.optim.optimizer import Optimizer
@@ -393,7 +393,7 @@ class BaseModel(torch.nn.Module):
         return self.to(torch.device("cuda"))
 
 
-class BaseInternalLossModule(ABC):
+class BaseInternalLossModule(torch.nn.Module):
     """ABC for modules which have internal loss(es)
     """
 

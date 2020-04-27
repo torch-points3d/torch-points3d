@@ -1,5 +1,4 @@
 from typing import Dict
-import torchnet as tnt
 import logging
 import torch
 from torch_geometric.nn.unpool import knn_interpolate
