@@ -210,7 +210,6 @@ Let's create a new file ``/torch_points3d/models/segmentation/pointnet2.py`` wit
 
    import torch.nn.functional as F
    from torch_geometric.data import Data
-   import etw_pytorch_utils as pt_utils
    import logging
 
    from torch_points3d.modules.pointnet2 import * # This part is extremely important. Always important the associated modules within your this file

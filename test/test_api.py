@@ -31,13 +31,12 @@ class TestAPI(unittest.TestCase):
             config=None,
         )
         dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=128)
-        model.set_input(dataset[0], device)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
 
         try:
-            model.forward()
+            model.forward(dataset[0])
         except Exception as e:
             print("Model failing:")
             print(model)
@@ -52,13 +51,12 @@ class TestAPI(unittest.TestCase):
             architecture="unet", input_nc=input_nc, output_nc=5, num_layers=num_layers, multiscale=True, config=None,
         )
         dataset = MockDataset(input_nc, num_points=512)
-        model.set_input(dataset[0], device)
         self.assertEqual(len(model._modules["down_modules"]), num_layers - 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), num_layers)
 
         try:
-            model.forward()
+            model.forward(dataset[0])
         except Exception as e:
             print("Model failing:")
             print(model)
@@ -73,13 +71,12 @@ class TestAPI(unittest.TestCase):
             architecture="unet", input_nc=input_nc, output_nc=5, num_layers=num_layers, multiscale=True, config=None,
         )
         dataset = MockDataset(input_nc, num_points=1024)
-        model.set_input(dataset[0], device)
         self.assertEqual(len(model._modules["down_modules"]), num_layers)
         self.assertEqual(len(model._modules["inner_modules"]), 2)
         self.assertEqual(len(model._modules["up_modules"]), num_layers + 1)
 
         try:
-            model.forward()
+            model.forward(dataset[0])
         except Exception as e:
             print("Model failing:")
             print(model)

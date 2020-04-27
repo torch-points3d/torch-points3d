@@ -50,7 +50,7 @@ class RSConvFactory(ModelFactory):
 class RSConvUnet(UnwrappedUnetBasedModel):
     CONV_TYPE = "dense"
 
-    def set_input(self, data, device):
+    def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
@@ -60,16 +60,24 @@ class RSConvUnet(UnwrappedUnetBasedModel):
                 pos -- Points [B, N, 3]
         """
         assert len(data.pos.shape) == 3
-        data = data.to(device)
+        data = data.to(self.device)
         if data.x is not None:
             x = data.x.transpose(1, 2).contiguous()
         else:
             x = None
         self.input = Data(x=x, pos=data.pos)
 
-    def forward(self):
+    def forward(self, data):
         """ This method does a forward on the Unet
+
+        Parameters:
+        -----------
+        data
+            A dictionary that contains the data itself and its metadata information. Should contain
+                x -- Features [B, N, C]
+                pos -- Points [B, N, 3]
         """
+        self._set_input(data)
         stack_down = []
         queue_up = queue.Queue()
 
