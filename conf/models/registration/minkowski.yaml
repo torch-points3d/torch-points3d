@@ -59,22 +59,3 @@ models:
             num_hn_samples: 2048
             pos_thresh: 0.1
             neg_thresh: 1.4
-
-    ResUNetBN2C:
-        class: minkowski.Minkowski_Baseline_Model_Fragment
-        conv_type: "SPARSE"
-        model_name: "ResUNetBN2C"
-        loss_mode: "match"
-        in_channels: 1
-        conv1_kernel_size: 5
-        out_channels: 32
-        D: 3
-        num_pos_pairs: 1024
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 2048
-            pos_thresh: 0.1
-            neg_thresh: 1.4
