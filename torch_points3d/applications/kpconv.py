@@ -1,7 +1,7 @@
 import os
 from omegaconf import DictConfig, OmegaConf
 
-from .modelfactory import ModelFactory
+from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.core.common_modules import FastBatchNorm1d
 from torch_points3d.modules.KPConv import *
 from torch_points3d.core.base_conv.partial_dense import *

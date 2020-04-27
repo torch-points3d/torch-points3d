@@ -3,7 +3,7 @@ import sys
 import queue
 from omegaconf import DictConfig, OmegaConf
 
-from .modelfactory import ModelFactory
+from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.modules.RSConv import *
 from torch_points3d.core.base_conv.dense import DenseFPModule
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
