@@ -97,7 +97,7 @@ class MultiHeadClassifier(BaseModule):
             [in_features, self._num_categories * in_features], bn_momentum=bn_momentum, bias=False
         )
         if dropout_proba:
-            self.channel_rasing.add_module("Dropout", Dropout(p=dropout_proba))
+            self.channel_rasing.add_module("Dropout", nn.Dropout(p=dropout_proba))
 
         self.classifier = UnaryConv((self._num_categories, in_features, self._max_seg_count))
         self._bias = Parameter(torch.zeros(self._max_seg_count,))
