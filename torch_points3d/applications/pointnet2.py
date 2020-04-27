@@ -63,30 +63,32 @@ class PointNet2Factory(ModelFactory):
 class PointNet2Unet(UnwrappedUnetBasedModel):
     CONV_TYPE = "dense"
 
-    def set_input(self, data, device):
+    def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
-        Parameters:
-            input: a dictionary that contains the data itself and its metadata information.
-        Sets:
-            self.input:
-                x -- Features [B, C, N]
-                pos -- Points [B, N, 3]
         """
         assert len(data.pos.shape) == 3
-        data = data.to(device)
+        data = data.to(self.device)
         if data.x is not None:
             x = data.x.transpose(1, 2).contiguous()
         else:
             x = None
         self.input = Data(x=x, pos=data.pos)
 
-    def forward(self):
+    def forward(self, data):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
            |       |      |________|      |    |
            |       |______________________|    |
            |___________________________________|
+
+        Parameters:
+        -----------
+        data
+            A dictionary that contains the data itself and its metadata information. Should contain
+                x -- Features [B, N, C]
+                pos -- Points [B, N, 3]
         """
+        self._set_input(data)
         data = self.input
         stack_down = [data]
         for i in range(len(self.down_modules) - 1):

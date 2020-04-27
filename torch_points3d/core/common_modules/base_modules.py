@@ -2,17 +2,9 @@ import numpy as np
 import torch
 from torch import nn
 from torch.nn.parameter import Parameter
-from torch.nn import (
-    Sequential as Seq,
-    Linear as Lin,
-    ReLU,
-    LeakyReLU,
-    BatchNorm1d as BN,
-    Dropout,
-)
 
 
-class BaseModule(torch.nn.Module):
+class BaseModule(nn.Module):
     """ Base module class with some basic additions to the pytorch Module class
     """
 
@@ -41,9 +33,13 @@ class Identity(BaseModule):
 
 
 def MLP(channels, activation=nn.LeakyReLU(0.2), bn_momentum=0.1, bias=True):
-    return Seq(
+    return nn.Sequential(
         *[
-            Seq(Lin(channels[i - 1], channels[i], bias=bias), BN(channels[i], momentum=bn_momentum), activation)
+            nn.Sequential(
+                nn.Linear(channels[i - 1], channels[i], bias=bias),
+                FastBatchNorm1d(channels[i], momentum=bn_momentum),
+                activation,
+            )
             for i in range(1, len(channels))
         ]
     )
@@ -101,7 +97,7 @@ class MultiHeadClassifier(BaseModule):
             [in_features, self._num_categories * in_features], bn_momentum=bn_momentum, bias=False
         )
         if dropout_proba:
-            self.channel_rasing.add_module("Dropout", Dropout(p=dropout_proba))
+            self.channel_rasing.add_module("Dropout", nn.Dropout(p=dropout_proba))
 
         self.classifier = UnaryConv((self._num_categories, in_features, self._max_seg_count))
         self._bias = Parameter(torch.zeros(self._max_seg_count,))
@@ -132,11 +128,36 @@ class MultiHeadClassifier(BaseModule):
 class FastBatchNorm1d(BaseModule):
     def __init__(self, num_features, momentum=0.1):
         super().__init__()
-        self.batch_norm = BN(num_features, momentum=momentum)
+        self.batch_norm = nn.BatchNorm1d(num_features, momentum=momentum)
 
-    def forward(self, x):
+    def _forward_dense(self, x):
+        return self.batch_norm(x)
+
+    def _forward_sparse(self, x):
+        """ Batch norm 1D is not optimised for 2D tensors. The first dimension is supposed to be
+        the batch and therefore not very large. So we introduce a custom version that leverages BatchNorm1D
+        in a more optimised way
+        """
         x = x.unsqueeze(2)
         x = x.transpose(0, 2)
         x = self.batch_norm(x)
         x = x.transpose(0, 2)
         return x.squeeze()
+
+    def forward(self, x):
+        if x.dim() == 2:
+            return self._forward_sparse(x)
+        elif x.dim() == 3:
+            return self._forward_dense(x)
+        else:
+            raise ValueError("Non supported number of dimensions {}".format(x.dim()))
+
+
+class Seq(nn.Sequential):
+    def __init__(self):
+        super().__init__()
+        self._num_modules = 0
+
+    def append(self, module):
+        self.add_module(str(self._num_modules), module)
+        self._num_modules += 1
