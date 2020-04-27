@@ -103,7 +103,7 @@ class KPConvLayer(torch.nn.Module):
         )
 
 
-class KPConvDeformableLayer(torch.nn.Module, BaseInternalLossModule):
+class KPConvDeformableLayer(BaseInternalLossModule):
     """
     apply the deformable kernel point convolution on a point cloud
     NB : it is the original version of KPConv, it is not the message passing version

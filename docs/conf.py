@@ -53,7 +53,8 @@ autodoc_mock_imports = [
     "matplotlib",
     "pytorch_metric_learning",
     "scipy",
-    "MinkowskiEngine"
+    "MinkowskiEngine",
+    "etw-pytorch-utils"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
