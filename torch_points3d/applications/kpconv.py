@@ -61,17 +61,15 @@ class KPConvFactory(ModelFactory):
 class KPConvUnet(UnwrappedUnetBasedModel):
     CONV_TYPE = "partial_dense"
 
-    def set_input(self, data, device):
+    def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
 
         Parameters
         -----------
         data:
             a dictionary that contains the data itself and its metadata information.
-        device
-            Device on which to run the code. cpu or cuda
         """
-        data = data.to(device)
+        data = data.to(self.device)
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
             self.upsample = data.upsample
@@ -83,11 +81,21 @@ class KPConvUnet(UnwrappedUnetBasedModel):
 
         self.input = data
 
-    def forward(self):
+    def forward(self, data):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
                    |      |_________|     |
                    |______________________|
 
+        Parameters
+        -----------
+        data:
+            A dictionary that contains the data itself and its metadata information. Should contain
+                - pos [N, 3]
+                - x [N, C]
+                - multiscale (optional) precomputed data for the down convolutions
+                - upsample (optional) precomputed data for the up convolutions
+
         """
+        self._set_input(data)
         return super().forward(self.input, precomputed_down=self.pre_computed, precomputed_up=self.upsample)
