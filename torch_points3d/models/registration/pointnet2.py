@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 from torch.nn import Linear as Lin
 from torch.nn import Sequential as Seq
-import etw_pytorch_utils as pt_utils
 from torch_geometric.data import Data
 import logging
 

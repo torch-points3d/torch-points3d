@@ -100,5 +100,6 @@ Supported tasks
    :caption: API
    :hidden:
 
+   src/api/models
    src/api/transforms
    src/api/filters

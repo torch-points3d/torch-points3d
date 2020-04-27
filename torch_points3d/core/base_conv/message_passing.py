@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import *
 import torch
 from torch.nn import (
@@ -19,7 +19,6 @@ from torch_geometric.nn import (
 )
 from torch_geometric.data import Batch
 import torch_points_kernels as tp
-import etw_pytorch_utils as pt_utils
 
 from torch_points3d.core.base_conv.base_conv import *
 from torch_points3d.core.common_modules import *
@@ -208,7 +207,7 @@ class BaseResnetBlockDown(BaseConvolutionDown):
         return x
 
 
-class BaseResnetBlock(ABC, torch.nn.Module):
+class BaseResnetBlock(torch.nn.Module):
     def __init__(self, indim, outdim, convdim):
         """
             indim: size of x at the input
