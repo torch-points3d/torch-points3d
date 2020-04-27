@@ -98,7 +98,7 @@ class ProposalModule(nn.Module):
             data.idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
             data_features = self.vote_aggregation(data)
         else:
-            log_string("Unknown sampling strategy: %s. Exiting!" % (self.sampling))
+            print("Unknown sampling strategy: %s. Exiting!" % (self.sampling))
             exit()
 
         data.aggregated_vote_xyz = data_features.pos  # (batch_size, num_proposal, 3)
