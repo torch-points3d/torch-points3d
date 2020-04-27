@@ -134,6 +134,10 @@ class FastBatchNorm1d(BaseModule):
         return self.batch_norm(x)
 
     def _forward_sparse(self, x):
+        """ Batch norm 1D is not optimised for 2D tensors. The first dimension is supposed to be
+        the batch and therefore not very large. So we introduce a custom version that leverages BatchNorm1D
+        in a more optimised way
+        """
         x = x.unsqueeze(2)
         x = x.transpose(0, 2)
         x = self.batch_norm(x)
