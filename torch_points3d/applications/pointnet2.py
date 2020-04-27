@@ -2,7 +2,7 @@ import os
 import sys
 from omegaconf import DictConfig, OmegaConf
 
-from . import ModelFactory
+from .modelfactory import ModelFactory
 from torch_points3d.modules.pointnet2 import *
 from torch_points3d.core.base_conv.dense import DenseFPModule
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
@@ -16,17 +16,29 @@ PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/pointnet2")
 def PointNet2(
     architecture: str = None,
     input_nc: int = None,
-    output_nc: int = None,
     num_layers: int = None,
     config: DictConfig = None,
     multiscale=True,
     **kwargs
 ):
+    """ Create a PointNet2 backbone model based on the architecture proposed in
+    https://arxiv.org/abs/1706.02413
+
+    Parameters
+    ----------
+    architecture : str, optional
+        Architecture of the model, choose from unet, encoder and decoder
+    input_nc : int, optional
+        Number of channels for the input
+    num_layers : int, optional
+        Depth of the network
+    config : DictConfig, optional
+        Custom config, overrides the num_layers and architecture parameters
+    """
     factory = PointNet2Factory(
         architecture=architecture,
         num_layers=num_layers,
         input_nc=input_nc,
-        output_nc=output_nc,
         multiscale=multiscale,
         config=config,
         **kwargs
@@ -68,33 +80,24 @@ class PointNet2Unet(UnwrappedUnetBasedModel):
             x = None
         self.input = Data(x=x, pos=data.pos)
 
-    def forward(self, precomputed_down=None, precomputed_up=None):
+    def forward(self):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
            |       |      |________|      |    |
            |       |______________________|    |
            |___________________________________|
-
-        Parameters
-        ----------
-        data: torch.geometric.Data
-            Data object that contains all info required by the modules
-        precomputed_down: torch.geometric.Data
-            Precomputed data that will be passed to the down convs
-        precomputed_up: torch.geometric.Data
-            Precomputed data that will be passed to the up convs
         """
         data = self.input
         stack_down = [data]
         for i in range(len(self.down_modules) - 1):
-            data = self.down_modules[i](data, precomputed=precomputed_down)
+            data = self.down_modules[i](data)
             stack_down.append(data)
-        data = self.down_modules[-1](data, precomputed=precomputed_down)
+        data = self.down_modules[-1](data)
 
         if not isinstance(self.inner_modules[0], Identity):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
         for i in range(len(self.up_modules)):
-            data = self.up_modules[i]((data, stack_down.pop()), precomputed=precomputed_up)
+            data = self.up_modules[i]((data, stack_down.pop()))
         return data

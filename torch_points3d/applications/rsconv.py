@@ -3,7 +3,7 @@ import sys
 import queue
 from omegaconf import DictConfig, OmegaConf
 
-from . import ModelFactory
+from .modelfactory import ModelFactory
 from torch_points3d.modules.RSConv import *
 from torch_points3d.core.base_conv.dense import DenseFPModule
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
@@ -14,23 +14,23 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/rsconv")
 
 
-def RSConv(
-    architecture: str = None,
-    input_nc: int = None,
-    output_nc: int = None,
-    num_layers: int = None,
-    config: DictConfig = None,
-    multiscale=True,
-    **kwargs
-):
+def RSConv(architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, **kwargs):
+    """ Create a RSConv backbone model based on the architecture proposed in
+    https://arxiv.org/abs/1904.07601
+
+    Parameters
+    ----------
+    architecture : str, optional
+        Architecture of the model, choose from unet, encoder and decoder
+    input_nc : int, optional
+        Number of channels for the input
+    num_layers : int, optional
+        Depth of the network
+    config : DictConfig, optional
+        Custom config, overrides the num_layers and architecture parameters
+    """
     factory = RSConvFactory(
-        architecture=architecture,
-        num_layers=num_layers,
-        input_nc=input_nc,
-        output_nc=output_nc,
-        multiscale=multiscale,
-        config=config,
-        **kwargs
+        architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )
     return factory.build()
 
@@ -67,17 +67,8 @@ class RSConvUnet(UnwrappedUnetBasedModel):
             x = None
         self.input = Data(x=x, pos=data.pos)
 
-    def forward(self, precomputed_down=None, precomputed_up=None):
+    def forward(self):
         """ This method does a forward on the Unet
-
-        Parameters
-        ----------
-        data: torch.geometric.Data
-            Data object that contains all info required by the modules
-        precomputed_down: torch.geometric.Data
-            Precomputed data that will be passed to the down convs
-        precomputed_up: torch.geometric.Data
-            Precomputed data that will be passed to the up convs
         """
         stack_down = []
         queue_up = queue.Queue()
