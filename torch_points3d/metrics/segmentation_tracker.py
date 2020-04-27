@@ -1,5 +1,4 @@
 from typing import Dict
-import torchnet as tnt
 import torch
 import numpy as np
 

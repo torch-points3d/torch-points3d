@@ -11,7 +11,6 @@ cycler==0.10.0
 decorator==4.4.2
 docker-pycreds==0.4.0
 docutils==0.16
--e git+https://github.com/erikwijmans/etw_pytorch_utils.git@4a99f9e27f291dce25d16f06aa52eb127f3b68ed#egg=etw-pytorch-utils
 future==0.18.2
 gitdb==4.0.4
 gitpython==3.1.1
@@ -75,7 +74,6 @@ sphinxcontrib-htmlhelp==1.0.3
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.4
-statistics==1.0.3.5
 subprocess32==3.5.4
 tensorboard==2.2.1
 tensorboard-plugin-wit==1.6.0.post3

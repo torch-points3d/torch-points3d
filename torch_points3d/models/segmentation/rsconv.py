@@ -4,10 +4,11 @@ import queue
 import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
-import etw_pytorch_utils as pt_utils
 
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.modules.RSConv import *
+from torch_points3d.core.common_modules.dense_modules import Conv1D
+from torch_points3d.core.common_modules.base_modules import Seq
 from .base import Segmentation_MP
 
 log = logging.getLogger(__name__)
@@ -33,13 +34,14 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
         # Last MLP
         last_mlp_opt = option.mlp_cls
 
-        self.FC_layer = pt_utils.Seq(last_mlp_opt.nn[0] + self._num_categories)
+        self.FC_layer = Seq()
+        last_mlp_opt.nn[0] += self._num_categories
         for i in range(1, len(last_mlp_opt.nn)):
-            self.FC_layer.conv1d(last_mlp_opt.nn[i], bn=True, bias=False)
+            self.FC_layer.append(Conv1D(last_mlp_opt.nn[i - 1], last_mlp_opt.nn[i], bn=True, bias=False))
         if last_mlp_opt.dropout:
-            self.FC_layer.dropout(p=last_mlp_opt.dropout)
+            self.FC_layer.append(torch.nn.Dropout(p=last_mlp_opt.dropout))
 
-        self.FC_layer.conv1d(self._num_classes, activation=None)
+        self.FC_layer.append(Conv1D(last_mlp_opt.nn[-1], self._num_classes, activation=None, bias=True, bn=False))
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):

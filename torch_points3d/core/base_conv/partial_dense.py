@@ -18,7 +18,6 @@ from torch_geometric.nn import (
 )
 from torch_geometric.data import Batch
 import torch_points_kernels as tp
-import etw_pytorch_utils as pt_utils
 
 from torch_points3d.core.spatial_ops import *
 from .base_conv import BaseConvolution

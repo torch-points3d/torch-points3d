@@ -3,7 +3,7 @@ from typing import List, Union
 import torch
 from torch_geometric.nn import knn, radius
 import torch_points_kernels as tp
-import torchnet as tnt
+
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils.enums import ConvolutionFormat
 

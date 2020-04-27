@@ -28,7 +28,7 @@ class TestPointnetModules(unittest.TestCase):
         npt.assert_array_equal(np.asarray(pos.detach()), np.asarray(trans_pos.detach()))
 
 
-class MockLossModule(torch.nn.Module, BaseInternalLossModule):
+class MockLossModule(BaseInternalLossModule):
     def __init__(self, internal_losses):
         super().__init__()
         self.internal_losses = internal_losses

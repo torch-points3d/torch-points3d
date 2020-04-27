@@ -18,11 +18,10 @@ from torch_geometric.nn import (
 )
 from torch_geometric.data import Data
 import torch_points_kernels as tp
-import etw_pytorch_utils as pt_utils
 
 from torch_points3d.core.spatial_ops import BaseMSNeighbourFinder
 from torch_points3d.core.base_conv import BaseConvolution
-from torch_points3d.core.common_modules import MLP
+from torch_points3d.core.common_modules.dense_modules import MLP2D
 
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.utils.model_building_utils.activation_resolver import get_activation
@@ -114,10 +113,10 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, bn=True, bias=False, activation="LeakyReLU", **kwargs):
+    def __init__(self, up_conv_nn, bn=True, bias=False, activation=torch.nn.LeakyReLU(negative_slope=0.1), **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
 
-        self.nn = pt_utils.SharedMLP(up_conv_nn, bn=bn, activation=get_activation(activation))
+        self.nn = MLP2D(up_conv_nn, bn=bn, activation=activation, bias=False)
 
     def conv(self, pos, pos_skip, x):
         assert pos_skip.shape[2] == 3
@@ -138,9 +137,9 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max", bn=True, activation="LeakyReLU", **kwargs):
+    def __init__(self, nn, aggr="max", bn=True, activation=torch.nn.LeakyReLU(negative_slope=0.1), **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
-        self.nn = pt_utils.SharedMLP(nn, bn=bn, activation=get_activation(activation))
+        self.nn = MLP2D(nn, bn=bn, activation=activation, bias=False)
         if aggr.lower() not in ["mean", "max"]:
             raise Exception("The aggregation provided is unrecognized {}".format(aggr))
         self._aggr = aggr.lower()
