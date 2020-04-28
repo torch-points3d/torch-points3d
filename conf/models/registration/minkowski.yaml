@@ -36,7 +36,7 @@ models:
           class: "ContrastiveHardestNegativeLoss"
           params:
             num_pos: 1024
-            num_hn_samples: 2048
+            num_hn_samples: 256
             pos_thresh: 0.1
             neg_thresh: 1.4
 
