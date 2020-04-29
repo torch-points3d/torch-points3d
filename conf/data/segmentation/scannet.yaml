@@ -50,7 +50,7 @@ data:
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True, True]
-          feat_names: ["rgb", "z"]
+          feat_names: ["rgb", "pos_z"]
           input_nc_feats: [3, 1]
           delete_feats: [True, True]
           stricts: [False, True]
@@ -69,7 +69,7 @@ data:
       - transform: AddFeatsByKeys
         params:
           list_add_to_x: [True, True]
-          feat_names: ["rgb", "z"]
+          feat_names: ["rgb", "pos_z"]
           input_nc_feats: [3, 1]
           delete_feats: [True, True]
           stricts: [False, True]
