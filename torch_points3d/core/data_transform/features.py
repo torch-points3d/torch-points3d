@@ -331,7 +331,7 @@ class XYZFeature(object):
         assert data.pos is not None
         for axis_name, id_axis in zip(self._axis_names, self._axis):
             f = data.pos[:, id_axis].clone()
-            setattr(data, axis_name, f)
+            setattr(data, "pos_{}".format(axis_name), f)
         return data
 
     def __repr__(self):

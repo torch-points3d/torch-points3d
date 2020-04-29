@@ -40,6 +40,12 @@ data:
         feat_names: [rgb, pos_z]
         delete_feats: [True, True]
     - transform: Center
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
+    - transform: ShiftVoxels
   test_transform:
     - transform: XYZFeature
       params:
@@ -52,3 +58,8 @@ data:
         feat_names: [rgb, pos_z]
         delete_feats: [True, True]
     - transform: Center
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
