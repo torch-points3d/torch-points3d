@@ -145,7 +145,7 @@ class ResNetBase(MinkowskiNetwork):
         assert self.BLOCK is not None
         assert self.OUT_PIXEL_DIST > 0
 
-        self.network_initialization(in_channels, out_channels, D)
+        self.network_initialization(in_channels, out_channels, D, conv1_kernel_size)
         self.weight_initialization()
 
     def network_initialization(self, in_channels, out_channels, D):
