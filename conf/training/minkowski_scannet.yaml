@@ -9,12 +9,12 @@ training:
     optim:
         base_lr: 0.1
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
-        grad_clip: 5
+        grad_clip: 100
         optimizer:
-            class: Adam
+            class: SGD
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
-                weight_decay: 1e-2
+                weight_decay: 1e-4
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"
@@ -30,13 +30,13 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    entity: "thomas-chaton"
-    project: scannet
-    log: False
-    notes:
-    name: "Res16UNet34C "
+    entity: ""
+    project: s3dis
+    log: True
+    notes: "Minkowski baseline"
+    name: "Mink-Res16UNet34C "
     public: True # It will be display the model within wandb log, else not.
 
     # parameters for TensorBoard Visualization
 tensorboard:
-    log: True
+    log: False

@@ -105,7 +105,7 @@ models:
             skip: True
         mlp_cls:
             nn: [128 * 2 + 2 * 64, 128]
-            dropout: 0.5
+            dropout: 0
 
     RSConv_MSN_S3DIS:
         class: rsconv.RSConvLogicModel
@@ -116,10 +116,10 @@ models:
             npoint: [2048, 1024, 512, 64]
             radii:
                 [
-                    [0.15, 0.175, 0.2],
+                    [0.075, 0.1, 0.125],
+                    [0.1, 0.15, 0.2],
                     [0.2, 0.3, 0.4],
-                    [0.4, 0.5, 0.6],
-                    [0.6, 0.8, 1.2],
+                    [0.4, 0.6, 0.8],
                 ]
             nsamples: [[16, 32, 48], [16, 48, 64], [16, 32, 48], [16, 24, 32]]
             down_conv_nn:
@@ -158,5 +158,5 @@ models:
             skip: True
         mlp_cls:
             nn: [128 * 2 + 2 * 64, 128]
-            dropout: 0.5
+            dropout: 0.
         

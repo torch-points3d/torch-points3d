@@ -3,7 +3,6 @@ import queue
 
 import torch
 import torch.nn.functional as F
-from torch_geometric.data import Data
 
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.modules.RSConv import *
@@ -54,7 +53,9 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
                 pos -- Features [B, 3, N]
         """
         data = data.to(device)
-        self.input = Data(x=data.x.transpose(1, 2).contiguous() if data.x is not None else None, pos=data.pos)
+        if data.x is not None:
+            data.x = data.x.transpose(1, 2).contiguous()
+        self.input = data
         if data.y is not None:
             self.labels = torch.flatten(data.y).long()  # [B,N]
         else:
