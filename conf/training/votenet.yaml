@@ -1,4 +1,3 @@
-# Ref: https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/config.py
 training:
     epochs: 500
     num_workers: 4
@@ -7,11 +6,11 @@ training:
     cuda: 1
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
     optim:
-        base_lr: 0.1
+        base_lr: 0.01
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
         grad_clip: 5
         optimizer:
-            class: Adam
+            class: SGD
             params:
                 lr: ${training.optim.base_lr} # The path is cut from training
                 weight_decay: 1e-2
