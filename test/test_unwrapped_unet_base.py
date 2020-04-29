@@ -67,8 +67,7 @@ class TestUnwrapperUnet(unittest.TestCase):
         modellib = MockModelLib()
         model = MockModel(models_conf["TestUnwrapper"], "", None, modellib)
         data = []
-        model.input = data
-        d = model()
+        d = model(data)
         self.assertEqual(d, [0, 1, 2, 3, "inner", 4, 5, 6, 7])
 
     def test_forwardprecompute(self):
@@ -77,8 +76,7 @@ class TestUnwrapperUnet(unittest.TestCase):
         modellib = MockModelLib()
         model = MockModel(models_conf["TestPrecompute"], "", None, modellib)
         data = []
-        model.input = data
-        d = model(precomputed_down="NotEmpty", precomputed_up="NotEmpty")
+        d = model(data, precomputed_down="NotEmpty", precomputed_up="NotEmpty")
         self.assertEqual(d, [0, 1, 2, 3, "inner", 4, 5, 6, 7])
 
     def test_noinnermost(self):
@@ -87,8 +85,7 @@ class TestUnwrapperUnet(unittest.TestCase):
         modellib = MockModelLib()
         model = MockModel(models_conf["TestNoInnermost"], "", None, modellib)
         data = []
-        model.input = data
-        d = model()
+        d = model(data, precomputed_up="Hey", precomputed_down="Yay")
         self.assertEqual(d, [0, 1, 2, 3, 4, 5, 6])
 
     def test_unbalanced(self):
@@ -97,8 +94,7 @@ class TestUnwrapperUnet(unittest.TestCase):
         modellib = MockModelLib()
         model = MockModel(models_conf["TestUnbalanced"], "", None, modellib)
         data = []
-        model.input = data
-        d = model()
+        d = model(data, precomputed_up="Hey", precomputed_down="Yay")
         self.assertEqual(d, [0, 1, 2, 3, 4])
 
 

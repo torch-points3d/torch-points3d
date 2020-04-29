@@ -62,10 +62,10 @@ class RSConvUnet(UnwrappedUnetBasedModel):
         assert len(data.pos.shape) == 3
         data = data.to(self.device)
         if data.x is not None:
-            x = data.x.transpose(1, 2).contiguous()
+            data.x = data.x.transpose(1, 2).contiguous()
         else:
-            x = None
-        self.input = Data(x=x, pos=data.pos)
+            data.x = None
+        self.input = data
 
     def forward(self, data):
         """ This method does a forward on the Unet
