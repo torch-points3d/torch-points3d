@@ -45,6 +45,7 @@ data:
         size: ${data.first_subsampling}
         quantize_coords: True
         mode: "last"
+    - transform: ShiftVoxels
   test_transform:
     - transform: XYZFeature
       params:
