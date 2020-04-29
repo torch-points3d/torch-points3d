@@ -6,7 +6,7 @@ models:
         down_conv:
             module_name: SimpleBlockDown
             dimension: 3
-            bn_momentum: 0.1
+            bn_momentum: 0.05
             down_conv_nn:
                 [
                     [FEAT, 32],
@@ -20,7 +20,7 @@ models:
         up_conv:
             module_name: SimpleBlockUp
             dimension: 3
-            bn_momentum: 0.1
+            bn_momentum: 0.05
             up_conv_nn:
                 [
                     [256, 64],
@@ -41,13 +41,11 @@ models:
             neg_thresh: 1.4
 
 
-
-    Res16UNet34A:
+    Res16UNet32B:
         class: minkowski.Minkowski_Baseline_Model_Fragment
         conv_type: "SPARSE"
-        model_name: "Res16UNet14A"
+        model_name: "Res16UNet32B"
         loss_mode: "match"
-        feature_dimension: 1
         conv1_kernel_size: 5
         out_channels: 32
         D: 3
@@ -56,6 +54,41 @@ models:
           class: "ContrastiveHardestNegativeLoss"
           params:
             num_pos: 1024
-            num_hn_samples: 2048
+            num_hn_samples: 256
+            pos_thresh: 0.1
+            neg_thresh: 1.4
+    Res16UNet34A:
+        class: minkowski.Minkowski_Baseline_Model_Fragment
+        conv_type: "SPARSE"
+        model_name: "Res16UNet14A"
+        loss_mode: "match"
+        conv1_kernel_size: 5
+        out_channels: 32
+        D: 3
+        normalize_feature: True
+        metric_loss:
+          class: "ContrastiveHardestNegativeLoss"
+          params:
+            num_pos: 1024
+            num_hn_samples: 256
+            pos_thresh: 0.1
+            neg_thresh: 1.4
+
+
+    Res16UNet34B:
+      # to big...
+        class: minkowski.Minkowski_Baseline_Model_Fragment
+        conv_type: "SPARSE"
+        model_name: "Res16UNet14B"
+        loss_mode: "match"
+        conv1_kernel_size: 5
+        out_channels: 32
+        D: 3
+        normalize_feature: True
+        metric_loss:
+          class: "ContrastiveHardestNegativeLoss"
+          params:
+            num_pos: 1024
+            num_hn_samples: 256
             pos_thresh: 0.1
             neg_thresh: 1.4

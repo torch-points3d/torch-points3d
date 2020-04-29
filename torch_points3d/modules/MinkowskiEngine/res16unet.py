@@ -256,8 +256,8 @@ class Res16UNetBase(ResNetBase):
 
     # To use the model, must call initialize_coords before forward pass.
     # Once data is processed, call clear to reset the model before calling initialize_coords
-    def __init__(self, in_channels, out_channels, D=3, **kwargs):
-        super(Res16UNetBase, self).__init__(in_channels, out_channels, D)
+    def __init__(self, in_channels, out_channels, D=3, conv1_kernel_size=3, **kwargs):
+        super(Res16UNetBase, self).__init__(in_channels, out_channels, D, conv1_kernel_size, **kwargs)
 
     def network_initialization(self, in_channels, out_channels, D):
         # Setup net_metadata
@@ -571,6 +571,10 @@ class Res16UNet18B(Res16UNet18):
 
 class Res16UNet18D(Res16UNet18):
     PLANES = (32, 64, 128, 256, 384, 384, 384, 384)
+
+
+class Res16UNet32B(Res16UNet34):
+    PLANES = (32, 64, 128, 256, 256, 64, 64, 64)
 
 
 class Res16UNet34A(Res16UNet34):

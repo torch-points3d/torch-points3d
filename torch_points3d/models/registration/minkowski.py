@@ -134,7 +134,11 @@ class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
         BaseMinkowski.__init__(self, option, model_type, dataset, modules)
 
         self.model = initialize_minkowski_unet(
-            option.model_name, dataset.feature_dimension, option.out_channels, option.D
+            option.model_name,
+            in_channels=dataset.feature_dimension,
+            out_channels=option.out_channels,
+            D=option.D,
+            conv1_kernel_size=option.conv1_kernel_size,
         )
 
     def apply_nn(self, input):
