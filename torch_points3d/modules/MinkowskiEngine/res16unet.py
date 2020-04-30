@@ -635,7 +635,7 @@ class STResTesseract16UNet18A(STRes16UNet18A, STResTesseract16UNetBase):
 
 def get_block(norm_type, inplanes, planes, stride=1, dilation=1, downsample=None, bn_momentum=0.1, D=3):
     if norm_type == NormType.BATCH_NORM:
-        return BasicBlockBN(
+        return BasicBlock(
             inplanes=inplanes,
             planes=planes,
             stride=stride,
@@ -644,7 +644,7 @@ def get_block(norm_type, inplanes, planes, stride=1, dilation=1, downsample=None
             bn_momentum=bn_momentum,
             D=D,
         )
-    elif norm_type == "IN":
+    elif norm_type == NormType.INSTANCE_NORM:
         return BasicBlockIN(inplanes, planes, stride, dilation, downsample, bn_momentum, D)
     else:
         raise ValueError(f"Type {norm_type}, not defined")
