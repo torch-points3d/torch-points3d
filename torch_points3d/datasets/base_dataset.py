@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 import logging
 from functools import partial
-
+import numpy as np
 import torch
 import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
@@ -168,8 +168,12 @@ class BaseDataset:
         """
         conv_type = model.conv_type
         self._batch_size = batch_size
+
         batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
-        dataloader = partial(torch.utils.data.DataLoader, collate_fn=batch_collate_function)
+        dataloader = partial(
+            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
+        )
+
 
         if self.train_sampler:
             log.info(self.train_sampler)
