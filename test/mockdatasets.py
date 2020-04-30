@@ -85,12 +85,12 @@ class PairMockDataset(MockDataset):
         torch.manual_seed(0)
         datalist_source = [
             Data(pos=torch.randn((self.num_points, 3)), x=self._feature,
-                 pair_ind=self._pair_ind)
+                 pair_ind=self._pair_ind, size_pair_ind=torch.tensor([len(self._pair_ind)]))
             for i in range(self.batch_size)
         ]
         datalist_target = [
             Data(pos=torch.randn((self.num_points, 3)), x=self._feature,
-                 pair_ind=self._pair_ind)
+                 pair_ind=self._pair_ind, size_pair_ind=torch.tensor([len(self._pair_ind)]))
             for i in range(self.batch_size)
         ]
         if self._transform:

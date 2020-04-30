@@ -145,7 +145,7 @@ class ResNetBase(MinkowskiNetwork):
         assert self.BLOCK is not None
         assert self.OUT_PIXEL_DIST > 0
 
-        self.network_initialization(in_channels, out_channels, D, conv1_kernel_size)
+        self.network_initialization(in_channels, out_channels, D)
         self.weight_initialization()
 
     def network_initialization(self, in_channels, out_channels, D):
@@ -257,7 +257,7 @@ class Res16UNetBase(ResNetBase):
     # To use the model, must call initialize_coords before forward pass.
     # Once data is processed, call clear to reset the model before calling initialize_coords
     def __init__(self, in_channels, out_channels, D=3, conv1_kernel_size=3, **kwargs):
-        super(Res16UNetBase, self).__init__(in_channels, out_channels, D, conv1_kernel_size, **kwargs)
+        super(Res16UNetBase, self).__init__(in_channels, out_channels, D, conv1_kernel_size)
 
     def network_initialization(self, in_channels, out_channels, D):
         # Setup net_metadata
