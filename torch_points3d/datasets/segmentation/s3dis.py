@@ -427,8 +427,6 @@ class S3DISSphere(S3DISOriginalFused):
             return self._test_spheres[idx]
 
     def _get_random(self):
-        np.random.seed()
-
         # Random spheres biased towards getting more low frequency classes
         chosen_label = np.random.choice(self._labels, p=self._label_counts)
         valid_centres = self._centres_for_sampling[self._centres_for_sampling[:, 4] == chosen_label]
