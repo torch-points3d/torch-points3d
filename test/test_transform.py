@@ -257,7 +257,7 @@ class Testhelpers(unittest.TestCase):
 
         data_out = t(data.clone())
 
-        x = data_out.z
+        x = data_out.pos_z
 
         self.assertEqual(np.array_equal(x, pos[:, -1]), True)
 
@@ -265,10 +265,10 @@ class Testhelpers(unittest.TestCase):
 
         self.assertEqual(np.array_equal(x, pos[:, -1]), False)
 
-        self.assertIn("z", data_out.keys)
+        self.assertIn("pos_z", data_out.keys)
         self.assertIn("pos", data_out.keys)
-        self.assertNotIn("x", data_out.keys)
-        self.assertNotIn("y", data_out.keys)
+        self.assertNotIn("pos_x", data_out.keys)
+        self.assertNotIn("pos_y", data_out.keys)
 
     def test_scalePos(self):
         tr = ScalePos(scale=2.0)

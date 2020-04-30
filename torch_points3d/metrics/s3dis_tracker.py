@@ -1,5 +1,4 @@
 from typing import Dict
-import torchnet as tnt
 import logging
 import torch
 from torch_geometric.nn.unpool import knn_interpolate
@@ -40,19 +39,21 @@ class S3DISTracker(SegmentationTracker):
             self._test_area.votes = torch.zeros((self._test_area.y.shape[0], self._num_classes), dtype=torch.float)
             self._test_area.to(model.device)
 
-        # Gather input to the model and check that it fits with the test set
+        # Gather origin ids and check that it fits with the test set
         inputs = model.get_input()
-        if inputs[SaveOriginalPosId.KEY] is None or inputs[SaveOriginalPosId.KEY].max() >= self._test_area.pos.shape[0]:
-            raise ValueError(
-                "The inputs given to the model do not have a %s attribute or this attribute does\
-                     not correspond to the number of points in the test area point cloud."
-                % SaveOriginalPosId.KEY
-            )
+        if inputs[SaveOriginalPosId.KEY] is None:
+            raise ValueError("The inputs given to the model do not have a %s attribute." % SaveOriginalPosId.KEY)
+
+        originids = inputs[SaveOriginalPosId.KEY]
+        if originids.dim() == 2:
+            originids = originids.flatten()
+        if originids.max() >= self._test_area.pos.shape[0]:
+            raise ValueError("Origin ids are larger than the number of points in the original point cloud.")
 
         # Set predictions
         outputs = model.get_output()
-        self._test_area.votes[inputs[SaveOriginalPosId.KEY]] += outputs
-        self._test_area.prediction_count[inputs[SaveOriginalPosId.KEY]] += 1
+        self._test_area.votes[originids] += outputs
+        self._test_area.prediction_count[originids] += 1
 
     def finalise(self, full_res=False, vote_miou=True, ply_output="", **kwargs):
         per_class_iou = self._confusion_matrix.get_intersection_union_per_class()[0]

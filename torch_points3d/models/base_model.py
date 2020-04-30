@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import Optional, Dict, Any
 import torch
 from torch.optim.optimizer import Optimizer
@@ -170,10 +170,7 @@ class BaseModel(torch.nn.Module):
         self.backward()  # calculate gradients
 
         if self._grad_clip > 0:
-            std_ = torch.stack(
-                [p.detach().std() for p in self.parameters() if (p.requires_grad and p.std() > 0)]
-            ).mean()
-            torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip * std_.item())
+            torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
 
         if make_optimizer_step:
             self._optimizer.step()  # update parameters
@@ -393,7 +390,7 @@ class BaseModel(torch.nn.Module):
         return self.to(torch.device("cuda"))
 
 
-class BaseInternalLossModule(ABC):
+class BaseInternalLossModule(torch.nn.Module):
     """ABC for modules which have internal loss(es)
     """
 

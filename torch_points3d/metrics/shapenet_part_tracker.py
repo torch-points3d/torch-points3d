@@ -1,5 +1,4 @@
 from typing import Dict
-import torchnet as tnt
 import numpy as np
 
 from .confusion_matrix import ConfusionMatrix

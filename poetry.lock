@@ -322,26 +322,6 @@ python-versions = ">=2.7"
 version = "0.3"
 
 [[package]]
-category = "main"
-description = ""
-name = "etw-pytorch-utils"
-optional = false
-python-versions = "~2.7 || ^3.5"
-version = "1.1.2"
-
-[package.dependencies]
-numpy = "^1.16"
-scipy = "^1.2"
-statistics = "^1.0"
-torch = "^1.0"
-tqdm = "^4.29"
-visdom = "^0.1.8"
-
-[package.source]
-reference = "4a99f9e27f291dce25d16f06aa52eb127f3b68ed"
-type = "git"
-url = "https://github.com/erikwijmans/etw_pytorch_utils.git"
-[[package]]
 category = "dev"
 description = "A platform independent file lock."
 name = "filelock"
@@ -1854,17 +1834,6 @@ test = ["pytest"]
 
 [[package]]
 category = "main"
-description = "A Python 2.* port of 3.4 Statistics Module"
-name = "statistics"
-optional = false
-python-versions = "*"
-version = "1.0.3.5"
-
-[package.dependencies]
-docutils = ">=0.3"
-
-[[package]]
-category = "main"
 description = "A backport of the subprocess module from Python 3 for use on 2.x."
 name = "subprocess32"
 optional = false
@@ -2275,7 +2244,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 MinkowskiEngine = ["MinkowskiEngine"]
 
 [metadata]
-content-hash = "3f087aa846af8a5a500b4e72ef7b49ba34df7a556a387de3026f2e947513a16e"
+content-hash = "40d69872ebb6f02ca1e0f317eff748ce7f661248353ff4251b5a7af5163e6a12"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2429,7 +2398,6 @@ entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
     {file = "entrypoints-0.3.tar.gz", hash = "sha256:c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"},
 ]
-etw-pytorch-utils = []
 filelock = [
     {file = "filelock-3.0.12-py3-none-any.whl", hash = "sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836"},
     {file = "filelock-3.0.12.tar.gz", hash = "sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59"},
@@ -3235,9 +3203,6 @@ sphinxcontrib-qthelp = [
 sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib-serializinghtml-1.1.4.tar.gz", hash = "sha256:eaa0eccc86e982a9b939b2b82d12cc5d013385ba5eadcc7e4fed23f4405f77bc"},
     {file = "sphinxcontrib_serializinghtml-1.1.4-py2.py3-none-any.whl", hash = "sha256:f242a81d423f59617a8e5cf16f5d4d74e28ee9a66f9e5b637a18082991db5a9a"},
-]
-statistics = [
-    {file = "statistics-1.0.3.5.tar.gz", hash = "sha256:2dc379b80b07bf2ddd5488cad06b2b9531da4dd31edb04dc9ec0dc226486c138"},
 ]
 subprocess32 = [
     {file = "subprocess32-3.5.4-cp27-cp27m-macosx_10_6_intel.whl", hash = "sha256:88e37c1aac5388df41cc8a8456bb49ebffd321a3ad4d70358e3518176de3a56b"},

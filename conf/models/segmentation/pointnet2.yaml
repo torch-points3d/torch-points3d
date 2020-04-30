@@ -54,7 +54,7 @@ models:
             nn: [128, 128, 128, 128, 128]
             dropout: 0.5
 
-    pointnet2_onehot:
+    pointnet2_largemsg:
         class: pointnet2.PointNet2_D
         conv_type: "DENSE"
         use_category: ${data.use_category}
