@@ -1,18 +1,17 @@
 data:
     class: scannet.ScannetDataset
-    dataset_name: "scannet_boxes"
+    dataset_name: "scannet"
     task: object_detection
     dataroot: data
-    grid_size: 0.05
     version: 'v2'
     use_instance_labels: True
     use_instance_bboxes: True
     donotcare_class_ids: []
-    max_num_point: None
-    process_workers: 1
-    input_nc: 3 + 1
-    num_classes: 18
-    num_points: 20000
+    process_workers: 4
+
+    pre_transform:
+      - transform: GridSampling
+        lparams: [0.02]
     
     train_transform:
       - transform: FixedPoints

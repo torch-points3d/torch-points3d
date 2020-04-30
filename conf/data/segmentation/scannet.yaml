@@ -2,14 +2,14 @@ data:
     class: scannet.ScannetDataset
     task: segmentation
     dataroot: data
-    grid_size: 0.05
     version: 'v2'
     use_instance_labels: False
     use_instance_bboxes: False
     donotcare_class_ids: []
-    max_num_point: None
-    process_workers: 1
+    process_workers: 4
+    
     apply_rotation: True
+    grid_size: 0.05
     
     pre_transform:
       - transform: GridSampling
