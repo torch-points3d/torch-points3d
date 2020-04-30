@@ -71,13 +71,11 @@ class ScannetObjectDetection(Scannet):
 
         center_label: (MAX_NUM_OBJ,3) for GT box center XYZ
         sem_cls_label: (MAX_NUM_OBJ,) semantic class index
-        angle_class_label: (MAX_NUM_OBJ,) with int values in 0,...,NUM_HEADING_BIN-1
         angle_residual_label: (MAX_NUM_OBJ,)
-        size_classe_label: (MAX_NUM_OBJ,) with int values in 0,...,NUM_SIZE_CLUSTER
         size_residual_label: (MAX_NUM_OBJ,3)
         box_label_mask: (MAX_NUM_OBJ) as 0/1 with 1 indicating a unique box
-        point_votes: (N,3) with votes XYZ
-        point_votes_mask: (N,) with 0/1 with 1 indicating the point is in one of the object's OBB.
+        vote_label: (N,3) with votes XYZ
+        vote_label_mask: (N,) with 0/1 with 1 indicating the point is in one of the object's OBB.
         """
         # Initaliase variables
         num_points = data.pos.shape[0]
@@ -87,7 +85,6 @@ class ScannetObjectDetection(Scannet):
 
         target_bboxes = torch.zeros((self.MAX_NUM_OBJ, 6))
         target_bboxes_mask = torch.zeros((self.MAX_NUM_OBJ), dtype=torch.bool)
-        angle_classes = torch.zeros((self.MAX_NUM_OBJ,))
         angle_residuals = torch.zeros((self.MAX_NUM_OBJ,))
         size_classes = torch.zeros((self.MAX_NUM_OBJ,))
         size_residuals = torch.zeros((self.MAX_NUM_OBJ, 3))
@@ -131,10 +128,7 @@ class ScannetObjectDetection(Scannet):
         ]
 
         data.center_label = target_bboxes.float()[:, 0:3]
-        data.heading_class_label = angle_classes.int()
         data.heading_residual_label = angle_residuals.float()
-        data.heading_class_label = angle_classes.int()
-        data.size_class_label = size_classes.int()
         data.size_residual_label = size_residuals.float()
         data.sem_cls_label = torch.from_numpy(target_bboxes_semcls).int()
         data.box_label_mask = target_bboxes_mask
@@ -143,11 +137,11 @@ class ScannetObjectDetection(Scannet):
         delattr(data, "instance_bboxes")
         delattr(data, "instance_labels")
         delattr(data, "y")
-
         return data
 
-    def _remap_labels(self):
+    def _remap_labels(self, data):
         log.info("Keeping original labels in y. Please do not use data.y in your network.")
+        return data
 
 
 class ScannetDataset(BaseDataset):
