@@ -22,7 +22,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ├─ forward_scripts         # Script that runs a forward pass on possibly non annotated data
 ├─ outputs                 # All outputs from your runs sorted by date
 ├─ scripts                 # Some scripts to help manage the project
-├─ torch_points3d  
+├─ torch_points3d
     ├─ core                # Core components
     ├─ datasets            # All code related to datasets
     ├─ metrics             # All metrics and trackers
@@ -122,6 +122,11 @@ You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
 poetry install -E MinkowskiEngine --no-root
+```
+
+#### Pycuda
+```bash
+poetry add pycuda
 ```
 
 
