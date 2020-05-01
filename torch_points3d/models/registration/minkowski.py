@@ -40,9 +40,9 @@ class BaseMinkowski(BaseModel):
                 in_feat = last_mlp_opt.nn[i]
 
             if last_mlp_opt.dropout:
-                self.FC_layer.append("Dropout", Dropout(p=last_mlp_opt.dropout))
+                self.FC_layer.append(Dropout(p=last_mlp_opt.dropout))
 
-            self.FC_layer.append("Class", Linear(in_feat, in_feat, bias=False))
+            self.FC_layer.append(Linear(in_feat, in_feat, bias=False))
         else:
             self.FC_layer = torch.nn.Identity()
 
@@ -179,9 +179,9 @@ class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
                 in_feat = last_mlp_opt.nn[i]
 
             if last_mlp_opt.dropout:
-                self.FC_layer.append("Dropout", Dropout(p=last_mlp_opt.dropout))
+                self.FC_layer.append(Dropout(p=last_mlp_opt.dropout))
 
-            self.FC_layer.append("Class", Linear(in_feat, in_feat, bias=False))
+            self.FC_layer.append(Linear(in_feat, in_feat, bias=False))
         else:
             self.FC_layer = torch.nn.Identity()
 
