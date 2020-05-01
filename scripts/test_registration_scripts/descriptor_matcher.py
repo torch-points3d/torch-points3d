@@ -64,8 +64,6 @@ def compute_dists(kp_source, kp_target, trans):
     """
     kp_target_t = kp_target.dot(trans[:3, :3].T) + trans[:3, 3]
     dist = np.linalg.norm(kp_source - kp_target_t, axis=1)
-    plt.hist(dist, bins=100)
-    plt.show()
     return dist
 
 
