@@ -221,7 +221,7 @@ class RandomSphere(object):
 
 class SphereSampling:
     """ Samples points within a sphere
-        
+
     Parameters
     ----------
     radius : float
@@ -523,7 +523,6 @@ class PairTransform(object):
 class ShiftVoxels:
     """ Trick to make Sparse conv invariant to even and odds coordinates
     https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/train.py#L78
-
     Parameters
     -----------
     apply_shift: bool:
@@ -546,7 +545,6 @@ class ShiftVoxels:
 
 class RandomDropout:
     """ Randomly drop points from the input data
-
     Parameters
     ----------
     dropout_ratio : float, optional

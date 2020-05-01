@@ -7,6 +7,7 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.datasets.registration.basetest import Base3DMatchTest
 from torch_points3d.datasets.registration.basetest import SimplePatch
 from torch_points3d.datasets.registration.utils import PatchExtractor
+from torch_points3d.datasets.registration.detector import RandomDetector
 
 
 class Test3DMatch(Base3DMatchTest):
@@ -34,13 +35,24 @@ class Test3DMatch(Base3DMatchTest):
         with open(osp.join(self.path_table, 'table.json'), 'r') as f:
             self.table = json.load(f)
 
-    def get(self, idx):
+    def __getitem__(self, idx):
+        r"""Gets the data object at index :obj:`idx` and transforms it (in case
+        a :obj:`self.transform` is given).
+        In case :obj:`idx` is a slicing object, *e.g.*, :obj:`[2:5]`, a list, a
+        tuple, a  LongTensor or a BoolTensor, will return a subset of the
+        dataset at the specified indices."""
         data = torch.load(
             osp.join(self.path_table, 'fragment_{:06d}.pt'.format(idx)))
+        if(self.transform is not None):
+            data = self.transform(data)
+        if(self.num_random_pt > 0):
+            detector = RandomDetector(self.num_random_pt)
+            data = detector(data)
         return data
 
     def get_patches(self, idx):
-        fragment = self.get(idx)
+        fragment = torch.load(
+            osp.join(self.path_table, 'fragment_{:06d}.pt'.format(idx)))
         patch_dataset = [self.patch_extractor(fragment, fragment.keypoints[i])
                          for i in range(self.num_random_pt)]
 

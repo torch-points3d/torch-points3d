@@ -9,6 +9,8 @@ from torch_points_kernels.points_cpu import ball_query
 import imageio
 from tqdm import tqdm
 
+from torch_points3d.core.data_transform import GridSampling, SaveOriginalPosId
+from torch_geometric.transforms import Compose
 import torch_points3d.datasets.registration.fusion as fusion
 
 
@@ -140,17 +142,22 @@ def filter_pair(pair, dist):
     return pair
 
 
-def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=False, num_pos=1):
-    data1 = torch.load(path1)
-    data2 = torch.load(path2)
+def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=False, num_pos=1, rot_gt=torch.eye(3)):
 
     # we can use ball query on cpu because the points are sorted
     # print(len(data1.pos), len(data2.pos), max_distance_overlap)
-    pair, dist = ball_query(data2.pos, data1.pos, radius=max_distance_overlap, max_num=num_pos, mode=1)
+    pair, dist = ball_query(data2.pos.to(torch.float),
+                            data1.pos.to(torch.float) @ rot_gt.T,
+                            radius=max_distance_overlap,
+                            max_num=num_pos, mode=1, sorted=True)
     pair = filter_pair(pair, dist)
+    pair2 = []
     overlap = [pair.shape[0] / len(data1.pos)]
     if reciprocity:
-        pair2, dist2 = ball_query(data1.pos, data2.pos, radius=max_distance_overlap, max_num=num_pos, mode=1)
+        pair2, dist2 = ball_query(data1.pos.to(torch.float) @ rot_gt.T,
+                                  data2.pos.to(torch.float),
+                                  radius=max_distance_overlap,
+                                  max_num=num_pos, mode=1, sorted=True)
         pair2 = filter_pair(pair2, dist2)
         overlap.append(pair2.shape[0] / len(data2.pos))
     # overlap = pair.shape[0] / \
@@ -158,9 +165,19 @@ def compute_overlap_and_matches(path1, path2, max_distance_overlap, reciprocity=
     # print(pair)
 
     # print(path1, path2, "overlap=", overlap)
-    output = dict(pair=pair, path_source=path1, path_target=path2, overlap=overlap)
+    output = dict(pair=pair, pair2=pair2, overlap=overlap)
     return output
 
+def compute_subsampled_matches(data1, data2, voxel_size=0.1, max_distance_overlap=0.02):
+    """
+    compute matches on subsampled version of data and track ind
+    """
+    grid_sampling = Compose([SaveOriginalPosId(), GridSampling(voxel_size, mode='last')])
+    subsampled_data = grid_sampling(data1.clone())
+    origin_id = subsampled_data.origin_id.numpy()
+    pair = compute_overlap_and_matches(subsampled_data, data2, max_distance_overlap)['pair']
+    pair[:, 0] = origin_id[pair[:, 0]]
+    return torch.from_numpy(pair.copy())
 
 def get_3D_bound(list_path_img, path_intrinsic, list_path_trans, depth_thresh, limit_size=600, voxel_size=0.01):
     vol_bnds = np.zeros((3, 2))
@@ -226,7 +243,7 @@ def rgbd2fragment_fine(
         if (i + 1) % num_frame_per_fragment == 0:
 
             if save_pc:
-                pcd = tsdf_vol.get_point_cloud(0.2, 0.0)
+                pcd = tsdf_vol.get_point_cloud(0.35, 0.0)
                 torch_data = Data(pos=torch.from_numpy(pcd.copy()))
             else:
                 verts, faces, norms = tsdf_vol.get_mesh()
@@ -273,3 +290,27 @@ class PatchExtractor:
                     patch[key] = data[key][col]
 
         return patch
+
+
+def tracked_matches(data_s, data_t, pair):
+    """
+    allow to keep the index that are still present after a sparse input
+    Parameters:
+    pair : P x 2 indices of the matched points before any transformation
+    """
+
+    pair_np = pair.numpy()
+    mask_s = np.isin(pair_np[:, 0], data_s.origin_id.numpy())
+    mask_t = np.isin(pair_np[:, 1], data_t.origin_id.numpy())
+    # print(data_s.origin_id.shape)
+    # print(data_s.pos.shape)
+    # print(data_s.xyz.shape)
+    mask = np.logical_and(mask_s, mask_t)
+    filtered_pair = pair_np[mask]
+
+    table_s = dict(zip(data_s.origin_id.numpy(),
+                       np.arange(0, len(data_s.pos))))
+    table_t = dict(zip(data_t.origin_id.numpy(),
+                       np.arange(0, len(data_t.pos))))
+    res = torch.tensor([[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]).to(torch.long)
+    return res

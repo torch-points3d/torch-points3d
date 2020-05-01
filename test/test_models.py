@@ -10,10 +10,13 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric, MockDataset
+from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 
 from torch_points3d.models.model_factory import instantiate_model
-from torch_points3d.core.data_transform import ToSparseInput
+from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
+from torch_geometric.transforms import Compose
 
 # calls resolve_model, then find_model_using_name
 
@@ -26,7 +29,7 @@ def load_model_config(task, model_type, model_name):
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
     config = OmegaConf.load(models_conf)
     config.update("model_name", model_name)
-    config.update("data.task", "segmentation")
+    config.update("data.task", task)
     return config
 
 
@@ -55,13 +58,25 @@ class TestModelUtils(unittest.TestCase):
                     return True
             return False
 
-        def get_dataset(conv_type):
+        def get_dataset(conv_type, task):
             features = 2
-            if conv_type.lower() == "dense":
-                return MockDataset(features, num_points=2048)
-            if conv_type.lower() == "sparse":
-                return MockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
-            return MockDatasetGeometric(features)
+            if task == "registration":
+                if conv_type.lower() == "dense":
+                    return PairMockDataset(features, num_points=2048)
+                if conv_type.lower() == "sparse":
+                    tr = Compose(
+                        [XYZFeature(True, True, True), GridSampling(size=0.01, quantize_coords=True, mode="last")]
+                    )
+                    return PairMockDatasetGeometric(features, transform=tr, num_points=1024)
+                return PairMockDatasetGeometric(features)
+            else:
+                if conv_type.lower() == "dense":
+                    return MockDataset(features, num_points=2048)
+                if conv_type.lower() == "sparse":
+                    return MockDatasetGeometric(
+                        features, transform=GridSampling(size=0.01, quantize_coords=True, mode="last"), num_points=1024
+                    )
+                return MockDatasetGeometric(features)
 
         for type_file in self.model_type_files:
             associated_task = type_file.split("/")[-2]
@@ -72,7 +87,7 @@ class TestModelUtils(unittest.TestCase):
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
                         models_config.update("model_name", model_name)
-                        dataset = get_dataset(models_config.models[model_name].conv_type)
+                        dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
                         model = instantiate_model(models_config, dataset)
                         model.set_input(dataset[0], device)
                         try:
@@ -98,6 +113,16 @@ class TestModelUtils(unittest.TestCase):
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)
         model.set_input(dataset[0], device)
+        model.forward()
+        model.backward()
+
+    def test_siamese_minkowski(self):
+        params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
+        transform = Compose([XYZFeature(True, True, True), GridSampling(size=0.01, quantize_coords=True, mode="last")])
+        dataset = PairMockDatasetGeometric(5, transform=transform, num_points=1024, is_pair_ind=True)
+        model = instantiate_model(params, dataset)
+        d = dataset[0]
+        model.set_input(d, device)
         model.forward()
         model.backward()
 

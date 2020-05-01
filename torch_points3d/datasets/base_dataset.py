@@ -19,7 +19,6 @@ from torch_points3d.models.base_model import BaseModel
 # A logger for this file
 log = logging.getLogger(__name__)
 
-
 class BaseDataset:
     def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
@@ -128,7 +127,6 @@ class BaseDataset:
                     log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
                 setattr(self, new_name, filt)
-
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
@@ -170,10 +168,12 @@ class BaseDataset:
         """
         conv_type = model.conv_type
         self._batch_size = batch_size
-        batch_collate_function = BaseDataset._get_collate_function(conv_type, precompute_multi_scale)
+
+        batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(
             torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
         )
+
 
         if self.train_sampler:
             log.info(self.train_sampler)

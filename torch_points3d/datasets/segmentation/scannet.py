@@ -549,7 +549,7 @@ class Scannet(InMemoryDataset):
         # Build data container
         data = {}
         data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
-        data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:]) 
+        data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:])
         if normalize_rgb:
             data["rgb"] /= 255.0
         data["y"] = torch.from_numpy(semantic_labels)

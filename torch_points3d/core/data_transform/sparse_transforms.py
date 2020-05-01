@@ -41,19 +41,19 @@ class RemoveDuplicateCoords(object):
     def _process(self, data):
         if self._mode == "last":
             data = shuffle_data(data)
-        
+
         coords = data.pos
         if "batch" not in data:
             cluster = grid_cluster(coords, torch.tensor([1, 1, 1]))
         else:
             cluster = voxel_grid(coords, data.batch, 1)
         cluster, unique_pos_indices = consecutive_cluster(cluster)
-        
+
         skip_keys=[]
         if self._mode == "last":
-           skip_keys.append("pos")
-           data.pos = coords[unique_pos_indices]
-        data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)            
+            skip_keys.append("pos")
+            data.pos = coords[unique_pos_indices]
+        data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)
         return data
 
     def __call__(self, data):
@@ -89,12 +89,15 @@ class ToSparseInput(object):
     """
 
     def __init__(self, grid_size=None, mode="last"):
+
         self._grid_size = grid_size
         self._mode = mode
+
         self._transform = GridSampling(grid_size, quantize_coords=True, mode=mode)
 
     def _process(self, data):
         return self._transform(data)
+
 
     def __call__(self, data):
         if isinstance(data, list):
@@ -107,6 +110,7 @@ class ToSparseInput(object):
     def __repr__(self):
         return "{}(grid_size={}, mode={})"\
             .format(self.__class__.__name__, self._grid_size, self._mode)
+
 
 class RandomCoordsFlip(object):
 

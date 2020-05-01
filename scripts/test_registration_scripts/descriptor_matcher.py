@@ -6,10 +6,11 @@ import os
 import os.path as osp
 from omegaconf import OmegaConf
 import sys
+import matplotlib.pyplot as plt
 
 # Import building function for model and dataset
 DIR = os.path.dirname(os.path.realpath(__file__))
-ROOT = os.path.join(DIR, "..")
+ROOT = os.path.join(DIR, "..", "..")
 sys.path.insert(0, ROOT)
 
 
@@ -36,10 +37,11 @@ def read_gt_log(path):
     return list_pair, list_mat
 
 
-def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=False, sym=True):
+def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=False, sym=False):
     """
     compute matches between features
     """
+
     tree_source = KDTree(feature_source)
     tree_target = KDTree(feature_target)
     _, nn_ind_source = tree_target.query(feature_source, k=1)
@@ -49,8 +51,7 @@ def compute_matches(feature_source, feature_target, kp_source, kp_target, ratio=
     if sym:
         indmatch = np.where(nn_ind_source.T[0][nn_ind_target.T[0]] == np.arange(len(feature_source)))[0]
     else:
-        indmatch = np.arange(len(feature_source))
-
+        indmatch = np.arange(len(feature_target))
     new_kp_source = np.copy(kp_source[nn_ind_target.T[0][indmatch]])
     new_kp_target = np.copy(kp_target[indmatch])
 
@@ -87,11 +88,16 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     data_source = np.load(path_descr_source)
     data_target = np.load(path_descr_target)
 
+    feat_s = data_source["feat"]
+    feat_t = data_target["feat"]
+
+    if len(data_source["feat"]) != len(data_source["keypoints"]):
+        # Sampled features using keypoints.
+        feat_s = feat_s[data_source["keypoints"]]
+        feat_t = feat_t[data_target["keypoints"]]
+
     kp_source, kp_target = compute_matches(
-        data_source["feat"],
-        data_target["feat"],
-        data_source["pcd"][data_source["keypoints"]],
-        data_target["pcd"][data_target["keypoints"]],
+        feat_s, feat_t, data_source["pcd"][data_source["keypoints"]], data_target["pcd"][data_target["keypoints"]],
     )
 
     dist = compute_dists(kp_source, kp_target, gt_trans)
@@ -100,7 +106,7 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
     n_t = osp.split(path_descr_target)[-1].split(".")[0]
 
     frac_correct = compute_mean_correct_matches(dist, list_tau)
-    print(n_s, n_t, frac_correct[0:5], list_tau)
+
     dico = dict(
         kp_source=kp_source,
         kp_target=kp_target,
@@ -110,6 +116,7 @@ def pair_evaluation(path_descr_source, path_descr_target, gt_trans, list_tau, re
         name_source=n_s,
         name_target=n_t,
     )
+    print(n_s, n_t, frac_correct)
     return dico
 
 
@@ -122,7 +129,7 @@ def compute_recall_scene(scene_name, list_pair, list_trans, list_tau1, list_tau2
     for i, pair in enumerate(list_pair):
         dico = pair_evaluation(pair[0], pair[1], list_trans[i], list_tau1, res_path)
         list_frac_correct.append(dico["frac_correct"])
-        list_dico[dico]
+        list_dico.append(dico)
 
     list_recall = compute_mean_correct_matches(np.asarray(list_frac_correct), list_tau2, is_leq=False)
     print("Save the matches")

@@ -1,10 +1,11 @@
 from torch_points3d.core.data_transform import MultiScaleTransform
 from torch_points3d.core.data_transform import PairTransform
-from torch_points3d.datasets.registration.pair import SimpleBatch
+from torch_points3d.datasets.registration.pair import DensePairBatch
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.utils.config import ConvolutionFormatFactory
 from torch_points3d.datasets.registration.pair import PairMultiScaleBatch, PairBatch
 from torch_points3d.datasets.base_dataset import BaseDataset
+
 
 
 class BaseSiameseDataset(BaseDataset):
@@ -13,7 +14,6 @@ class BaseSiameseDataset(BaseDataset):
         base dataset for siamese inputs
         """
         super().__init__(dataset_opt)
-
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
@@ -29,7 +29,7 @@ class BaseSiameseDataset(BaseDataset):
                 )
 
         if is_dense:
-            return lambda datalist: SimpleBatch.from_data_list(datalist)
+            return lambda datalist: DensePairBatch.from_data_list(datalist)
         else:
             return lambda datalist: PairBatch.from_data_list(datalist)
 

@@ -10,11 +10,11 @@ data:
     max_num_point: None
     process_workers: 1
     apply_rotation: True
-    
+
     pre_transform:
       - transform: GridSampling
         lparams: [0.02]
-    
+
     train_transform:
       - transform: RandomDropout
       - transform: XYZFeature
@@ -42,7 +42,7 @@ data:
           mode: "last"
       - transform: RandomCoordsFlip
         params:
-          ignored_axis: ['z'] 
+          ignored_axis: ['z']
       - transform: ShiftVoxels
       - transform: ChromaticAutoContrast
       - transform: ChromaticTranslation
@@ -54,7 +54,7 @@ data:
           input_nc_feats: [3, 1]
           delete_feats: [True, True]
           stricts: [False, True]
-    
+
     val_transform:
       - transform: XYZFeature
         params:

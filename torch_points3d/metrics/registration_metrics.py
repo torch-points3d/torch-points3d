@@ -38,9 +38,10 @@ def estimate_transfo(xyz, xyz_target):
     Q = xyz_c.T.mm(xyz_target_c) / len(xyz)
     U, S, V = torch.svd(Q)
     d = torch.det(V.mm(U.T))
-    R = V.mm(torch.diag(torch.tensor([1, 1, d]))).mm(U.T)
+    diag = torch.diag(torch.tensor([1, 1, d], device=xyz.device))
+    R = V.mm(diag).mm(U.T)
     t = xyz_target.mean(0) - R @ xyz.mean(0)
-    T = torch.eye(4)
+    T = torch.eye(4, device=xyz.device)
     T[:3, :3] = R
     T[:3, 3] = t
     return T
@@ -56,7 +57,7 @@ def get_geman_mclure_weight(xyz, xyz_target, mu):
 
 
 def get_cross_product_matrix(k):
-    return torch.tensor([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
+    return torch.tensor([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]], device=k.device)
 
 
 def rodrigues(axis, theta):
@@ -65,8 +66,8 @@ def rodrigues(axis, theta):
     source : https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
     """
     K = get_cross_product_matrix(axis)
-    t = torch.tensor([theta])
-    R = torch.eye(3) + torch.sin(t) * K + (1 - torch.cos(t)) * K.mm(K)
+    t = torch.tensor([theta], device=axis.device)
+    R = torch.eye(3, device=axis.device) + torch.sin(t) * K + (1 - torch.cos(t)) * K.mm(K)
     return R
 
 
@@ -80,9 +81,9 @@ def get_matrix_system(xyz, xyz_target, weight):
     the matrix is minus cross product matrix concatenate with the identity (rearanged).
     """
     assert xyz.shape == xyz_target.shape
-    A_x = torch.zeros(xyz.shape[0], 6)
-    A_y = torch.zeros(xyz.shape[0], 6)
-    A_z = torch.zeros(xyz.shape[0], 6)
+    A_x = torch.zeros(xyz.shape[0], 6, device=xyz.device)
+    A_y = torch.zeros(xyz.shape[0], 6, device=xyz.device)
+    A_z = torch.zeros(xyz.shape[0], 6, device=xyz.device)
     b_x = weight.view(-1) * (xyz_target[:, 0] - xyz[:, 0])
     b_y = weight.view(-1) * (xyz_target[:, 1] - xyz[:, 1])
     b_z = weight.view(-1) * (xyz_target[:, 2] - xyz[:, 2])
@@ -102,7 +103,7 @@ def get_trans(x):
     """
     get the matrix
     """
-    T = torch.eye(4)
+    T = torch.eye(4, device=x.device)
     T[:3, 3] = x[3:]
     axis = x[:3]
     theta = torch.norm(axis)
@@ -119,10 +120,10 @@ def fast_global_registration(xyz, xyz_target, mu_init=1, num_iter=20):
     """
     assert xyz.shape == xyz_target.shape
 
-    T_res = torch.eye(4)
+    T_res = torch.eye(4, device=xyz.device)
     mu = mu_init
     source = xyz.clone()
-    weight = torch.ones(len(source), 1)
+    weight = torch.ones(len(source), 1, device=xyz.device)
     for i in range(num_iter):
         if i > 0 and i % 5 == 0:
             mu /= 2.0

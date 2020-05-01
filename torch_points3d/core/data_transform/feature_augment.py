@@ -29,7 +29,7 @@ class ChromaticTranslation(object):
 
     Parameters
     ----------
-    trans_range_ratio: 
+    trans_range_ratio:
         ratio of translation i.e. tramnslation = 2 * ratio * rand(-0.5, 0.5) (default: 1e-1)
     """
 
@@ -49,10 +49,10 @@ class ChromaticTranslation(object):
 
 class ChromaticAutoContrast(object):
     """ Rescale colors between 0 and 1 to enhance contrast
-    
+
     Parameters
     ----------
-    randomize_blend_factor : 
+    randomize_blend_factor :
         Blend factor is random
     blend_factor:
         Ratio of the original color that is kept
@@ -87,7 +87,7 @@ class ChromaticAutoContrast(object):
 
 class ChromaticJitter:
     """ Jitter on the rgb attribute of data
-    
+
     Parameters
     ----------
     std :
@@ -133,3 +133,28 @@ class DropFeature:
 
     def __repr__(self):
         return "DropFeature: proba = {}, feature = {}".format(self._drop_proba, self._feature_name)
+
+
+class Jitter:
+    """
+    add a small gaussian noise to the feature.
+    Parameters
+    ----------
+    mu: float
+        mean of the gaussian noise
+    sigma: float
+        standard deviation of the gaussian noise
+    p: float
+        probability of noise
+    """
+    def __init__(self, mu=0, sigma=0.01, p=0.95):
+        self.mu = mu
+        self.sigma = sigma
+        self.p = p
+    def __call__(self, data):
+        if(random.random() < self.p):
+            data.x += torch.randn_like(data.x) * self.sigma + self.mu
+        return data
+
+    def __repr__(self):
+        return "Jitter(mu={}, sigma={})".format(self.mu, self.sigma)

@@ -103,7 +103,6 @@ class UnetBasedModel(BaseModel):
         self._factory_module = factory_module_cls(
             down_conv_cls_name, up_conv_cls_name, modules_lib
         )  # Create the factory object
-
         # construct unet structure
         contains_global = hasattr(opt, "innermost") and opt.innermost is not None
         if contains_global:
@@ -377,6 +376,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         same convolution is given for each layer, and arguments are given
         in lists
         """
+
         self.down_modules = nn.ModuleList()
         self.inner_modules = nn.ModuleList()
         self.up_modules = nn.ModuleList()
@@ -415,7 +415,7 @@ class UnwrappedUnetBasedModel(BaseModel):
             self.up_modules.append(up_module)
 
         self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
-            getattr(opt, "loss", None), getattr(opt, "miner", None)
+            getattr(opt, "metric_loss", None), getattr(opt, "miner", None)
         )
 
     def _get_factory(self, model_name, modules_lib) -> BaseFactory:

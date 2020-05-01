@@ -9,7 +9,7 @@ import sys
 import numpy as np
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-ROOT = os.path.join(DIR, "..")
+ROOT = os.path.join(DIR, "..", "..")
 sys.path.insert(0, ROOT)
 
 # Import building function for model and dataset
@@ -35,9 +35,8 @@ def save(out_path, scene_name, pc_name, data, feature):
     """
 
     kp = None
-    if len(feature) != len(data.pos):
-        # it must contain keypoints
-        assert getattr(data, "keypoints", None) is not None
+    # it must contain keypoints
+    if hasattr(data, "keypoints"):
         kp = data["keypoints"]
     else:
         kp = np.arange(0, len(feature))
@@ -45,7 +44,13 @@ def save(out_path, scene_name, pc_name, data, feature):
     if not osp.exists(out_dir):
         os.makedirs(out_dir)
     out_file = osp.join(out_dir, pc_name.split(".")[0] + "_desc.npz")
-    np.savez(out_file, pcd=data.pos.numpy(), feat=feature, keypoints=kp)
+    if hasattr(data, "xyz"):
+        pcd = data.xyz.numpy()
+        if hasattr(data, "mask"):
+            kp = np.where(data.mask.numpy())[0]
+    else:
+        pcd = data.pos.numpy()
+    np.savez(out_file, pcd=pcd, feat=feature, keypoints=kp)
 
 
 def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
@@ -55,9 +60,9 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
         for i in range(num_fragment):
             dataset.set_patches(i)
             dataset.create_dataloaders(
-                model, cfg.batch_size, False, cfg.num_workers, False,
+                model, cfg.training.batch_size, False, cfg.training.num_workers, False,
             )
-            loader = dataset.test_dataloaders()[0]
+            loader = dataset.test_dataloaders[0]
             features = []
             scene_name, pc_name = dataset.get_name(i)
 
@@ -75,37 +80,41 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
             save(output_path, scene_name, pc_name, dataset.base_dataset[i].to("cpu"), features)
     else:
         dataset.create_dataloaders(
-            model, 1, False, cfg.num_workers, False,
+            model, 1, False, cfg.training.num_workers, False,
         )
-        loader = dataset.test_dataloaders()[0]
+        loader = dataset.test_dataloaders[0]
         with Ctq(loader) as tq_test_loader:
             for i, data in enumerate(tq_test_loader):
+                scene_name, pc_name = dataset.get_name(i)
+                # pcd = open3d.geometry.PointCloud()
+                # pcd.points = open3d.utility.Vector3dVector(data.pos.to(torch.float).numpy())
+                # open3d.visualization.draw_geometries([pcd])
                 with torch.no_grad():
                     model.set_input(data, device)
                     model.forward()
-                    features = model.get_output()[0]  # batch of 1
-                    save(output_path, scene_name, pc_name, data.to("cpu"), features)
+                    features = model.get_output()  # batch of 1
+                    save(output_path, scene_name, pc_name, data.to("cpu"), features.to("cpu"))
 
 
-@hydra.main(config_path="../conf/config.yaml")
+@hydra.main(config_path="../../conf/config.yaml")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 
     # Get device
-    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.cuda) else "cpu")
+    device = torch.device("cuda" if (torch.cuda.is_available() and cfg.training.cuda) else "cpu")
     log.info("DEVICE : {}".format(device))
 
     # Enable CUDNN BACKEND
-    torch.backends.cudnn.enabled = cfg.enable_cudnn
+    torch.backends.cudnn.enabled = cfg.training.enable_cudnn
 
     # Checkpoint
-    checkpoint = ModelCheckpoint(cfg.checkpoint_dir, cfg.model_name, cfg.weight_name, strict=True)
+    checkpoint = ModelCheckpoint(cfg.training.checkpoint_dir, cfg.model_name, cfg.training.weight_name, strict=True)
 
     # Setup the dataset config
     # Generic config
 
     dataset = instantiate_dataset(cfg.data)
-    model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
+    model = checkpoint.create_model(dataset, weight_name=cfg.training.weight_name)
     log.info(model)
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
@@ -117,7 +126,7 @@ def main(cfg):
     model = model.to(device)
 
     # Run training / evaluation
-    output_path = os.path.join(cfg.checkpoint_dir, cfg.data.name, "features")
+    output_path = os.path.join(cfg.training.checkpoint_dir, cfg.data.name, "features")
     if not os.path.exists(output_path):
         os.makedirs(output_path, exist_ok=True)
 
