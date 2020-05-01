@@ -6,7 +6,7 @@ from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.models.base_model import BaseModel
 
 from torch.nn import Sequential, Linear, LeakyReLU, Dropout
-from torch_points3d.core.common_modules import FastBatchNorm1d
+from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
 
 log = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ class BaseMinkowski(BaseModel):
         if option.mlp_cls is not None:
             last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
-            self.FC_layer = Sequential()
+            self.FC_layer = Seq()
             for i in range(1, len(last_mlp_opt.nn)):
-                self.FC_layer.add_module(
+                self.FC_layer.append(
                     str(i),
                     Sequential(
                         *[
@@ -40,9 +40,9 @@ class BaseMinkowski(BaseModel):
                 in_feat = last_mlp_opt.nn[i]
 
             if last_mlp_opt.dropout:
-                self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+                self.FC_layer.append("Dropout", Dropout(p=last_mlp_opt.dropout))
 
-            self.FC_layer.add_module("Class", Linear(in_feat, in_feat, bias=False))
+            self.FC_layer.append("Class", Linear(in_feat, in_feat, bias=False))
         else:
             self.FC_layer = torch.nn.Identity()
 
@@ -164,9 +164,9 @@ class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
         if option.mlp_cls is not None:
             last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
-            self.FC_layer = Sequential()
+            self.FC_layer = Seq()
             for i in range(1, len(last_mlp_opt.nn)):
-                self.FC_layer.add_module(
+                self.FC_layer.append(
                     str(i),
                     Sequential(
                         *[
@@ -179,9 +179,9 @@ class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
                 in_feat = last_mlp_opt.nn[i]
 
             if last_mlp_opt.dropout:
-                self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+                self.FC_layer.append("Dropout", Dropout(p=last_mlp_opt.dropout))
 
-            self.FC_layer.add_module("Class", Linear(in_feat, in_feat, bias=False))
+            self.FC_layer.append("Class", Linear(in_feat, in_feat, bias=False))
         else:
             self.FC_layer = torch.nn.Identity()
 

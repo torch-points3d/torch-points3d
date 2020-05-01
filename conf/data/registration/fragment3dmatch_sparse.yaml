@@ -43,9 +43,11 @@ data:
         add_x: True
         add_y: True
         add_z: True
-    - transform: ToSparseInput
+    - transform: GridSampling
       params:
-        grid_size: ${data.first_subsampling}
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -72,9 +74,11 @@ data:
         add_x: True
         add_y: True
         add_z: True
-    - transform: ToSparseInput
+    - transform: GridSampling
       params:
-        grid_size: ${data.first_subsampling}
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
