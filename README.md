@@ -126,7 +126,7 @@ poetry install -E MinkowskiEngine --no-root
 
 #### Pycuda
 ```bash
-poetry add pycuda
+pip install pycuda
 ```
 
 
