@@ -18,7 +18,7 @@ python-versions = "*"
 version = "0.7.12"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 name = "appdirs"
 optional = false
@@ -850,21 +850,6 @@ version = "0.32.0"
 
 [[package]]
 category = "main"
-description = "A super-fast templating language that borrows the  best ideas from the existing templating languages."
-name = "mako"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.1.2"
-
-[package.dependencies]
-MarkupSafe = ">=0.9.2"
-
-[package.extras]
-babel = ["babel"]
-lingua = ["lingua"]
-
-[[package]]
-category = "main"
 description = "Python implementation of Markdown."
 name = "markdown"
 optional = false
@@ -1390,20 +1375,6 @@ doc = ["nbsite", "sphinx-ioam-theme"]
 tests = ["flake8", "pytest"]
 
 [[package]]
-category = "main"
-description = "Python wrapper for Nvidia CUDA"
-name = "pycuda"
-optional = false
-python-versions = "*"
-version = "2019.1.2"
-
-[package.dependencies]
-appdirs = ">=1.4.0"
-decorator = ">=3.2.0"
-mako = "*"
-pytools = ">=2011.2"
-
-[[package]]
 category = "dev"
 description = "passive checker of Python programs"
 name = "pyflakes"
@@ -1462,20 +1433,6 @@ version = "2.8.1"
 
 [package.dependencies]
 six = ">=1.5"
-
-[[package]]
-category = "main"
-description = "A collection of tools for Python"
-name = "pytools"
-optional = false
-python-versions = "*"
-version = "2020.1"
-
-[package.dependencies]
-appdirs = ">=1.4.0"
-decorator = ">=3.2.0"
-numpy = ">=1.6.0"
-six = ">=1.8.0"
 
 [[package]]
 category = "main"
@@ -2340,7 +2297,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 MinkowskiEngine = ["MinkowskiEngine"]
 
 [metadata]
-content-hash = "f3d89528a2b8e2087c6c3aefee87c7725fd2f5b32b5bb34aa21aeb27a20764be"
+content-hash = "6d33e6853b3c7de47289217de2ad6666aa94f976b97c7c8f3e2205f1603114e7"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2753,10 +2710,6 @@ llvmlite = [
     {file = "llvmlite-0.32.0-cp38-cp38-win_amd64.whl", hash = "sha256:2f719a26539ae84ad1e61d51158c2f5f0665b6568d16f2e22797abe6e0c34075"},
     {file = "llvmlite-0.32.0.tar.gz", hash = "sha256:d65c645c32fae7b50852e80597eaef8369f826b75017d5c8d07c800e37eaed89"},
 ]
-mako = [
-    {file = "Mako-1.1.2-py2.py3-none-any.whl", hash = "sha256:8e8b53c71c7e59f3de716b6832c4e401d903af574f6962edbbbf6ecc2a5fe6c9"},
-    {file = "Mako-1.1.2.tar.gz", hash = "sha256:3139c5d64aa5d175dbafb95027057128b5fbd05a40c53999f3905ceb53366d9d"},
-]
 markdown = [
     {file = "Markdown-3.2.1-py2.py3-none-any.whl", hash = "sha256:e4795399163109457d4c5af2183fbe6b60326c17cfdf25ce6e7474c6624f725d"},
     {file = "Markdown-3.2.1.tar.gz", hash = "sha256:90fee683eeabe1a92e149f7ba74e5ccdc81cd397bd6c516d93a8da0ef90b6902"},
@@ -3078,9 +3031,6 @@ pyct = [
     {file = "pyct-0.4.6-py2.py3-none-any.whl", hash = "sha256:359eab8c91e63c705f838ccdd56548258f013de0bd3481c99775552ee2ab9de6"},
     {file = "pyct-0.4.6.tar.gz", hash = "sha256:df7b2d29f874cabdbc22e4f8cba2ceb895c48aa33da4e0fe679e89873e0a4c6e"},
 ]
-pycuda = [
-    {file = "pycuda-2019.1.2.tar.gz", hash = "sha256:ada56ce98a41f9f95fe18809f38afbae473a5c62d346cfa126a2d5477f24cc8a"},
-]
 pyflakes = [
     {file = "pyflakes-2.1.1-py2.py3-none-any.whl", hash = "sha256:17dbeb2e3f4d772725c777fabc446d5634d1038f234e77343108ce445ea69ce0"},
     {file = "pyflakes-2.1.1.tar.gz", hash = "sha256:d976835886f8c5b31d47970ed689944a0262b5f3afa00a5a7b4dc81e5449f8a2"},
@@ -3103,9 +3053,6 @@ pyrsistent = [
 python-dateutil = [
     {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
     {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
-]
-pytools = [
-    {file = "pytools-2020.1.tar.gz", hash = "sha256:c132d17855584ad61c6e00f3ff11146499755944afc400cce9eae0ecf03d04a6"},
 ]
 pytorch-metric-learning = [
     {file = "pytorch-metric-learning-0.9.84.tar.gz", hash = "sha256:46c9a06ce656cb05a5a86f2f98c13882783e66aa5d5df754220eaf24c7736c92"},
