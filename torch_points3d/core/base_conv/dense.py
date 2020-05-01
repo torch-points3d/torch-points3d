@@ -113,7 +113,7 @@ class BaseDenseConvolutionUp(BaseConvolution):
 
 
 class DenseFPModule(BaseDenseConvolutionUp):
-    def __init__(self, up_conv_nn, bn=True, bias=False, activation=torch.nn.LeakyReLU(negative_slope=0.1), **kwargs):
+    def __init__(self, up_conv_nn, bn=True, bias=False, activation=torch.nn.LeakyReLU(negative_slope=0.01), **kwargs):
         super(DenseFPModule, self).__init__(None, **kwargs)
 
         self.nn = MLP2D(up_conv_nn, bn=bn, activation=activation, bias=False)
@@ -137,7 +137,7 @@ class DenseFPModule(BaseDenseConvolutionUp):
 
 
 class GlobalDenseBaseModule(torch.nn.Module):
-    def __init__(self, nn, aggr="max", bn=True, activation=torch.nn.LeakyReLU(negative_slope=0.1), **kwargs):
+    def __init__(self, nn, aggr="max", bn=True, activation=torch.nn.LeakyReLU(negative_slope=0.01), **kwargs):
         super(GlobalDenseBaseModule, self).__init__()
         self.nn = MLP2D(nn, bn=bn, activation=activation, bias=False)
         if aggr.lower() not in ["mean", "max"]:
