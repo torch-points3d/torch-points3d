@@ -36,10 +36,10 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    project: default
-    log: False
+    project: registration
+    log: True
     notes:
-    name:
+    name: humanpose1
     public: True # It will be display the model within wandb log, else not.
 
     # parameters for TensorBoard Visualization
