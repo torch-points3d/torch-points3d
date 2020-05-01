@@ -25,6 +25,9 @@ sphinx_rtd_theme = "^0.4.3"
 MinkowskiEngine = {version = "^0.4.2", optional = true}
 torch-points-kernels = "^0.5.2"
 numpy = "^1.18.2"
+scikit-image = "^0.16.2"
+pycuda = "^2019.1.2"
+numba = "^0.49.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
