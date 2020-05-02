@@ -32,10 +32,10 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: $HOME/.poetry/bin/poetry install --no-dev
 
-      #- name: Linting
-      #  run: |
-      #    pip install pre-commit
-      #    pre-commit run --all-files
+      - name: Linting
+        run: |
+          pip install pre-commit
+          poetry run pre-commit run --all-files
 
       - name: Checkout tools repo
         uses: actions/checkout@v2
