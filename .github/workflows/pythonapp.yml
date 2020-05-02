@@ -69,13 +69,13 @@ jobs:
           name: codecov-umbrella
 
       - name: Build project for distribution
-        if: startsWith(github.ref, '/refs/heads/v*')
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           source $HOME/.poetry/env
           poetry run poetry build
 
       - name: Publish to PyPI
-        if: startsWith(github.ref, '/refs/heads/v*')
+        if: startsWith(github.ref, 'refs/tags/v')
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
