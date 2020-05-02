@@ -32,10 +32,10 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: $HOME/.poetry/bin/poetry install --no-dev
 
-      - name: Linting
-        run: |
-          pip install pre-commit
-          pre-commit run --all-files
+      #- name: Linting
+      #  run: |
+      #    pip install pre-commit
+      #    pre-commit run --all-files
 
       - name: Checkout tools repo
         uses: actions/checkout@v2
@@ -71,13 +71,11 @@ jobs:
       - name: Build project for distribution
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          source $HOME/.poetry/env
-          poetry run poetry build
+          $HOME/.poetry/bin/poetry run poetry build
 
       - name: Publish to PyPI
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
         run: |
-          source $HOME/.poetry/env
-          poetry run poetry publish
+          $HOME/.poetry/bin/poetry run poetry publish

@@ -37,7 +37,7 @@ repos:
     hooks:
       - id: requirements.txt
         name: Generate requirements.txt
-        entry: $HOME/.poetry/bin/poetry export
+        entry: poetry export
         args:
           [
             '-f',
