@@ -376,30 +376,33 @@ class SelfSupervisedFragment3DMatch(Base3DMatch):
                  debug=False,
                  is_online_matching=False,
                  num_pos_pairs=1024,
-                 size_block=0.1):
+                 min_size_block=0.1,
+                 max_size_block=2):
 
         self.is_patch = False
-        super(Fragment3DMatch, self).__init__(root,
-                                              num_frame_per_fragment,
-                                              mode,
-                                              min_overlap_ratio,
-                                              max_overlap_ratio,
-                                              max_dist_overlap,
-                                              tsdf_voxel_size,
-                                              limit_size,
-                                              depth_thresh,
-                                              is_fine,
-                                              transform,
-                                              pre_transform,
-                                              pre_transform_fragment,
-                                              pre_filter,
-                                              verbose,
-                                              debug)
+        super(SelfSupervisedFragment3DMatch, self).__init__(
+            root,
+            num_frame_per_fragment,
+            mode,
+            min_overlap_ratio,
+            max_overlap_ratio,
+            max_dist_overlap,
+            tsdf_voxel_size,
+            limit_size,
+            depth_thresh,
+            is_fine,
+            transform,
+            pre_transform,
+            pre_transform_fragment,
+            pre_filter,
+            verbose,
+            debug)
         self.path_match = osp.join(self.processed_dir, self.mode, 'matches')
         self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
         self.is_online_matching = is_online_matching
         self.num_pos_pairs = num_pos_pairs
-        self.size_block = size_block
+        self.min_size_block = min_size_block
+        self.max_size_block = max_size_block
 
     def get_fragment(self, idx):
 
@@ -418,10 +421,11 @@ class SelfSupervisedFragment3DMatch(Base3DMatch):
 
         pos = data_source.pos
         i = torch.randint(0, len(pos))
+        size_block = random.random()*(self.max_size_block - self.min_size_block) + self.min_size_block
         point = pos[i].view(1, 3)
         ind, dist = ball_query(point,
                                pos,
-                               radius=self.size_block,
+                               radius=size_block,
                                max_num=-1,
                                mode=1)
         _, col = ind[dist[:, 0] > 0].t()
@@ -509,7 +513,9 @@ class General3DMatchDataset(BaseSiameseDataset):
                     transform=train_transform,
                     pre_filter=pre_filter,
                     is_online_matching=dataset_opt.is_online_matching,
-                    num_pos_pairs=dataset_opt.num_pos_pairs
+                    num_pos_pairs=dataset_opt.num_pos_pairs,
+                    min_size_block=dataset_opt.min_size_block,
+                    max_size_block=dataset_opt.max_size_block,
                 )
             else:
                 self.train_dataset = Fragment3DMatch(
