@@ -30,7 +30,12 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: $HOME/.poetry/bin/poetry install
+        run: $HOME/.poetry/bin/poetry install --no-dev
+
+      - name: Linting
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
 
       - name: Checkout tools repo
         uses: actions/checkout@v2
@@ -62,3 +67,17 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests
           name: codecov-umbrella
+
+      - name: Build project for distribution
+        if: startsWith(github.ref, '/refs/heads/v*')
+        run: |
+          source $HOME/.poetry/env
+          poetry run poetry build
+
+      - name: Publish to PyPI
+        if: startsWith(github.ref, '/refs/heads/v*')
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          source $HOME/.poetry/env
+          poetry run poetry publish
