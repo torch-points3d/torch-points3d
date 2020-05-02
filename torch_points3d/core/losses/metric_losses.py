@@ -31,10 +31,36 @@ def pdist(A, B, dist_type="L2"):
 
 
 class ContrastiveHardestNegativeLoss(nn.Module):
+    r"""
+    Compute contrastive loss between positive pairs and mine negative pairs which are not in the intersection of the two point clouds (taken from https://github.com/chrischoy/FCGF)
+    Let :math:`(f_i, f^{+}_i)_{i=1 \dots N}` set of positive_pairs and :math:`(f_i, f^{-}_i)_{i=1 \dots M}` a set of negative pairs
+    The loss is computed as:
+    .. math::
+        L = \frac{1}{N^2} \sum_{i=1}^N \sum_{j=1}^N [d^{+}_{ij} - \lambda_+]_+ + \frac{1}{M} \sum_{i=1}^M [\lambda_{-} - d^{-}_i]_+
+
+    where:
+    .. math::
+        d^{+}_{ij} = ||f_{i} - f^{+}_{j}||
+
+    and
+    .. math::
+        d^{-}_{i} = \min_{j}(||f_{i} - f^{-}_{j}||)
+
+    In this loss, we only mine the negatives
+    Parameters
+    ----------
+
+    pos_thresh:
+        positive threshold of the positive distance
+    neg_thresh:
+        negative threshold of the negative distance
+    num_pos:
+        number of positive pairs
+    num_hn_samples:
+        number of negative point we mine.
+    """
+
     def __init__(self, pos_thresh, neg_thresh, num_pos=5192, num_hn_samples=2048):
-        """
-        works well
-        """
         nn.Module.__init__(self)
         self.pos_thresh = pos_thresh
         self.neg_thresh = neg_thresh
@@ -95,10 +121,20 @@ class ContrastiveHardestNegativeLoss(nn.Module):
 
 
 class BatchHardContrastiveLoss(nn.Module):
+    """
+        apply contrastive loss but mine the negative sample in the batch.
+    apply a mask if the distance between negative pair is too close.
+    Parameters
+    ----------
+    pos_thresh:
+        positive threshold of the positive distance
+    neg_thresh:
+        negative threshold of the negative distance
+    min_dist:
+        minimum distance to be in the negative sample
+    """
+
     def __init__(self, pos_thresh, neg_thresh, min_dist=0.15):
-        """
-        Still need further tests
-        """
         nn.Module.__init__(self)
         self.pos_thresh = pos_thresh
         self.neg_thresh = neg_thresh

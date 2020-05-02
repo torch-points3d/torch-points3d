@@ -13,9 +13,10 @@ from test.mockdatasets import MockDatasetGeometric, MockDataset
 from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 
 from torch_points3d.models.model_factory import instantiate_model
-from torch_points3d.core.data_transform import ToSparseInput
+from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
+from torch_geometric.transforms import Compose
 
 # calls resolve_model, then find_model_using_name
 
@@ -63,13 +64,18 @@ class TestModelUtils(unittest.TestCase):
                 if conv_type.lower() == "dense":
                     return PairMockDataset(features, num_points=2048)
                 if conv_type.lower() == "sparse":
-                    return PairMockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
+                    tr = Compose(
+                        [XYZFeature(True, True, True), GridSampling(size=0.01, quantize_coords=True, mode="last")]
+                    )
+                    return PairMockDatasetGeometric(features, transform=tr, num_points=1024)
                 return PairMockDatasetGeometric(features)
             else:
                 if conv_type.lower() == "dense":
                     return MockDataset(features, num_points=2048)
                 if conv_type.lower() == "sparse":
-                    return MockDatasetGeometric(features, transform=ToSparseInput(0.01), num_points=1024)
+                    return MockDatasetGeometric(
+                        features, transform=GridSampling(size=0.01, quantize_coords=True, mode="last"), num_points=1024
+                    )
                 return MockDatasetGeometric(features)
 
         for type_file in self.model_type_files:
@@ -112,7 +118,7 @@ class TestModelUtils(unittest.TestCase):
 
     def test_siamese_minkowski(self):
         params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
-        transform = ToSparseInput(grid_size=0.01)
+        transform = Compose([XYZFeature(True, True, True), GridSampling(size=0.01, quantize_coords=True, mode="last")])
         dataset = PairMockDatasetGeometric(5, transform=transform, num_points=1024, is_pair_ind=True)
         model = instantiate_model(params, dataset)
         d = dataset[0]

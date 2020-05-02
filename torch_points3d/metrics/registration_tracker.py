@@ -85,12 +85,14 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
         if self._stage != "train":
             batch_idx, batch_idx_target = model.get_batch_idx()
             batch_xyz, batch_xyz_target = model.get_xyz()
-            batch_ind, batch_ind_target = model.get_ind()
+            batch_ind, batch_ind_target, batch_size_ind = model.get_ind()
             batch_feat, batch_feat_target = model.get_outputs()
 
             nb_batches = batch_idx.max() + 1
             cum_sum = 0
             cum_sum_target = 0
+            begin = 0
+            end = batch_size_ind[0].item()
             for b in range(nb_batches):
                 xyz = batch_xyz[batch_idx == b]
                 xyz_target = batch_xyz_target[batch_idx_target == b]
@@ -99,19 +101,23 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 # as we have concatenated ind,
                 # we need to substract the cum_sum because we deal
                 # with each batch independently
-                ind = batch_ind[b * len(batch_ind) / nb_batches : (b + 1) * len(batch_ind) / nb_batches] - cum_sum
-                ind_target = (
-                    batch_ind_target[
-                        b * len(batch_ind_target) / nb_batches : (b + 1) * len(batch_ind_target) / nb_batches
-                    ]
-                    - cum_sum_target
-                )
+                # ind = batch_ind[b * len(batch_ind) / nb_batches : (b + 1) * len(batch_ind) / nb_batches] - cum_sum
+                # ind_target = (batch_ind_target[b * len(batch_ind_target) / nb_batches : (b + 1) * len(batch_ind_target) / nb_batches]- cum_sum_target)
+                ind = batch_ind[begin:end] - cum_sum
+                ind_target = batch_ind_target[begin:end] - cum_sum_target
+                # print(begin, end)
+                if b < nb_batches - 1:
+                    begin = end
+                    end = begin + batch_size_ind[b + 1].item()
                 cum_sum += len(xyz)
                 cum_sum_target += len(xyz_target)
                 rand = torch.randperm(len(feat))[: self.num_points]
                 rand_target = torch.randperm(len(feat_target))[: self.num_points]
 
                 matches_gt = torch.stack([ind, ind_target]).T
+
+                # print(matches_gt.max(0), len(xyz), len(xyz_target), len(matches_gt))
+                # print(batch_ind.shape, nb_batches)
                 T_gt = estimate_transfo(xyz[matches_gt[:, 0]], xyz_target[matches_gt[:, 1]])
 
                 matches_pred = get_matches(feat[rand], feat_target[rand_target])

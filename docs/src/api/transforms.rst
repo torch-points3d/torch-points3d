@@ -44,6 +44,8 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.ChromaticJitter
 
+.. autoclass:: torch_points3d.core.data_transform.Jitter
+
 .. autoclass:: torch_points3d.core.data_transform.RandomDropout
 
 .. autoclass:: torch_points3d.core.data_transform.PCACompute

@@ -6,14 +6,14 @@ from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.models.base_model import BaseModel
 
 from torch.nn import Sequential, Linear, LeakyReLU, Dropout
-from torch_points3d.core.common_modules import FastBatchNorm1d
+from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
 
 log = logging.getLogger(__name__)
 
 
 class BaseMinkowski(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
-        super(BaseMinkowski, self).__init__(option)
+        BaseModel.__init__(self, option)
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
         self.loss_names = ["loss_reg", "loss"]
@@ -21,12 +21,13 @@ class BaseMinkowski(BaseModel):
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
         # Last Layer
+
         if option.mlp_cls is not None:
             last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
-            self.FC_layer = Sequential()
+            self.FC_layer = Seq()
             for i in range(1, len(last_mlp_opt.nn)):
-                self.FC_layer.add_module(
+                self.FC_layer.append(
                     str(i),
                     Sequential(
                         *[
@@ -39,9 +40,9 @@ class BaseMinkowski(BaseModel):
                 in_feat = last_mlp_opt.nn[i]
 
             if last_mlp_opt.dropout:
-                self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+                self.FC_layer.append(Dropout(p=last_mlp_opt.dropout))
 
-            self.FC_layer.add_module("Class", Linear(in_feat, in_feat, bias=False))
+            self.FC_layer.append(Linear(in_feat, in_feat, bias=False))
         else:
             self.FC_layer = torch.nn.Identity()
 
@@ -54,11 +55,14 @@ class BaseMinkowski(BaseModel):
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)
             self.xyz_target = torch.stack((data.pos_x_target, data.pos_y_target, data.pos_z_target), 0).T.to(device)
             self.match = data.pair_ind.to(torch.long).to(device)
+            self.size_match = data.size_pair_ind.to(torch.long).to(device)
         else:
             self.match = None
 
     def compute_loss_match(self):
-        self.loss_reg = self.metric_loss_module(self.output, self.output_target, self.match, self.xyz, self.xyz_target)
+        self.loss_reg = self.metric_loss_module(
+            self.output, self.output_target, self.match[:, :2], self.xyz, self.xyz_target
+        )
         self.loss = self.loss_reg
 
     def compute_loss_label(self):
@@ -106,7 +110,7 @@ class BaseMinkowski(BaseModel):
 
     def get_ind(self):
         if self.match is not None:
-            return self.match[:, 0], self.match[:, 1]
+            return self.match[:, 0], self.match[:, 1], self.size_match
         else:
             return None
 
@@ -127,10 +131,14 @@ class BaseMinkowski(BaseModel):
 
 class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
     def __init__(self, option, model_type, dataset, modules):
-        super(Minkowski_Baseline_Model_Fragment, self).__init__(option, model_type, dataset, modules)
+        BaseMinkowski.__init__(self, option, model_type, dataset, modules)
 
         self.model = initialize_minkowski_unet(
-            option.model_name, dataset.feature_dimension, option.out_channels, option.D
+            option.model_name,
+            in_channels=dataset.feature_dimension,
+            out_channels=option.out_channels,
+            D=option.D,
+            conv1_kernel_size=option.conv1_kernel_size,
         )
 
     def apply_nn(self, input):
@@ -144,7 +152,38 @@ class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
 
 class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
-        super(MinkowskiFragment, self).__init__(option, model_type, dataset, modules)
+        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        self.mode = option.loss_mode
+        self.normalize_feature = option.normalize_feature
+        self.loss_names = ["loss_reg", "loss"]
+        self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
+            getattr(option, "metric_loss", None), getattr(option, "miner", None)
+        )
+        # Last Layer
+
+        if option.mlp_cls is not None:
+            last_mlp_opt = option.mlp_cls
+            in_feat = last_mlp_opt.nn[0]
+            self.FC_layer = Seq()
+            for i in range(1, len(last_mlp_opt.nn)):
+                self.FC_layer.append(
+                    str(i),
+                    Sequential(
+                        *[
+                            Linear(in_feat, last_mlp_opt.nn[i], bias=False),
+                            FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
+                            LeakyReLU(0.2),
+                        ]
+                    ),
+                )
+                in_feat = last_mlp_opt.nn[i]
+
+            if last_mlp_opt.dropout:
+                self.FC_layer.append(Dropout(p=last_mlp_opt.dropout))
+
+            self.FC_layer.append(Linear(in_feat, in_feat, bias=False))
+        else:
+            self.FC_layer = torch.nn.Identity()
 
     def apply_nn(self, input):
         x = input

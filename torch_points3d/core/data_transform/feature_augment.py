@@ -137,14 +137,22 @@ class DropFeature:
 
 class Jitter:
     """
-    add a small gaussian noise to the feature
+    add a small gaussian noise to the feature.
+    Parameters
+    ----------
+    mu: float
+        mean of the gaussian noise
+    sigma: float
+        standard deviation of the gaussian noise
+    p: float
+        probability of noise
     """
-    def __init__(self, mu=0, sigma=0.01):
+    def __init__(self, mu=0, sigma=0.01, p=0.95):
         self.mu = mu
         self.sigma = sigma
-
+        self.p = p
     def __call__(self, data):
-        if(random.random() < 0.95):
+        if(random.random() < self.p):
             data.x += torch.randn_like(data.x) * self.sigma + self.mu
         return data
 

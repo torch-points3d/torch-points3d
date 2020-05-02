@@ -12,7 +12,7 @@ data:
   depth_thresh: 4.5
   first_subsampling: 0.02
   is_online_matching: False
-  num_pos_pairs: 1024
+  num_pos_pairs: 30000
   pre_transform:
     - transform: GridSampling
       params:
@@ -43,9 +43,11 @@ data:
         add_x: True
         add_y: True
         add_z: True
-    - transform: ToSparseInput
+    - transform: GridSampling
       params:
-        grid_size: ${data.first_subsampling}
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -72,9 +74,11 @@ data:
         add_x: True
         add_y: True
         add_z: True
-    - transform: ToSparseInput
+    - transform: GridSampling
       params:
-        grid_size: ${data.first_subsampling}
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:

@@ -21,7 +21,7 @@ class RSConvMapper(nn.Module):
         and the features of RSConv]
     """
 
-    def __init__(self, down_conv_nn, use_xyz, bn=True, activation=nn.LeakyReLU(negative_slope=0.1), *args, **kwargs):
+    def __init__(self, down_conv_nn, use_xyz, bn=True, activation=nn.LeakyReLU(negative_slope=0.01), *args, **kwargs):
         super(RSConvMapper, self).__init__()
 
         self._down_conv_nn = down_conv_nn

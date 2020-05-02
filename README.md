@@ -22,7 +22,7 @@ The framework allows lean and yet complex model to be built with minimum effort 
 ├─ forward_scripts         # Script that runs a forward pass on possibly non annotated data
 ├─ outputs                 # All outputs from your runs sorted by date
 ├─ scripts                 # Some scripts to help manage the project
-├─ torch_points3d  
+├─ torch_points3d
     ├─ core                # Core components
     ├─ datasets            # All code related to datasets
     ├─ metrics             # All metrics and trackers
@@ -122,6 +122,11 @@ You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
 poetry install -E MinkowskiEngine --no-root
+```
+
+#### Pycuda
+```bash
+pip install pycuda
 ```
 
 
@@ -279,3 +284,5 @@ A sequence of checks will be run for you and you may have to add the fixed files
 
 When it comes to docstrings we use [numpy style](https://numpydoc.readthedocs.io/en/latest/format.html) docstrings, for those who use
 Visual Studio Code, there is a great [extension](https://github.com/NilsJPWerner/autoDocstring) that can help with that. Install it and set the format to numpy and you should be good to go!
+
+Finaly, if you want to have a direct chat with us feel free to join our slack, just shoot us an email and we'll add you.
