@@ -26,3 +26,4 @@ docs_old
 /*.egg
 build/*
 dist/*
+.venv
