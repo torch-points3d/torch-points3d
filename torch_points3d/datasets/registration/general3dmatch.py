@@ -1,17 +1,20 @@
+import random
 import numpy as np
 import os
 import os.path as osp
 import torch
-from torch_geometric.data import Batch
+from torch_geometric.data import Batch, Data
 
 from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.datasets.registration.base3dmatch import Base3DMatch
 from torch_points3d.datasets.registration.utils import PatchExtractor
+from torch_points3d.datasets.registration.utils import tracked_matches
 from torch_points3d.datasets.registration.pair import Pair
 from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 from torch_points3d.core.data_transform.transforms import GridSampling
 from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
+from torch_points3d.datasets.registration.utils import compute_overlap_and_matches, compute_subsampled_matches
 
 
 class Patch3DMatch(Base3DMatch):
@@ -235,7 +238,11 @@ class Fragment3DMatch(Base3DMatch):
                  pre_transform_fragment=None,
                  pre_filter=None,
                  verbose=False,
-                 debug=False):
+                 debug=False,
+                 is_online_matching=False,
+                 num_pos_pairs=1024,
+                 voxel_size_search=0.1):
+
         self.is_patch = False
         super(Fragment3DMatch, self).__init__(root,
                                               num_frame_per_fragment,
@@ -249,33 +256,56 @@ class Fragment3DMatch(Base3DMatch):
                                               is_fine,
                                               transform,
                                               pre_transform,
+                                              pre_transform_fragment,
                                               pre_filter,
                                               verbose,
                                               debug)
+        self.path_match = osp.join(self.processed_dir, self.mode, 'matches')
+        self.list_fragment = [f for f in os.listdir(self.path_match) if 'matches' in f]
+        self.is_online_matching = is_online_matching
+        self.num_pos_pairs = num_pos_pairs
+        self.voxel_size_search = voxel_size_search
 
     def get_fragment(self, idx):
 
         match = np.load(
-            osp.join(self.processed_dir,
-                     self.mode, 'matches',
+            osp.join(self.path_match,
                      'matches{:06d}.npy'.format(idx)),
             allow_pickle=True).item()
-
-        print(match['path_source'])
         data_source = torch.load(match['path_source'])
         data_target = torch.load(match['path_target'])
+        # new_pair = compute_subsampled_matches(data_source, data_target,self.voxel_size_search,self.max_dist_overlap)
+        new_pair = torch.from_numpy(match['pair'])
+
         if(self.transform is not None):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
+
         batch = Pair.make_pair(data_source, data_target)
-        batch.y = torch.from_numpy(match['pair'])
+        if(self.is_online_matching):
+            new_match = compute_overlap_and_matches(
+                Data(pos=data_source.pos), Data(pos=data_target.pos),
+                self.max_dist_overlap)
+            batch.pair_ind = torch.from_numpy(new_match['pair'].copy())
+        else:
+            pair = tracked_matches(data_source, data_target, new_pair)
+            batch.pair_ind = pair
+
+        num_pos_pairs = len(batch.pair_ind)
+        if self.num_pos_pairs < len(batch.pair_ind):
+            num_pos_pairs = self.num_pos_pairs
+
+        rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
+        batch.pair_ind = batch.pair_ind[rand_ind]
+        batch.size_pair_ind = torch.tensor([num_pos_pairs])
         return batch.contiguous().to(torch.float)
 
     def get(self, idx):
         return self.get_fragment(idx)
 
     def __len__(self):
-        return len(self.list_test_fragment)
+        return len(self.list_fragment)
+
 
 
 class General3DMatchDataset(BaseSiameseDataset):
@@ -286,7 +316,8 @@ class General3DMatchDataset(BaseSiameseDataset):
         train_transform = self.train_transform
         test_transform = self.test_transform
         pre_filter = self.pre_filter
-        test_pre_filter = self.test_pre_filter
+        test_pre_filter = getattr(self, 'test_pre_filter', None)
+        self.is_patch = dataset_opt.is_patch
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(
@@ -332,7 +363,9 @@ class General3DMatchDataset(BaseSiameseDataset):
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
                 transform=train_transform,
-                pre_filter=pre_filter)
+                pre_filter=pre_filter,
+                is_online_matching=dataset_opt.is_online_matching,
+                num_pos_pairs=dataset_opt.num_pos_pairs)
 
             self.test_dataset = Fragment3DMatch(
                 root=self._data_path,
@@ -344,7 +377,9 @@ class General3DMatchDataset(BaseSiameseDataset):
                 limit_size=dataset_opt.limit_size,
                 depth_thresh=dataset_opt.depth_thresh,
                 pre_transform=pre_transform,
-                transform=test_transform)
+                transform=test_transform,
+                is_online_matching=False,
+                num_pos_pairs=dataset_opt.num_pos_pairs)
 
     @staticmethod
     def get_tracker(model, dataset, wandb_log: bool,

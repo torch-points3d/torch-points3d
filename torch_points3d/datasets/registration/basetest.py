@@ -9,7 +9,7 @@ import torch
 
 from torch_geometric.data import Dataset, download_url, extract_zip
 from torch_geometric.data import Data
-from torch_points3d.datasets.registration.detector import RandomDetector
+
 from torch_points3d.datasets.registration.utils import rgbd2fragment_rough
 from torch_points3d.datasets.registration.utils import rgbd2fragment_fine
 from torch_points3d.datasets.registration.utils import compute_overlap_and_matches
@@ -115,11 +115,6 @@ class BaseTest(Dataset):
                 data = Data(pos=pos)
                 if(self.pre_transform is not None):
                     data = self.pre_transform(data)
-
-                if(self.num_random_pt > 0):
-                    detector = RandomDetector(self.num_random_pt)
-                    data = detector(data)
-                # compute keypoints indices
                 torch.save(data, out_path)
                 self.table[ind] = {'in_path': fragment_path,
                                    'scene_path': scene_path,
@@ -134,18 +129,8 @@ class BaseTest(Dataset):
     def process(self):
         self._pre_transform_fragments_ply()
 
-    def get(self, idx):
-        raise NotImplementedError("implement class to get patch or fragment or more")
-
     def __getitem__(self, idx):
-        r"""Gets the data object at index :obj:`idx` and transforms it (in case
-        a :obj:`self.transform` is given).
-        In case :obj:`idx` is a slicing object, *e.g.*, :obj:`[2:5]`, a list, a
-        tuple, a  LongTensor or a BoolTensor, will return a subset of the
-        dataset at the specified indices."""
-
-        data = self.get(idx)
-        return data
+        raise NotImplementedError("implement class to get patch or fragment or more")
 
 
 class Base3DMatchTest(BaseTest):

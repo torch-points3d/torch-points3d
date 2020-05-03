@@ -256,8 +256,8 @@ class Res16UNetBase(ResNetBase):
 
     # To use the model, must call initialize_coords before forward pass.
     # Once data is processed, call clear to reset the model before calling initialize_coords
-    def __init__(self, in_channels, out_channels, D=3, **kwargs):
-        super(Res16UNetBase, self).__init__(in_channels, out_channels, D)
+    def __init__(self, in_channels, out_channels, D=3, conv1_kernel_size=3, **kwargs):
+        super(Res16UNetBase, self).__init__(in_channels, out_channels, D, conv1_kernel_size)
 
     def network_initialization(self, in_channels, out_channels, D):
         # Setup net_metadata
@@ -573,6 +573,10 @@ class Res16UNet18D(Res16UNet18):
     PLANES = (32, 64, 128, 256, 384, 384, 384, 384)
 
 
+class Res16UNet32B(Res16UNet34):
+    PLANES = (32, 64, 128, 256, 256, 64, 64, 64)
+
+
 class Res16UNet34A(Res16UNet34):
     PLANES = (32, 64, 128, 256, 256, 128, 64, 64)
 
@@ -627,3 +631,20 @@ class STResTesseract16UNetBase(STRes16UNetBase):
 
 class STResTesseract16UNet18A(STRes16UNet18A, STResTesseract16UNetBase):
     pass
+
+
+def get_block(norm_type, inplanes, planes, stride=1, dilation=1, downsample=None, bn_momentum=0.1, D=3):
+    if norm_type == NormType.BATCH_NORM:
+        return BasicBlock(
+            inplanes=inplanes,
+            planes=planes,
+            stride=stride,
+            dilation=dilation,
+            downsample=downsample,
+            bn_momentum=bn_momentum,
+            D=D,
+        )
+    elif norm_type == NormType.INSTANCE_NORM:
+        return BasicBlockIN(inplanes, planes, stride, dilation, downsample, bn_momentum, D)
+    else:
+        raise ValueError(f"Type {norm_type}, not defined")

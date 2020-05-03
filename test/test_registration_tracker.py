@@ -42,6 +42,7 @@ class MockModel:
         list_xyz_target = [list_xyz[i].mm(trans[i][:3, :3]) + trans[i][:3, 3] for i in range(16)]
         self.ind = [torch.arange(400) for _ in range(4)]
         self.ind_target = [torch.arange(400) for _ in range(4)]
+        self.ind_size = [torch.tensor([100, 100, 100, 100]) for _ in range(4)]
         self.xyz = [torch.cat(list_xyz[4 * i : 4 * (i + 1)], 0) for i in range(4)]
         self.xyz_target = [torch.cat(list_xyz_target[4 * i : 4 * (i + 1)], 0) for i in range(4)]
         self.feat = self.xyz
@@ -79,7 +80,7 @@ class MockModel:
         return self.xyz[self.iter], self.xyz_target[self.iter]
 
     def get_ind(self):
-        return self.ind[self.iter], self.ind_target[self.iter]
+        return self.ind[self.iter], self.ind_target[self.iter], self.ind_size[self.iter]
 
     def get_current_losses(self):
         return self.losses[self.iter]

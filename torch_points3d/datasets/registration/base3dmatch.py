@@ -242,7 +242,7 @@ class Base3DMatch(Dataset):
         if files_exist([out_dir]):  # pragma: no cover
             return
         makedirs(out_dir)
-
+        ind = 0
         for scene_path in os.listdir(osp.join(self.raw_dir, mod)):
 
             list_seq = sorted([f for f in os.listdir(osp.join(self.raw_dir, mod,
@@ -256,19 +256,19 @@ class Base3DMatch(Dataset):
                                              for f in os.listdir(fragment_dir)
                                              if 'fragment' in f])
                 log.info("compute_overlap_and_matches")
-                ind = 0
+
                 for path1 in list_fragment_path:
                     for path2 in list_fragment_path:
                         if path1 < path2:
                             out_path = osp.join(out_dir,
                                                 'matches{:06d}.npy'.format(ind))
-
+                            data1 = torch.load(path1)
+                            data2 = torch.load(path2)
                             match = compute_overlap_and_matches(
-                                path1, path2, self.max_dist_overlap)
-                            if(self.verbose):
-                                log.info(match['path_source'],
-                                         match['path_target'],
-                                         'overlap={}'.format(match['overlap']))
+                                data1, data2, self.max_dist_overlap)
+                            match['path_source'] = path1
+                            match['path_target'] = path2
+
                             if(np.max(match['overlap']) > self.min_overlap_ratio and
                                np.max(match['overlap']) < self.max_overlap_ratio):
                                 np.save(out_path, match)
