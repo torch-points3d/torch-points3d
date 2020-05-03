@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: $HOME/.poetry/bin/poetry install --no-dev
+        run: $HOME/.poetry/bin/poetry install
 
       - name: Linting
         run: |
@@ -68,6 +68,10 @@ jobs:
           flags: unittests
           name: codecov-umbrella
 
+  deploy:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
       - name: Build project for distribution
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
