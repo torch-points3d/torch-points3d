@@ -131,7 +131,7 @@ class FragmentPointNet2_D(UnetBasedModel):
         last_mlp_opt = option.mlp_cls
 
         self.FC_layer = Seq()
-        last_mlp_opt.nn[0] += self._num_categories
+        last_mlp_opt.nn[0]
         for i in range(1, len(last_mlp_opt.nn)):
             self.FC_layer.append(Conv1D(last_mlp_opt.nn[i - 1], last_mlp_opt.nn[i], bn=True, bias=False))
         if last_mlp_opt.dropout:
@@ -169,7 +169,7 @@ class FragmentPointNet2_D(UnetBasedModel):
 
     def compute_loss_match(self):
         self.loss_reg = self.metric_loss_module(
-            self.output, self.output_target, self.match[:, :2], self.input.pos, self.input.pos_target
+            self.output, self.output_target, self.match[:, :2], self.input.pos, self.input_target.pos
         )
         self.loss = self.loss_reg
 
