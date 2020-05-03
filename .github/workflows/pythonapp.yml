@@ -70,6 +70,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Display Tag
+        id: tag
+        run: |
+          run: echo "Current tag : ${{ github.ref }}"
+
       - name: Build project for distribution
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
