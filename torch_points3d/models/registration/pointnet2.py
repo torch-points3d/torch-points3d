@@ -12,6 +12,9 @@ from torch_points3d.core.common_modules import MLP
 from torch_points3d.models.base_architectures import BackboneBasedModel
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.models.registration.base import create_batch_siamese
+from torch_points3d.models.base_architectures import UnetBasedModel
+from torch_points3d.core.common_modules.dense_modules import Conv1D
+from torch_points3d.core.common_modules.base_modules import Seq
 
 log = logging.getLogger(__name__)
 
@@ -97,8 +100,159 @@ class PatchPointNet2_D(BackboneBasedModel):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
-class FragmentPointNet(UnwrappedUnetBasedModel):
+class FragmentPointNet2_D(UnetBasedModel):
+
+    r"""
+        PointNet2 with multi-scale grouping
+        descriptors network for registration that uses feature propogation layers
+
+        Parameters
+        ----------
+        num_classes: int
+            Number of semantics classes to predict over -- size of softmax classifier that run for each point
+        input_channels: int = 6
+            Number of input channels in the feature descriptor for each point.  If the point cloud is Nx9, this
+            value should be 6 as in an Nx9 point cloud, 3 of the channels are xyz, and 6 are feature descriptors
+        use_xyz: bool = True
+            Whether or not to use the xyz position of a point as a feature
+    """
+
     def __init__(self, option, model_type, dataset, modules):
-        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
-        self.set_last_mlp(option.mlp_cls)
-        self.loss_names = ["loss_reg", "loss", "internal"]
+        # call the initialization method of UnetBasedModel
+        UnetBasedModel.__init__(self, option, model_type, dataset, modules)
+        # Last MLP
+        self.mode = option.loss_mode
+        self.normalize_feature = option.normalize_feature
+        self.out_channels = option.out_channels
+        self.loss_names = ["loss_reg", "loss"]
+        self.metric_loss_module, self.miner_module = UnetBasedModel.get_metric_loss_and_miner(
+            getattr(option, "metric_loss", None), getattr(option, "miner", None)
+        )
+        last_mlp_opt = option.mlp_cls
+
+        self.FC_layer = Seq()
+        last_mlp_opt.nn[0] += self._num_categories
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.append(Conv1D(last_mlp_opt.nn[i - 1], last_mlp_opt.nn[i], bn=True, bias=False))
+        if last_mlp_opt.dropout:
+            self.FC_layer.append(torch.nn.Dropout(p=last_mlp_opt.dropout))
+
+        self.FC_layer.append(Conv1D(last_mlp_opt.nn[-1], self.out_channels, activation=None, bias=True, bn=False))
+
+    def set_input(self, data, device):
+        """Unpack input data from the dataloader and perform necessary pre-processing steps.
+        Parameters:
+            input: a dictionary that contains the data itself and its metadata information.
+        Sets:
+            self.input:
+                x -- Features [B, C, N]
+                pos -- Points [B, N, 3]
+        """
+        assert len(data.pos.shape) == 3
+
+        if data.x is not None:
+            x = data.x.transpose(1, 2).contiguous()
+        else:
+            x = None
+        self.input = Data(x=x, pos=data.pos).to(device)
+
+        if hasattr(data, "pos_target"):
+            if data.x_target is not None:
+                x = data.x_target.transpose(1, 2).contiguous()
+            else:
+                x = None
+            self.input_target = Data(x=x, pos=data.pos_target).to(device)
+            self.match = data.pair_ind.to(torch.long).to(device)
+            self.size_match = data.size_pair_ind.to(torch.long).to(device)
+        else:
+            self.match = None
+
+    def compute_loss_match(self):
+        self.loss_reg = self.metric_loss_module(
+            self.output, self.output_target, self.match[:, :2], self.input.pos, self.input.pos_target
+        )
+        self.loss = self.loss_reg
+
+    def compute_loss_label(self):
+        """
+        compute the loss separating the miner and the loss
+        each point correspond to a labels
+        """
+        output = torch.cat([self.output[self.match[:, 0]], self.output_target[self.match[:, 1]]], 0)
+        rang = torch.arange(0, len(self.match), dtype=torch.long, device=self.match.device)
+        labels = torch.cat([rang, rang], 0)
+        hard_pairs = None
+        if self.miner_module is not None:
+            hard_pairs = self.miner_module(output, labels)
+        # loss
+        self.loss_reg = self.metric_loss_module(output, labels, hard_pairs)
+        self.loss = self.loss_reg
+
+    def apply_nn(self, input):
+        last_feature = self.model(input).x
+        output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self.out_channels))
+        if self.normalize_feature:
+            return output / (torch.norm(output, p=2, dim=1, keepdim=True) + 1e-5)
+        else:
+            return output
+
+    def forward(self):
+        self.output = self.apply_nn(self.input)
+        if self.match is None:
+            return self.output
+
+        self.output_target = self.apply_nn(self.input_target)
+        if self.mode == "match":
+            self.compute_loss_match()
+        elif self.mode == "label":
+            self.compute_loss_label()
+        else:
+            raise NotImplementedError("The mode for the loss is incorrect")
+
+        return self.output
+
+    def backward(self):
+        """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
+        # calculate loss given the input and intermediate results
+        if hasattr(self, "loss"):
+            self.loss.backward()
+
+    def get_outputs(self):
+        if self.match is not None:
+            return self.output, self.output_target
+        else:
+            return self.output
+
+    def get_ind(self):
+        if self.match is not None:
+            return self.match[:, 0], self.match[:, 1], self.size_match
+        else:
+            return None
+
+    def get_xyz(self):
+        if self.match is not None:
+            return self.input.pos, self.input_target.pos
+        else:
+            return self.input.pos
+
+    def get_batch_idx(self):
+        if self.match is not None:
+            batch = (
+                torch.arange(0, self.input.pos.shape[0])
+                .view(-1, 1)
+                .repeat(1, self.input.pos.shape[1])
+                .view(-1)
+                .to(self.input.pos.device)
+            )
+            batch_target = (
+                torch.arange(0, self.input_target.pos.shape[0])
+                .view(-1, 1)
+                .repeat(1, self.input_target.pos.shape[1])
+                .view(-1)
+                .to(self.input.pos.device)
+            )
+
+            return batch, batch_target
+        else:
+            return None
