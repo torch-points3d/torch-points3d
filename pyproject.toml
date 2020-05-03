@@ -52,6 +52,7 @@ MinkowskiEngine = ["MinkowskiEngine"]
 
 [tool.black]
 line-length = 120
+
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=0.12", "torch"]
 build-backend = "poetry.masonry.api"
