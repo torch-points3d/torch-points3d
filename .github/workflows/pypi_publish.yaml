@@ -21,6 +21,17 @@ jobs:
           run: |
             curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 
+        - name: Cache python dependencies
+          uses: actions/cache@v1
+          id: cache
+          with:
+            path: /home/runner/.cache/pypoetry/virtualenvs
+            key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+        - name: Install dependencies
+          if: steps.cache.outputs.cache-hit != 'true'
+          run: $HOME/.poetry/bin/poetry install
+
         - name: Display Tag
           id: tag
           run: |
@@ -29,7 +40,7 @@ jobs:
         - name: Build project for distribution
           if: startsWith(github.ref, 'refs/tags/v')
           run: |
-              $HOME/.poetry/bin/poetry run poetry build
+              $HOME/.poetry/bin/poetry run poetry build -vvv
 
         - name: Publish to PyPI
           if: startsWith(github.ref, 'refs/tags/v')
