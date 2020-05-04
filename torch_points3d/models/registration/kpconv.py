@@ -1,17 +1,28 @@
+from typing import Any
 import torch
 import torch.nn.functional as F
 from torch.nn import Linear as Lin
 from torch.nn import Sequential as Seq
+from torch_geometric.data import Data
+from torch_geometric.nn import global_mean_pool
 import logging
 
 from torch_points3d.core.losses import *
-from torch_points3d.modules.pointnet2 import *
-from torch_points3d.core.base_conv.dense import DenseFPModule
 from torch_points3d.core.common_modules import MLP
+from torch_points3d.core.common_modules import FastBatchNorm1d
+from torch_points3d.core.base_conv.partial_dense import *
+
 from torch_points3d.models.base_architectures import BackboneBasedModel
 from torch_points3d.models.registration.base import create_batch_siamese
+from torch_points3d.models.base_model import BaseModel
+from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
+
+from .base import Segmentation_MP
+from torch_points3d.modules.KPConv import *
+
+from torch_points3d.datasets.multiscale_data import MultiScaleBatch
+from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.datasets.registration.pair import PairMultiScaleBatch
-from torch_geometric.nn import global_mean_pool
 
 log = logging.getLogger(__name__)
 
@@ -106,6 +117,134 @@ class PatchKPConv(BackboneBasedModel):
         self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
 
         self.loss += self.loss_reg
+
+    def backward(self):
+        """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
+        # calculate loss given the input and intermediate results
+        if hasattr(self, "loss"):
+            self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
+
+
+class KPConvPaper(UnwrappedUnetBasedModel):
+    def __init__(self, option, model_type, dataset, modules):
+        # Extract parameters from the dataset
+        # Assemble encoder / decoder
+        UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
+
+        # Build final MLP
+        last_mlp_opt = option.mlp_cls
+
+        in_feat = last_mlp_opt.nn[0] + self._num_categories
+        self.FC_layer = Seq()
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.add_module(
+                str(i),
+                Seq(
+                    *[
+                        Lin(in_feat, last_mlp_opt.nn[i], bias=False),
+                        FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
+                        LeakyReLU(0.2),
+                    ]
+                ),
+            )
+            in_feat = last_mlp_opt.nn[i]
+
+        if last_mlp_opt.dropout:
+            self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+
+        self.FC_layer.add_module("Last", Lin(in_feat, self.out_channels, bias=False))
+
+        self.loss_names = ["loss_reg", "loss"]
+
+        self.lambda_reg = self.get_from_opt(option, ["loss_weights", "lambda_reg"])
+        if self.lambda_reg:
+            self.loss_names += ["loss_regul"]
+
+        self.lambda_internal_losses = self.get_from_opt(option, ["loss_weights", "lambda_internal_losses"])
+
+        self.visual_names = ["data_visual"]
+
+    def set_input(self, data, device):
+        """Unpack input data from the dataloader and perform necessary pre-processing steps.
+        Parameters:
+            input: a dictionary that contains the data itself and its metadata information.
+        """
+        # data = data.to(device)
+
+        if isinstance(data, PairMultiScaleBatch):
+            self.pre_computed = data.multiscale.to(device)
+            self.upsample = data.upsample.to(device)
+            del data.upsample
+            del data.multiscale
+        else:
+            self.upsample = None
+            self.pre_computed = None
+
+        self.input = Data(pos=data.pos, x=data.x, batch=data.batch).to(device)
+        self.input.x = add_ones(self.input.pos, self.input.x, True)
+        if hasattr(data, "pos_target"):
+            pass
+        # self.labels = data.y
+        # self.batch_idx = data.batch
+
+    def apply_nn(self, input, pre_computed, upsample):
+        pass
+
+    def forward(self) -> Any:
+        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
+        stack_down = []
+
+        data = self.input
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data, precomputed=self.pre_computed)
+            stack_down.append(data)
+
+        data = self.down_modules[-1](data, precomputed=self.pre_computed)
+        innermost = False
+
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            data = self.inner_modules[0](data)
+            innermost = True
+
+        for i in range(len(self.up_modules)):
+            if i == 0 and innermost:
+                data = self.up_modules[i]((data, stack_down.pop()))
+            else:
+                data = self.up_modules[i]((data, stack_down.pop()), precomputed=self.upsample)
+
+        last_feature = data.x
+        if self._use_category:
+            self.output = self.FC_layer(last_feature, self.category)
+        else:
+            self.output = self.FC_layer(last_feature)
+
+        if self.labels is not None:
+            self.compute_loss()
+
+        self.data_visual = self.input
+        self.data_visual.pred = torch.max(self.output, -1)[1]
+        return self.output
+
+    def compute_loss(self):
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+
+        self.loss = 0
+
+        # Get regularization on weights
+        if self.lambda_reg:
+            self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
+            self.loss += self.loss_reg
+
+        # Collect internal losses and set them with self and them to self for later tracking
+        if self.lambda_internal_losses:
+            self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+
+        # Final cross entrop loss
+        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL)
+        self.loss += self.loss_seg
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
