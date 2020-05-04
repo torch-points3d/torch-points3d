@@ -5,7 +5,7 @@ data:
   name: 3DMatch
   is_patch: False
   radius_patch: 0.3
-  first_subsampling: 0.02
+  first_subsampling: 0.025
   num_random_pt: 5000
   is_offline: True
   pre_transforms:
@@ -13,11 +13,17 @@ data:
       params:
         size: ${data.first_subsampling}
   test_transforms:
-    - transform: ToSparseInput
+    - transform: SaveOriginalPosId
+    - transform: XYZFeature
       params:
-        grid_size: ${data.first_subsampling}
+        add_x: True
+        add_y: True
+        add_z: True
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
         mode: "last"
-        keep_xyz: True
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
