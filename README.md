@@ -153,9 +153,9 @@ poetry run python train.py task=segmentation model_type=pointnet2 model_name=poi
 
 And you should see something like that
 
-![logging](/docs/imgs/logging.png)
+![logging](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/logging.png)
 
-The [config](conf/models/segmentation/pointnet2.yaml) for pointnet++ is a good example of how to define a model and is as follow:
+The [config](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/conf/models/segmentation/pointnet2.yaml) for pointnet++ is a good example of how to define a model and is as follow:
 
 ```yaml
 # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
@@ -198,7 +198,7 @@ pointnet2_onehot:
 
 | Model Name                                                           | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
 | -------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
-| [`pointnet2_original`](/benchmark/s3dis_fold5/Pointnet2_original.md) | 3,026,829 | 04:29 / 01:07(RTX 2060) | 0.0512        | 85.26 | 45.58 | 73.11 |
+| [`pointnet2_original`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/s3dis_fold5/Pointnet2_original.md) | 3,026,829 | 04:29 / 01:07(RTX 2060) | 0.0512        | 85.26 | 45.58 | 73.11 |
 
 ## Shapenet part segmentation
 
@@ -206,12 +206,12 @@ The data reported below correspond to the part segmentation problem for Shapenet
 
 | Model Name                                                            | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
 | --------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
-| [`pointnet2_charlesmsg`](/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes         | 1,733,946 | 15:07 / 01:20 (K80)     | 0.089         | 82.1   | 85.1  |
-| [`RSCNN_MSG`](/benchmark/shapenet/rscnn_original.md)                  | No          | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04          | 82.811 | 85.3  |
+| [`pointnet2_charlesmsg`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes         | 1,733,946 | 15:07 / 01:20 (K80)     | 0.089         | 82.1   | 85.1  |
+| [`RSCNN_MSG`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/rscnn_original.md)                  | No          | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04          | 82.811 | 85.3  |
 
 ## Explore your experiments
 
-We provide a [notebook](dashboard/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/dashboard/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 
 ```
 jupyter labextension install @pyviz/jupyterlab_pyviz
@@ -219,25 +219,25 @@ jupyter labextension install @pyviz/jupyterlab_pyviz
 
 Run through the notebook and you should see a dashboard starting that looks like the following:
 
-![dashboard](docs/imgs/Dashboard_demo.gif)
+![dashboard](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/Dashboard_demo.gif)
 
 ## Inference
 
 ### Inference script
 
-We provide a script for running a given pre trained model on custom data that may not be annotated. You will find an [example](forward_scripts/forward.py) of this for the part segmentation task on Shapenet. Just like for the rest of the codebase most of the customization happens through config files and the provided example can be extended to other datasets. You can also easily create your own from there. Going back to the part segmentation task, say you have a folder full of point clouds that you know are Airplanes, and you have the checkpoint of a model trained on Airplanes and potentially other classes, simply edit the [config.yaml](forward_scripts/conf/config.yaml) and [shapenet.yaml](forward_scripts/conf/dataset/shapenet.yaml) and run the following command:
+We provide a script for running a given pre trained model on custom data that may not be annotated. You will find an [example](https://github.com/nicolas-chaulet/torch-points3d/blob/master/forward_scripts/forward.py) of this for the part segmentation task on Shapenet. Just like for the rest of the codebase most of the customization happens through config files and the provided example can be extended to other datasets. You can also easily create your own from there. Going back to the part segmentation task, say you have a folder full of point clouds that you know are Airplanes, and you have the checkpoint of a model trained on Airplanes and potentially other classes, simply edit the [config.yaml](https://github.com/nicolas-chaulet/torch-points3d/blob/master/forward_scripts/conf/config.yaml) and [shapenet.yaml](https://github.com/nicolas-chaulet/torch-points3d/blob/master/forward_scripts/conf/dataset/shapenet.yaml) and run the following command:
 
 ```bash
 python forward_scripts/forward.py
 ```
 
-The result of the forward run will be placed in the specified `output_folder` and you can use the [notebook](forward_scripts/notebooks/viz_shapenet.ipynb) provided to explore the results. Below is an example of the outcome of using a model trained on caps only to find the parts of airplanes and caps.
+The result of the forward run will be placed in the specified `output_folder` and you can use the [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/forward_scripts/notebooks/viz_shapenet.ipynb) provided to explore the results. Below is an example of the outcome of using a model trained on caps only to find the parts of airplanes and caps.
 
-![resexplore](docs/imgs/inference_demo.gif)
+![resexplore](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/inference_demo.gif)
 
 ### Containerize your model with Docker
 
-Finally, for people interested in deploying their models to production environments, we provide a [Dockerfile](docker/Dockerfile) as well as a [build script](docker/build.sh). Say you have trained a network for semantic segmentation that gave the weight `<outputfolder/weights.pt>`, the following command will build a docker image for you:
+Finally, for people interested in deploying their models to production environments, we provide a [Dockerfile](https://github.com/nicolas-chaulet/torch-points3d/blob/master/docker/Dockerfile) as well as a [build script](https://github.com/nicolas-chaulet/torch-points3d/blob/master/docker/build.sh). Say you have trained a network for semantic segmentation that gave the weight `<outputfolder/weights.pt>`, the following command will build a docker image for you:
 
 ```bash
 cd docker
