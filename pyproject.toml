@@ -1,11 +1,13 @@
 [tool.poetry]
 name = "torch_points3d"
-version = "0.1.0"
-description = ""
+version = "0.1.2"
+description = "Point Cloud Deep Learning Extension Library for PyTorch"
 authors = ["Thomas Chaton <thomas.chaton.ai@gmail.com>", "Nicolas Chaulet <nicolas.chaulet@gmail.com>"]
 packages = [
     { include = "torch_points3d" },
 ]
+readme = "README.md"
+documentation = "https://torch-points3d.readthedocs.io/en/latest/"
 
 [tool.poetry.dependencies]
 python = "^3.6"
@@ -21,9 +23,8 @@ torch-sparse = "==0.4.3"
 torch-cluster = "==1.4.5"
 torch-geometric = "==1.3.2"
 pytorch_metric_learning = "^0.9.75"
-sphinx_rtd_theme = "^0.4.3"
 MinkowskiEngine = {version = "^0.4.2", optional = true}
-torch-points-kernels = "^0.5.2"
+torch-points-kernels = "0.5.2"
 numpy = "^1.18.2"
 scikit-image = "^0.16.2"
 numba = "^0.49.0"
@@ -40,16 +41,18 @@ pyvista = "^0.23.1"
 panel = "^0.8.0"
 param = "^1.9.3"
 codecov = "^2.0.16"
-sphinx = "^2.4.4"
-sphinx-autobuild = "^0.7.1"
 gpustat = "^0.6.0"
 snakeviz = "^2.0.1"
+sphinx_rtd_theme = "^0.4.3"
+sphinx = "^2.4.4"
+sphinx-autobuild = "^0.7.1"
 
 [tool.poetry.extras]
 MinkowskiEngine = ["MinkowskiEngine"]
 
 [tool.black]
 line-length = 120
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
