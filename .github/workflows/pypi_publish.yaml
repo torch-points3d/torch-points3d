@@ -1,0 +1,27 @@
+name: pypi_publish
+
+on: [push]
+
+jobs:
+    pypi:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Display Tag
+          id: tag
+          run: |
+              echo "Current tag : ${{ github.ref }}"
+
+        - name: Build project for distribution
+          if: startsWith(github.ref, 'refs/tags/v')
+          run: |
+              $HOME/.poetry/bin/poetry run poetry build
+
+        - name: Publish to PyPI
+          if: startsWith(github.ref, 'refs/tags/v')
+          env:
+              POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+          run: |
+              $HOME/.poetry/bin/poetry run poetry publish
