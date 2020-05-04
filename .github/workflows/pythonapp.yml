@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: $HOME/.poetry/bin/poetry install
+        run: $HOME/.poetry/bin/poetry install --no-dev
 
       - name: Checkout tools repo
         uses: actions/checkout@v2
@@ -46,6 +46,7 @@ jobs:
 
       - name: Lint with flake8
         run: |
+          $HOME/.poetry/bin/poetry run pip install flake8
           # stop the build if there are Python syntax errors or undefined names
           $HOME/.poetry/bin/poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
@@ -53,6 +54,7 @@ jobs:
 
       - name: Test with unittest
         run: |
+          $HOME/.poetry/bin/poetry run pip install coverage
           $HOME/.poetry/bin/poetry run coverage run -m unittest -v
           $HOME/.poetry/bin/poetry run coverage xml
 
