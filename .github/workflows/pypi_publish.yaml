@@ -24,7 +24,7 @@ jobs:
         - name: Set version
           run: |
               version="$(basename -- ${{ github.ref }})"
-              sed -i "s/__version__/$version/" pyproject.toml
+              sed -i "/^version/s/\(.*\)/version = \"$version\"/" pyproject.toml
               cat pyproject.toml
 
         - name: Build project for distribution
