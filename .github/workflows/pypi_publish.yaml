@@ -3,7 +3,7 @@ name: pypi_publish
 on:
     push:
       tags:
-      - 'v*'
+      - '*.*.*'
 
 jobs:
     pypi:
@@ -21,18 +21,17 @@ jobs:
           run: |
             curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
 
-        - name: Display Tag
-          id: tag
+        - name: Set version
           run: |
-              echo "Current tag : ${{ github.ref }}"
+              version="$(basename -- ${{ github.ref }})"
+              sed -i "s/__version__/$version/" pyproject.toml
+              cat pyproject.toml
 
         - name: Build project for distribution
-          if: startsWith(github.ref, 'refs/tags/v')
           run: |
               $HOME/.poetry/bin/poetry build
 
         - name: Publish to PyPI
-          if: startsWith(github.ref, 'refs/tags/v')
           env:
               POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
           run: |
