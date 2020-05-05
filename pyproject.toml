@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "torch_points3d"
-version = "0.1.1"
+version = "0.1.0" # This will be overriden by the CI at publish time
 description = "Point Cloud Deep Learning Extension Library for PyTorch"
 authors = ["Thomas Chaton <thomas.chaton.ai@gmail.com>", "Nicolas Chaulet <nicolas.chaulet@gmail.com>"]
 packages = [
