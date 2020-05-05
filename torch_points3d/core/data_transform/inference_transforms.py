@@ -67,7 +67,7 @@ class PointNetForward(ModelInference):
         self.feat_name = feat_name
 
         from torch_points3d.datasets.base_dataset import BaseDataset
-        from torch_geometric.transforms import FixedPoints GridSampling
+        from torch_geometric.transforms import FixedPoints, GridSampling
 
         self.inference_transform = BaseDataset.remove_transform(self.inference_transform, [GridSampling, FixedPoints])
 

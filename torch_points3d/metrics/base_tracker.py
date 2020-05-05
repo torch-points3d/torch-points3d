@@ -7,7 +7,6 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
-from torch_points3d.models.base_model import BaseModel
 
 log = logging.getLogger(__name__)
 

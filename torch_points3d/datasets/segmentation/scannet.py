@@ -385,6 +385,43 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
 
 class Scannet(InMemoryDataset):
+    """ Scannet dataset, you will have to agree to terms and conditions by hitting enter
+    so that it downloads the dataset.
+
+    http://www.scan-net.org/
+
+    Parameters
+    ----------
+    root : str
+        Path to the data
+    split : str, optional
+        Split used
+    transform (callable, optional):
+        A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a transformed
+        version. The data object will be transformed before every access.
+    pre_transform (callable, optional): 
+        A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a 
+        transformed version. The data object will be transformed before being saved to disk.
+    pre_filter (callable, optional): 
+        A function that takes in an :obj:`torch_geometric.data.Data` object and returns a boolean
+        value, indicating whether the data object should be included in the final dataset. 
+    version : str, optional
+        version of scannet, by default "v2"
+    use_instance_labels : bool, optional
+        Wether we use instance labels or not, by default False
+    use_instance_bboxes : bool, optional
+        Wether we use bounding box labels or not, by default False
+    donotcare_class_ids : list, optional
+        Class ids to be discarded
+    max_num_point : [type], optional
+        Max number of points to keep during the pre processing step
+    use_multiprocessing : bool, optional
+        Wether we use multiprocessing or not
+    process_workers : int, optional
+        Number of process workers
+    normalize_rgb : bool, optional
+        Normalise rgb values, by default True
+    """
 
     CLASS_LABELS = CLASS_LABELS
     URLS_METADATA = URLS_METADATA
@@ -409,8 +446,6 @@ class Scannet(InMemoryDataset):
         types=[".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"],
         normalize_rgb=True,
     ):
-
-
         if not isinstance(donotcare_class_ids, list):
             raise Exception("donotcare_class_ids should be list with indices of class to ignore")
         self.donotcare_class_ids = donotcare_class_ids
@@ -604,7 +639,7 @@ class Scannet(InMemoryDataset):
     def process(self):
         self.read_from_metadata()
 
-        mapping_dict = {indice:idx for idx, indice in enumerate(self.valid_class_idx)}
+        mapping_dict = {indice: idx for idx, indice in enumerate(self.valid_class_idx)}
         for idx in range(NUM_CLASSES):
             if idx not in mapping_dict:
                 mapping_dict[idx] = IGNORE_LABEL
@@ -651,6 +686,24 @@ class Scannet(InMemoryDataset):
 
 
 class ScannetDataset(BaseDataset):
+    """ Wrapper around Scannet that creates train and test datasets.
+
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
+
+            - dataroot
+            - version
+            - max_num_point (optional)
+            - use_instance_labels (optional)
+            - use_instance_bboxes (optional)
+            - donotcare_class_ids (optional)
+            - pre_transforms (optional)
+            - train_transforms (optional)
+            - val_transforms (optional)
+    """
+
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 

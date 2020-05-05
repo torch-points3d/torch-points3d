@@ -101,5 +101,6 @@ Supported tasks
    :hidden:
 
    src/api/models
+   src/api/datasets
    src/api/transforms
    src/api/filters
