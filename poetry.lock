@@ -2012,7 +2012,7 @@ description = ""
 name = "torch-points-kernels"
 optional = false
 python-versions = "*"
-version = "0.5.2"
+version = "0.6.0"
 
 [package.dependencies]
 torch = ">=1.1.0"
@@ -2136,7 +2136,7 @@ description = "Virtual Python Environment builder"
 name = "virtualenv"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
-version = "20.0.19"
+version = "20.0.20"
 
 [package.dependencies]
 appdirs = ">=1.4.3,<2"
@@ -2302,7 +2302,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 MinkowskiEngine = ["MinkowskiEngine"]
 
 [metadata]
-content-hash = "26f11f06ccb865bdec5f042c083fce129960a6edfccfbd7c670deb2f17febd6f"
+content-hash = "a148e6097f382eede78351a66865f296d953bb8fbb8b663c45d85bb807ae072d"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -3383,7 +3383,7 @@ torch-geometric = [
     {file = "torch_geometric-1.3.2.tar.gz", hash = "sha256:4471cf36a7c01f2e8d8df4b69d3bf6d5f8aa182570484cd716b5920d693eb900"},
 ]
 torch-points-kernels = [
-    {file = "torch-points-kernels-0.5.2.tar.gz", hash = "sha256:c629adc36fc143d5d4e0e7a5eb734e282fdc59be73edebd433d2418061023bcd"},
+    {file = "torch-points-kernels-0.6.0.tar.gz", hash = "sha256:e5f46bd57a135fb7ad5a9de5c1f9045a0a235f46ebc7074fc9dd3e8da855494f"},
 ]
 torch-scatter = [
     {file = "torch_scatter-1.4.0.tar.gz", hash = "sha256:5999ef256154e5a99445118c1a53f95cf0f95ef7b5cd8d3b256101125479cc2e"},
@@ -3455,8 +3455,8 @@ urllib3 = [
     {file = "urllib3-1.25.9.tar.gz", hash = "sha256:3018294ebefce6572a474f0604c2021e33b3fd8006ecd11d62107a5d2a963527"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.0.19-py2.py3-none-any.whl", hash = "sha256:b86480fc1fe3908a85d7377eee8dc9644a58090b9d3a3701b347c69c308f3e72"},
-    {file = "virtualenv-20.0.19.tar.gz", hash = "sha256:8bb59b586fea2eb3bb5600f7ef53d11fd4a64806cdf1a7217b29e7d943dbd8dc"},
+    {file = "virtualenv-20.0.20-py2.py3-none-any.whl", hash = "sha256:b4c14d4d73a0c23db267095383c4276ef60e161f94fde0427f2f21a0132dde74"},
+    {file = "virtualenv-20.0.20.tar.gz", hash = "sha256:fd0e54dec8ac96c1c7c87daba85f0a59a7c37fe38748e154306ca21c73244637"},
 ]
 visdom = [
     {file = "visdom-0.1.8.9.tar.gz", hash = "sha256:c73ad23723c24a48156899f78dd76bd4538eba3edf9120b6c65a9528fa677126"},

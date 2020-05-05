@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "torch_points3d"
-version = "0.1.2"
+version = "0.1.1"
 description = "Point Cloud Deep Learning Extension Library for PyTorch"
 authors = ["Thomas Chaton <thomas.chaton.ai@gmail.com>", "Nicolas Chaulet <nicolas.chaulet@gmail.com>"]
 packages = [
@@ -24,7 +24,7 @@ torch-cluster = "==1.4.5"
 torch-geometric = "==1.3.2"
 pytorch_metric_learning = "^0.9.75"
 MinkowskiEngine = {version = "^0.4.2", optional = true}
-torch-points-kernels = "0.5.2"
+torch-points-kernels = "^0.6.0"
 numpy = "^1.18.2"
 scikit-image = "^0.16.2"
 numba = "^0.49.0"
@@ -54,5 +54,5 @@ MinkowskiEngine = ["MinkowskiEngine"]
 line-length = 120
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
