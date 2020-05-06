@@ -19,6 +19,11 @@ data:
         size: ${data.first_subsampling}
   train_transform:
     - transform: SaveOriginalPosId
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: False
+        mode: "mean"
     - transform: RandomNoise
       params:
         sigma: 0.005
@@ -38,12 +43,6 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
-
-    - transform: GridSampling
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: "mean"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -53,6 +52,11 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: False
+        mode: "mean"
     - transform: RandomRotate
       params:
         degrees: 180
@@ -65,12 +69,6 @@ data:
       params:
         degrees: 180
         axis: 2
-
-    - transform: GridSampling
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: "mean"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:

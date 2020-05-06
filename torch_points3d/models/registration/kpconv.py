@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch.nn import Linear as Lin
 from torch.nn import Sequential as Seq
+from torch.nn import Identity
 from torch_geometric.data import Data
 from torch_geometric.nn import global_mean_pool
 import logging
@@ -126,7 +127,7 @@ class PatchKPConv(BackboneBasedModel):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
-class KPConvPaper(UnwrappedUnetBasedModel):
+class FragmentKPConv(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # Extract parameters from the dataset
         # Assemble encoder / decoder
@@ -154,7 +155,8 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
 
         self.FC_layer.add_module("Last", Lin(in_feat, self.out_channels, bias=False))
-
+        self.mode = option.loss_mode
+        self.normalize_feature = option.normalize_feature
         self.loss_names = ["loss_reg", "loss"]
 
         self.lambda_reg = self.get_from_opt(option, ["loss_weights", "lambda_reg"])
@@ -175,32 +177,32 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         if isinstance(data, PairMultiScaleBatch):
             self.pre_computed = data.multiscale.to(device)
             self.upsample = data.upsample.to(device)
-            del data.upsample
-            del data.multiscale
         else:
             self.upsample = None
             self.pre_computed = None
 
         self.input = Data(pos=data.pos, x=data.x, batch=data.batch).to(device)
-        self.input.x = add_ones(self.input.pos, self.input.x, True)
         if hasattr(data, "pos_target"):
-            pass
-        # self.labels = data.y
-        # self.batch_idx = data.batch
+            if isinstance(data, PairMultiScaleBatch):
+                self.pre_computed_target = data.multiscale_target.to(device)
+                self.upsample_target = data.upsample_target.to(device)
+            else:
+                self.upsample_target = None
+                self.pre_computed_target = None
+            self.input_target = Data(pos=data.pos_target, x=data.x_target, batch=data.batch_target).to(device)
+            self.match = data.pair_ind.to(torch.long).to(device)
+            self.size_match = data.size_pair_ind.to(torch.long).to(device)
+        else:
+            self.match = None
 
     def apply_nn(self, input, pre_computed, upsample):
-        pass
-
-    def forward(self) -> Any:
-        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         stack_down = []
-
-        data = self.input
+        data = input
         for i in range(len(self.down_modules) - 1):
-            data = self.down_modules[i](data, precomputed=self.pre_computed)
+            data = self.down_modules[i](data, precomputed=pre_computed)
             stack_down.append(data)
 
-        data = self.down_modules[-1](data, precomputed=self.pre_computed)
+        data = self.down_modules[-1](data, precomputed=pre_computed)
         innermost = False
 
         if not isinstance(self.inner_modules[0], Identity):
@@ -214,18 +216,42 @@ class KPConvPaper(UnwrappedUnetBasedModel):
             else:
                 data = self.up_modules[i]((data, stack_down.pop()), precomputed=self.upsample)
 
-        last_feature = data.x
-        if self._use_category:
-            self.output = self.FC_layer(last_feature, self.category)
+        output = self.FC_layer(data.x)
+        if self.normalize_feature:
+            return output / (torch.norm(output, p=2, dim=1, keepdim=True) + 1e-3)
         else:
-            self.output = self.FC_layer(last_feature)
+            return output
 
-        if self.labels is not None:
-            self.compute_loss()
+    def forward(self) -> Any:
+        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
+        self.output = self.apply_nn(self.input, self.pre_computed, self.upsample)
+        if self.match is None:
+            return self.output
 
-        self.data_visual = self.input
-        self.data_visual.pred = torch.max(self.output, -1)[1]
+        self.output_target = self.apply_nn(self.input_target, self.pre_computed_target, self.upsample_target)
+        self.compute_loss()
+        # self.data_visual = self.input
+        # self.data_visual.pred = torch.max(self.output, -1)[1]
         return self.output
+
+    def compute_loss_match(self):
+        return self.metric_loss_module(
+            self.output, self.output_target, self.match[:, :2], self.input.pos, self.input_target.pos
+        )
+
+    def compute_loss_label(self):
+        """
+        compute the loss separating the miner and the loss
+        each point correspond to a labels
+        """
+        output = torch.cat([self.output[self.match[:, 0]], self.output_target[self.match[:, 1]]], 0)
+        rang = torch.arange(0, len(self.match), dtype=torch.long, device=self.match.device)
+        labels = torch.cat([rang, rang], 0)
+        hard_pairs = None
+        if self.miner_module is not None:
+            hard_pairs = self.miner_module(output, labels)
+        # loss
+        return self.metric_loss_module(output, labels, hard_pairs)
 
     def compute_loss(self):
         if self._weight_classes is not None:
@@ -235,16 +261,18 @@ class KPConvPaper(UnwrappedUnetBasedModel):
 
         # Get regularization on weights
         if self.lambda_reg:
-            self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
-            self.loss += self.loss_reg
+            self.loss_regul = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
+            self.loss += self.loss_regul
 
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
             self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
 
-        # Final cross entrop loss
-        self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL)
-        self.loss += self.loss_seg
+        if self.mode == "match":
+            self.loss_reg = self.compute_loss_match()
+        elif self.mode == "label":
+            self.loss_reg = self.compute_loss_label()
+        self.loss += self.loss_reg
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -252,3 +280,29 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         # calculate loss given the input and intermediate results
         if hasattr(self, "loss"):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
+
+    def get_outputs(self):
+        if self.match is not None:
+            return self.output, self.output_target
+        else:
+            return self.output
+
+    def get_ind(self):
+        if self.match is not None:
+            return self.match[:, 0], self.match[:, 1], self.size_match
+        else:
+            return None
+
+    def get_xyz(self):
+        if self.match is not None:
+            return self.input.pos, self.input_target.pos
+        else:
+            return self.input.pos
+
+    def get_batch_idx(self):
+        if self.match is not None:
+            batch = self.input.batch
+            batch_target = self.input_target.batch
+            return batch, batch_target
+        else:
+            return None
