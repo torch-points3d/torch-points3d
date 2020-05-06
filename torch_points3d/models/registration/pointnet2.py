@@ -232,9 +232,9 @@ class FragmentPointNet2_D(UnetBasedModel):
 
     def get_xyz(self):
         if self.match is not None:
-            return self.input.pos, self.input_target.pos
+            return self.input.pos.view(-1, 3), self.input_target.pos.view(-1, 3)
         else:
-            return self.input.pos
+            return self.input.pos.view(-1, 3)
 
     def get_batch_idx(self):
         if self.match is not None:
@@ -252,7 +252,6 @@ class FragmentPointNet2_D(UnetBasedModel):
                 .view(-1)
                 .to(self.input.pos.device)
             )
-
             return batch, batch_target
         else:
             return None
