@@ -190,6 +190,22 @@ class ShapeNet(InMemoryDataset):
 
 
 class ShapeNetDataset(BaseDataset):
+    """ Wrapper around ShapeNet that creates train and test datasets.
+
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
+
+            - dataroot
+            - category: List of categories or All
+            - normal: bool, include normals or not
+            - pre_transforms
+            - train_transforms
+            - test_transforms
+            - val_transforms
+    """
+
     FORWARD_CLASS = "forward.shapenet.ForwardShapenetDataset"
 
     def __init__(self, dataset_opt):
@@ -241,4 +257,3 @@ class ShapeNetDataset(BaseDataset):
             [BaseTracker] -- tracker
         """
         return ShapenetPartTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
-

@@ -38,8 +38,8 @@ Core features
 
   * **Core Architectures** - Unet
   * **Core Modules** - Residual Block, Down-sampling and Up-sampling convolutions
-  * **Core Transforms** - Grid Sampling, Rotation, Scaling
-  * **Core Sampling** - FPS, Random Sampling
+  * **Core Transforms** - Rotation, Scaling, Jitter
+  * **Core Sampling** - FPS, Random Sampling,  Grid Sampling
   * **Core Neighbour Finder** - Radius Search, KNN
 
 *
@@ -87,7 +87,7 @@ Supported tasks
 .. toctree::
    :glob:
    :maxdepth: 1
-   :caption: Contents
+   :caption: Developer guide
    :hidden:
 
    src/gettingstarted
@@ -96,10 +96,11 @@ Supported tasks
 
 .. toctree::
    :glob:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: API
    :hidden:
 
    src/api/models
+   src/api/datasets
    src/api/transforms
    src/api/filters

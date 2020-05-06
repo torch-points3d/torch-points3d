@@ -14,10 +14,10 @@ from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.utils.config import ConvolutionFormatFactory
 from torch_points3d.utils.colors import COLORS, colored_print
-from torch_points3d.models.base_model import BaseModel
 
 # A logger for this file
 log = logging.getLogger(__name__)
+
 
 class BaseDataset:
     def __init__(self, dataset_opt):
@@ -127,6 +127,7 @@ class BaseDataset:
                     log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
                 setattr(self, new_name, filt)
+
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
@@ -162,7 +163,7 @@ class BaseDataset:
             return batch[key][batch.batch == index]
 
     def create_dataloaders(
-        self, model: BaseModel, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
+        self, model, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
     ):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
@@ -173,7 +174,6 @@ class BaseDataset:
         dataloader = partial(
             torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
         )
-
 
         if self.train_sampler:
             log.info(self.train_sampler)

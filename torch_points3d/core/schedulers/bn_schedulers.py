@@ -3,7 +3,7 @@ import logging
 
 try:
     import MinkowskiEngine as ME
-except:
+
     BATCH_NORM_MODULES = (
         nn.BatchNorm1d,
         nn.BatchNorm2d,
@@ -11,8 +11,9 @@ except:
         ME.MinkowskiBatchNorm,
         ME.MinkowskiInstanceNorm,
     )
-else:
+except:
     BATCH_NORM_MODULES = (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)
+
 
 log = logging.getLogger(__name__)
 

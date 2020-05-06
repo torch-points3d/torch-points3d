@@ -5,9 +5,6 @@ import logging
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "..", "..")
 sys.path.insert(0, os.path.join(ROOT))
 
-from .grid_transform import GridSampling
-import torch_points3d.metrics.model_checkpoint as model_checkpoint
-
 log = logging.getLogger(__name__)
 
 
@@ -29,6 +26,7 @@ class ModelInference(object):
         from torch_points3d.datasets.base_dataset import BaseDataset
         from torch_points3d.datasets.dataset_factory import instantiate_dataset
         from torch_points3d.utils.mock import MockDataset
+        import torch_points3d.metrics.model_checkpoint as model_checkpoint
 
         checkpoint = model_checkpoint.ModelCheckpoint(checkpoint_dir, model_name, weight_name, strict=True)
         if mock_dataset:
@@ -69,7 +67,7 @@ class PointNetForward(ModelInference):
         self.feat_name = feat_name
 
         from torch_points3d.datasets.base_dataset import BaseDataset
-        from torch_geometric.transforms import FixedPoints
+        from torch_geometric.transforms import FixedPoints, GridSampling
 
         self.inference_transform = BaseDataset.remove_transform(self.inference_transform, [GridSampling, FixedPoints])
 
