@@ -18,7 +18,6 @@ from torch_scatter import scatter_add, scatter_mean
 from torch_cluster import grid_cluster
 
 from torch_points3d.datasets.multiscale_data import MultiScaleData
-from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
 from .grid_transform import group_data, GridSampling, shuffle_data
