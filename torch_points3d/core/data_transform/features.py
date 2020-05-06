@@ -2,7 +2,6 @@ from typing import List
 from tqdm import tqdm as tq
 import itertools
 import numpy as np
-from scipy.linalg import expm, norm
 import math
 import re
 import torch
@@ -10,6 +9,7 @@ import random
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
+
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch

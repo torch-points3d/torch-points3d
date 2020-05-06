@@ -102,7 +102,7 @@ def save_confusion_matrix(cm, path2save, ordered_names):
     cmn = cm.astype("float") / cm.sum(axis=-1)[:, np.newaxis]
     cmn[np.isnan(cmn) | np.isinf(cmn)] = 0
     fig, ax = plt.subplots(figsize=(31, 31))
-    g = sns.heatmap(
+    sns.heatmap(
         cmn, annot=True, fmt=".2f", xticklabels=ordered_names, yticklabels=ordered_names, annot_kws={"size": 20}
     )
     # g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)
@@ -115,7 +115,7 @@ def save_confusion_matrix(cm, path2save, ordered_names):
     cmn = cm.astype("float") / cm.sum(axis=0)[np.newaxis, :]
     cmn[np.isnan(cmn) | np.isinf(cmn)] = 0
     fig, ax = plt.subplots(figsize=(31, 31))
-    g = sns.heatmap(
+    sns.heatmap(
         cmn, annot=True, fmt=".2f", xticklabels=ordered_names, yticklabels=ordered_names, annot_kws={"size": 20}
     )
     # g.set_xticklabels(g.get_xticklabels(), rotation = 35, fontsize = 20)

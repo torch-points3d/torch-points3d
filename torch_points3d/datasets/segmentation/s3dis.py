@@ -2,8 +2,6 @@ import os
 import os.path as osp
 from itertools import repeat, product
 import numpy as np
-import pandas as pd
-import torch
 import h5py
 import torch
 import random
@@ -165,7 +163,6 @@ def add_weights(dataset, train, class_weight_method):
             if class_weight_method == "sqrt":
                 weights = torch.sqrt(weights)
             elif str(class_weight_method).startswith("log"):
-                w = float(class_weight_method.replace("log", ""))
                 weights = 1 / torch.log(1.1 + weights / weights.sum())
 
             weights /= torch.sum(weights)
@@ -189,11 +186,6 @@ class S3DIS1x1Dataset(BaseDataset):
         super().__init__(dataset_opt)
 
         pre_transform = self.pre_transform
-
-        transform = T.Compose(
-            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
-        )
-
         train_dataset = S3DIS1x1(
             self._data_path,
             test_area=self.dataset_opt.fold,
