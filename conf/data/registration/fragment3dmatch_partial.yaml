@@ -10,7 +10,7 @@ data:
   tsdf_voxel_size: 0.006
   limit_size: 850
   depth_thresh: 4.5
-  first_subsampling: 0.025
+  first_subsampling: 0.03
   is_online_matching: False
   num_pos_pairs: 30000
   pre_transforms:
@@ -19,6 +19,8 @@ data:
         size: ${data.first_subsampling}
   train_transform:
     - transform: SaveOriginalPosId
+    - transform: FixedPoints
+      lparams: [32000]
     - transform: GridSampling
       params:
         size: ${data.first_subsampling}
@@ -52,6 +54,8 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
+    - transform: FixedPoints
+      lparams: [32000]
     - transform: GridSampling
       params:
         size: ${data.first_subsampling}

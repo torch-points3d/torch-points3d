@@ -60,7 +60,7 @@ models:
           [False, False],
         ]
       max_num_neighbors:
-        [[25, 25], [25, 30], [30, 38], [38, 38], [38, 38]]
+        [[12, 12], [12, 15], [15, 19], [19, 19], [19, 19]]
       module_name: KPDualBlock
     up_conv:
       module_name: FPModule_PD
