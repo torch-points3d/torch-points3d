@@ -747,5 +747,5 @@ class ScannetDataset(BaseDataset):
             [BaseTracker] -- tracker
         """
         return SegmentationTracker(
-            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
+            self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )

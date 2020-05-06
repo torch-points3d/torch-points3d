@@ -256,4 +256,4 @@ class ShapeNetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return ShapenetPartTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        return ShapenetPartTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

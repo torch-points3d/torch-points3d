@@ -395,7 +395,7 @@ class General3DMatchDataset(BaseSiameseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        if dataset.is_patch:
-            return PatchRegistrationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        if self.is_patch:
+            return PatchRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
         else:
-            return FragmentRegistrationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+            return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

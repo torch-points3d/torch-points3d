@@ -220,7 +220,7 @@ class S3DIS1x1Dataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
 ################################### Used for fused s3dis radius sphere ###################################
@@ -578,4 +578,4 @@ class S3DISFusedDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return S3DISTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        return S3DISTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
