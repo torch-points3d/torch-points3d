@@ -129,7 +129,7 @@ def main(cfg):
         model.enable_dropout_in_eval()
     model = model.to(device)
 
-    tracker: BaseTracker = dataset.get_tracker(dataset, False, False)
+    tracker: BaseTracker = dataset.get_tracker(False, False)
 
     # Run training / evaluation
     run(

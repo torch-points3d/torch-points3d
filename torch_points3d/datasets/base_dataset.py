@@ -411,9 +411,8 @@ class BaseDataset:
         transform = MultiScaleTransform(strategies)
         self._set_multiscale_transform(transform)
 
-    @staticmethod
     @abstractmethod
-    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         pass
 
     def resolve_saving_stage(self, selection_stage):

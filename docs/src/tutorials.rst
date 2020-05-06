@@ -60,13 +60,12 @@ Start by creating a new file ``torch_points3d/datasets/segmentation/s3dis.py`` w
             )
 
 
-        @staticmethod
-        def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
+        def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
             """Factory method for the tracker
 
             Arguments:
-                dataset {[type]}
                 wandb_log - Log using weight and biases
+                tensorboard_log - Log using tensorboard
             Returns:
                 [BaseTracker] -- tracker
             """
@@ -112,13 +111,12 @@ The final step is to associate a metric tracker to your dataset, in this case we
 
 .. code-block:: python
 
-       @staticmethod
-        def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
+        def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
             """Factory method for the tracker
 
             Arguments:
-                dataset {[type]}
                 wandb_log - Log using weight and biases
+                tensorboard_log - Log using tensorboard
             Returns:
                 [BaseTracker] -- tracker
             """

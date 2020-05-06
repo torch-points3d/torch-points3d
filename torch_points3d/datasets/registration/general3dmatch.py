@@ -385,15 +385,13 @@ class General3DMatchDataset(BaseSiameseDataset):
                 num_pos_pairs=dataset_opt.num_pos_pairs,
             )
 
-    @staticmethod
-    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """
         Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
-            dataset {[type]}
             wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
         Returns:
             [BaseTracker] -- tracker
         """
@@ -401,4 +399,3 @@ class General3DMatchDataset(BaseSiameseDataset):
             return PatchRegistrationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
         else:
             return FragmentRegistrationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
-

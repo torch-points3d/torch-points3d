@@ -211,13 +211,12 @@ class S3DIS1x1Dataset(BaseDataset):
 
         self.train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
 
-    @staticmethod
-    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            dataset {[type]}
             wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
         Returns:
             [BaseTracker] -- tracker
         """
@@ -570,14 +569,12 @@ class S3DISFusedDataset(BaseDataset):
         """
         to_ply(pos, label, file)
 
-    @staticmethod
-    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
-            dataset {[type]}
             wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
         Returns:
             [BaseTracker] -- tracker
         """
