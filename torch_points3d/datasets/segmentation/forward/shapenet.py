@@ -121,7 +121,7 @@ class ForwardShapenetDataset(BaseDataset):
         )
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:

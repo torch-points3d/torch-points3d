@@ -7,6 +7,7 @@ import torch
 import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
 
+from torch_points3d.models.model_interface import DatasetInterface
 from torch_points3d.core.data_transform import instantiate_transforms, MultiScaleTransform
 from torch_points3d.core.data_transform import instantiate_filters
 from torch_points3d.datasets.batch import SimpleBatch
@@ -154,7 +155,6 @@ class BaseDataset:
 
     @staticmethod
     def get_sample(batch, key, index, conv_type):
-
         assert hasattr(batch, key)
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_dense:
@@ -163,7 +163,7 @@ class BaseDataset:
             return batch[key][batch.batch == index]
 
     def create_dataloaders(
-        self, model, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
+        self, model: DatasetInterface, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
     ):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
@@ -413,7 +413,7 @@ class BaseDataset:
 
     @staticmethod
     @abstractmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
         pass
 
     def resolve_saving_stage(self, selection_stage):

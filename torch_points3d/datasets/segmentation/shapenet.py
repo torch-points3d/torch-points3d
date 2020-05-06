@@ -247,7 +247,7 @@ class ShapeNetDataset(BaseDataset):
         return len(self._categories) > 1
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(dataset, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:

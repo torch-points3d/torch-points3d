@@ -9,6 +9,7 @@ from .registration_metrics import fast_global_registration
 from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
 from .registration_metrics import get_matches
+from torch_points3d.models.model_interface import TrackerInterface
 
 
 class PatchRegistrationTracker(BaseTracker):
@@ -26,7 +27,7 @@ class PatchRegistrationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
 
-    def track(self, model):
+    def track(self, model: TrackerInterface):
         """ Add model predictions (accuracy)
         """
         super().track(model)
@@ -79,7 +80,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
         self._hit_ratio = tnt.meter.AverageValueMeter()
         self._feat_match_ratio = tnt.meter.AverageValueMeter()
 
-    def track(self, model):
+    def track(self, model: TrackerInterface):
         super().track(model)
         if self._stage != "train":
             batch_idx, batch_idx_target = model.get_batch_idx()

@@ -5,7 +5,8 @@ import copy
 import glob
 import shutil
 from omegaconf import OmegaConf, DictConfig
-from torch_points3d.models.base_model import BaseModel
+
+from torch_points3d.models.model_interface import CheckpointInterface
 from torch_points3d.utils.colors import COLORS, colored_print
 from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
 from torch_points3d.core.schedulers.bn_schedulers import instantiate_bn_scheduler
@@ -199,7 +200,7 @@ class ModelCheckpoint(object):
     def get_starting_epoch(self):
         return len(self._checkpoint.stats["train"]) + 1
 
-    def _initialize_model(self, model: BaseModel, weight_name):
+    def _initialize_model(self, model: CheckpointInterface, weight_name):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict)
@@ -218,11 +219,11 @@ class ModelCheckpoint(object):
         )
 
     def save_best_models_under_current_metrics(
-        self, model: BaseModel, metrics_holder: dict, metric_func_dict: dict, **kwargs
+        self, model: CheckpointInterface, metrics_holder: dict, metric_func_dict: dict, **kwargs
     ):
         """[This function is responsible to save checkpoint under the current metrics and their associated DEFAULT_METRICS_FUNC]
         Arguments:
-            model {[BaseModel]} -- [Model]
+            model {[CheckpointInterface]} -- [Model]
             metrics_holder {[Dict]} -- [Need to contain stage, epoch, current_metrics]
         """
         metrics = metrics_holder["current_metrics"]
