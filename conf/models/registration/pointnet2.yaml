@@ -51,8 +51,8 @@ models:
     out_channels: 32
     down_conv:
       module_name: PointNetMSGDown
-      npoint: [512, 128]
-      radii: [[0.1, 0.2, 0.4], [0.4, 0.8]]
+      npoint: [2048, 256]
+      radii: [[0.4, 0.8, 1.2], [0.8, 1.2]]
       nsamples: [[32, 64, 128], [64, 128]]
       down_conv_nn:
         [[[FEAT+3, 32, 32, 64],

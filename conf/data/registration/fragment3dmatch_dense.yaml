@@ -20,7 +20,7 @@ data:
   train_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
-      lparams: [8196]
+      lparams: [16384]
     - transform: Center
     - transform: RandomNoise
       params:
@@ -45,7 +45,7 @@ data:
   test_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
-      lparams: [8196]
+      lparams: [16384]
     - transform: Center
     - transform: RandomRotate
       params:
