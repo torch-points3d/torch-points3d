@@ -18,11 +18,8 @@ from torch_points3d.models.registration.base import create_batch_siamese
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
 
-from .base import Segmentation_MP
 from torch_points3d.modules.KPConv import *
 
-from torch_points3d.datasets.multiscale_data import MultiScaleBatch
-from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.datasets.registration.pair import PairMultiScaleBatch
 
 log = logging.getLogger(__name__)
@@ -98,9 +95,6 @@ class PatchKPConv(BackboneBasedModel):
             return self.output
 
     def compute_loss(self):
-        if self._weight_classes is not None:
-            self._weight_classes = self._weight_classes.to(self.output.device)
-
         self.loss = 0
 
         # Get regularization on weights
@@ -136,7 +130,8 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         # Build final MLP
         last_mlp_opt = option.mlp_cls
 
-        in_feat = last_mlp_opt.nn[0] + self._num_categories
+        self.out_channels = option.out_channels
+        in_feat = last_mlp_opt.nn[0]
         self.FC_layer = Seq()
         for i in range(1, len(last_mlp_opt.nn)):
             self.FC_layer.add_module(
@@ -173,7 +168,6 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         # data = data.to(device)
-
         if isinstance(data, PairMultiScaleBatch):
             self.pre_computed = data.multiscale.to(device)
             self.upsample = data.upsample.to(device)
@@ -254,9 +248,6 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         return self.metric_loss_module(output, labels, hard_pairs)
 
     def compute_loss(self):
-        if self._weight_classes is not None:
-            self._weight_classes = self._weight_classes.to(self.output.device)
-
         self.loss = 0
 
         # Get regularization on weights
