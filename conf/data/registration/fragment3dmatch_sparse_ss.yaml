@@ -10,7 +10,7 @@ data:
   tsdf_voxel_size: 0.006
   limit_size: 850
   depth_thresh: 4.5
-  first_subsampling: 0.02
+  first_subsampling: 0.025
   is_online_matching: False
   num_pos_pairs: 30000
   self_supervised: True

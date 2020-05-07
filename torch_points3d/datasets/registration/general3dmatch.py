@@ -223,27 +223,6 @@ class Fragment3DMatch(Base3DMatch):
                 final dataset. (default: :obj:`None`)
             num_random_pt: number of point we select when we test
         """
-<<<<<<< HEAD
-    def __init__(self, root,
-                 num_frame_per_fragment=50,
-                 mode='train_small',
-                 min_overlap_ratio=0.3,
-                 max_overlap_ratio=1.0,
-                 max_dist_overlap=0.01,
-                 tsdf_voxel_size=0.02,
-                 limit_size=700,
-                 depth_thresh=6,
-                 is_fine=True,
-                 transform=None,
-                 pre_transform=None,
-                 pre_transform_fragment=None,
-                 pre_filter=None,
-                 verbose=False,
-                 debug=False,
-                 is_online_matching=False,
-                 num_pos_pairs=1024):
-=======
-
     def __init__(
         self,
         root,
@@ -264,9 +243,8 @@ class Fragment3DMatch(Base3DMatch):
         debug=False,
         is_online_matching=False,
         num_pos_pairs=1024,
-        voxel_size_search=0.1,
     ):
->>>>>>> upstream/master
+
 
         self.is_patch = False
         super(Fragment3DMatch, self).__init__(
@@ -294,21 +272,12 @@ class Fragment3DMatch(Base3DMatch):
 
     def get_fragment(self, idx):
 
-<<<<<<< HEAD
-        match = np.load(
-            osp.join(self.path_match,
-                     'matches{:06d}.npy'.format(idx)),
-            allow_pickle=True).item()
-        data_source = torch.load(match['path_source'])
-        data_target = torch.load(match['path_target'])
-        new_pair = torch.from_numpy(match['pair'])
-=======
+
         match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
         data_source = torch.load(match["path_source"])
         data_target = torch.load(match["path_target"])
-        # new_pair = compute_subsampled_matches(data_source, data_target,self.voxel_size_search,self.max_dist_overlap)
         new_pair = torch.from_numpy(match["pair"])
->>>>>>> upstream/master
+
 
         if self.transform is not None:
             data_source = self.transform(data_source)
@@ -340,7 +309,6 @@ class Fragment3DMatch(Base3DMatch):
         return len(self.list_fragment)
 
 
-<<<<<<< HEAD
 class SelfSupervisedFragment3DMatch(Base3DMatch):
     r"""
         Fragment extracted from :the Princeton 3DMatch dataset\n
@@ -492,8 +460,6 @@ class SelfSupervisedFragment3DMatch(Base3DMatch):
         return len(self.list_fragment)
 
 
-=======
->>>>>>> upstream/master
 class General3DMatchDataset(BaseSiameseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
