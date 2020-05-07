@@ -142,7 +142,6 @@ class TestModelUtils(unittest.TestCase):
 
             make_optimizer_step = model._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
             make_optimizer_steps.append(make_optimizer_step)
-
             grad_ = model._modules["lin1"].weight.grad
             if grad_ is not None:
                 contains_grads.append((grad_.sum() != 0).item())

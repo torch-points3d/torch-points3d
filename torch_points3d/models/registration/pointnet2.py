@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import Linear as Lin
-from torch.nn import Sequential as Seq
+from torch.nn import Sequential
 from torch_geometric.data import Data
 import logging
 
@@ -40,7 +40,7 @@ class PatchPointNet2_D(BackboneBasedModel):
             self.FC_layer = MLP(last_mlp_opt.nn[: len(last_mlp_opt.nn) - 1])
             self.FC_layer.add_module("last", Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
         elif len(last_mlp_opt.nn) == 2:
-            self.FC_layer = Seq(Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
+            self.FC_layer = Sequential(Lin(last_mlp_opt.nn[-2], last_mlp_opt.nn[-1]))
         else:
             self.FC_layer = torch.nn.Identity()
 

@@ -158,7 +158,7 @@ class Testhelpers(unittest.TestCase):
     def test_RemoveAttributes(self):
         N = 10
         mapping = {"a": 1, "b": 2, "c": 3, "d": 4}
-        keys, values = np.asarray(list(mapping.keys())), np.asarray(list(mapping.values()))
+        keys = np.asarray(list(mapping.keys()))
         data = Data(
             a=torch.randn((N, 1)),
             b=torch.randn((N, 2)),

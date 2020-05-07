@@ -126,7 +126,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         """
         return getattr(self, "input")
 
-    def forward(self) -> Any:
+    def forward(self, *args, **kwargs) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         raise NotImplementedError("You must implement your own forward")
 

@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import *
 import torch
 from torch.nn import (
-    Sequential as Seq,
     Linear as Lin,
     ReLU,
     LeakyReLU,

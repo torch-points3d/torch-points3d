@@ -1,10 +1,11 @@
+from typing import *
 from torch import nn
 import logging
 
 try:
     import MinkowskiEngine as ME
 
-    BATCH_NORM_MODULES = (
+    BATCH_NORM_MODULES: Any = (
         nn.BatchNorm1d,
         nn.BatchNorm2d,
         nn.BatchNorm3d,

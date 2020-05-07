@@ -1,7 +1,7 @@
 type: mytype
 define_constants:
     L1_OUT: 20
-    MODULE: RSConv
+    MODULE: RSConvDown
 down_conv:
     module_name: MODULE
     aggr: max

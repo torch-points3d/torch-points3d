@@ -7,7 +7,6 @@ from torch_geometric.nn import (
     knn_interpolate,
 )
 from torch.nn import (
-    Sequential as Seq,
     Linear as Lin,
     ReLU,
     LeakyReLU,
