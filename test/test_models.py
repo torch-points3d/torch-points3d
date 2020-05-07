@@ -11,6 +11,7 @@ sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric, MockDataset
 from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
+from test.utils import test_hasgrad
 
 from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling
@@ -94,8 +95,17 @@ class TestModelUtils(unittest.TestCase):
                             model.forward()
                             model.backward()
                         except Exception as e:
-                            print("Model failing:")
-                            print(model)
+                            print("Forward or backward failing")
+                            raise e
+                        try:
+                            ratio = test_hasgrad(model)
+                            if ratio < 1:
+                                print(
+                                    "Model %s.%s.%s has %i%% of parameters with 0 gradient"
+                                    % (associated_task, type_file.split("/")[-1][:-5], model_name, 100 * ratio)
+                                )
+                        except Exception as e:
+                            print("Model with zero gradient %s: %s" % (type_file, model_name))
                             raise e
 
     def test_largekpconv(self):
@@ -107,14 +117,24 @@ class TestModelUtils(unittest.TestCase):
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print("Model segmentation.kpconv.KPConvPaper has %i%% of parameters with 0 gradient" % (100 * ratio))
 
     def test_pointnet2ms(self):
-        params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
-        dataset = MockDatasetGeometric(5)
+        params = load_model_config("segmentation", "pointnet2", "pointnet2_largemsg")
+        params.update("data.use_category", True)
+        dataset = MockDataset(5, num_points=2048)
         model = instantiate_model(params, dataset)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print(
+                "Model segmentation.pointnet2.pointnet2_largemsgs has %i%% of parameters with 0 gradient"
+                % (100 * ratio)
+            )
 
     def test_siamese_minkowski(self):
         params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
@@ -125,36 +145,11 @@ class TestModelUtils(unittest.TestCase):
         model.set_input(d, device)
         model.forward()
         model.backward()
-
-    def test_accumulated_gradient(self):
-        params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
-        config_training = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
-        dataset = MockDatasetGeometric(5)
-        model = instantiate_model(params, dataset)
-        model.instantiate_optimizers(config_training)
-        model.set_input(dataset[0], "cpu")
-        expected_make_optimizer_step = [False, False, True, False, False, True, False, False, True, False]
-        expected_contains_grads = [False, True, True, False, True, True, False, True, True, False]
-        make_optimizer_steps = []
-        contains_grads = []
-        for epoch in range(10):
-            model.forward()
-
-            make_optimizer_step = model._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
-            make_optimizer_steps.append(make_optimizer_step)
-            grad_ = model._modules["lin1"].weight.grad
-            if grad_ is not None:
-                contains_grads.append((grad_.sum() != 0).item())
-            else:
-                contains_grads.append(False)
-
-            model.backward()  # calculate gradients
-
-            if make_optimizer_step:
-                model._optimizer.step()  # update parameters
-
-        self.assertEqual(contains_grads, expected_contains_grads)
-        self.assertEqual(make_optimizer_steps, expected_make_optimizer_step)
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print(
+                "Model registration.minkowski.MinkUNet_Fragment has %i%% of parameters with 0 gradient" % (100 * ratio)
+            )
 
 
 if __name__ == "__main__":
