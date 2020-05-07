@@ -3,6 +3,7 @@ import numpy as np
 
 from .confusion_matrix import ConfusionMatrix
 from .base_tracker import meter_value, BaseTracker
+from torch_points3d.models import model_interface
 
 
 class ShapenetPartTracker(BaseTracker):
@@ -36,13 +37,13 @@ class ShapenetPartTracker(BaseTracker):
         self._Imiou = 0
         self._miou_per_class = {}
 
-    def track(self, model, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)
         outputs = self._convert(model.get_output())
         targets = self._convert(model.get_labels())
-        batch_idx = self._convert(model.get_batch_idx())
+        batch_idx = self._convert(model.get_batch())
         if batch_idx is None:
             raise ValueError("Your model need to set the batch_idx variable in its set_input function.")
 

@@ -737,7 +737,7 @@ class ScannetDataset(BaseDataset):
         )
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -747,5 +747,5 @@ class ScannetDataset(BaseDataset):
             [BaseTracker] -- tracker
         """
         return SegmentationTracker(
-            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
+            self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )

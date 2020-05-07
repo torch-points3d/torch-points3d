@@ -6,6 +6,7 @@ from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.metrics.meters import APMeter
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
+from torch_points3d.models import model_interface
 
 
 class SegmentationTracker(BaseTracker):
@@ -45,7 +46,7 @@ class SegmentationTracker(BaseTracker):
     def confusion_matrix(self):
         return self._confusion_matrix.confusion_matrix
 
-    def track(self, model, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

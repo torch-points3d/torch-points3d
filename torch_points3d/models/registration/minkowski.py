@@ -120,7 +120,7 @@ class BaseMinkowski(BaseModel):
         else:
             return self.xyz
 
-    def get_batch_idx(self):
+    def get_batch(self):
         if self.match is not None:
             batch = self.input.C[:, 0]
             batch_target = self.input_target.C[:, 0]

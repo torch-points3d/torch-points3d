@@ -54,6 +54,10 @@ autodoc_mock_imports = [
     "scipy",
     "MinkowskiEngine",
     "pandas",
+    "numpy",
+    "torchnet",
+    "h5py",
+    "plyfile"
 ]
 
 # Add any paths that contain templates here, relative to this directory.
