@@ -1,3 +1,4 @@
+from typing import Dict, Any, List, Optional, Tuple
 import os
 import torch
 import logging
@@ -27,16 +28,16 @@ class Checkpoint:
         self._check_path = checkpoint_file
         self._filled = False
         self.run_config = None
-        self.models = {}
-        self.stats = {"train": [], "test": [], "val": []}
-        self.optimizer = None
-        self.schedulers = {}
+        self.models: Dict[str, Any] = {}
+        self.stats: Dict[str, List[Any]] = {"train": [], "test": [], "val": []}
+        self.optimizer: Optional[Tuple[str, Any]] = None
+        self.schedulers: Dict[str, Any] = {}
 
-    def save_objects(self, models_to_save, stage, current_stat, optimizer, schedulers, **kwargs):
+    def save_objects(self, models_to_save: Dict[str, Any], stage, current_stat, optimizer, schedulers, **kwargs):
         """ Saves checkpoint with updated mdoels for the given stage
         """
         self.models = models_to_save
-        self.optimizer = [optimizer.__class__.__name__, optimizer.state_dict()]
+        self.optimizer = (optimizer.__class__.__name__, optimizer.state_dict())
         self.schedulers = {
             scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
             for scheduler_name, scheduler in schedulers.items()
@@ -213,9 +214,8 @@ class ModelCheckpoint(object):
             if token_name in metric_name:
                 return func
         raise Exception(
-            'The metric name {} doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}'.format(
-                token_name
-            )
+            'The metric name %s doesn t have a func to measure which one is best. Example: For best_train_iou, {"iou":max}'
+            % token_name
         )
 
     def save_best_models_under_current_metrics(

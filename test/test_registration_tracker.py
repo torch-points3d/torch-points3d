@@ -73,7 +73,7 @@ class MockModel:
         self.feat[2][rang2] = self.feat[2][inv2]
         self.feat[3][rang3] = self.feat[3][inv3]
 
-    def get_outputs(self):
+    def get_output(self):
         return self.feat[self.iter], self.feat_target[self.iter]
 
     def get_xyz(self):

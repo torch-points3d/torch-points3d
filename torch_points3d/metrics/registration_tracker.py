@@ -84,9 +84,9 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
         super().track(model)
         if self._stage != "train":
             batch_idx, batch_idx_target = model.get_batch()
-            batch_xyz, batch_xyz_target = model.get_xyz()
-            batch_ind, batch_ind_target, batch_size_ind = model.get_ind()
-            batch_feat, batch_feat_target = model.get_outputs()
+            batch_xyz, batch_xyz_target = model.get_xyz()  # type: ignore
+            batch_ind, batch_ind_target, batch_size_ind = model.get_ind()  # type: ignore
+            batch_feat, batch_feat_target = model.get_output()
 
             nb_batches = batch_idx.max() + 1
             cum_sum = 0
