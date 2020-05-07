@@ -27,7 +27,7 @@ class PatchRegistrationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
 
-    def track(self, model: model_interface.TrackerInterface):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add model predictions (accuracy)
         """
         super().track(model)
@@ -80,7 +80,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
         self._hit_ratio = tnt.meter.AverageValueMeter()
         self._feat_match_ratio = tnt.meter.AverageValueMeter()
 
-    def track(self, model: TrackerInterface):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         super().track(model)
         if self._stage != "train":
             batch_idx, batch_idx_target = model.get_batch()
