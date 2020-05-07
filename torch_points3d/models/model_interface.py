@@ -40,7 +40,7 @@ class TrackerInterface(ABC):
         """
 
     @abstractmethod
-    def get_batch_idx(self):
+    def get_batch(self):
         """ returns a trensor of size ``[N_points]`` where each value is the batch index of a point
         """
 
