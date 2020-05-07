@@ -735,7 +735,6 @@ class ScannetDataset(BaseDataset):
             max_num_point=max_num_point,
         )
 
-    @staticmethod
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 

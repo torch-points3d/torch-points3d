@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from tqdm import tqdm as tq
 import itertools
 import numpy as np
@@ -110,7 +110,7 @@ class AddFeatsByKeys(object):
         self,
         list_add_to_x: List[bool],
         feat_names: List[str],
-        input_nc_feats: List[int] = None,
+        input_nc_feats: List[Optional[int]] = None,
         stricts: List[bool] = None,
         delete_feats: List[bool] = None,
     ):
@@ -207,7 +207,7 @@ class AddFeatByKey(object):
                         x = x.unsqueeze(-1)
                     if feat.dim() == 1:
                         feat = feat.unsqueeze(-1)
-                    data.x = torch.cat([x, feat], axis=-1)
+                    data.x = torch.cat([x, feat], dim=-1)
                 else:
                     raise Exception(
                         "The tensor x and {} can't be concatenated, x: {}, feat: {}".format(

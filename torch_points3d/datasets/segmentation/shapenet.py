@@ -246,7 +246,6 @@ class ShapeNetDataset(BaseDataset):
     def is_hierarchical(self):
         return len(self._categories) > 1
 
-    @staticmethod
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 

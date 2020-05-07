@@ -114,7 +114,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 rand = torch.randperm(len(feat))[: self.num_points]
                 rand_target = torch.randperm(len(feat_target))[: self.num_points]
 
-                matches_gt = torch.stack([ind, ind_target]).T
+                matches_gt = torch.stack([ind, ind_target]).transpose(0, 1)
 
                 # print(matches_gt.max(0), len(xyz), len(xyz_target), len(matches_gt))
                 # print(batch_ind.shape, nb_batches)

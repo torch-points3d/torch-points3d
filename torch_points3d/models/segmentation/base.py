@@ -25,7 +25,7 @@ class Segmentation_MP(UnetBasedModel):
         self._weight_classes = dataset.weight_classes
 
         nn = option.mlp_cls.nn
-        self.dropout = option.mlp_cls.get("dropout")
+        self.dropout = bool(option.mlp_cls.get("dropout"))
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
@@ -42,13 +42,13 @@ class Segmentation_MP(UnetBasedModel):
         self.labels = data.y
         self.batch_idx = data.batch
 
-    def forward(self) -> Any:
+    def forward(self, *args, **kwargs) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         data = self.model(self.input)
         x = F.relu(self.lin1(data.x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.dropout(x, p=self.dropout, training=bool(self.training))
         x = self.lin2(x)
-        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.dropout(x, p=self.dropout, training=bool(self.training))
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
 

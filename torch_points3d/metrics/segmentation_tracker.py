@@ -11,7 +11,7 @@ from torch_points3d.models.model_interface import TrackerInterface
 
 class SegmentationTracker(BaseTracker):
     def __init__(
-        self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label=IGNORE_LABEL
+        self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label: int = IGNORE_LABEL
     ):
         """ This is a generic tracker for segmentation tasks.
         It uses a confusion matrix in the back-end to track results.
