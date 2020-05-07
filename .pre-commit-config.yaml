@@ -33,15 +33,15 @@ repos:
       - id: nbstripout
         files: '.ipynb'
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: '323f177eb169987f7034a75d0a195e4448eec0ba'  # Use the sha / tag you want to point at
-    hooks:
-      - id: mypy
-        args: 
-          [
-            "-p",
-            "torch_points3d" 
-          ]
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: '323f177eb169987f7034a75d0a195e4448eec0ba'  # Use the sha / tag you want to point at
+  #   hooks:
+  #     - id: mypy
+  #       args: 
+  #         [
+  #           "-p",
+  #           "torch_points3d" 
+  #         ]
 
 
   - repo: local

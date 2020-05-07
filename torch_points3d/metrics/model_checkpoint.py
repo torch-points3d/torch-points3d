@@ -219,7 +219,7 @@ class ModelCheckpoint(object):
         )
 
     def save_best_models_under_current_metrics(
-        self, model: CheckpointInterface, metrics_holder: dict, metric_func_dict: dict, **kwargs
+        self, model: model_interface.CheckpointInterface, metrics_holder: dict, metric_func_dict: dict, **kwargs
     ):
         """[This function is responsible to save checkpoint under the current metrics and their associated DEFAULT_METRICS_FUNC]
         Arguments:

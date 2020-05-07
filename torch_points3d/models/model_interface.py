@@ -9,8 +9,7 @@ class CheckpointInterface(ABC):
     def schedulers(self):
         pass
 
-    @schedulers.setter  # type: ignore
-    @abstractmethod
+    @schedulers.setter
     def schedulers(self, schedulers):
         pass
 
@@ -18,9 +17,16 @@ class CheckpointInterface(ABC):
     def optimizer(self):
         pass
 
-    @optimizer.setter  # type: ignore
-    @abstractmethod
+    @optimizer.setter
     def optimizer(self, optimizer):
+        pass
+
+    @abstractmethod
+    def state_dict(self):
+        pass
+
+    @abstractmethod
+    def load_state_dict(self, state):
         pass
 
 
@@ -58,3 +64,8 @@ class TrackerInterface(ABC):
     @abstractmethod
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
+
+    @abstractproperty
+    def device(self):
+        """ Returns the device onto which the model leaves (cpu or gpu)
+        """
