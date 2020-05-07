@@ -8,8 +8,8 @@ cycler==0.10.0
 decorator==4.4.2
 docker-pycreds==0.4.0
 future==0.18.2
-gitdb==4.0.4
-gitpython==3.1.1
+gitdb==4.0.5
+gitpython==3.1.2
 google-auth==1.14.1
 google-auth-oauthlib==0.4.1
 googledrivedownloader==0.4
@@ -60,7 +60,7 @@ scipy==1.4.1
 sentry-sdk==0.14.3
 shortuuid==1.0.1
 six==1.14.0
-smmap==3.0.2
+smmap==3.0.4
 subprocess32==3.5.4
 tensorboard==2.2.1
 tensorboard-plugin-wit==1.6.0.post3

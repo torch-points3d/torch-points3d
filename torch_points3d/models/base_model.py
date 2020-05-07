@@ -14,11 +14,12 @@ from torch_points3d.core.regularizer import *
 from torch_points3d.core.losses import instantiate_loss_or_miner
 from torch_points3d.utils.config import is_dict
 from torch_points3d.utils.colors import colored_print, COLORS
+from .model_interface import TrackerInterface, DatasetInterface, CheckpointInterface
 
 log = logging.getLogger(__name__)
 
 
-class BaseModel(torch.nn.Module):
+class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointInterface):
     """This class is an abstract base class (ABC) for models.
     To create a subclass, you need to implement the following five functions:
         -- <__init__>:                      initialize the class; first call BaseModel.__init__(self, opt).
@@ -72,7 +73,7 @@ class BaseModel(torch.nn.Module):
             for scheduler_name, scheduler in schedulers.items():
                 setattr(self, "_{}".format(scheduler_name), scheduler)
 
-    def add_scheduler(self, scheduler_name, scheduler):
+    def _add_scheduler(self, scheduler_name, scheduler):
         setattr(self, "_{}".format(scheduler_name), scheduler)
         self._schedulers[scheduler_name] = scheduler
 
@@ -97,7 +98,6 @@ class BaseModel(torch.nn.Module):
     def conv_type(self):
         return self._conv_type
 
-    @abstractmethod
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -110,7 +110,7 @@ class BaseModel(torch.nn.Module):
         """
         return getattr(self, "labels", None)
 
-    def get_batch_idx(self):
+    def get_batch(self):
         """ returns a trensor of size ``[N_points]`` where each value is the batch index of a point
         """
         return getattr(self, "batch_idx", None)
@@ -126,11 +126,11 @@ class BaseModel(torch.nn.Module):
         """
         return getattr(self, "input")
 
-    @abstractmethod
     def forward(self) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
+        raise NotImplementedError("You must implement your own forward")
 
-    def manage_optimizer_zero_grad(self):
+    def _manage_optimizer_zero_grad(self):
         if not self._accumulated_gradient_step:
             self._optimizer.zero_grad()  # clear existing gradients
             return True
@@ -166,7 +166,7 @@ class BaseModel(torch.nn.Module):
         self._num_samples += batch_size
 
         self.forward()  # first call forward to calculate intermediate results
-        make_optimizer_step = self.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
+        make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
 
         if self._grad_clip > 0:
@@ -217,7 +217,7 @@ class BaseModel(torch.nn.Module):
                 self._update_lr_scheduler_on = update_lr_scheduler_on
             scheduler_opt.update_scheduler_on = self._update_lr_scheduler_on
             lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
-            self.add_scheduler("lr_scheduler", lr_scheduler)
+            self._add_scheduler("lr_scheduler", lr_scheduler)
 
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
@@ -227,7 +227,7 @@ class BaseModel(torch.nn.Module):
                 self._update_bn_scheduler_on = update_bn_scheduler_on
             bn_scheduler_opt.update_scheduler_on = self._update_bn_scheduler_on
             bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
-            self.add_scheduler("bn_scheduler", bn_scheduler)
+            self._add_scheduler("bn_scheduler", bn_scheduler)
 
         # Accumulated gradients
         self._accumulated_gradient_step = self.get_from_opt(config, ["training", "optim", "accumulated_gradient"])

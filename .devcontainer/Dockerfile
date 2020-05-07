@@ -35,7 +35,7 @@ RUN pip3 install setuptools poetry
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN poetry install --no-root
+RUN poetry update
 RUN poetry env info --path > /python_path
 RUN cat /python_path
 

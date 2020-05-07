@@ -140,7 +140,7 @@ class TestModelUtils(unittest.TestCase):
         for epoch in range(10):
             model.forward()
 
-            make_optimizer_step = model.manage_optimizer_zero_grad()  # Accumulate gradient if option is up
+            make_optimizer_step = model._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
             make_optimizer_steps.append(make_optimizer_step)
 
             grad_ = model._modules["lin1"].weight.grad

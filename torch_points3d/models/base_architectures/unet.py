@@ -483,7 +483,6 @@ class UnwrappedUnetBasedModel(BaseModel):
             Precomputed data that will be passed to the up convs
         """
         stack_down = []
-        data = self.input
         for i in range(len(self.down_modules) - 1):
             data = self.down_modules[i](data, precomputed=precomputed_down)
             stack_down.append(data)

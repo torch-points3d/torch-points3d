@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 import logging
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
-from torch_points3d.models.base_model import BaseModel
+from torch_points3d.models import model_interface
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class BaseTracker:
         self._metric_func = {"loss": min}
         return self._metric_func
 
-    def track(self, model, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         if self._finalised:
             raise RuntimeError("Cannot track new values with a finalised tracker, you need to reset it first")
         losses = self._convert(model.get_current_losses())

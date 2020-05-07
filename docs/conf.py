@@ -47,14 +47,17 @@ autodoc_mock_imports = [
     "torch_geometric",
     "sklearn",
     "omegaconf",
-    "etw-pytorch-utils",
     "tqdm",
     "hydra",
     "matplotlib",
     "pytorch_metric_learning",
     "scipy",
     "MinkowskiEngine",
-    "etw-pytorch-utils"
+    "pandas",
+    "numpy",
+    "torchnet",
+    "h5py",
+    "plyfile"
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -85,7 +85,7 @@ class MockModel:
     def get_current_losses(self):
         return self.losses[self.iter]
 
-    def get_batch_idx(self):
+    def get_batch(self):
         return self.batch_idx[self.iter], self.batch_idx_target[self.iter]
 
 

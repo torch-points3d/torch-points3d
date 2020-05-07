@@ -27,3 +27,4 @@ docs_old
 build/*
 dist/*
 .venv
+.mypy_cache
