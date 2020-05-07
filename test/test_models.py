@@ -117,7 +117,9 @@ class TestModelUtils(unittest.TestCase):
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()
-        test_hasgrad(model)
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print("Model segmentation.kpconv.KPConvPaper has %i%% of parameters with 0 gradient" % (100 * ratio))
 
     def test_pointnet2ms(self):
         params = load_model_config("segmentation", "pointnet2", "pointnet2_largemsg")
@@ -127,7 +129,12 @@ class TestModelUtils(unittest.TestCase):
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()
-        test_hasgrad(model)
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print(
+                "Model segmentation.pointnet2.pointnet2_largemsgs has %i%% of parameters with 0 gradient"
+                % (100 * ratio)
+            )
 
     def test_siamese_minkowski(self):
         params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
@@ -138,7 +145,11 @@ class TestModelUtils(unittest.TestCase):
         model.set_input(d, device)
         model.forward()
         model.backward()
-        test_hasgrad(model)
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print(
+                "Model registration.minkowski.MinkUNet_Fragment has %i%% of parameters with 0 gradient" % (100 * ratio)
+            )
 
 
 if __name__ == "__main__":
