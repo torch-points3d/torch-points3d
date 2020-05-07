@@ -446,7 +446,7 @@ class SelfSupervisedFragment3DMatch(Base3DMatch):
 
         rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
         batch.pair_ind = batch.pair_ind[rand_ind]
-        print(batch)
+
         return batch.contiguous().to(torch.float)
 
     def get(self, idx):
