@@ -43,6 +43,7 @@ jobs:
         run: |
           cd MinkowskiEngine
           $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
+          cd .. && rm -rf MinkowskiEngine
 
       - name: Lint with flake8
         run: |
