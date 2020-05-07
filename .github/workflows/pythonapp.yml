@@ -52,6 +52,11 @@ jobs:
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           $HOME/.poetry/bin/poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+      - name: Static type check with mypy
+        run: |
+          $HOME/.poetry/bin/poetry run pip install mypy
+          $HOME/.poetry/bin/poetry run mypy -p torch_points3d
+
       - name: Test with unittest
         run: |
           $HOME/.poetry/bin/poetry run pip install coverage
