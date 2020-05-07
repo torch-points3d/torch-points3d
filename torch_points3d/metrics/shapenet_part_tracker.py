@@ -43,7 +43,7 @@ class ShapenetPartTracker(BaseTracker):
         super().track(model)
         outputs = self._convert(model.get_output())
         targets = self._convert(model.get_labels())
-        batch_idx = self._convert(model.get_batch_idx())
+        batch_idx = self._convert(model.get_batch())
         if batch_idx is None:
             raise ValueError("Your model need to set the batch_idx variable in its set_input function.")
 
