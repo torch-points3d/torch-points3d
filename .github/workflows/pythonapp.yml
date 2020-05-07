@@ -45,18 +45,10 @@ jobs:
           $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
           cd .. && rm -rf MinkowskiEngine
 
-      - name: Lint with flake8
+      - name: Static cheks with flake8 and mypy
         run: |
-          $HOME/.poetry/bin/poetry run pip install flake8
-          # stop the build if there are Python syntax errors or undefined names
-          $HOME/.poetry/bin/poetry run flake8 . --count --select=E9,F402,F6,F7,F5,F8,F9 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          $HOME/.poetry/bin/poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-      - name: Static type check with mypy
-        run: |
-          $HOME/.poetry/bin/poetry run pip install mypy
-          $HOME/.poetry/bin/poetry run mypy -p torch_points3d
+          $HOME/.poetry/bin/poetry run pip install flake8 mypy
+          make staticchecks
 
       - name: Test with unittest
         run: |

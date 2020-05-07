@@ -1,7 +1,7 @@
 import unittest
 from omegaconf import DictConfig
 from torch.nn import (
-    Sequential as Sequential,
+    Sequential,
     Linear as Lin,
     ReLU,
     LeakyReLU,

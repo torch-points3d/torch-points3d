@@ -25,7 +25,7 @@ class Segmentation_MP(UnetBasedModel):
         self._weight_classes = dataset.weight_classes
 
         nn = option.mlp_cls.nn
-        self.dropout = bool(option.mlp_cls.get("dropout"))
+        self.dropout = option.mlp_cls.get("dropout")
         self.lin1 = torch.nn.Linear(nn[0], nn[1])
         self.lin2 = torch.nn.Linear(nn[2], nn[3])
         self.lin3 = torch.nn.Linear(nn[4], dataset.num_classes)
