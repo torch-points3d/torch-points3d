@@ -6,7 +6,6 @@ from tqdm import tqdm as tq
 import torch
 from glob import glob
 import sys
-import json
 import csv
 import logging
 import numpy as np
@@ -510,7 +509,7 @@ class Scannet(InMemoryDataset):
         )
         log.info("***")
         log.info("Press any key to continue, or CTRL-C to exit.")
-        key = input("")
+        input("")
         if self.version == "v2" and ".sens" in file_types:
             log.info(
                 "Note: ScanNet v2 uses the same .sens files as ScanNet v1: Press 'n' to exclude downloading .sens files for each scan"
@@ -529,7 +528,7 @@ class Scannet(InMemoryDataset):
         log.info(TOS_URL)
         log.info("***")
         log.info("Press any key to continue, or CTRL-C to exit.")
-        key = input("")
+        input("")
         self.download_scans()
         metadata_path = osp.join(self.raw_dir, "metadata")
         if not os.path.exists(metadata_path):
@@ -736,7 +735,6 @@ class ScannetDataset(BaseDataset):
             max_num_point=max_num_point,
         )
 
-    @staticmethod
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 

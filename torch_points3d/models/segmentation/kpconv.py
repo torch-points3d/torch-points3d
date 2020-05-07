@@ -103,7 +103,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         if self._use_category:
             self.category = data.category
 
-    def forward(self) -> Any:
+    def forward(self, *args, **kwargs) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         stack_down = []
 

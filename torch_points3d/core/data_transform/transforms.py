@@ -9,7 +9,6 @@ from tqdm import tqdm as tq
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
 from torch.nn import functional as F
-from torch_geometric.nn import fps, radius, knn
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
@@ -108,8 +107,6 @@ class GridSphereSampling(object):
         self._center = center
 
     def _process(self, data):
-        num_points = data.pos.shape[0]
-
         if not hasattr(data, self.KDTREE_KEY):
             tree = KDTree(np.asarray(data.pos), leaf_size=50)
         else:
@@ -132,7 +129,6 @@ class GridSphereSampling(object):
             grid_label = data.y[ind]
 
             # Find neighbours within the original data
-            t_center = torch.FloatTensor(grid_center)
             ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
             sampler = SphereSampling(self._radius, grid_center, align_origin=self._center)
             new_data = sampler(data)

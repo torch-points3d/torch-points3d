@@ -28,6 +28,8 @@ class ModelFactory:
         config: DictConfig = None,
         **kwargs
     ):
+        if not architecture:
+            raise ValueError()
         self._architecture = architecture.lower()
         assert self._architecture in self.MODEL_ARCHITECTURES, ModelFactory.raise_enum_error(
             "model_architecture", self._architecture, self.MODEL_ARCHITECTURES

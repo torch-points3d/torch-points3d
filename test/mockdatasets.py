@@ -39,7 +39,6 @@ class MockDataset(torch.utils.data.Dataset):
     @property
     def datalist(self):
         torch.manual_seed(0)
-        pos = torch.randn((self.num_points, 3))
         datalist = [
             Data(pos=torch.randn((self.num_points, 3)), x=self._feature, y=self._y, category=self._category)
             for i in range(self.batch_size)

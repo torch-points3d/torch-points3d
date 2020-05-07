@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-import numpy.testing as npt
 import unittest
 import tempfile
 import h5py

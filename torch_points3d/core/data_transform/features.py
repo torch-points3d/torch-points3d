@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, Optional
 from tqdm import tqdm as tq
 import itertools
 import numpy as np
-from scipy.linalg import expm, norm
 import math
 import re
 import torch
@@ -10,6 +9,7 @@ import random
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
+
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
@@ -110,7 +110,7 @@ class AddFeatsByKeys(object):
         self,
         list_add_to_x: List[bool],
         feat_names: List[str],
-        input_nc_feats: List[int] = None,
+        input_nc_feats: List[Optional[int]] = None,
         stricts: List[bool] = None,
         delete_feats: List[bool] = None,
     ):
@@ -207,7 +207,7 @@ class AddFeatByKey(object):
                         x = x.unsqueeze(-1)
                     if feat.dim() == 1:
                         feat = feat.unsqueeze(-1)
-                    data.x = torch.cat([x, feat], axis=-1)
+                    data.x = torch.cat([x, feat], dim=-1)
                 else:
                     raise Exception(
                         "The tensor x and {} can't be concatenated, x: {}, feat: {}".format(

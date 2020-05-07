@@ -57,7 +57,8 @@ autodoc_mock_imports = [
     "numpy",
     "torchnet",
     "h5py",
-    "plyfile"
+    "plyfile",
+    "wandb",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

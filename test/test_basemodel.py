@@ -1,7 +1,7 @@
 import unittest
 from omegaconf import DictConfig
 from torch.nn import (
-    Sequential as Seq,
+    Sequential,
     Linear as Lin,
     ReLU,
     LeakyReLU,
@@ -18,8 +18,8 @@ from torch_points3d.models.base_model import BaseModel
 
 
 def MLP(channels):
-    return Seq(
-        *[Seq(Lin(channels[i - 1], channels[i]), Dropout(0.5), BN(channels[i])) for i in range(1, len(channels))]
+    return Sequential(
+        *[Sequential(Lin(channels[i - 1], channels[i]), Dropout(0.5), BN(channels[i])) for i in range(1, len(channels))]
     )
 
 
