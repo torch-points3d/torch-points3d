@@ -21,30 +21,6 @@ from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
 from torch_points3d.core.data_transform.transforms import euler_angles_to_rotation_matrix
 
-class RemoveAttributes(object):
-    """
-    This transform removes attributes
-
-    Parameters
-    -----------
-    keys: list[str]:
-        List of attributes to remove
-    """
-    def __init__(self, keys):
-        self._keys = keys
-
-    def __call__(self, data):
-        for key in self._keys:
-            if hasattr(data, key):
-                delattr(data, key)
-        return data
-
-    def __repr__(self):
-        return "{}(key={})".format(
-            self.__class__.__name__, self._keys
-        )
-
-
 class Random3AxisRotation(object):
     """
     Rotate pointcloud with random angles along x, y, z axis

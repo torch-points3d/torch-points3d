@@ -118,7 +118,7 @@ class KPConvEncoder(BaseKPConv):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
-        data.x = data.x.unsqueeze()
+        data.x = data.x.unsqueeze(dim=-1)
         return data
 
 
