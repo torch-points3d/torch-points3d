@@ -64,14 +64,17 @@ class PointNet2Factory(ModelFactory):
             model_config = self._config
         else:
             path_to_model = os.path.join(
-                PATH_TO_CONFIG, "encoder_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss")
+                PATH_TO_CONFIG,
+                "encoder_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss"),
             )
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
         return PointNet2Unet(model_config, None, None, modules_lib)
 
-class PointNet2Encoder(UnwrappedUnetBasedModel):
+
+class BasePointnet2(UnwrappedUnetBasedModel):
+
     CONV_TYPE = "dense"
 
     def _set_input(self, data):
@@ -85,13 +88,10 @@ class PointNet2Encoder(UnwrappedUnetBasedModel):
             x = None
         self.input = Data(x=x, pos=data.pos)
 
-    def forward(self, data):
-        """ This method does a forward on the Unet assuming symmetrical skip connections
-        Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
-           |       |      |________|      |    |
-           |       |______________________|    |
-           |___________________________________|
 
+class PointNet2Encoder(BasePointnet2):
+    def forward(self, data):
+        """
         Parameters:
         -----------
         data
@@ -113,20 +113,8 @@ class PointNet2Encoder(UnwrappedUnetBasedModel):
 
         return data
 
+
 class PointNet2Unet(UnwrappedUnetBasedModel):
-    CONV_TYPE = "dense"
-
-    def _set_input(self, data):
-        """Unpack input data from the dataloader and perform necessary pre-processing steps.
-        """
-        assert len(data.pos.shape) == 3
-        data = data.to(self.device)
-        if data.x is not None:
-            x = data.x.transpose(1, 2).contiguous()
-        else:
-            x = None
-        self.input = Data(x=x, pos=data.pos)
-
     def forward(self, data):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
