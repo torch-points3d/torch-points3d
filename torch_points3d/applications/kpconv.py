@@ -110,18 +110,15 @@ class KPConvEncoder(BaseKPConv):
         data = self.input
         stack_down = [data]
         for i in range(len(self.down_modules) - 1):
-            print(data)
             data = self.down_modules[i](data)
             stack_down.append(data)
         data = self.down_modules[-1](data)
 
-        import pdb
-
-        pdb.set_trace()
         if not isinstance(self.inner_modules[0], Identity):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
+        data.x = data.x.unsqueeze()
         return data
 
 
