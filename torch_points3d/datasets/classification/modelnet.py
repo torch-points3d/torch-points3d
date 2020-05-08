@@ -25,5 +25,5 @@ class ModelNetDataset(BaseDataset):
         )
 
         self.test_dataset = ModelNet(
-            self._data_path, name=str(number), train=False, transform=self.testtransform, pre_transform=self.pre_transform,
+            self._data_path, name=str(number), train=False, transform=self.test_transform, pre_transform=self.pre_transform,
         )
