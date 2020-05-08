@@ -70,7 +70,7 @@ class PointNet2Factory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
-        return PointNet2Unet(model_config, None, None, modules_lib)
+        return PointNet2Encoder(model_config, None, None, modules_lib)
 
 
 class BasePointnet2(UnwrappedUnetBasedModel):
