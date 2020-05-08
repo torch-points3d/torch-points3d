@@ -8,6 +8,17 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
+## Torch-Points3d Templates
+
+[Secondary repo](https://github.com/tchaton/torch-points3d-templates) containing code templates for [Pytorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) and [FastAI](https://github.com/fastai/fastai) framework.
+
+For Pytorch Lightning, you will find a script running a point cloud classifier with several bakcbones  on ModelNet `under 100 lines`.
+
+Available Backbones:
+- `KPConv`,
+- `PointNet2`
+- `RSconv`
+
 ## Project structure
 
 ```bash

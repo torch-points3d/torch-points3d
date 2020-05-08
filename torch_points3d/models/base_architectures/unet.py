@@ -383,7 +383,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         # Factory for creating up and down modules
         factory_module_cls = self._get_factory(model_type, modules_lib)
         down_conv_cls_name = opt.down_conv.module_name
-        up_conv_cls_name = opt.up_conv.module_name
+        up_conv_cls_name = opt.up_conv.module_name if opt.up_conv is not None else None
         self._factory_module = factory_module_cls(
             down_conv_cls_name, up_conv_cls_name, modules_lib
         )  # Create the factory object
@@ -406,12 +406,13 @@ class UnwrappedUnetBasedModel(BaseModel):
             self.down_modules.append(down_module)
 
         # Up modules
-        for i in range(len(opt.up_conv.up_conv_nn)):
-            args = self._fetch_arguments(opt.up_conv, i, "UP")
-            conv_cls = self._get_from_kwargs(args, "conv_cls")
-            up_module = conv_cls(**args)
-            self._save_upsample(up_module)
-            self.up_modules.append(up_module)
+        if up_conv_cls_name:
+            for i in range(len(opt.up_conv.up_conv_nn)):
+                args = self._fetch_arguments(opt.up_conv, i, "UP")
+                conv_cls = self._get_from_kwargs(args, "conv_cls")
+                up_module = conv_cls(**args)
+                self._save_upsample(up_module)
+                self.up_modules.append(up_module)
 
         self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
             getattr(opt, "metric_loss", None), getattr(opt, "miner", None)

@@ -14,7 +14,9 @@ DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/rsconv")
 
 
-def RSConv(architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, **kwargs):
+def RSConv(
+    architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
+):
     """ Create a RSConv backbone model based on the architecture proposed in
     https://arxiv.org/abs/1904.07601
 
@@ -46,8 +48,18 @@ class RSConvFactory(ModelFactory):
         modules_lib = sys.modules[__name__]
         return RSConvUnet(model_config, None, None, modules_lib)
 
+    def _build_encoder(self):
+        if self._config:
+            model_config = self._config
+        else:
+            path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers))
+            model_config = OmegaConf.load(path_to_model)
+        self.resolve_model(model_config)
+        modules_lib = sys.modules[__name__]
+        return RSConvEncoder(model_config, None, None, modules_lib)
 
-class RSConvUnet(UnwrappedUnetBasedModel):
+
+class RSConvBase(UnwrappedUnetBasedModel):
     CONV_TYPE = "dense"
 
     def _set_input(self, data):
@@ -67,6 +79,34 @@ class RSConvUnet(UnwrappedUnetBasedModel):
             x = None
         self.input = Data(x=x, pos=data.pos)
 
+
+class RSConvEncoder(RSConvBase):
+    def forward(self, data):
+        """ This method does a forward on the Unet
+
+        Parameters:
+        -----------
+        data
+            A dictionary that contains the data itself and its metadata information. Should contain
+                x -- Features [B, N, C]
+                pos -- Points [B, N, 3]
+        """
+        self._set_input(data)
+        data = self.input
+        stack_down = [data]
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+        data = self.down_modules[-1](data)
+
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            data = self.inner_modules[0](data)
+
+        return data
+
+
+class RSConvUnet(RSConvBase):
     def forward(self, data):
         """ This method does a forward on the Unet
 

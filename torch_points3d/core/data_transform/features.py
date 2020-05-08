@@ -21,7 +21,6 @@ from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
 from torch_points3d.core.data_transform.transforms import euler_angles_to_rotation_matrix
 
-
 class Random3AxisRotation(object):
     """
     Rotate pointcloud with random angles along x, y, z axis
