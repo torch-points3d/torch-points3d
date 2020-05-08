@@ -20,6 +20,7 @@ def KPConv(
     in_grid_size: float = 0.02,
     in_feat: int = 64,
     config: DictConfig = None,
+    *args,
     **kwargs
 ):
     """ Create a KPConv backbone model based on the architecture proposed in
@@ -57,8 +58,18 @@ class KPConvFactory(ModelFactory):
         modules_lib = sys.modules[__name__]
         return KPConvUnet(model_config, None, None, modules_lib)
 
+    def _build_encoder(self):
+        if self._config:
+            model_config = self._config
+        else:
+            path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers))
+            model_config = OmegaConf.load(path_to_model)
+        self.resolve_model(model_config)
+        modules_lib = sys.modules[__name__]
+        return KPConvEncoder(model_config, None, None, modules_lib)
 
-class KPConvUnet(UnwrappedUnetBasedModel):
+
+class BaseKPConv(UnwrappedUnetBasedModel):
     CONV_TYPE = "partial_dense"
 
     def _set_input(self, data):
@@ -81,6 +92,40 @@ class KPConvUnet(UnwrappedUnetBasedModel):
 
         self.input = data
 
+
+class KPConvEncoder(BaseKPConv):
+    def forward(self, data):
+        """
+        Parameters
+        -----------
+        data:
+            A dictionary that contains the data itself and its metadata information. Should contain
+                - pos [N, 3]
+                - x [N, C]
+                - multiscale (optional) precomputed data for the down convolutions
+                - upsample (optional) precomputed data for the up convolutions
+
+        """
+        self._set_input(data)
+        data = self.input
+        stack_down = [data]
+        for i in range(len(self.down_modules) - 1):
+            print(data)
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+        data = self.down_modules[-1](data)
+
+        import pdb
+
+        pdb.set_trace()
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            data = self.inner_modules[0](data)
+
+        return data
+
+
+class KPConvUnet(BaseKPConv):
     def forward(self, data):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output

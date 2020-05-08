@@ -19,6 +19,7 @@ def PointNet2(
     num_layers: int = None,
     config: DictConfig = None,
     multiscale=True,
+    *args,
     **kwargs
 ):
     """ Create a PointNet2 backbone model based on the architecture proposed in
@@ -114,7 +115,7 @@ class PointNet2Encoder(BasePointnet2):
         return data
 
 
-class PointNet2Unet(UnwrappedUnetBasedModel):
+class PointNet2Unet(BasePointnet2):
     def forward(self, data):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
