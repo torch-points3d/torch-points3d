@@ -95,5 +95,4 @@ class ModelFactory:
                 value = self.kwargs.get(key)
                 if value:
                     constants[key] = value
-
         resolve(model_config, constants)
