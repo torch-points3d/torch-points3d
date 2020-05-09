@@ -62,6 +62,7 @@ where each folder contains the dataset related to each task.
 - **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas _et al._: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
 - **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy _et al._: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
 - **[PointAugment](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointAugment)** from Ruihui Li _et al._: [PointAugment: an Auto-Augmentation Framework for Point Cloud Classification](https://arxiv.org/abs/1904.08755) (CVPR'20)
+- **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
 
 ## Available datasets
 
