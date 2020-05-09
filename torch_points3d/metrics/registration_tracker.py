@@ -88,7 +88,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
             # batch_ind, batch_ind_target, batch_size_ind = model.get_ind()  # type: ignore
             input, input_target = model.get_input()
             batch_xyz, batch_xyz_target = input.pos, input_target.pos
-            batch_ind, batch_ind_target, batch_size_ind = input.ind, input_target.ind_target, input.size
+            batch_ind, batch_ind_target, batch_size_ind = input.ind, input_target.ind, input.size
             batch_feat, batch_feat_target = model.get_output()
 
             nb_batches = batch_idx.max() + 1
