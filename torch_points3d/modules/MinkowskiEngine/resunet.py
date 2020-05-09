@@ -235,9 +235,11 @@ class Res2BlockDown(ME.MinkowskiNetwork):
         dilation,
         dimension=3,
         bn_momentum=0.01,
-        norm_type=None,
+        norm_type=NormType.BATCH_NORM,
         block_norm_type=NormType.BATCH_NORM,
+        **kwargs
     ):
+        ME.MinkowskiNetwork.__init__(self, dimension)
         self.conv = ME.MinkowskiConvolution(
             in_channels=down_conv_nn[0],
             out_channels=down_conv_nn[1],
@@ -273,9 +275,11 @@ class Res2BlockUp(ME.MinkowskiNetwork):
         dilation,
         dimension=3,
         bn_momentum=0.01,
-        norm_type=None,
+        norm_type=NormType.BATCH_NORM,
         block_norm_type=NormType.BATCH_NORM,
+        **kwargs
     ):
+        ME.MinkowskiNetwork.__init__(self, dimension)
         self.conv = ME.MinkowskiConvolutionTranspose(
             in_channels=up_conv_nn[0],
             out_channels=up_conv_nn[1],
@@ -283,11 +287,8 @@ class Res2BlockUp(ME.MinkowskiNetwork):
             stride=stride,
             dilation=dilation,
             has_bias=False,
-            dimension=D,
+            dimension=dimension,
         )
-
-        self.norm = get_norm(norm_type, up_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
-        self.block = get_block(block_norm_type, up_conv_nn[1], up_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
         if len(up_conv_nn) == 3:
             self.final = ME.MinkowskiConvolution(
                 in_channels=up_conv_nn[1],
@@ -299,11 +300,12 @@ class Res2BlockUp(ME.MinkowskiNetwork):
                 dimension=dimension,
             )
         else:
+            self.norm = get_norm(norm_type, up_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
+            self.block = get_block(block_norm_type, up_conv_nn[1], up_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
             self.final = None
 
     def forward(self, x, x_skip):
-
-        if x_skip is None:
+        if x_skip is not None:
             x = ME.cat(x, x_skip)
         out_s = self.conv(x)
         if self.final is None:
@@ -313,4 +315,5 @@ class Res2BlockUp(ME.MinkowskiNetwork):
             return out
         else:
             out_s = MEF.relu(out_s)
-            out_s = self.final(out_s)
+            out = self.final(out_s)
+            return out
