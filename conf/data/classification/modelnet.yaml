@@ -7,8 +7,14 @@ data:
     pre_transforms:
         - transform: NormalizeScale
     train_transforms:
+        - transform: RemoveAttributes
+          params:
+            attr_names: ["face"]
         - transform: FixedPoints
-            lparams: [2048]
+          lparams: [1024]
     test_transforms:
+        - transform: RemoveAttributes
+          params:
+            attr_names: ["face"]
         - transform: FixedPoints
-            lparams: [2048]
+          lparams: [1024]

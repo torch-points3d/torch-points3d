@@ -1,0 +1,15 @@
+models:
+  PointNet2Encoder:
+    class: pointnet2.ClassificationModel
+    class_name: PointNet2
+    conv_type: 'dense'
+    input_nc: 3
+    in_feat: 16
+    output_nc: 256
+    num_layers: 3
+    point_augment:
+      shuffle: True
+      nn_raising: [64, 128]
+      nn_rotation: [64, 32]
+      nn_translation: [64, 32]
+
