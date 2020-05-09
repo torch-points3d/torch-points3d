@@ -19,6 +19,7 @@ def PointNet2(
     num_layers: int = None,
     config: DictConfig = None,
     multiscale=True,
+    *args,
     **kwargs
 ):
     """ Create a PointNet2 backbone model based on the architecture proposed in
@@ -59,8 +60,22 @@ class PointNet2Factory(ModelFactory):
         modules_lib = sys.modules[__name__]
         return PointNet2Unet(model_config, None, None, modules_lib)
 
+    def _build_encoder(self):
+        if self._config:
+            model_config = self._config
+        else:
+            path_to_model = os.path.join(
+                PATH_TO_CONFIG,
+                "encoder_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss"),
+            )
+            model_config = OmegaConf.load(path_to_model)
+        self.resolve_model(model_config)
+        modules_lib = sys.modules[__name__]
+        return PointNet2Encoder(model_config, None, None, modules_lib)
 
-class PointNet2Unet(UnwrappedUnetBasedModel):
+
+class BasePointnet2(UnwrappedUnetBasedModel):
+
     CONV_TYPE = "dense"
 
     def _set_input(self, data):
@@ -74,6 +89,33 @@ class PointNet2Unet(UnwrappedUnetBasedModel):
             x = None
         self.input = Data(x=x, pos=data.pos)
 
+
+class PointNet2Encoder(BasePointnet2):
+    def forward(self, data):
+        """
+        Parameters:
+        -----------
+        data
+            A dictionary that contains the data itself and its metadata information. Should contain
+                x -- Features [B, N, C]
+                pos -- Points [B, N, 3]
+        """
+        self._set_input(data)
+        data = self.input
+        stack_down = [data]
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+        data = self.down_modules[-1](data)
+
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            data = self.inner_modules[0](data)
+
+        return data
+
+
+class PointNet2Unet(BasePointnet2):
     def forward(self, data):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
