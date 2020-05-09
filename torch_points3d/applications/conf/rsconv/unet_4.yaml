@@ -1,4 +1,6 @@
 conv_type: "DENSE"
+define_constants:
+    output_nc: 256
 down_conv:
     module_name: RSConvOriginalMSGDown
     npoint: [1024, 256, 64, 16]
@@ -26,10 +28,10 @@ down_conv:
         ]
 innermost:
     - module_name: GlobalDenseBaseModule
-      nn: [512 * 3 + 3, 128]
+      nn: [512 * 3 + 3, output_nc // 4]
       aggr: "mean"
     - module_name: GlobalDenseBaseModule
-      nn: [256 * 3 + 3, 128]
+      nn: [256 * 3 + 3, output_nc // 4]
       aggr: "mean"
 up_conv:
     bn: True
@@ -40,7 +42,7 @@ up_conv:
             [512 * 3 + 256 * 3, 512, 512],
             [128 * 3 + 512, 512, 512],
             [64 * 3 + 512, 256, 256],
-            [256 + FEAT , 128, 128],
+            [256 + FEAT , output_nc // 2],
             [],
         ]
     skip: True
