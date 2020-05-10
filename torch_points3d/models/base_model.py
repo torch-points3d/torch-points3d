@@ -183,6 +183,12 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             bn_scheduler_step = self._collect_scheduler_step("_update_bn_scheduler_on")
             self._bn_scheduler.step(bn_scheduler_step)
 
+    def extract_current_losses(self, obj):
+        for name in self.loss_names:
+            if isinstance(name, str):
+                if hasattr(obj, name):
+                    setattr(self, name, getattr(obj, name))
+
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
         errors_ret = OrderedDict()

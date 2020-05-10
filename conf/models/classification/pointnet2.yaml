@@ -1,6 +1,6 @@
 models:
   PointNet2Encoder:
-    class: pointnet2.ClassificationModel
+    class: pointnet2.PointAugmentedPointnet2
     class_name: PointNet2
     conv_type: 'dense'
     input_nc: 3
