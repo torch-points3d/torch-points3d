@@ -7,6 +7,8 @@ from torch_points3d.modules.KPConv import *
 from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
+from torch_points3d.core.common_modules.dense_modules import Conv1D
+from torch_points3d.core.common_modules.base_modules import Seq
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -14,14 +16,7 @@ PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/kpconv")
 
 
 def KPConv(
-    architecture: str = None,
-    input_nc: int = None,
-    num_layers: int = None,
-    in_grid_size: float = 0.02,
-    in_feat: int = 64,
-    config: DictConfig = None,
-    *args,
-    **kwargs
+    architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
 ):
     """ Create a KPConv backbone model based on the architecture proposed in
     https://arxiv.org/abs/1904.08889
@@ -56,7 +51,7 @@ class KPConvFactory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
-        return KPConvUnet(model_config, None, None, modules_lib)
+        return KPConvUnet(model_config, None, None, modules_lib, **self.kwargs)
 
     def _build_encoder(self):
         if self._config:
@@ -71,6 +66,10 @@ class KPConvFactory(ModelFactory):
 
 class BaseKPConv(UnwrappedUnetBasedModel):
     CONV_TYPE = "partial_dense"
+
+    @property
+    def contains_output_nc(self):
+        return "output_nc" in self._kwargs
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -123,6 +122,27 @@ class KPConvEncoder(BaseKPConv):
 
 
 class KPConvUnet(BaseKPConv):
+    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
+        super(KPConvUnet, self).__init__(model_config, model_type, dataset, modules)
+
+        self._args = args
+        self._kwargs = kwargs
+
+        if self.contains_output_nc:
+            self.mlp = Seq()
+            self.mlp.append(Conv1D(self.in_feat, self.output_nc, activation=None, bias=True, bn=False))
+
+    @property
+    def in_feat(self):
+        return self._kwargs["in_feat"] if "in_feat" in self._kwargs else 64
+
+    @property
+    def output_nc(self):
+        if self.contains_output_nc:
+            return self._kwargs["output_nc"]
+        else:
+            return self.in_feat
+
     def forward(self, data):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
@@ -140,4 +160,7 @@ class KPConvUnet(BaseKPConv):
 
         """
         self._set_input(data)
-        return super().forward(self.input, precomputed_down=self.pre_computed, precomputed_up=self.upsample)
+        data = super().forward(self.input, precomputed_down=self.pre_computed, precomputed_up=self.upsample)
+        if self.contains_output_nc:
+            data.x = self.mlp(data.x.unsqueeze(-1))
+        return data

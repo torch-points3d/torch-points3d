@@ -1,6 +1,4 @@
 conv_type: "DENSE"
-define_constants:
-    output_nc: 256
 down_conv:
     module_name: PointNetMSGDown
     npoint: [512, 128]
@@ -27,6 +25,6 @@ up_conv:
         [
             [1024 + 256*2, 256, 256],
             [256 + 128 * 2 + 64, 256, 128],
-            [128 + FEAT, output_nc, output_nc],
+            [128 + FEAT, 128, 128],
         ]
     skip: True

@@ -7,6 +7,8 @@ from torch_points3d.modules.pointnet2 import *
 from torch_points3d.core.base_conv.dense import DenseFPModule
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
+from torch_points3d.core.common_modules.dense_modules import Conv1D
+from torch_points3d.core.common_modules.base_modules import Seq
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -58,7 +60,7 @@ class PointNet2Factory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
-        return PointNet2Unet(model_config, None, None, modules_lib)
+        return PointNet2Unet(model_config, None, None, modules_lib, **self.kwargs)
 
     def _build_encoder(self):
         if self._config:
@@ -77,6 +79,10 @@ class PointNet2Factory(ModelFactory):
 class BasePointnet2(UnwrappedUnetBasedModel):
 
     CONV_TYPE = "dense"
+
+    @property
+    def contains_output_nc(self):
+        return "output_nc" in self._kwargs
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -116,6 +122,23 @@ class PointNet2Encoder(BasePointnet2):
 
 
 class PointNet2Unet(BasePointnet2):
+    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
+        super(PointNet2Unet, self).__init__(model_config, model_type, dataset, modules)
+
+        self._args = args
+        self._kwargs = kwargs
+
+        if self.contains_output_nc:
+            self.mlp = Seq()
+            self.mlp.append(Conv1D(128, self.output_nc, activation=None, bias=True, bn=False))
+
+    @property
+    def output_nc(self):
+        if self.contains_output_nc:
+            return self._kwargs["output_nc"]
+        else:
+            return 128
+
     def forward(self, data):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
@@ -144,4 +167,7 @@ class PointNet2Unet(BasePointnet2):
 
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((data, stack_down.pop()))
+
+        if self.contains_output_nc:
+            data.x = self.mlp(data.x)
         return data
