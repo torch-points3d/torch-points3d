@@ -110,18 +110,6 @@ class BaseMinkowski(BaseModel):
         else:
             return self.output
 
-    def get_ind(self):
-        if self.match is not None:
-            return self.match[:, 0], self.match[:, 1], self.size_match
-        else:
-            return None
-
-    def get_xyz(self):
-        if self.match is not None:
-            return self.xyz, self.xyz_target
-        else:
-            return self.xyz
-
     def get_batch(self):
         if self.match is not None:
             batch = self.input.C[:, 0]
