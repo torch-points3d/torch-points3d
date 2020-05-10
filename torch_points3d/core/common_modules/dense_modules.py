@@ -2,6 +2,16 @@ import torch.nn as nn
 from .base_modules import Seq
 
 
+class Linear(Seq):
+    def __init__(self, in_channels, out_channels, bias=True, bn=True, activation=nn.LeakyReLU(negative_slope=0.01)):
+        super().__init__()
+        self.append(nn.Linear(in_channels, out_channels, bias=bias))
+        if bn:
+            self.append(nn.BatchNorm1d(out_channels))
+        if activation:
+            self.append(activation)
+
+
 class Conv2D(Seq):
     def __init__(self, in_channels, out_channels, bias=True, bn=True, activation=nn.LeakyReLU(negative_slope=0.01)):
         super().__init__()
@@ -20,6 +30,13 @@ class Conv1D(Seq):
             self.append(nn.BatchNorm1d(out_channels))
         if activation:
             self.append(activation)
+
+
+class MLP(Seq):
+    def __init__(self, channels, bias=False, bn=True, activation=nn.LeakyReLU(negative_slope=0.01)):
+        super().__init__()
+        for i in range(len(channels) - 1):
+            self.append(Linear(channels[i], channels[i + 1], bn=bn, bias=bias, activation=activation))
 
 
 class MLP1D(Seq):

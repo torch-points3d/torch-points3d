@@ -1,0 +1,29 @@
+models:
+    PointAugmentedModel:
+      class: point_augment.PointAugmentedModel
+      activate: True
+      shuffle: True
+      nn_raising: [64, 128]
+      nn_rotation: [64, 32]
+      nn_translation: [64, 32]
+      backbone: kpconv # Can choose between pointnet2, kpconv and rsconv
+      conv_type: "partial_dense" # Should be the same as its associated model
+      backbones:
+        pointnet2:
+            class_name: PointNet2
+            conv_type: "dense"
+            in_feat: 16
+            num_layers: 3
+            multiscale: True
+        kpconv:
+            class_name: KPConv
+            conv_type: "partial_dense"
+            in_feat: 16
+            num_layers: 4
+        rsconv:
+            class_name: RSConv
+            conv_type: "dense"
+            in_feat: 16
+            num_layers: 4
+  
+  
