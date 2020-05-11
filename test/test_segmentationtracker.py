@@ -5,9 +5,10 @@ import sys
 from torch_geometric.data import Data
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
-sys.path.append(ROOT)
+sys.path.insert(0, ROOT)
 
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+from torch_points3d.metrics.classification_tracker import ClassificationTracker
 from torch_points3d.metrics.s3dis_tracker import S3DISTracker
 
 
@@ -118,6 +119,23 @@ class TestS3DISTarcker(unittest.TestCase):
         metrics = tracker.get_metrics(verbose=True)
         self.assertAlmostEqual(metrics["test_full_vote_miou"], 25, 5)
         self.assertAlmostEqual(metrics["test_vote_miou"], 100, 5)
+
+
+class TestClassificationTracker(unittest.TestCase):
+    from torch_points3d.metrics.classification_tracker import ClassificationTracker
+
+    def test_classification(self):
+        tracker = ClassificationTracker(MockDataset())
+        tracker.reset("test")
+        model = MockModel()
+        tracker.track(model)
+        metrics = tracker.get_metrics()
+        self.assertAlmostEqual(metrics["test_acc"], 100, 5)
+
+        model.iter += 1
+        tracker.track(model)
+        metrics = tracker.get_metrics()
+        self.assertAlmostEqual(metrics["test_acc"], 50, 5)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 from typing import Dict
 import torch
+import torchnet as tnt
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
@@ -12,21 +13,18 @@ class ClassificationTracker(BaseTracker):
         It uses a confusion matrix in the back-end to track results.
         Use the tracker to track an epoch.
         You can use the reset function before you start a new epoch
-
         Arguments:
             dataset  -- dataset to track (used for the number of classes)
-
         Keyword Arguments:
             stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
             wandb_log {str} --  Log using weight and biases
         """
         super(ClassificationTracker, self).__init__(stage, wandb_log, use_tensorboard)
-        self._num_classes = dataset.num_classes
-        self._dataset = dataset
         self.reset(stage)
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
+        self._acc = tnt.meter.AverageValueMeter()
 
     @staticmethod
     def detach_tensor(tensor):
@@ -38,7 +36,7 @@ class ClassificationTracker(BaseTracker):
     def compute_acc(y_hat, y):
         labels_hat = torch.argmax(y_hat, dim=1)
         acc = torch.sum(y == labels_hat).item() / (len(y) * 1.0)
-        return torch.tensor(acc)
+        return acc
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
@@ -48,14 +46,13 @@ class ClassificationTracker(BaseTracker):
         outputs = model.get_output()
         targets = model.get_labels().flatten()
 
-        self._acc = 100 * self.compute_acc(outputs, targets).item()
+        self._acc.add(100 * self.compute_acc(outputs, targets))
 
     def get_metrics(self, verbose=False) -> Dict[str, float]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
-
-        metrics["{}_acc".format(self._stage)] = self._acc
+        metrics["{}_acc".format(self._stage)] = meter_value(self._acc)
         return metrics
 
     @property

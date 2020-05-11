@@ -34,7 +34,6 @@ class SegmentationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
-        # self._ap_meter = APMeter()
 
     @staticmethod
     def detach_tensor(tensor):

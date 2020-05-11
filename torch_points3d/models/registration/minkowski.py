@@ -1,5 +1,6 @@
 import logging
 import torch
+from torch_geometric.data import Data
 
 from torch_points3d.modules.MinkowskiEngine import *
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
@@ -7,6 +8,7 @@ from torch_points3d.models.base_model import BaseModel
 
 from torch.nn import Sequential, Linear, LeakyReLU, Dropout
 from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
+
 
 log = logging.getLogger(__name__)
 
@@ -108,18 +110,6 @@ class BaseMinkowski(BaseModel):
         else:
             return self.output
 
-    def get_ind(self):
-        if self.match is not None:
-            return self.match[:, 0], self.match[:, 1], self.size_match
-        else:
-            return None
-
-    def get_xyz(self):
-        if self.match is not None:
-            return self.xyz, self.xyz_target
-        else:
-            return self.xyz
-
     def get_batch(self):
         if self.match is not None:
             batch = self.input.C[:, 0]
@@ -127,6 +117,15 @@ class BaseMinkowski(BaseModel):
             return batch, batch_target
         else:
             return None
+
+    def get_input(self):
+        if self.match is not None:
+            input = Data(pos=self.xyz, ind=self.match[:, 0], size=self.size_match)
+            input_target = Data(pos=self.xyz_target, ind=self.match[:, 1], size=self.size_match)
+            return input, input_target
+        else:
+            input = Data(pos=self.xyz)
+            return input
 
 
 class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
