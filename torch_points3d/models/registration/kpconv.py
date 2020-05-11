@@ -211,7 +211,7 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
             if i == 0 and innermost:
                 data = self.up_modules[i]((data, stack_down.pop()))
             else:
-                data = self.up_modules[i]((data, stack_down.pop()), precomputed=self.upsample)
+                data = self.up_modules[i]((data, stack_down.pop()), precomputed=upsample)
 
         output = self.FC_layer(data.x)
         if self.normalize_feature:

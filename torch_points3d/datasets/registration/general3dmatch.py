@@ -275,8 +275,8 @@ class Fragment3DMatch(Base3DMatch):
     def get_fragment(self, idx):
 
         match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
-        data_source = torch.load(match["path_source"])
-        data_target = torch.load(match["path_target"])
+        data_source = torch.load(match["path_source"]).to(torch.float)
+        data_target = torch.load(match["path_target"]).to(torch.float)
         new_pair = torch.from_numpy(match["pair"])
 
 
