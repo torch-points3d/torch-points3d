@@ -55,7 +55,7 @@ data:
   test_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
-      lparams: [32000]
+      lparams: [20000]
     - transform: GridSampling
       params:
         size: ${data.first_subsampling}
