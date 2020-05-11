@@ -172,8 +172,8 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         """
         # data = data.to(device)
         if isinstance(data, PairMultiScaleBatch):
-            self.pre_computed = data.multiscale.to(device)
-            self.upsample = data.upsample.to(device)
+            self.pre_computed = [f.to(device) for f in data.multiscale]
+            self.upsample = [f.to(device) for f in data.upsample]
         else:
             self.upsample = None
             self.pre_computed = None
@@ -181,8 +181,8 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         self.input = Data(pos=data.pos, x=data.x, batch=data.batch).to(device)
         if hasattr(data, "pos_target"):
             if isinstance(data, PairMultiScaleBatch):
-                self.pre_computed_target = data.multiscale_target.to(device)
-                self.upsample_target = data.upsample_target.to(device)
+                self.pre_computed_target = [f.to(device) for f in data.multiscale_target]
+                self.upsample_target = [f.to(device) for f in data.upsample_target]
             else:
                 self.upsample_target = None
                 self.pre_computed_target = None
