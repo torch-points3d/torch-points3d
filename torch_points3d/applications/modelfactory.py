@@ -34,6 +34,7 @@ class ModelFactory:
         assert self._architecture in self.MODEL_ARCHITECTURES, ModelFactory.raise_enum_error(
             "model_architecture", self._architecture, self.MODEL_ARCHITECTURES
         )
+
         self._input_nc = input_nc
         self._num_layers = num_layers
         self._config = config
