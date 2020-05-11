@@ -2,6 +2,7 @@ import os
 import sys
 import queue
 from omegaconf import DictConfig, OmegaConf
+import logging
 
 from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.modules.RSConv import *
@@ -15,6 +16,8 @@ from .utils import extract_output_nc
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/rsconv")
+
+log = logging.getLogger(__name__)
 
 
 def RSConv(
@@ -107,7 +110,11 @@ class RSConvBase(UnwrappedUnetBasedModel):
 
 class RSConvEncoder(RSConvBase):
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        default_output_nc = extract_output_nc(model_config)
+        try:
+            default_output_nc = extract_output_nc(model_config)
+        except:
+            default_output_nc = -1
+            log.warning("Could not resolve number of output channels")
         super().__init__(
             model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
         )
@@ -141,11 +148,15 @@ class RSConvEncoder(RSConvBase):
 
 class RSConvUnet(RSConvBase):
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        default_output_nc = (
-            model_config.innermost[0].nn[-1]
-            + model_config.innermost[1].nn[-1]
-            + model_config.up_conv.up_conv_nn[-1][-1]
-        )
+        try:
+            default_output_nc = (
+                model_config.innermost[0].nn[-1]
+                + model_config.innermost[1].nn[-1]
+                + model_config.up_conv.up_conv_nn[-1][-1]
+            )
+        except:
+            default_output_nc = -1
+            log.warning("Could not resolve number of output channels")
         super().__init__(
             model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
         )

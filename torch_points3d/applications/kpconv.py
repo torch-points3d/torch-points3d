@@ -1,5 +1,6 @@
 import os
 from omegaconf import DictConfig, OmegaConf
+import logging
 
 from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.core.common_modules import FastBatchNorm1d
@@ -10,9 +11,12 @@ from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.core.common_modules.base_modules import MLP
 from .utils import extract_output_nc
 
+
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/kpconv")
+
+log = logging.getLogger(__name__)
 
 
 def KPConv(
@@ -71,8 +75,12 @@ class BaseKPConv(UnwrappedUnetBasedModel):
 
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
         super(BaseKPConv, self).__init__(model_config, model_type, dataset, modules)
+        try:
+            default_output_nc = extract_output_nc(model_config)
+        except:
+            default_output_nc = -1
+            log.warning("Could not resolve number of output channels")
 
-        default_output_nc = extract_output_nc(model_config)
         self._output_nc = default_output_nc
         self._has_mlp_head = False
         if "output_nc" in kwargs:

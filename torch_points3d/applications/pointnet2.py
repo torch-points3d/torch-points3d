@@ -1,6 +1,7 @@
 import os
 import sys
 from omegaconf import DictConfig, OmegaConf
+import logging
 
 from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.modules.pointnet2 import *
@@ -14,6 +15,8 @@ from .utils import extract_output_nc
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/pointnet2")
+
+log = logging.getLogger(__name__)
 
 
 def PointNet2(
@@ -86,7 +89,12 @@ class BasePointnet2(UnwrappedUnetBasedModel):
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
         super(BasePointnet2, self).__init__(model_config, model_type, dataset, modules)
 
-        default_output_nc = extract_output_nc(model_config)
+        try:
+            default_output_nc = extract_output_nc(model_config)
+        except:
+            default_output_nc = -1
+            log.warning("Could not resolve number of output channels")
+
         self._has_mlp_head = False
         self._output_nc = default_output_nc
         if "output_nc" in kwargs:
