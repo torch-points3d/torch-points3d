@@ -281,22 +281,19 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         else:
             return self.output
 
-    def get_ind(self):
-        if self.match is not None:
-            return self.match[:, 0], self.match[:, 1], self.size_match
-        else:
-            return None
-
-    def get_xyz(self):
-        if self.match is not None:
-            return self.input.pos, self.input_target.pos
-        else:
-            return self.input.pos
-
-    def get_batch_idx(self):
+    def get_batch(self):
         if self.match is not None:
             batch = self.input.batch
             batch_target = self.input_target.batch
             return batch, batch_target
         else:
             return None
+
+    def get_input(self):
+        if self.match is not None:
+            input = Data(pos=self.input.pos, ind=self.match[:, 0], size=self.size_match)
+            input_target = Data(pos=self.input_target.pos, ind=self.match[:, 1], size=self.size_match)
+            return input, input_target
+        else:
+            input = Data(pos=self.xyz)
+            return input
