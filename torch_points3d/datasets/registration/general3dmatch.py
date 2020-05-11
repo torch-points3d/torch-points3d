@@ -304,7 +304,7 @@ class Fragment3DMatch(Base3DMatch):
         rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
         batch.pair_ind = batch.pair_ind[rand_ind]
         batch.size_pair_ind = torch.tensor([num_pos_pairs])
-        return batch.contiguous().to(torch.float)
+        return batch.contiguous()
 
     def get(self, idx):
         return self.get_fragment(idx)
@@ -440,8 +440,8 @@ class SelfSupervisedFragment3DMatch(Base3DMatch):
         new_pair = torch.stack((col, col)).T
 
         if(self.transform is not None):
-            data_source = self.transform(data_source)
-            data_target = self.transform(data_target)
+            data_source = self.transform(data_source).to(torch.float)
+            data_target = self.transform(data_target).to(torch.float)
 
         batch = Pair.make_pair(data_source, data_target)
 
@@ -455,7 +455,7 @@ class SelfSupervisedFragment3DMatch(Base3DMatch):
         rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
         batch.pair_ind = batch.pair_ind[rand_ind]
 
-        return batch.contiguous().to(torch.float)
+        return batch.contiguous()
 
     def get(self, idx):
         return self.get_fragment(idx)
