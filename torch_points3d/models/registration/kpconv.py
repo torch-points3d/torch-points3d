@@ -275,7 +275,7 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         if hasattr(self, "loss"):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
-    def get_outputs(self):
+    def get_output(self):
         if self.match is not None:
             return self.output, self.output_target
         else:
