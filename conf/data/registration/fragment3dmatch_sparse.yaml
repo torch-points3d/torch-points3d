@@ -19,6 +19,8 @@ data:
         size: ${data.first_subsampling}
   train_transform:
     - transform: SaveOriginalPosId
+    - transform: FixedPoints
+      lparams: [20000]
     - transform: RandomNoise
       params:
         sigma: 0.005
@@ -57,6 +59,8 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
+    - transform: FixedPoints
+      lparams: [20000]
     - transform: RandomRotate
       params:
         degrees: 180
