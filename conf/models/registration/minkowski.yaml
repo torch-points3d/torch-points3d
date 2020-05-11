@@ -4,7 +4,7 @@ models:
         conv_type: "SPARSE"
         loss_mode: "match"
         down_conv:
-            module_name: SimpleBlockDown
+            module_name: Res2BlockDown
             dimension: 3
             bn_momentum: 0.05
             down_conv_nn:
@@ -18,7 +18,7 @@ models:
             stride: [1, 2, 2, 2]
             dilation: [1, 1, 1, 1]
         up_conv:
-            module_name: SimpleBlockUp
+            module_name: Res2BlockUp
             dimension: 3
             bn_momentum: 0.05
             up_conv_nn:
@@ -26,7 +26,7 @@ models:
                     [256, 64],
                     [64 + 128, 64],
                     [64 + 64, 64],
-                    [64 + 32, 32]
+                    [64 + 32, 64, 32]
                 ]
             kernel_size: [3, 3, 3, 1]
             stride: [2, 2, 2, 1]
