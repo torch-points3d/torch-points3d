@@ -21,7 +21,6 @@ import tempfile
 import urllib
 from urllib.request import urlopen
 
-from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from torch_points3d.datasets.base_dataset import BaseDataset
 from . import IGNORE_LABEL
 
@@ -744,6 +743,8 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
+        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+
         return SegmentationTracker(
             self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )
