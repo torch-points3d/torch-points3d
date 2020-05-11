@@ -284,7 +284,7 @@ class Fragment3DMatch(Base3DMatch):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
 
-        if(hasattr(batch, "multiscale")):
+        if(hasattr(data_source, "multiscale")):
             batch = MultiScalePair.make_pair(data_source, data_target)
         else:
             batch = Pair.make_pair(data_source, data_target)
