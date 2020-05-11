@@ -19,8 +19,6 @@ import csv
 import pandas as pd
 import pickle
 
-from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
-from torch_points3d.metrics.s3dis_tracker import S3DISTracker
 from torch_points3d.datasets.samplers import BalancedRandomSampler
 import torch_points3d.core.data_transform as cT
 from torch_points3d.datasets.base_dataset import BaseDataset
@@ -212,6 +210,8 @@ class S3DIS1x1Dataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
+        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+
         return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
@@ -570,4 +570,6 @@ class S3DISFusedDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
+        from torch_points3d.metrics.s3dis_tracker import S3DISTracker
+
         return S3DISTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
