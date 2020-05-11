@@ -9,7 +9,7 @@ models:
     define_constants:
       in_grid_size: ${data.first_subsampling}
       in_feat: 64
-      bn_momentum: 0.02
+      bn_momentum: 0.98
     down_conv:
       down_conv_nn:
         [
@@ -60,7 +60,7 @@ models:
           [False, False],
         ]
       max_num_neighbors:
-        [[12, 12], [12, 15], [15, 19], [19, 19], [19, 19]]
+        [[20, 20], [20, 20], [20, 32], [32, 32], [32, 32]]
       module_name: KPDualBlock
     up_conv:
       module_name: FPModule_PD
