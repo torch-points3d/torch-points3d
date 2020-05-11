@@ -9,6 +9,7 @@ from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedMode
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.core.common_modules.dense_modules import Conv1D
 from torch_points3d.core.common_modules.base_modules import Seq
+from .utils import extract_output_nc
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -33,6 +34,8 @@ def PointNet2(
         Architecture of the model, choose from unet, encoder and decoder
     input_nc : int, optional
         Number of channels for the input
+   output_nc : int, optional
+        If specified, then we add a fully connected head at the end of the network to provide the requested dimension
     num_layers : int, optional
         Depth of the network
     config : DictConfig, optional
@@ -73,16 +76,32 @@ class PointNet2Factory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
-        return PointNet2Encoder(model_config, None, None, modules_lib)
+        return PointNet2Encoder(model_config, None, None, modules_lib, **self.kwargs)
 
 
 class BasePointnet2(UnwrappedUnetBasedModel):
 
     CONV_TYPE = "dense"
 
+    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
+        super(BasePointnet2, self).__init__(model_config, model_type, dataset, modules)
+
+        default_output_nc = extract_output_nc(model_config)
+        self._has_mlp_head = False
+        self._output_nc = default_output_nc
+        if "output_nc" in kwargs:
+            self._has_mlp_head = True
+            self._output_nc = kwargs["output_nc"]
+            self.mlp = Seq()
+            self.mlp.append(Conv1D(default_output_nc, self._output_nc, bn=True, bias=False))
+
     @property
-    def contains_output_nc(self):
-        return "output_nc" in self._kwargs
+    def has_mlp_head(self):
+        return self._has_mlp_head
+
+    @property
+    def output_nc(self):
+        return self._output_nc
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -118,27 +137,12 @@ class PointNet2Encoder(BasePointnet2):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
+        if self.has_mlp_head:
+            data.x = self.mlp(data.x)
         return data
 
 
 class PointNet2Unet(BasePointnet2):
-    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        super(PointNet2Unet, self).__init__(model_config, model_type, dataset, modules)
-
-        self._args = args
-        self._kwargs = kwargs
-
-        if self.contains_output_nc:
-            self.mlp = Seq()
-            self.mlp.append(Conv1D(128, self.output_nc, activation=None, bias=True, bn=False))
-
-    @property
-    def output_nc(self):
-        if self.contains_output_nc:
-            return self._kwargs["output_nc"]
-        else:
-            return 128
-
     def forward(self, data):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
@@ -168,6 +172,6 @@ class PointNet2Unet(BasePointnet2):
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((data, stack_down.pop()))
 
-        if self.contains_output_nc:
+        if self.has_mlp_head:
             data.x = self.mlp(data.x)
         return data

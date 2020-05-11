@@ -1,7 +1,6 @@
 conv_type: "DENSE"
 define_constants:
     in_feat: 64
-    output_nc: 256
 down_conv:
     module_name: PointNetMSGDown
     npoint: [512, 128]
@@ -10,9 +9,9 @@ down_conv:
     down_conv_nn:
         [
             [
-                [FEAT, in_feat // 2, in_feat // 2, in_feat],
-                [FEAT, in_feat, in_feat, in_feat * 2],
-                [FEAT, in_feat, in_feat + in_feat // 2 , in_feat * 2],
+                [FEAT + 3, in_feat // 2, in_feat // 2, in_feat],
+                [FEAT+ 3, in_feat, in_feat, in_feat * 2],
+                [FEAT+ 3, in_feat, in_feat + in_feat // 2 , in_feat * 2],
             ],
             [
                 [in_feat + in_feat * 2 + in_feat * 2 + 3, in_feat * 2, in_feat * 2, in_feat * 4],
@@ -21,4 +20,4 @@ down_conv:
         ]
 innermost:
     module_name: GlobalDenseBaseModule
-    nn: [in_feat * 4 * 2 + 3, in_feat * 4, in_feat * 8, output_nc]
+    nn: [in_feat * 4 * 2 + 3, in_feat * 4, in_feat * 8]

@@ -63,5 +63,5 @@ innermost:
         name: LeakyReLU
         negative_slope: 0.2
     aggr: "mean"
-    nn: [32 * in_feat + 3, output_nc]
+    nn: [32 * in_feat + 3, 32 * in_feat]
 

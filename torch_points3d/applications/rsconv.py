@@ -10,6 +10,7 @@ from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedMode
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.core.common_modules.dense_modules import Conv1D
 from torch_points3d.core.common_modules.base_modules import Seq
+from .utils import extract_output_nc
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -28,6 +29,8 @@ def RSConv(
         Architecture of the model, choose from unet, encoder and decoder
     input_nc : int, optional
         Number of channels for the input
+    output_nc : int, optional
+        If specified, then we add a fully connected head at the end of the network to provide the requested dimension
     num_layers : int, optional
         Depth of the network
     config : DictConfig, optional
@@ -58,15 +61,31 @@ class RSConvFactory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
-        return RSConvEncoder(model_config, None, None, modules_lib)
+        return RSConvEncoder(model_config, None, None, modules_lib, **self.kwargs)
 
 
 class RSConvBase(UnwrappedUnetBasedModel):
     CONV_TYPE = "dense"
 
+    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
+        super(RSConvBase, self).__init__(model_config, model_type, dataset, modules)
+
+        default_output_nc = kwargs.get("default_output_nc", 384)
+        self._has_mlp_head = False
+        self._output_nc = default_output_nc
+        if "output_nc" in kwargs:
+            self._has_mlp_head = True
+            self._output_nc = kwargs["output_nc"]
+            self.mlp = Seq()
+            self.mlp.append(Conv1D(default_output_nc, self._output_nc, bn=True, bias=False))
+
     @property
-    def contains_output_nc(self):
-        return "output_nc" in self._kwargs
+    def has_mlp_head(self):
+        return self._has_mlp_head
+
+    @property
+    def output_nc(self):
+        return self._output_nc
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -87,6 +106,12 @@ class RSConvBase(UnwrappedUnetBasedModel):
 
 
 class RSConvEncoder(RSConvBase):
+    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
+        default_output_nc = extract_output_nc(model_config)
+        super().__init__(
+            model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
+        )
+
     def forward(self, data):
         """ This method does a forward on the Unet
 
@@ -109,26 +134,21 @@ class RSConvEncoder(RSConvBase):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
+        if self.has_mlp_head:
+            data.x = self.mlp(data.x)
         return data
 
 
 class RSConvUnet(RSConvBase):
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        super(RSConvUnet, self).__init__(model_config, model_type, dataset, modules)
-
-        self._args = args
-        self._kwargs = kwargs
-
-        if self.contains_output_nc:
-            self.mlp = Seq()
-            self.mlp.append(Conv1D(384, self.output_nc, activation=None, bias=True, bn=False))
-
-    @property
-    def output_nc(self):
-        if self.contains_output_nc:
-            return self._kwargs["output_nc"]
-        else:
-            return 384
+        default_output_nc = (
+            model_config.innermost[0].nn[-1]
+            + model_config.innermost[1].nn[-1]
+            + model_config.up_conv.up_conv_nn[-1][-1]
+        )
+        super().__init__(
+            model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
+        )
 
     def forward(self, data):
         """ This method does a forward on the Unet
@@ -158,12 +178,14 @@ class RSConvUnet(RSConvBase):
         data_inner = self.inner_modules[0](data)
         data_inner_2 = self.inner_modules[1](stack_down[3])
 
-        for i in range(len(self.up_modules) - 1):
+        for i in range(len(self.up_modules)):
             data = self.up_modules[i]((queue_up.get(), stack_down.pop()))
             queue_up.put(data)
 
         last_feature = torch.cat(
             [data.x, data_inner.x.repeat(1, 1, data.x.shape[-1]), data_inner_2.x.repeat(1, 1, data.x.shape[-1])], dim=1
         )
-        data.x = self.mlp(last_feature) if self.contains_output_nc else last_feature
+
+        if self.has_mlp_head:
+            data.x = self.mlp(last_feature)
         return data
