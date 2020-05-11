@@ -9,7 +9,7 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.datasets.registration.base3dmatch import Base3DMatch
 from torch_points3d.datasets.registration.utils import PatchExtractor
 from torch_points3d.datasets.registration.utils import tracked_matches
-from torch_points3d.datasets.registration.pair import Pair
+from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
 from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 from torch_points3d.core.data_transform.transforms import GridSampling
@@ -153,6 +153,8 @@ class Patch3DMatch(Base3DMatch):
         if self.transform is not None:
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
+
+        batch = Pair.make_pair(data_source, data_target)
         batch = Pair.make_pair(data_source, data_target)
         batch = batch.contiguous().to(torch.float)
         return batch
@@ -272,7 +274,6 @@ class Fragment3DMatch(Base3DMatch):
 
     def get_fragment(self, idx):
 
-
         match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
         data_source = torch.load(match["path_source"])
         data_target = torch.load(match["path_target"])
@@ -283,7 +284,10 @@ class Fragment3DMatch(Base3DMatch):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
 
-        batch = Pair.make_pair(data_source, data_target)
+        if(hasattr(batch, "multiscale")):
+            batch = MultiScalePair.make_pair(data_source, data_target)
+        else:
+            batch = Pair.make_pair(data_source, data_target)
         if self.is_online_matching:
             new_match = compute_overlap_and_matches(
                 Data(pos=data_source.pos), Data(pos=data_target.pos), self.max_dist_overlap
