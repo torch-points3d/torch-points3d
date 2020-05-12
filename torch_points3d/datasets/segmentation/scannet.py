@@ -11,7 +11,6 @@ import logging
 import numpy as np
 from plyfile import PlyData, PlyElement
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
-from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 import multiprocessing
 from tqdm import tqdm

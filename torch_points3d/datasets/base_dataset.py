@@ -20,6 +20,25 @@ from torch_points3d.utils.colors import COLORS, colored_print
 log = logging.getLogger(__name__)
 
 
+def explode_transform(transforms):
+    """ Returns a flattened list of transform
+    Arguments:
+        transforms {[list | T.Compose]} -- Contains list of transform to be added
+
+    Returns:
+        [list] -- [List of transforms]
+    """
+    out = []
+    if transforms is not None:
+        if isinstance(transforms, Compose):
+            out = transforms.transforms
+        elif isinstance(transforms, list):
+            out = transforms
+        else:
+            raise Exception("transforms should be provided either within a list or a Compose")
+    return out
+
+
 class BaseDataset:
     def __init__(self, dataset_opt):
         self.dataset_opt = dataset_opt
@@ -45,27 +64,6 @@ class BaseDataset:
 
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
-
-    @staticmethod
-    def add_transform(transform_list_to_be_added, out=[]):
-        """[Add transforms to an existing list or not]
-        Arguments:
-            transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
-            out {[type]} -- [Should be a lis]
-
-        Returns:
-            [list] -- [List of transforms]
-        """
-        if out is None:
-            out = []
-        if transform_list_to_be_added is not None:
-            if isinstance(transform_list_to_be_added, Compose):
-                out += transform_list_to_be_added.transforms
-            elif isinstance(transform_list_to_be_added, list):
-                out += transform_list_to_be_added
-            else:
-                raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
-        return out
 
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
@@ -111,8 +109,8 @@ class BaseDataset:
                     continue
                 setattr(obj, new_name, transform)
 
-        inference_transform = BaseDataset.add_transform(obj.pre_transform)
-        inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
+        inference_transform = explode_transform(obj.pre_transform)
+        inference_transform += explode_transform(obj.test_transform)
         obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
     def set_filter(self, dataset_opt):
