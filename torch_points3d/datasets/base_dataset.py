@@ -22,12 +22,13 @@ log = logging.getLogger(__name__)
 
 def explode_transform(transforms):
     """ Returns a flattened list of transform
-        Arguments:
-            transforms {[list | T.Compose]} -- Contains list of transform to be added
+    Arguments:
+        transforms {[list | T.Compose]} -- Contains list of transform to be added
 
-        Returns:
-            [list] -- [List of transforms]
-        """
+    Returns:
+        [list] -- [List of transforms]
+    """
+    out = []
     if transforms is not None:
         if isinstance(transforms, Compose):
             out = transforms.transforms
