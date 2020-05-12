@@ -47,7 +47,7 @@ jobs:
 
       - name: Static cheks with flake8 and mypy
         run: |
-          $HOME/.poetry/bin/poetry run pip install flake8 mypy
+          $HOME/.poetry/bin/poetry run pip install flake8==3.8.1 mypy==0.770
           make staticchecks
 
       - name: Test with unittest
