@@ -80,7 +80,7 @@ class SampledModelNet(InMemoryDataset):
         torch.save(self.process_set("test"), self.processed_paths[1])
 
     def process_set(self, dataset):
-        with open(osp.join(self.raw_dir, "modelnet{}_shape_names.txt".format(self.name, dataset)), "r") as f:
+        with open(osp.join(self.raw_dir, "modelnet{}_shape_names.txt".format(self.name)), "r") as f:
             categories = f.read().splitlines()
             categories = sorted(categories)
         with open(osp.join(self.raw_dir, "modelnet{}_{}.txt".format(self.name, dataset)), "r") as f:
