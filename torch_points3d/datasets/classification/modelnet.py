@@ -118,9 +118,6 @@ class ModelNetDataset(BaseDataset):
         number = dataset_opt.number
         if str(number) not in self.AVAILABLE_NUMBERS:
             raise Exception("Only ModelNet10 and ModelNet40 are available")
-        name = "ModelNet{}".format(number)
-        self._data_path = osp.join(osp.dirname(osp.realpath(__file__)), "..", "data", name)
-
         self.train_dataset = SampledModelNet(
             self._data_path,
             name=str(number),

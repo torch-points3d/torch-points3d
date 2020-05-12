@@ -6,6 +6,8 @@ data:
     number: 10
     pre_transforms:
         - transform: NormalizeScale
+        - transform: GridSampling
+            lparams: [0.02]
     train_transforms:
         - transform: FixedPoints
             lparams: [2048]
