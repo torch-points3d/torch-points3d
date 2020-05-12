@@ -24,7 +24,7 @@ Available Backbones:
 ```bash
 ├─ benchmark               # Output from various benchmark runs
 ├─ conf                    # All configurations for training nad evaluation leave there
-├─ dashboard               # A collection of notebooks that allow result exploration and network debugging
+├─ notebooks               # A collection of notebooks that allow result exploration and network debugging
 ├─ docker                  # Docker image that can be used for inference or training
 ├─ docs                    # All the doc
 ├─ eval.py                 # Eval script
@@ -222,7 +222,7 @@ The data reported below correspond to the part segmentation problem for Shapenet
 
 ## Explore your experiments
 
-We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/dashboard/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 
 ```
 jupyter labextension install @pyviz/jupyterlab_pyviz
