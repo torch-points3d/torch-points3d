@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+### Bugfix
+- Pre transform is being overriden by the inference transform
+
 ## 0.2.1
 ### Added
 - Customizable number of channels at the output of the API models

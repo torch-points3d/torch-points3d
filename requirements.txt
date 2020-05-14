@@ -20,7 +20,7 @@ h5py==2.10.0
 hydra-core==0.11.3
 idna==2.9
 imageio==2.8.0
-importlib-metadata==1.6.0
+importlib-metadata==1.6.0; python_version < "3.8"
 isodate==0.6.0
 joblib==0.14.1
 jsonpatch==1.25
@@ -56,19 +56,20 @@ requests==2.23.0
 requests-oauthlib==1.3.0
 rsa==4.0
 scikit-image==0.16.2
-scikit-learn==0.22.2.post1
+scikit-learn==0.23.0
 scipy==1.4.1
-sentry-sdk==0.14.3
+sentry-sdk==0.14.4
 shortuuid==1.0.1
 six==1.14.0
 smmap==3.0.4
 subprocess32==3.5.4
 tensorboard==2.2.1
 tensorboard-plugin-wit==1.6.0.post3
+threadpoolctl==2.0.0
 torch==1.3.1
 torch-cluster==1.4.5
 torch-geometric==1.3.2
-torch-points-kernels==0.6.0
+torch-points-kernels==0.6.1
 torch-scatter==1.4.0
 torch-sparse==0.4.3
 torchfile==0.1.0
@@ -78,7 +79,7 @@ tornado==6.0.4
 tqdm==4.46.0
 urllib3==1.25.9
 visdom==0.1.8.9
-wandb==0.8.35
+wandb==0.8.36
 watchdog==0.10.2
 websocket-client==0.57.0
 werkzeug==1.0.1

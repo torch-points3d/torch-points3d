@@ -84,6 +84,7 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(str(dataset.test_transform), str(T.Compose([T3d.AddOnes()])))
         self.assertEqual(str(dataset.train_transform), str(T.Compose([T3d.RandomSymmetry()])))
         self.assertEqual(str(dataset.val_transform), str(T.Compose([T3d.Jitter()])))
+        self.assertEqual(str(dataset.inference_transform), str(T.Compose([T3d.RandomNoise(), T3d.AddOnes()])))
         self.assertEqual(dataset.train_dataset, None)
         self.assertEqual(dataset.test_dataset, None)
         self.assertEqual(dataset.val_dataset, None)
