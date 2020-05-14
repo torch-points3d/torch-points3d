@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
+import copy
 
 from torch_points3d.models import model_interface
 from torch_points3d.core.data_transform import instantiate_transforms, MultiScaleTransform
@@ -31,9 +32,9 @@ def explode_transform(transforms):
     out = []
     if transforms is not None:
         if isinstance(transforms, Compose):
-            out = transforms.transforms
+            out = copy.deepcopy(transforms.transforms)
         elif isinstance(transforms, list):
-            out = transforms
+            out = copy.deepcopy(transforms)
         else:
             raise Exception("transforms should be provided either within a list or a Compose")
     return out

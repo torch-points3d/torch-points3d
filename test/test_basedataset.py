@@ -1,11 +1,12 @@
 import unittest
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 import os
 import sys
 from glob import glob
 import torch
 import numpy as np
 from torch_geometric.data.data import Data
+import torch_geometric.transforms as T
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
@@ -17,6 +18,7 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.utils.enums import ConvolutionFormat
+import torch_points3d.core.data_transform as T3d
 
 
 class Options:
@@ -72,13 +74,16 @@ class TestDataset(unittest.TestCase):
         opt = Options()
         opt.dataset_name = os.path.join(os.getcwd(), "test")
         opt.dataroot = os.path.join(os.getcwd(), "test")
-
+        opt.pre_transform = [DictConfig({"transform": "RandomNoise"})]
+        opt.test_transform = [DictConfig({"transform": "AddOnes"})]
+        opt.val_transform = [DictConfig({"transform": "Jitter"})]
+        opt.train_transform = [DictConfig({"transform": "RandomSymmetry"})]
         dataset = BaseDataset(opt)
 
-        self.assertEqual(dataset.pre_transform, None)
-        self.assertEqual(dataset.test_transform, None)
-        self.assertEqual(dataset.train_transform, None)
-        self.assertEqual(dataset.val_transform, None)
+        self.assertEqual(str(dataset.pre_transform), str(T.Compose([T3d.RandomNoise()])))
+        self.assertEqual(str(dataset.test_transform), str(T.Compose([T3d.AddOnes()])))
+        self.assertEqual(str(dataset.train_transform), str(T.Compose([T3d.RandomSymmetry()])))
+        self.assertEqual(str(dataset.val_transform), str(T.Compose([T3d.Jitter()])))
         self.assertEqual(dataset.train_dataset, None)
         self.assertEqual(dataset.test_dataset, None)
         self.assertEqual(dataset.val_dataset, None)
@@ -190,7 +195,7 @@ class TestDataset(unittest.TestCase):
         mock_base_dataset.get_dataset("testos")
 
         with self.assertRaises(ValueError):
-            mock_base_dataset.test_dataset = [test_with_name,test_with_name]
+            mock_base_dataset.test_dataset = [test_with_name, test_with_name]
 
 
 class TestBatchCollate(unittest.TestCase):
