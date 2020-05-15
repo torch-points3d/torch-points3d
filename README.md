@@ -12,9 +12,10 @@ The framework allows lean and yet complex model to be built with minimum effort 
 
 [Secondary repo](https://github.com/tchaton/torch-points3d-templates) containing code templates for [Pytorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) and [FastAI](https://github.com/fastai/fastai) framework.
 
-For Pytorch Lightning, you will find a script running a point cloud classifier with several bakcbones  on ModelNet `under 100 lines`.
+For Pytorch Lightning, you will find a script running a point cloud classifier with several bakcbones on ModelNet `under 100 lines`.
 
 Available Backbones:
+
 - `KPConv`,
 - `PointNet2`
 - `RSconv`
@@ -24,7 +25,7 @@ Available Backbones:
 ```bash
 ├─ benchmark               # Output from various benchmark runs
 ├─ conf                    # All configurations for training nad evaluation leave there
-├─ notebooks               # A collection of notebooks that allow result exploration and network debugging
+├─ notebooks               # A collection of examples notebooks for using API and easy data exploration
 ├─ docker                  # Docker image that can be used for inference or training
 ├─ docs                    # All the doc
 ├─ eval.py                 # Eval script
@@ -207,16 +208,16 @@ pointnet2_onehot:
 
 ## S3DIS 1x1
 
-| Model Name                                                           | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
-| -------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
+| Model Name                                                                                                                        | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
 | [`pointnet2_original`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/s3dis_fold5/Pointnet2_original.md) | 3,026,829 | 04:29 / 01:07(RTX 2060) | 0.0512        | 85.26 | 45.58 | 73.11 |
 
 ## Shapenet part segmentation
 
 The data reported below correspond to the part segmentation problem for Shapenet for all categories. We report against mean instance IoU and mean class IoU (average of the mean instance IoU per class)
 
-| Model Name                                                            | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
-| --------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
+| Model Name                                                                                                                         | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
 | [`pointnet2_charlesmsg`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes         | 1,733,946 | 15:07 / 01:20 (K80)     | 0.089         | 82.1   | 85.1  |
 | [`RSCNN_MSG`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/rscnn_original.md)                  | No          | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04          | 82.811 | 85.3  |
 
