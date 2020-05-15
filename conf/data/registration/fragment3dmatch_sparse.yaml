@@ -25,18 +25,12 @@ data:
       params:
         sigma: 0.005
         clip: 0.05
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 0
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 1
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 2
+    - transform: Random3AxisRotation
+        params:
+          apply_rotation: True
+          rot_x: 180
+          rot_y: 180
+          rot_z: 180
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
@@ -61,18 +55,12 @@ data:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 0
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 1
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 2
+    - transform: Random3AxisRotation
+        params:
+          apply_rotation: True
+          rot_x: 180
+          rot_y: 180
+          rot_z: 180
     - transform: XYZFeature
       params:
         add_x: True

@@ -1,9 +1,10 @@
 import logging
+import torch
 import torch.nn.functional as F
 from typing import Any
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.models.base_architectures import BackboneBasedModel
-
+from torch_points3d.models.base_model import BaseModel
 from torch_points3d.core.common_modules.dense_modules import Conv1D
 from torch_points3d.core.common_modules.base_modules import Seq
 
@@ -71,3 +72,73 @@ class PatchSiamese(BackboneBasedModel):
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
         self.loss_reg.backward()  # calculate gradients of network G w.r.t. loss_G
+
+
+class FragmentBaseModel(BaseModel):
+    def __init__(self, option):
+        BaseModel.__init__(self, option)
+
+    def set_input(self, data, device):
+        raise NotImplementedError("need to define set_input")
+
+    def compute_loss_match(self):
+        if hasattr(self, "xyz"):
+            xyz = self.xyz
+            xyz_target = self.xyz_target
+        else:
+            xyz = self.input.pos
+            xyz_target = self.input_target.pos
+        self.loss_reg = self.metric_loss_module(self.output, self.output_target, self.match[:, :2], xyz, xyz_target)
+        self.loss = self.loss_reg
+
+    def compute_loss_label(self):
+        """
+        compute the loss separating the miner and the loss
+        each point correspond to a labels
+        """
+        output = torch.cat([self.output[self.match[:, 0]], self.output_target[self.match[:, 1]]], 0)
+        rang = torch.arange(0, len(self.match), dtype=torch.long, device=self.match.device)
+        labels = torch.cat([rang, rang], 0)
+        hard_pairs = None
+        if self.miner_module is not None:
+            hard_pairs = self.miner_module(output, labels)
+        # loss
+        self.loss_reg = self.metric_loss_module(output, labels, hard_pairs)
+        self.loss = self.loss_reg
+
+    def compute_loss(self):
+        if self.mode == "match":
+            self.compute_loss_match()
+        elif self.mode == "label":
+            self.compute_loss_label()
+        else:
+            raise NotImplementedError("The mode for the loss is incorrect")
+
+    def apply_nn(self, input):
+        raise NotImplementedError("Model still not defined")
+
+    def forward(self):
+        self.output = self.apply_nn(self.input)
+        if self.match is None:
+            return self.output
+
+        self.output_target = self.apply_nn(self.input_target)
+        self.compute_loss()
+
+        return self.output
+
+    def backward(self):
+        if hasattr(self, "loss"):
+            self.loss.backward()
+
+    def get_output(self):
+        if self.match is not None:
+            return self.output, self.output_target
+        else:
+            return self.output, None
+
+    def get_batch(self):
+        raise NotImplementedError("Need to define get_batch")
+
+    def get_input(self):
+        raise NotImplementedError("Need to define get_input")

@@ -7,14 +7,12 @@ import logging
 
 from torch_points3d.core.losses import *
 from torch_points3d.modules.pointnet2 import *
-from torch_points3d.core.base_conv.dense import DenseFPModule
 from torch_points3d.core.common_modules import MLP
 from torch_points3d.models.base_architectures import BackboneBasedModel
-from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
-from torch_points3d.models.registration.base import create_batch_siamese
 from torch_points3d.models.base_architectures import UnetBasedModel
 from torch_points3d.core.common_modules.dense_modules import Conv1D
 from torch_points3d.core.common_modules.base_modules import Seq
+from torch_points3d.models.registration.base import FragmentBaseModel
 
 log = logging.getLogger(__name__)
 
@@ -100,7 +98,7 @@ class PatchPointNet2_D(BackboneBasedModel):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
-class FragmentPointNet2_D(UnetBasedModel):
+class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
 
     r"""
         PointNet2 with multi-scale grouping
@@ -167,27 +165,6 @@ class FragmentPointNet2_D(UnetBasedModel):
         else:
             self.match = None
 
-    def compute_loss_match(self):
-        self.loss_reg = self.metric_loss_module(
-            self.output, self.output_target, self.match[:, :2], self.input.pos, self.input_target.pos
-        )
-        self.loss = self.loss_reg
-
-    def compute_loss_label(self):
-        """
-        compute the loss separating the miner and the loss
-        each point correspond to a labels
-        """
-        output = torch.cat([self.output[self.match[:, 0]], self.output_target[self.match[:, 1]]], 0)
-        rang = torch.arange(0, len(self.match), dtype=torch.long, device=self.match.device)
-        labels = torch.cat([rang, rang], 0)
-        hard_pairs = None
-        if self.miner_module is not None:
-            hard_pairs = self.miner_module(output, labels)
-        # loss
-        self.loss_reg = self.metric_loss_module(output, labels, hard_pairs)
-        self.loss = self.loss_reg
-
     def apply_nn(self, input):
         last_feature = self.model(input).x
         output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self.out_channels))
@@ -195,34 +172,6 @@ class FragmentPointNet2_D(UnetBasedModel):
             return output / (torch.norm(output, p=2, dim=1, keepdim=True) + 1e-5)
         else:
             return output
-
-    def forward(self):
-        self.output = self.apply_nn(self.input)
-        if self.match is None:
-            return self.output
-
-        self.output_target = self.apply_nn(self.input_target)
-        if self.mode == "match":
-            self.compute_loss_match()
-        elif self.mode == "label":
-            self.compute_loss_label()
-        else:
-            raise NotImplementedError("The mode for the loss is incorrect")
-
-        return self.output
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        if hasattr(self, "loss"):
-            self.loss.backward()
-
-    def get_output(self):
-        if self.match is not None:
-            return self.output, self.output_target
-        else:
-            return self.output
 
     def get_input(self):
         if self.match is not None:
@@ -251,4 +200,4 @@ class FragmentPointNet2_D(UnetBasedModel):
             )
             return batch, batch_target
         else:
-            return None
+            return None, None

@@ -219,67 +219,19 @@ class FragmentKPConv(UnwrappedUnetBasedModel):
         else:
             return output
 
-    def forward(self) -> Any:
-        """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        self.output = self.apply_nn(self.input, self.pre_computed, self.upsample)
-        if self.match is None:
-            return self.output
-
-        self.output_target = self.apply_nn(self.input_target, self.pre_computed_target, self.upsample_target)
-        self.compute_loss()
-        # self.data_visual = self.input
-        # self.data_visual.pred = torch.max(self.output, -1)[1]
-        return self.output
-
-    def compute_loss_match(self):
-        return self.metric_loss_module(
-            self.output, self.output_target, self.match[:, :2], self.input.pos, self.input_target.pos
-        )
-
-    def compute_loss_label(self):
-        """
-        compute the loss separating the miner and the loss
-        each point correspond to a labels
-        """
-        output = torch.cat([self.output[self.match[:, 0]], self.output_target[self.match[:, 1]]], 0)
-        rang = torch.arange(0, len(self.match), dtype=torch.long, device=self.match.device)
-        labels = torch.cat([rang, rang], 0)
-        hard_pairs = None
-        if self.miner_module is not None:
-            hard_pairs = self.miner_module(output, labels)
-        # loss
-        return self.metric_loss_module(output, labels, hard_pairs)
-
     def compute_loss(self):
         self.loss = 0
 
-        # Get regularization on weights
-        if self.lambda_reg:
-            self.loss_regul = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
-            self.loss += self.loss_regul
-
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
-            self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+            self.loss_internal = self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+            self.loss += self.loss_internal
 
         if self.mode == "match":
             self.loss_reg = self.compute_loss_match()
         elif self.mode == "label":
             self.loss_reg = self.compute_loss_label()
         self.loss += self.loss_reg
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        if hasattr(self, "loss"):
-            self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
-
-    def get_output(self):
-        if self.match is not None:
-            return self.output, self.output_target
-        else:
-            return self.output
 
     def get_batch(self):
         if self.match is not None:
