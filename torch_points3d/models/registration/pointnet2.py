@@ -218,25 +218,22 @@ class FragmentPointNet2_D(UnetBasedModel):
         if hasattr(self, "loss"):
             self.loss.backward()
 
-    def get_outputs(self):
+    def get_output(self):
         if self.match is not None:
             return self.output, self.output_target
         else:
             return self.output
 
-    def get_ind(self):
+    def get_input(self):
         if self.match is not None:
-            return self.match[:, 0], self.match[:, 1], self.size_match
+            input = Data(pos=self.input.pos.view(-1, 3), ind=self.match[:, 0], size=self.size_match)
+            input_target = Data(pos=self.input_target.pos.view(-1, 3), ind=self.match[:, 1], size=self.size_match)
+            return input, input_target
         else:
-            return None
+            input = Data(pos=self.input.pos.view(-1, 3))
+            return input
 
-    def get_xyz(self):
-        if self.match is not None:
-            return self.input.pos.view(-1, 3), self.input_target.pos.view(-1, 3)
-        else:
-            return self.input.pos.view(-1, 3)
-
-    def get_batch_idx(self):
+    def get_batch(self):
         if self.match is not None:
             batch = (
                 torch.arange(0, self.input.pos.shape[0])
