@@ -9,7 +9,7 @@ models:
     define_constants:
       in_grid_size: ${data.first_subsampling}
       in_feat: 64
-      bn_momentum: 0.98
+      bn_momentum: 0.02
     down_conv:
       down_conv_nn:
         [
