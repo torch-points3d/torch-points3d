@@ -16,6 +16,7 @@ from torch_points3d.core.common_modules import MLP
 from torch_points3d.core.common_modules import FastBatchNorm1d
 from torch_points3d.core.base_conv.partial_dense import *
 
+from torch_points3d.models.registration.base import FragmentBaseModel
 from torch_points3d.models.base_architectures import BackboneBasedModel
 from torch_points3d.models.registration.base import create_batch_siamese
 from torch_points3d.models.base_model import BaseModel
@@ -124,7 +125,7 @@ class PatchKPConv(BackboneBasedModel):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
-class FragmentKPConv(UnwrappedUnetBasedModel):
+class FragmentKPConv(UnwrappedUnetBasedModel, FragmentBaseModel):
     def __init__(self, option, model_type, dataset, modules):
         # Extract parameters from the dataset
         # Assemble encoder / decoder
