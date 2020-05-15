@@ -43,3 +43,7 @@ RUN git clone https://github.com/StanfordVL/MinkowskiEngine.git /tmp/ME \
     && cd /tmp/ME \
     && export VENV=`cat /python_path` \
     && $VENV/bin/python setup.py install --cpu_only
+
+RUN apt-get update \
+    && apt-get install -y --fix-missing --no-install-recommends\
+    xvfb libgl1-mesa-glx

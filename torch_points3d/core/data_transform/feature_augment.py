@@ -3,6 +3,7 @@ import torch
 
 # Those Transformation are adapted from https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/lib/transforms.py
 
+
 class NormalizeRGB(object):
     """Normalize rgb between 0 and 1
 
@@ -17,11 +18,11 @@ class NormalizeRGB(object):
     def __call__(self, data):
         assert hasattr(data, "rgb")
         if not (data.rgb.max() <= 1 and data.rgb.min() >= 0):
-            data.rgb = data.rgb.float() / 255.
+            data.rgb = data.rgb.float() / 255.0
         return data
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self._normalize)
+        return "{}({})".format(self.__class__.__name__, self._normalize)
 
 
 class ChromaticTranslation(object):
@@ -47,6 +48,7 @@ class ChromaticTranslation(object):
     def __repr__(self):
         return "{}(trans_range_ratio={})".format(self.__class__.__name__, self.trans_range_ratio)
 
+
 class ChromaticAutoContrast(object):
     """ Rescale colors between 0 and 1 to enhance contrast
 
@@ -69,7 +71,7 @@ class ChromaticAutoContrast(object):
             feats = data.rgb
             lo = feats.min(0, keepdims=True)[0]
             hi = feats.max(0, keepdims=True)[0]
-            assert hi.max() > 0, f"invalid color value. Color is supposed to be [0-255]"
+            assert hi.max() > 0, "invalid color value. Color is supposed to be [0-255]"
 
             scale = 1.0 / (hi - lo)
 
@@ -147,12 +149,14 @@ class Jitter:
     p: float
         probability of noise
     """
+
     def __init__(self, mu=0, sigma=0.01, p=0.95):
         self.mu = mu
         self.sigma = sigma
         self.p = p
+
     def __call__(self, data):
-        if(random.random() < self.p):
+        if random.random() < self.p:
             data.x += torch.randn_like(data.x) * self.sigma + self.mu
         return data
 

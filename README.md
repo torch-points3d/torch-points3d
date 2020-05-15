@@ -2,7 +2,7 @@
   <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
 </p>
 
-[![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) and [Facebook Hydra](https://hydra.cc/).
 
@@ -24,7 +24,7 @@ Available Backbones:
 ```bash
 ├─ benchmark               # Output from various benchmark runs
 ├─ conf                    # All configurations for training nad evaluation leave there
-├─ dashboard               # A collection of notebooks that allow result exploration and network debugging
+├─ notebooks               # A collection of notebooks that allow result exploration and network debugging
 ├─ docker                  # Docker image that can be used for inference or training
 ├─ docs                    # All the doc
 ├─ eval.py                 # Eval script
@@ -222,7 +222,7 @@ The data reported below correspond to the part segmentation problem for Shapenet
 
 ## Explore your experiments
 
-We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/dashboard/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 
 ```
 jupyter labextension install @pyviz/jupyterlab_pyviz
