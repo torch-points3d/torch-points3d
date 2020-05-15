@@ -88,8 +88,8 @@ class FragmentBaseModel(BaseModel):
         else:
             xyz = self.input.pos
             xyz_target = self.input_target.pos
-        self.loss_reg = self.metric_loss_module(self.output, self.output_target, self.match[:, :2], xyz, xyz_target)
-        self.loss = self.loss_reg
+        loss_reg = self.metric_loss_module(self.output, self.output_target, self.match[:, :2], xyz, xyz_target)
+        return loss_reg
 
     def compute_loss_label(self):
         """
@@ -103,14 +103,14 @@ class FragmentBaseModel(BaseModel):
         if self.miner_module is not None:
             hard_pairs = self.miner_module(output, labels)
         # loss
-        self.loss_reg = self.metric_loss_module(output, labels, hard_pairs)
-        self.loss = self.loss_reg
+        loss_reg = self.metric_loss_module(output, labels, hard_pairs)
+        return loss_reg
 
     def compute_loss(self):
         if self.mode == "match":
-            self.compute_loss_match()
+            self.loss = self.compute_loss_match()
         elif self.mode == "label":
-            self.compute_loss_label()
+            self.loss = self.compute_loss_label()
         else:
             raise NotImplementedError("The mode for the loss is incorrect")
 

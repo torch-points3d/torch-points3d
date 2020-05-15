@@ -27,11 +27,11 @@ data:
         sigma: 0.005
         clip: 0.05
     - transform: Random3AxisRotation
-        params:
-          apply_rotation: True
-          rot_x: 180
-          rot_y: 180
-          rot_z: 180
+      params:
+        apply_rotation: True
+        rot_x: 180
+        rot_y: 180
+        rot_z: 180
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
@@ -42,8 +42,8 @@ data:
       lparams: [16384]
     - transform: Center
     - transform: Random3AxisRotation
-        params:
-          apply_rotation: True
-          rot_x: 180
-          rot_y: 180
-          rot_z: 180
+      params:
+        apply_rotation: True
+        rot_x: 180
+        rot_y: 180
+        rot_z: 180

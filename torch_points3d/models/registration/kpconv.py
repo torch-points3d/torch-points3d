@@ -125,7 +125,7 @@ class PatchKPConv(BackboneBasedModel):
             self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
-class FragmentKPConv(UnwrappedUnetBasedModel, FragmentBaseModel):
+class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # Extract parameters from the dataset
         # Assemble encoder / decoder
@@ -220,6 +220,16 @@ class FragmentKPConv(UnwrappedUnetBasedModel, FragmentBaseModel):
         else:
             return output
 
+    def forward(self):
+        self.output = self.apply_nn(self.input, self.pre_computed, self.upsample)
+        if self.match is None:
+            return self.output
+
+        self.output_target = self.apply_nn(self.input_target, self.pre_computed_target, self.upsample_target)
+        self.compute_loss()
+
+        return self.output
+
     def compute_loss(self):
         self.loss = 0
 
@@ -232,6 +242,7 @@ class FragmentKPConv(UnwrappedUnetBasedModel, FragmentBaseModel):
             self.loss_reg = self.compute_loss_match()
         elif self.mode == "label":
             self.loss_reg = self.compute_loss_label()
+
         self.loss += self.loss_reg
 
     def get_batch(self):
