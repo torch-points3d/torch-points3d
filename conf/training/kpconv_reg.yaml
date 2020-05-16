@@ -18,7 +18,7 @@ training:
         bn_scheduler:
             bn_policy: "step_decay"
             params:
-                bn_momentum: 0.98
+                bn_momentum: 0.02
                 bn_decay: 0.9
                 decay_step : 1000
                 bn_clip : 1e-2
@@ -29,13 +29,13 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    project: s3dis
+    project: registration
     log: True
-    notes: "Fixed batch norm to 0.02"
-    name: "kpconv-bn02"
+    notes: "Fixed batch norm to 0.98"
+    name: "kpconv-bn98"
     public: True # It will be display the model within wandb log, else not.
 
 
 # parameters for TensorBoard Visualization
 tensorboard:
-    log: False
+    log: True

@@ -5,22 +5,28 @@ data:
   name: 3DMatch
   is_patch: False
   num_frame_per_fragment: 101
-  max_dist_overlap: 0.05
-  min_overlap_ratio: 0.3
+  max_dist_overlap: 0.04
+  min_overlap_ratio: 0.2
   tsdf_voxel_size: 0.006
   limit_size: 850
   depth_thresh: 4.5
-  first_subsampling: 0.02
+  first_subsampling: 0.03
   is_online_matching: False
   num_pos_pairs: 30000
-  pre_transform:
+  pre_transforms:
     - transform: GridSampling
       params:
         size: ${data.first_subsampling}
+        mode: "mean"
   train_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: False
+        mode: "last"
     - transform: RandomNoise
       params:
         sigma: 0.005
@@ -34,16 +40,6 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -55,22 +51,17 @@ data:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
+    - transform: GridSampling
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: False
+        mode: "last"
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
         rot_x: 180
         rot_y: 180
         rot_z: 180
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
