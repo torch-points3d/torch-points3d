@@ -32,8 +32,3 @@ class BaseSiameseDataset(BaseDataset):
             return lambda datalist: DensePairBatch.from_data_list(datalist)
         else:
             return lambda datalist: PairBatch.from_data_list(datalist)
-
-    def set_strategies(self, model):
-        strategies = model.get_spatial_ops()
-        transform = PairTransform(MultiScaleTransform(strategies))
-        self._set_multiscale_transform(transform)
