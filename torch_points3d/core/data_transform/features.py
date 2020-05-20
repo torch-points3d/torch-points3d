@@ -1,5 +1,5 @@
 from typing import List, Optional
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import itertools
 import numpy as np
 import math

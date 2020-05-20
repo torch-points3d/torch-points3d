@@ -7,7 +7,7 @@ import torch
 from torch_geometric.data import Data
 from torch_points_kernels.points_cpu import ball_query
 import imageio
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from torch_points3d.core.data_transform import GridSampling, SaveOriginalPosId
 from torch_geometric.transforms import Compose

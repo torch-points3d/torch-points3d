@@ -14,7 +14,7 @@ from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors, KDTree
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import csv
 import pandas as pd
 import pickle

@@ -5,14 +5,16 @@ on: [pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.6
+            python-version: ${{ matrix.python-version }}
 
       - name: Install poetry
         run: |
@@ -26,7 +28,7 @@ jobs:
         id: cache
         with:
           path: /home/runner/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'

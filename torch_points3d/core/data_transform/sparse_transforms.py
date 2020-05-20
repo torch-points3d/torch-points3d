@@ -7,7 +7,7 @@ import re
 import torch
 import scipy
 import random
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial

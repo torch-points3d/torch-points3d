@@ -2,7 +2,6 @@ import os
 import os.path as osp
 import shutil
 import json
-from tqdm import tqdm as tq
 import torch
 from glob import glob
 import sys
@@ -13,7 +12,6 @@ from plyfile import PlyData, PlyElement
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 import torch_geometric.transforms as T
 import multiprocessing
-from tqdm import tqdm
 import pandas as pd
 
 import tempfile
