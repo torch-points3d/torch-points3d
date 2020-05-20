@@ -12,17 +12,22 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install -U pip
-RUN pip3 install setuptools poetry
+RUN python3 -m pip install -U pip \
+    && python3 -m pip install -U pip \
+    && pip3 install setuptools>=41.0.0 \
+    && pip3 install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
+    && rm -rf /root/.cache
 
-COPY pyproject.toml .
-COPY poetry.lock .
+COPY pyproject.toml pyproject.toml
+COPY torch_points3d/__init__.py torch_points3d/__init__.py
+COPY README.md README.md
 
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-dev --no-root && rm -rf /root/.cache
+RUN pip3 install . && rm -rf /root/.cache
 
 RUN git clone https://github.com/StanfordVL/MinkowskiEngine.git /tmp/ME \
     && cd /tmp/ME \
-    && python3 setup.py install --cpu_only
+    && $PYTHON setup.py install --cpu_only \
+    && rm -rf /root/.cache && rm -rf /tmp/ME
 
 ARG MODEL=""
 ENV WORKDIR=/dpb

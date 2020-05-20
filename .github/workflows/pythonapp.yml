@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7]
     steps:
       - uses: actions/checkout@v2
 
@@ -16,10 +16,6 @@ jobs:
         with:
             python-version: ${{ matrix.python-version }}
 
-      - name: Install poetry
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-
       - name: Install system dependencies
         run: sudo apt-get install libopenblas-dev
 
@@ -27,12 +23,16 @@ jobs:
         uses: actions/cache@v1
         id: cache
         with:
-          path: /home/runner/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: $HOME/.poetry/bin/poetry install --no-dev -vvv --no-root
+        run: |
+          python -m pip install -U pip
+          pip install setuptools>=41.0.0
+          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install .
 
       - name: Checkout tools repo
         uses: actions/checkout@v2
@@ -44,19 +44,19 @@ jobs:
       - name: Add Minkowski Engine
         run: |
           cd MinkowskiEngine
-          $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
+          python setup.py install --cpu_only
           cd .. && rm -rf MinkowskiEngine
 
       - name: Static cheks with flake8 and mypy
         run: |
-          $HOME/.poetry/bin/poetry run pip install flake8==3.8.1 mypy==0.770
+          pip install flake8==3.8.1 mypy==0.770
           make staticchecks
 
       - name: Test with unittest
         run: |
-          $HOME/.poetry/bin/poetry run pip install coverage
-          $HOME/.poetry/bin/poetry run coverage run -m unittest -v
-          $HOME/.poetry/bin/poetry run coverage xml
+          pip install coverage
+          coverage run -m unittest -v
+          coverage xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

@@ -222,7 +222,7 @@ description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
 name = "codecov"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.1.0"
+version = "2.1.1"
 
 [package.dependencies]
 coverage = "*"
@@ -2010,8 +2010,8 @@ category = "main"
 description = "PyTorch Extension Library of Optimized Graph Cluster Algorithms"
 name = "torch-cluster"
 optional = false
-python-versions = "*"
-version = "1.4.5"
+python-versions = ">=3.6"
+version = "1.5.4"
 
 [package.dependencies]
 scipy = "*"
@@ -2021,20 +2021,23 @@ category = "main"
 description = "Geometric Deep Learning Extension Library for PyTorch"
 name = "torch-geometric"
 optional = false
-python-versions = "*"
-version = "1.3.2"
+python-versions = ">=3.6"
+version = "1.4.3"
 
 [package.dependencies]
 googledrivedownloader = "*"
 h5py = "*"
 networkx = "*"
+numba = "*"
 numpy = "*"
 pandas = "*"
 plyfile = "*"
 rdflib = "*"
 requests = "*"
+scikit-image = "*"
 scikit-learn = "*"
 scipy = "*"
+torch = "*"
 
 [[package]]
 category = "main"
@@ -2052,16 +2055,16 @@ category = "main"
 description = "PyTorch Extension Library of Optimized Scatter Operations"
 name = "torch-scatter"
 optional = false
-python-versions = "*"
-version = "1.4.0"
+python-versions = ">=3.6"
+version = "2.0.4"
 
 [[package]]
 category = "main"
 description = "PyTorch Extension Library of Optimized Autograd Sparse Matrix Operations"
 name = "torch-sparse"
 optional = false
-python-versions = "*"
-version = "0.4.3"
+python-versions = ">=3.6"
+version = "0.6.3"
 
 [package.dependencies]
 scipy = "*"
@@ -2220,10 +2223,7 @@ description = "VTK is an open-source toolkit for 3D computer graphics, image pro
 name = "vtk"
 optional = false
 python-versions = "*"
-version = "9.0.0"
-
-[package.extras]
-numpy = ["numpy (>=1.9)"]
+version = "8.1.2"
 
 [[package]]
 category = "main"
@@ -2343,7 +2343,7 @@ testing = ["jaraco.itertools", "func-timeout"]
 MinkowskiEngine = ["MinkowskiEngine"]
 
 [metadata]
-content-hash = "6af8da6178dae439560ace5d905815ec8a750f94643e0472185d2c9b622046f4"
+content-hash = "079035b1f0d2481a74e948712cf54f345c5426d359186d5bf63071fde3dcc6c7"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -2426,7 +2426,7 @@ click = [
     {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
 ]
 codecov = [
-    {file = "codecov-2.1.0.tar.gz", hash = "sha256:43ad6cb3e7de073d911aa3ab6a754db88d270fcb0e0d8e2062b964098a51d69b"},
+    {file = "codecov-2.1.1.tar.gz", hash = "sha256:520ab0ef447d695a9f71e83f9fa65eedbd2d6d1022ff88836e27b9eb82fbdc7b"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
@@ -3430,19 +3430,19 @@ torch = [
     {file = "torch-1.4.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:504915c6bc6051ba6a4c2a43c446463dff04411e352f1e26fe13debeae431778"},
 ]
 torch-cluster = [
-    {file = "torch_cluster-1.4.5.tar.gz", hash = "sha256:cf5b9363d82173bb26bb966ba93712c3262765a3a4d25c003479732a9260c257"},
+    {file = "torch_cluster-1.5.4.tar.gz", hash = "sha256:000f217e6bb2ef89e2403b27fe7c4b2c1f7fbacf781790b194f712b46d648a0c"},
 ]
 torch-geometric = [
-    {file = "torch_geometric-1.3.2.tar.gz", hash = "sha256:4471cf36a7c01f2e8d8df4b69d3bf6d5f8aa182570484cd716b5920d693eb900"},
+    {file = "torch_geometric-1.4.3.tar.gz", hash = "sha256:51369ad28a632a135e7eadc649e39a714107a338ff00b8d5f62ddc9f8c3a2010"},
 ]
 torch-points-kernels = [
     {file = "torch-points-kernels-0.6.3.tar.gz", hash = "sha256:5b44bfd02a5eea581d12dea2d3c644df72540baa6d8695987bfdcaa933b9b20b"},
 ]
 torch-scatter = [
-    {file = "torch_scatter-1.4.0.tar.gz", hash = "sha256:5999ef256154e5a99445118c1a53f95cf0f95ef7b5cd8d3b256101125479cc2e"},
+    {file = "torch_scatter-2.0.4.tar.gz", hash = "sha256:db6c9eca919b86f3eb6102dd0e1215af72e39ed3a4e8d142e6a21d3f20d5c244"},
 ]
 torch-sparse = [
-    {file = "torch_sparse-0.4.3.tar.gz", hash = "sha256:87b63cb21f091b450271e75d42280c9ef165d61e6ae6dcb983ad2caedfd6eb0f"},
+    {file = "torch_sparse-0.6.3.tar.gz", hash = "sha256:2d2bb488e14207187f9856d2a9349851e7a3cc37d0f5cf7c7ed930d0fc8c7531"},
 ]
 torchfile = [
     {file = "torchfile-0.1.0.tar.gz", hash = "sha256:a53dfe134b737845a9f2cb24fe0585317874f965932cebdb0439d13c8da4136e"},
@@ -3526,14 +3526,17 @@ visdom = [
     {file = "visdom-0.1.8.9.tar.gz", hash = "sha256:c73ad23723c24a48156899f78dd76bd4538eba3edf9120b6c65a9528fa677126"},
 ]
 vtk = [
-    {file = "vtk-9.0.0-cp35-cp35m-macosx_10_9_x86_64.whl", hash = "sha256:e588afcaad2ccbf6ec6f02b78a2b9a1b33ea6f08adf992a197b9d175f07e6f2d"},
-    {file = "vtk-9.0.0-cp35-cp35m-win_amd64.whl", hash = "sha256:95fdf95a69c357ee349c1f32beac61642fd94d6009559633db7dd4e4c20e0b20"},
-    {file = "vtk-9.0.0-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:eb61fe7f3e6c346652720b3056a6b94a01b8d91be1480a9f907035abee074fcf"},
-    {file = "vtk-9.0.0-cp36-cp36m-win_amd64.whl", hash = "sha256:5f98d155c445dd6702730c6a4353631511987a5e768ec406ca41ad1c1bb6cecc"},
-    {file = "vtk-9.0.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:412cf376cba991cb7ee64a6b6b22855066f0b8ad7baa09e85f93b2dc433fdac8"},
-    {file = "vtk-9.0.0-cp37-cp37m-win_amd64.whl", hash = "sha256:a1dfbcd6277063087e41a642e1191c2d104559ca0b1dec9d2b117f3c34f73b20"},
-    {file = "vtk-9.0.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:c0ca8279f1faa49e048e807def14ae1297cbc855c1ba96f956a9563f2d68de83"},
-    {file = "vtk-9.0.0-cp38-cp38-win_amd64.whl", hash = "sha256:a7d4c64f3153384456b520c642b51b3128ffd794bb483ddbca9cd6632c6f703e"},
+    {file = "vtk-8.1.2-cp27-cp27m-macosx_10_6_x86_64.whl", hash = "sha256:ee17372ded18987480e3e07405f9b36fc4e2a0c1da1503628c4980a3957d7c98"},
+    {file = "vtk-8.1.2-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:8c6809a3526c8cf06b921dec06cd672f54baa3a050124f0f19f0adb6cf283aa4"},
+    {file = "vtk-8.1.2-cp35-cp35m-macosx_10_6_x86_64.whl", hash = "sha256:56e73eeba6402ba497a24ebdbe773cadbf01b9f7c12b3a2e26f8b40f203d718e"},
+    {file = "vtk-8.1.2-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:28df91add29d9cdd6c49235b2c65e31ab50c8655c56ad1a5914b605e22554d7d"},
+    {file = "vtk-8.1.2-cp35-cp35m-win_amd64.whl", hash = "sha256:44454f9dd6c41f20b904b41e1ac0dd06cc3367952da1a8d8d3074e1a40dce916"},
+    {file = "vtk-8.1.2-cp36-cp36m-macosx_10_6_x86_64.whl", hash = "sha256:cd68246764412e8f6855e8e73772392aa826b9d6c3d59e7544ce22af1ad7dcc8"},
+    {file = "vtk-8.1.2-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:34b43d32609d81d94a7122e388f7d6a0883138438484d0ee29158726810f6704"},
+    {file = "vtk-8.1.2-cp36-cp36m-win_amd64.whl", hash = "sha256:5c2634afaabd2243c5fbe0f4aa9cff66537cfbcb5d4893e93c31cfce878a413c"},
+    {file = "vtk-8.1.2-cp37-cp37m-macosx_10_6_x86_64.whl", hash = "sha256:110dd7d730584b2e8c13e15f1b245d1b5afb9a6e163223e1fb0e775cec818e92"},
+    {file = "vtk-8.1.2-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:d4d834d29abf98c67a63328c271e82bde3f769cbae295fb91e840bead2298d13"},
+    {file = "vtk-8.1.2-cp37-cp37m-win_amd64.whl", hash = "sha256:e790aed1a776d3682b2c38a5a795a0f46e3043f96ed113a3bbaf7ef5eaaeba08"},
 ]
 wandb = [
     {file = "wandb-0.8.36-py2.py3-none-any.whl", hash = "sha256:d2ac39d2ab1d506a8e8d962905203533533c60c7b83d9798e679edd778ce0503"},

@@ -26,24 +26,29 @@ RUN apt-get update \
     python3-pip python3-dev python3-venv python3-setuptools\
     git iproute2 procps lsb-release \
     libsm6 libxext6 libxrender-dev \
+    xvfb libgl1-mesa-glx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install -U pip
-RUN pip3 install setuptools poetry
+ENV ENV=/py3-torch-points3d
+ENV PYTHON=$ENV/bin/python
+ENV PIP=$ENV/bin/pip
 
-COPY pyproject.toml .
-COPY poetry.lock .
+RUN python3 -m pip install -U pip \
+    && pip3 install virtualenv \
+    && python3 -m venv $ENV \
+    && $PYTHON -m pip install -U pip \
+    && $PIP install setuptools>=41.0.0 \
+    && $PIP install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
+    && rm -rf /root/.cache
 
-RUN poetry install --no-root
-RUN poetry env info --path > /python_path
-RUN cat /python_path
+COPY pyproject.toml pyproject.toml
+COPY torch_points3d/__init__.py torch_points3d/__init__.py
+COPY README.md README.md
+
+RUN $PIP install . && rm -rf /root/.cache
 
 RUN git clone https://github.com/StanfordVL/MinkowskiEngine.git /tmp/ME \
     && cd /tmp/ME \
-    && export VENV=`cat /python_path` \
-    && $VENV/bin/python setup.py install --cpu_only
-
-RUN apt-get update \
-    && apt-get install -y --fix-missing --no-install-recommends\
-    xvfb libgl1-mesa-glx
+    && $PYTHON setup.py install --cpu_only \
+    && rm -rf /root/.cache && rm -rf /tmp/ME
