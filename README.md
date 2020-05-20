@@ -8,16 +8,13 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
-## Torch-Points3d Templates
+## Requirements
 
-[Secondary repo](https://github.com/tchaton/torch-points3d-templates) containing code templates for [Pytorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) and [FastAI](https://github.com/fastai/fastai) framework.
+- CUDA 10 or higher
+- Python 3.6 or higher + headers (python-dev)
+- PyTorch 1.3.1 or higher
+- [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
 
-For Pytorch Lightning, you will find a script running a point cloud classifier with several bakcbones  on ModelNet `under 100 lines`.
-
-Available Backbones:
-- `KPConv`,
-- `PointNet2`
-- `RSconv`
 
 ## Project structure
 
@@ -86,13 +83,7 @@ where each folder contains the dataset related to each task.
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
-## Getting started
-
-### Requirements:
-
-- CUDA > 10
-- Python 3 + headers (python-dev)
-- [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
+## Developer guidelines
 
 ### Setup repo
 

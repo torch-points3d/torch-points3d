@@ -68,7 +68,7 @@ threadpoolctl==2.0.0
 torch==1.4.0
 torch-cluster==1.5.4
 torch-geometric==1.4.3
-torch-points-kernels==0.6.2
+torch-points-kernels==0.6.3
 torch-scatter==1.4.0
 torch-sparse==0.4.4
 torchfile==0.1.0

@@ -580,7 +580,7 @@ description = "IPython Kernel for Jupyter"
 name = "ipykernel"
 optional = false
 python-versions = ">=3.5"
-version = "5.2.1"
+version = "5.3.0"
 
 [package.dependencies]
 appnope = "*"
@@ -2041,11 +2041,11 @@ torch = "*"
 
 [[package]]
 category = "main"
-description = ""
+description = "PyTorch kernels for spatial operations on point clouds"
 name = "torch-points-kernels"
 optional = false
 python-versions = "*"
-version = "0.6.2"
+version = "0.6.3"
 
 [package.dependencies]
 torch = ">=1.1.0"
@@ -2629,8 +2629,8 @@ importlib-resources = [
     {file = "importlib_resources-1.5.0.tar.gz", hash = "sha256:6f87df66833e1942667108628ec48900e02a4ab4ad850e25fbf07cb17cf734ca"},
 ]
 ipykernel = [
-    {file = "ipykernel-5.2.1-py3-none-any.whl", hash = "sha256:003c9c1ab6ff87d11f531fee2b9ca59affab19676fc6b2c21da329aef6e73499"},
-    {file = "ipykernel-5.2.1.tar.gz", hash = "sha256:2937373c356fa5b634edb175c5ea0e4b25de8008f7c194f2d49cfbd1f9c970a8"},
+    {file = "ipykernel-5.3.0-py3-none-any.whl", hash = "sha256:a8362e3ae365023ca458effe93b026b8cdadc0b73ff3031472128dd8a2cf0289"},
+    {file = "ipykernel-5.3.0.tar.gz", hash = "sha256:731adb3f2c4ebcaff52e10a855ddc87670359a89c9c784d711e62d66fccdafae"},
 ]
 ipython = [
     {file = "ipython-7.14.0-py3-none-any.whl", hash = "sha256:5b241b84bbf0eb085d43ae9d46adf38a13b45929ca7774a740990c2c242534bb"},
@@ -3439,7 +3439,7 @@ torch-geometric = [
     {file = "torch_geometric-1.4.3.tar.gz", hash = "sha256:51369ad28a632a135e7eadc649e39a714107a338ff00b8d5f62ddc9f8c3a2010"},
 ]
 torch-points-kernels = [
-    {file = "torch-points-kernels-0.6.2.tar.gz", hash = "sha256:2563788f5f88a92af3660bf0eed98b42047373b4860f4ad64bdc453f16e50246"},
+    {file = "torch-points-kernels-0.6.3.tar.gz", hash = "sha256:5b44bfd02a5eea581d12dea2d3c644df72540baa6d8695987bfdcaa933b9b20b"},
 ]
 torch-scatter = [
     {file = "torch_scatter-1.4.0.tar.gz", hash = "sha256:5999ef256154e5a99445118c1a53f95cf0f95ef7b5cd8d3b256101125479cc2e"},
