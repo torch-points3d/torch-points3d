@@ -31,7 +31,7 @@ jobs:
         run: |
           python -m pip install -U pip
           pip install setuptools>=41.0.0
-          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install torch==1.4.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
           pip install .
 
       - name: Checkout tools repo
@@ -47,7 +47,7 @@ jobs:
           python setup.py install --cpu_only
           cd .. && rm -rf MinkowskiEngine
 
-      - name: Static cheks with flake8 and mypy
+      - name: Static checks with flake8 and mypy
         run: |
           pip install flake8==3.8.1 mypy==0.770
           make staticchecks
