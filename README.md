@@ -12,8 +12,8 @@ The framework allows lean and yet complex model to be built with minimum effort 
 
 - CUDA 10 or higher
 - Python 3.6 or higher + headers (python-dev)
-- PyTorch 1.3.1 or higher
-- [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
+- PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
+- MinkowskiEngine (optional) for [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
 
 
 ## Project structure
@@ -86,18 +86,15 @@ where each folder contains the dataset related to each task.
 ## Developer guidelines
 
 ### Setup repo
-
-Clone the repo to your local machine
-
-Run the following command from the root of the repo
-
+We use [Poetry](https://poetry.eustace.io/) for managing our packages.
+In order to get started, clone this repositories and run the following command from the root of the repo
 ```
 poetry install --no-root
 ```
 
 This will install all required dependencies in a new virtual environment.
 
-Activate it
+Activate the environment
 
 ```bash
 poetry shell
@@ -107,12 +104,6 @@ You can check that the install has been successful by running
 
 ```bash
 python -m unittest -v
-```
-
-or from pypi
-
-```bash
-pip install torch_points3d
 ```
 
 #### [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine)
@@ -138,7 +129,7 @@ export PATH="/usr/local/cuda-10.2/bin:$PATH"
 You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
-poetry install -E MinkowskiEngine --no-root
+poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
 ```
 
 #### Pycuda

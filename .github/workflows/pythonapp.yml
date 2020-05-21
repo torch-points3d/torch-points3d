@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7]
     steps:
       - uses: actions/checkout@v2
 
@@ -32,20 +32,8 @@ jobs:
           python -m pip install -U pip
           pip install setuptools>=41.0.0
           pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
           pip install .
-
-      - name: Checkout tools repo
-        uses: actions/checkout@v2
-        with:
-          repository: StanfordVL/MinkowskiEngine
-          ref: 7087411269605b8cb5b9f61246d474f507ca3781
-          path: MinkowskiEngine
-
-      - name: Add Minkowski Engine
-        run: |
-          cd MinkowskiEngine
-          python setup.py install --cpu_only
-          cd .. && rm -rf MinkowskiEngine
 
       - name: Static checks with flake8 and mypy
         run: |

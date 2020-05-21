@@ -39,7 +39,7 @@ pathtools==0.1.2
 pillow==7.1.2
 plyfile==0.7.2
 promise==2.3
-protobuf==3.12.0
+protobuf==3.12.1
 psutil==5.7.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
