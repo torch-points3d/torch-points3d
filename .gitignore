@@ -30,3 +30,4 @@ dist/*
 .mypy_cache
 lightning_logs
 data
+.tox

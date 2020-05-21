@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]
+        python-version: [3.6, 3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
 
@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: StanfordVL/MinkowskiEngine
-          ref: v0.4.2
+          ref: 7087411269605b8cb5b9f61246d474f507ca3781
           path: MinkowskiEngine
 
       - name: Add Minkowski Engine
