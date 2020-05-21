@@ -14,9 +14,9 @@ sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 import torch_points3d.core.data_transform as cT
 
 
-class TestGridSampling(unittest.TestCase):
+class TestGridSampling3D(unittest.TestCase):
     def setUp(self):
-        self.sampler = cT.GridSampling(0.04)
+        self.sampler = cT.GridSampling3D(0.04)
         num_points = 5
         pos = torch.from_numpy(np.array([[0, 0, 0.01], [0.01, 0, 0], [0, 0.01, 0], [0, 0.01, 0], [0.01, 0, 0.01]]))
         batch = torch.from_numpy(np.zeros(num_points)).long()
@@ -52,14 +52,14 @@ class TestGridSampling(unittest.TestCase):
         data_fragment = torch.load(os.path.join(DIR_PATH, "test_data/fragment_000003.pt"))
 
         sparse = cT.ToSparseInput(0.02)
-        gr = cT.GridSampling(0.02)
+        gr = cT.GridSampling3D(0.02)
 
         self.loop(data_random, gr, sparse, "random")
         self.loop(data_fragment, gr, sparse, "fragment")
 
     def test_quantize(self):
         data_random = Data(pos=torch.randn(100, 3) * 0.1, x=torch.ones((100, 1)))
-        gr = cT.GridSampling(0.2, quantize_coords=True)
+        gr = cT.GridSampling3D(0.2, quantize_coords=True)
         quantized = gr(data_random)
         self.assertEqual(quantized.x.shape[0], quantized.pos.shape[0])
         self.assertEqual(quantized.num_nodes, quantized.pos.shape[0])

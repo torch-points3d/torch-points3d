@@ -12,7 +12,7 @@ data:
     apply_rotation: True
 
     pre_transform:
-      - transform: GridSampling
+      - transform: GridSampling3D
         lparams: [0.02]
 
     train_transform:
@@ -35,7 +35,7 @@ data:
           rot_x: 5
           rot_y: 5
           rot_z: 180
-      - transform: GridSampling
+      - transform: GridSampling3D
         params:
           size: ${data.grid_size}
           quantize_coords: True
@@ -61,7 +61,7 @@ data:
           add_x: False
           add_y: False
           add_z: True
-      - transform: GridSampling
+      - transform: GridSampling3D
         params:
           size: ${data.grid_size}
           quantize_coords: True

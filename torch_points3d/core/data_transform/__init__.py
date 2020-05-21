@@ -41,7 +41,7 @@ if L_intersection_names:
 
 def instantiate_transform(transform_option, attr="transform"):
     """ Creates a transform from an OmegaConf dict such as
-    transform: GridSampling
+    transform: GridSampling3D
         params:
             size: 0.01
     """
@@ -75,7 +75,7 @@ def instantiate_transform(transform_option, attr="transform"):
 
 def instantiate_transforms(transform_options):
     """ Creates a torch_geometric composite transform from an OmegaConf list such as
-    - transform: GridSampling
+    - transform: GridSampling3D
         params:
             size: 0.01
     - transform: NormaliseScale

@@ -5,7 +5,7 @@ from torch.nn import Linear as Lin
 from .kernels import KPConvLayer, KPConvDeformableLayer
 from torch_points3d.core.common_modules.base_modules import BaseModule, FastBatchNorm1d
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder
-from torch_points3d.core.data_transform import GridSampling
+from torch_points3d.core.data_transform import GridSampling3D
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.core.base_conv.message_passing import GlobalBaseModule
 from torch_points3d.core.common_modules.base_modules import Identity
@@ -58,7 +58,7 @@ class SimpleBlock(BaseModule):
 
         is_strided = prev_grid_size != grid_size
         if is_strided:
-            self.sampler = GridSampling(grid_size)
+            self.sampler = GridSampling3D(grid_size)
         else:
             self.sampler = None
 

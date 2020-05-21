@@ -8,7 +8,7 @@ data:
     use_category: True
     pre_transforms:
         - transform: NormalizeScale
-        - transform: GridSampling
+        - transform: GridSampling3D
           params:
               size: ${data.first_subsampling}
 

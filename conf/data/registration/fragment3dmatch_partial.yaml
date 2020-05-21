@@ -14,7 +14,7 @@ data:
   is_online_matching: False
   num_pos_pairs: 30000
   pre_transforms:
-    - transform: GridSampling
+    - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
         mode: "mean"
@@ -22,7 +22,7 @@ data:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
-    - transform: GridSampling
+    - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
         quantize_coords: False
@@ -51,7 +51,7 @@ data:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
-    - transform: GridSampling
+    - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
         quantize_coords: False

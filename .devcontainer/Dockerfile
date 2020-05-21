@@ -42,6 +42,8 @@ RUN python3 -m pip install -U pip \
     && $PIP install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
     && rm -rf /root/.cache
 
+WORKDIR /app
+
 COPY pyproject.toml pyproject.toml
 COPY torch_points3d/__init__.py torch_points3d/__init__.py
 COPY README.md README.md

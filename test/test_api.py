@@ -7,7 +7,7 @@ ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
 
 from test.mockdatasets import MockDatasetGeometric, MockDataset
-from torch_points3d.core.data_transform import GridSampling
+from torch_points3d.core.data_transform import GridSampling3D
 
 seed = 0
 torch.manual_seed(seed)
@@ -30,7 +30,7 @@ class TestAPIUnet(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
@@ -59,7 +59,7 @@ class TestAPIUnet(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
@@ -145,7 +145,7 @@ class TestAPIEncoder(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertFalse(model.has_mlp_head)
@@ -173,7 +173,7 @@ class TestAPIEncoder(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertTrue(model.has_mlp_head)

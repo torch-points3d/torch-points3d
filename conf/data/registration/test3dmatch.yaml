@@ -9,7 +9,7 @@ data:
   num_random_pt: 5000
   is_offline: True
   pre_transforms:
-    - transform: GridSampling
+    - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
   test_transforms:
