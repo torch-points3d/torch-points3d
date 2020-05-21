@@ -52,6 +52,6 @@ RUN $PIP install . && rm -rf /root/.cache
 
 RUN git clone https://github.com/StanfordVL/MinkowskiEngine.git /tmp/ME \
     && cd /tmp/ME \
-    && git checkout 7087411269605b8cb5b9f61246d474f507ca3781
+    && git checkout 7087411269605b8cb5b9f61246d474f507ca3781 \
     && $PYTHON setup.py install --cpu_only \
     && rm -rf /root/.cache && rm -rf /tmp/ME
