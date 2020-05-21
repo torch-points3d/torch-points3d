@@ -10,10 +10,10 @@ The framework allows lean and yet complex model to be built with minimum effort 
 
 ## Requirements
 
-- CUDA 10 or higher
+- CUDA 10 or higher (if you want GPU version)
 - Python 3.6 or higher + headers (python-dev)
 - PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
-- MinkowskiEngine (optional) for [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
+- MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
 
 
 ## Project structure
