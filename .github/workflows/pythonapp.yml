@@ -1,13 +1,17 @@
 name: unittest
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6.10, 3.7.7]
+        python-version: [3.6, 3.7]
     steps:
       - uses: actions/checkout@v2
 
@@ -23,17 +27,23 @@ jobs:
         uses: actions/cache@v1
         id: cache
         with:
-          path: /opt/hostedtoolcache/Python/${{ matrix.python-version }}/x64
+          path: /venv/${{ matrix.python-version }}
           key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install -U pip
-          pip install setuptools>=41.0.0
-          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-          pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
-          pip install .
+          pip install virtualenv
+          python -m venv $pythonEnv
+          $PIP install setuptools>=41.0.0
+          $PIP install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          $PIP install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
+          $PIP install .
+        env:
+          pythonEnv: /venv/${{ matrix.python-version }}
+          PYTHON: $pythonEnv/bin/python
+          PIP: $pythonEnv/bin/python
 
       - name: Static checks with flake8 and mypy
         run: |
@@ -42,9 +52,13 @@ jobs:
 
       - name: Test with unittest
         run: |
-          pip install coverage
-          coverage run -m unittest -v
-          coverage xml
+          $PIP install coverage
+          ${pythonEnv}/bin/coverage run -m unittest -v
+          ${pythonEnv}/bin/coverage xml
+        env:
+          pythonEnv: /venv/${{ matrix.python-version }}
+          PYTHON: ${pythonEnv}/bin/python
+          PIP: ${pythonEnv}/bin/python
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
