@@ -27,7 +27,7 @@ jobs:
         uses: actions/cache@v1
         id: cache
         with:
-          path: /venv/${{ matrix.python-version }}
+          path: ~/${{ matrix.python-version }}
           key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
           $PIP install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
           $PIP install .
         env:
-          pythonEnv: /venv/${{ matrix.python-version }}
+          pythonEnv: ~/${{ matrix.python-version }}
           PYTHON: $pythonEnv/bin/python
           PIP: $pythonEnv/bin/python
 
@@ -56,7 +56,7 @@ jobs:
           ${pythonEnv}/bin/coverage run -m unittest -v
           ${pythonEnv}/bin/coverage xml
         env:
-          pythonEnv: /venv/${{ matrix.python-version }}
+          pythonEnv: ~/${{ matrix.python-version }}
           PYTHON: ${pythonEnv}/bin/python
           PIP: ${pythonEnv}/bin/python
 
