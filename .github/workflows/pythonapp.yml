@@ -42,8 +42,8 @@ jobs:
           $PIP install .
         env:
           pythonEnv: ~/${{ matrix.python-version }}
-          PYTHON: $pythonEnv/bin/python
-          PIP: $pythonEnv/bin/python
+          PYTHON: ${pythonEnv}/bin/python
+          PIP: ${pythonEnv}/bin/python
 
       - name: Static checks with flake8 and mypy
         run: |
