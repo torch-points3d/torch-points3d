@@ -23,7 +23,7 @@ jobs:
         uses: actions/cache@v1
         id: cache
         with:
-          path: ${pythonLocation}
+          path: ${{ pythonLocation }}
           key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
