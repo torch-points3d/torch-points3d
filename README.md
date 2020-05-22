@@ -15,6 +15,12 @@ The framework allows lean and yet complex model to be built with minimum effort 
 - PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
 - MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
 
+Install with
+```bash
+pip install torch
+pip install torch-points3d
+```
+
 
 ## Project structure
 
@@ -279,7 +285,7 @@ When we update the version of Pytorch that is used, the compiled packages need t
 
 This can happen for the following libraries:
 
-- torch-points
+- torch-points-kernels
 - torch-scatter
 - torch-cluster
 - torch-sparse

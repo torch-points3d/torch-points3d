@@ -34,6 +34,7 @@ You can easily install Torch Points3D with ``pip``
 
 .. code-block:: bash
 
+   pip install torch
    pip install torch-points3d
    
 but first make sure that the following dependencies are met
