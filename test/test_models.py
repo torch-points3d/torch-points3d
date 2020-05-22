@@ -14,7 +14,7 @@ from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 from test.utils import test_hasgrad
 
 from torch_points3d.models.model_factory import instantiate_model
-from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling
+from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling3D
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
@@ -66,7 +66,7 @@ class TestModelUtils(unittest.TestCase):
                     return PairMockDataset(features, num_points=2048)
                 if conv_type.lower() == "sparse":
                     tr = Compose(
-                        [XYZFeature(True, True, True), GridSampling(size=0.01, quantize_coords=True, mode="last")]
+                        [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
                     )
                     return PairMockDatasetGeometric(features, transform=tr, num_points=1024)
                 return PairMockDatasetGeometric(features)
@@ -75,7 +75,9 @@ class TestModelUtils(unittest.TestCase):
                     return MockDataset(features, num_points=2048)
                 if conv_type.lower() == "sparse":
                     return MockDatasetGeometric(
-                        features, transform=GridSampling(size=0.01, quantize_coords=True, mode="last"), num_points=1024
+                        features,
+                        transform=GridSampling3D(size=0.01, quantize_coords=True, mode="last"),
+                        num_points=1024,
                     )
                 return MockDatasetGeometric(features)
 
@@ -138,7 +140,9 @@ class TestModelUtils(unittest.TestCase):
 
     def test_siamese_minkowski(self):
         params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
-        transform = Compose([XYZFeature(True, True, True), GridSampling(size=0.01, quantize_coords=True, mode="last")])
+        transform = Compose(
+            [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
+        )
         dataset = PairMockDatasetGeometric(5, transform=transform, num_points=1024, is_pair_ind=True)
         model = instantiate_model(params, dataset)
         d = dataset[0]

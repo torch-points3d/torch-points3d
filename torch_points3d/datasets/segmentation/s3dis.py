@@ -14,7 +14,7 @@ from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors, KDTree
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import csv
 import pandas as pd
 import pickle
@@ -442,7 +442,7 @@ class S3DISSphere(S3DISOriginalFused):
     def __init__(self, root, sample_per_epoch=100, radius=2, *args, **kwargs):
         self._sample_per_epoch = sample_per_epoch
         self._radius = radius
-        self._grid_sphere_sampling = cT.GridSampling(size=radius / 10.0)
+        self._grid_sphere_sampling = cT.GridSampling3D(size=radius / 10.0)
         super().__init__(root, *args, **kwargs)
 
     def __len__(self):

@@ -5,7 +5,7 @@ import math
 import re
 import torch
 import random
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
 from torch.nn import functional as F
@@ -19,7 +19,7 @@ from torch_points3d.datasets.registration.pair import Pair
 from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
-from .grid_transform import group_data, GridSampling, shuffle_data
+from .grid_transform import group_data, GridSampling3D, shuffle_data
 
 
 class RemoveAttributes(object):
@@ -90,7 +90,7 @@ class GridSphereSampling(object):
     radius: float
         Radius of the sphere to be sampled.
     grid_size: float, optional
-        Grid_size to be used with GridSampling to select spheres center. If None, radius will be used
+        Grid_size to be used with GridSampling3D to select spheres center. If None, radius will be used
     delattr_kd_tree: bool, optional
         If True, KDTREE_KEY should be deleted as an attribute if it exists
     center: bool, optional
@@ -102,7 +102,7 @@ class GridSphereSampling(object):
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
         grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
-        self._grid_sampling = GridSampling(size=grid_size if grid_size else self._radius)
+        self._grid_sampling = GridSampling3D(size=grid_size if grid_size else self._radius)
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 

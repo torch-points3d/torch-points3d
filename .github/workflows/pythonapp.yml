@@ -1,22 +1,24 @@
 name: unittest
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7]
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.6
-
-      - name: Install poetry
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+            python-version: ${{ matrix.python-version }}
 
       - name: Install system dependencies
         run: sudo apt-get install libopenblas-dev
@@ -25,36 +27,40 @@ jobs:
         uses: actions/cache@v1
         id: cache
         with:
-          path: /home/runner/.cache/pypoetry/virtualenvs
-          key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          path: /home/runner/.cache/${{ matrix.python-version }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: $HOME/.poetry/bin/poetry install --no-dev -vvv --no-root
-
-      - name: Checkout tools repo
-        uses: actions/checkout@v2
-        with:
-          repository: StanfordVL/MinkowskiEngine
-          ref: v0.4.2
-          path: MinkowskiEngine
-
-      - name: Add Minkowski Engine
         run: |
-          cd MinkowskiEngine
-          $HOME/.poetry/bin/poetry run python setup.py install --cpu_only
-          cd .. && rm -rf MinkowskiEngine
+          python -m pip install -U pip
+          pip install virtualenv
+          python -m venv ${pythonEnv}
+          source ${pythonEnv}/bin/activate
+          python -m pip install -U pip
+          pip install setuptools>=41.0.0
+          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
+          pip install .
+        env:
+          pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
 
-      - name: Static cheks with flake8 and mypy
+      - name: Static checks with flake8 and mypy
         run: |
-          $HOME/.poetry/bin/poetry run pip install flake8==3.8.1 mypy==0.770
+          source ${pythonEnv}/bin/activate
+          pip install flake8==3.8.1 mypy==0.770
           make staticchecks
+        env:
+          pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
 
       - name: Test with unittest
         run: |
-          $HOME/.poetry/bin/poetry run pip install coverage
-          $HOME/.poetry/bin/poetry run coverage run -m unittest -v
-          $HOME/.poetry/bin/poetry run coverage xml
+          source ${pythonEnv}/bin/activate
+          pip install coverage
+          coverage run -m unittest -v
+          coverage xml
+        env:
+          pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

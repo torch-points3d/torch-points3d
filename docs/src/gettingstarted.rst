@@ -5,7 +5,8 @@ Getting Started
 
 You're reading this because the API wasn't cracking it and you would like to extend the framework for your own task or use 
 some of the deeper layers of our codebase. This set of pages will take you from setting up the code for local development 
-all the way to adding a new task or a new dataset to the framework. 
+all the way to adding a new task or a new dataset to the framework.
+For using Torch Points3D as a library please refer to :ref:`this section<index:Install with pip>`.
 
 
 Installation

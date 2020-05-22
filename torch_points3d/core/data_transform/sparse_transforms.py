@@ -7,7 +7,7 @@ import re
 import torch
 import scipy
 import random
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 from torch.nn import functional as F
 from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
@@ -20,7 +20,7 @@ from torch_cluster import grid_cluster
 from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
-from .grid_transform import group_data, GridSampling, shuffle_data
+from .grid_transform import group_data, GridSampling3D, shuffle_data
 
 
 class RemoveDuplicateCoords(object):
@@ -92,7 +92,7 @@ class ToSparseInput(object):
         self._grid_size = grid_size
         self._mode = mode
 
-        self._transform = GridSampling(grid_size, quantize_coords=True, mode=mode)
+        self._transform = GridSampling3D(grid_size, quantize_coords=True, mode=mode)
 
     def _process(self, data):
         return self._transform(data)

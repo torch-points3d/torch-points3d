@@ -8,16 +8,19 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 
-## Torch-Points3d Templates
+## Requirements
 
-[Secondary repo](https://github.com/tchaton/torch-points3d-templates) containing code templates for [Pytorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) and [FastAI](https://github.com/fastai/fastai) framework.
+- CUDA 10 or higher (if you want GPU version)
+- Python 3.6 or higher + headers (python-dev)
+- PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
+- MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
 
-For Pytorch Lightning, you will find a script running a point cloud classifier with several bakcbones  on ModelNet `under 100 lines`.
+Install with
+```bash
+pip install torch
+pip install torch-points3d
+```
 
-Available Backbones:
-- `KPConv`,
-- `PointNet2`
-- `RSconv`
 
 ## Project structure
 
@@ -86,27 +89,18 @@ where each folder contains the dataset related to each task.
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
-## Getting started
-
-### Requirements:
-
-- CUDA > 10
-- Python 3 + headers (python-dev)
-- [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
+## Developer guidelines
 
 ### Setup repo
-
-Clone the repo to your local machine
-
-Run the following command from the root of the repo
-
+We use [Poetry](https://poetry.eustace.io/) for managing our packages.
+In order to get started, clone this repositories and run the following command from the root of the repo
 ```
 poetry install --no-root
 ```
 
 This will install all required dependencies in a new virtual environment.
 
-Activate it
+Activate the environment
 
 ```bash
 poetry shell
@@ -116,12 +110,6 @@ You can check that the install has been successful by running
 
 ```bash
 python -m unittest -v
-```
-
-or from pypi
-
-```bash
-pip install torch_points3d
 ```
 
 #### [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine)
@@ -147,7 +135,7 @@ export PATH="/usr/local/cuda-10.2/bin:$PATH"
 You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
-poetry install -E MinkowskiEngine --no-root
+poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
 ```
 
 #### Pycuda
@@ -297,7 +285,7 @@ When we update the version of Pytorch that is used, the compiled packages need t
 
 This can happen for the following libraries:
 
-- torch-points
+- torch-points-kernels
 - torch-scatter
 - torch-cluster
 - torch-sparse
