@@ -36,25 +36,29 @@ jobs:
           python -m pip install -U pip
           pip install virtualenv
           python -m venv $pythonEnv
-          export PIP=${pythonEnv}/bin/pip
-          ${pythonEnv}/bin/python -m pip install -U pip
-          $PIP install setuptools>=41.0.0
-          $PIP install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-          $PIP install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
-          $PIP install .
+          source ${pythonEnv}/bin/activate
+          python -m pip install -U pip
+          pip install setuptools>=41.0.0
+          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
+          pip install .
         env:
           pythonEnv: ~/${{ matrix.python-version }}
 
       - name: Static checks with flake8 and mypy
         run: |
+          source ${pythonEnv}/bin/activate
           pip install flake8==3.8.1 mypy==0.770
           make staticchecks
+        env:
+          pythonEnv: ~/${{ matrix.python-version }}
 
       - name: Test with unittest
         run: |
-          ${pythonEnv}/bin/pip install coverage
-          ${pythonEnv}/bin/coverage run -m unittest -v
-          ${pythonEnv}/bin/coverage xml
+          source ${pythonEnv}/bin/activate
+          pip install coverage
+          coverage run -m unittest -v
+          coverage xml
         env:
           pythonEnv: ~/${{ matrix.python-version }}
 
