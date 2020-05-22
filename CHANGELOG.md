@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+
+## 1.0.1
+
+### Changed
+- We now support the latest PyTorch
+- Migration to the latest PyTorch Geometric and dependencies
+
+### Bugfixes
+- #273 (support python 3.7)
+
 ## 0.2.2
 ### Bugfix
 - Pre transform is being overriden by the inference transform
