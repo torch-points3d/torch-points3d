@@ -431,7 +431,9 @@ class S3DISOriginalFused(InMemoryDataset):
                 val_data_list[i] = []
                 trainval_data_list[i] = []
                 for data in data_list[i]:
-                    if data.validation_set:
+                    validation_set = data.validation_set
+                    del data.validation_set
+                    if validation_set:
                         val_data_list[i].append(data)
                         trainval_data_list[i].append(data)
                     else:
