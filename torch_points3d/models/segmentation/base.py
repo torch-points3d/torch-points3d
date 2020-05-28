@@ -42,13 +42,13 @@ class Segmentation_MP(UnetBasedModel):
         self.labels = data.y
         self.batch_idx = data.batch
 
-    def forward(self) -> Any:
+    def forward(self, *args, **kwargs) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         data = self.model(self.input)
         x = F.relu(self.lin1(data.x))
-        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.dropout(x, p=self.dropout, training=bool(self.training))
         x = self.lin2(x)
-        x = F.dropout(x, p=self.dropout, training=self.training)
+        x = F.dropout(x, p=self.dropout, training=bool(self.training))
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
 

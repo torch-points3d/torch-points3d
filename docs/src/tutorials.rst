@@ -60,17 +60,16 @@ Start by creating a new file ``torch_points3d/datasets/segmentation/s3dis.py`` w
             )
 
 
-        @staticmethod
-        def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+        def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
             """Factory method for the tracker
 
             Arguments:
-                dataset {[type]}
                 wandb_log - Log using weight and biases
+                tensorboard_log - Log using tensorboard
             Returns:
                 [BaseTracker] -- tracker
             """
-            return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+            return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 Let's explain the code more in details there.
 
@@ -112,17 +111,16 @@ The final step is to associate a metric tracker to your dataset, in this case we
 
 .. code-block:: python
 
-       @staticmethod
-        def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+        def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
             """Factory method for the tracker
 
             Arguments:
-                dataset {[type]}
                 wandb_log - Log using weight and biases
+                tensorboard_log - Log using tensorboard
             Returns:
                 [BaseTracker] -- tracker
             """
-            return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+            return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
 .. _config_ref:
@@ -345,9 +343,9 @@ Here is an example with the ``RSConv`` implementation in ``MESSAGE_TYPE ConvType
 
 .. code-block:: python
 
-   class RSConv(BaseConvolutionDown):
+   class RSConvDown(BaseConvolutionDown):
        def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, *args, **kwargs):
-           super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+           super(RSConvDown, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
            self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
 
@@ -365,7 +363,7 @@ Here is an extract from the model architecture config:
 .. code-block:: yaml
 
    down_conv: # For the encoder part convolution
-       module_name: RSConv # We will be using the RSConv Module
+       module_name: RSConvDown # We will be using the RSConvDown Module
 
        # And provide to each convolution, the associated arguments within a list are selected using the convolution index.
        # For the others, there are just copied for each convolution.

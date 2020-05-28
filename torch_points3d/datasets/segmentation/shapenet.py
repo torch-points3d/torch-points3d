@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import shutil
 import json
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import torch
 
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
@@ -190,6 +190,22 @@ class ShapeNet(InMemoryDataset):
 
 
 class ShapeNetDataset(BaseDataset):
+    """ Wrapper around ShapeNet that creates train and test datasets.
+
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
+
+            - dataroot
+            - category: List of categories or All
+            - normal: bool, include normals or not
+            - pre_transforms
+            - train_transforms
+            - test_transforms
+            - val_transforms
+    """
+
     FORWARD_CLASS = "forward.shapenet.ForwardShapenetDataset"
 
     def __init__(self, dataset_opt):
@@ -230,15 +246,13 @@ class ShapeNetDataset(BaseDataset):
     def is_hierarchical(self):
         return len(self._categories) > 1
 
-    @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            dataset {[type]}
             wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
         Returns:
             [BaseTracker] -- tracker
         """
-        return ShapenetPartTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
-
+        return ShapenetPartTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

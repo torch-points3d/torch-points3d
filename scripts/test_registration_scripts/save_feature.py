@@ -37,17 +37,15 @@ def save(out_path, scene_name, pc_name, data, feature):
     kp = None
     # it must contain keypoints
     if hasattr(data, "keypoints"):
-        kp = data["keypoints"]
+        kp = data.keypoints
     else:
-        kp = np.arange(0, len(feature))
+        kp = None
     out_dir = osp.join(out_path, scene_name)
     if not osp.exists(out_dir):
         os.makedirs(out_dir)
     out_file = osp.join(out_dir, pc_name.split(".")[0] + "_desc.npz")
-    if hasattr(data, "xyz"):
-        pcd = data.xyz.numpy()
-        if hasattr(data, "mask"):
-            kp = np.where(data.mask.numpy())[0]
+    if hasattr(data, "pos_x"):
+        pcd = torch.stack((data.pos_x, data.pos_y, data.pos_z)).T.numpy()
     else:
         pcd = data.pos.numpy()
     np.savez(out_file, pcd=pcd, feat=feature, keypoints=kp)

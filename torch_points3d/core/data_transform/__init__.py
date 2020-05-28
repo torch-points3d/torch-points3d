@@ -12,7 +12,7 @@ from .filters import *
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
 _intersection_names = set(_custom_transforms.__dict__) & set(_torch_geometric_transforms.__dict__)
-_intersection_names = [module for module in _intersection_names if not module.startswith("_")]
+_intersection_names = set([module for module in _intersection_names if not module.startswith("_")])
 L_intersection_names = len(_intersection_names) > 0
 _intersection_cls = []
 
@@ -39,9 +39,9 @@ if L_intersection_names:
         )
 
 
-def instantiate_transform(transform_option, attr='transform'):
+def instantiate_transform(transform_option, attr="transform"):
     """ Creates a transform from an OmegaConf dict such as
-    transform: GridSampling
+    transform: GridSampling3D
         params:
             size: 0.01
     """
@@ -75,7 +75,7 @@ def instantiate_transform(transform_option, attr='transform'):
 
 def instantiate_transforms(transform_options):
     """ Creates a torch_geometric composite transform from an OmegaConf list such as
-    - transform: GridSampling
+    - transform: GridSampling3D
         params:
             size: 0.01
     - transform: NormaliseScale
@@ -89,5 +89,5 @@ def instantiate_transforms(transform_options):
 def instantiate_filters(filter_options):
     filters = []
     for filt in filter_options:
-        filters.append(instantiate_transform(filt, 'filter'))
+        filters.append(instantiate_transform(filt, "filter"))
     return FCompose(filters)

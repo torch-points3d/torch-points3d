@@ -1,4 +1,5 @@
-from tqdm import tqdm, std
+from tqdm.auto import tqdm
+from tqdm import std
 import numpy as np
 
 from torch_points3d.utils.colors import COLORS

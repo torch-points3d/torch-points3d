@@ -3,7 +3,6 @@ import numpy as np
 import numpy
 import scipy
 import re
-import logging
 import torch
 import logging
 import torch.nn.functional as F
@@ -72,7 +71,7 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
     return data
 
 
-class GridSampling:
+class GridSampling3D:
     """ Clusters points into voxels with size :attr:`size`.
     Parameters
     ----------
@@ -92,7 +91,7 @@ class GridSampling:
         self._mode = mode
         if verbose:
             log.warning(
-                "If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling"
+                "If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling3D"
             )
 
             if self._mode == "last":

@@ -3,7 +3,7 @@ import torch
 from torch_geometric.data import Data
 
 from torch_points3d.core.spatial_ops import KNNInterpolate
-from torch_points3d.core.data_transform import GridSampling
+from torch_points3d.core.data_transform import GridSampling3D
 
 
 class TestInterpolate(unittest.TestCase):
@@ -12,7 +12,7 @@ class TestInterpolate(unittest.TestCase):
         x = torch.tensor([0, 0, 0, 0, 1]).unsqueeze(-1)
         support = Data(x=x, pos=pos)
 
-        query = GridSampling(1)(support.clone())
+        query = GridSampling3D(1)(support.clone())
 
         interpolate = KNNInterpolate(1)
         up = interpolate.precompute(query, support)

@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 from torch_points3d.core.data_transform import (
     instantiate_transform,
     instantiate_transforms,
-    GridSampling,
+    GridSampling3D,
     MultiScaleTransform,
     Random3AxisRotation,
     AddFeatByKey,
@@ -39,22 +39,22 @@ np.random.seed(0)
 
 class Testhelpers(unittest.TestCase):
     def test_Instantiate(self):
-        conf = DictConfig({"transform": "GridSampling", "params": {"size": 0.1}})
+        conf = DictConfig({"transform": "GridSampling3D", "params": {"size": 0.1}})
         t = instantiate_transform(conf)
-        self.assertIsInstance(t, GridSampling)
+        self.assertIsInstance(t, GridSampling3D)
 
         conf = DictConfig({"transform": "None", "params": {"size": 0.1}})
         with self.assertRaises(ValueError):
             t = instantiate_transform(conf)
 
     def test_InstantiateTransforms(self):
-        conf = ListConfig([{"transform": "GridSampling", "params": {"size": 0.1}}, {"transform": "Center"},])
+        conf = ListConfig([{"transform": "GridSampling3D", "params": {"size": 0.1}}, {"transform": "Center"},])
         t = instantiate_transforms(conf)
-        self.assertIsInstance(t.transforms[0], GridSampling)
+        self.assertIsInstance(t.transforms[0], GridSampling3D)
         self.assertIsInstance(t.transforms[1], T.Center)
 
     def test_multiscaleTransforms(self):
-        samplers = [GridSampling(0.25), None, GridSampling(0.5)]
+        samplers = [GridSampling3D(0.25), None, GridSampling3D(0.5)]
         search = [
             RadiusNeighbourFinder(0.5, 100, ConvolutionFormat.PARTIAL_DENSE.value),
             RadiusNeighbourFinder(0.5, 150, ConvolutionFormat.PARTIAL_DENSE.value),
@@ -158,7 +158,7 @@ class Testhelpers(unittest.TestCase):
     def test_RemoveAttributes(self):
         N = 10
         mapping = {"a": 1, "b": 2, "c": 3, "d": 4}
-        keys, values = np.asarray(list(mapping.keys())), np.asarray(list(mapping.values()))
+        keys = np.asarray(list(mapping.keys()))
         data = Data(
             a=torch.randn((N, 1)),
             b=torch.randn((N, 2)),

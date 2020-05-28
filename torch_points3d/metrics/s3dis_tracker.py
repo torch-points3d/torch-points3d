@@ -3,12 +3,12 @@ import logging
 import torch
 from torch_geometric.nn.unpool import knn_interpolate
 
-from torch_points3d.models.base_model import BaseModel
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.core.data_transform import SaveOriginalPosId
+from torch_points3d.models import model_interface
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class S3DISTracker(SegmentationTracker):
         self._vote_miou = None
         self._iou_per_class = {}
 
-    def track(self, model: BaseModel, full_res=False, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res=False, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

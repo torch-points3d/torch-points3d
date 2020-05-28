@@ -8,7 +8,7 @@ _custom_losses = sys.modules["torch_points3d.core.losses.losses"]
 _torch_metric_learning_losses = sys.modules["pytorch_metric_learning.losses"]
 _torch_metric_learning_miners = sys.modules["pytorch_metric_learning.miners"]
 _intersection = set(_custom_losses.__dict__) & set(_torch_metric_learning_losses.__dict__)
-_intersection = [module for module in _intersection if not module.startswith("_")]
+_intersection = set([module for module in _intersection if not module.startswith("_")])
 if _intersection:
     raise Exception(
         "It seems that you are overiding a transform from pytorch metric learning, \

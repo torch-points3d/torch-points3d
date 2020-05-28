@@ -3,6 +3,12 @@
 Getting Started
 ================
 
+You're reading this because the API wasn't cracking it and you would like to extend the framework for your own task or use 
+some of the deeper layers of our codebase. This set of pages will take you from setting up the code for local development 
+all the way to adding a new task or a new dataset to the framework.
+For using Torch Points3D as a library please refer to :ref:`this section<index:Install with pip>`.
+
+
 Installation
 ----------------------------
 
@@ -142,7 +148,7 @@ Once the training is complete, you can access the model checkpoint as well as an
 Visualise your results
 ------------------------
 
-We provide a `notebook <dashboard/dashboard.ipynb>`_ based on `pyvista <https://docs.pyvista.org/>`_ and `panel <https://panel.holoviz.org/>`_ that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+We provide a `notebook <notebooks/dashboard.ipynb>`_ based on `pyvista <https://docs.pyvista.org/>`_ and `panel <https://panel.holoviz.org/>`_ that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 
 .. code-block:: bash
     
@@ -163,7 +169,7 @@ scalable and also ensure that components could be reused. Below is the overall s
 
    ├── benchmark                 # Output from various benchmark runs
    ├── conf                      # All configurations for training nad evaluation leave there
-   ├── dashboard                 # A collection of notebooks that allow result exploration and network debugging
+   ├── notebooks                 # A collection of notebooks that allow result exploration and network debugging
    ├── docker                    # Docker image that can be used for inference or training
    ├── docs                      # All the doc
    ├── eval.py                   # Eval script

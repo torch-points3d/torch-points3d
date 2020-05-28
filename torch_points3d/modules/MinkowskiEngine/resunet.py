@@ -219,3 +219,101 @@ class ResUNetBN2E(ResUNet2):
     NORM_TYPE = NormType.BATCH_NORM
     CHANNELS = [None, 128, 128, 128, 256]
     TR_CHANNELS = [None, 64, 128, 128, 128]
+
+
+class Res2BlockDown(ME.MinkowskiNetwork):
+
+    """
+    block for unwrapped Resnet
+    """
+
+    def __init__(
+        self,
+        down_conv_nn,
+        kernel_size,
+        stride,
+        dilation,
+        dimension=3,
+        bn_momentum=0.01,
+        norm_type=NormType.BATCH_NORM,
+        block_norm_type=NormType.BATCH_NORM,
+        **kwargs
+    ):
+        ME.MinkowskiNetwork.__init__(self, dimension)
+        self.conv = ME.MinkowskiConvolution(
+            in_channels=down_conv_nn[0],
+            out_channels=down_conv_nn[1],
+            kernel_size=kernel_size,
+            stride=stride,
+            dilation=dilation,
+            has_bias=False,
+            dimension=dimension,
+        )
+        self.norm = get_norm(norm_type, down_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
+        self.block = get_block(block_norm_type, down_conv_nn[1], down_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
+
+    def forward(self, x):
+
+        out_s = self.conv(x)
+        out_s = self.norm(out_s)
+        out_s = self.block(out_s)
+        out = MEF.relu(out_s)
+        return out
+
+
+class Res2BlockUp(ME.MinkowskiNetwork):
+
+    """
+    block for unwrapped Resnet
+    """
+
+    def __init__(
+        self,
+        up_conv_nn,
+        kernel_size,
+        stride,
+        dilation,
+        dimension=3,
+        bn_momentum=0.01,
+        norm_type=NormType.BATCH_NORM,
+        block_norm_type=NormType.BATCH_NORM,
+        **kwargs
+    ):
+        ME.MinkowskiNetwork.__init__(self, dimension)
+        self.conv = ME.MinkowskiConvolutionTranspose(
+            in_channels=up_conv_nn[0],
+            out_channels=up_conv_nn[1],
+            kernel_size=kernel_size,
+            stride=stride,
+            dilation=dilation,
+            has_bias=False,
+            dimension=dimension,
+        )
+        if len(up_conv_nn) == 3:
+            self.final = ME.MinkowskiConvolution(
+                in_channels=up_conv_nn[1],
+                out_channels=up_conv_nn[2],
+                kernel_size=kernel_size,
+                stride=stride,
+                dilation=dilation,
+                has_bias=True,
+                dimension=dimension,
+            )
+        else:
+            self.norm = get_norm(norm_type, up_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
+            self.block = get_block(block_norm_type, up_conv_nn[1], up_conv_nn[1], bn_momentum=bn_momentum, D=dimension)
+            self.final = None
+
+    def forward(self, x, x_skip):
+        if x_skip is not None:
+            x = ME.cat(x, x_skip)
+        out_s = self.conv(x)
+        if self.final is None:
+            out_s = self.norm(out_s)
+            out_s = self.block(out_s)
+            out = MEF.relu(out_s)
+            return out
+        else:
+            out_s = MEF.relu(out_s)
+            out = self.final(out_s)
+            return out

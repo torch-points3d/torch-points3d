@@ -2,27 +2,22 @@ import os
 import os.path as osp
 import shutil
 import json
-from tqdm import tqdm as tq
 import torch
 from glob import glob
 import sys
-import json
 import csv
 import logging
 import numpy as np
 from plyfile import PlyData, PlyElement
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
-from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 import multiprocessing
-from tqdm import tqdm
 import pandas as pd
 
 import tempfile
 import urllib
 from urllib.request import urlopen
 
-from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from torch_points3d.datasets.base_dataset import BaseDataset
 from . import IGNORE_LABEL
 
@@ -385,6 +380,43 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
 
 class Scannet(InMemoryDataset):
+    """ Scannet dataset, you will have to agree to terms and conditions by hitting enter
+    so that it downloads the dataset.
+
+    http://www.scan-net.org/
+
+    Parameters
+    ----------
+    root : str
+        Path to the data
+    split : str, optional
+        Split used
+    transform (callable, optional):
+        A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a transformed
+        version. The data object will be transformed before every access.
+    pre_transform (callable, optional): 
+        A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a 
+        transformed version. The data object will be transformed before being saved to disk.
+    pre_filter (callable, optional): 
+        A function that takes in an :obj:`torch_geometric.data.Data` object and returns a boolean
+        value, indicating whether the data object should be included in the final dataset. 
+    version : str, optional
+        version of scannet, by default "v2"
+    use_instance_labels : bool, optional
+        Wether we use instance labels or not, by default False
+    use_instance_bboxes : bool, optional
+        Wether we use bounding box labels or not, by default False
+    donotcare_class_ids : list, optional
+        Class ids to be discarded
+    max_num_point : [type], optional
+        Max number of points to keep during the pre processing step
+    use_multiprocessing : bool, optional
+        Wether we use multiprocessing or not
+    process_workers : int, optional
+        Number of process workers
+    normalize_rgb : bool, optional
+        Normalise rgb values, by default True
+    """
 
     CLASS_LABELS = CLASS_LABELS
     URLS_METADATA = URLS_METADATA
@@ -480,7 +512,7 @@ class Scannet(InMemoryDataset):
         )
         log.info("***")
         log.info("Press any key to continue, or CTRL-C to exit.")
-        key = input("")
+        input("")
         if self.version == "v2" and ".sens" in file_types:
             log.info(
                 "Note: ScanNet v2 uses the same .sens files as ScanNet v1: Press 'n' to exclude downloading .sens files for each scan"
@@ -499,7 +531,7 @@ class Scannet(InMemoryDataset):
         log.info(TOS_URL)
         log.info("***")
         log.info("Press any key to continue, or CTRL-C to exit.")
-        key = input("")
+        input("")
         self.download_scans()
         metadata_path = osp.join(self.raw_dir, "metadata")
         if not os.path.exists(metadata_path):
@@ -580,6 +612,7 @@ class Scannet(InMemoryDataset):
 
     def process(self):
         self.read_from_metadata()
+
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
             if not os.path.exists(self.processed_paths[i]):
@@ -630,6 +663,24 @@ class Scannet(InMemoryDataset):
 
 
 class ScannetDataset(BaseDataset):
+    """ Wrapper around Scannet that creates train and test datasets.
+
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
+
+            - dataroot
+            - version
+            - max_num_point (optional)
+            - use_instance_labels (optional)
+            - use_instance_bboxes (optional)
+            - donotcare_class_ids (optional)
+            - pre_transforms (optional)
+            - train_transforms (optional)
+            - val_transforms (optional)
+    """
+
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
@@ -662,8 +713,7 @@ class ScannetDataset(BaseDataset):
             max_num_point=max_num_point,
         )
 
-    @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -672,6 +722,8 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
+        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+
         return SegmentationTracker(
-            dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
+            self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )

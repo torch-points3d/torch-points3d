@@ -22,3 +22,5 @@ dashboard
 .git
 data
 docs
+.tox
+.mypy_cache

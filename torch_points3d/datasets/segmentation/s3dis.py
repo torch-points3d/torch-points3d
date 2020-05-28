@@ -2,8 +2,6 @@ import os
 import os.path as osp
 from itertools import repeat, product
 import numpy as np
-import pandas as pd
-import torch
 import h5py
 import torch
 import random
@@ -16,13 +14,11 @@ from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors, KDTree
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import csv
 import pandas as pd
 import pickle
 
-from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
-from torch_points3d.metrics.s3dis_tracker import S3DISTracker
 from torch_points3d.datasets.samplers import BalancedRandomSampler
 import torch_points3d.core.data_transform as cT
 from torch_points3d.datasets.base_dataset import BaseDataset
@@ -165,7 +161,6 @@ def add_weights(dataset, train, class_weight_method):
             if class_weight_method == "sqrt":
                 weights = torch.sqrt(weights)
             elif str(class_weight_method).startswith("log"):
-                w = float(class_weight_method.replace("log", ""))
                 weights = 1 / torch.log(1.1 + weights / weights.sum())
 
             weights /= torch.sum(weights)
@@ -189,11 +184,6 @@ class S3DIS1x1Dataset(BaseDataset):
         super().__init__(dataset_opt)
 
         pre_transform = self.pre_transform
-
-        transform = T.Compose(
-            [T.FixedPoints(dataset_opt.num_points), T.RandomTranslate(0.01), T.RandomRotate(180, axis=2),]
-        )
-
         train_dataset = S3DIS1x1(
             self._data_path,
             test_area=self.dataset_opt.fold,
@@ -211,17 +201,18 @@ class S3DIS1x1Dataset(BaseDataset):
 
         self.train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
 
-    @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            dataset {[type]}
             wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+
+        return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
 ################################### Used for fused s3dis radius sphere ###################################
@@ -231,6 +222,24 @@ class S3DISOriginalFused(InMemoryDataset):
     """ Original S3DIS dataset. Each area is loaded individually and can be processed using a pre_collate transform. 
     This transform can be used for example to fuse the area into a single space and split it into 
     spheres or smaller regions. If no fusion is applied, each element in the dataset is a single room by default.
+
+    http://buildingparser.stanford.edu/dataset.html
+
+    Parameters
+    ----------
+    root: str
+        path to the directory where the data will be saved
+    test_area: int
+        number between 1 and 6 that denotes the area used for testing
+    train: bool
+        Is this a train split or not
+    pre_collate_transform:
+        Transforms to be applied before the data is assembled into samples (apply fusing here for example)
+    keep_instance: bool
+        set to True if you wish to keep instance data
+    pre_transform
+    transform
+    pre_filter
     """
 
     url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
@@ -406,12 +415,34 @@ class S3DISSphere(S3DISOriginalFused):
     """ Small variation of S3DISOriginalFused that allows random sampling of spheres 
     within an Area during training and validation. Spheres have a radius of 2m. If sample_per_epoch is not specified, spheres
     are taken on a 2m grid.
+
+    http://buildingparser.stanford.edu/dataset.html
+
+    Parameters
+    ----------
+    root: str
+        path to the directory where the data will be saved
+    test_area: int
+        number between 1 and 6 that denotes the area used for testing
+    train: bool
+        Is this a train split or not
+    pre_collate_transform:
+        Transforms to be applied before the data is assembled into samples (apply fusing here for example)
+    keep_instance: bool
+        set to True if you wish to keep instance data
+    sample_per_epoch
+        Number of spheres that are randomly sampled at each epoch (-1 for fixed grid)
+    radius
+        radius of each sphere
+    pre_transform
+    transform
+    pre_filter
     """
 
     def __init__(self, root, sample_per_epoch=100, radius=2, *args, **kwargs):
         self._sample_per_epoch = sample_per_epoch
         self._radius = radius
-        self._grid_sphere_sampling = cT.GridSampling(size=radius / 10.0)
+        self._grid_sphere_sampling = cT.GridSampling3D(size=radius / 10.0)
         super().__init__(root, *args, **kwargs)
 
     def __len__(self):
@@ -470,6 +501,22 @@ class S3DISSphere(S3DISOriginalFused):
 
 
 class S3DISFusedDataset(BaseDataset):
+    """ Wrapper around S3DISSphere that creates train and test datasets.
+
+    http://buildingparser.stanford.edu/dataset.html
+
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
+
+            - dataroot
+            - fold: test_area parameter
+            - pre_collate_transform
+            - train_transforms
+            - test_transforms
+    """
+
     INV_OBJECT_LABEL = INV_OBJECT_LABEL
 
     def __init__(self, dataset_opt):
@@ -514,15 +561,15 @@ class S3DISFusedDataset(BaseDataset):
         """
         to_ply(pos, label, file)
 
-    @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            task {str} -- task description
-            dataset {[type]}
             wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
         Returns:
             [BaseTracker] -- tracker
         """
-        return S3DISTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        from torch_points3d.metrics.s3dis_tracker import S3DISTracker
+
+        return S3DISTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

@@ -2,16 +2,16 @@ from typing import Dict
 import torch
 import numpy as np
 
-from torch_points3d.models.base_model import BaseModel
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.metrics.meters import APMeter
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
+from torch_points3d.models import model_interface
 
 
 class SegmentationTracker(BaseTracker):
     def __init__(
-        self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label=IGNORE_LABEL
+        self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label: int = IGNORE_LABEL
     ):
         """ This is a generic tracker for segmentation tasks.
         It uses a confusion matrix in the back-end to track results.
@@ -34,7 +34,6 @@ class SegmentationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
-        self._ap_meter = APMeter()
 
     @staticmethod
     def detach_tensor(tensor):
@@ -46,7 +45,7 @@ class SegmentationTracker(BaseTracker):
     def confusion_matrix(self):
         return self._confusion_matrix.confusion_matrix
 
-    def track(self, model: BaseModel, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

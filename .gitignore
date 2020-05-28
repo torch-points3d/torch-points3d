@@ -26,3 +26,8 @@ docs_old
 /*.egg
 build/*
 dist/*
+.venv
+.mypy_cache
+lightning_logs
+data
+.tox

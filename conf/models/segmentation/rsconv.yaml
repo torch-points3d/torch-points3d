@@ -4,7 +4,7 @@ models:
         class: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
-            module_name: RSConv
+            module_name: RSConvDown
             ratios: [0.2, 0.25]
             radius: [0.1, 0.2]
             local_nn: [[10, 8, FEAT], [10, 32, 64, 64]]
@@ -28,7 +28,7 @@ models:
         class: rsconv.RSConv_MP
         conv_type: "MESSAGE_PASSING"
         down_conv:
-            module_name: RSConv
+            module_name: RSConvDown
             ratios: [0.5, 0.5, 0.5, 0.5]
             radius: [0.1, 0.2, 0.3, 0.4]
             local_nn: [[10, 8, FEAT], [10, 16, 16], [10, 32, 32], [10, 64, 64]]

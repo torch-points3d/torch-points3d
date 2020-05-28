@@ -1,0 +1,38 @@
+name: pypi_publish
+
+on:
+    push:
+      tags:
+      - '*.*.*'
+
+jobs:
+    pypi:
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Set up Python 3.7
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.7
+
+        - name: Install poetry
+          run: |
+            curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+
+        - name: Set version
+          run: |
+              version="$(basename -- ${{ github.ref }})"
+              sed -i "/^version/s/\(.*\)/version = \"$version\"/" pyproject.toml
+              cat pyproject.toml
+
+        - name: Build project for distribution
+          run: |
+              $HOME/.poetry/bin/poetry build
+
+        - name: Publish to PyPI
+          env:
+              POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+          run: |
+              $HOME/.poetry/bin/poetry publish

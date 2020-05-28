@@ -1,23 +1,24 @@
 import logging
 import torch
+from torch_geometric.data import Data
 
 from torch_points3d.modules.MinkowskiEngine import *
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
-from torch_points3d.models.base_model import BaseModel
-
+from torch_points3d.models.registration.base import FragmentBaseModel
 from torch.nn import Sequential, Linear, LeakyReLU, Dropout
 from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
+
 
 log = logging.getLogger(__name__)
 
 
-class BaseMinkowski(BaseModel):
+class BaseMinkowski(FragmentBaseModel):
     def __init__(self, option, model_type, dataset, modules):
-        BaseModel.__init__(self, option)
+        FragmentBaseModel.__init__(self, option)
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
         self.loss_names = ["loss_reg", "loss"]
-        self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
+        self.metric_loss_module, self.miner_module = FragmentBaseModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
         # Last Layer
@@ -59,74 +60,22 @@ class BaseMinkowski(BaseModel):
         else:
             self.match = None
 
-    def compute_loss_match(self):
-        self.loss_reg = self.metric_loss_module(
-            self.output, self.output_target, self.match[:, :2], self.xyz, self.xyz_target
-        )
-        self.loss = self.loss_reg
-
-    def compute_loss_label(self):
-        """
-        compute the loss separating the miner and the loss
-        each point correspond to a labels
-        """
-        output = torch.cat([self.output[self.match[:, 0]], self.output_target[self.match[:, 1]]], 0)
-        rang = torch.arange(0, len(self.match), dtype=torch.long, device=self.match.device)
-        labels = torch.cat([rang, rang], 0)
-        hard_pairs = None
-        if self.miner_module is not None:
-            hard_pairs = self.miner_module(output, labels)
-        # loss
-        self.loss_reg = self.metric_loss_module(output, labels, hard_pairs)
-        self.loss = self.loss_reg
-
-    def apply_nn(self, input):
-        raise NotImplementedError("Model still not defined")
-
-    def forward(self):
-        self.output = self.apply_nn(self.input)
-        if self.match is None:
-            return self.output
-
-        self.output_target = self.apply_nn(self.input_target)
-        if self.mode == "match":
-            self.compute_loss_match()
-        elif self.mode == "label":
-            self.compute_loss_label()
-        else:
-            raise NotImplementedError("The mode for the loss is incorrect")
-
-        return self.output
-
-    def backward(self):
-        if hasattr(self, "loss"):
-            self.loss.backward()
-
-    def get_outputs(self):
-        if self.match is not None:
-            return self.output, self.output_target
-        else:
-            return self.output
-
-    def get_ind(self):
-        if self.match is not None:
-            return self.match[:, 0], self.match[:, 1], self.size_match
-        else:
-            return None
-
-    def get_xyz(self):
-        if self.match is not None:
-            return self.xyz, self.xyz_target
-        else:
-            return self.xyz
-
-    def get_batch_idx(self):
+    def get_batch(self):
         if self.match is not None:
             batch = self.input.C[:, 0]
             batch_target = self.input_target.C[:, 0]
             return batch, batch_target
         else:
-            return None
+            return None, None
+
+    def get_input(self):
+        if self.match is not None:
+            input = Data(pos=self.xyz, ind=self.match[:, 0], size=self.size_match)
+            input_target = Data(pos=self.xyz_target, ind=self.match[:, 1], size=self.size_match)
+            return input, input_target
+        else:
+            input = Data(pos=self.xyz)
+            return input, None
 
 
 class Minkowski_Baseline_Model_Fragment(BaseMinkowski):
@@ -156,7 +105,7 @@ class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
         self.loss_names = ["loss_reg", "loss"]
-        self.metric_loss_module, self.miner_module = BaseModel.get_metric_loss_and_miner(
+        self.metric_loss_module, self.miner_module = FragmentBaseModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
         # Last Layer

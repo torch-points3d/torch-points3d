@@ -2,7 +2,6 @@ from typing import Dict
 import torchnet as tnt
 import torch
 
-from torch_points3d.models.base_model import BaseModel
 from .base_tracker import BaseTracker
 from .registration_metrics import compute_accuracy
 from .registration_metrics import estimate_transfo
@@ -10,6 +9,7 @@ from .registration_metrics import fast_global_registration
 from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
 from .registration_metrics import get_matches
+from torch_points3d.models import model_interface
 
 
 class PatchRegistrationTracker(BaseTracker):
@@ -27,7 +27,7 @@ class PatchRegistrationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
 
-    def track(self, model: BaseModel):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add model predictions (accuracy)
         """
         super().track(model)
@@ -80,13 +80,16 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
         self._hit_ratio = tnt.meter.AverageValueMeter()
         self._feat_match_ratio = tnt.meter.AverageValueMeter()
 
-    def track(self, model: BaseModel):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         super().track(model)
         if self._stage != "train":
-            batch_idx, batch_idx_target = model.get_batch_idx()
-            batch_xyz, batch_xyz_target = model.get_xyz()
-            batch_ind, batch_ind_target, batch_size_ind = model.get_ind()
-            batch_feat, batch_feat_target = model.get_outputs()
+            batch_idx, batch_idx_target = model.get_batch()
+            # batch_xyz, batch_xyz_target = model.get_xyz()  # type: ignore
+            # batch_ind, batch_ind_target, batch_size_ind = model.get_ind()  # type: ignore
+            input, input_target = model.get_input()
+            batch_xyz, batch_xyz_target = input.pos, input_target.pos
+            batch_ind, batch_ind_target, batch_size_ind = input.ind, input_target.ind, input.size
+            batch_feat, batch_feat_target = model.get_output()
 
             nb_batches = batch_idx.max() + 1
             cum_sum = 0
@@ -114,7 +117,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 rand = torch.randperm(len(feat))[: self.num_points]
                 rand_target = torch.randperm(len(feat_target))[: self.num_points]
 
-                matches_gt = torch.stack([ind, ind_target]).T
+                matches_gt = torch.stack([ind, ind_target]).transpose(0, 1)
 
                 # print(matches_gt.max(0), len(xyz), len(xyz_target), len(matches_gt))
                 # print(batch_ind.shape, nb_batches)

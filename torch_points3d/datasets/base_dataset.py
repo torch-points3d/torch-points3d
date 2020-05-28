@@ -6,7 +6,9 @@ import numpy as np
 import torch
 import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
+import copy
 
+from torch_points3d.models import model_interface
 from torch_points3d.core.data_transform import instantiate_transforms, MultiScaleTransform
 from torch_points3d.core.data_transform import instantiate_filters
 from torch_points3d.datasets.batch import SimpleBatch
@@ -14,10 +16,29 @@ from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.utils.enums import ConvolutionFormat
 from torch_points3d.utils.config import ConvolutionFormatFactory
 from torch_points3d.utils.colors import COLORS, colored_print
-from torch_points3d.models.base_model import BaseModel
 
 # A logger for this file
 log = logging.getLogger(__name__)
+
+
+def explode_transform(transforms):
+    """ Returns a flattened list of transform
+    Arguments:
+        transforms {[list | T.Compose]} -- Contains list of transform to be added
+
+    Returns:
+        [list] -- [List of transforms]
+    """
+    out = []
+    if transforms is not None:
+        if isinstance(transforms, Compose):
+            out = copy.deepcopy(transforms.transforms)
+        elif isinstance(transforms, list):
+            out = copy.deepcopy(transforms)
+        else:
+            raise Exception("transforms should be provided either within a list or a Compose")
+    return out
+
 
 class BaseDataset:
     def __init__(self, dataset_opt):
@@ -44,27 +65,6 @@ class BaseDataset:
 
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
-
-    @staticmethod
-    def add_transform(transform_list_to_be_added, out=[]):
-        """[Add transforms to an existing list or not]
-        Arguments:
-            transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
-            out {[type]} -- [Should be a lis]
-
-        Returns:
-            [list] -- [List of transforms]
-        """
-        if out is None:
-            out = []
-        if transform_list_to_be_added is not None:
-            if isinstance(transform_list_to_be_added, Compose):
-                out += transform_list_to_be_added.transforms
-            elif isinstance(transform_list_to_be_added, list):
-                out += transform_list_to_be_added
-            else:
-                raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
-        return out
 
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
@@ -110,8 +110,8 @@ class BaseDataset:
                     continue
                 setattr(obj, new_name, transform)
 
-        inference_transform = BaseDataset.add_transform(obj.pre_transform)
-        inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
+        inference_transform = explode_transform(obj.pre_transform)
+        inference_transform += explode_transform(obj.test_transform)
         obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
     def set_filter(self, dataset_opt):
@@ -127,6 +127,7 @@ class BaseDataset:
                     log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
                 setattr(self, new_name, filt)
+
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
@@ -153,7 +154,6 @@ class BaseDataset:
 
     @staticmethod
     def get_sample(batch, key, index, conv_type):
-
         assert hasattr(batch, key)
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_dense:
@@ -162,7 +162,12 @@ class BaseDataset:
             return batch[key][batch.batch == index]
 
     def create_dataloaders(
-        self, model: BaseModel, batch_size: int, shuffle: bool, num_workers: int, precompute_multi_scale: bool,
+        self,
+        model: model_interface.DatasetInterface,
+        batch_size: int,
+        shuffle: bool,
+        num_workers: int,
+        precompute_multi_scale: bool,
     ):
         """ Creates the data loaders. Must be called in order to complete the setup of the Dataset
         """
@@ -173,7 +178,6 @@ class BaseDataset:
         dataloader = partial(
             torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
         )
-
 
         if self.train_sampler:
             log.info(self.train_sampler)
@@ -411,9 +415,8 @@ class BaseDataset:
         transform = MultiScaleTransform(strategies)
         self._set_multiscale_transform(transform)
 
-    @staticmethod
     @abstractmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         pass
 
     def resolve_saving_stage(self, selection_stage):

@@ -28,6 +28,25 @@ We aim to build a tool which can be used for benchmarking SOTA models, while als
    :target: imgs/Dashboard_demo.gif
    :alt: dashboard
 
+Install with pip
+-----------------
+You can easily install Torch Points3D with ``pip``
+
+.. code-block:: bash
+
+   pip install torch
+   pip install torch-points3d
+   
+but first make sure that the following dependencies are met
+
+- CUDA 10 or higher (if you want GPU version)
+- Python 3.6 or higher + headers (python-dev)
+- PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
+- MinkowskiEngine (optional) see `here <https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine>`_ for installation instructions
+
+
+
+
 
 Core features
 ---------------
@@ -38,8 +57,8 @@ Core features
 
   * **Core Architectures** - Unet
   * **Core Modules** - Residual Block, Down-sampling and Up-sampling convolutions
-  * **Core Transforms** - Grid Sampling, Rotation, Scaling
-  * **Core Sampling** - FPS, Random Sampling
+  * **Core Transforms** - Rotation, Scaling, Jitter
+  * **Core Sampling** - FPS, Random Sampling,  Grid Sampling
   * **Core Neighbour Finder** - Radius Search, KNN
 
 *
@@ -83,11 +102,10 @@ Supported tasks
 * Classification [TO COME]
 * Object detection [TO COME]
 
-
 .. toctree::
    :glob:
    :maxdepth: 1
-   :caption: Contents
+   :caption: Developer guide
    :hidden:
 
    src/gettingstarted
@@ -96,10 +114,11 @@ Supported tasks
 
 .. toctree::
    :glob:
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: API
    :hidden:
 
    src/api/models
+   src/api/datasets
    src/api/transforms
    src/api/filters

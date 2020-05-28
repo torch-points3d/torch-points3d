@@ -2,6 +2,7 @@ import unittest
 import torch
 import os
 import sys
+from torch_geometric.data import Data
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
@@ -73,19 +74,20 @@ class MockModel:
         self.feat[2][rang2] = self.feat[2][inv2]
         self.feat[3][rang3] = self.feat[3][inv3]
 
-    def get_outputs(self):
+    def get_output(self):
         return self.feat[self.iter], self.feat_target[self.iter]
 
-    def get_xyz(self):
-        return self.xyz[self.iter], self.xyz_target[self.iter]
-
-    def get_ind(self):
-        return self.ind[self.iter], self.ind_target[self.iter], self.ind_size[self.iter]
+    def get_input(self):
+        input = Data(pos=self.xyz[self.iter], ind=self.ind[self.iter], size=self.ind_size[self.iter])
+        input_target = Data(
+            pos=self.xyz_target[self.iter], ind=self.ind_target[self.iter], size=self.ind_size[self.iter]
+        )
+        return input, input_target
 
     def get_current_losses(self):
         return self.losses[self.iter]
 
-    def get_batch_idx(self):
+    def get_batch(self):
         return self.batch_idx[self.iter], self.batch_idx_target[self.iter]
 
 

@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch.nn import (
-    Sequential as Seq,
     Linear as Lin,
     ReLU,
     LeakyReLU,

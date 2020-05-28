@@ -50,9 +50,9 @@ class Convolution(MessagePassing):
         return x
 
 
-class RSConv(BaseConvolutionDown):
+class RSConvDown(BaseConvolutionDown):
     def __init__(self, ratio=None, radius=None, local_nn=None, down_conv_nn=None, *args, **kwargs):
-        super(RSConv, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
+        super(RSConvDown, self).__init__(FPSSampler(ratio), RadiusNeighbourFinder(radius), *args, **kwargs)
 
         self._conv = Convolution(local_nn=local_nn, global_nn=down_conv_nn)
 

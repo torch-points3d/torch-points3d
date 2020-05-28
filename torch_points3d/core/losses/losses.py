@@ -1,4 +1,4 @@
-from typing import *
+from typing import Any
 from collections import OrderedDict
 import torch
 import torch.nn as nn

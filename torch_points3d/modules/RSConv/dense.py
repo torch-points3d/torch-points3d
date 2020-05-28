@@ -1,12 +1,11 @@
 import logging
 
 import torch
-from torch.nn import Sequential as Seq
+from torch.nn import Sequential
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Conv1d
 import torch_points_kernels as tp
-from typing import Tuple
 
 from torch_points3d.core.base_conv.dense import *
 from torch_points3d.core.common_modules.dense_modules import MLP2D
@@ -40,7 +39,7 @@ class RSConvMapper(nn.Module):
 
         self.nn["mlp_msg"] = MLP2D([f_in, f_intermediate, f_out], bn=bn, bias=False)
 
-        self.nn["norm"] = Seq(*[nn.BatchNorm2d(f_out), activation])
+        self.nn["norm"] = Sequential(*[nn.BatchNorm2d(f_out), activation])
 
         self._f_out = f_out
 
@@ -132,7 +131,7 @@ class RSConvSharedMSGDown(BaseDenseConvolutionDown):
         # https://github.com/Yochengliu/Relation-Shape-CNN/blob/6464eb8bb4efc686adec9da437112ef888e55684/utils/pointnet2_modules.py#L106
         self._mapper = RSConvMapper(down_conv_nn, activation=activation, use_xyz=self.use_xyz)
 
-        self.mlp_out = Seq(
+        self.mlp_out = Sequential(
             *[
                 Conv1d(channel_raising_nn[0], channel_raising_nn[-1], kernel_size=1, stride=1, bias=True),
                 nn.BatchNorm1d(channel_raising_nn[-1]),
@@ -187,7 +186,7 @@ class RSConvSharedMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def __repr__(self):
-        return "{}({}, shared: {} {}, {} \033[0m)".format(
+        return "{}({}, shared: {} {}, {} {})".format(
             self.__class__.__name__,
             self.mlps.__repr__(),
             COLORS.Cyan,
@@ -331,7 +330,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
 
     def _prepare_features(
         self, xyz: torch.Tensor, new_xyz: torch.Tensor, features: torch.Tensor = None, idx: torch.Tensor = None
-    ) -> Tuple[torch.Tensor]:
+    ) -> torch.Tensor:
         """
         Parameters
         ----------
@@ -425,7 +424,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
 
         # https://github.com/Yochengliu/Relation-Shape-CNN/blob/6464eb8bb4efc686adec9da437112ef888e55684/utils/pointnet2_modules.py#L106
 
-        self.mlp_out = Seq(
+        self.mlp_out = Sequential(
             *[
                 Conv1d(channel_raising_nn[0], channel_raising_nn[-1], kernel_size=1, stride=1, bias=True),
                 nn.BatchNorm1d(channel_raising_nn[-1]),
@@ -483,7 +482,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def __repr__(self):
-        return "{}({}, shared: {} {}, {} \033[0m)".format(
+        return "{}({}, shared: {} {}, {} {})".format(
             self.__class__.__name__,
             self.mlps.__repr__(),
             COLORS.Cyan,
