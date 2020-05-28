@@ -180,7 +180,6 @@ class ScannetDataset(BaseDataset):
     def mean_size_arr(self):
         return self.train_dataset.MEAN_SIZE_ARR.copy()
 
-    @staticmethod
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
