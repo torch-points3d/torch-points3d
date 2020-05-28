@@ -181,7 +181,7 @@ class ScannetDataset(BaseDataset):
         return self.train_dataset.MEAN_SIZE_ARR.copy()
 
     @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
@@ -190,4 +190,4 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return ObjectDetectionTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        pass
