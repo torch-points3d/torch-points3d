@@ -429,15 +429,14 @@ class S3DISOriginalFused(InMemoryDataset):
             if i != self.test_area - 1:
                 train_data_list[i] = []
                 val_data_list[i] = []
-                trainval_data_list[i] = []
                 for data in data_list[i]:
                     validation_set = data.validation_set
                     del data.validation_set
                     if validation_set:
                         val_data_list[i].append(data)
-                        trainval_data_list[i].append(data)
                     else:
                         train_data_list[i].append(data)
+                trainval_data_list[i] = val_data_list[i] + train_data_list[i]
 
         train_data_list = list(train_data_list.values())
         val_data_list = list(val_data_list.values())
@@ -510,10 +509,10 @@ class S3DISSphere(S3DISOriginalFused):
         else:
             return self._test_spheres[idx]
 
-    def process(self):
+    def process(self): # We have to include this method, otherwise the parent class skips processing
         super().process()
 
-    def download(self):
+    def download(self): # We have to include this method, otherwise the parent class skips download
         super().download()
 
     def _get_random(self):
