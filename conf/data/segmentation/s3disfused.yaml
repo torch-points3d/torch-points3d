@@ -52,3 +52,4 @@ data:
         feat_names: [rgb, pos_z]
         delete_feats: [True, True]
     - transform: Center
+  val_transform: ${data.test_transform}
