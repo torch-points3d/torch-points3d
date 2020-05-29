@@ -62,3 +62,4 @@ data:
     - transform: ScalePos
       params:
         scale: 0.5
+  val_transform: ${data.test_transform}
