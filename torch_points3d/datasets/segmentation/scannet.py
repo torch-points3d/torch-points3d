@@ -680,7 +680,7 @@ class Scannet(InMemoryDataset):
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
-                    for arg in args[:5]:
+                    for arg in args:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
                         
