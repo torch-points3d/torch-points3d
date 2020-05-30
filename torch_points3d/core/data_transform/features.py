@@ -115,7 +115,10 @@ class AddFeatsByKeys(object):
     ):
 
         self._feat_names = feat_names
-        self._list_add_to_x = eval(list_add_to_x)
+        try:
+            self._list_add_to_x = eval(list_add_to_x)
+        except:
+            self._list_add_to_x = list_add_to_x
         self._delete_feats = delete_feats
         if self._delete_feats:
             assert len(self._delete_feats) == len(self._feat_names)

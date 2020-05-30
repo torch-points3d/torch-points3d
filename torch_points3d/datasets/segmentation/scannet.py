@@ -92,6 +92,8 @@ URLS_METADATA = [
 ]
 VALID_CLASS_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
 
+INV_OBJECT_LABEL = {class_idx:class_name for class_idx, class_name in enumerate(CLASS_LABELS)}
+
 SCANNET_COLOR_MAP = {
     0: (0.0, 0.0, 0.0),
     1: (174.0, 199.0, 232.0),
@@ -177,11 +179,12 @@ def download_file(url, out_file):
         # urllib.urlretrieve(url, out_file_tmp)
         os.rename(out_file_tmp, out_file)
     else:
-        log.warning("WARNING Skipping download of existing file " + out_file)
+        pass
+        #log.warning("WARNING Skipping download of existing file " + out_file)
 
 
 def download_scan(scan_id, out_dir, file_types, use_v1_sens):
-    log.info("Downloading ScanNet " + RELEASE_NAME + " scan " + scan_id + " ...")
+    #log.info("Downloading ScanNet " + RELEASE_NAME + " scan " + scan_id + " ...")
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
     for ft in file_types:
@@ -193,7 +196,7 @@ def download_scan(scan_id, out_dir, file_types, use_v1_sens):
         )
         out_file = out_dir + "/" + scan_id + ft
         download_file(url, out_file)
-    log.info("Downloaded scan " + scan_id)
+    #log.info("Downloaded scan " + scan_id)
 
 
 def download_label_map(out_dir):
@@ -722,6 +725,8 @@ class ScannetDataset(BaseDataset):
             - val_transforms (optional)
     """
 
+    INV_OBJECT_LABEL = INV_OBJECT_LABEL
+
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
@@ -769,7 +774,7 @@ class ScannetDataset(BaseDataset):
 
     @property
     def test_data(self):
-        return self.test_dataset[0].raw_test_data
+        return self.test_dataset[0].raw_test_data[0]
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
@@ -780,8 +785,8 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+        from torch_points3d.metrics.scannet_tracker import ScannetTracker
 
-        return SegmentationTracker(
+        return ScannetTracker(
             self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )

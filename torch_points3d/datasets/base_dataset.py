@@ -210,9 +210,25 @@ class BaseDataset:
         if precompute_multi_scale:
             self.set_strategies(model)
 
+        self.test_loaders_contains_labels
+
     @property
     def has_val_loader(self):
         return hasattr(self, "_val_loader")
+
+    @property
+    def test_loaders_contains_labels(self, return_values=False):
+        out = []
+        if self.has_test_loaders:
+            for loader in self.test_dataloaders:
+                sample = loader.dataset[0]
+                has_labels = False
+                if hasattr(sample, 'y'):
+                    has_labels = sample.y is not None
+                out.append(has_labels)
+                setattr(loader, "has_labels", has_labels)
+        if return_values:
+            return out
 
     @property
     def has_test_loaders(self):
