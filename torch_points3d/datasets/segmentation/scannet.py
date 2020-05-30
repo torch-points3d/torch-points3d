@@ -772,10 +772,6 @@ class ScannetDataset(BaseDataset):
             max_num_point=max_num_point,
         )
 
-    @property
-    def test_data(self):
-        return self.test_dataset[0].raw_test_data[0]
-
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
@@ -785,8 +781,8 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        from torch_points3d.metrics.scannet_tracker import ScannetTracker
+        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 
-        return ScannetTracker(
+        return SegmentationTracker(
             self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )
