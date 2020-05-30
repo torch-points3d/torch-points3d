@@ -19,6 +19,7 @@ import urllib
 from urllib.request import urlopen
 
 from torch_points3d.datasets.base_dataset import BaseDataset
+import torch_points3d.core.data_transform as cT
 from . import IGNORE_LABEL
 
 log = logging.getLogger(__name__)
@@ -133,7 +134,9 @@ SCANNET_COLOR_MAP = {
     40: (100.0, 85.0, 144.0),
 }
 
-SPLITS = ["train", "val"]
+SPLITS = ["train", "val",  "test"]
+
+MAX_NUM_POINTS = 1200000
 
 
 def get_release_scans(release_file):
@@ -358,7 +361,7 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
         ymax = np.max(obj_pc[:, 1])
         zmax = np.max(obj_pc[:, 2])
         bbox = np.array(
-            [(xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2, xmax - xmin, ymax - ymin, zmax - zmin, label_id]
+            [(xmin + xmax) / 2., (ymin + ymax) / 2., (zmin + zmax) / 2., xmax - xmin, ymax - ymin, zmax - zmin, label_id]
         )
         # NOTE: this assumes obj_id is in 1,2,3,.,,,.NUM_INSTANCES
         instance_bboxes[obj_id - 1, :] = bbox
@@ -462,19 +465,24 @@ class Scannet(InMemoryDataset):
             path = self.processed_paths[0]
         elif split == "val":
             path = self.processed_paths[1]
-        elif split == "trainval":
+        elif split == "test":
             path = self.processed_paths[2]
+        elif split == "trainval":
+            path = self.processed_paths[3]
         else:
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
 
         self.data, self.slices = torch.load(path)
 
-        if not use_instance_bboxes:
-            delattr(self.data, "instance_bboxes")
-        if not use_instance_labels:
-            delattr(self.data, "instance_labels")
+        if split == "test":
+            self.raw_test_data = torch.load(self.processed_raw_paths[-1])
+        else:
+            if not use_instance_bboxes:
+                delattr(self.data, "instance_bboxes")
+            if not use_instance_labels:
+                delattr(self.data, "instance_labels")
+            self.data = self._remap_labels(self.data)
 
-        self.data = self._remap_labels(self.data)
 
     @property
     def raw_file_names(self):
@@ -485,6 +493,11 @@ class Scannet(InMemoryDataset):
         return ["{}.pt".format(s,) for s in Scannet.SPLITS]
 
     @property
+    def processed_raw_paths(self):
+        return [os.path.join(self.processed_dir, "raw_{}.pt".format(s)) for s in Scannet.SPLITS]
+    
+
+    @property
     def num_classes(self):
         return len(Scannet.VALID_CLASS_IDS)
 
@@ -492,8 +505,12 @@ class Scannet(InMemoryDataset):
         release_file = BASE_URL + RELEASE + ".txt"
         release_scans = get_release_scans(release_file)
         file_types = FILETYPES
+        release_test_file = BASE_URL + RELEASE + '_test.txt'
+        release_test_scans = get_release_scans(release_test_file)
         file_types_test = FILETYPES_TEST
         out_dir_scans = os.path.join(self.raw_dir, "scans")
+        out_dir_test_scans = os.path.join(self.raw_dir, 'scans_test')
+        out_dir_tasks = os.path.join(self.raw_dir, 'tasks')
 
         if self.types:  # download file type
             file_types = self.types
@@ -503,7 +520,7 @@ class Scannet(InMemoryDataset):
                     return
             file_types_test = []
             for file_type in file_types:
-                if file_type not in FILETYPES_TEST:
+                if file_type in FILETYPES_TEST:
                     file_types_test.append(file_type)
         download_label_map(self.raw_dir)
         log.info("WARNING: You are downloading all ScanNet " + RELEASE_NAME + " scans of type " + file_types[0])
@@ -523,6 +540,8 @@ class Scannet(InMemoryDataset):
         download_release(release_scans, out_dir_scans, file_types, use_v1_sens=True)
         if self.version == "v2":
             download_label_map(self.raw_dir)
+            download_release(release_test_scans, out_dir_test_scans, file_types_test, use_v1_sens=True)
+            #download_file(os.path.join(BASE_URL, RELEASE_TASKS, TEST_FRAMES_FILE[0]), os.path.join(out_dir_tasks, TEST_FRAMES_FILE[0]))
 
     def download(self):
         log.info(
@@ -538,6 +557,18 @@ class Scannet(InMemoryDataset):
             os.makedirs(metadata_path)
         for url in self.URLS_METADATA:
             _ = download_url(url, metadata_path)
+
+    @staticmethod
+    def read_one_test_scan(scannet_dir, scan_name, normalize_rgb):
+        mesh_file = osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply")
+        mesh_vertices = read_mesh_vertices_rgb(mesh_file)
+
+        data = {}
+        data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
+        data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:])
+        if normalize_rgb:
+            data["rgb"] /= 255.0
+        return Data(**data)
 
     @staticmethod
     def read_one_scan(
@@ -593,7 +624,6 @@ class Scannet(InMemoryDataset):
     @staticmethod
     def process_func(
         id_scan,
-        pre_transform,
         scannet_dir,
         scan_name,
         label_map_file,
@@ -601,17 +631,22 @@ class Scannet(InMemoryDataset):
         max_num_point,
         obj_class_ids,
         normalize_rgb,
+        split
     ):
-        data = Scannet.read_one_scan(
-            scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
-        )
-        if pre_transform:
-            data = pre_transform(data)
+        if split == "test":
+            data = Scannet.read_one_test_scan(
+                scannet_dir, scan_name, normalize_rgb,
+            )
+        else:
+            data = Scannet.read_one_scan(
+                scannet_dir, scan_name, label_map_file, donotcare_class_ids, int(max_num_point), obj_class_ids, normalize_rgb,
+            )
         log.info("{}| scan_name: {}, data: {}".format(id_scan, scan_name, data))
-        return data
+        return cT.SaveOriginalPosId()(data)
 
     def process(self):
         self.read_from_metadata()
+        self.download()
 
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
@@ -621,7 +656,6 @@ class Scannet(InMemoryDataset):
                 args = [
                     (
                         "{}/{}".format(id, total),
-                        self.pre_transform,
                         scannet_dir,
                         scan_name,
                         self.label_map_file,
@@ -629,17 +663,24 @@ class Scannet(InMemoryDataset):
                         self.max_num_point,
                         self.VALID_CLASS_IDS,
                         self.normalize_rgb,
+                        split
                     )
                     for id, scan_name in enumerate(scan_names)
                 ]
-                if self.use_multiprocessing:
+                if False:#self.use_multiprocessing:
                     with multiprocessing.Pool(processes=self.process_workers) as pool:
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
-                    for arg in args:
+                    for arg in args[:5]:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
+                        
+                log.info("SAVING TO {}".format(self.processed_raw_paths[i]))
+                torch.save(self.collate(datas), self.processed_raw_paths[i])    
+
+                datas = [self.pre_transform(data) for data in datas]            
+                
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
 
@@ -687,7 +728,7 @@ class ScannetDataset(BaseDataset):
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
         donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
-        max_num_point: int = dataset_opt.max_num_point
+        max_num_point: int =  MAX_NUM_POINTS if dataset_opt.use_max_num_point else None
 
         self.train_dataset = Scannet(
             self._data_path,
@@ -712,6 +753,23 @@ class ScannetDataset(BaseDataset):
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
         )
+
+
+        self.test_dataset = Scannet(
+            self._data_path,
+            split="test",
+            transform=self.val_transform,
+            pre_transform=self.pre_transform,
+            version=dataset_opt.version,
+            use_instance_labels=use_instance_labels,
+            use_instance_bboxes=use_instance_bboxes,
+            donotcare_class_ids=donotcare_class_ids,
+            max_num_point=max_num_point,
+        )
+
+    @property
+    def test_data(self):
+        return self.test_dataset[0].raw_test_data
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker

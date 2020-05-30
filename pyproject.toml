@@ -54,3 +54,6 @@ line-length = 120
 [build-system]
 requires = ["poetry>=1.0.0"]
 build-backend = "poetry.masonry.api"
+
+[global]
+no-cache-dir = true
