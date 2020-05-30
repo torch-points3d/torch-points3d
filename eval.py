@@ -100,10 +100,10 @@ def run(
     make_submission=True,
     tracker_options={},
 ):
-    # if dataset.has_val_loader:
-    #    eval_epoch(
-    #        model, dataset, device, tracker, checkpoint, voting_runs=voting_runs, tracker_options=tracker_options
-    #    )
+    if dataset.has_val_loader:
+        eval_epoch(
+            model, dataset, device, tracker, checkpoint, voting_runs=voting_runs, tracker_options=tracker_options
+        )
 
     if dataset.has_test_loaders:
         test_epoch(
