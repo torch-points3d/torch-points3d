@@ -55,6 +55,7 @@ def test_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     voting_runs=1,
+    make_submission=True,
     tracker_options={},
 ):
 
@@ -63,6 +64,7 @@ def test_epoch(
     for loader in loaders:
         stage_name = loader.dataset.name
         tracker.reset(stage_name)
+        outputs = []
         for i in range(voting_runs):
             with Ctq(loader) as tq_test_loader:
                 for data in tq_test_loader:
@@ -70,11 +72,19 @@ def test_epoch(
                         model.set_input(data, device)
                         model.forward()
 
-                    tracker.track(model, **tracker_options)
-                    tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+                    if loader.has_labels:
+                        tracker.track(model, **tracker_options)
+                        tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+                    else:
+                        if make_submission:
+                            outputs.append(model.get_output())
 
-        tracker.finalise(**tracker_options)
-        tracker.print_summary()
+        if loader.has_labels:
+            tracker.finalise(**tracker_options)
+            tracker.print_summary()
+        else:
+            if make_submission:
+                tracker.make_submission(data, outputs, loader.dataset, model.conv_type)
 
 
 def run(
@@ -85,6 +95,7 @@ def run(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     voting_runs=1,
+    make_submission=True,
     tracker_options={},
 ):
     if dataset.has_val_loader:
@@ -94,7 +105,14 @@ def run(
 
     if dataset.has_test_loaders:
         test_epoch(
-            model, dataset, device, tracker, checkpoint, voting_runs=voting_runs, tracker_options=tracker_options
+            model,
+            dataset,
+            device,
+            tracker,
+            checkpoint,
+            voting_runs=voting_runs,
+            make_submission=make_submission,
+            tracker_options=tracker_options,
         )
 
 
@@ -140,6 +158,7 @@ def main(cfg):
         tracker,
         checkpoint,
         voting_runs=cfg.voting_runs,
+        make_submission=cfg.make_submission,
         tracker_options=cfg.tracker_options,
     )
 

@@ -447,6 +447,7 @@ class Scannet(InMemoryDataset):
         normalize_rgb=True,
     ):
 
+        assert self.SPLITS == ["train", "val", "test"]
         if not isinstance(donotcare_class_ids, list):
             raise Exception("donotcare_class_ids should be list with indices of class to ignore")
         self.donotcare_class_ids = donotcare_class_ids
@@ -485,6 +486,8 @@ class Scannet(InMemoryDataset):
             if not use_instance_labels:
                 delattr(self.data, "instance_labels")
             self.data = self._remap_labels(self.data)
+        
+        self.read_from_metadata()
 
 
     @property
@@ -562,7 +565,7 @@ class Scannet(InMemoryDataset):
             _ = download_url(url, metadata_path)
 
     @staticmethod
-    def read_one_test_scan(scannet_dir, scan_name, normalize_rgb):
+    def read_one_test_scan(scannet_dir, scan_name, id_scan, normalize_rgb):
         mesh_file = osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply")
         mesh_vertices = read_mesh_vertices_rgb(mesh_file)
 
@@ -571,6 +574,7 @@ class Scannet(InMemoryDataset):
         data["rgb"] = torch.from_numpy(mesh_vertices[:, 3:])
         if normalize_rgb:
             data["rgb"] /= 255.0
+        data['id_scan'] = torch.from_numpy(np.asarray([id_scan]))
         return Data(**data)
 
     @staticmethod
@@ -622,7 +626,8 @@ class Scannet(InMemoryDataset):
         metadata_path = osp.join(self.raw_dir, "metadata")
         self.label_map_file = osp.join(metadata_path, LABEL_MAP_FILE)
         split_files = ["scannetv2_{}.txt".format(s) for s in Scannet.SPLITS]
-        self.scan_names = [[line.rstrip() for line in open(osp.join(metadata_path, sf))] for sf in split_files]
+        self.scan_names = [sorted([line.rstrip() for line in open(osp.join(metadata_path, sf))]) for sf in split_files]
+        self.scan_tests_mapping = {idx:scan_name for idx, scan_name in enumerate(self.scan_names[-1])}
 
     @staticmethod
     def process_func(
@@ -638,7 +643,7 @@ class Scannet(InMemoryDataset):
     ):
         if split == "test":
             data = Scannet.read_one_test_scan(
-                scannet_dir, scan_name, normalize_rgb,
+                scannet_dir, scan_name, int(id_scan.split('/')[0]), normalize_rgb
             )
         else:
             data = Scannet.read_one_scan(
@@ -724,7 +729,6 @@ class ScannetDataset(BaseDataset):
             - train_transforms (optional)
             - val_transforms (optional)
     """
-
     INV_OBJECT_LABEL = INV_OBJECT_LABEL
 
     def __init__(self, dataset_opt):
@@ -781,8 +785,8 @@ class ScannetDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+        from torch_points3d.metrics.scannet_segmentation_tracker import ScannetSegmentationTracker
 
-        return SegmentationTracker(
+        return ScannetSegmentationTracker(
             self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
         )
