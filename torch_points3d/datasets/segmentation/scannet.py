@@ -427,7 +427,7 @@ class Scannet(InMemoryDataset):
     def __init__(
         self,
         root,
-        split="trainval",
+        split="train",
         transform=None,
         pre_transform=None,
         pre_filter=None,
@@ -436,11 +436,11 @@ class Scannet(InMemoryDataset):
         use_instance_bboxes=False,
         donotcare_class_ids=[],
         max_num_point=None,
-        use_multiprocessing=False,
         process_workers=4,
         types=[".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"],
         normalize_rgb=True,
     ):
+
         if not isinstance(donotcare_class_ids, list):
             raise Exception("donotcare_class_ids should be list with indices of class to ignore")
         self.donotcare_class_ids = donotcare_class_ids
@@ -452,12 +452,12 @@ class Scannet(InMemoryDataset):
         self.max_num_point = max_num_point
         self.use_instance_labels = use_instance_labels
         self.use_instance_bboxes = use_instance_bboxes
-        self.use_multiprocessing = use_multiprocessing
+        self.use_multiprocessing = process_workers > 1
         self.process_workers = process_workers
         self.types = types
         self.normalize_rgb = normalize_rgb
 
-        super(Scannet, self).__init__(root, transform, pre_transform, pre_filter)
+        super().__init__(root, transform, pre_transform, pre_filter)
         if split == "train":
             path = self.processed_paths[0]
         elif split == "val":
@@ -468,6 +468,13 @@ class Scannet(InMemoryDataset):
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
 
         self.data, self.slices = torch.load(path)
+
+        if not use_instance_bboxes:
+            delattr(self.data, "instance_bboxes")
+        if not use_instance_labels:
+            delattr(self.data, "instance_labels")
+
+        self.data = self._remap_labels(self.data)
 
     @property
     def raw_file_names(self):
@@ -534,16 +541,7 @@ class Scannet(InMemoryDataset):
 
     @staticmethod
     def read_one_scan(
-        scannet_dir,
-        scan_name,
-        label_map_file,
-        donotcare_class_ids,
-        max_num_point,
-        obj_class_ids,
-        mapping_func,
-        normalize_rgb,
-        use_instance_labels=True,
-        use_instance_bboxes=True,
+        scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
     ):
         mesh_file = osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply")
         agg_file = osp.join(scannet_dir, scan_name, scan_name + ".aggregation.json")
@@ -573,9 +571,6 @@ class Scannet(InMemoryDataset):
                 semantic_labels = semantic_labels[choices]
                 instance_labels = instance_labels[choices]
 
-        # Remap labels to [0-(len(valid_labels))]
-        semantic_labels = mapping_func(semantic_labels)
-
         # Build data container
         data = {}
         data["pos"] = torch.from_numpy(mesh_vertices[:, :3])
@@ -584,12 +579,8 @@ class Scannet(InMemoryDataset):
             data["rgb"] /= 255.0
         data["y"] = torch.from_numpy(semantic_labels)
         data["x"] = None
-
-        if use_instance_labels:
-            data["iy"] = torch.from_numpy(instance_labels)
-
-        if use_instance_bboxes:
-            data["bbox"] = torch.from_numpy(instance_bboxes)
+        data["instance_labels"] = torch.from_numpy(instance_labels)
+        data["instance_bboxes"] = torch.from_numpy(instance_bboxes)
 
         return Data(**data)
 
@@ -609,22 +600,10 @@ class Scannet(InMemoryDataset):
         donotcare_class_ids,
         max_num_point,
         obj_class_ids,
-        mapping_func,
         normalize_rgb,
-        use_instance_labels=True,
-        use_instance_bboxes=True,
     ):
         data = Scannet.read_one_scan(
-            scannet_dir,
-            scan_name,
-            label_map_file,
-            donotcare_class_ids,
-            max_num_point,
-            obj_class_ids,
-            mapping_func,
-            normalize_rgb,
-            use_instance_labels=use_instance_labels,
-            use_instance_bboxes=use_instance_bboxes,
+            scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
         )
         if pre_transform:
             data = pre_transform(data)
@@ -633,15 +612,6 @@ class Scannet(InMemoryDataset):
 
     def process(self):
         self.read_from_metadata()
-
-        mapping_dict = {indice: idx for idx, indice in enumerate(self.valid_class_idx)}
-        for idx in range(NUM_CLASSES):
-            if idx not in mapping_dict:
-                mapping_dict[idx] = IGNORE_LABEL
-        for idx in self.donotcare_class_ids:
-            mapping_dict[idx] = IGNORE_LABEL
-        print("MAPPING IDX: {}".format(mapping_dict))
-        mapping_func = np.vectorize(mapping_dict.get)
 
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
@@ -658,10 +628,7 @@ class Scannet(InMemoryDataset):
                         self.donotcare_class_ids,
                         self.max_num_point,
                         self.VALID_CLASS_IDS,
-                        mapping_func,
                         self.normalize_rgb,
-                        self.use_instance_labels,
-                        self.use_instance_bboxes,
                     )
                     for id, scan_name in enumerate(scan_names)
                 ]
@@ -675,6 +642,21 @@ class Scannet(InMemoryDataset):
                         datas.append(data)
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
+
+    def _remap_labels(self, data):
+        """ Remaps labels to [0 ; num_labels -1]. Can be overriden.
+        """
+        mapping_dict = {indice: idx for idx, indice in enumerate(self.valid_class_idx)}
+        for idx in range(NUM_CLASSES):
+            if idx not in mapping_dict:
+                mapping_dict[idx] = IGNORE_LABEL
+        for idx in self.donotcare_class_ids:
+            mapping_dict[idx] = IGNORE_LABEL
+        print("MAPPING IDX: {}".format(mapping_dict))
+        for source, target in mapping_dict.items():
+            mask = data.y == source
+            data.y[mask] = target
+        return data
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, len(self))
@@ -705,7 +687,7 @@ class ScannetDataset(BaseDataset):
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
         donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
-        max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
+        max_num_point: int = dataset_opt.max_num_point
 
         self.train_dataset = Scannet(
             self._data_path,
