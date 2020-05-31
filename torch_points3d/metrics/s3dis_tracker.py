@@ -27,7 +27,7 @@ class S3DISTracker(SegmentationTracker):
         super().track(model)
 
         # Train mode or low res, nothing special to do
-        if self._stage == "train" and not full_res:
+        if self._stage == "train" or not full_res:
             return
 
         # Test mode, compute votes in order to get full res predictions
