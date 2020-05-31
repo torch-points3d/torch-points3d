@@ -535,7 +535,6 @@ class Scannet(InMemoryDataset):
         file_types_test = FILETYPES_TEST
         out_dir_scans = os.path.join(self.raw_dir, "scans")
         out_dir_test_scans = os.path.join(self.raw_dir, 'scans_test')
-        out_dir_tasks = os.path.join(self.raw_dir, 'tasks')
 
         if self.types:  # download file type
             file_types = self.types
