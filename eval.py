@@ -55,7 +55,7 @@ def test_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     voting_runs=1,
-    make_submission=True,
+    make_submission=False,
     tracker_options={},
 ):
 
@@ -97,7 +97,7 @@ def run(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     voting_runs=1,
-    make_submission=True,
+    make_submission=False,
     tracker_options={},
 ):
     if dataset.has_val_loader:

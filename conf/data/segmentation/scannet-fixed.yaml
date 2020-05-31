@@ -8,10 +8,10 @@ data:
   use_instance_labels: False
   use_instance_bboxes: False
   donotcare_class_ids: []
-  use_max_num_point: True
   process_workers: 0
   apply_rotation: True
   use_category: False
+  mode: 'last'
 
   pre_transform:
     - transform: GridSampling3D
@@ -41,7 +41,7 @@ data:
       params:
         size: ${data.first_subsampling}
         quantize_coords: False
-        mode: 'last'
+        mode: ${data.mode}
     - transform: ChromaticTranslation
     - transform: ChromaticJitter
     - transform: AddFeatsByKeys
@@ -64,7 +64,7 @@ data:
       params:
         size: ${data.first_subsampling}
         quantize_coords: False
-        mode: 'last'
+        mode: ${data.mode}
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True, True]

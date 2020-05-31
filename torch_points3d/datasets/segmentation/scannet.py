@@ -668,7 +668,7 @@ class Scannet(InMemoryDataset):
             )
         else:
             data = Scannet.read_one_scan(
-                scannet_dir, scan_name, label_map_file, donotcare_class_ids, int(max_num_point), obj_class_ids, normalize_rgb,
+                scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
             )
         log.info("{}| scan_name: {}, data: {}".format(id_scan, scan_name, data))
 
@@ -679,7 +679,6 @@ class Scannet(InMemoryDataset):
 
     def process(self):
         self.read_from_metadata()
-        self.download()
 
         scannet_dir = osp.join(self.raw_dir, "scans")
         for i, (scan_names, split) in enumerate(zip(self.scan_names, self.SPLITS)):
@@ -706,7 +705,7 @@ class Scannet(InMemoryDataset):
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
-                    for arg in args[:5]:
+                    for arg in args:
                         data = Scannet.process_func(*arg)
                         datas.append(data)
 
@@ -767,7 +766,7 @@ class ScannetDataset(BaseDataset):
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
         donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
-        max_num_point: int =  MAX_NUM_POINTS if dataset_opt.use_max_num_point else None
+        max_num_point: int =  dataset_opt.max_num_point if dataset_opt.max_num_point is not None else None
         process_workers: int =  dataset_opt.process_workers if dataset_opt.process_workers else 0
 
 

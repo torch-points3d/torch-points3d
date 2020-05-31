@@ -134,29 +134,30 @@ def test_epoch(
     loaders = dataset.test_dataloaders
 
     for loader in loaders:
-        if loader.has_labels:
-            stage_name = loader.dataset.name
-            tracker.reset(stage_name)
-            visualizer.reset(epoch, stage_name)
-            with Ctq(loader) as tq_test_loader:
-                for data in tq_test_loader:
-                    with torch.no_grad():
-                        model.set_input(data, device)
-                        model.forward()
+        if not loader.has_labels:
+            continue
+        stage_name = loader.dataset.name
+        tracker.reset(stage_name)
+        visualizer.reset(epoch, stage_name)
+        with Ctq(loader) as tq_test_loader:
+            for data in tq_test_loader:
+                with torch.no_grad():
+                    model.set_input(data, device)
+                    model.forward()
 
-                    tracker.track(model, data=data)
-                    tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
+                tracker.track(model, data=data)
+                tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
-                    if visualizer.is_active:
-                        visualizer.save_visuals(model.get_current_visuals())
+                if visualizer.is_active:
+                    visualizer.save_visuals(model.get_current_visuals())
 
-                    if early_break:
-                        break
+                if early_break:
+                    break
 
-            tracker.finalise()
-            metrics = tracker.publish(epoch)
-            tracker.print_summary()
-            checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
+        tracker.finalise()
+        metrics = tracker.publish(epoch)
+        tracker.print_summary()
+        checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
 
 
 def run(
