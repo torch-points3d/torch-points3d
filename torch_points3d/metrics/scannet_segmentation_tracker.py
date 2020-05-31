@@ -19,7 +19,7 @@ class ScannetSegmentationTracker(SegmentationTracker):
         super().reset(stage=stage)
         self._full_res = False
 
-    def track(self, model: model_interface.TrackerInterface, full_res=False, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res=True, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         # Train mode or low res, nothing special to do
@@ -65,7 +65,7 @@ class ScannetSegmentationTracker(SegmentationTracker):
         scan_names, full_preds, _ = self.outputs_to_full_res(datas, outputs)
 
         for scan_name, full_pred in zip(scan_names, full_preds):
-            full_pred = full_pred.argmax(-1).cpu().numpy().astype(np.int8)
+            full_pred = full_pred.cpu().numpy().astype(np.int8)
             path_file = osp.join(path_to_submission, "{}.txt".format(scan_name))
             np.savetxt(path_file, full_pred, delimiter="/n", fmt="%d")
 
@@ -77,30 +77,37 @@ class ScannetSegmentationTracker(SegmentationTracker):
         full_preds = []
         full_labels = []
 
+        predictions = torch.stack(outputs)
+
         if self._conv_type == "DENSE":
-            predictions = torch.stack(outputs).view((datas[0].pos.shape[0], num_votes, -1, self._num_classes))
+            predictions = predictions.view((datas[0].pos.shape[0], num_votes, -1, self._num_classes))
 
-            for idx_batch, id_scan in enumerate(id_scans):
-                raw_data = self.load_raw_data(id_scan)
-                scan_names.append(raw_data.scan_name)
+        for idx_batch, id_scan in enumerate(id_scans):
+            raw_data = self.load_raw_data(id_scan)
+            scan_names.append(raw_data.scan_name)
 
-                if self._dataset.dataset_has_labels(self._stage):
-                    full_labels.append(raw_data.y)
+            if self._dataset.dataset_has_labels(self._stage):
+                full_labels.append(raw_data.y)
 
-                votes_counts = torch.zeros(raw_data.pos.shape[0], dtype=torch.int)
-                votes = torch.zeros((raw_data.pos.shape[0], self._num_classes), dtype=torch.float)
+            votes_counts = torch.zeros(raw_data.pos.shape[0], dtype=torch.int)
+            votes = torch.zeros((raw_data.pos.shape[0], self._num_classes), dtype=torch.float)
 
-                for idx_votes in range(num_votes):
-                    idx = datas[idx_votes][SaveOriginalPosId.KEY][idx_batch]
+            batch_mask = idx_batch
+            for idx_votes in range(num_votes):
+                if self._conv_type != "DENSE":
+                    batch_mask = datas[idx_votes].batch == idx_batch
+                idx = datas[idx_votes][SaveOriginalPosId.KEY][batch_mask]
+
+                if self._conv_type == "DENSE":
                     votes[idx] += predictions[idx_batch][idx_votes]
-                    votes_counts[idx] += 1
+                else:
+                    votes[idx] += predictions[idx_votes][batch_mask]
+                votes_counts[idx] += 1
 
-                has_prediction = votes_counts > 0
-                votes[has_prediction] /= votes_counts[has_prediction].unsqueeze(-1)
+            has_prediction = votes_counts > 0
+            votes[has_prediction] /= votes_counts[has_prediction].unsqueeze(-1)
 
-                full_pred = knn_interpolate(votes[has_prediction], raw_data.pos[has_prediction], raw_data.pos, k=1)
-                full_preds.append(full_pred)
-        else:
-            pass
+            full_pred = knn_interpolate(votes[has_prediction], raw_data.pos[has_prediction], raw_data.pos, k=1)
+            full_preds.append(full_pred.argmax(-1))
 
         return scan_names, full_preds, full_labels

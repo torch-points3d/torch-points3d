@@ -2,7 +2,7 @@ data:
   class: scannet.ScannetDataset
   task: segmentation
   dataroot: data
-  first_subsampling: 0.05
+  first_subsampling: 0.1
   version: 'v2'
   use_instance_labels: False
   use_instance_bboxes: False

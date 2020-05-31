@@ -517,7 +517,8 @@ class Scannet(InMemoryDataset):
     
     @property
     def path_to_submission(self):
-        path_to_submission = os.path.join(self.root, "unzip_root")
+        root = os.getcwd() if 'outputs' in str(os.getcwd()) else self.root
+        path_to_submission = os.path.join(root, "unzip_root")
         if not os.path.exists(path_to_submission):
             os.makedirs(path_to_submission)
         return path_to_submission
