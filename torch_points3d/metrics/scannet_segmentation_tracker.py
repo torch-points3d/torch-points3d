@@ -3,7 +3,8 @@ from typing import Dict
 import logging
 import numpy as np
 import torch
-
+from typing import List
+from torch_geometric.data import Data
 from torch_geometric.nn.unpool import knn_interpolate
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -35,8 +36,9 @@ class ScannetSegmentationTracker(SegmentationTracker):
             return
 
         self._full_res = full_res
+        self._conv_type = model.conv_type
 
-        datas = [kwargs.get("data")]
+        datas: List[Data] = [kwargs.get("data")]
         datas[0].id_scan.squeeze()
 
         _, full_preds, full_labels = self.outputs_to_full_res([kwargs.get("data")], [model.get_output()])
