@@ -213,6 +213,10 @@ class BaseDataset:
         self._set_has_labels()
 
     @property
+    def has_train_loader(self):
+        return hasattr(self, "_train_loader")
+
+    @property
     def has_val_loader(self):
         return hasattr(self, "_val_loader")
 
@@ -288,7 +292,8 @@ class BaseDataset:
 
     @property
     def loaders(self):
-        loaders = [self.train_dataloader]
+        loaders = []
+        if self.has_train_loader: loaders += [self.train_dataloader]
         if self.has_val_loader: loaders += [self.val_dataloader]
         if self.has_test_loaders: loaders += self.test_dataloaders
         return loaders

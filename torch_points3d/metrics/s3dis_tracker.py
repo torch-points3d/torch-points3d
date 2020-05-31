@@ -24,12 +24,10 @@ class S3DISTracker(SegmentationTracker):
     def track(self, model: model_interface.TrackerInterface, full_res=False, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
-        # Train mode or low res, nothing special to do
-        if not full_res:
-            super().track(model)
-            return
+        super().track(model)
 
-        if self._stage == "train":
+        # Train mode or low res, nothing special to do
+        if self._stage == "train" and not full_res:
             super().track(model)
             return
 
