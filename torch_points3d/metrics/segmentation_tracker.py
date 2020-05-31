@@ -91,3 +91,6 @@ class SegmentationTracker(BaseTracker):
             "map": max,
         }  # Those map subsentences to their optimization functions
         return self._metric_func
+
+    def load_raw_data(self, idx):
+        return self._dataset.get_raw_data(self._stage, idx)

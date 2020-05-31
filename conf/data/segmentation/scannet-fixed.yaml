@@ -9,7 +9,7 @@ data:
   use_instance_bboxes: False
   donotcare_class_ids: []
   use_max_num_point: True
-  process_workers: 1
+  process_workers: 0
   apply_rotation: True
   use_category: False
 
@@ -52,7 +52,7 @@ data:
         delete_feats: [True, True]
         stricts: [False, True]
     - transform: FixedPoints
-      lparams: [2048]
+      lparams: [4092]
 
   val_transform:
     - transform: XYZFeature
@@ -73,6 +73,6 @@ data:
         delete_feats: [True, True]
         stricts: [False, True]
     - transform: FixedPoints
-      lparams: [2048]
+      lparams: [4092]
 
   test_transform: ${data.val_transform}

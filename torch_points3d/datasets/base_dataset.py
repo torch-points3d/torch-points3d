@@ -210,25 +210,20 @@ class BaseDataset:
         if precompute_multi_scale:
             self.set_strategies(model)
 
-        self.test_loaders_contains_labels
+        self._set_has_labels()
 
     @property
     def has_val_loader(self):
         return hasattr(self, "_val_loader")
 
-    @property
-    def test_loaders_contains_labels(self, return_values=False):
-        out = []
-        if self.has_test_loaders:
-            for loader in self.test_dataloaders:
-                sample = loader.dataset[0]
-                has_labels = False
-                if hasattr(sample, 'y'):
-                    has_labels = sample.y is not None
-                out.append(has_labels)
-                setattr(loader, "has_labels", has_labels)
-        if return_values:
-            return out
+    def _set_has_labels(self):
+        for loader in self.loaders:
+            sample = loader.dataset[0]
+            has_labels = False
+            if hasattr(sample, 'y'):
+                has_labels = sample.y is not None
+            setattr(loader, "has_labels", has_labels)
+            setattr(loader.dataset, "has_labels", has_labels)
 
     @property
     def has_test_loaders(self):
@@ -292,6 +287,13 @@ class BaseDataset:
         return self._test_loaders
 
     @property
+    def loaders(self):
+        loaders = [self.train_dataloader]
+        if self.has_val_loader: loaders += [self.val_dataloader]
+        if self.has_test_loaders: loaders += self.test_dataloaders
+        return loaders
+
+    @property
     def num_test_datasets(self):
         return len(self._test_dataset) if self._test_dataset else 0
 
@@ -308,6 +310,23 @@ class BaseDataset:
         if self.has_val_loader:
             out += [self._val_dataset.name]
         return out
+
+    @property
+    def available_dataset_names(self):
+        return ["train"] + self.available_stage_names
+
+    def get_raw_data(self, stage, idx):
+        assert stage in self.available_dataset_names
+        dataset = self.get_dataset(stage)
+        if hasattr(dataset, "get_raw_data"):
+            return dataset.get_raw_data(stage, idx)
+        else:
+            raise Exception("Dataset {} doesn t have a get_raw_data function implemented".format(dataset))
+
+    def dataset_has_labels(self, stage):
+        assert stage in self.available_dataset_names
+        dataset = self.get_dataset(stage)
+        return dataset.has_labels
 
     @property
     def has_fixed_points_transform(self):

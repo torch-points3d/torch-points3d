@@ -1,5 +1,5 @@
-import os
 import os.path as osp
+from typing import Dict
 import logging
 import numpy as np
 import torch
@@ -14,30 +14,79 @@ log = logging.getLogger(__name__)
 
 
 class ScannetSegmentationTracker(SegmentationTracker):
-    def make_submission(self, datas, outputs, dataset, conv_type):
-        root = dataset.root
-        scan_tests_mapping = dataset.scan_tests_mapping
-        path_to_submission = osp.join(root, "unzip_root")
-        if not os.path.exists(path_to_submission):
-            os.makedirs(path_to_submission)
+    def reset(self, stage="train"):
+        super().reset(stage=stage)
+        self._full_res = False
+
+    def track(self, model: model_interface.TrackerInterface, full_res=False, **kwargs):
+        """ Add current model predictions (usually the result of a batch) to the tracking
+        """
+        # Train mode or low res, nothing special to do
+        if not full_res:
+            super().track(model)
+            return
+
+        if self._stage == "train":
+            super().track(model)
+            return
+
+        if kwargs.get("data") is None:
+            super().track(model)
+            return
+
+        self._full_res = full_res
+
+        datas = [kwargs.get("data")]
+        datas[0].id_scan.squeeze()
+
+        _, full_preds, full_labels = self.outputs_to_full_res([kwargs.get("data")], [model.get_output()])
+
+        assert [fp.shape for fp in full_preds] == [fl.shape for fl in full_labels]
+
+        for full_label, full_pred in zip(full_labels, full_preds):
+            self._confusion_matrix.count_predicted_batch(full_label, full_pred.cpu().numpy())
+
+        self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
+        self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
+        self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
+
+    def get_metrics(self, verbose=False) -> Dict[str, float]:
+        """ Returns a dictionnary of all metrics and losses being tracked
+        """
+        if self._full_res:
+            self._stage += "_full"
+        return super().get_metrics(verbose)
+
+    def make_submission(self, datas, outputs):
+        path_to_submission = self._dataset.path_to_submission
+
+        scan_names, full_preds, _ = self.outputs_to_full_res(datas, outputs)
+
+        for scan_name, full_pred in zip(scan_names, full_preds):
+            full_pred = full_pred.argmax(-1).cpu().numpy().astype(np.int8)
+            path_file = osp.join(path_to_submission, "{}.txt".format(scan_name))
+            np.savetxt(path_file, full_pred, delimiter="/n", fmt="%d")
+
+    def outputs_to_full_res(self, datas, outputs):
 
         id_scans = datas[0].id_scan.squeeze()
-        num_classes = outputs[0].shape[-1]
         num_votes = len(outputs)
+        scan_names = []
+        full_preds = []
+        full_labels = []
 
-        if conv_type == "DENSE":
-
-            predictions = torch.stack(outputs).view((datas[0].pos.shape[0], num_votes, -1, num_classes))
+        if self._conv_type == "DENSE":
+            predictions = torch.stack(outputs).view((datas[0].pos.shape[0], num_votes, -1, self._num_classes))
 
             for idx_batch, id_scan in enumerate(id_scans):
-                scannet_dir = osp.join(dataset.raw_dir, "scans_test")
-                scan_name = scan_tests_mapping[id_scan.item()]
-                log.info("PREDICTION FOR FILE: {}".format(scan_name))
-                raw_data = dataset.read_one_test_scan(scannet_dir, scan_name, 0, dataset.normalize_rgb)
+                raw_data = self.load_raw_data(id_scan)
+                scan_names.append(raw_data.scan_name)
+
+                if self._dataset.dataset_has_labels(self._stage):
+                    full_labels.append(raw_data.y)
 
                 votes_counts = torch.zeros(raw_data.pos.shape[0], dtype=torch.int)
-                votes = torch.zeros((raw_data.pos.shape[0], num_classes), dtype=torch.float)
-                predictions[idx_batch]
+                votes = torch.zeros((raw_data.pos.shape[0], self._num_classes), dtype=torch.float)
 
                 for idx_votes in range(num_votes):
                     idx = datas[idx_votes][SaveOriginalPosId.KEY][idx_batch]
@@ -47,10 +96,9 @@ class ScannetSegmentationTracker(SegmentationTracker):
                 has_prediction = votes_counts > 0
                 votes[has_prediction] /= votes_counts[has_prediction].unsqueeze(-1)
 
-                full_pred = knn_interpolate(votes[has_prediction], raw_data.pos[has_prediction], raw_data.pos, k=1,)
+                full_pred = knn_interpolate(votes[has_prediction], raw_data.pos[has_prediction], raw_data.pos, k=1)
+                full_preds.append(full_pred)
+        else:
+            pass
 
-                full_pred = full_pred.argmax(-1).cpu().numpy().astype(np.int8)
-
-                path_file = osp.join(path_to_submission, "{}.txt".format(scan_name))
-
-                np.savetxt(path_file, full_pred, delimiter="/n", fmt="%d")
+        return scan_names, full_preds, full_labels

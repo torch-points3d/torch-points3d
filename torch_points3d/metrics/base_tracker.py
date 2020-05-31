@@ -23,6 +23,7 @@ class BaseTracker:
         self._tensorboard_dir = os.path.join(os.getcwd(), "tensorboard")
         self._n_iter = 0
         self._finalised = False
+        self._conv_type = None
 
         if self._use_tensorboard:
             log.info(
@@ -49,6 +50,7 @@ class BaseTracker:
         return self._metric_func
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
+        self._conv_type = model.conv_type
         if self._finalised:
             raise RuntimeError("Cannot track new values with a finalised tracker, you need to reset it first")
         losses = self._convert(model.get_current_losses())

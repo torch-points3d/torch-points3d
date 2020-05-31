@@ -86,7 +86,7 @@ def test_epoch(
             tracker.print_summary()
         else:
             if make_submission:
-                tracker.make_submission(datas, outputs, loader.dataset, model.conv_type)
+                tracker.make_submission(datas, outputs)
 
 
 def run(
