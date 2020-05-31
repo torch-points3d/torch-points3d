@@ -53,7 +53,7 @@ class S3DISTracker(SegmentationTracker):
         # Set predictions
         outputs = model.get_output()
         self._test_area.votes[originids] += outputs
-        self._test_area.git[originids] += 1
+        self._test_area.prediction_count[originids] += 1
 
     def finalise(self, full_res=False, vote_miou=True, ply_output="", **kwargs):
         per_class_iou = self._confusion_matrix.get_intersection_union_per_class()[0]
