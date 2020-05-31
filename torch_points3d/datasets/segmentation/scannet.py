@@ -652,7 +652,8 @@ class Scannet(InMemoryDataset):
 
     @staticmethod
     def process_func(
-        id_scan,
+        id_scan, 
+        total,
         scannet_dir,
         scan_name,
         label_map_file,
@@ -670,9 +671,8 @@ class Scannet(InMemoryDataset):
             data = Scannet.read_one_scan(
                 scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
             )
-        log.info("{}| scan_name: {}, data: {}".format(id_scan, scan_name, data))
+        log.info("{}/{}| scan_name: {}, data: {}".format(id_scan, total, scan_name, data))
 
-        id_scan = int(id_scan.split('/')[0])
         data['id_scan'] = torch.from_numpy(np.asarray([id_scan]))
 
         return cT.SaveOriginalPosId()(data)
@@ -688,7 +688,8 @@ class Scannet(InMemoryDataset):
                 total = len(scan_names)
                 args = [
                     (
-                        "{}/{}".format(id, total),
+                        id,
+                        total,
                         scannet_dir,
                         scan_name,
                         self.label_map_file,
