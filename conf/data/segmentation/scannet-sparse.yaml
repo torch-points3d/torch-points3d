@@ -10,7 +10,6 @@ data:
   donotcare_class_ids: []
   process_workers: 1
   apply_rotation: True
-  use_category: False
   mode: 'last'
 
   pre_transform:

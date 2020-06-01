@@ -83,7 +83,7 @@ class ScannetSegmentationTracker(SegmentationTracker):
             predictions = predictions.view((datas[0].pos.shape[0], num_votes, -1, self._num_classes))
 
         for idx_batch, id_scan in enumerate(id_scans):
-            raw_data = self.load_raw_data(id_scan)
+            raw_data = self._dataset.get_raw_data(self._stage, id_scan)
             scan_names.append(raw_data.scan_name)
 
             if self._dataset.dataset_has_labels(self._stage):

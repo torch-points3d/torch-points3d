@@ -1,4 +1,3 @@
-import os
 import torch
 import hydra
 import logging
@@ -20,7 +19,6 @@ from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 # Utils import
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.utils.colors import COLORS
-from torch_points3d.utils.config import create_symlink_from_eval_to_train
 
 log = logging.getLogger(__name__)
 
@@ -124,14 +122,6 @@ def run(
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 
-    eval_checkpoint_dir = os.getcwd()
-
-    # Set getcwd to current checkpoint_dir so submission is place there
-    def getcwd():
-        return cfg.checkpoint_dir
-
-    os.getcwd = getcwd
-
     # Get device
     device = torch.device("cuda" if (torch.cuda.is_available() and cfg.cuda) else "cpu")
     log.info("DEVICE : {}".format(device))
@@ -173,8 +163,6 @@ def main(cfg):
         make_submission=cfg.make_submission,
         tracker_options=cfg.tracker_options,
     )
-
-    create_symlink_from_eval_to_train(eval_checkpoint_dir)
 
 
 if __name__ == "__main__":
