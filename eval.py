@@ -41,7 +41,7 @@ def eval_epoch(
                     model.set_input(data, device)
                     model.forward()
 
-                tracker.track(model, **tracker_options)
+                tracker.track(model, **tracker_options, data=data)
                 tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
     tracker.finalise(**tracker_options)
@@ -62,10 +62,14 @@ def test_epoch(
     loaders = dataset.test_dataloaders
 
     for loader in loaders:
+        if not loader.has_labels and not make_submission:  # No label, no submission -> do nothing
+            continue
+
         stage_name = loader.dataset.name
         tracker.reset(stage_name)
         datas = []
         outputs = []
+
         for i in range(voting_runs):
             with Ctq(loader) as tq_test_loader:
                 for data in tq_test_loader:
@@ -74,7 +78,7 @@ def test_epoch(
                         model.forward()
 
                     if loader.has_labels:
-                        tracker.track(model, **tracker_options)
+                        tracker.track(model, **tracker_options, data=data)
                         tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
                     else:
                         if make_submission:
@@ -86,7 +90,7 @@ def test_epoch(
             tracker.print_summary()
         else:
             if make_submission:
-                tracker.make_submission(datas, outputs)
+                tracker.make_submission(datas, outputs, model.conv_type)
 
 
 def run(
