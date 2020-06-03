@@ -113,3 +113,10 @@ def is_iterable(entity):
 
 def is_dict(entity):
     return isinstance(entity, dict) or isinstance(entity, DictConfig)
+
+def create_symlink_from_eval_to_train(eval_checkpoint_dir):
+    root = os.path.join(os.getcwd(), "evals")
+    if not os.path.exists(root):
+        os.makedirs(root)
+    num_files = len(os.listdir(root)) + 1
+    os.symlink(eval_checkpoint_dir, os.path.join(root, "eval_{}".format(num_files)))

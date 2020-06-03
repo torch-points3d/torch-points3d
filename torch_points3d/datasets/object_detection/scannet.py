@@ -181,14 +181,12 @@ class ScannetDataset(BaseDataset):
     def mean_size_arr(self):
         return self.train_dataset.MEAN_SIZE_ARR.copy()
 
-    @staticmethod
-    def get_tracker(model, dataset, wandb_log: bool, tensorboard_log: bool):
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
         Arguments:
-            dataset {[type]}
             wandb_log - Log using weight and biases
         Returns:
             [BaseTracker] -- tracker
         """
-        return ObjectDetectionTracker(dataset, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        return ObjectDetectionTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

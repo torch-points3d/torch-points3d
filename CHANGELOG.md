@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Support scannet test dataset and automatic generation of submission files using the eval.py script
+- Full res predictions on Scannet with voting
 
 ### Changed
+- evaluation output folder is now a subfolder of the checkpoint it uses
 
 ### Removed
 

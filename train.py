@@ -53,7 +53,7 @@ def train_epoch(
             model.set_input(data, device)
             model.optimize_parameters(epoch, dataset.batch_size)
             if i % 10 == 0:
-                tracker.track(model)
+                tracker.track(model, data=data)
 
             tq_train_loader.set_postfix(
                 **tracker.get_metrics(),
@@ -103,7 +103,7 @@ def eval_epoch(
                 model.set_input(data, device)
                 model.forward()
 
-            tracker.track(model)
+            tracker.track(model, data=data)
             tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
             if visualizer.is_active:
@@ -134,6 +134,8 @@ def test_epoch(
     loaders = dataset.test_dataloaders
 
     for loader in loaders:
+        if not loader.has_labels:
+            continue
         stage_name = loader.dataset.name
         tracker.reset(stage_name)
         visualizer.reset(epoch, stage_name)
@@ -143,7 +145,7 @@ def test_epoch(
                     model.set_input(data, device)
                     model.forward()
 
-                tracker.track(model)
+                tracker.track(model, data=data)
                 tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
                 if visualizer.is_active:

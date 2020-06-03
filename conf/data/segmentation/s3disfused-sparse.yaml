@@ -63,3 +63,4 @@ data:
         size: ${data.first_subsampling}
         quantize_coords: True
         mode: "last"
+  val_transform: ${data.test_transform}
