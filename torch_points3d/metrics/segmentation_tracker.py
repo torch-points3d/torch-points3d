@@ -34,6 +34,9 @@ class SegmentationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
+        self._acc = 0
+        self._macc = 0
+        self._miou = 0
 
     @staticmethod
     def detach_tensor(tensor):
@@ -48,6 +51,9 @@ class SegmentationTracker(BaseTracker):
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
+        if not self._dataset.has_labels(self._stage):
+            return
+
         super().track(model)
 
         outputs = model.get_output()

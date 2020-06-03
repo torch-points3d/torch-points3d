@@ -49,14 +49,14 @@ class Checkpoint:
         torch.save(to_save, self._check_path)
 
     @staticmethod
-    def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig, strict=False):
+    def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig, strict=False, resume=True):
         """ Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
         if not os.path.exists(checkpoint_file):
             ckp = Checkpoint(checkpoint_file)
-            if strict:
+            if strict or resume:
                 available_checkpoints = glob.glob(os.path.join(checkpoint_dir, "*.pt"))
                 message = "The provided path {} didn't contain the checkpoint_file {}".format(
                     checkpoint_dir, checkpoint_name + ".pt"
@@ -68,9 +68,10 @@ class Checkpoint:
             return ckp
         else:
             chkp_name = os.path.basename(checkpoint_file)
-            shutil.copyfile(
-                checkpoint_file, chkp_name
-            )  # Copy checkpoint to new run directory to make sure we don't override
+            if resume:
+                shutil.copyfile(
+                    checkpoint_file, chkp_name
+                )  # Copy checkpoint to new run directory to make sure we don't override
             ckp = Checkpoint(chkp_name)
             log.info("Loading checkpoint from {}".format(checkpoint_file))
             objects = torch.load(checkpoint_file, map_location="cpu")
@@ -162,7 +163,9 @@ class ModelCheckpoint(object):
         resume=False,
         strict=False,
     ):
-        self._checkpoint = Checkpoint.load(load_dir, check_name, copy.deepcopy(run_config), strict=(strict or resume))
+        self._checkpoint = Checkpoint.load(
+            load_dir, check_name, copy.deepcopy(run_config), strict=strict, resume=resume
+        )
         self._resume = resume
         self._selection_stage = selection_stage
 

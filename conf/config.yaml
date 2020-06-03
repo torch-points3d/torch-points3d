@@ -17,7 +17,6 @@ defaults:
   - hydra/job_logging: custom
 
 model_name: ??? # Name of the specific model to load
-update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]
-selection_stage: ""
+update_lr_scheduler_on: 'on_epoch' # ["on_epoch", "on_num_batch", "on_num_sample"]
+selection_stage: ''
 pretty_print: False
-num_eval: 1

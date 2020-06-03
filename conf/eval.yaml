@@ -1,13 +1,18 @@
 num_workers: 6
 batch_size: 10
 cuda: 1
-weight_name: "latest"           # Used during resume, select with model to load from [miou, macc, acc..., latest]
+weight_name: 'latest' # Used during resume, select with model to load from [miou, macc, acc..., latest]
 enable_cudnn: True
-checkpoint_dir: "/home/nicolas/deeppointcloud-benchmarks/outputs/2020-04-14/21-54-19" # "{your_path}/outputs/2020-01-28/11-04-13" for example
+checkpoint_dir: '/Volumes/Workspace/deeppointcloud-benchmark/outputs/2020-06-01/13-25-49' # "{your_path}/outputs/2020-01-28/11-04-13" for example
 model_name: KPConvPaper
-precompute_multi_scale: True    # Compute multiscate features on cpu for faster training / inference
+precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
 enable_dropout: False
 voting_runs: 1
 
-tracker_options:                # Extra options for the tracker
-    full_res: True
+tracker_options: # Extra options for the tracker
+  full_res: True
+  make_submission: False
+
+hydra:
+  run:
+    dir: ${checkpoint_dir}/eval/${now:%Y-%m-%d_%H-%M-%S}

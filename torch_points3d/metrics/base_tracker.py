@@ -23,6 +23,7 @@ class BaseTracker:
         self._tensorboard_dir = os.path.join(os.getcwd(), "tensorboard")
         self._n_iter = 0
         self._finalised = False
+        self._conv_type = None
 
         if self._use_tensorboard:
             log.info(
