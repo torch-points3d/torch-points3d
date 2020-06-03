@@ -493,7 +493,18 @@ class Scannet(InMemoryDataset):
 
         self.read_from_metadata()
 
-    def get_raw_data(self, stage, id_scan):
+    def get_raw_data(self, id_scan, remap_labels=True) -> Data:
+        """ Grabs the raw data associated with a scan index
+
+        Parameters
+        ----------
+        id_scan : int or torch.Tensor
+            id of the scan
+        remap_labels : bool, optional
+            If True then labels are mapped to the range [IGNORE_LABELS:number of labels]. 
+            If using this method to compare ground truth against prediction then set remap_labels to True
+        """
+        stage = self.name
         if torch.is_tensor(id_scan):
             id_scan = int(id_scan.item())
         assert stage in self.SPLITS
@@ -505,6 +516,8 @@ class Scannet(InMemoryDataset):
         data = torch.load(path_to_raw_scan)
         data.scan_name = scan_name
         data.path_to_raw_scan = path_to_raw_scan
+        if self.has_labels and remap_labels:
+            data = self._remap_labels(data)
         return data
 
     @property
@@ -742,7 +755,6 @@ class Scannet(InMemoryDataset):
                 mapping_dict[idx] = IGNORE_LABEL
         for idx in self.donotcare_class_ids:
             mapping_dict[idx] = IGNORE_LABEL
-        print("MAPPING IDX: {}".format(mapping_dict))
         for source, target in mapping_dict.items():
             mask = data.y == source
             data.y[mask] = target

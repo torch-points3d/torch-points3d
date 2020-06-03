@@ -58,7 +58,11 @@ class ScannetSegmentationTracker(SegmentationTracker):
         if self._dataset.has_labels(self._stage):
             for scan_id in self._full_preds:
                 full_labels = self._raw_datas[scan_id].y
-                self._full_confusion_matrix.count_predicted_batch(full_labels, self._full_preds[scan_id].cpu().numpy())
+                # Mask ignored labels
+                mask = full_labels != self._ignore_label
+                full_labels = full_labels[mask]
+                full_preds = self._full_preds[scan_id].cpu()[mask].numpy()
+                self._full_confusion_matrix.count_predicted_batch(full_labels, full_preds)
 
             self._full_acc = 100 * self._full_confusion_matrix.get_overall_accuracy()
             self._full_macc = 100 * self._full_confusion_matrix.get_mean_class_accuracy()
@@ -90,13 +94,13 @@ class ScannetSegmentationTracker(SegmentationTracker):
         """
         id_scans = data.id_scan.squeeze()
         if self._conv_type == "DENSE":
-            batch_size = self._dataset.batch_size
+            batch_size = len(id_scans)
             output = output.view(batch_size, -1, output.shape[-1])
 
         for idx_batch, id_scan in enumerate(id_scans):
             # First time we see this scan
             if id_scan not in self._raw_datas:
-                raw_data = self._dataset.get_raw_data(self._stage, id_scan)
+                raw_data = self._dataset.get_raw_data(self._stage, id_scan, remap_labels=True)
                 self._raw_datas[id_scan] = raw_data
                 self._vote_counts[id_scan] = torch.zeros(raw_data.pos.shape[0], dtype=torch.int)
                 self._votes[id_scan] = torch.zeros((raw_data.pos.shape[0], self._num_classes), dtype=torch.float)

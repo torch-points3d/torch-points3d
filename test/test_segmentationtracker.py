@@ -24,6 +24,9 @@ class MockDataset:
     def test_data(self):
         return Data(pos=self.pos, y=self.test_label)
 
+    def has_labels(self, stage):
+        return True
+
 
 class MockModel:
     def __init__(self):

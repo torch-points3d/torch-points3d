@@ -323,11 +323,11 @@ class BaseDataset:
     def available_dataset_names(self):
         return ["train"] + self.available_stage_names
 
-    def get_raw_data(self, stage, idx):
+    def get_raw_data(self, stage, idx, **kwargs):
         assert stage in self.available_dataset_names
         dataset = self.get_dataset(stage)
         if hasattr(dataset, "get_raw_data"):
-            return dataset.get_raw_data(stage, idx)
+            return dataset.get_raw_data(idx, **kwargs)
         else:
             raise Exception("Dataset {} doesn t have a get_raw_data function implemented".format(dataset))
 
