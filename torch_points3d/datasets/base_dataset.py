@@ -221,10 +221,10 @@ class BaseDataset:
         return hasattr(self, "_val_loader")
 
     def _set_has_labels(self):
-        for loader in self.loaders:
+        for loader in self._loaders:
             sample = loader.dataset[0]
             has_labels = False
-            if hasattr(sample, 'y'):
+            if hasattr(sample, "y"):
                 has_labels = sample.y is not None
             setattr(loader, "has_labels", has_labels)
             setattr(loader.dataset, "has_labels", has_labels)
@@ -291,11 +291,14 @@ class BaseDataset:
         return self._test_loaders
 
     @property
-    def loaders(self):
+    def _loaders(self):
         loaders = []
-        if self.has_train_loader: loaders += [self.train_dataloader]
-        if self.has_val_loader: loaders += [self.val_dataloader]
-        if self.has_test_loaders: loaders += self.test_dataloaders
+        if self.has_train_loader:
+            loaders += [self.train_dataloader]
+        if self.has_val_loader:
+            loaders += [self.val_dataloader]
+        if self.has_test_loaders:
+            loaders += self.test_dataloaders
         return loaders
 
     @property
@@ -303,7 +306,7 @@ class BaseDataset:
         return len(self._test_dataset) if self._test_dataset else 0
 
     @property
-    def test_datatset_names(self):
+    def _test_datatset_names(self):
         if self.test_dataset:
             return [d.name for d in self.test_dataset]
         else:
@@ -311,7 +314,7 @@ class BaseDataset:
 
     @property
     def available_stage_names(self):
-        out = self.test_datatset_names
+        out = self._test_datatset_names
         if self.has_val_loader:
             out += [self._val_dataset.name]
         return out
@@ -328,7 +331,14 @@ class BaseDataset:
         else:
             raise Exception("Dataset {} doesn t have a get_raw_data function implemented".format(dataset))
 
-    def dataset_has_labels(self, stage):
+    def has_labels(self, stage: str) -> bool:
+        """ Tests if a given dataset has labels or not
+
+        Parameters
+        ----------
+        stage : str
+            name of the dataset to test
+        """
         assert stage in self.available_dataset_names
         dataset = self.get_dataset(stage)
         return dataset.has_labels

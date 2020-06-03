@@ -41,7 +41,7 @@ def eval_epoch(
                     model.set_input(data, device)
                     model.forward()
 
-                tracker.track(model, **tracker_options, data=data)
+                tracker.track(model, data=data, **tracker_options)
                 tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
     tracker.finalise(**tracker_options)
@@ -55,21 +55,18 @@ def test_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     voting_runs=1,
-    make_submission=False,
     tracker_options={},
 ):
 
     loaders = dataset.test_dataloaders
 
     for loader in loaders:
-        if not loader.has_labels and not make_submission:  # No label, no submission -> do nothing
+        stage_name = loader.dataset.name
+        if not loader.has_labels and not tracker_options["make_submission"]:  # No label, no submission -> do nothing
+            log.warning("No forward will be run on dataset %s." % stage_name)
             continue
 
-        stage_name = loader.dataset.name
         tracker.reset(stage_name)
-        datas = []
-        outputs = []
-
         for i in range(voting_runs):
             with Ctq(loader) as tq_test_loader:
                 for data in tq_test_loader:
@@ -77,20 +74,11 @@ def test_epoch(
                         model.set_input(data, device)
                         model.forward()
 
-                    if loader.has_labels:
-                        tracker.track(model, **tracker_options, data=data)
-                        tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
-                    else:
-                        if make_submission:
-                            datas.append(data)
-                            outputs.append(model.get_output())
+                    tracker.track(model, data=data, **tracker_options)
+                    tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
-        if loader.has_labels:
-            tracker.finalise(**tracker_options)
-            tracker.print_summary()
-        else:
-            if make_submission:
-                tracker.make_submission(datas, outputs, model.conv_type)
+        tracker.finalise(**tracker_options)
+        tracker.print_summary()
 
 
 def run(
@@ -101,7 +89,6 @@ def run(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     voting_runs=1,
-    make_submission=False,
     tracker_options={},
 ):
     if dataset.has_val_loader:
@@ -111,14 +98,7 @@ def run(
 
     if dataset.has_test_loaders:
         test_epoch(
-            model,
-            dataset,
-            device,
-            tracker,
-            checkpoint,
-            voting_runs=voting_runs,
-            make_submission=make_submission,
-            tracker_options=tracker_options,
+            model, dataset, device, tracker, checkpoint, voting_runs=voting_runs, tracker_options=tracker_options,
         )
 
 
@@ -164,7 +144,6 @@ def main(cfg):
         tracker,
         checkpoint,
         voting_runs=cfg.voting_runs,
-        make_submission=cfg.make_submission,
         tracker_options=cfg.tracker_options,
     )
 
