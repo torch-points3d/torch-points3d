@@ -70,8 +70,8 @@ class VoteNetModel(BaseModel):
 
         sampling_id_key = "sampling_id_0"
         setattr(
-            outputs, "seed_inds", getattr(data_features, sampling_id_key, None)[:, : self.num_seed_points,]
-        )  # TODO Check that this is correct. Seed_inds should be [B,num_seeds]
+            outputs, "seed_inds", getattr(data_features, sampling_id_key, None)[:, : self.num_seed_points]
+        )  # [B,num_seeds]
 
         self.output = outputs
 

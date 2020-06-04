@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import OmegaConf
+from omegaconf import OmegaConf
 
 from torch_points3d.modules.pointnet2 import PointNetMSGDown
 import torch_points_kernels as tp
@@ -108,9 +108,7 @@ class ProposalModule(nn.Module):
         if data.pos.dim() != 3:
             raise ValueError("This method only supports dense convolutions for now")
         if self.sampling == "seed_fps":
-            sample_idx = tp.furthest_point_sample(
-                data.seed_pos, self.num_proposal
-            )  # TODO is it necessary to do fps when data.seed_pos is altready coming from an fps?
+            sample_idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
         else:
             raise ValueError("Unknown sampling strategy: %s. Exiting!" % (self.sampling))
 

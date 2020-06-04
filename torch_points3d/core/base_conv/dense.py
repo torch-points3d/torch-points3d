@@ -83,7 +83,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
 
         new_data = Data(pos=new_pos, x=new_x)
         if self._save_sampling_id:
-            setattr(new_data, "sampling_id_{}".format(self._index), idx)
+            setattr(new_data, "sampling_id_{}".format(self._index), idx[:, :, 0])
         return new_data
 
 
