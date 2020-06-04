@@ -23,7 +23,6 @@ class VoteNetModel(BaseModel):
         # 1 - CREATE BACKBONE MODEL
         input_nc = dataset.feature_dimension
         backbone_option = option.backbone
-        self.num_seed_points = backbone_option.down_conv.npoint[1]
         backbone_cls = getattr(models, backbone_option.model_type)
         self.backbone_model = backbone_cls(architecture="unet", input_nc=input_nc, config=backbone_option)
 
@@ -59,7 +58,7 @@ class VoteNetModel(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         # Forward through backbone model
-        self.input = data
+        self.input = data.to(device)
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
@@ -69,21 +68,21 @@ class VoteNetModel(BaseModel):
         outputs = self.proposal_cls_module(data_votes)
 
         sampling_id_key = "sampling_id_0"
-        setattr(
-            outputs, "seed_inds", getattr(data_features, sampling_id_key, None)[:, : self.num_seed_points]
-        )  # [B,num_seeds]
+        setattr(outputs, "seed_inds", getattr(data_features, sampling_id_key, None))  # [B,num_seeds]
 
         self.output = outputs
+        self._compute_losses()
 
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
+    def _compute_losses(self):
         losses, metrics, labels = votenet_module.get_loss(self.input, self.output, self.loss_params)
         self.labels = labels
-
-        losses["loss"].backward()
         for loss_name, loss in losses.items():
             if torch.is_tensor(loss):
                 if not self.losses_has_been_added:
                     self.loss_names += [loss_name]
                 setattr(self, loss_name, loss.item())
         self.losses_has_been_added = True
+
+    def backward(self):
+        """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self.loss.backward()
