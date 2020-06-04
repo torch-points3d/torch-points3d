@@ -240,7 +240,7 @@ class ShapeNet(InMemoryDataset):
                 filenames = [
                     osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
                 ]  # Removing first directory.
-            data_raw_list, data_list = self._process_filenames(sorted(filenames)[:10])
+            data_raw_list, data_list = self._process_filenames(sorted(filenames))
             if split == "train" or split == "val":
                 if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
                 trainval.append(data_list)
@@ -308,8 +308,6 @@ class ShapeNetDataset(BaseDataset):
             pre_transform=self.pre_transform,
         )
         self._categories = self.train_dataset.categories
-
-        import pdb; pdb.set_trace()
 
     @property
     def class_to_segments(self):
