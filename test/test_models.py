@@ -25,7 +25,7 @@ try:
     import MinkowskiEngine
 except:
     HAS_MINKOWSKI = False
-    print("Skipping tests that require Minkowski Engine")
+    print("=============== Skipping tests that require Minkowski Engine =============")
 
 seed = 0
 torch.manual_seed(seed)
@@ -73,8 +73,6 @@ class TestModelUtils(unittest.TestCase):
         self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
 
     def test_runall(self):
-        print("============ Starting run all models")
-
         def is_known_to_fail(model_name):
             forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
             if not HAS_MINKOWSKI:
@@ -92,7 +90,6 @@ class TestModelUtils(unittest.TestCase):
             for model_name in models_config.models.keys():
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
-                        print("============" + model_name)
                         models_config.update("model_name", model_name)
                         dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
                         model = instantiate_model(models_config, dataset)
@@ -151,10 +148,7 @@ class TestModelUtils(unittest.TestCase):
         model.backward()
         ratio = test_hasgrad(model)
         if ratio < 1:
-            print(
-                "Model segmentation.pointnet2.pointnet2_largemsgs has %i%% of parameters with 0 gradient"
-                % (100 * ratio)
-            )
+            print("Model object_detection.votenet.VoteNetPaper has %i%% of parameters with 0 gradient" % (100 * ratio))
 
     def test_siamese_minkowski(self):
         if not HAS_MINKOWSKI:
