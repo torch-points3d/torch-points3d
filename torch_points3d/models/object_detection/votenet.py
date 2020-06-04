@@ -68,7 +68,9 @@ class VoteNetModel(BaseModel):
         outputs = self.proposal_cls_module(data_votes)
 
         sampling_id_key = "sampling_id_0"
-        setattr(outputs, "seed_inds", getattr(data_features, sampling_id_key, None))  # [B,num_seeds]
+        num_seeds = data_features.pos.shape[1]
+        seed_inds = getattr(data_features, sampling_id_key, None)[:, :num_seeds]
+        setattr(outputs, "seed_inds", seed_inds)  # [B,num_seeds]
 
         self.output = outputs
         self._compute_losses()
@@ -80,7 +82,7 @@ class VoteNetModel(BaseModel):
             if torch.is_tensor(loss):
                 if not self.losses_has_been_added:
                     self.loss_names += [loss_name]
-                setattr(self, loss_name, loss.item())
+                setattr(self, loss_name, loss)
         self.losses_has_been_added = True
 
     def backward(self):

@@ -19,7 +19,13 @@ from torch_points3d.utils.model_building_utils.model_definition_resolver import 
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
 
-# calls resolve_model, then find_model_using_name
+
+HAS_MINKOWSKI = True
+try:
+    import MinkowskiEngine
+except:
+    HAS_MINKOWSKI = False
+    print("Skipping tests that require Minkowski Engine")
 
 seed = 0
 torch.manual_seed(seed)
@@ -66,23 +72,13 @@ class TestModelUtils(unittest.TestCase):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
 
-    def test_createall(self):
-        for type_file in self.model_type_files:
-            associated_task = type_file.split("/")[-2]
-            models_config = OmegaConf.load(type_file)
-            models_config = OmegaConf.merge(models_config, self.data_config)
-            models_config.update("data.task", associated_task)
-            for model_name in models_config.models.keys():
-                with self.subTest(model_name):
-                    if model_name not in ["MinkUNet_WIP"]:
-                        models_config.update("model_name", model_name)
-                        instantiate_model(models_config, MockDatasetGeometric(6))
-
     def test_runall(self):
         print("============ Starting run all models")
 
         def is_known_to_fail(model_name):
             forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
+            if not HAS_MINKOWSKI:
+                forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B"]
             for failing in forward_failing:
                 if failing.lower() in model_name.lower():
                     return True
@@ -161,6 +157,9 @@ class TestModelUtils(unittest.TestCase):
             )
 
     def test_siamese_minkowski(self):
+        if not HAS_MINKOWSKI:
+            return
+
         params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
         transform = Compose(
             [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
