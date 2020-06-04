@@ -94,6 +94,7 @@ class TestModelUtils(unittest.TestCase):
             for model_name in models_config.models.keys():
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
+                        print("============" + model_name)
                         models_config.update("model_name", model_name)
                         dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
                         model = instantiate_model(models_config, dataset)
