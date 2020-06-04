@@ -133,6 +133,8 @@ class ShapeNet(InMemoryDataset):
         self.raw_data, self.raw_slices, self.raw_y_mask = self.load_data(raw_path, include_normals)
 
     def load_data(self, path, include_normals):
+        '''This function is used twice to load data for both raw and pre_transformed
+        '''
         data, slices = torch.load(path)
         data.x = data.x if include_normals else None
 
