@@ -191,6 +191,8 @@ class ShapeNet(InMemoryDataset):
         categories_ids = [self.category_ids[cat] for cat in self.categories]
         cat_idx = {categories_ids[i]: i for i in range(len(categories_ids))}
 
+        has_pre_transform = self.pre_transform is not None
+
         for scan_id, name in enumerate(tq(filenames)):
             cat = name.split(osp.sep)[0]
             if cat not in categories_ids:
@@ -205,12 +207,12 @@ class ShapeNet(InMemoryDataset):
             data = Data(pos=pos, x=x, y=y, category=category, scan_id=scan_id)
             if self.pre_filter is not None and not self.pre_filter(data):
                 continue
-            data_raw_list.append(data.clone())
-            if self.pre_transform is not None:
+            data_raw_list.append(data.clone() if has_pre_transform else data)
+            if has_pre_transform:
                 data = self.pre_transform(data)
                 data_list.append(data)
         
-        if self.pre_transform is None:
+        if has_pre_transform:
             return [], data_raw_list
         return data_raw_list, data_list
 
