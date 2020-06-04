@@ -214,7 +214,7 @@ class ShapeNet(InMemoryDataset):
                 data = self.pre_transform(data)
                 data_list.append(data)
         
-        if has_pre_transform:
+        if not has_pre_transform:
             return [], data_raw_list
         return data_raw_list, data_list
 
