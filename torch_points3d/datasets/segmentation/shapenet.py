@@ -218,7 +218,7 @@ class ShapeNet(InMemoryDataset):
             return [], data_raw_list
         return data_raw_list, data_list
 
-    def save_datas(self, datas, path_to_datas, save_bool=True):
+    def _save_data_list(self, datas, path_to_datas, save_bool=True):
         if save_bool:
             torch.save(self.collate(datas), path_to_datas)
 
@@ -245,11 +245,11 @@ class ShapeNet(InMemoryDataset):
                 if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
                 trainval.append(data_list)
 
-            self.save_datas(data_list, self.processed_paths[i])
-            self.save_datas(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
+            self._save_data_list(data_list, self.processed_paths[i])
+            self._save_data_list(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
 
-        self.save_datas(self._re_index_trainval(trainval), self.processed_paths[3])
-        self.save_datas(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
+        self._save_data_list(self._re_index_trainval(trainval), self.processed_paths[3])
+        self._save_data_list(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
 
     def __repr__(self):
         return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)
