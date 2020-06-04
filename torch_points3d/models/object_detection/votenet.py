@@ -23,11 +23,10 @@ class VoteNetModel(BaseModel):
 
         # 1 - CREATE BACKBONE MODEL
         input_nc = dataset.feature_dimension
-
         backbone_option = option.backbone
-        self.num_point = backbone_option.down_conv.npoint[1]
+        self.num_seed_points = backbone_option.down_conv.npoint[1]
         backbone_cls = getattr(models, backbone_option.model_type)
-        self.backbone_model = backbone_cls(architecture="unet", input_nc=input_nc, config=option.backbone)
+        self.backbone_model = backbone_cls(architecture="unet", input_nc=input_nc, config=backbone_option)
 
         # 2 - CREATE VOTING MODEL
         voting_option = option.voting
@@ -71,7 +70,9 @@ class VoteNetModel(BaseModel):
         outputs = self.proposal_cls_module(data_votes)
 
         sampling_id_key = "sampling_id_0"
-        setattr(outputs, "seed_inds", getattr(data_features, sampling_id_key, None)[:, : self.num_point,])
+        setattr(
+            outputs, "seed_inds", getattr(data_features, sampling_id_key, None)[:, : self.num_seed_points,]
+        )  # TODO Check that this is correct. Seed_inds should be [B,num_seeds]
 
         self.output = outputs
 

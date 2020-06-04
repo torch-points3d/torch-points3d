@@ -38,6 +38,16 @@ class VotingModule(nn.Module):
         self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
 
     def forward(self, data):
+        """ Votes for centres using a PN++ like architecture
+        Returns
+        -------
+        data:
+            - pos: position of the vote (centre of the box)
+            - x: feature of the vote (original feature + processed feature)
+            - seed_pos: position of the original point
+        """
+        if data.pos.dim() != 3:
+            raise ValueError("This method only supports dense convolutions for now")
 
         batch_size = data.pos.shape[0]
         num_points = data.pos.shape[1]
@@ -60,7 +70,7 @@ class VotingModule(nn.Module):
 
 
 if __name__ == "__main__":
-    net = VotingModule(2, 256).cuda()
-    data_votes = net(Data(pox=torch.rand(8, 1024, 3).cuda(), x=torch.rand(8, 256, 1024).cuda()))
+    net = VotingModule(2, 256)
+    data_votes = net(Data(pos=torch.rand(8, 1024, 3), x=torch.rand(8, 256, 1024)))
     print("vote_pos", data_votes.pos.shape)
     print("vote_x", data_votes.x.shape)

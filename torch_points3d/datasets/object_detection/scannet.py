@@ -129,6 +129,7 @@ class ScannetObjectDetection(Scannet):
 
         data.center_label = target_bboxes.float()[:, 0:3]
         data.heading_residual_label = angle_residuals.float()
+        data.size_class_label = size_classes
         data.size_residual_label = size_residuals.float()
         data.sem_cls_label = torch.from_numpy(target_bboxes_semcls).int()
         data.box_label_mask = target_bboxes_mask
@@ -142,6 +143,12 @@ class ScannetObjectDetection(Scannet):
     def _remap_labels(self, data):
         log.info("Keeping original labels in y. Please do not use data.y in your network.")
         return data
+
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
 
 
 class ScannetDataset(BaseDataset):

@@ -9,7 +9,7 @@ import numpy as np
 
 FAR_THRESHOLD = 0.6
 NEAR_THRESHOLD = 0.3
-GT_VOTE_FACTOR = 3  # number of GT votes per point
+GT_VOTE_FACTOR = 3  # number of GT votes per point TODO should not be hardcoded
 OBJECTNESS_CLS_WEIGHTS = [0.2, 0.8]  # put larger weights on positive objectness
 
 
@@ -135,21 +135,23 @@ def compute_objectness_loss(inputs, outputs, loss_params):
     B = gt_center.shape[0]
     K = aggregated_vote_xyz.shape[1]
     gt_center.shape[1]
-    dist1, ind1, dist2, _ = nn_distance(aggregated_vote_xyz, gt_center)  # dist1: BxK, dist2: BxK2
+    dist1, ind1, dist2, _ = nn_distance(
+        aggregated_vote_xyz, gt_center
+    )  # dist1: BxK, dist2: BxK2 TODO Optimise this nn_distance function, does a lot of useless stuff
 
     # Generate objectness label and mask
     # objectness_label: 1 if pred object center is within NEAR_THRESHOLD of any GT object
     # objectness_mask: 0 if pred object center is in gray zone (DONOTCARE), 1 otherwise
     euclidean_dist1 = torch.sqrt(dist1 + 1e-6)
-    objectness_label = torch.zeros((B, K), dtype=torch.long).cuda()
-    objectness_mask = torch.zeros((B, K)).cuda()
+    objectness_label = torch.zeros((B, K), dtype=torch.long)
+    objectness_mask = torch.zeros((B, K))
     objectness_label[euclidean_dist1 < loss_params.near_threshold] = 1
     objectness_mask[euclidean_dist1 < loss_params.near_threshold] = 1
     objectness_mask[euclidean_dist1 > loss_params.far_threshold] = 1
 
     # Compute objectness loss
     objectness_scores = outputs["objectness_scores"]
-    criterion = nn.CrossEntropyLoss(torch.Tensor(loss_params.objectness_cls_weights).cuda(), reduction="none")
+    criterion = nn.CrossEntropyLoss(torch.Tensor(loss_params.objectness_cls_weights), reduction="none")
     objectness_loss = criterion(objectness_scores.transpose(2, 1), objectness_label)
     objectness_loss = torch.sum(objectness_loss * objectness_mask) / (torch.sum(objectness_mask) + 1e-6)
 
@@ -207,10 +209,10 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     heading_residual_normalized_label = heading_residual_label / (np.pi / num_heading_bin)
 
     # Ref: https://discuss.pytorch.org/t/convert-int-into-one-hot-format/507/3
-    heading_label_one_hot = torch.cuda.FloatTensor(batch_size, heading_class_label.shape[1], num_heading_bin).zero_()
+    heading_label_one_hot = torch.zeros(batch_size, heading_class_label.shape[1], num_heading_bin)
     heading_label_one_hot.scatter_(
         2, heading_class_label.unsqueeze(-1).long(), 1
-    )  # src==1 so it's *one-hot* (B,K,num_heading_bin)
+    )  # src==1 so it's *one-hot* (B,K,num_heading_bin) TODO change that for pytorch OneHot
     heading_residual_normalized_loss = huber_loss(
         torch.sum(outputs["heading_residuals_normalized"] * heading_label_one_hot, -1)
         - heading_residual_normalized_label,
@@ -230,7 +232,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
         inputs["size_residual_label"], 1, object_assignment.unsqueeze(-1).repeat(1, 1, 3)
     )  # select (B,K,3) from (B,K2,3)
 
-    size_label_one_hot = torch.cuda.FloatTensor(batch_size, size_class_label.shape[1], num_size_cluster).zero_()
+    size_label_one_hot = torch.zeros(batch_size, size_class_label.shape[1], num_size_cluster)
     size_label_one_hot.scatter_(
         2, size_class_label.unsqueeze(-1).long(), 1
     )  # src==1 so it's *one-hot* (B,K,num_size_cluster)
@@ -240,7 +242,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     )  # (B,K,3)
 
     mean_size_arr_expanded = (
-        torch.from_numpy(mean_size_arr.astype(np.float32)).cuda().unsqueeze(0).unsqueeze(0)
+        torch.from_numpy(mean_size_arr.astype(np.float32)).unsqueeze(0).unsqueeze(0)
     )  # (1,1,num_size_cluster,3)
     mean_size_label = torch.sum(size_label_one_hot_tiled * mean_size_arr_expanded, 2)  # (B,K,3)
     size_residual_label_normalized = size_residual_label / mean_size_label  # (B,K,3)
@@ -285,9 +287,9 @@ def get_loss(inputs, outputs, loss_params):
     inputs["objectness_label"] = objectness_label
     inputs["objectness_mask"] = objectness_mask
     inputs["object_assignment"] = object_assignment
-    objectness_label.shape[0] * objectness_label.shape[1]
-    # metrics["pos_ratio"] = torch.sum(objectness_label.float().cuda()) / float(total_num_proposal)
-    # metrics["neg_ratio"] = torch.sum(objectness_mask.float()) / float(total_num_proposal) - metrics["pos_ratio"]
+    total_num_proposal = objectness_label.shape[0] * objectness_label.shape[1]
+    metrics["pos_ratio"] = torch.sum(objectness_label.float()) / float(total_num_proposal)
+    metrics["neg_ratio"] = torch.sum(objectness_mask.float()) / float(total_num_proposal) - metrics["pos_ratio"]
 
     # Box loss and sem cls loss
     (
@@ -309,16 +311,17 @@ def get_loss(inputs, outputs, loss_params):
 
     # Final loss function
     loss = vote_loss + 0.5 * objectness_loss + box_loss + 0.1 * sem_cls_loss
-    loss *= 10
+    loss *= 10  # TODO WHY???
     losses["loss"] = loss
 
     # --------------------------------------------
     # Some other statistics
-    # obj_pred_val = torch.argmax(outputs["objectness_scores"], 2)  # B,K
-    # obj_acc = torch.sum((obj_pred_val == objectness_label.long()).float() * objectness_mask) / (
-    #    torch.sum(objectness_mask) + 1e-6
-    # )
-    # metrics["obj_acc"] = obj_acc
+    obj_pred_val = torch.argmax(outputs["objectness_scores"], 2)  # B,K
+    obj_acc = torch.sum((obj_pred_val == objectness_label.long()).float() * objectness_mask) / (
+        torch.sum(objectness_mask) + 1e-6
+    )
+    metrics["obj_acc"] = obj_acc
+    # TODO move metrics to the tracker
     labels["objectness_label"] = objectness_label
     labels["objectness_mask"] = objectness_mask
 

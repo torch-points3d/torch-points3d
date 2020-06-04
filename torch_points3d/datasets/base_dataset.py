@@ -432,9 +432,9 @@ class BaseDataset:
         ----------
         name : str
         """
-        all_datasets = [self.train_dataset, self.val_dataset] + [t for t in self.test_dataset]
+        all_datasets = [self.train_dataset, self.val_dataset] + self.test_dataset
         for dataset in all_datasets:
-            if dataset.name == name:
+            if dataset is not None and dataset.name == name:
                 return dataset
         raise ValueError("No dataset with name %s was found." % name)
 

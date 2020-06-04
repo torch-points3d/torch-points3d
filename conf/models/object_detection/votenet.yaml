@@ -37,14 +37,13 @@ models:
             module_name: ProposalModule
             vote_aggregation:
                 module_name: PointNetMSGDown
-                npoint: [num_proposal]
+                npoint: num_proposal
                 radii: [0.3]
                 nsample: [16]
                 down_conv_nn: [[num_features + 3, in_feat * 2, in_feat * 2, in_feat * 2]]
             num_class: num_classes
             num_heading_bin: 1
             num_size_cluster: num_classes
-            mean_size_arr: 3
             num_proposal: num_proposal
             sampling: "seed_fps"
         loss_params:

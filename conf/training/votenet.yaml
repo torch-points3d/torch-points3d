@@ -8,7 +8,7 @@ training:
     optim:
         base_lr: 0.01
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
-        grad_clip: 5
+        grad_clip: 100
         optimizer:
             class: SGD
             params:
@@ -29,11 +29,11 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    entity: "thomas-chaton"
+    entity: thomas-chaton
     project: scannet_object_detection
     log: False
     notes:
-    name: "VoteNet "
+    name: VoteNet
     public: True # It will be display the model within wandb log, else not.
 
     # parameters for TensorBoard Visualization

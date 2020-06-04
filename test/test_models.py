@@ -34,6 +34,33 @@ def load_model_config(task, model_type, model_name):
     return config
 
 
+def get_dataset(conv_type, task):
+    features = 2
+    if task == "object_detection":
+        include_box = True
+    else:
+        include_box = False
+
+    if task == "registration":
+        if conv_type.lower() == "dense":
+            return PairMockDataset(features, num_points=2048)
+        if conv_type.lower() == "sparse":
+            tr = Compose([XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")])
+            return PairMockDatasetGeometric(features, transform=tr, num_points=1024)
+        return PairMockDatasetGeometric(features)
+    else:
+        if conv_type.lower() == "dense":
+            return MockDataset(features, num_points=2048, include_box=include_box)
+        if conv_type.lower() == "sparse":
+            return MockDatasetGeometric(
+                features,
+                include_box=include_box,
+                transform=GridSampling3D(size=0.01, quantize_coords=True, mode="last"),
+                num_points=1024,
+            )
+        return MockDatasetGeometric(features)
+
+
 class TestModelUtils(unittest.TestCase):
     def setUp(self):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
@@ -53,33 +80,11 @@ class TestModelUtils(unittest.TestCase):
 
     def test_runall(self):
         def is_known_to_fail(model_name):
-            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet", "VoteNetPaper"]
+            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
             for failing in forward_failing:
                 if failing.lower() in model_name.lower():
                     return True
             return False
-
-        def get_dataset(conv_type, task):
-            features = 2
-            if task == "registration":
-                if conv_type.lower() == "dense":
-                    return PairMockDataset(features, num_points=2048)
-                if conv_type.lower() == "sparse":
-                    tr = Compose(
-                        [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
-                    )
-                    return PairMockDatasetGeometric(features, transform=tr, num_points=1024)
-                return PairMockDatasetGeometric(features)
-            else:
-                if conv_type.lower() == "dense":
-                    return MockDataset(features, num_points=2048)
-                if conv_type.lower() == "sparse":
-                    return MockDatasetGeometric(
-                        features,
-                        transform=GridSampling3D(size=0.01, quantize_coords=True, mode="last"),
-                        num_points=1024,
-                    )
-                return MockDatasetGeometric(features)
 
         for type_file in self.model_type_files:
             associated_task = type_file.split("/")[-2]
@@ -127,6 +132,20 @@ class TestModelUtils(unittest.TestCase):
         params = load_model_config("segmentation", "pointnet2", "pointnet2_largemsg")
         params.update("data.use_category", True)
         dataset = MockDataset(5, num_points=2048)
+        model = instantiate_model(params, dataset)
+        model.set_input(dataset[0], device)
+        model.forward()
+        model.backward()
+        ratio = test_hasgrad(model)
+        if ratio < 1:
+            print(
+                "Model segmentation.pointnet2.pointnet2_largemsgs has %i%% of parameters with 0 gradient"
+                % (100 * ratio)
+            )
+
+    def test_votenet(self):
+        params = load_model_config("object_detection", "votenet", "VoteNetPaper")
+        dataset = get_dataset("dense", "object_detection")
         model = instantiate_model(params, dataset)
         model.set_input(dataset[0], device)
         model.forward()

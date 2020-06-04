@@ -57,15 +57,19 @@ class BaseDenseConvolutionDown(BaseConvolution):
         """
         raise NotImplementedError
 
-    def forward(self, data, **kwargs):
+    def forward(self, data, sample_idx=None, **kwargs):
         """
-        Arguments:
+        Parameters
+        ----------
+        data: Data
             x -- Previous features [B, C, N]
             pos -- Previous positions [B, N, 3]
+        sample_idx: Optional[torch.Tensor]
+            can be used to shortcut the sampler [B,K]
         """
         x, pos = data.x, data.pos
-        if "idx" in data:
-            idx = data.idx
+        if sample_idx:
+            idx = sample_idx
         else:
             idx = self.sampler(pos)
         idx = idx.unsqueeze(-1).repeat(1, 1, pos.shape[-1]).long()
