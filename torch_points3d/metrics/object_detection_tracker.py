@@ -2,7 +2,7 @@ from typing import Dict
 import torchnet as tnt
 import torch
 
-from torch_points3d.models.base_model import BaseModel
+from torch_points3d.models.model_interface import TrackerInterface
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.metrics.meters import APMeter
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -10,18 +10,6 @@ from torch_points3d.datasets.segmentation import IGNORE_LABEL
 
 class ObjectDetectionTracker(BaseTracker):
     def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False):
-        """ This is a generic tracker for segmentation tasks.
-        It uses a confusion matrix in the back-end to track results.
-        Use the tracker to track an epoch.
-        You can use the reset function before you start a new epoch
-
-        Arguments:
-            dataset  -- dataset to track (used for the number of classes)
-
-        Keyword Arguments:
-            stage {str} -- current stage. (train, validation, test, etc...) (default: {"train"})
-            wandb_log {str} --  Log using weight and biases
-        """
         super(ObjectDetectionTracker, self).__init__(stage, wandb_log, use_tensorboard)
         self._num_classes = dataset.num_classes
         self._dataset = dataset
@@ -41,7 +29,7 @@ class ObjectDetectionTracker(BaseTracker):
     def confusion_matrix(self):
         return self._confusion_matrix.confusion_matrix
 
-    def track(self, model: BaseModel, **kwargs):
+    def track(self, model: TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)

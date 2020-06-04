@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 import torch
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications import models
@@ -62,7 +61,7 @@ class VoteNetModel(BaseModel):
         # Forward through backbone model
         self.input = data
 
-    def forward(self) -> Any:
+    def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
 
         data_features = self.backbone_model.forward(self.input)
