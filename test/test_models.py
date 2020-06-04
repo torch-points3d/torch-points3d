@@ -79,6 +79,8 @@ class TestModelUtils(unittest.TestCase):
                         instantiate_model(models_config, MockDatasetGeometric(6))
 
     def test_runall(self):
+        print("============ Starting run all models")
+
         def is_known_to_fail(model_name):
             forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
             for failing in forward_failing:
