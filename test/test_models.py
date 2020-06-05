@@ -75,7 +75,7 @@ def get_dataset(conv_type, task):
         return MockDatasetGeometric(features, batch_size=batch_size)
 
 
-class TestModelUtils(unittest.TestCase):
+class TestModels(unittest.TestCase):
     def setUp(self):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
@@ -118,65 +118,6 @@ class TestModelUtils(unittest.TestCase):
                         except Exception as e:
                             print("Model with zero gradient %s: %s" % (type_file, model_name))
                             raise e
-
-    def test_largekpconv(self):
-        params = load_model_config("segmentation", "kpconv", "KPConvPaper")
-        params.update("data.use_category", True)
-        params.update("data.first_subsampling", 0.02)
-        dataset = MockDatasetGeometric(5)
-        model = instantiate_model(params, dataset)
-        model.set_input(dataset[0], device)
-        model.forward()
-        model.backward()
-        ratio = test_hasgrad(model)
-        if ratio < 1:
-            print("Model segmentation.kpconv.KPConvPaper has %i%% of parameters with 0 gradient" % (100 * ratio))
-
-    def test_pointnet2ms(self):
-        params = load_model_config("segmentation", "pointnet2", "pointnet2_largemsg")
-        params.update("data.use_category", True)
-        dataset = MockDataset(5, num_points=2048)
-        model = instantiate_model(params, dataset)
-        model.set_input(dataset[0], device)
-        model.forward()
-        model.backward()
-        ratio = test_hasgrad(model)
-        if ratio < 1:
-            print(
-                "Model segmentation.pointnet2.pointnet2_largemsgs has %i%% of parameters with 0 gradient"
-                % (100 * ratio)
-            )
-
-    def test_votenet(self):
-        params = load_model_config("object_detection", "votenet", "VoteNetPaper")
-        dataset = get_dataset("dense", "object_detection")
-        model = instantiate_model(params, dataset)
-        model.set_input(dataset[0], device)
-        model.forward()
-        model.backward()
-        ratio = test_hasgrad(model)
-        if ratio < 1:
-            print("Model object_detection.votenet.VoteNetPaper has %i%% of parameters with 0 gradient" % (100 * ratio))
-
-    def test_siamese_minkowski(self):
-        if not HAS_MINKOWSKI:
-            return
-
-        params = load_model_config("registration", "minkowski", "MinkUNet_Fragment")
-        transform = Compose(
-            [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
-        )
-        dataset = PairMockDatasetGeometric(5, transform=transform, num_points=1024, is_pair_ind=True)
-        model = instantiate_model(params, dataset)
-        d = dataset[0]
-        model.set_input(d, device)
-        model.forward()
-        model.backward()
-        ratio = test_hasgrad(model)
-        if ratio < 1:
-            print(
-                "Model registration.minkowski.MinkUNet_Fragment has %i%% of parameters with 0 gradient" % (100 * ratio)
-            )
 
 
 if __name__ == "__main__":
