@@ -1,6 +1,6 @@
 data:
   class: scannet.ScannetDataset
-  dataset_name: "scannet"
+  dataset_name: "scannet-fixed"
   task: object_detection
   dataroot: data
   version: 'v2'
