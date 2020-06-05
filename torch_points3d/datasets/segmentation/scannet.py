@@ -402,7 +402,7 @@ class Scannet(InMemoryDataset):
     root : str
         Path to the data
     split : str, optional
-        Split used
+        Split used (train, val or test)
     transform (callable, optional):
         A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a transformed
         version. The data object will be transformed before every access.
@@ -477,10 +477,8 @@ class Scannet(InMemoryDataset):
             path = self.processed_paths[1]
         elif split == "test":
             path = self.processed_paths[2]
-        elif split == "trainval":
-            path = self.processed_paths[3]
         else:
-            raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
+            raise ValueError((f"Split {split} found, but expected either " "train, val, or test"))
 
         self.data, self.slices = torch.load(path)
 
@@ -490,6 +488,9 @@ class Scannet(InMemoryDataset):
             if not use_instance_labels:
                 delattr(self.data, "instance_labels")
             self.data = self._remap_labels(self.data)
+            self.has_labels = True
+        else:
+            self.has_labels = False
 
         self.read_from_metadata()
 

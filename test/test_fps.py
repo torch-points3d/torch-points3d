@@ -3,6 +3,11 @@ import numpy as np
 from torch_geometric.nn import fps
 import unittest
 import logging
+import os
+import sys
+
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 
 from test import run_if_cuda
 
@@ -12,7 +17,6 @@ log = logging.getLogger(__name__)
 class TestPytorchClusterFPS(unittest.TestCase):
     @run_if_cuda
     def test_simple(self):
-
         num_points = 2048
         pos = torch.randn((num_points, 3)).cuda()
         batch = torch.zeros((num_points)).cuda().long()

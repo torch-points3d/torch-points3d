@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
 
@@ -19,11 +20,11 @@ class MockDatasetConfig(object):
 
 
 class MockDataset(torch.utils.data.Dataset):
-    def __init__(self, feature_size=0, transform=None, num_points=100):
+    def __init__(self, feature_size=0, transform=None, num_points=100, include_box=False, batch_size=2):
         self.feature_dimension = feature_size
         self.num_classes = 10
         self.num_points = num_points
-        self.batch_size = 2
+        self.batch_size = batch_size
         self.weight_classes = None
         self.feature_size = feature_size
         if feature_size > 0:
@@ -34,21 +35,35 @@ class MockDataset(torch.utils.data.Dataset):
         self._category = torch.ones((self.num_points,), dtype=torch.long)
         self._ms_transform = None
         self._transform = transform
+        self.mean_size_arr = np.array([1])
+        self.include_box = include_box
 
     def __len__(self):
         return self.num_points
 
+    def _generate_data(self):
+        data = Data(
+            pos=torch.randn((self.num_points, 3)),
+            x=torch.randn((self.num_points, self.feature_size)) if self.feature_size else None,
+            y=torch.randint(0, 10, (self.num_points,)),
+            category=self._category,
+        )
+        if self.include_box:
+            num_boxes = 10
+            data.center_label = torch.randn(num_boxes, 3)
+            data.heading_class_label = torch.zeros((num_boxes,))
+            data.heading_residual_label = torch.randn((num_boxes,))
+            data.size_class_label = torch.randint(0, 10, (num_boxes,))
+            data.size_residual_label = torch.randn(num_boxes, 3)
+            data.sem_cls_label = torch.randint(0, 10, (num_boxes,))
+            data.box_label_mask = torch.randint(0, 1, (num_boxes,)).bool()
+            data.vote_label = torch.randn(self.num_points, 9)
+            data.vote_label_mask = torch.randint(0, 1, (self.num_points,)).bool()
+        return data
+
     @property
     def datalist(self):
-        datalist = [
-            Data(
-                pos=torch.randn((self.num_points, 3)),
-                x=torch.randn((self.num_points, self.feature_size)) if self.feature_size else None,
-                y=torch.randint(0, 10, (self.num_points,)),
-                category=self._category,
-            )
-            for i in range(self.batch_size)
-        ]
+        datalist = [self._generate_data() for i in range(self.batch_size)]
         if self._transform:
             datalist = [self._transform(d.clone()) for d in datalist]
         if self._ms_transform:
@@ -77,8 +92,8 @@ class MockDatasetGeometric(MockDataset):
 
 
 class PairMockDataset(MockDataset):
-    def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True):
-        super(PairMockDataset, self).__init__(feature_size, transform, num_points)
+    def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True, batch_size=2):
+        super(PairMockDataset, self).__init__(feature_size, transform, num_points, batch_size=batch_size)
         if is_pair_ind:
             self._pair_ind = torch.tensor([[0, 1], [1, 0]])
         else:

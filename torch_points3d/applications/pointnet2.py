@@ -177,9 +177,15 @@ class PointNet2Unet(BasePointnet2):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
+        sampling_ids = self._collect_sampling_ids(stack_down)
+
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((data, stack_down.pop()))
 
+        for key, value in sampling_ids.items():
+            setattr(data, key, value)
+
         if self.has_mlp_head:
             data.x = self.mlp(data.x)
+
         return data

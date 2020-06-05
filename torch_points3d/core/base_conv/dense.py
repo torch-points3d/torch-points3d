@@ -41,6 +41,7 @@ class BaseDenseConvolutionDown(BaseConvolution):
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
         super(BaseDenseConvolutionDown, self).__init__(sampler, neighbour_finder, *args, **kwargs)
         self._index = kwargs.get("index", None)
+        self._save_sampling_id = kwargs.get("save_sampling_id", None)
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
         """ Implements a Dense convolution where radius_idx represents
@@ -56,14 +57,21 @@ class BaseDenseConvolutionDown(BaseConvolution):
         """
         raise NotImplementedError
 
-    def forward(self, data, **kwargs):
+    def forward(self, data, sample_idx=None, **kwargs):
         """
-        Arguments:
+        Parameters
+        ----------
+        data: Data
             x -- Previous features [B, C, N]
             pos -- Previous positions [B, N, 3]
+        sample_idx: Optional[torch.Tensor]
+            can be used to shortcut the sampler [B,K]
         """
         x, pos = data.x, data.pos
-        idx = self.sampler(pos)
+        if sample_idx:
+            idx = sample_idx
+        else:
+            idx = self.sampler(pos)
         idx = idx.unsqueeze(-1).repeat(1, 1, pos.shape[-1]).long()
         new_pos = pos.gather(1, idx)
 
@@ -72,7 +80,11 @@ class BaseDenseConvolutionDown(BaseConvolution):
             radius_idx = self.neighbour_finder(pos, new_pos, scale_idx=scale_idx)
             ms_x.append(self.conv(x, pos, new_pos, radius_idx, scale_idx))
         new_x = torch.cat(ms_x, 1)
-        return Data(pos=new_pos, x=new_x)
+
+        new_data = Data(pos=new_pos, x=new_x)
+        if self._save_sampling_id:
+            setattr(new_data, "sampling_id_{}".format(self._index), idx[:, :, 0])
+        return new_data
 
 
 class BaseDenseConvolutionUp(BaseConvolution):

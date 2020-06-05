@@ -1,0 +1,46 @@
+data:
+  class: scannet.ScannetDataset
+  dataset_name: "scannet-fixed"
+  task: object_detection
+  dataroot: data
+  version: 'v2'
+  use_instance_labels: True
+  use_instance_bboxes: True
+  donotcare_class_ids: []
+  process_workers: 8
+
+  pre_transform:
+    - transform: GridSampling3D
+      lparams: [0.02]
+  
+  train_transform:
+    - transform: FixedPoints
+      lparams: [20000] 
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True  
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: ["rgb", "pos_z"]
+        input_nc_feats: [3, 1]
+        delete_feats: [True, True]
+        stricts: [False, True]
+
+  val_transform:
+    - transform: FixedPoints
+      lparams: [20000] 
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True  
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: ["rgb", "pos_z"]
+        input_nc_feats: [3, 1]
+        delete_feats: [True, True]
+        stricts: [False, True]
