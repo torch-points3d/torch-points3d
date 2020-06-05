@@ -57,7 +57,6 @@ jobs:
         run: |
           source ${pythonEnv}/bin/activate
           pip install coverage
-          python test/test_models.py
           coverage run -m unittest -v
           coverage xml
         env:

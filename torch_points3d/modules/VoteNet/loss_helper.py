@@ -12,25 +12,7 @@ NEAR_THRESHOLD = 0.3
 GT_VOTE_FACTOR = 3  # number of GT votes per point TODO should not be hardcoded
 OBJECTNESS_CLS_WEIGHTS = [0.2, 0.8]  # put larger weights on positive objectness
 
-
-def huber_loss(error, delta=1.0):
-    """
-    Args:
-        error: Torch tensor (d1,d2,...,dk)
-    Returns:
-        loss: Torch tensor (d1,d2,...,dk)
-
-    x = error = pred - gt or dist(pred,gt)
-    0.5 * |x|^2                 if |x|<=d
-    0.5 * d^2 + d * (|x|-d)     if |x|>d
-    Ref: https://github.com/charlesq34/frustum-pointnets/blob/master/models/model_util.py
-    """
-    abs_error = torch.abs(error)
-    # quadratic = torch.min(abs_error, torch.FloatTensor([delta]))
-    quadratic = torch.clamp(abs_error, max=delta)
-    linear = abs_error - quadratic
-    loss = 0.5 * quadratic ** 2 + delta * linear
-    return loss
+from torch_points3d.core.losses import huber_loss
 
 
 def nn_distance(pc1, pc2, l1smooth=False, delta=1.0, l1=False):
