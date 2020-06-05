@@ -130,7 +130,10 @@ class ShapeNet(InMemoryDataset):
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
 
         self.data, self.slices, self.y_mask = self.load_data(path, include_normals)
-        self.raw_data, self.raw_slices, self.raw_y_mask = self.load_data(raw_path, include_normals)
+
+        if os.path.exists(raw_path):
+            self.get_raw_data = self.get
+            self.raw_data, self.raw_slices, _ = self.load_data(raw_path, include_normals)
 
     def load_data(self, path, include_normals):
         '''This function is used twice to load data for both raw and pre_transformed
@@ -194,26 +197,28 @@ class ShapeNet(InMemoryDataset):
         cat_idx = {categories_ids[i]: i for i in range(len(categories_ids))}
 
         has_pre_transform = self.pre_transform is not None
-
-        for scan_id, name in enumerate(tq(filenames)):
+        
+        scan_id = -1
+        for name in tq(filenames):
             cat = name.split(osp.sep)[0]
             if cat not in categories_ids:
                 continue
-
+            scan_id += 1
             data = read_txt_array(osp.join(self.raw_dir, name))
             pos = data[:, :3]
             x = data[:, 3:6]
             y = data[:, -1].type(torch.long)
             category = torch.ones(x.shape[0], dtype=torch.long) * cat_idx[cat]
-            scan_id = torch.from_numpy(np.asarray([scan_id]))
-            data = Data(pos=pos, x=x, y=y, category=category, scan_id=scan_id)
+            scan_id_tensor = torch.from_numpy(np.asarray([scan_id])).clone()
+            is_raw = torch.ones(1, dtype=torch.bool)
+            data = Data(pos=pos, x=x, y=y, category=category, scan_id=scan_id_tensor, is_raw=is_raw)
             if self.pre_filter is not None and not self.pre_filter(data):
                 continue
             data_raw_list.append(data.clone() if has_pre_transform else data)
             if has_pre_transform:
                 data = self.pre_transform(data)
+                data.is_raw = torch.zeros(1, dtype=torch.bool)
                 data_list.append(data)
-        
         if not has_pre_transform:
             return [], data_raw_list
         return data_raw_list, data_list
@@ -228,7 +233,7 @@ class ShapeNet(InMemoryDataset):
         train, val = trainval
         for v in val:
             v.scan_id += len(train)
-        assert (train[-1].scan_id + 1 == val[0].scan_id).item()
+        assert (train[-1].scan_id + 1 == val[0].scan_id).item(), (train[-1].scan_id, val[0].scan_id)
         return train + val
 
     def process(self):
