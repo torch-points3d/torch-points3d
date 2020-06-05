@@ -1,8 +1,7 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
+""" Adapted from VoteNet
 
+Ref: https://github.com/facebookresearch/votenet/blob/master/models/loss_helper.py
+"""
 import torch
 import torch.nn as nn
 import numpy as np
@@ -12,40 +11,11 @@ NEAR_THRESHOLD = 0.3
 GT_VOTE_FACTOR = 3  # number of GT votes per point TODO should not be hardcoded
 OBJECTNESS_CLS_WEIGHTS = [0.2, 0.8]  # put larger weights on positive objectness
 
-from torch_points3d.core.losses import huber_loss
+from torch_points3d.core.losses import huber_loss, nn_distance
+from .votenet_results import VoteNetResults
 
 
-def nn_distance(pc1, pc2, l1smooth=False, delta=1.0, l1=False):
-    """
-    Input:
-        pc1: (B,N,C) torch tensor
-        pc2: (B,M,C) torch tensor
-        l1smooth: bool, whether to use l1smooth loss
-        delta: scalar, the delta used in l1smooth loss
-    Output:
-        dist1: (B,N) torch float32 tensor
-        idx1: (B,N) torch int64 tensor
-        dist2: (B,M) torch float32 tensor
-        idx2: (B,M) torch int64 tensor
-    """
-    N = pc1.shape[1]
-    M = pc2.shape[1]
-    pc1_expand_tile = pc1.unsqueeze(2).repeat(1, 1, M, 1)
-    pc2_expand_tile = pc2.unsqueeze(1).repeat(1, N, 1, 1)
-    pc_diff = pc1_expand_tile - pc2_expand_tile
-
-    if l1smooth:
-        pc_dist = torch.sum(huber_loss(pc_diff, delta), dim=-1)  # (B,N,M)
-    elif l1:
-        pc_dist = torch.sum(torch.abs(pc_diff), dim=-1)  # (B,N,M)
-    else:
-        pc_dist = torch.sum(pc_diff ** 2, dim=-1)  # (B,N,M)
-    dist1, idx1 = torch.min(pc_dist, dim=2)  # (B,N)
-    dist2, idx2 = torch.min(pc_dist, dim=1)  # (B,M)
-    return dist1, idx1, dist2, idx2
-
-
-def compute_vote_loss(input, output):
+def compute_vote_loss(input, output: VoteNetResults):
     """ Compute vote loss: Match predicted votes to GT votes.
 
     Args:
@@ -69,7 +39,7 @@ def compute_vote_loss(input, output):
     # Load ground truth votes and assign them to seed points
     batch_size = output["seed_pos"].shape[0]
     num_seed = output["seed_pos"].shape[1]  # B,num_seed,3
-    vote_xyz = output["pos"]  # B,num_seed*vote_factor,3
+    vote_xyz = output["seed_votes"]  # B,num_seed*vote_factor,3
     seed_inds = output["seed_inds"].long()  # B,num_seed in [0,num_points-1]
 
     # Get groundtruth votes for the seed points
@@ -98,7 +68,7 @@ def compute_vote_loss(input, output):
     return vote_loss
 
 
-def compute_objectness_loss(inputs, outputs, loss_params):
+def compute_objectness_loss(inputs, outputs: VoteNetResults, loss_params):
     """ Compute objectness loss for the proposals.
 
     Args:
@@ -106,42 +76,19 @@ def compute_objectness_loss(inputs, outputs, loss_params):
 
     Returns:
         objectness_loss: scalar Tensor
-        objectness_label: (batch_size, num_seed) Tensor with value 0 or 1
-        objectness_mask: (batch_size, num_seed) Tensor with value 0 or 1
-        object_assignment: (batch_size, num_seed) Tensor with long int
+        objectness_label: (batch_size, num_aggregated) Tensor with value 0 or 1
+        objectness_mask: (batch_size, num_aggregated) Tensor with value 0 or 1
+        object_assignment: (batch_size, num_aggregated) Tensor with long int
             within [0,num_gt_object-1]
     """
-    # Associate proposal and GT objects by point-to-point distances
-    aggregated_vote_xyz = outputs["aggregated_vote_xyz"]
-    gt_center = inputs["center_label"][:, :, 0:3]
-    B = gt_center.shape[0]
-    K = aggregated_vote_xyz.shape[1]
-    gt_center.shape[1]
-    dist1, ind1, dist2, _ = nn_distance(
-        aggregated_vote_xyz, gt_center
-    )  # dist1: BxK, dist2: BxK2 TODO Optimise this nn_distance function, does a lot of useless stuff
-
-    # Generate objectness label and mask
-    # objectness_label: 1 if pred object center is within NEAR_THRESHOLD of any GT object
-    # objectness_mask: 0 if pred object center is in gray zone (DONOTCARE), 1 otherwise
-    euclidean_dist1 = torch.sqrt(dist1 + 1e-6)
-    objectness_label = torch.zeros((B, K), dtype=torch.long).to(inputs.pos.device)
-    objectness_mask = torch.zeros((B, K)).to(inputs.pos.device)
-    objectness_label[euclidean_dist1 < loss_params.near_threshold] = 1
-    objectness_mask[euclidean_dist1 < loss_params.near_threshold] = 1
-    objectness_mask[euclidean_dist1 > loss_params.far_threshold] = 1
-
     # Compute objectness loss
     objectness_scores = outputs["objectness_scores"]
-    weights = torch.Tensor(loss_params.objectness_cls_weights).to(inputs.pos.device)
+    weights = torch.tensor(loss_params.objectness_cls_weights).to(objectness_scores.device)
     criterion = nn.CrossEntropyLoss(weights, reduction="none")
-    objectness_loss = criterion(objectness_scores.transpose(2, 1), objectness_label)
-    objectness_loss = torch.sum(objectness_loss * objectness_mask) / (torch.sum(objectness_mask) + 1e-6)
+    objectness_loss = criterion(objectness_scores.transpose(2, 1), outputs.objectness_label)
+    objectness_loss = torch.sum(objectness_loss * outputs.objectness_mask) / (torch.sum(outputs.objectness_mask) + 1e-6)
 
-    # Set assignment
-    object_assignment = ind1  # (B,K) with values in 0,1,...,K2-1
-
-    return objectness_loss, objectness_label, objectness_mask, object_assignment
+    return objectness_loss
 
 
 def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
@@ -164,7 +111,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     num_size_cluster = loss_params.num_size_cluster
     mean_size_arr = np.asarray(loss_params.mean_size_arr)
 
-    object_assignment = inputs["object_assignment"]
+    object_assignment = outputs.object_assignment
     batch_size = object_assignment.shape[0]
 
     # Compute center loss
@@ -172,7 +119,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     gt_center = inputs["center_label"][:, :, 0:3]
     dist1, ind1, dist2, _ = nn_distance(pred_center, gt_center)  # dist1: BxK, dist2: BxK2
     box_label_mask = inputs["box_label_mask"]
-    objectness_label = inputs["objectness_label"].float()
+    objectness_label = outputs["objectness_label"].float()
     centroid_reg_loss1 = torch.sum(dist1 * objectness_label) / (torch.sum(objectness_label) + 1e-6)
     centroid_reg_loss2 = torch.sum(dist2 * box_label_mask) / (torch.sum(box_label_mask) + 1e-6)
     center_loss = centroid_reg_loss1 + centroid_reg_loss2
@@ -252,27 +199,16 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     )
 
 
-def get_loss(inputs, outputs, loss_params):
-
+def get_loss(inputs, outputs: VoteNetResults, loss_params):
     losses = {}
-    metrics = {}
-    labels = {}
 
     # Vote loss
     vote_loss = compute_vote_loss(inputs, outputs)
     losses["vote_loss"] = vote_loss
 
     # Obj loss
-    objectness_loss, objectness_label, objectness_mask, object_assignment = compute_objectness_loss(
-        inputs, outputs, loss_params
-    )
+    objectness_loss = compute_objectness_loss(inputs, outputs, loss_params)
     losses["objectness_loss"] = objectness_loss
-    inputs["objectness_label"] = objectness_label
-    inputs["objectness_mask"] = objectness_mask
-    inputs["object_assignment"] = object_assignment
-    total_num_proposal = objectness_label.shape[0] * objectness_label.shape[1]
-    metrics["pos_ratio"] = torch.sum(objectness_label.float()) / float(total_num_proposal)
-    metrics["neg_ratio"] = torch.sum(objectness_mask.float()) / float(total_num_proposal) - metrics["pos_ratio"]
 
     # Box loss and sem cls loss
     (
@@ -297,15 +233,4 @@ def get_loss(inputs, outputs, loss_params):
     loss *= 10  # TODO WHY???
     losses["loss"] = loss
 
-    # --------------------------------------------
-    # Some other statistics
-    obj_pred_val = torch.argmax(outputs["objectness_scores"], 2)  # B,K
-    obj_acc = torch.sum((obj_pred_val == objectness_label.long()).float() * objectness_mask) / (
-        torch.sum(objectness_mask) + 1e-6
-    )
-    metrics["obj_acc"] = obj_acc
-    # TODO move metrics to the tracker
-    labels["objectness_label"] = objectness_label
-    labels["objectness_mask"] = objectness_mask
-
-    return losses, metrics, labels
+    return losses

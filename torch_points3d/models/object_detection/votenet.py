@@ -44,6 +44,7 @@ class VoteNetModel(BaseModel):
             sampling=proposal_option.sampling,
         )
 
+        # Loss params
         self.loss_params = option.loss_params
         self.loss_params.num_heading_bin = proposal_option.num_heading_bin
         self.loss_params.num_size_cluster = proposal_option.num_size_cluster
@@ -62,22 +63,25 @@ class VoteNetModel(BaseModel):
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-
         data_features = self.backbone_model.forward(self.input)
         data_votes = self.voting_module(data_features)
-        outputs = self.proposal_cls_module(data_votes)
 
         sampling_id_key = "sampling_id_0"
         num_seeds = data_features.pos.shape[1]
         seed_inds = getattr(data_features, sampling_id_key, None)[:, :num_seeds]
-        setattr(outputs, "seed_inds", seed_inds)  # [B,num_seeds]
+        setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
+        outputs: votenet_module.VoteNetResults = self.proposal_cls_module(data_votes)
 
+        # Associate proposal and GT objects by point-to-point distances
+        gt_center = self.input.center_label[:, :, 0:3]
+        outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
+
+        # Set output and compute losses
         self.output = outputs
         self._compute_losses()
 
     def _compute_losses(self):
-        losses, metrics, labels = votenet_module.get_loss(self.input, self.output, self.loss_params)
-        self.labels = labels
+        losses = votenet_module.get_loss(self.input, self.output, self.loss_params)
         for loss_name, loss in losses.items():
             if torch.is_tensor(loss):
                 if not self.losses_has_been_added:

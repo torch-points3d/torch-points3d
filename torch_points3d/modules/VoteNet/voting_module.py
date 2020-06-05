@@ -1,12 +1,7 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-#
-# This source code is licensed under the MIT license found in the
-# LICENSE file in the root directory of this source tree.
+"""
+Adapted from VoteNet
 
-""" Voting module: generate votes from XYZ and features of seed points.
-
-Date: July, 2019
-Author: Charles R. Qi and Or Litany
+Ref: https://github.com/facebookresearch/votenet/blob/master/models/voting_module.py
 """
 
 import torch
