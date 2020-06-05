@@ -20,11 +20,11 @@ class MockDatasetConfig(object):
 
 
 class MockDataset(torch.utils.data.Dataset):
-    def __init__(self, feature_size=0, transform=None, num_points=100, include_box=False):
+    def __init__(self, feature_size=0, transform=None, num_points=100, include_box=False, batch_size=2):
         self.feature_dimension = feature_size
         self.num_classes = 10
         self.num_points = num_points
-        self.batch_size = 2
+        self.batch_size = batch_size
         self.weight_classes = None
         self.feature_size = feature_size
         if feature_size > 0:
@@ -92,8 +92,8 @@ class MockDatasetGeometric(MockDataset):
 
 
 class PairMockDataset(MockDataset):
-    def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True):
-        super(PairMockDataset, self).__init__(feature_size, transform, num_points)
+    def __init__(self, feature_size=0, transform=None, num_points=100, is_pair_ind=True, batch_size=2):
+        super(PairMockDataset, self).__init__(feature_size, transform, num_points, batch_size=batch_size)
         if is_pair_ind:
             self._pair_ind = torch.tensor([[0, 1], [1, 0]])
         else:

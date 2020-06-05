@@ -41,30 +41,38 @@ def load_model_config(task, model_type, model_name):
 
 
 def get_dataset(conv_type, task):
+    num_points = 1024
     features = 2
+    batch_size = 2
     if task == "object_detection":
         include_box = True
     else:
         include_box = False
 
+    if conv_type.lower() == "dense":
+        num_points = 2048
+        batch_size = 1
+
     if task == "registration":
         if conv_type.lower() == "dense":
-            return PairMockDataset(features, num_points=2048)
+            return PairMockDataset(features, num_points=num_points, batch_size=batch_size)
         if conv_type.lower() == "sparse":
             tr = Compose([XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")])
-            return PairMockDatasetGeometric(features, transform=tr, num_points=1024)
-        return PairMockDatasetGeometric(features)
+            return PairMockDatasetGeometric(features, transform=tr, num_points=num_points, batch_size=batch_size)
+        return PairMockDatasetGeometric(features, batch_size=batch_size)
     else:
         if conv_type.lower() == "dense":
-            return MockDataset(features, num_points=2048, include_box=include_box)
+            num_points = 2048
+            return MockDataset(features, num_points=num_points, include_box=include_box, batch_size=batch_size)
         if conv_type.lower() == "sparse":
             return MockDatasetGeometric(
                 features,
                 include_box=include_box,
                 transform=GridSampling3D(size=0.01, quantize_coords=True, mode="last"),
-                num_points=1024,
+                num_points=num_points,
+                batch_size=batch_size,
             )
-        return MockDatasetGeometric(features)
+        return MockDatasetGeometric(features, batch_size=batch_size)
 
 
 class TestModelUtils(unittest.TestCase):
