@@ -52,6 +52,7 @@ As a general philosophy we have split datasets and models by task. For example, 
 - segmentation
 - classification
 - registration
+- object_detection
 
 where each folder contains the dataset related to each task.
 
@@ -63,8 +64,8 @@ where each folder contains the dataset related to each task.
 * **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
 * **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
 * **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
-* **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
-* **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi *et al.*: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664)
+* **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR19)
+* **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi *et al.*: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
 
 ## Available datasets
 
@@ -80,9 +81,9 @@ where each folder contains the dataset related to each task.
 * S3DIS Fused
 ```
 
-- **[Shapenet](https://www.shapenet.org/)** from Iro Armeni _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
+- **[Shapenet](https://www.shapenet.org/)** from Angel X. Chang _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
 
-### Segmentation + Object Detection
+### Object detection and panoptic
 * **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 
 
@@ -113,11 +114,11 @@ model = KPConv(
 from torch_points3d.applications.pointnet2 import PointNet2
 
 model = PointNet2(
-   architecture="unet", 
-   input_nc=3, 
-   output_nc=5, 
-   num_layers=3, 
-   multiscale=True, 
+   architecture="unet",
+   input_nc=3,
+   output_nc=5,
+   num_layers=3,
+   multiscale=True,
    config=None,
 )
 ```
@@ -128,11 +129,11 @@ model = PointNet2(
 from torch_points3d.applications.rsconv import RSConv
 
 model = RSConv(
-   architecture="unet", 
-   input_nc=3, 
-   output_nc=5, 
-   num_layers=3, 
-   multiscale=True, 
+   architecture="unet",
+   input_nc=3,
+   output_nc=5,
+   num_layers=3,
+   multiscale=True,
    config=None,
 )
 ```
