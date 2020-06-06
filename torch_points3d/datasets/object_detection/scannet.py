@@ -118,9 +118,10 @@ class ScannetObjectDetection(Scannet):
         # NOTE: set size class as semantic class. Consider use size2class.
         class_ind = np.asarray([np.where(self.NYU40IDS == x)[0][0] for x in np.asarray(instance_bboxes[:, -1])])
         size_classes[0 : instance_bboxes.shape[0]] = torch.from_numpy(class_ind)
-        size_residuals[0 : instance_bboxes.shape[0], :] = target_bboxes[
-            0 : instance_bboxes.shape[0], 3:6
-        ] - torch.from_numpy(self.MEAN_SIZE_ARR[class_ind, :])
+        if len(class_ind):
+            size_residuals[0 : instance_bboxes.shape[0], :] = target_bboxes[
+                0 : instance_bboxes.shape[0], 3:6
+            ] - torch.from_numpy(self.MEAN_SIZE_ARR[class_ind, :])
 
         target_bboxes_semcls = np.zeros((self.MAX_NUM_OBJ))
         target_bboxes_semcls[0 : instance_bboxes.shape[0]] = [
@@ -128,7 +129,9 @@ class ScannetObjectDetection(Scannet):
         ]
 
         data.center_label = target_bboxes.float()[:, 0:3]
+        data.heading_class_label = torch.zeros((self.MAX_NUM_OBJ,))
         data.heading_residual_label = angle_residuals.float()
+        data.size_class_label = size_classes
         data.size_residual_label = size_residuals.float()
         data.sem_cls_label = torch.from_numpy(target_bboxes_semcls).int()
         data.box_label_mask = target_bboxes_mask
@@ -140,7 +143,14 @@ class ScannetObjectDetection(Scannet):
         return data
 
     def _remap_labels(self, data):
+        log.info("Keeping original labels in y. Please do not use data.y in your network.")
         return data
+
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
 
 
 class ScannetDataset(BaseDataset):
@@ -184,9 +194,8 @@ class ScannetDataset(BaseDataset):
         """Factory method for the tracker
 
         Arguments:
-            dataset {[type]}
             wandb_log - Log using weight and biases
         Returns:
             [BaseTracker] -- tracker
         """
-        pass
+        return ObjectDetectionTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)

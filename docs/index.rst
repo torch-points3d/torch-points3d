@@ -86,11 +86,12 @@ The following models have been tested and validated:
 * `KPConv: Flexible and Deformable Convolution for Point Clouds <https://arxiv.org/abs/1904.08889>`_
 * `PointCNN: Convolution On X-Transformed Points <https://arxiv.org/abs/1801.07791>`_
 * `PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space <https://arxiv.org/abs/1706.02413>`_
+* `4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks <https://arxiv.org/abs/1904.08755>`_ 
+* `Deep Hough Voting for 3D Object Detection in Point Clouds <https://arxiv.org/abs/1904.09664>`_
 
 We are actively working on adding the following ones to the framework:
 
 * `RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds  <https://arxiv.org/pdf/1911.11236.pdf>`_ - implemented but not completely tested
-* `4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks <https://arxiv.org/abs/1904.08755>`_ - Actively being worked on
 
 and much more to come ...
 
@@ -99,8 +100,8 @@ Supported tasks
 
 * Segmentation
 * Registration
-* Classification [TO COME]
-* Object detection [TO COME]
+* Classification
+* Object detection
 
 .. toctree::
    :glob:

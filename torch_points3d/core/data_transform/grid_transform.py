@@ -15,6 +15,10 @@ from torch_cluster import grid_cluster
 log = logging.getLogger(__name__)
 
 
+# Label will be the majority label in each voxel
+_INTEGER_LABEL_KEYS = ["y", "instance_labels"]
+
+
 def shuffle_data(data):
     num_points = data.pos.shape[0]
     shuffle_idx = torch.randperm(num_points)
@@ -61,7 +65,7 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
             if mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
-                if key == "y":
+                if key in _INTEGER_LABEL_KEYS:
                     item_min = item.min()
                     item = F.one_hot(item - item_min)
                     item = scatter_add(item, cluster, dim=0)
