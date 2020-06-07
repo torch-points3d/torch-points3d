@@ -114,23 +114,43 @@ class TestSegmentationTracker(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             tracker.track(model)
 
-    def test_seg_full_res_helperes(self):
+    def test_seg_full_res_helpers(self):
 
         raw_pos = torch.from_numpy(np.asarray([[0, 0, 0], [0, 0.5, 0], [0.5, 1, 0], [1, 1, 0]]))
         raw_y = torch.from_numpy(np.asarray([0, 0, 1, 1]))
+        preds = torch.from_numpy(np.asarray([[1, 0], [1, 0], [0, 1], [0, 1]]))
         idx = torch.arange(0, 4)
         raw_data = Data(pos=raw_pos, y=raw_y)
-        segmentation_resolver = SegmentationFullResHelpers(raw_data, 2, "dense")
 
-        slice_ = [0, 2]
-        data = Data(pos=raw_pos[slice_], y=raw_y[slice_])
-        setattr(data, SaveOriginalPosId.KEY, [idx[slice_]])
-        output = torch.from_numpy(np.asarray([[1.0, 0.0], [0.0, 1.0]]))
-        segmentation_resolver.add_vote(data, output, 0)
-        segmentation_resolver.add_vote(data, output, 0)
-        segmentation_resolver.add_vote(data, output, 0)
+        np.asarray([1, 1, 0, 0])
+        left_pred = np.asarray([0, 0, 0, 0])
+        np.asarray([0, 0, 1, 1])
+        right_pred = np.asarray([1, 1, 1, 1])
 
-        npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), raw_y)
+        for _ in range(25):
+            segmentation_resolver = SegmentationFullResHelpers(raw_data, 2, "dense")
+
+            for _ in range(np.random.randint(1, 10)):
+                slice_ = np.random.choice(range(4), 2)
+                data = Data(pos=raw_pos[slice_], y=raw_y[slice_])
+                setattr(data, SaveOriginalPosId.KEY, [idx[slice_]])
+                output = preds[slice_]
+                segmentation_resolver.add_vote(data, output, 0)
+
+            mask = segmentation_resolver._vote_counts.numpy() > 0
+            if np.sum(mask > 0) > 2:
+                npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), raw_y)
+            else:
+                has_left = np.sum(mask[:2]) > 0
+                has_right = np.sum(mask[2:]) > 0
+
+                if has_left and has_right:
+                    npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), raw_y)
+
+                elif has_left and not has_right:
+                    npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), left_pred)
+                else:
+                    npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), right_pred)
 
 
 class TestS3DISTarcker(unittest.TestCase):
