@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 
 from torch_points3d.models import model_interface
 from torch_points3d.core.data_transform import SaveOriginalPosId
-from torch_points3d.metrics.segmentation_tracker import SegmentationFullResHelpers
+from torch_points3d.metrics.helpers import SegmentationFullResHelpers
 
 
 class ShapenetPartTracker(BaseTracker):
