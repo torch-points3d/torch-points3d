@@ -45,12 +45,9 @@ class ShapenetPartTracker(BaseTracker):
         self._full_miou_per_class = None
         self._full_Cmiou = None
         self._full_Imiou = None
+        self._full_res = False
 
-    @property
-    def _full_res(self):
-        return self._full_Imiou is not None
-
-    def track(self, model: model_interface.TrackerInterface, full_res: bool = False, data: Data = None, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res: bool = True, data: Data = None, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)
@@ -91,13 +88,15 @@ class ShapenetPartTracker(BaseTracker):
             id_scan = data.id_scan[b].item()
             if id_scan not in self._full_res_scans[cat]:
                 raw_data = self._dataset.get_raw_data(self._stage, id_scan)
-                self._full_res_scans[cat][id_scan] = SegmentationFullResHelpers(
+                self._full_res_scans[cat][id_scan] = SegmentationVoter(
                     raw_data, self._num_classes, self._conv_type, class_seg_map=self._class_seg_map[cat]
                 )
             self._full_res_scans[cat][id_scan].add_vote(data, logits, batch_mask)
 
     def finalise(self, **kwargs):
-        if not bool(self._full_res_scans):
+        # Check if at least one element has been created for full res interpolation
+        contains_elements = np.sum([bool(d) for d in list(self._full_res_scans.values())]) > 0
+        if not contains_elements:
             return
 
         for cat in self._full_res_scans.keys():
@@ -110,6 +109,8 @@ class ShapenetPartTracker(BaseTracker):
         self._full_miou_per_class, self._full_Cmiou, self._full_Imiou = ShapenetPartTracker._get_metrics_per_class(
             self._full_shape_ious
         )
+
+        self._full_res = True
 
     def _compute_part_ious(self, segl, segp, cat):
         part_ious = np.zeros(len(self._class_seg_map[cat]))

@@ -5,6 +5,7 @@ data:
   normal: True
   train_size: 14016 # Number of shapes in the whole training set
   use_category: True
+  category: 'Cap'
   first_subsampling: 0.02
   pre_transforms:
     - transform: NormalizeScale
@@ -21,3 +22,4 @@ data:
   test_transforms:
     - transform: FixedPoints
       lparams: [2048]
+  val_transforms: ${data.test_transforms}
