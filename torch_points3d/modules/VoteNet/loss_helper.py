@@ -107,9 +107,8 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     """
 
     num_heading_bin = loss_params.num_heading_bin
-    num_size_cluster = loss_params.num_size_cluster
-    num_size_cluster = loss_params.num_size_cluster
     mean_size_arr = np.asarray(loss_params.mean_size_arr)
+    num_size_cluster = len(mean_size_arr)
 
     object_assignment = outputs.object_assignment
     batch_size = object_assignment.shape[0]

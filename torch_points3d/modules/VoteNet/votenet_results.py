@@ -3,6 +3,7 @@ from torch_geometric.data import Data
 import numpy as np
 
 from torch_points3d.core.losses.huber_loss import nn_distance
+from torch_points3d.utils.box_utils import box_corners_from_param, nms_samecls
 
 
 class VoteNetResults(Data):
@@ -16,7 +17,6 @@ class VoteNetResults(Data):
         features: torch.Tensor,
         num_classes: int,
         num_heading_bin: int,
-        num_size_cluster: int,
         mean_size_arr: torch.Tensor,
     ):
         """ Takes the sampled votes and the output features from the proposal network to generate a structured data object with
@@ -38,8 +38,6 @@ class VoteNetResults(Data):
             Number of classes to predict
         num_heading_bin: int
             Number of bins for heading computations
-        num_size_cluster: int
-            Number of clusters for size computations
         mean_size_arr: torch.Tensor
             Average size of the box per class in each direction
 
@@ -60,6 +58,7 @@ class VoteNetResults(Data):
             - size_residuals - [B,N,num_size_cluster, 3]
             - sem_cls_scores - [B,N,num_classes]
         """
+        num_size_cluster = len(mean_size_arr)
         assert features.dim() == 3
         assert features.shape[1] == 2 + 3 + num_heading_bin * 2 + num_size_cluster * 4 + num_classes
 
@@ -109,7 +108,7 @@ class VoteNetResults(Data):
         Parameters
         ----------
         gt_center : torch.Tensor
-            centres of ground truth objects [B,K,3]
+            center of ground truth objects [B,K,3]
         near_threshold: float
         far_threshold: float
         """
@@ -120,7 +119,7 @@ class VoteNetResults(Data):
         dist1, ind1, _, _ = nn_distance(
             self.sampled_votes, gt_center
         )  # dist1: BxK, dist2: BxK2 TODO Optimise this nn_distance function, does a lot of useless stuff
-        # TODO Why computing the closest GT using the vote instead of the corrected centre
+        # TODO Why computing the closest GT using the vote instead of the corrected center
 
         euclidean_dist1 = torch.sqrt(dist1 + 1e-6)
         self.objectness_label = torch.zeros((B, K), dtype=torch.long).to(self.sampled_votes.device)
@@ -130,3 +129,79 @@ class VoteNetResults(Data):
         self.objectness_mask[euclidean_dist1 > far_threshold] = 1
 
         self.object_assignment = ind1
+
+    @property
+    def batch_size(self):
+        return self.center.shape[0]
+
+    @property
+    def num_proposal(self):
+        return self.center.shape[1]
+
+    def get_boxes(self, dataset, apply_nms=False) -> torch.Tensor:
+        """ Generates boxes from predictions
+
+        Parameters
+        ----------
+        dataset :
+            Must provide a class2size method and a class2angle method that return the angle and size
+            for a given object class and residual value
+        apply_nms: bool
+            If True then we apply non max suppression before returning the boxes
+
+        Returns
+        -------
+        boxes: [B, num_proposal, 8, 3]
+            corners of a 3d box, np array
+        """
+
+        # Size and Heading prediciton
+        pred_heading_class = torch.argmax(self.heading_scores, -1)  # B,num_proposal
+        pred_heading_residual = torch.gather(
+            self.heading_residuals, 2, pred_heading_class.unsqueeze(-1)
+        )  # B,num_proposal,1
+        pred_size_class = torch.argmax(self.size_scores, -1)  # B,num_proposal
+        pred_size_residual = torch.gather(self.size_residuals, 2, pred_size_class.unsqueeze(-1))  # B,num_proposal,1
+
+        # Generate box corners
+        pred_corners_3d = torch.zeros((self.batch_size, self.num_proposal, 8, 3))
+        for i in range(self.batch_size):
+            for j in range(self.num_proposal):
+                heading_angle = dataset.class2angle(pred_heading_class[i, j], pred_heading_residual[i, j])
+                box_size = dataset.class2size(pred_size_class[i, j], pred_size_residual[i, j])
+                corners_3d = box_corners_from_param(box_size, heading_angle, self.center[i, j, :])
+                pred_corners_3d[i, j] = corners_3d
+
+        # Apply nms if required
+        if apply_nms:
+            self._nms_mask(pred_corners_3d)
+        else:
+            pass
+
+        return pred_corners_3d
+
+    def _nms_mask(self, pred_corners_3d):
+        """
+        Parameters
+        ----------
+        pred_corners_3d : [B, num_proposal, 8, 3]
+            box corners
+        """
+        # Objectness and class
+        pred_obj = torch.nn.functional.softmax(self.objectness_scores, -1)[:, :, 1]  # B,num_proposal
+        pred_sem_cls = torch.argmax(self.sem_cls_scores, -1)  # B,num_proposal
+
+        boxes_3d = torch.zeros((self.batch_size, self.num_proposal, 6))  # [xmin, ymin, zmin, xmax, ymax, zmax]
+        boxes_3d[:, :, 0] = torch.min(pred_corners_3d[:, :, :, 0], dim=2)
+        boxes_3d[:, :, 1] = torch.min(pred_corners_3d[:, :, :, 1], dim=2)
+        boxes_3d[:, :, 2] = torch.min(pred_corners_3d[:, :, :, 2], dim=2)
+        boxes_3d[:, :, 3] = torch.max(pred_corners_3d[:, :, :, 0], dim=2)
+        boxes_3d[:, :, 4] = torch.max(pred_corners_3d[:, :, :, 1], dim=2)
+        boxes_3d[:, :, 5] = torch.max(pred_corners_3d[:, :, :, 2], dim=2)
+
+        boxes_3d = boxes_3d.cpu().numpy()
+        mask = np.zeros(boxes_3d.shape, dtype=np.bool)
+        for b in self.batch_size:
+            pick = nms_samecls(boxes_3d[b], pred_sem_cls, pred_obj, overlap_threshold=0.25)
+            mask[b, pick] = True
+        return mask

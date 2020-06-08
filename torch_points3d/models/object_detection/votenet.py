@@ -38,7 +38,6 @@ class VoteNetModel(BaseModel):
             num_class=proposal_option.num_class,
             vote_aggregation_config=proposal_option.vote_aggregation,
             num_heading_bin=proposal_option.num_heading_bin,
-            num_size_cluster=proposal_option.num_size_cluster,
             mean_size_arr=dataset.mean_size_arr,
             num_proposal=proposal_option.num_proposal,
             sampling=proposal_option.sampling,
@@ -47,7 +46,6 @@ class VoteNetModel(BaseModel):
         # Loss params
         self.loss_params = option.loss_params
         self.loss_params.num_heading_bin = proposal_option.num_heading_bin
-        self.loss_params.num_size_cluster = proposal_option.num_size_cluster
         self.loss_params.mean_size_arr = dataset.mean_size_arr.tolist()
 
         self.losses_has_been_added = False

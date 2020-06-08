@@ -18,7 +18,6 @@ class ProposalModule(nn.Module):
         num_class,
         vote_aggregation_config,
         num_heading_bin,
-        num_size_cluster,
         mean_size_arr,
         num_proposal,
         sampling,
@@ -28,7 +27,7 @@ class ProposalModule(nn.Module):
 
         self.num_class = num_class
         self.num_heading_bin = num_heading_bin
-        self.num_size_cluster = num_size_cluster
+        self.num_size_cluster = len(mean_size_arr)
         self.mean_size_arr = nn.Parameter(torch.Tensor(mean_size_arr), requires_grad=False)
         self.num_proposal = num_proposal
         self.sampling = sampling
@@ -45,7 +44,7 @@ class ProposalModule(nn.Module):
         # heading class+residual (num_heading_bin*2), size class+residual(num_size_cluster*4)
         self.conv1 = torch.nn.Conv1d(128, 128, 1)
         self.conv2 = torch.nn.Conv1d(128, 128, 1)
-        self.conv3 = torch.nn.Conv1d(128, 2 + 3 + num_heading_bin * 2 + num_size_cluster * 4 + self.num_class, 1)
+        self.conv3 = torch.nn.Conv1d(128, 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class, 1)
         self.bn1 = torch.nn.BatchNorm1d(128)
         self.bn2 = torch.nn.BatchNorm1d(128)
 
@@ -80,6 +79,5 @@ class ProposalModule(nn.Module):
             x,
             self.num_class,
             self.num_heading_bin,
-            self.num_size_cluster,
             self.mean_size_arr,
         )

@@ -190,6 +190,15 @@ class ScannetDataset(BaseDataset):
     def mean_size_arr(self):
         return self.train_dataset.MEAN_SIZE_ARR.copy()
 
+    def class2angle(self, pred_cls, residual, to_label_format=True):
+        """ Inverse function to angle2class.
+        As ScanNet only has axis-alined boxes so angles are always 0. """
+        return 0
+
+    def class2size(self, pred_cls, residual):
+        """ Inverse function to size2class """
+        return self.mean_size_arr[pred_cls, :] + residual
+
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
