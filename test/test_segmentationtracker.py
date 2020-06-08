@@ -10,7 +10,7 @@ ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)
 from torch_points3d.core.data_transform import SaveOriginalPosId
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
-from torch_points3d.metrics.helpers import SegmentationFullResHelpers
+from torch_points3d.metrics.segmentation_helpers import SegmentationVoter
 from torch_points3d.metrics.classification_tracker import ClassificationTracker
 from torch_points3d.metrics.s3dis_tracker import S3DISTracker
 
@@ -127,7 +127,7 @@ class TestSegmentationTracker(unittest.TestCase):
         right_pred = np.asarray([1, 1, 1, 1])
 
         for _ in range(25):
-            segmentation_resolver = SegmentationFullResHelpers(raw_data, 2, "dense")
+            segmentation_resolver = SegmentationVoter(raw_data, 2, "dense")
 
             for _ in range(np.random.randint(1, 10)):
                 slice_ = np.random.choice(range(4), 2)
@@ -150,6 +150,9 @@ class TestSegmentationTracker(unittest.TestCase):
                     npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), left_pred)
                 else:
                     npt.assert_array_almost_equal(segmentation_resolver.full_res_preds.numpy(), right_pred)
+
+        segmentation_resolver.k = 5
+        self.assertEqual(segmentation_resolver.k, 5)
 
 
 class TestS3DISTarcker(unittest.TestCase):

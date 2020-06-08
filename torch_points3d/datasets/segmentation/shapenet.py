@@ -130,6 +130,8 @@ class ShapeNet(InMemoryDataset):
 
         self.data, self.slices, self.y_mask = self.load_data(path, include_normals)
 
+        # We have perform a slighly optimzation on memory space of no pre-transform was used.
+        # c.f self._process_filenames
         if os.path.exists(raw_path):
             self.raw_data, self.raw_slices, _ = self.load_data(raw_path, include_normals)
         else:

@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 
 from torch_points3d.models import model_interface
 from torch_points3d.core.data_transform import SaveOriginalPosId
-from torch_points3d.metrics.helpers import SegmentationFullResHelpers
+from torch_points3d.metrics.segmentation_helpers import SegmentationVoter
 
 
 class ShapenetPartTracker(BaseTracker):
@@ -50,7 +50,7 @@ class ShapenetPartTracker(BaseTracker):
     def _full_res(self):
         return self._full_Imiou is not None
 
-    def track(self, model: model_interface.TrackerInterface, full_res: bool = True, data: Data = None, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res: bool = False, data: Data = None, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)
@@ -64,7 +64,7 @@ class ShapenetPartTracker(BaseTracker):
         nb_batches = batch_idx.max() + 1
 
         if self._stage != "train" and full_res:
-            self.to_full_res(data, outputs, batch_idx)
+            self._add_votes(data, outputs, batch_idx)
 
         # pred to the groundtruth classes (selected by seg_classes[cat])
         for b in range(nb_batches):
@@ -75,9 +75,9 @@ class ShapenetPartTracker(BaseTracker):
             part_ious = self._compute_part_ious(segl, segp, cat)
             self._shape_ious[cat].append(np.mean(part_ious))
 
-        self._miou_per_class, self._Cmiou, self._Imiou = self._get_metrics_per_class(self._shape_ious)
+        self._miou_per_class, self._Cmiou, self._Imiou = ShapenetPartTracker._get_metrics_per_class(self._shape_ious)
 
-    def to_full_res(self, data, outputs, batch_idx):
+    def _add_votes(self, data, outputs, batch_idx):
         nb_batches = batch_idx.max() + 1
         for b in range(nb_batches):
             batch_mask = b
@@ -107,7 +107,7 @@ class ShapenetPartTracker(BaseTracker):
                 segp = sample.full_res_preds.numpy()
                 part_ious = self._compute_part_ious(segl, segp, cat)
                 self._full_shape_ious[cat].append(np.mean(part_ious))
-        self._full_miou_per_class, self._full_Cmiou, self._full_Imiou = self._get_metrics_per_class(
+        self._full_miou_per_class, self._full_Cmiou, self._full_Imiou = ShapenetPartTracker._get_metrics_per_class(
             self._full_shape_ious
         )
 
@@ -143,7 +143,8 @@ class ShapenetPartTracker(BaseTracker):
         self._metric_func = {"Cmiou": max, "Imiou": max, "loss": min}
         return self._metric_func
 
-    def _get_metrics_per_class(self, shape_ious):
+    @staticmethod
+    def _get_metrics_per_class(shape_ious):
         instance_ious = []
         cat_ious = {}
         for cat in shape_ious.keys():
