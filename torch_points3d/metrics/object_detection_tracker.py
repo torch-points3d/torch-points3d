@@ -57,6 +57,8 @@ class ObjectDetectionTracker(BaseTracker):
         if data is None or self._stage == "train" or not track_boxes:
             return
 
+        self._add_box_pred(outputs, data, model.conv_type)
+
     def _add_box_pred(self, outputs: VoteNetResults, input_data, conv_type):
         # Track box predictions
         pred_boxes = outputs.get_boxes(self._dataset, apply_nms=True)
