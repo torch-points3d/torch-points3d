@@ -22,7 +22,7 @@ from torch_points3d.datasets.object_detection.box_data import BoxData
 
 class TestUtils(unittest.TestCase):
     def test_cornerfromparams(self):
-        box = box_corners_from_param(torch.tensor([1, 2, 3]), np.pi / 2, torch.tensor([1, 1, 1]))
+        box = box_corners_from_param(torch.tensor([1, 2, 3]).float(), np.pi / 2, torch.tensor([1, 1, 1]))
         torch.testing.assert_allclose(
             box,
             1
@@ -41,18 +41,18 @@ class TestUtils(unittest.TestCase):
         )
 
     def test_box3dvol(self):
-        box = box_corners_from_param(torch.tensor([1, 2, 3]), np.pi / 2, torch.tensor([0, 0, 0]))
+        box = box_corners_from_param(torch.tensor([1, 2, 3]).float(), np.pi / 2, torch.tensor([0, 0, 0]))
         self.assertEqual(box3d_vol(box), 6)
 
     def test_intersection_area(self):
-        box1 = box_corners_from_param(torch.tensor([1, 1, 3]), 0, torch.tensor([0, 0, 0])).numpy()
-        box2 = box_corners_from_param(torch.tensor([1, 1, 3]), np.pi / 2, torch.tensor([0, 0, 0])).numpy()
+        box1 = box_corners_from_param(torch.tensor([1, 1, 3]).float(), 0, torch.tensor([0, 0, 0])).numpy()
+        box2 = box_corners_from_param(torch.tensor([1, 1, 3]).float(), np.pi / 2, torch.tensor([0, 0, 0])).numpy()
         rect1 = [(box1[i, 0], box1[i, 1]) for i in range(4)]
         rect2 = [(box2[i, 0], box2[i, 1]) for i in range(4)]
         self.assertAlmostEqual(intersection_area(rect1, rect2), 1, places=5)
 
-        box1 = box_corners_from_param(torch.tensor([2, 2, 3]), 0, torch.tensor([1, 1, 0])).numpy()
-        box2 = box_corners_from_param(torch.tensor([2, 2, 3]), 0, torch.tensor([0, 0, 0])).numpy()
+        box1 = box_corners_from_param(torch.tensor([2, 2, 3]).float(), 0, torch.tensor([1, 1, 0])).numpy()
+        box2 = box_corners_from_param(torch.tensor([2, 2, 3]).float(), 0, torch.tensor([0, 0, 0])).numpy()
         rect1 = [(box1[i, 0], box1[i, 1]) for i in range(4)]
         rect2 = [(box2[i, 0], box2[i, 1]) for i in range(4)]
         self.assertAlmostEqual(intersection_area(rect1, rect2), 1, places=5)
@@ -73,8 +73,8 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(nms_samecls(boxes, classes, scores, 0.1), [1])
 
     def test_box3diou(self):
-        box1 = box_corners_from_param(torch.tensor([2, 2, 3]), 0, torch.tensor([1, 1, 0])).numpy()
-        box2 = box_corners_from_param(torch.tensor([1, 1, 1]), 0, torch.tensor([0.5, 0.5, 0.5])).numpy()
+        box1 = box_corners_from_param(torch.tensor([2, 2, 3]).float(), 0, torch.tensor([1, 1, 0])).numpy()
+        box2 = box_corners_from_param(torch.tensor([1, 1, 1]).float(), 0, torch.tensor([0.5, 0.5, 0.5])).numpy()
         self.assertAlmostEqual(box3d_iou(box1, box2), 1.0 / (2 * 3 * 2), places=5)
 
 
@@ -82,7 +82,7 @@ class TestVotenetResults(unittest.TestCase):
     def test_nms(self):
         res = VoteNetResults(center=torch.zeros((2, 4, 3)))
 
-        box = box_corners_from_param(torch.tensor([1, 1, 1]), 0, torch.tensor([0.5, 0.5, 0.5]))
+        box = box_corners_from_param(torch.tensor([1, 1, 1]).float(), 0, torch.tensor([0.5, 0.5, 0.5]))
         boxes = box.unsqueeze(0).unsqueeze(0)
         boxes.repeat((res.batch_size, res.num_proposal, 1, 1))
 
@@ -138,7 +138,7 @@ class TestVotenetResults(unittest.TestCase):
 
 class TestAP(unittest.TestCase):
     def test_evaldetection(self):
-        box = box_corners_from_param(torch.tensor([1, 1, 1]), 0, torch.tensor([0.5, 0.5, 0.5]))
+        box = box_corners_from_param(torch.tensor([1, 1, 1]).float(), 0, torch.tensor([0.5, 0.5, 0.5]))
 
         # Image1 -> 1 class1 and 1 class2
         # Image2 -> 1 class1
