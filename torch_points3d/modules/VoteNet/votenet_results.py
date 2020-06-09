@@ -192,7 +192,7 @@ class VoteNetResults(Data):
             # Build box data for each detected object and add it to the list
             batch_detection = []
             for j in range(len(corners)):
-                batch_detection.append(BoxData(classname[j].item(), corners[j].item(), objectness=objectness[j].item()))
+                batch_detection.append(BoxData(classname[j], corners[j], objectness=objectness[j]))
 
             detected_boxes.append(batch_detection)
 

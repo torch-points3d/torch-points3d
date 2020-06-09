@@ -21,3 +21,6 @@ class BoxData:
     @property
     def is_gt(self):
         return self.objectness is not None
+
+    def __repr__(self):
+        return "{}: (objectness={})".format(self.__class__.__name__, self.objectness)

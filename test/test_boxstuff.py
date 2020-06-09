@@ -92,6 +92,49 @@ class TestVotenetResults(unittest.TestCase):
         mask = res._nms_mask(boxes, objectness, classes)
         np.testing.assert_equal(mask, np.asarray([[False, True, False, False], [True, True, False, False]]))
 
+    def test_getboxes(self):
+        class MockDataset:
+            def class2size(self, classname, residual):
+                sizes = torch.tensor([[1, 1, 1], [0, 0, 0]]).float()
+                return sizes[classname] + residual
+
+            def class2angle(self, classname, residual):
+                return 0
+
+        batch_size = 2
+        num_samples = 4
+        results = VoteNetResults(
+            center=torch.zeros((2, 4, 3)),
+            heading_scores=torch.zeros(batch_size, num_samples, 1),
+            heading_residuals=torch.zeros(batch_size, num_samples, 1),
+            size_scores=torch.zeros(batch_size, num_samples, 1),
+            size_residuals=torch.zeros(batch_size, num_samples, 3),
+            objectness_scores=torch.ones(batch_size, num_samples, 2),
+            sem_cls_scores=torch.ones(batch_size, num_samples, 1),
+        )
+
+        boxes = results.get_boxes(MockDataset())
+        self.assertEqual(len(boxes), batch_size)
+        self.assertEqual(len(boxes[0]), num_samples)
+        box = boxes[0][0]
+
+        np.testing.assert_allclose(
+            box.corners3d,
+            np.asarray(
+                [
+                    [-0.5, -0.5, -0.5],
+                    [0.5, -0.5, -0.5],
+                    [0.5, 0.5, -0.5],
+                    [-0.5, 0.5, -0.5],
+                    [-0.5, -0.5, 0.5],
+                    [0.5, -0.5, 0.5],
+                    [0.5, 0.5, 0.5],
+                    [-0.5, 0.5, 0.5],
+                ]
+            ),
+        )
+        self.assertAlmostEqual(box.objectness, 0.5)
+
 
 class TestAP(unittest.TestCase):
     def test_evaldetection(self):
