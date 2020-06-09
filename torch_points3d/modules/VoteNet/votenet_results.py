@@ -192,30 +192,34 @@ class VoteNetResults(Data):
             # Build box data for each detected object and add it to the list
             batch_detection = []
             for j in range(len(corners)):
-                batch_detection.append(BoxData(classname[j].item(), corners[j].item(), score=objectness[j].item()))
+                batch_detection.append(BoxData(classname[j].item(), corners[j].item(), objectness=objectness[j].item()))
 
             detected_boxes.append(batch_detection)
 
         return detected_boxes
 
-    def _nms_mask(self, pred_corners_3d, pred_obj, pred_sem_cls):
+    def _nms_mask(self, pred_corners_3d, objectness, pred_sem_cls):
         """
         Parameters
         ----------
         pred_corners_3d : [B, num_proposal, 8, 3]
             box corners
+        objectness: [B, num_proposal]
+            objectness score
+        pred_sem_cls: [B, num_proposal]
+            Predicted semantic class
         """
         boxes_3d = torch.zeros((self.batch_size, self.num_proposal, 6))  # [xmin, ymin, zmin, xmax, ymax, zmax]
-        boxes_3d[:, :, 0] = torch.min(pred_corners_3d[:, :, :, 0], dim=2)
-        boxes_3d[:, :, 1] = torch.min(pred_corners_3d[:, :, :, 1], dim=2)
-        boxes_3d[:, :, 2] = torch.min(pred_corners_3d[:, :, :, 2], dim=2)
-        boxes_3d[:, :, 3] = torch.max(pred_corners_3d[:, :, :, 0], dim=2)
-        boxes_3d[:, :, 4] = torch.max(pred_corners_3d[:, :, :, 1], dim=2)
-        boxes_3d[:, :, 5] = torch.max(pred_corners_3d[:, :, :, 2], dim=2)
+        boxes_3d[:, :, 0] = torch.min(pred_corners_3d[:, :, :, 0], dim=2)[0]
+        boxes_3d[:, :, 1] = torch.min(pred_corners_3d[:, :, :, 1], dim=2)[0]
+        boxes_3d[:, :, 2] = torch.min(pred_corners_3d[:, :, :, 2], dim=2)[0]
+        boxes_3d[:, :, 3] = torch.max(pred_corners_3d[:, :, :, 0], dim=2)[0]
+        boxes_3d[:, :, 4] = torch.max(pred_corners_3d[:, :, :, 1], dim=2)[0]
+        boxes_3d[:, :, 5] = torch.max(pred_corners_3d[:, :, :, 2], dim=2)[0]
 
         boxes_3d = boxes_3d.cpu().numpy()
         mask = np.zeros((self.batch_size, self.num_proposal), dtype=np.bool)
-        for b in self.batch_size:
-            pick = nms_samecls(boxes_3d[b], pred_sem_cls, pred_obj, overlap_threshold=0.25)
+        for b in range(self.batch_size):
+            pick = nms_samecls(boxes_3d[b], pred_sem_cls[b], objectness[b], overlap_threshold=0.25)
             mask[b, pick] = True
         return mask

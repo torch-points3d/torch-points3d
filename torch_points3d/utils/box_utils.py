@@ -40,6 +40,8 @@ def nms_samecls(boxes, classes, scores, overlap_threshold=0.25):
         [description], by default 0.25
     """
     boxes = np.asarray(boxes)
+    scores = np.asarray(scores)
+    classes = np.asarray(classes)
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     z1 = boxes[:, 2]
@@ -87,11 +89,13 @@ def box3d_iou(corners1, corners2):
         iou: 3D bounding box IoU
     """
     # corner points are in counter clockwise order
-    rect1 = np.asarray([(corners1[i, 0], corners1[i, 1]) for i in range(3, -1, -1)])
-    rect2 = np.asarray([(corners2[i, 0], corners2[i, 1]) for i in range(3, -1, -1)])
+    assert corners1.shape == (8, 3)
+    assert corners2.shape == (8, 3)
+    rect1 = np.asarray([(corners1[i, 0], corners1[i, 1]) for i in range(4)])
+    rect2 = np.asarray([(corners2[i, 0], corners2[i, 1]) for i in range(4)])
     inter_area = intersection_area(rect1, rect2)
-    z_min = min(corners1[0, 2], corners2[0, 2])
-    z_max = max(corners1[4, 2], corners2[4, 2])
+    z_min = max(corners1[0, 2], corners2[0, 2])
+    z_max = min(corners1[4, 2], corners2[4, 2])
     inter_vol = inter_area * max(0.0, z_max - z_min)
     vol1 = box3d_vol(corners1)
     vol2 = box3d_vol(corners2)

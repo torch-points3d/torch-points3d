@@ -13,7 +13,11 @@ from torch_points3d.utils.box_utils import (
     intersection_area,
     convex_hull_graham,
     nms_samecls,
+    box3d_iou,
 )
+from torch_points3d.modules.VoteNet.votenet_results import VoteNetResults
+from torch_points3d.metrics.box_detection.ap import eval_detection
+from torch_points3d.datasets.object_detection.box_data import BoxData
 
 
 class TestUtils(unittest.TestCase):
@@ -67,6 +71,47 @@ class TestUtils(unittest.TestCase):
         scores = np.asarray([0, 1])
         self.assertEqual(nms_samecls(boxes, classes, scores), [1, 0])
         self.assertEqual(nms_samecls(boxes, classes, scores, 0.1), [1])
+
+    def test_box3diou(self):
+        box1 = box_corners_from_param(torch.tensor([2, 2, 3]), 0, torch.tensor([1, 1, 0])).numpy()
+        box2 = box_corners_from_param(torch.tensor([1, 1, 1]), 0, torch.tensor([0.5, 0.5, 0.5])).numpy()
+        self.assertAlmostEqual(box3d_iou(box1, box2), 1.0 / (2 * 3 * 2), places=5)
+
+
+class TestVotenetResults(unittest.TestCase):
+    def test_nms(self):
+        res = VoteNetResults(center=torch.zeros((2, 4, 3)))
+
+        box = box_corners_from_param(torch.tensor([1, 1, 1]), 0, torch.tensor([0.5, 0.5, 0.5]))
+        boxes = box.unsqueeze(0).unsqueeze(0)
+        boxes.repeat((res.batch_size, res.num_proposal, 1, 1))
+
+        objectness = torch.tensor([[0, 1, 0.5, 0], [1, 0.8, 0, 0]])
+        classes = torch.tensor([[0, 0, 0, 0], [2, 1, 1, 1]]).long()
+
+        mask = res._nms_mask(boxes, objectness, classes)
+        np.testing.assert_equal(mask, np.asarray([[False, True, False, False], [True, True, False, False]]))
+
+
+class TestAP(unittest.TestCase):
+    def test_evaldetection(self):
+        box = box_corners_from_param(torch.tensor([1, 1, 1]), 0, torch.tensor([0.5, 0.5, 0.5]))
+
+        # Image1 -> 1 class1 and 1 class2
+        # Image2 -> 1 class1
+        gt = {
+            "0": [BoxData("class1", box), BoxData("class2", box)],
+            "1": [BoxData("class1", box)],
+        }
+
+        pred = {
+            "0": [BoxData("class1", box, objectness=0.5), BoxData("class2", box, objectness=0.5)],
+            "1": [BoxData("class2", box, objectness=1)],
+        }
+        rec, prec, ap = eval_detection(pred, gt)
+        np.testing.assert_allclose(rec["class2"], np.asarray([0, 1]))
+        np.testing.assert_allclose(prec["class2"], np.asarray([0, 0.5]))
+        self.assertAlmostEqual(ap["class2"], 0.5)
 
 
 if __name__ == "__main__":
