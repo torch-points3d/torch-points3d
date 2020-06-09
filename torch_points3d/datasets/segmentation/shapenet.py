@@ -3,14 +3,15 @@ import os.path as osp
 import shutil
 import json
 from tqdm.auto import tqdm as tq
+from itertools import repeat, product
+import numpy as np
 import torch
 
 from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
-
+from torch_points3d.core.data_transform import SaveOriginalPosId
 from torch_points3d.metrics.shapenet_part_tracker import ShapenetPartTracker
-
 from torch_points3d.datasets.base_dataset import BaseDataset
 
 
@@ -114,26 +115,50 @@ class ShapeNet(InMemoryDataset):
 
         if split == "train":
             path = self.processed_paths[0]
+            raw_path = self.processed_raw_paths[0]
         elif split == "val":
             path = self.processed_paths[1]
+            raw_path = self.processed_raw_paths[1]
         elif split == "test":
             path = self.processed_paths[2]
+            raw_path = self.processed_raw_paths[2]
         elif split == "trainval":
             path = self.processed_paths[3]
+            raw_path = self.processed_raw_paths[3]
         else:
             raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
 
-        self.data, self.slices = torch.load(path)
-        self.data.x = self.data.x if include_normals else None
+        self.data, self.slices, self.y_mask = self.load_data(path, include_normals)
 
-        self.y_mask = torch.zeros((len(self.seg_classes.keys()), 50), dtype=torch.bool)
+        # We have perform a slighly optimzation on memory space of no pre-transform was used.
+        # c.f self._process_filenames
+        if os.path.exists(raw_path):
+            self.raw_data, self.raw_slices, _ = self.load_data(raw_path, include_normals)
+        else:
+            self.get_raw_data = self.get
+
+    def load_data(self, path, include_normals):
+        '''This function is used twice to load data for both raw and pre_transformed
+        '''
+        data, slices = torch.load(path)
+        data.x = data.x if include_normals else None
+
+        y_mask = torch.zeros((len(self.seg_classes.keys()), 50), dtype=torch.bool)
         for i, labels in enumerate(self.seg_classes.values()):
-            self.y_mask[i, labels] = 1
+            y_mask[i, labels] = 1
+
+        return data, slices, y_mask
 
     @property
     def raw_file_names(self):
         return list(self.category_ids.values()) + ["train_test_split"]
 
+    @property
+    def processed_raw_paths(self):
+        cats = "_".join([cat[:3].lower() for cat in self.categories])
+        processed_raw_paths = [os.path.join(self.processed_dir, "raw_{}_{}".format(cats, s)) for s in ["train", "val", "test", "trainval"]]
+        return processed_raw_paths
+        
     @property
     def processed_file_names(self):
         cats = "_".join([cat[:3].lower() for cat in self.categories])
@@ -147,31 +172,73 @@ class ShapeNet(InMemoryDataset):
         name = self.url.split("/")[-1].split(".")[0]
         os.rename(osp.join(self.root, name), self.raw_dir)
 
-    def process_filenames(self, filenames):
+    def get_raw_data(self, idx, **kwargs):
+        data = self.raw_data.__class__()
+
+        if hasattr(self.raw_data, '__num_nodes__'):
+            data.num_nodes = self.raw_data.__num_nodes__[idx]
+
+        for key in self.raw_data.keys:
+            item, slices = self.raw_data[key], self.raw_slices[key]
+            start, end = slices[idx].item(), slices[idx + 1].item()
+            # print(slices[idx], slices[idx + 1])
+            if torch.is_tensor(item):
+                s = list(repeat(slice(None), item.dim()))
+                s[self.raw_data.__cat_dim__(key, item)] = slice(start, end)
+            elif start + 1 == end:
+                s = slices[start]
+            else:
+                s = slice(start, end)
+            data[key] = item[s]
+        return data
+
+    def _process_filenames(self, filenames):
+        data_raw_list = []
         data_list = []
         categories_ids = [self.category_ids[cat] for cat in self.categories]
         cat_idx = {categories_ids[i]: i for i in range(len(categories_ids))}
 
+        has_pre_transform = self.pre_transform is not None
+        
+        id_scan = -1
         for name in tq(filenames):
             cat = name.split(osp.sep)[0]
             if cat not in categories_ids:
                 continue
-
+            id_scan += 1
             data = read_txt_array(osp.join(self.raw_dir, name))
             pos = data[:, :3]
             x = data[:, 3:6]
             y = data[:, -1].type(torch.long)
             category = torch.ones(x.shape[0], dtype=torch.long) * cat_idx[cat]
-            data = Data(pos=pos, x=x, y=y, category=category)
+            id_scan_tensor = torch.from_numpy(np.asarray([id_scan])).clone()
+            data = Data(pos=pos, x=x, y=y, category=category, id_scan=id_scan_tensor)
+            data = SaveOriginalPosId()(data)
             if self.pre_filter is not None and not self.pre_filter(data):
                 continue
-            if self.pre_transform is not None:
+            data_raw_list.append(data.clone() if has_pre_transform else data)
+            if has_pre_transform:
                 data = self.pre_transform(data)
-            data_list.append(data)
+                data_list.append(data)
+        if not has_pre_transform:
+            return [], data_raw_list
+        return data_raw_list, data_list
 
-        return data_list
+    def _save_data_list(self, datas, path_to_datas, save_bool=True):
+        if save_bool:
+            torch.save(self.collate(datas), path_to_datas)
+
+    def _re_index_trainval(self, trainval):
+        if len(trainval) == 0:
+            return trainval
+        train, val = trainval
+        for v in val:
+            v.id_scan += len(train)
+        assert (train[-1].id_scan + 1 == val[0].id_scan).item(), (train[-1].id_scan, val[0].id_scan)
+        return train + val
 
     def process(self):
+        raw_trainval = []
         trainval = []
         for i, split in enumerate(["train", "val", "test"]):
             path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
@@ -179,11 +246,16 @@ class ShapeNet(InMemoryDataset):
                 filenames = [
                     osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
                 ]  # Removing first directory.
-            data_list = self.process_filenames(filenames)
+            data_raw_list, data_list = self._process_filenames(sorted(filenames))
             if split == "train" or split == "val":
-                trainval += data_list
-            torch.save(self.collate(data_list), self.processed_paths[i])
-        torch.save(self.collate(trainval), self.processed_paths[3])
+                if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
+                trainval.append(data_list)
+
+            self._save_data_list(data_list, self.processed_paths[i])
+            self._save_data_list(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
+
+        self._save_data_list(self._re_index_trainval(trainval), self.processed_paths[3])
+        self._save_data_list(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
 
     def __repr__(self):
         return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)
@@ -214,15 +286,23 @@ class ShapeNetDataset(BaseDataset):
             self._category = dataset_opt.category
         except KeyError:
             self._category = None
-        pre_transform = self.pre_transform
-        train_transform = self.train_transform
+
         self.train_dataset = ShapeNet(
             self._data_path,
             self._category,
             include_normals=dataset_opt.normal,
-            split="trainval",
-            pre_transform=pre_transform,
-            transform=train_transform,
+            split="train",
+            pre_transform=self.pre_transform,
+            transform=self.train_transform,
+        )
+
+        self.val_dataset = ShapeNet(
+            self._data_path,
+            self._category,
+            include_normals=dataset_opt.normal,
+            split="val",
+            pre_transform=self.pre_transform,
+            transform=self.val_transform,
         )
 
         self.test_dataset = ShapeNet(
@@ -231,7 +311,7 @@ class ShapeNetDataset(BaseDataset):
             include_normals=dataset_opt.normal,
             split="test",
             transform=self.test_transform,
-            pre_transform=pre_transform,
+            pre_transform=self.pre_transform,
         )
         self._categories = self.train_dataset.categories
 
