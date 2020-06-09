@@ -1,9 +1,11 @@
 import torch
 from torch_geometric.data import Data
 import numpy as np
+from typing import List
 
 from torch_points3d.core.losses.huber_loss import nn_distance
 from torch_points3d.utils.box_utils import box_corners_from_param, nms_samecls
+from torch_points3d.datasets.object_detection.box_data import BoxData
 
 
 class VoteNetResults(Data):
@@ -138,7 +140,7 @@ class VoteNetResults(Data):
     def num_proposal(self):
         return self.center.shape[1]
 
-    def get_boxes(self, dataset, apply_nms=False) -> torch.Tensor:
+    def get_boxes(self, dataset, apply_nms=False) -> List[List[BoxData]]:
         """ Generates boxes from predictions
 
         Parameters
@@ -151,8 +153,7 @@ class VoteNetResults(Data):
 
         Returns
         -------
-        boxes: [B, num_proposal, 8, 3]
-            corners of a 3d box, np array
+        List[List[BoxData]] contains the list of predicted boxes for each batch
         """
 
         # Size and Heading prediciton
@@ -172,25 +173,38 @@ class VoteNetResults(Data):
                 corners_3d = box_corners_from_param(box_size, heading_angle, self.center[i, j, :])
                 pred_corners_3d[i, j] = corners_3d
 
+        # Objectness and class
+        pred_obj = torch.nn.functional.softmax(self.objectness_scores, -1)[:, :, 1]  # B,num_proposal
+        pred_sem_cls = torch.argmax(self.sem_cls_scores, -1)  # B,num_proposal
+
         # Apply nms if required
         if apply_nms:
-            self._nms_mask(pred_corners_3d)
+            mask = self._nms_mask(pred_corners_3d, pred_obj, pred_sem_cls)
         else:
-            pass
+            mask = np.ones((self.batch_size, self.num_proposal), dtype=np.bool)
 
-        return pred_corners_3d
+        detected_boxes = []
+        for i in range(self.batch_size):
+            corners = pred_corners_3d[i, mask[i]]
+            objectness = pred_obj[i, mask[i]]
+            classname = pred_sem_cls[i, mask[i]]
 
-    def _nms_mask(self, pred_corners_3d):
+            # Build box data for each detected object and add it to the list
+            batch_detection = []
+            for j in range(len(corners)):
+                batch_detection.append(BoxData(classname[j].item(), corners[j].item(), score=objectness[j].item()))
+
+            detected_boxes.append(batch_detection)
+
+        return detected_boxes
+
+    def _nms_mask(self, pred_corners_3d, pred_obj, pred_sem_cls):
         """
         Parameters
         ----------
         pred_corners_3d : [B, num_proposal, 8, 3]
             box corners
         """
-        # Objectness and class
-        pred_obj = torch.nn.functional.softmax(self.objectness_scores, -1)[:, :, 1]  # B,num_proposal
-        pred_sem_cls = torch.argmax(self.sem_cls_scores, -1)  # B,num_proposal
-
         boxes_3d = torch.zeros((self.batch_size, self.num_proposal, 6))  # [xmin, ymin, zmin, xmax, ymax, zmax]
         boxes_3d[:, :, 0] = torch.min(pred_corners_3d[:, :, :, 0], dim=2)
         boxes_3d[:, :, 1] = torch.min(pred_corners_3d[:, :, :, 1], dim=2)
@@ -200,7 +214,7 @@ class VoteNetResults(Data):
         boxes_3d[:, :, 5] = torch.max(pred_corners_3d[:, :, :, 2], dim=2)
 
         boxes_3d = boxes_3d.cpu().numpy()
-        mask = np.zeros(boxes_3d.shape, dtype=np.bool)
+        mask = np.zeros((self.batch_size, self.num_proposal), dtype=np.bool)
         for b in self.batch_size:
             pick = nms_samecls(boxes_3d[b], pred_sem_cls, pred_obj, overlap_threshold=0.25)
             mask[b, pick] = True

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import logging
 import torch
 from torch_geometric.nn.unpool import knn_interpolate
@@ -102,7 +102,7 @@ class S3DISTracker(SegmentationTracker):
         c.count_predicted_batch(self._test_area.y.numpy(), torch.argmax(full_pred, 1).numpy())
         self._full_vote_miou = c.get_average_intersection_union() * 100
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

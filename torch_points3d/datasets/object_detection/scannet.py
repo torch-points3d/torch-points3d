@@ -6,6 +6,7 @@ from torch_geometric.data import InMemoryDataset
 from torch_points3d.datasets.segmentation.scannet import Scannet, NUM_CLASSES, IGNORE_LABEL
 from torch_points3d.metrics.object_detection_tracker import ObjectDetectionTracker
 from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.utils.box_utils import box_corners_from_param
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -68,7 +69,7 @@ class ScannetObjectDetection(Scannet):
 
     def _set_extra_labels(self, data):
         """ Adds extra labels for the instance and object segmentation tasks
-
+        instance_box_corners: (MAX_NUM_OBJ, 8, 3) corners of the bounding boxes in this room
         center_label: (MAX_NUM_OBJ,3) for GT box center XYZ
         sem_cls_label: (MAX_NUM_OBJ,) semantic class index
         angle_residual_label: (MAX_NUM_OBJ,)
@@ -103,16 +104,21 @@ class ScannetObjectDetection(Scannet):
         # from the points sharing the same instance label.
         point_votes = torch.zeros([num_points, 3])
         point_votes_mask = torch.zeros(num_points, dtype=torch.bool)
+        instance_box_corners = []
         for i_instance in np.unique(instance_labels):
             # find all points belong to that instance
             ind = np.where(instance_labels == i_instance)[0]
             # find the semantic label
             instance_class = semantic_labels[ind[0]].item()
             if instance_class in self.NYU40IDS:
-                x = data.pos[ind, :3]
-                center = 0.5 * (x.min(0)[0] + x.max(0)[0])
-                point_votes[ind, :] = center - x
+                pos = data.pos[ind, :3]
+                max_pox = pos.max(0)[0]
+                min_pos = pos.min(0)[0]
+                center = 0.5 * (min_pos + max_pox)
+                point_votes[ind, :] = center - pos
                 point_votes_mask[ind] = True
+                box_size = max_pox - min_pos
+                instance_box_corners.append(box_corners_from_param(box_size, 0, center))
         point_votes = point_votes.repeat((1, 3))  # make 3 votes identical
 
         # NOTE: set size class as semantic class. Consider use size2class.
@@ -137,7 +143,8 @@ class ScannetObjectDetection(Scannet):
         data.box_label_mask = target_bboxes_mask
         data.vote_label = point_votes.float()
         data.vote_label_mask = point_votes_mask
-        delattr(data, "instance_bboxes")
+        data.instance_box_corners = torch.zeros((self.MAX_NUM_OBJ, 8, 3))
+        data.instance_box_corners[: len(instance_box_corners), :, :] = torch.tensor(instance_box_corners)
         delattr(data, "instance_labels")
         delattr(data, "y")
         return data

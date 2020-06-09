@@ -699,8 +699,7 @@ class Scannet(InMemoryDataset):
             )
         log.info("{}/{}| scan_name: {}, data: {}".format(id_scan, total, scan_name, data))
 
-        data["id_scan"] = torch.from_numpy(np.asarray([id_scan]))
-
+        data["id_scan"] = torch.tensor([id_scan])
         return cT.SaveOriginalPosId()(data)
 
     def process(self):

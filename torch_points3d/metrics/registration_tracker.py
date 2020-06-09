@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import torchnet as tnt
 import torch
 
@@ -37,7 +37,7 @@ class PatchRegistrationTracker(BaseTracker):
 
         self._acc = compute_accuracy(outputs[:N], outputs[N:])
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

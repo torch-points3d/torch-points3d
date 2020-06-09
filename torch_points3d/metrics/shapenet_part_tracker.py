@@ -1,4 +1,3 @@
-from typing import Dict
 import numpy as np
 
 from .confusion_matrix import ConfusionMatrix
@@ -79,7 +78,7 @@ class ShapenetPartTracker(BaseTracker):
         mean_class_ious = np.mean(list(cat_ious.values()))
         return cat_ious, mean_class_ious, np.mean(instance_ious)
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False):
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
