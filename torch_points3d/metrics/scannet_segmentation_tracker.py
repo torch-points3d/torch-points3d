@@ -1,5 +1,5 @@
 import os.path as osp
-from typing import Dict
+from typing import Dict, Any
 import logging
 import numpy as np
 import torch
@@ -38,7 +38,7 @@ class ScannetSegmentationTracker(SegmentationTracker):
 
         self._vote(kwargs.get("data"), model.get_output())
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

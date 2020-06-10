@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import torch
 import numpy as np
 
@@ -77,7 +77,7 @@ class SegmentationTracker(BaseTracker):
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

@@ -34,11 +34,11 @@ def train_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
-    debugging,
+    cfg,
 ):
 
-    early_break = getattr(debugging, "early_break", False)
-    profiling = getattr(debugging, "profiling", False)
+    early_break = getattr(cfg.debugging, "early_break", False)
+    profiling = getattr(cfg.debugging, "profiling", False)
 
     model.train()
     tracker.reset("train")
@@ -53,7 +53,7 @@ def train_epoch(
             model.set_input(data, device)
             model.optimize_parameters(epoch, dataset.batch_size)
             if i % 10 == 0:
-                tracker.track(model, data=data)
+                tracker.track(model, data=data, **cfg.tracker_options)
 
             tq_train_loader.set_postfix(
                 **tracker.get_metrics(),
@@ -71,10 +71,10 @@ def train_epoch(
                 break
 
             if profiling:
-                if i > getattr(debugging, "num_batches", 50):
+                if i > getattr(cfg.debugging, "num_batches", 50):
                     return 0
 
-    tracker.finalise()
+    tracker.finalise(**cfg.tracker_options)
     metrics = tracker.publish(epoch)
     checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
     log.info("Learning rate = %f" % model.learning_rate)
@@ -88,10 +88,10 @@ def eval_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
-    debugging,
+    cfg,
 ):
 
-    early_break = getattr(debugging, "early_break", False)
+    early_break = getattr(cfg.debugging, "early_break", False)
 
     model.eval()
     tracker.reset("val")
@@ -103,7 +103,7 @@ def eval_epoch(
                 model.set_input(data, device)
                 model.forward()
 
-            tracker.track(model, data=data)
+            tracker.track(model, data=data, **cfg.tracker_options)
             tq_val_loader.set_postfix(**tracker.get_metrics(), color=COLORS.VAL_COLOR)
 
             if visualizer.is_active:
@@ -112,7 +112,7 @@ def eval_epoch(
             if early_break:
                 break
 
-    tracker.finalise()
+    tracker.finalise(**cfg.tracker_options)
     metrics = tracker.publish(epoch)
     tracker.print_summary()
     checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
@@ -126,9 +126,9 @@ def test_epoch(
     tracker: BaseTracker,
     checkpoint: ModelCheckpoint,
     visualizer: Visualizer,
-    debugging,
+    cfg,
 ):
-    early_break = getattr(debugging, "early_break", False)
+    early_break = getattr(cfg.debugging, "early_break", False)
     model.eval()
 
     loaders = dataset.test_dataloaders
@@ -145,7 +145,7 @@ def test_epoch(
                     model.set_input(data, device)
                     model.forward()
 
-                tracker.track(model, data=data)
+                tracker.track(model, data=data, **cfg.tracker_options)
                 tq_test_loader.set_postfix(**tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
                 if visualizer.is_active:
@@ -154,7 +154,7 @@ def test_epoch(
                 if early_break:
                     break
 
-        tracker.finalise()
+        tracker.finalise(**cfg.tracker_options)
         metrics = tracker.publish(epoch)
         tracker.print_summary()
         checkpoint.save_best_models_under_current_metrics(model, metrics, tracker.metric_func)
@@ -168,19 +168,19 @@ def run(
 
     for epoch in range(checkpoint.start_epoch, cfg.training.epochs):
         log.info("EPOCH %i / %i", epoch, cfg.training.epochs)
-        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
+        train_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg)
         if profiling:
             return 0
         if dataset.has_val_loader:
-            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
+            eval_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg)
 
         if dataset.has_test_loaders:
-            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
+            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg)
 
     # Single test evaluation in resume case
     if checkpoint.start_epoch > cfg.training.epochs:
         if dataset.has_test_loaders:
-            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg.debugging)
+            test_epoch(epoch, model, dataset, device, tracker, checkpoint, visualizer, cfg)
 
 
 @hydra.main(config_path="conf/config.yaml")

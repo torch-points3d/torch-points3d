@@ -1,4 +1,3 @@
-from typing import Dict
 import numpy as np
 from .confusion_matrix import ConfusionMatrix
 from .base_tracker import meter_value, BaseTracker
@@ -47,7 +46,7 @@ class ShapenetPartTracker(BaseTracker):
         self._full_Imiou = None
         self._full_res = False
 
-    def track(self, model: model_interface.TrackerInterface, full_res: bool = True, data: Data = None, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res: bool = False, data: Data = None, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)
@@ -124,7 +123,7 @@ class ShapenetPartTracker(BaseTracker):
                 )
         return part_ious
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False):
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import torch
 import torchnet as tnt
 
@@ -48,7 +48,7 @@ class ClassificationTracker(BaseTracker):
 
         self._acc.add(100 * self.compute_acc(outputs, targets))
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

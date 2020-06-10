@@ -1,11 +1,16 @@
-from typing import Dict
+from typing import Dict, List, Any
 import torchnet as tnt
 import torch
+from collections import OrderedDict
 
 from torch_points3d.models.model_interface import TrackerInterface
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.metrics.meters import APMeter
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
+
+from torch_points3d.modules.VoteNet import VoteNetResults
+from torch_points3d.datasets.object_detection.box_data import BoxData
+from .box_detection.ap import eval_detection
 
 
 class ObjectDetectionTracker(BaseTracker):
@@ -14,10 +19,17 @@ class ObjectDetectionTracker(BaseTracker):
         self._num_classes = dataset.num_classes
         self._dataset = dataset
         self.reset(stage)
-        self._metric_func = {"loss": min, "acc": max}
+        self._metric_func = {"loss": min, "acc": max, "pos": max, "neg": min, "map": max}
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
+        self._pred_boxes: Dict[str, List[BoxData]] = {}
+        self._gt_boxes: Dict[str, List[BoxData]] = {}
+        self._rec: Dict[str, float] = {}
+        self._ap: Dict[str, float] = {}
+        self._neg_ratio = tnt.meter.AverageValueMeter()
+        self._obj_acc = tnt.meter.AverageValueMeter()
+        self._pos_ratio = tnt.meter.AverageValueMeter()
 
     @staticmethod
     def detach_tensor(tensor):
@@ -25,31 +37,101 @@ class ObjectDetectionTracker(BaseTracker):
             tensor = tensor.detach()
         return tensor
 
-    @property
-    def confusion_matrix(self):
-        return self._confusion_matrix.confusion_matrix
-
-    def track(self, model: TrackerInterface, **kwargs):
+    def track(self, model: TrackerInterface, data=None, track_boxes=False, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
+        if tracking boxes, you must provide a labeled "data" object with the following attributes:
+            - id_scan: id of the scan to which the boxes belong to
+            - instance_box_cornerimport torchnet as tnts - gt box corners
+            - box_label_mask - mask for boxes (0 = no box)
+            - sem_cls_label - semantic label for each box
         """
         super().track(model)
 
-        outputs = model.get_output()
-        targets = model.get_labels()
+        outputs: VoteNetResults = model.get_output()
 
-        obj_pred_val = torch.argmax(outputs["objectness_scores"], 2)  # B,K
-        self._obj_acc = torch.sum(
-            (obj_pred_val == targets["objectness_label"].long()).float() * targets["objectness_mask"]
-        ) / (torch.sum(targets["objectness_mask"]) + 1e-6)
+        total_num_proposal = outputs.objectness_label.shape[0] * outputs.objectness_label.shape[1]
+        pos_ratio = torch.sum(outputs.objectness_label.float()).item() / float(total_num_proposal)
+        self._pos_ratio.add(pos_ratio)
+        self._neg_ratio.add(torch.sum(outputs.objectness_mask.float()).item() / float(total_num_proposal) - pos_ratio)
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+        obj_pred_val = torch.argmax(outputs.objectness_scores, 2)  # B,K
+        self._obj_acc.add(
+            torch.sum((obj_pred_val == outputs.objectness_label.long()).float() * outputs.objectness_mask).item()
+            / (torch.sum(outputs.objectness_mask) + 1e-6).item()
+        )
+
+        if data is None or self._stage == "train" or not track_boxes:
+            return
+
+        self._add_box_pred(outputs, data, model.conv_type)
+
+    def _add_box_pred(self, outputs: VoteNetResults, input_data, conv_type):
+        # Track box predictions
+        pred_boxes = outputs.get_boxes(self._dataset, apply_nms=True)
+        if input_data.id_scan is None:
+            raise ValueError("Cannot track boxes without knowing in which scan they are")
+
+        scan_ids = input_data.id_scan
+        assert len(scan_ids) == len(pred_boxes)
+        for idx, scan_id in enumerate(scan_ids):
+            # Predictions
+            self._pred_boxes[scan_id.item()] = pred_boxes[idx]
+
+            # Ground truth
+            sample_mask = idx
+            if conv_type != "DENSE":
+                sample_mask = input_data.batch == idx
+            gt_boxes = input_data.instance_box_corners[sample_mask]
+            gt_boxes = gt_boxes[input_data.box_label_mask[sample_mask]]
+            sample_labels = input_data.sem_cls_label[sample_mask]
+            gt_box_data = [BoxData(sample_labels[i].item(), gt_boxes[i]) for i in range(len(gt_boxes))]
+            self._gt_boxes[scan_id.item()] = gt_box_data
+
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
 
-        metrics["{}_acc".format(self._stage)] = self._obj_acc.item()
+        metrics["{}_acc".format(self._stage)] = meter_value(self._obj_acc)
+        metrics["{}_pos".format(self._stage)] = meter_value(self._pos_ratio)
+        metrics["{}_neg".format(self._stage)] = meter_value(self._neg_ratio)
+
+        if self._has_box_data:
+            mAP = sum(self._ap.values()) / len(self._ap)
+            metrics["{}_map".format(self._stage)] = mAP
+
+        if verbose and self._has_box_data:
+            metrics["{}_class_rec".format(self._stage)] = self._dict_to_str(self._rec)
+            metrics["{}_class_ap".format(self._stage)] = self._dict_to_str(self._ap)
 
         return metrics
+
+    def finalise(self, track_boxes=False, overlap_threshold=0.25, **kwargs):
+        if not track_boxes or len(self._gt_boxes) == 0:
+            return
+
+        # Compute box detection metrics
+        rec, _, ap = eval_detection(self._pred_boxes, self._gt_boxes, ovthresh=overlap_threshold)
+        self._ap = OrderedDict(sorted(ap.items()))
+        self._rec = OrderedDict({})
+        for key, val in sorted(rec.items()):
+            try:
+                value = val[-1]
+            except TypeError:
+                value = val
+            self._rec[key] = value
+
+    @staticmethod
+    def _dict_to_str(dictionnary):
+        string = "{"
+        for key, value in dictionnary.items():
+            string += "%s: %.2f," % (str(key), value)
+        string += "}"
+        return string
+
+    @property
+    def _has_box_data(self):
+        return len(self._rec)
 
     @property
     def metric_func(self):
