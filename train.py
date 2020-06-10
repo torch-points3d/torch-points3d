@@ -236,6 +236,9 @@ def main(cfg):
     )
     log.info(dataset)
 
+    # Verify attributes in dataset
+    model.verify_data(dataset.train_dataset[0])
+
     # Choose selection stage
     selection_stage = getattr(cfg, "selection_stage", "")
     checkpoint.selection_stage = dataset.resolve_saving_stage(selection_stage)

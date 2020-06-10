@@ -10,6 +10,22 @@ log = logging.getLogger(__name__)
 
 
 class VoteNetModel(BaseModel):
+    __REQUIRED_DATA__ = [
+        "pos",
+    ]
+
+    __REQUIRED_LABELS__ = [
+        "center_label",
+        "heading_class_label",
+        "heading_residual_label",
+        "size_class_label",
+        "size_residual_label",
+        "sem_cls_label",
+        "box_label_mask",
+        "vote_label",
+        "vote_label_mask",
+    ]
+
     def __init__(self, option, model_type, dataset, modules):
         """Initialize this model class.
         Parameters:

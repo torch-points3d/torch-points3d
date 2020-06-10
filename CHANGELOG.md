@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full res predictions on Scannet with voting
 - VoteNet model and losses
 - Tracker for object detection
+- Models can specify which attributes they need from the data in order to forward and train properly
 - Full res predictions on ShapeNet with voting
 
 ### Changed

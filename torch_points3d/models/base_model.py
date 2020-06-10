@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from abc import abstractmethod
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -27,6 +27,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         -- <forward>:                       produce intermediate results.
         -- <optimize_parameters>:           calculate losses, gradients, and update network weights.
     """
+
+    __REQUIRED_DATA__: List[str] = []
+    __REQUIRED_LABELS__: List[str] = []
 
     def __init__(self, opt):
         """Initialize the BaseModel class.
@@ -388,6 +391,23 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     def cuda(self):
         return self.to(torch.device("cuda"))
+
+    def verify_data(self, data, forward_only=False):
+        """ Goes through the __REQUIRED_DATA__ and __REQUIRED_LABELS__ attribute of the model
+        and verifies that the passed data object contains all required members.
+        If something is missing it raises a KeyError exception.
+        """
+        missing_keys = []
+        required_attributes = self.__REQUIRED_DATA__
+        if not forward_only:
+            required_attributes += self.__REQUIRED_LABELS__
+        for attr in required_attributes:
+            if not hasattr(data, attr) or data[attr] is None:
+                missing_keys.append(attr)
+        if len(missing_keys):
+            raise KeyError(
+                "Missing attributes in your data object: {}. The model will fail to forward.".format(missing_keys)
+            )
 
 
 class BaseInternalLossModule(torch.nn.Module):
