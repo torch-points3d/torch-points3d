@@ -82,19 +82,12 @@ class ScannetObjectDetection(Scannet):
         num_points = data.pos.shape[0]
         semantic_labels = data.y
         instance_labels = data.instance_labels
-        instance_bboxes = data.instance_bboxes
 
-        target_bboxes = torch.zeros((self.MAX_NUM_OBJ, 6))
+        center_label = torch.zeros((self.MAX_NUM_OBJ, 3))
         target_bboxes_mask = torch.zeros((self.MAX_NUM_OBJ), dtype=torch.bool)
         angle_residuals = torch.zeros((self.MAX_NUM_OBJ,))
         size_classes = torch.zeros((self.MAX_NUM_OBJ,))
         size_residuals = torch.zeros((self.MAX_NUM_OBJ, 3))
-
-        # Keep only boxes with valid ids
-        bbox_mask = np.in1d(instance_bboxes[:, -1], self.NYU40IDS)
-        instance_bboxes = instance_bboxes[bbox_mask, :]
-        target_bboxes_mask[0 : instance_bboxes.shape[0]] = True
-        target_bboxes[0 : instance_bboxes.shape[0], :] = instance_bboxes[:, 0:6]  # TODO handle data augmentation
 
         # compute votes *AFTER* augmentation
         # generate votes
@@ -105,6 +98,9 @@ class ScannetObjectDetection(Scannet):
         point_votes = torch.zeros([num_points, 3])
         point_votes_mask = torch.zeros(num_points, dtype=torch.bool)
         instance_box_corners = []
+        box_sizes = []
+        centers = []
+        instance_classes = []
         for i_instance in np.unique(instance_labels):
             # find all points belong to that instance
             ind = np.where(instance_labels == i_instance)[0]
@@ -119,22 +115,29 @@ class ScannetObjectDetection(Scannet):
                 point_votes_mask[ind] = True
                 box_size = max_pox - min_pos
                 instance_box_corners.append(box_corners_from_param(box_size, 0, center))
+                box_sizes.append(torch.tensor(box_size))
+                centers.append(torch.tensor(center))
+                instance_classes.append(self.NYU40ID2CLASS[instance_class])
         point_votes = point_votes.repeat((1, 3))  # make 3 votes identical
+        instance_classes = torch.tensor(instance_classes)
 
-        # NOTE: set size class as semantic class. Consider use size2class.
-        class_ind = np.asarray([np.where(self.NYU40IDS == x)[0][0] for x in np.asarray(instance_bboxes[:, -1])])
-        size_classes[0 : instance_bboxes.shape[0]] = torch.from_numpy(class_ind)
-        if len(class_ind):
-            size_residuals[0 : instance_bboxes.shape[0], :] = target_bboxes[
-                0 : instance_bboxes.shape[0], 3:6
-            ] - torch.from_numpy(self.MEAN_SIZE_ARR[class_ind, :])
+        # Keep only boxes with valid ids
+        num_instances = len(instance_classes)
+        target_bboxes_mask[0:num_instances] = True
 
+        # Set box semantic label
         target_bboxes_semcls = np.zeros((self.MAX_NUM_OBJ))
-        target_bboxes_semcls[0 : instance_bboxes.shape[0]] = [
-            self.NYU40ID2CLASS[x.item()] for x in instance_bboxes[:, -1][0 : instance_bboxes.shape[0]]
-        ]
+        target_bboxes_semcls[0:num_instances] = instance_classes
 
-        data.center_label = target_bboxes.float()[:, 0:3]
+        # Set size residual and box centres
+        size_classes[0:num_instances] = instance_classes
+        if num_instances > 0:
+            box_sizes = torch.stack(box_sizes)
+            centers = torch.stack(centers)
+            size_residuals[0:num_instances, :] = box_sizes - torch.from_numpy(self.MEAN_SIZE_ARR[instance_classes, :])
+            center_label[0:num_instances, :] = centers
+
+        data.center_label = center_label
         data.heading_class_label = torch.zeros((self.MAX_NUM_OBJ,))
         data.heading_residual_label = angle_residuals.float()
         data.size_class_label = size_classes
@@ -144,7 +147,10 @@ class ScannetObjectDetection(Scannet):
         data.vote_label = point_votes.float()
         data.vote_label_mask = point_votes_mask
         data.instance_box_corners = torch.zeros((self.MAX_NUM_OBJ, 8, 3))
-        data.instance_box_corners[: len(instance_box_corners), :, :] = torch.tensor(instance_box_corners)
+        if len(instance_box_corners):
+            data.instance_box_corners[: len(instance_box_corners), :, :] = torch.stack(instance_box_corners)
+
+        delattr(data, "instance_bboxes")
         delattr(data, "instance_labels")
         delattr(data, "y")
         return data
@@ -204,7 +210,11 @@ class ScannetDataset(BaseDataset):
 
     def class2size(self, pred_cls, residual):
         """ Inverse function to size2class """
-        return self.mean_size_arr[pred_cls, :] + residual
+        if torch.is_tensor(residual):
+            mean = torch.tensor(self.mean_size_arr[pred_cls, :]).to(residual.device)
+        else:
+            mean = self.mean_size_arr[pred_cls, :]
+        return mean + residual
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker

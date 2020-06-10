@@ -11,11 +11,16 @@ class BoxData:
         assert corners3d.shape == (8, 3)
         assert objectness is None or objectness <= 1 and objectness >= 0
 
+        if torch.is_tensor(classname):
+            classname = classname.cpu().item()
         self.classname = classname
-        self.corners3d = np.asarray(corners3d)
+
+        if torch.is_tensor(corners3d):
+            corners3d = corners3d.cpu().numpy()
+        self.corners3d = corners3d
 
         if torch.is_tensor(objectness):
-            objectness = objectness.item()
+            objectness = objectness.cpu().item()
         self.objectness = objectness
 
     @property

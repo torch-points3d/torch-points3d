@@ -11,6 +11,8 @@ def box_corners_from_param(box_size, heading_angle, center):
         output (8,3) array for 3D box corners
     """
     R = euler_angles_to_rotation_matrix(torch.tensor([0.0, 0.0, float(heading_angle)]))
+    if torch.is_tensor(box_size):
+        box_size = box_size.float()
     l, w, h = box_size
     x_corners = torch.tensor([-l / 2, l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2])
     y_corners = torch.tensor([-w / 2, -w / 2, w / 2, w / 2, -w / 2, -w / 2, w / 2, w / 2])
@@ -39,9 +41,13 @@ def nms_samecls(boxes, classes, scores, overlap_threshold=0.25):
     overlap_threshold : float, optional
         [description], by default 0.25
     """
-    boxes = np.asarray(boxes)
-    scores = np.asarray(scores)
-    classes = np.asarray(classes)
+    if torch.is_tensor(boxes):
+        boxes = boxes.cpu().numpy()
+    if torch.is_tensor(scores):
+        scores = scores.cpu().numpy()
+    if torch.is_tensor(classes):
+        classes = classes.cpu().numpy()
+
     x1 = boxes[:, 0]
     y1 = boxes[:, 1]
     z1 = boxes[:, 2]

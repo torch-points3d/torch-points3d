@@ -162,7 +162,11 @@ class VoteNetResults(Data):
             self.heading_residuals, 2, pred_heading_class.unsqueeze(-1)
         )  # B,num_proposal,1
         pred_size_class = torch.argmax(self.size_scores, -1)  # B,num_proposal
-        pred_size_residual = torch.gather(self.size_residuals, 2, pred_size_class.unsqueeze(-1))  # B,num_proposal,1
+        pred_size_residual = torch.gather(
+            self.size_residuals, 2, pred_size_class.unsqueeze(-1).unsqueeze(-1).repeat(1, 1, 1, 3)
+        ).squeeze(
+            2
+        )  # B,num_proposal,3
 
         # Generate box corners
         pred_corners_3d = torch.zeros((self.batch_size, self.num_proposal, 8, 3))

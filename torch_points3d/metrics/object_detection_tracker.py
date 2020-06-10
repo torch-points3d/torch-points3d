@@ -1,6 +1,7 @@
 from typing import Dict, List, Any
 import torchnet as tnt
 import torch
+from collections import OrderedDict
 
 from torch_points3d.models.model_interface import TrackerInterface
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
@@ -18,14 +19,17 @@ class ObjectDetectionTracker(BaseTracker):
         self._num_classes = dataset.num_classes
         self._dataset = dataset
         self.reset(stage)
-        self._metric_func = {"loss": min, "acc": max}
+        self._metric_func = {"loss": min, "acc": max, "pos": max, "neg": min, "map": max}
+
+    def reset(self, stage="train"):
+        super().reset(stage=stage)
         self._pred_boxes: Dict[str, List[BoxData]] = {}
         self._gt_boxes: Dict[str, List[BoxData]] = {}
         self._rec: Dict[str, float] = {}
         self._ap: Dict[str, float] = {}
-
-    def reset(self, stage="train"):
-        super().reset(stage=stage)
+        self._neg_ratio = tnt.meter.AverageValueMeter()
+        self._obj_acc = tnt.meter.AverageValueMeter()
+        self._pos_ratio = tnt.meter.AverageValueMeter()
 
     @staticmethod
     def detach_tensor(tensor):
@@ -33,11 +37,11 @@ class ObjectDetectionTracker(BaseTracker):
             tensor = tensor.detach()
         return tensor
 
-    def track(self, model: TrackerInterface, data=None, track_boxes=False, **kwargs):
+    def track(self, model: TrackerInterface, data=None, track_boxes=True, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         if tracking boxes, you must provide a labeled "data" object with the following attributes:
             - id_scan: id of the scan to which the boxes belong to
-            - instance_box_corners - gt box corners
+            - instance_box_cornerimport torchnet as tnts - gt box corners
             - box_label_mask - mask for boxes (0 = no box)
             - sem_cls_label - semantic label for each box
         """
@@ -46,13 +50,15 @@ class ObjectDetectionTracker(BaseTracker):
         outputs: VoteNetResults = model.get_output()
 
         total_num_proposal = outputs.objectness_label.shape[0] * outputs.objectness_label.shape[1]
-        self._pos_ratio = torch.sum(outputs.objectness_label.float()) / float(total_num_proposal)
-        self._neg_ratio = torch.sum(outputs.objectness_label.float()) / float(total_num_proposal) - self._pos_ratio
+        pos_ratio = torch.sum(outputs.objectness_label.float()).item() / float(total_num_proposal)
+        self._pos_ratio.add(pos_ratio)
+        self._neg_ratio.add(torch.sum(outputs.objectness_mask.float()).item() / float(total_num_proposal) - pos_ratio)
 
         obj_pred_val = torch.argmax(outputs.objectness_scores, 2)  # B,K
-        self._obj_acc = torch.sum(
-            (obj_pred_val == outputs.objectness_label.long()).float() * outputs.objectness_mask
-        ) / (torch.sum(outputs.objectness_mask) + 1e-6)
+        self._obj_acc.add(
+            torch.sum((obj_pred_val == outputs.objectness_label.long()).float() * outputs.objectness_mask).item()
+            / (torch.sum(outputs.objectness_mask) + 1e-6).item()
+        )
 
         if data is None or self._stage == "train" or not track_boxes:
             return
@@ -86,9 +92,9 @@ class ObjectDetectionTracker(BaseTracker):
         """
         metrics = super().get_metrics(verbose)
 
-        metrics["{}_acc".format(self._stage)] = self._obj_acc.item()
-        metrics["{}_pos".format(self._stage)] = self._pos_ratio.item()
-        metrics["{}_neg".format(self._stage)] = self._neg_ratio.item()
+        metrics["{}_acc".format(self._stage)] = meter_value(self._obj_acc)
+        metrics["{}_pos".format(self._stage)] = meter_value(self._pos_ratio)
+        metrics["{}_neg".format(self._stage)] = meter_value(self._neg_ratio)
 
         if self._has_box_data:
             mAP = sum(self._ap.values()) / len(self._ap)
@@ -100,12 +106,20 @@ class ObjectDetectionTracker(BaseTracker):
 
         return metrics
 
-    def finalise(self, track_boxes=False, overlap_threshold=0.25, **kwargs):
+    def finalise(self, track_boxes=True, overlap_threshold=0.25, **kwargs):
         if not track_boxes or len(self._gt_boxes) == 0:
             return
 
         # Compute box detection metrics
-        self._rec, _, self._ap = eval_detection(self._pred_boxes, self._gt_boxes, ovthresh=overlap_threshold)
+        rec, _, ap = eval_detection(self._pred_boxes, self._gt_boxes, ovthresh=overlap_threshold)
+        self._ap = OrderedDict(sorted(ap.items()))
+        self._rec = OrderedDict({})
+        for key, val in sorted(rec.items()):
+            try:
+                value = val[-1]
+            except TypeError:
+                value = val
+            self._rec[key] = value
 
     @property
     def _has_box_data(self):

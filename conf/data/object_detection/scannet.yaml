@@ -15,7 +15,24 @@ data:
   
   train_transform:
     - transform: FixedPoints
-      lparams: [20000] 
+      lparams: [40000] 
+    - transform: RandomNoise
+      params:
+        sigma: 0.001
+    - transform: RandomRotate
+      params:
+        degrees: 180
+        axis: 2
+    - transform: RandomScaleAnisotropic
+      params:
+        scales: [0.8, 1.2]
+    - transform: RandomSymmetry
+      params:
+        axis: [True, False, False]
+    - transform: DropFeature
+      params:
+        drop_proba: 0.2
+        feature_name: rgb  
     - transform: XYZFeature
       params:
         add_x: False
@@ -31,7 +48,7 @@ data:
 
   val_transform:
     - transform: FixedPoints
-      lparams: [20000] 
+      lparams:  [40000] 
     - transform: XYZFeature
       params:
         add_x: False

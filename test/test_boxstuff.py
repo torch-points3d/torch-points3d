@@ -108,7 +108,7 @@ class TestVotenetResults(unittest.TestCase):
             heading_scores=torch.zeros(batch_size, num_samples, 1),
             heading_residuals=torch.zeros(batch_size, num_samples, 1),
             size_scores=torch.zeros(batch_size, num_samples, 1),
-            size_residuals=torch.zeros(batch_size, num_samples, 3),
+            size_residuals=torch.zeros(batch_size, num_samples, 2, 3),
             objectness_scores=torch.ones(batch_size, num_samples, 2),
             sem_cls_scores=torch.ones(batch_size, num_samples, 1),
         )
