@@ -27,6 +27,7 @@ class MockModel:
         ]
         self.labels = [np.asarray([1, 1]), np.asarray([2, 2]), np.asarray([3])]
         self.batch_idx = [np.asarray([0, 1]), np.asarray([0, 1]), np.asarray([0])]
+        self.conv_type = "DENSE"
 
     def get_output(self):
         return self.outputs[self.iter]
