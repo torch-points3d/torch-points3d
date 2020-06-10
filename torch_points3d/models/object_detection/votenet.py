@@ -12,6 +12,9 @@ log = logging.getLogger(__name__)
 class VoteNetModel(BaseModel):
     __REQUIRED_DATA__ = [
         "pos",
+    ]
+
+    __REQUIRED_LABELS__ = [
         "center_label",
         "heading_class_label",
         "heading_residual_label",

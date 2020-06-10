@@ -37,6 +37,7 @@ def MLP(channels):
 
 class MockModel(BaseModel):
     __REQUIRED_DATA__ = ["x"]
+    __REQUIRED_LABELS__ = ["y"]
 
     def __init__(self):
         super(MockModel, self).__init__(DictConfig({"conv_type": "Dummy"}))
@@ -102,9 +103,9 @@ class TestBaseModel(unittest.TestCase):
 
     def test_validatedata(self):
         model = MockModel()
-        model.verify_data(Data(x=0))
+        model.verify_data(Data(x=0), forward_only=True)
         with self.assertRaises(KeyError):
-            model.verify_data(Data(y=0))
+            model.verify_data(Data(x=0))
 
 
 if __name__ == "__main__":
