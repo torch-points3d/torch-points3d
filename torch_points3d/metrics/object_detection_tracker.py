@@ -101,8 +101,8 @@ class ObjectDetectionTracker(BaseTracker):
             metrics["{}_map".format(self._stage)] = mAP
 
         if verbose and self._has_box_data:
-            metrics["{}_class_rec".format(self._stage)] = self._rec
-            metrics["{}_class_ap".format(self._stage)] = self._ap
+            metrics["{}_class_rec".format(self._stage)] = self._dict_to_str(self._rec)
+            metrics["{}_class_ap".format(self._stage)] = self._dict_to_str(self._ap)
 
         return metrics
 
@@ -120,6 +120,14 @@ class ObjectDetectionTracker(BaseTracker):
             except TypeError:
                 value = val
             self._rec[key] = value
+
+    @staticmethod
+    def _dict_to_str(dictionnary):
+        string = "{"
+        for key, value in dictionnary.items():
+            string += "%s: %.2f" % (str(key), value)
+        string += "}"
+        return string
 
     @property
     def _has_box_data(self):
