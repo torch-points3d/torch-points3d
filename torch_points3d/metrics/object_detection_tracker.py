@@ -37,7 +37,7 @@ class ObjectDetectionTracker(BaseTracker):
             tensor = tensor.detach()
         return tensor
 
-    def track(self, model: TrackerInterface, data=None, track_boxes=True, **kwargs):
+    def track(self, model: TrackerInterface, data=None, track_boxes=False, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         if tracking boxes, you must provide a labeled "data" object with the following attributes:
             - id_scan: id of the scan to which the boxes belong to
@@ -106,7 +106,7 @@ class ObjectDetectionTracker(BaseTracker):
 
         return metrics
 
-    def finalise(self, track_boxes=True, overlap_threshold=0.25, **kwargs):
+    def finalise(self, track_boxes=False, overlap_threshold=0.25, **kwargs):
         if not track_boxes or len(self._gt_boxes) == 0:
             return
 
