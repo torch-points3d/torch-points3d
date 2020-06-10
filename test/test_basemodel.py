@@ -10,6 +10,7 @@ from torch.nn import (
 )
 import os
 import sys
+from torch_geometric.data import Data
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
@@ -35,6 +36,8 @@ def MLP(channels):
 
 
 class MockModel(BaseModel):
+    __REQUIRED_DATA__ = ["x"]
+
     def __init__(self):
         super(MockModel, self).__init__(DictConfig({"conv_type": "Dummy"}))
 
@@ -45,7 +48,15 @@ class MockModel(BaseModel):
         self.input = a
 
 
-class TestSimpleBatch(unittest.TestCase):
+class TestBaseModel(unittest.TestCase):
+    def test_getinput(self):
+        model = MockModel()
+        with self.assertRaises(AttributeError):
+            model.get_input()
+
+        model.set_input(1)
+        self.assertEqual(model.get_input(), 1)
+
     def test_enable_dropout_eval(self):
         model = MockModel()
         model.eval()
@@ -89,15 +100,11 @@ class TestSimpleBatch(unittest.TestCase):
         self.assertEqual(contains_grads, expected_contains_grads)
         self.assertEqual(make_optimizer_steps, expected_make_optimizer_step)
 
-
-class TestBaseModel(unittest.TestCase):
-    def test_getinput(self):
+    def test_validatedata(self):
         model = MockModel()
-        with self.assertRaises(AttributeError):
-            model.get_input()
-
-        model.set_input(1)
-        self.assertEqual(model.get_input(), 1)
+        model.verify_data(Data(x=0))
+        with self.assertRaises(KeyError):
+            model.verify_data(Data(y=0))
 
 
 if __name__ == "__main__":
