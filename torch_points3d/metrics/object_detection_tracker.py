@@ -125,7 +125,7 @@ class ObjectDetectionTracker(BaseTracker):
     def _dict_to_str(dictionnary):
         string = "{"
         for key, value in dictionnary.items():
-            string += "%s: %.2f" % (str(key), value)
+            string += "%s: %.2f," % (str(key), value)
         string += "}"
         return string
 
