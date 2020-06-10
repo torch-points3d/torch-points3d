@@ -31,3 +31,4 @@ dist/*
 lightning_logs
 data
 .tox
+tp3d
