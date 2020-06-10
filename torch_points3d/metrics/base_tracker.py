@@ -1,7 +1,7 @@
 import os
 import torchnet as tnt
 import torch
-from typing import Dict
+from typing import Dict, Any
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 import logging
@@ -36,7 +36,7 @@ class BaseTracker:
         self._loss_meters = {}
         self._finalised = False
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         metrics = {}
         for key, loss_meter in self._loss_meters.items():
             value = meter_value(loss_meter, dim=0)

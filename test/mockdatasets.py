@@ -35,7 +35,7 @@ class MockDataset(torch.utils.data.Dataset):
         self._category = torch.ones((self.num_points,), dtype=torch.long)
         self._ms_transform = None
         self._transform = transform
-        self.mean_size_arr = np.array([1])
+        self.mean_size_arr = torch.rand((11, 3))
         self.include_box = include_box
 
     def __len__(self):
@@ -53,7 +53,7 @@ class MockDataset(torch.utils.data.Dataset):
             data.center_label = torch.randn(num_boxes, 3)
             data.heading_class_label = torch.zeros((num_boxes,))
             data.heading_residual_label = torch.randn((num_boxes,))
-            data.size_class_label = torch.randint(0, 10, (num_boxes,))
+            data.size_class_label = torch.randint(0, len(self.mean_size_arr), (num_boxes,))
             data.size_residual_label = torch.randn(num_boxes, 3)
             data.sem_cls_label = torch.randint(0, 10, (num_boxes,))
             data.box_label_mask = torch.randint(0, 1, (num_boxes,)).bool()

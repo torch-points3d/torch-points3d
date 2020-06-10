@@ -43,7 +43,6 @@ models:
                 down_conv_nn: [[num_features + 3, in_feat * 2, in_feat * 2, in_feat * 2]]
             num_class: num_classes
             num_heading_bin: 1
-            num_size_cluster: num_classes
             num_proposal: num_proposal
             sampling: "seed_fps"
         loss_params:
