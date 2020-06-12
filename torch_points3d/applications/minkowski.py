@@ -1,6 +1,8 @@
 import os
 from omegaconf import DictConfig, OmegaConf
 import logging
+import torch
+from torch_geometric.data import Batch
 
 from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.modules.MinkowskiEngine import *
@@ -83,10 +85,111 @@ class MinkowskiFactory(ModelFactory):
 class BaseMinkowski(UnwrappedUnetBasedModel):
     CONV_TYPE = "sparse"
 
+    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
+        super(BaseMinkowski, self).__init__(model_config, model_type, dataset, modules)
+        try:
+            default_output_nc = extract_output_nc(model_config)
+        except:
+            default_output_nc = -1
+            log.warning("Could not resolve number of output channels")
 
-class MinkowskiUnet(BaseMinkowski):
-    pass
+        self._output_nc = default_output_nc
+        self._has_mlp_head = False
+        if "output_nc" in kwargs:
+            self._has_mlp_head = True
+            self._output_nc = kwargs["output_nc"]
+            self.mlp = MLP([default_output_nc, self.output_nc], activation=torch.nn.LeakyReLU(0.2), bias=False)
+
+    @property
+    def has_mlp_head(self):
+        return self._has_mlp_head
+
+    @property
+    def output_nc(self):
+        return self._output_nc
+
+    def _set_input(self, data):
+        """Unpack input data from the dataloader and perform necessary pre-processing steps.
+
+        Parameters
+        -----------
+        data:
+            a dictionary that contains the data itself and its metadata information.
+        """
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        self.input = ME.SparseTensor(data.x, coords=coords).to(self.device)
 
 
 class MinkowskiEncoder(BaseMinkowski):
-    pass
+    def forward(self, data):
+        """
+        Parameters:
+        -----------
+        data
+            A SparseTensor that contains the data itself and its metadata information. Should contain
+                x -- Features [N, C]
+                pos -- Coords [N, 3]
+                batch -- Batch [N]
+        Returns
+        --------
+        data:
+            - pos [1, 3] - Last Coord
+            - x [1, output_nc]
+
+        """
+        self._set_input(data)
+        data = self.input
+        stack_down = [data]
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+
+        out = Batch(x=data.F, pos=data.C[:, 1:], batch=data.C[:, 0])
+        if not isinstance(self.inner_modules[0], Identity):
+            stack_down.append(data)
+            out = self.inner_modules[0](out)
+
+        if self.has_mlp_head:
+            out.x = self.mlp(out.F)
+        return out
+
+
+class MinkowskiUnet(BaseMinkowski):
+    def forward(self, data):
+        """Run forward pass.
+        Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
+                   |      |_________|     |
+                   |______________________|
+
+        Parameters
+        -----------
+        data:
+            A dictionary that contains the data itself and its metadata information. Should contain
+            - pos [N, 3]
+            - x [N, C]
+            - batch [N]
+
+        Returns
+        --------
+        data:
+            - pos [N, 3]
+            - x [N, output_nc]
+            - batch [N]
+        """
+        self._set_input(data)
+        data = self.input
+        stack_down = []
+        for i in range(len(self.down_modules) - 1):
+            data = self.down_modules[i](data)
+            stack_down.append(data)
+
+        data = self.down_modules[-1](data)
+        stack_down.append(None)
+        # TODO : Manage the inner module
+        for i in range(len(self.up_modules)):
+            data = self.up_modules[i](data, stack_down.pop())
+
+        out = Batch(x=data.F, pos=data.C[:, 1:], batch=data.C[:, 0])
+        if self.has_mlp_head:
+            out.x = self.mlp(out.F)
+        return out
