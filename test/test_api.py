@@ -128,6 +128,57 @@ class TestAPIUnet(unittest.TestCase):
             print(model)
             raise e
 
+    def test_minkowski(self):
+        from torch_points3d.applications.minkowski import Minkowski
+
+        input_nc = 3
+        num_layers = 4
+        in_feat = 32
+        model = Minkowski(architecture="unet", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,)
+        dataset = MockDatasetGeometric(
+            input_nc + 1, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128
+        )
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
+        self.assertEqual(len(model._modules["inner_modules"]), 0)
+        self.assertEqual(len(model._modules["up_modules"]), 4)
+        self.assertFalse(model.has_mlp_head)
+        self.assertEqual(model.output_nc, in_feat)
+
+        try:
+            data_out = model.forward(dataset[0])
+            self.assertEqual(data_out.x.shape[1], in_feat)
+        except Exception as e:
+            print("Model failing:")
+            print(model)
+            raise e
+
+        input_nc = 3
+        num_layers = 4
+        in_feat = 32
+        output_nc = 5
+        model = Minkowski(
+            architecture="unet",
+            input_nc=input_nc,
+            output_nc=output_nc,
+            in_feat=in_feat,
+            num_layers=num_layers,
+            config=None,
+        )
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
+        self.assertEqual(len(model._modules["inner_modules"]), 0)
+        self.assertEqual(len(model._modules["up_modules"]), 4)
+        self.assertTrue(model.has_mlp_head)
+        self.assertEqual(model.output_nc, output_nc)
+
+        try:
+            data_out = model.forward(dataset[0])
+            self.assertEqual(data_out.x.shape[1], output_nc)
+        except Exception as e:
+            print("Model failing:")
+            print(model)
+            raise e
+
 
 class TestAPIEncoder(unittest.TestCase):
     def test_kpconv(self):

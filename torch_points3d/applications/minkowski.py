@@ -45,12 +45,7 @@ def Minkowski(
     """
 
     factory = MinkowskiFactory(
-        architecture=architecture,
-        num_layers=num_layers,
-        input_nc=input_nc,
-        multiscale=multiscale,
-        config=config,
-        **kwargs
+        architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )
     return factory.build()
 
@@ -60,9 +55,7 @@ class MinkowskiFactory(ModelFactory):
         if self._config:
             model_config = self._config
         else:
-            path_to_model = os.path.join(
-                PATH_TO_CONFIG, "unet_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss")
-            )
+            path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
@@ -72,10 +65,7 @@ class MinkowskiFactory(ModelFactory):
         if self._config:
             model_config = self._config
         else:
-            path_to_model = os.path.join(
-                PATH_TO_CONFIG,
-                "encoder_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss"),
-            )
+            path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers),)
             model_config = OmegaConf.load(path_to_model)
         self.resolve_model(model_config)
         modules_lib = sys.modules[__name__]
