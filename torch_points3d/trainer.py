@@ -185,7 +185,7 @@ class Trainer:
                 )
 
                 if self._visualizer.is_active:
-                    self._visualizer.save_visuals(model.get_current_visuals())
+                    self._visualizer.save_visuals(self._model.get_current_visuals())
 
                 iter_data_time = time.time()
 
@@ -278,7 +278,7 @@ class Trainer:
 
     @property
     def precompute_multi_scale(self):
-        return self._model.conv_type == "PARTIAL_DENSE" and getattr(self._cfg.training, precompute_multi_scale, False)
+        return self._model.conv_type == "PARTIAL_DENSE" and getattr(self._cfg.training, "precompute_multi_scale", False)
 
     @property
     def wandb_log(self):
