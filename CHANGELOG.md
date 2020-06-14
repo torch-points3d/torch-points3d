@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tracker for object detection
 - Models can specify which attributes they need from the data in order to forward and train properly
 - Full res predictions on ShapeNet with voting
+- Trainer class to handle train / eval
+- Add testing for Trainer:
+  - Segmentation: PointNet2 on cap ShapeNet
+  - Segmentation: KPConv on scannetV2
+  - Object Detection: VoteNet on scannetV2
 
 ### Changed
 
