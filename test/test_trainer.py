@@ -50,6 +50,9 @@ class TestTrainer(unittest.TestCase):
         keys = [k for k in trainer._tracker.get_metrics().keys()]
         self.assertEqual(keys, ["test_loss_seg", "test_Cmiou", "test_Imiou"])
 
+        trainer._cfg.voting_runs = 2
+        trainer.eval()
+
         shutil.rmtree(PATH_OUTPUTS)
 
 
