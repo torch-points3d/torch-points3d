@@ -6,7 +6,10 @@ from torch_geometric.data import Batch
 
 from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.modules.MinkowskiEngine import *
+from torch_points3d.core.base_conv.message_passing import *
+from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
+from torch_points3d.core.common_modules.base_modules import MLP
 
 from .utils import extract_output_nc
 
@@ -108,6 +111,10 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
         """
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(self.device)
+        if hasattr(data, "xyz"):
+            self.xyz = data.xyz.to(self.device)
+        else:
+            self.xyz = data.pos.to(data.x.dtype).to(self.device)
 
 
 class MinkowskiEncoder(BaseMinkowski):
@@ -129,18 +136,15 @@ class MinkowskiEncoder(BaseMinkowski):
         """
         self._set_input(data)
         data = self.input
-        stack_down = [data]
-        for i in range(len(self.down_modules) - 1):
+        for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
-            stack_down.append(data)
 
-        out = Batch(x=data.F, pos=data.C[:, 1:], batch=data.C[:, 0])
+        out = Batch(x=data.F, batch=data.C[:, 0].long())
         if not isinstance(self.inner_modules[0], Identity):
-            stack_down.append(data)
             out = self.inner_modules[0](out)
 
         if self.has_mlp_head:
-            out.x = self.mlp(out.F)
+            out.x = self.mlp(out.x)
         return out
 
 
@@ -179,7 +183,7 @@ class MinkowskiUnet(BaseMinkowski):
         for i in range(len(self.up_modules)):
             data = self.up_modules[i](data, stack_down.pop())
 
-        out = Batch(x=data.F, pos=data.C[:, 1:], batch=data.C[:, 0])
+        out = Batch(x=data.F, pos=self.xyz, batch=data.C[:, 0])
         if self.has_mlp_head:
-            out.x = self.mlp(out.F)
+            out.x = self.mlp(out.x)
         return out

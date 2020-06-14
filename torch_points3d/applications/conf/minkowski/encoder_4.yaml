@@ -1,7 +1,8 @@
 
 class: minkowski.MinkowskiFragment
 conv_type: "SPARSE"
-in_feat: 64
+define_constants:
+  in_feat: 32
 down_conv:
     module_name: Res2BlockDown
     dimension: 3
@@ -22,4 +23,4 @@ innermost:
         name: LeakyReLU
         negative_slope: 0.2
     aggr: "mean"
-    nn: [8 * in_feat + 3, 8 * in_feat]
+    nn: [8*in_feat, 8*in_feat]
