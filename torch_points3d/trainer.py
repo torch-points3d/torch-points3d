@@ -68,7 +68,7 @@ class Trainer:
             self._cfg.model_name,
             self._cfg.training.weight_name,
             run_config=self._cfg,
-            resume=bool(self._cfg.training.checkpoint_dir),
+            resume=self._cfg.training.resume,  # bool(self._cfg.training.checkpoint_dir),
         )
 
         # Create model and datasets
@@ -159,9 +159,6 @@ class Trainer:
 
     def _train_epoch(self, epoch: int):
 
-        getattr(self._cfg.debugging, "early_break", False)
-        getattr(self._cfg.debugging, "profiling", False)
-
         self._model.train()
         self._tracker.reset("train")
         self._visualizer.reset(epoch, "train")
@@ -208,6 +205,7 @@ class Trainer:
         self._model.eval()
         if self.enable_dropout:
             self._model.enable_dropout_in_eval()
+
         self._tracker.reset(stage_name)
         if self.has_visualization:
             self._visualizer.reset(epoch, stage_name)
@@ -231,12 +229,12 @@ class Trainer:
                         self._tracker.track(self._model, data=data, **tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
-                    if self.early_break:
-                        break
+                        if self.early_break:
+                            break
 
-                    if self.profiling:
-                        if i > self.num_batches:
-                            return 0
+                        if self.profiling:
+                            if i > self.num_batches:
+                                return 0
 
             self._finalize_epoch(epoch)
 

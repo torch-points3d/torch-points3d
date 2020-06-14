@@ -104,6 +104,7 @@ class ShapeNet(InMemoryDataset):
         transform=None,
         pre_transform=None,
         pre_filter=None,
+        is_test=True,
     ):
         if categories is None:
             categories = list(self.category_ids.keys())
@@ -111,6 +112,7 @@ class ShapeNet(InMemoryDataset):
             categories = [categories]
         assert all(category in self.category_ids for category in categories)
         self.categories = categories
+        self.is_test = is_test
         super(ShapeNet, self).__init__(root, transform, pre_transform, pre_filter)
 
         if split == "train":
@@ -165,12 +167,13 @@ class ShapeNet(InMemoryDataset):
         return [os.path.join("{}_{}.pt".format(cats, split)) for split in ["train", "val", "test", "trainval"]]
 
     def download(self):
-        path = download_url(self.url, self.root)
-        extract_zip(path, self.root)
-        os.unlink(path)
-        shutil.rmtree(self.raw_dir)
-        name = self.url.split("/")[-1].split(".")[0]
-        os.rename(osp.join(self.root, name), self.raw_dir)
+        if not self.is_test:
+            path = download_url(self.url, self.root)
+            extract_zip(path, self.root)
+            os.unlink(path)
+            shutil.rmtree(self.raw_dir)
+            name = self.url.split("/")[-1].split(".")[0]
+            os.rename(osp.join(self.root, name), self.raw_dir)
 
     def get_raw_data(self, idx, **kwargs):
         data = self.raw_data.__class__()
@@ -238,24 +241,25 @@ class ShapeNet(InMemoryDataset):
         return train + val
 
     def process(self):
-        raw_trainval = []
-        trainval = []
-        for i, split in enumerate(["train", "val", "test"]):
-            path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
-            with open(path, "r") as f:
-                filenames = [
-                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
-                ]  # Removing first directory.
-            data_raw_list, data_list = self._process_filenames(sorted(filenames))
-            if split == "train" or split == "val":
-                if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
-                trainval.append(data_list)
+        if not self.is_test:
+            raw_trainval = []
+            trainval = []
+            for i, split in enumerate(["train", "val", "test"]):
+                path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
+                with open(path, "r") as f:
+                    filenames = [
+                        osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
+                    ]  # Removing first directory.
+                data_raw_list, data_list = self._process_filenames(sorted(filenames))
+                if split == "train" or split == "val":
+                    if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
+                    trainval.append(data_list)
 
-            self._save_data_list(data_list, self.processed_paths[i])
-            self._save_data_list(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
+                self._save_data_list(data_list, self.processed_paths[i])
+                self._save_data_list(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
 
-        self._save_data_list(self._re_index_trainval(trainval), self.processed_paths[3])
-        self._save_data_list(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
+            self._save_data_list(self._re_index_trainval(trainval), self.processed_paths[3])
+            self._save_data_list(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
 
     def __repr__(self):
         return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)
@@ -284,6 +288,7 @@ class ShapeNetDataset(BaseDataset):
         super().__init__(dataset_opt)
         try:
             self._category = dataset_opt.category
+            is_test = dataset_opt.get("is_test", False)
         except KeyError:
             self._category = None
 
@@ -294,6 +299,7 @@ class ShapeNetDataset(BaseDataset):
             split="train",
             pre_transform=self.pre_transform,
             transform=self.train_transform,
+            is_test=is_test,
         )
 
         self.val_dataset = ShapeNet(
@@ -303,6 +309,7 @@ class ShapeNetDataset(BaseDataset):
             split="val",
             pre_transform=self.pre_transform,
             transform=self.val_transform,
+            is_test=is_test,
         )
 
         self.test_dataset = ShapeNet(
@@ -312,6 +319,7 @@ class ShapeNetDataset(BaseDataset):
             split="test",
             transform=self.test_transform,
             pre_transform=self.pre_transform,
+            is_test=is_test,
         )
         self._categories = self.train_dataset.categories
 
