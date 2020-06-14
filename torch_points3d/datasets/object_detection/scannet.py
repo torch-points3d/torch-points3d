@@ -174,6 +174,7 @@ class ScannetDataset(BaseDataset):
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
         donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
         max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
+        is_test: bool = dataset_opt.is_test if dataset_opt.is_test is not None else False
 
         self.train_dataset = ScannetObjectDetection(
             self._data_path,
@@ -185,6 +186,7 @@ class ScannetDataset(BaseDataset):
             use_instance_bboxes=use_instance_bboxes,
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
+            is_test=is_test,
         )
 
         self.val_dataset = ScannetObjectDetection(
@@ -197,6 +199,7 @@ class ScannetDataset(BaseDataset):
             use_instance_bboxes=use_instance_bboxes,
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
+            is_test=is_test,
         )
 
     @property

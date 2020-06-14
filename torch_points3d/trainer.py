@@ -212,8 +212,8 @@ class Trainer:
 
         for loader in loaders:
             stage_name = loader.dataset.name
-            if (
-                not loader.has_labels and not tracker_options["make_submission"]
+            if not loader.has_labels and not tracker_options.get(
+                "make_submission", False
             ):  # No label, no submission -> do nothing
                 log.warning("No forward will be run on dataset %s." % stage_name)
                 continue
