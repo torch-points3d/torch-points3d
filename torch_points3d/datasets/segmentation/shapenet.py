@@ -167,13 +167,13 @@ class ShapeNet(InMemoryDataset):
         return [os.path.join("{}_{}.pt".format(cats, split)) for split in ["train", "val", "test", "trainval"]]
 
     def download(self):
-        if not self.is_test:
-            path = download_url(self.url, self.root)
-            extract_zip(path, self.root)
-            os.unlink(path)
-            shutil.rmtree(self.raw_dir)
-            name = self.url.split("/")[-1].split(".")[0]
-            os.rename(osp.join(self.root, name), self.raw_dir)
+        if self.is_test: return
+        path = download_url(self.url, self.root)
+        extract_zip(path, self.root)
+        os.unlink(path)
+        shutil.rmtree(self.raw_dir)
+        name = self.url.split("/")[-1].split(".")[0]
+        os.rename(osp.join(self.root, name), self.raw_dir)
 
     def get_raw_data(self, idx, **kwargs):
         data = self.raw_data.__class__()
@@ -241,25 +241,25 @@ class ShapeNet(InMemoryDataset):
         return train + val
 
     def process(self):
-        if not self.is_test:
-            raw_trainval = []
-            trainval = []
-            for i, split in enumerate(["train", "val", "test"]):
-                path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
-                with open(path, "r") as f:
-                    filenames = [
-                        osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
-                    ]  # Removing first directory.
-                data_raw_list, data_list = self._process_filenames(sorted(filenames))
-                if split == "train" or split == "val":
-                    if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
-                    trainval.append(data_list)
+        if self.is_test: return
+        raw_trainval = []
+        trainval = []
+        for i, split in enumerate(["train", "val", "test"]):
+            path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
+            with open(path, "r") as f:
+                filenames = [
+                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
+                ]  # Removing first directory.
+            data_raw_list, data_list = self._process_filenames(sorted(filenames))
+            if split == "train" or split == "val":
+                if len(data_raw_list) > 0: raw_trainval.append(data_raw_list)
+                trainval.append(data_list)
 
-                self._save_data_list(data_list, self.processed_paths[i])
-                self._save_data_list(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
+            self._save_data_list(data_list, self.processed_paths[i])
+            self._save_data_list(data_raw_list, self.processed_raw_paths[i], save_bool=len(data_raw_list) > 0)
 
-            self._save_data_list(self._re_index_trainval(trainval), self.processed_paths[3])
-            self._save_data_list(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
+        self._save_data_list(self._re_index_trainval(trainval), self.processed_paths[3])
+        self._save_data_list(self._re_index_trainval(raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
 
     def __repr__(self):
         return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)

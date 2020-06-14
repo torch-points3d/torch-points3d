@@ -730,17 +730,14 @@ class Scannet(InMemoryDataset):
                     )
                     for id, scan_name in enumerate(scan_names)
                 ]
-                if False:#self.use_multiprocessing:
+                if self.use_multiprocessing:
                     with multiprocessing.Pool(processes=self.process_workers) as pool:
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
                     for arg in args:
-                        try:
-                            data = Scannet.process_func(*arg)
-                            datas.append(data)
-                        except:
-                            pass
+                        data = Scannet.process_func(*arg)
+                        datas.append(data)
 
                 for data in datas:
                     id_scan = int(data.id_scan.item())
