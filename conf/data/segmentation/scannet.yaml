@@ -7,11 +7,12 @@ data:
   use_instance_bboxes: False
   donotcare_class_ids: []
   process_workers: 4
+  use_category: False
 
   apply_rotation: True
   mode: mean
   first_subsampling: 0.05
-  
+
   pre_transform:
     - transform: GridSampling3D
       lparams: [0.02]

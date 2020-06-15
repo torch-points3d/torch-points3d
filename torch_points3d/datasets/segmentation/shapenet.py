@@ -104,6 +104,7 @@ class ShapeNet(InMemoryDataset):
         transform=None,
         pre_transform=None,
         pre_filter=None,
+        is_test=False,
     ):
         if categories is None:
             categories = list(self.category_ids.keys())
@@ -111,6 +112,7 @@ class ShapeNet(InMemoryDataset):
             categories = [categories]
         assert all(category in self.category_ids for category in categories)
         self.categories = categories
+        self.is_test = is_test
         super(ShapeNet, self).__init__(root, transform, pre_transform, pre_filter)
 
         if split == "train":
@@ -165,6 +167,7 @@ class ShapeNet(InMemoryDataset):
         return [os.path.join("{}_{}.pt".format(cats, split)) for split in ["train", "val", "test", "trainval"]]
 
     def download(self):
+        if self.is_test: return
         path = download_url(self.url, self.root)
         extract_zip(path, self.root)
         os.unlink(path)
@@ -238,6 +241,7 @@ class ShapeNet(InMemoryDataset):
         return train + val
 
     def process(self):
+        if self.is_test: return
         raw_trainval = []
         trainval = []
         for i, split in enumerate(["train", "val", "test"]):
@@ -284,6 +288,7 @@ class ShapeNetDataset(BaseDataset):
         super().__init__(dataset_opt)
         try:
             self._category = dataset_opt.category
+            is_test = dataset_opt.get("is_test", False)
         except KeyError:
             self._category = None
 
@@ -294,6 +299,7 @@ class ShapeNetDataset(BaseDataset):
             split="train",
             pre_transform=self.pre_transform,
             transform=self.train_transform,
+            is_test=is_test,
         )
 
         self.val_dataset = ShapeNet(
@@ -303,6 +309,7 @@ class ShapeNetDataset(BaseDataset):
             split="val",
             pre_transform=self.pre_transform,
             transform=self.val_transform,
+            is_test=is_test,
         )
 
         self.test_dataset = ShapeNet(
@@ -312,6 +319,7 @@ class ShapeNetDataset(BaseDataset):
             split="test",
             transform=self.test_transform,
             pre_transform=self.pre_transform,
+            is_test=is_test,
         )
         self._categories = self.train_dataset.categories
 
