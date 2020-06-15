@@ -1,5 +1,5 @@
 
-class: minkowski.MinkowskiFragment
+class: minkowski.Minkowski_Model
 conv_type: "SPARSE"
 define_constants:
   in_feat: 32
