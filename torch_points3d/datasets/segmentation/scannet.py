@@ -451,6 +451,7 @@ class Scannet(InMemoryDataset):
         process_workers=4,
         types=[".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"],
         normalize_rgb=True,
+        is_test=False
     ):
 
         assert self.SPLITS == ["train", "val", "test"]
@@ -469,7 +470,7 @@ class Scannet(InMemoryDataset):
         self.process_workers = process_workers
         self.types = types
         self.normalize_rgb = normalize_rgb
-
+        self.is_test = is_test
         super().__init__(root, transform, pre_transform, pre_filter)
         if split == "train":
             path = self.processed_paths[0]
@@ -552,6 +553,7 @@ class Scannet(InMemoryDataset):
     def download_scans(self):
         release_file = BASE_URL + RELEASE + ".txt"
         release_scans = get_release_scans(release_file)
+        #release_scans = ["scene0191_00","scene0191_01", "scene0568_00", "scene0568_01"]
         file_types = FILETYPES
         release_test_file = BASE_URL + RELEASE + "_test.txt"
         release_test_scans = get_release_scans(release_test_file)
@@ -591,6 +593,7 @@ class Scannet(InMemoryDataset):
             # download_file(os.path.join(BASE_URL, RELEASE_TASKS, TEST_FRAMES_FILE[0]), os.path.join(out_dir_tasks, TEST_FRAMES_FILE[0]))
 
     def download(self):
+        if self.is_test: return 
         log.info(
             "By pressing any key to continue you confirm that you have agreed to the ScanNet terms of use as described at:"
         )
@@ -703,6 +706,7 @@ class Scannet(InMemoryDataset):
         return cT.SaveOriginalPosId()(data)
 
     def process(self):
+        if self.is_test: return 
         self.read_from_metadata()
 
         scannet_dir = osp.join(self.raw_dir, "scans")
@@ -793,6 +797,7 @@ class ScannetDataset(BaseDataset):
         donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
         max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point is not None else None
         process_workers: int = dataset_opt.process_workers if dataset_opt.process_workers else 0
+        is_test: bool = dataset_opt.is_test if dataset_opt.is_test is not None else False
 
         self.train_dataset = Scannet(
             self._data_path,
@@ -805,6 +810,7 @@ class ScannetDataset(BaseDataset):
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
             process_workers=process_workers,
+            is_test=is_test,
         )
 
         self.val_dataset = Scannet(
@@ -818,6 +824,7 @@ class ScannetDataset(BaseDataset):
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
             process_workers=process_workers,
+            is_test=is_test,
         )
 
         self.test_dataset = Scannet(
@@ -831,6 +838,7 @@ class ScannetDataset(BaseDataset):
             donotcare_class_ids=donotcare_class_ids,
             max_num_point=max_num_point,
             process_workers=process_workers,
+            is_test=is_test,
         )
 
     @property
