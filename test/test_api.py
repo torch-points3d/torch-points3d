@@ -240,5 +240,12 @@ class TestAPIEncoder(unittest.TestCase):
             raise e
 
 
+class TestAPIVoteNet(unittest.TestCase):
+    def test_votenet_paper(self):
+        from torch_points3d.applications.votenet import VoteNet
+
+        model = VoteNet(original=True, input_nc=3, num_classes=19)
+
+
 if __name__ == "__main__":
     unittest.main()
