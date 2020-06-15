@@ -124,13 +124,12 @@ class MinkowskiEncoder(BaseMinkowski):
         -----------
         data
             A SparseTensor that contains the data itself and its metadata information. Should contain
-                x -- Features [N, C]
-                pos -- Coords [N, 3]
-                batch -- Batch [N]
+                F -- Features [N, C]
+                coords -- Coords [N, 4]
+
         Returns
         --------
         data:
-            - pos [1, 3] - Last Coord
             - x [1, output_nc]
 
         """
@@ -157,16 +156,15 @@ class MinkowskiUnet(BaseMinkowski):
 
         Parameters
         -----------
-        data:
-            A dictionary that contains the data itself and its metadata information. Should contain
-            - pos [N, 3]
-            - x [N, C]
-            - batch [N]
+        data
+            A SparseTensor that contains the data itself and its metadata information. Should contain
+                F -- Features [N, C]
+                coords -- Coords [N, 4]
 
         Returns
         --------
         data:
-            - pos [N, 3]
+            - pos [N, 3] (coords or real pos if xyz is in data)
             - x [N, output_nc]
             - batch [N]
         """
