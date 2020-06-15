@@ -140,7 +140,7 @@ class VoteNetResults(Data):
     def num_proposal(self):
         return self.center.shape[1]
 
-    def get_boxes(self, dataset, apply_nms=False) -> List[List[BoxData]]:
+    def get_boxes(self, dataset, apply_nms=False, objectness_threshold=0.05) -> List[List[BoxData]]:
         """ Generates boxes from predictions
 
         Parameters
@@ -196,7 +196,8 @@ class VoteNetResults(Data):
             # Build box data for each detected object and add it to the list
             batch_detection = []
             for j in range(len(corners)):
-                batch_detection.append(BoxData(classname[j], corners[j], score=objectness[j]))
+                if objectness[j] > objectness_threshold:
+                    batch_detection.append(BoxData(classname[j], corners[j], score=objectness[j]))
 
             detected_boxes.append(batch_detection)
 
