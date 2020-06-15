@@ -1,0 +1,643 @@
+data:
+  apply_rotation: true
+  class: scannet.ScannetDataset
+  dataroot: test/data
+  donotcare_class_ids: []
+  first_subsampling: 0.05
+  mode: mean
+  pre_transform:
+    - lparams:
+        - 0.02
+      transform: GridSampling3D
+  process_workers: 4
+  task: segmentation
+  test_transform: ${data.val_transform}
+  train_transform:
+    - transform: RandomDropout
+    - params:
+        add_x: false
+        add_y: false
+        add_z: true
+      transform: XYZFeature
+    - params:
+        clip: 0.05
+        sigma: 0.01
+      transform: RandomNoise
+    - params:
+        scales:
+          - 0.8
+          - 1.2
+      transform: RandomScaleAnisotropic
+    - params:
+        apply_rotation: ${data.apply_rotation}
+        rot_x: 5
+        rot_y: 5
+        rot_z: 180
+      transform: Random3AxisRotation
+    - params:
+        mode: ${data.mode}
+        quantize_coords: false
+        size: ${data.first_subsampling}
+      transform: GridSampling3D
+    - transform: ChromaticTranslation
+    - transform: ChromaticJitter
+    - params:
+        delete_feats:
+          - true
+          - true
+        feat_names:
+          - rgb
+          - pos_z
+        input_nc_feats:
+          - 3
+          - 1
+        list_add_to_x:
+          - true
+          - true
+      transform: AddFeatsByKeys
+  use_category: false
+  use_instance_bboxes: false
+  use_instance_labels: false
+  val_transform:
+    - params:
+        add_x: false
+        add_y: false
+        add_z: true
+      transform: XYZFeature
+    - params:
+        mode: ${data.mode}
+        quantize_coords: false
+        size: ${data.first_subsampling}
+      transform: GridSampling3D
+    - params:
+        delete_feats:
+          - true
+          - true
+        feat_names:
+          - rgb
+          - pos_z
+        input_nc_feats:
+          - 3
+          - 1
+        list_add_to_x:
+          - true
+          - true
+      transform: AddFeatsByKeys
+  version: v2
+debugging:
+  early_break: true
+  find_neighbour_dist: false
+  num_batches: 50
+  profiling: false
+lr_scheduler:
+  class: ExponentialLR
+  params:
+    gamma: 0.9885
+model_name: KPConvPaper2LDMini
+models:
+  KPConvPaper:
+    class: kpconv.KPConvPaper
+    conv_type: PARTIAL_DENSE
+    define_constants:
+      bn_momentum: 0.02
+      in_feat: 64
+      in_grid_size: ${data.first_subsampling}
+    down_conv:
+      block_names:
+        - - SimpleBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+      deformable:
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - false
+      down_conv_nn:
+        - - - FEAT + 1
+            - in_feat
+          - - in_feat
+            - 2*in_feat
+        - - - 2*in_feat
+            - 2*in_feat
+          - - 2*in_feat
+            - 4*in_feat
+        - - - 4*in_feat
+            - 4*in_feat
+          - - 4*in_feat
+            - 8*in_feat
+        - - - 8*in_feat
+            - 8*in_feat
+          - - 8*in_feat
+            - 16*in_feat
+        - - - 16*in_feat
+            - 16*in_feat
+          - - 16*in_feat
+            - 32*in_feat
+      grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - 2*in_grid_size
+          - 2*in_grid_size
+        - - 4*in_grid_size
+          - 4*in_grid_size
+        - - 8*in_grid_size
+          - 8*in_grid_size
+        - - 16*in_grid_size
+          - 16*in_grid_size
+      has_bottleneck:
+        - - false
+          - true
+        - - true
+          - true
+        - - true
+          - true
+        - - true
+          - true
+        - - true
+          - true
+      max_num_neighbors:
+        - - 25
+          - 25
+        - - 25
+          - 30
+        - - 30
+          - 38
+        - - 38
+          - 38
+        - - 38
+          - 38
+      module_name: KPDualBlock
+      prev_grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - in_grid_size
+          - 2*in_grid_size
+        - - 2*in_grid_size
+          - 4*in_grid_size
+        - - 4*in_grid_size
+          - 8*in_grid_size
+        - - 8*in_grid_size
+          - 16*in_grid_size
+    loss_weights:
+      lambda_reg: 0
+    mlp_cls:
+      bn_momentum: bn_momentum
+      dropout: 0
+      nn:
+        - in_feat
+        - in_feat
+    up_conv:
+      bn_momentum:
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+      module_name: FPModule_PD
+      skip: true
+      up_conv_nn:
+        - - 32*in_feat + 16*in_feat
+          - 8*in_feat
+        - - 8*in_feat + 8*in_feat
+          - 4*in_feat
+        - - 4*in_feat + 4*in_feat
+          - 2*in_feat
+        - - 2*in_feat + 2*in_feat
+          - in_feat
+      up_k:
+        - 1
+        - 1
+        - 1
+        - 1
+    use_category: ${data.use_category}
+  KPConvPaper2LDMini:
+    class: kpconv.KPConvPaper
+    conv_type: PARTIAL_DENSE
+    define_constants:
+      bn_momentum: 0.02
+      in_feat: 64
+      in_grid_size: ${data.first_subsampling}
+    down_conv:
+      block_names:
+        - - SimpleBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+      deformable:
+        - - false
+          - false
+        - - false
+          - false
+      down_conv_nn:
+        - - - FEAT + 1
+            - in_feat
+          - - in_feat
+            - 2*in_feat
+        - - - 2*in_feat
+            - 2*in_feat
+          - - 2*in_feat
+            - 4*in_feat
+      grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - 2*in_grid_size
+          - 2*in_grid_size
+      has_bottleneck:
+        - - false
+          - true
+        - - true
+          - true
+      max_num_neighbors:
+        - - 15
+          - 15
+        - - 15
+          - 15
+      module_name: KPDualBlock
+      prev_grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - in_grid_size
+          - 2*in_grid_size
+    loss_weights:
+      lambda_reg: 0
+    mlp_cls:
+      bn_momentum: bn_momentum
+      dropout: 0
+      nn:
+        - in_feat
+        - in_feat
+    up_conv:
+      bn_momentum:
+        - bn_momentum
+        - bn_momentum
+      module_name: FPModule_PD
+      skip: true
+      up_conv_nn:
+        - - 4*in_feat + 2*in_feat
+          - in_feat
+      up_k:
+        - 1
+        - 1
+    use_category: ${data.use_category}
+  KPConvPaper_innermost:
+    class: kpconv.KPConvPaper
+    conv_type: PARTIAL_DENSE
+    define_constants:
+      bn_momentum: 0.02
+      in_feat: 64
+      in_grid_size: ${data.first_subsampling}
+    down_conv:
+      block_names:
+        - - SimpleBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+      deformable:
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - false
+      down_conv_nn:
+        - - - FEAT + 1
+            - in_feat
+          - - in_feat
+            - 2*in_feat
+        - - - 2*in_feat
+            - 2*in_feat
+          - - 2*in_feat
+            - 4*in_feat
+        - - - 4*in_feat
+            - 4*in_feat
+          - - 4*in_feat
+            - 8*in_feat
+        - - - 8*in_feat
+            - 8*in_feat
+          - - 8*in_feat
+            - 16*in_feat
+        - - - 16*in_feat
+            - 16*in_feat
+          - - 16*in_feat
+            - 32*in_feat
+      grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - 2*in_grid_size
+          - 2*in_grid_size
+        - - 4*in_grid_size
+          - 4*in_grid_size
+        - - 8*in_grid_size
+          - 8*in_grid_size
+        - - 16*in_grid_size
+          - 16*in_grid_size
+      has_bottleneck:
+        - - false
+          - true
+        - - true
+          - true
+        - - true
+          - true
+        - - true
+          - true
+        - - true
+          - true
+      max_num_neighbors:
+        - - 20
+          - 20
+        - - 35
+          - 35
+        - - 50
+          - 50
+        - - 50
+          - 50
+        - - 50
+          - 50
+      module_name: KPDualBlock
+      prev_grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - in_grid_size
+          - 2*in_grid_size
+        - - 2*in_grid_size
+          - 4*in_grid_size
+        - - 4*in_grid_size
+          - 8*in_grid_size
+        - - 8*in_grid_size
+          - 16*in_grid_size
+    in_grid_size: ${data.first_subsampling}
+    innermost:
+      activation:
+        name: LeakyReLU
+        negative_slope: 0.2
+      aggr: mean
+      module_name: GlobalBaseModule
+      nn:
+        - 32*in_feat + 3
+        - 8*in_feat
+        - 32*in_feat
+    loss_weights:
+      lambda_reg: 1.0e-06
+    mlp_cls:
+      bn_momentum: bn_momentum
+      dropout: 0.5
+      nn:
+        - in_feat
+        - in_feat
+    up_conv:
+      bn_momentum:
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+      module_name: FPModule_PD
+      skip: true
+      up_conv_nn:
+        - - 32*in_feat + 32*in_feat
+          - 32*in_feat
+        - - 32*in_feat + 16*in_feat
+          - 8*in_feat
+        - - 8*in_feat + 8*in_feat
+          - 4*in_feat
+        - - 4*in_feat + 4*in_feat
+          - 2*in_feat
+        - - 2*in_feat + 2*in_feat
+          - in_feat
+      up_k:
+        - 3
+        - 3
+        - 3
+        - 3
+        - 5
+  KPDeformableConvPaper:
+    class: kpconv.KPConvPaper
+    conv_type: PARTIAL_DENSE
+    define_constants:
+      bn_momentum: 0.02
+      in_feat: 64
+      in_grid_size: ${data.first_subsampling}
+    down_conv:
+      block_names:
+        - - SimpleBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+        - - ResnetBBlock
+          - ResnetBBlock
+      deformable:
+        - - false
+          - false
+        - - false
+          - false
+        - - false
+          - true
+        - - true
+          - true
+        - - true
+          - true
+      down_conv_nn:
+        - - - FEAT + 1
+            - in_feat
+          - - in_feat
+            - 2*in_feat
+        - - - 2*in_feat
+            - 2*in_feat
+          - - 2*in_feat
+            - 4*in_feat
+        - - - 4*in_feat
+            - 4*in_feat
+          - - 4*in_feat
+            - 8*in_feat
+        - - - 8*in_feat
+            - 8*in_feat
+          - - 8*in_feat
+            - 16*in_feat
+        - - - 16*in_feat
+            - 16*in_feat
+          - - 16*in_feat
+            - 32*in_feat
+      grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - 2*in_grid_size
+          - 2*in_grid_size
+        - - 4*in_grid_size
+          - 4*in_grid_size
+        - - 8*in_grid_size
+          - 8*in_grid_size
+        - - 16*in_grid_size
+          - 16*in_grid_size
+      has_bottleneck:
+        - - false
+          - true
+        - - true
+          - true
+        - - true
+          - true
+        - - true
+          - true
+        - - true
+          - true
+      max_num_neighbors:
+        - - 20
+          - 20
+        - - 20
+          - 35
+        - - 35
+          - 45
+        - - 45
+          - 40
+        - - 40
+          - 40
+      module_name: KPDualBlock
+      prev_grid_size:
+        - - in_grid_size
+          - in_grid_size
+        - - in_grid_size
+          - 2*in_grid_size
+        - - 2*in_grid_size
+          - 4*in_grid_size
+        - - 4*in_grid_size
+          - 8*in_grid_size
+        - - 8*in_grid_size
+          - 16*in_grid_size
+    loss_weights:
+      lambda_reg: 0
+    mlp_cls:
+      bn_momentum: bn_momentum
+      dropout: 0.5
+      nn:
+        - in_feat
+        - in_feat
+    up_conv:
+      bn_momentum:
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+        - bn_momentum
+      module_name: FPModule_PD
+      skip: true
+      up_conv_nn:
+        - - 32*in_feat + 16*in_feat
+          - 8*in_feat
+        - - 8*in_feat + 8*in_feat
+          - 4*in_feat
+        - - 4*in_feat + 4*in_feat
+          - 2*in_feat
+        - - 2*in_feat + 2*in_feat
+          - in_feat
+      up_k:
+        - 3
+        - 3
+        - 3
+        - 3
+    use_category: ${data.use_category}
+pretty_print: false
+selection_stage: ''
+sota:
+  modelnet40:
+    acc: 92.9
+  s3dis:
+    acc: 88.2
+    macc: 81.5
+    miou: 70.6
+  s3dis5:
+    miou: 67.1
+    mrec: 72.8
+  scannet:
+    miou: 72.5
+  semantic3d:
+    acc: 94.4
+    miou: 76.0
+  semantickitti:
+    miou: 50.3
+  shapenet:
+    mciou: 85.1
+    miou: 86.4
+tensorboard:
+  log: true
+tracker_options:
+  full_res: false
+  make_submission: false
+  track_boxes: true
+training:
+  batch_size: 2
+  checkpoint_dir: ''
+  cuda: 1
+  enable_cudnn: true
+  epochs: 100
+  num_workers: 6
+  optim:
+    base_lr: 0.001
+    bn_scheduler:
+      bn_policy: step_decay
+      params:
+        bn_clip: 0.01
+        bn_decay: 0.9
+        bn_momentum: 0.1
+        decay_step: 10
+    grad_clip: -1
+    lr_scheduler: ${lr_scheduler}
+    optimizer:
+      class: Adam
+      params:
+        lr: ${training.optim.base_lr}
+  precompute_multi_scale: false
+  shuffle: true
+  weight_name: latest
+update_lr_scheduler_on: on_epoch
+visualization:
+  activate: false
+  deterministic: true
+  format: pointcloud
+  num_samples_per_epoch: 10
+  saved_keys:
+    pos:
+      - - x
+        - float
+      - - y
+        - float
+      - - z
+        - float
+    pred:
+      - - p
+        - float
+    y:
+      - - l
+        - float
+wandb:
+  entity: ''
+  log: false
+  name: null
+  notes: null
+  project: default
+  public: true
