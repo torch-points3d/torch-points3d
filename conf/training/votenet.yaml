@@ -18,9 +18,9 @@ training:
         bn_scheduler:
             bn_policy: "step_decay"
             params:
-                bn_momentum: 0.02
-                bn_decay: 1
-                decay_step : 1000
+                bn_momentum: 0.5
+                bn_decay: 0.5
+                decay_step : 20
                 bn_clip : 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
@@ -32,7 +32,7 @@ wandb:
     entity: 
     project: scannet_object_detection
     log: False
-    notes: "Full data augmentatiom training"
+    notes: "Corrected box prediction"
     name: VoteNet
     public: True # It will be display the model within wandb log, else not.
 
