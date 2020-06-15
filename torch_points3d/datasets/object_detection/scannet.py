@@ -115,8 +115,8 @@ class ScannetObjectDetection(Scannet):
                 point_votes_mask[ind] = True
                 box_size = max_pox - min_pos
                 instance_box_corners.append(box_corners_from_param(box_size, 0, center))
-                box_sizes.append(torch.tensor(box_size))
-                centers.append(torch.tensor(center))
+                box_sizes.append(box_size)
+                centers.append(center)
                 instance_classes.append(self.NYU40ID2CLASS[instance_class])
         point_votes = point_votes.repeat((1, 3))  # make 3 votes identical
         instance_classes = torch.tensor(instance_classes)
