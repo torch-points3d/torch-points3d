@@ -9,7 +9,6 @@ import scipy
 import random
 from tqdm.auto import tqdm as tq
 from torch.nn import functional as F
-from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
