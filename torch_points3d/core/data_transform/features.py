@@ -200,6 +200,8 @@ class AddFeatByKey(object):
             if x is None:
                 if self._strict and data.pos.shape[0] != feat.shape[0]:
                     raise Exception("We expected to have an attribute x")
+                if feat.dim() == 1:
+                    feat = feat.unsqueeze(-1)
                 data.x = feat
             else:
                 if x.shape[0] == feat.shape[0]:

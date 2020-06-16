@@ -18,6 +18,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         bn=True,
         activation=torch.nn.LeakyReLU(negative_slope=0.01),
         use_xyz=True,
+        normalize_xyz=False,
         **kwargs
     ):
         assert len(radii) == len(nsample) == len(down_conv_nn)
@@ -29,11 +30,16 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         self.mlps = nn.ModuleList()
         for i in range(len(radii)):
             self.mlps.append(MLP2D(down_conv_nn[i], bn=bn, activation=activation, bias=False))
+        self.radii = radii
+        self.normalize_xyz = normalize_xyz
 
-    def _prepare_features(self, x, pos, new_pos, idx):
+    def _prepare_features(self, x, pos, new_pos, idx, scale_idx):
         new_pos_trans = pos.transpose(1, 2).contiguous()
         grouped_pos = tp.grouping_operation(new_pos_trans, idx)  # (B, 3, npoint, nsample)
         grouped_pos -= new_pos.transpose(1, 2).unsqueeze(-1)
+
+        if self.normalize_xyz:
+            grouped_pos /= self.radii[scale_idx]
 
         if x is not None:
             grouped_features = tp.grouping_operation(x, idx)
@@ -62,7 +68,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
             new_x -- Features after passing trhough the MLP [B, mlp[-1], npoints]
         """
         assert scale_idx < len(self.mlps)
-        new_features = self._prepare_features(x, pos, new_pos, radius_idx)
+        new_features = self._prepare_features(x, pos, new_pos, radius_idx, scale_idx)
         new_features = self.mlps[scale_idx](new_features)  # (B, mlp[-1], npoint, nsample)
         new_features = F.max_pool2d(new_features, kernel_size=[1, new_features.size(3)])  # (B, mlp[-1], npoint, 1)
         new_features = new_features.squeeze(-1)  # (B, mlp[-1], npoint)

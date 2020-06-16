@@ -140,22 +140,18 @@ class Trainer:
 
         epoch = self._checkpoint.start_epoch
         if self._dataset.has_val_loader:
-            self._test_epoch(epoch, "val", voting_runs=self._cfg.voting_runs, tracker_options=self._cfg.tracker_options)
+            self._test_epoch(epoch, "val")
 
         if self._dataset.has_test_loaders:
-            self._test_epoch(
-                epoch, "test", voting_runs=self._cfg.voting_runs, tracker_options=self._cfg.tracker_options,
-            )
+            self._test_epoch(epoch, "test")
 
     def _finalize_epoch(self, epoch):
-        self._tracker.finalise(**self._cfg.tracker_options)
+        self._tracker.finalise(**self.tracker_options)
         if self._is_training:
             metrics = self._tracker.publish(epoch)
             self._checkpoint.save_best_models_under_current_metrics(self._model, metrics, self._tracker.metric_func)
             if self._tracker._stage == "train":
                 log.info("Learning rate = %f" % self._model.learning_rate)
-        else:
-            self._tracker.print_summary()
 
     def _train_epoch(self, epoch: int):
 
@@ -172,7 +168,7 @@ class Trainer:
                 self._model.set_input(data, self._device)
                 self._model.optimize_parameters(epoch, self._dataset.batch_size)
                 if i % 10 == 0:
-                    self._tracker.track(self._model, data=data, **self._cfg.tracker_options)
+                    self._tracker.track(self._model, data=data, **self.tracker_options)
 
                 tq_train_loader.set_postfix(
                     **self._tracker.get_metrics(),
@@ -195,8 +191,8 @@ class Trainer:
 
         self._finalize_epoch(epoch)
 
-    def _test_epoch(self, epoch, stage_name: str, voting_runs: int = 1, tracker_options={}):
-
+    def _test_epoch(self, epoch, stage_name: str):
+        voting_runs = self._cfg.get("voting_runs", 1)
         if stage_name == "test":
             loaders = self._dataset.test_dataloaders
         else:
@@ -206,19 +202,17 @@ class Trainer:
         if self.enable_dropout:
             self._model.enable_dropout_in_eval()
 
-        self._tracker.reset(stage_name)
-        if self.has_visualization:
-            self._visualizer.reset(epoch, stage_name)
-
         for loader in loaders:
             stage_name = loader.dataset.name
-            if not loader.has_labels and not tracker_options.get(
+            self._tracker.reset(stage_name)
+            if self.has_visualization:
+                self._visualizer.reset(epoch, stage_name)
+            if not self._dataset.has_labels(stage_name) and not self.tracker_options.get(
                 "make_submission", False
             ):  # No label, no submission -> do nothing
                 log.warning("No forward will be run on dataset %s." % stage_name)
                 continue
 
-            self._tracker.reset(stage_name)
             for i in range(voting_runs):
                 with Ctq(loader) as tq_loader:
                     for data in tq_loader:
@@ -226,7 +220,7 @@ class Trainer:
                             self._model.set_input(data, self._device)
                             self._model.forward()
 
-                        self._tracker.track(self._model, data=data, **tracker_options)
+                        self._tracker.track(self._model, data=data, **self.tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
                         if self.early_break:
@@ -237,6 +231,7 @@ class Trainer:
                                 return 0
 
             self._finalize_epoch(epoch)
+            self._tracker.print_summary()
 
     @property
     def early_break(self):
@@ -291,3 +286,7 @@ class Trainer:
             return getattr(self._cfg.tensorboard, "log", False)
         else:
             return False
+
+    @property
+    def tracker_options(self):
+        return self._cfg.get("tracker_options", {})
