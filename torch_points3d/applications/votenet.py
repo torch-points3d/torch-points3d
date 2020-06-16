@@ -50,19 +50,23 @@ def VoteNet(
     *args,
     **kwargs
 ):
-    """ Create a VoteNet model with several backbones model
+    """ Create a VoteNet model based on the architecture proposed in
+    https://arxiv.org/abs/1904.09664
+
     Parameters
     ----------
-    architecture : str, optional
-        Architecture of the model, choose from unet, encoder and decoder
+    original : bool
+        If True, it will create VoteNet as defined within the original paper
+        Code can be found there: https://github.com/facebookresearch/votenet
     input_nc : int, optional
         Number of channels for the input
-    output_nc : int, optional
-        If specified, then we add a fully connected head at the end of the network to provide the requested dimension
-    num_layers : int, optional
-        Depth of the network
-    config : DictConfig, optional
-        Custom config, overrides the num_layers and architecture parameters
+    num_classes : int, optional
+        Number of different classes to be defined
+    mean_size_arr : []
+        If available, provide a prior for the box shapes
+    compute_loss : bool, default=False
+        Wether to simplify user work and compute losses for them.
+        Path VoteNet losses: /torch_points3d/modules/VoteNet/loss_helper.py
     """
 
     if original:
