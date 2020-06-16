@@ -198,6 +198,7 @@ class VoteNetResults(Data):
             corners = pred_corners_3d[i, mask[i]]
             objectness = pred_obj[i, mask[i]]
             sem_cls_scores = sem_cls_proba[i, mask[i]]
+            clsname = pred_sem_cls[i, mask[i]]
 
             # Build box data for each detected object and add it to the list
             batch_detection = []
@@ -209,8 +210,7 @@ class VoteNetResults(Data):
                                 BoxData(classname, corners[j], score=objectness[j] * sem_cls_scores[j, classname])
                             )
                     else:
-                        clsname = pred_sem_cls[i, mask[i]]
-                        batch_detection.append(BoxData(clsname, corners[j], score=objectness[j]))
+                        batch_detection.append(BoxData(clsname[j], corners[j], score=objectness[j]))
 
             detected_boxes.append(batch_detection)
 
