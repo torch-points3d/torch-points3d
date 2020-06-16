@@ -6,7 +6,7 @@ import re
 import torch
 import random
 from tqdm.auto import tqdm as tq
-from sklearn.neighbors import NearestNeighbors, KDTree
+from sklearn.neighbors import KDTree
 from functools import partial
 from torch.nn import functional as F
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch

@@ -210,8 +210,6 @@ class BaseDataset:
         if precompute_multi_scale:
             self.set_strategies(model)
 
-        self._set_has_labels()
-
     @property
     def has_train_loader(self):
         return hasattr(self, "_train_loader")
@@ -219,15 +217,6 @@ class BaseDataset:
     @property
     def has_val_loader(self):
         return hasattr(self, "_val_loader")
-
-    def _set_has_labels(self):
-        for loader in self._loaders:
-            sample = loader.dataset[0]
-            has_labels = False
-            if hasattr(sample, "y"):
-                has_labels = sample.y is not None
-            setattr(loader, "has_labels", has_labels)
-            setattr(loader.dataset, "has_labels", has_labels)
 
     @property
     def has_test_loaders(self):
@@ -341,35 +330,13 @@ class BaseDataset:
         """
         assert stage in self.available_dataset_names
         dataset = self.get_dataset(stage)
-        return dataset.has_labels
+        if hasattr(dataset, "has_labels"):
+            return dataset.has_labels
 
-    @property
-    def has_fixed_points_transform(self):
-        """
-        This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
-        """
-        transform_train = self.train_transform
-        transform_test = self.test_transform
-
-        if transform_train is None or transform_test is None:
-            return False
-
-        if not isinstance(transform_train, Compose):
-            transform_train = Compose([transform_train])
-
-        if not isinstance(transform_test, Compose):
-            transform_test = Compose([transform_test])
-
-        train_bool = False
-        test_bool = False
-
-        for transform in transform_train.transforms:
-            if isinstance(transform, FixedPoints):
-                train_bool = True
-        for transform in transform_test.transforms:
-            if isinstance(transform, FixedPoints):
-                test_bool = True
-        return train_bool and test_bool
+        sample = dataset[0]
+        if hasattr(sample, "y"):
+            return sample.y is not None
+        return False
 
     @property
     def is_hierarchical(self):
@@ -432,7 +399,9 @@ class BaseDataset:
         ----------
         name : str
         """
-        all_datasets = [self.train_dataset, self.val_dataset] + self.test_dataset
+        all_datasets = [self.train_dataset, self.val_dataset]
+        if self.test_dataset:
+            all_datasets += self.test_dataset
         for dataset in all_datasets:
             if dataset is not None and dataset.name == name:
                 return dataset

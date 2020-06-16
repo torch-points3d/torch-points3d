@@ -143,7 +143,6 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(len(loaders[1].dataset), 20)
         self.assertEqual(dataset.num_classes, 3)
         self.assertEqual(dataset.is_hierarchical, False)
-        self.assertEqual(dataset.has_fixed_points_transform, False)
         self.assertEqual(dataset.has_val_loader, True)
         self.assertEqual(dataset.class_to_segments, None)
         self.assertEqual(dataset.feature_dimension, 1)

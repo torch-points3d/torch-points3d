@@ -133,7 +133,7 @@ class TestVotenetResults(unittest.TestCase):
                 ]
             ),
         )
-        self.assertAlmostEqual(box.objectness, 0.5)
+        self.assertAlmostEqual(box.score, 0.5)
 
 
 class TestAP(unittest.TestCase):
@@ -148,8 +148,8 @@ class TestAP(unittest.TestCase):
         }
 
         pred = {
-            "0": [BoxData("class1", box, objectness=0.5), BoxData("class2", box, objectness=0.5)],
-            "1": [BoxData("class2", box, objectness=1)],
+            "0": [BoxData("class1", box, score=0.5), BoxData("class2", box, score=0.5)],
+            "1": [BoxData("class2", box, score=1)],
         }
         rec, prec, ap = eval_detection(pred, gt)
         np.testing.assert_allclose(rec["class2"], np.asarray([0, 1]))
