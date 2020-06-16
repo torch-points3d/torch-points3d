@@ -150,7 +150,7 @@ model = RSConv(
 from torch_points3d.applications.votenet import VoteNet
 
 model = VoteNet(
-  architecture="kpconv",
+  backbone="kpconv",
   input_nc=3,
   num_classes=20,
   mean_size_arr=[], # (num_classes, 3) If available, prior mean box sizes for each class

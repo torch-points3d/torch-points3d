@@ -58,6 +58,8 @@ def VoteNet(
     original : bool
         If True, it will create VoteNet as defined within the original paper
         Code can be found there: https://github.com/facebookresearch/votenet
+    backbone: str
+        Supported backbones [pointnet , rsconv, kpconv]
     input_nc : int, optional
         Number of channels for the input
     num_classes : int, optional
