@@ -192,8 +192,6 @@ class Trainer:
         self._finalize_epoch(epoch)
 
     def _test_epoch(self, epoch, stage_name: str):
-        # if epoch % 5 != 0:
-        #     return
         voting_runs = self._cfg.get("voting_runs", 1)
         if stage_name == "test":
             loaders = self._dataset.test_dataloaders

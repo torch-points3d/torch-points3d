@@ -140,7 +140,9 @@ class VoteNetResults(Data):
     def num_proposal(self):
         return self.center.shape[1]
 
-    def get_boxes(self, dataset, apply_nms=False, objectness_threshold=0.05) -> List[List[BoxData]]:
+    def get_boxes(
+        self, dataset, apply_nms=False, objectness_threshold=0.05, duplicate_boxes=False
+    ) -> List[List[BoxData]]:
         """ Generates boxes from predictions
 
         Parameters
@@ -150,6 +152,9 @@ class VoteNetResults(Data):
             for a given object class and residual value
         apply_nms: bool
             If True then we apply non max suppression before returning the boxes
+        duplicate_boxes: bool
+            If True then we duplicate predicted boxes accross all classes. Else we assign the box to the
+            most likely class
 
         Returns
         -------
@@ -188,16 +193,24 @@ class VoteNetResults(Data):
             mask = np.ones((self.batch_size, self.num_proposal), dtype=np.bool)
 
         detected_boxes = []
+        sem_cls_proba = torch.softmax(self.sem_cls_scores, -1)
         for i in range(self.batch_size):
             corners = pred_corners_3d[i, mask[i]]
             objectness = pred_obj[i, mask[i]]
-            classname = pred_sem_cls[i, mask[i]]
+            sem_cls_scores = sem_cls_proba[i, mask[i]]
 
             # Build box data for each detected object and add it to the list
             batch_detection = []
             for j in range(len(corners)):
                 if objectness[j] > objectness_threshold:
-                    batch_detection.append(BoxData(classname[j], corners[j], score=objectness[j]))
+                    if duplicate_boxes:
+                        for classname in range(self.sem_cls_scores.shape[-1]):
+                            batch_detection.append(
+                                BoxData(classname, corners[j], score=objectness[j] * sem_cls_scores[j, classname])
+                            )
+                    else:
+                        clsname = pred_sem_cls[i, mask[i]]
+                        batch_detection.append(BoxData(clsname, corners[j], score=objectness[j]))
 
             detected_boxes.append(batch_detection)
 
