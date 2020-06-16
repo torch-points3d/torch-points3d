@@ -68,7 +68,7 @@ class Trainer:
             self._cfg.model_name,
             self._cfg.training.weight_name,
             run_config=self._cfg,
-            resume=self._cfg.training.resume,  # bool(self._cfg.training.checkpoint_dir),
+            resume=bool(self._cfg.training.checkpoint_dir),
         )
 
         # Create model and datasets
