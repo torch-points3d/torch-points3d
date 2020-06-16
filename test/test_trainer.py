@@ -16,20 +16,15 @@ class TestTrainer(unittest.TestCase):
     def test_trainer_on_shapenet_fixed(self):
 
         self.path_outputs = os.path.join(DIR_PATH, "data/shapenet/outputs")
-
-        def getcwd():
-            return self.path_outputs
-
         if not os.path.exists(self.path_outputs):
             os.makedirs(self.path_outputs)
+        os.chdir(self.path_outputs)
 
         cfg = OmegaConf.load(os.path.join(DIR_PATH, "data/shapenet/shapenet_config.yaml"))
-        os.getcwd = getcwd
-
         cfg.training.epochs = 2
         cfg.training.num_workers = 0
-        cfg.training.checkpoint_dir = self.path_outputs
         cfg.data.is_test = True
+        cfg.data.dataroot = os.path.join(DIR_PATH, "data/")
 
         trainer = Trainer(cfg)
         trainer.train()
@@ -45,22 +40,16 @@ class TestTrainer(unittest.TestCase):
         trainer.eval()
 
     def test_trainer_on_scannet_object_detection(self):
-
         self.path_outputs = os.path.join(DIR_PATH, "data/scannet-fixed/outputs")
-
-        def getcwd():
-            return self.path_outputs
-
         if not os.path.exists(self.path_outputs):
             os.makedirs(self.path_outputs)
+        os.chdir(self.path_outputs)
 
         cfg = OmegaConf.load(os.path.join(DIR_PATH, "data/scannet-fixed/config_object_detection.yaml"))
-        os.getcwd = getcwd
-
         cfg.training.epochs = 2
         cfg.training.num_workers = 0
-        cfg.training.checkpoint_dir = self.path_outputs
         cfg.data.is_test = True
+        cfg.data.dataroot = os.path.join(DIR_PATH, "data/")
 
         trainer = Trainer(cfg)
         trainer.train()
@@ -68,20 +57,15 @@ class TestTrainer(unittest.TestCase):
     def test_trainer_on_scannet_segmentation(self):
 
         self.path_outputs = os.path.join(DIR_PATH, "data/scannet/outputs")
-
-        def getcwd():
-            return self.path_outputs
-
         if not os.path.exists(self.path_outputs):
             os.makedirs(self.path_outputs)
+        os.chdir(self.path_outputs)
 
         cfg = OmegaConf.load(os.path.join(DIR_PATH, "data/scannet/config_segmentation.yaml"))
-        os.getcwd = getcwd
-
         cfg.training.epochs = 2
         cfg.training.num_workers = 0
-        cfg.training.checkpoint_dir = self.path_outputs
         cfg.data.is_test = True
+        cfg.data.dataroot = os.path.join(DIR_PATH, "data/")
 
         trainer = Trainer(cfg)
         trainer.train()
