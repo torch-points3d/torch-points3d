@@ -188,6 +188,7 @@ class VoteNetBackbones(VoteNetBase):
         self.voting_module = voting_cls(
             vote_factor=self.get_attr(voting_option, "vote_factor"),
             seed_feature_dim=self.get_attr(voting_option, "feat_dim"),
+            conv_type=self.conv_type,
         )
 
         # 3 - CREATE PROPOSAL MODULE
@@ -200,6 +201,7 @@ class VoteNetBackbones(VoteNetBase):
             mean_size_arr=mean_size_arr,
             num_proposal=proposal_option.num_proposal,
             sampling=proposal_option.sampling,
+            conv_type=self.conv_type,
         )
 
         # Loss params

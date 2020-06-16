@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import OmegaConf
-
+from torch_cluster import fps
 from torch_points3d.modules.pointnet2 import PointNetMSGDown
 import torch_points_kernels as tp
 from .votenet_results import VoteNetResults
@@ -22,6 +22,7 @@ class ProposalModule(nn.Module):
         num_proposal,
         sampling,
         seed_feat_dim=256,
+        conv_type="DENSE",
     ):
         super().__init__()
 
@@ -33,20 +34,30 @@ class ProposalModule(nn.Module):
         self.sampling = sampling
         self.seed_feat_dim = seed_feat_dim
 
-        assert (
-            vote_aggregation_config.module_name == "PointNetMSGDown"
-        ), "Proposal Module support only PointNet2 for now"
-        params = OmegaConf.to_container(vote_aggregation_config)
-        self.vote_aggregation = PointNetMSGDown(**params)
-
         # Object proposal/detection
         # Objectness scores (2), center residual (3),
         # heading class+residual (num_heading_bin*2), size class+residual(num_size_cluster*4)
-        self.conv1 = torch.nn.Conv1d(128, 128, 1)
-        self.conv2 = torch.nn.Conv1d(128, 128, 1)
-        self.conv3 = torch.nn.Conv1d(128, 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class, 1)
-        self.bn1 = torch.nn.BatchNorm1d(128)
-        self.bn2 = torch.nn.BatchNorm1d(128)
+        self.conv_type = conv_type
+        if self.conv_type == "DENSE":
+
+            assert (
+                vote_aggregation_config.module_name == "PointNetMSGDown"
+            ), "Proposal Module support only PointNet2 for now"
+            params = OmegaConf.to_container(vote_aggregation_config)
+            self.vote_aggregation = PointNetMSGDown(**params)
+            self.conv1 = torch.nn.Conv1d(128, 128, 1)
+            self.conv2 = torch.nn.Conv1d(128, 128, 1)
+            self.conv3 = torch.nn.Conv1d(
+                128, 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class, 1
+            )
+            self.bn1 = torch.nn.BatchNorm1d(128)
+            self.bn2 = torch.nn.BatchNorm1d(128)
+        else:
+            self.conv1 = torch.nn.Linear(128, 128)
+            self.conv2 = torch.nn.Linear(128, 128)
+            self.conv3 = torch.nn.Linear(128, 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class)
+            self.bn1 = torch.nn.BatchNorm1d(128)
+            self.bn2 = torch.nn.BatchNorm1d(128)
 
     def forward(self, data):
         """
@@ -57,14 +68,21 @@ class ProposalModule(nn.Module):
         Returns:
             VoteNetResults
         """
-        if data.pos.dim() != 3:
-            raise ValueError("This method only supports dense convolutions for now")
+        if 3 < data.pos.dim() and data.pos.dim() <= 1:
+            raise Exception("data.pos doesn t have the correct dimension. Should be either 2 or 3")
+
         if self.sampling == "seed_fps":
-            sample_idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
+            if self.conv_type == "DENSE":
+                sample_idx = fps(data.seed_pos, data.batch, ratio=0.5, random_start=False)
+            else:
+                sample_idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
         else:
             raise ValueError("Unknown sampling strategy: %s. Exiting!" % (self.sampling))
 
-        data_features = self.vote_aggregation(data, sampled_idx=sample_idx)
+        if self.conv_type == "DENSE":
+            data_features = self.vote_aggregation(data, sampled_idx=sample_idx)
+        else:
+            pass
 
         # --------- PROPOSAL GENERATION ---------
         x = F.relu(self.bn1(self.conv1(data_features.x)))
