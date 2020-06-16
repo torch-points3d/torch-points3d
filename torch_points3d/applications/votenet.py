@@ -80,7 +80,6 @@ def VoteNet(
             num_classes=num_classes,
             mean_size_arr=mean_size_arr,
             compute_loss=compute_loss,
-            *args,
             **kwargs,
         )
     else:
@@ -94,7 +93,6 @@ def VoteNet(
             num_classes=num_classes,
             mean_size_arr=mean_size_arr,
             compute_loss=compute_loss,
-            *args,
             **kwargs,
         )
 
@@ -169,7 +167,6 @@ class VoteNetBackbones(VoteNetBase):
         num_classes: int = None,
         mean_size_arr=[],
         compute_loss: bool = False,
-        *args,
         **kwargs
     ):
         """Initialize this model class.
@@ -280,7 +277,6 @@ class VoteNetPaper(VoteNetBase):
         num_classes: int = None,
         mean_size_arr=[],
         compute_loss: bool = False,
-        *args,
         **kwargs
     ):
         """Initialize this model class.
