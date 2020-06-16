@@ -104,7 +104,7 @@ class ShapeNet(InMemoryDataset):
         transform=None,
         pre_transform=None,
         pre_filter=None,
-        is_test=True,
+        is_test=False,
     ):
         if categories is None:
             categories = list(self.category_ids.keys())
