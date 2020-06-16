@@ -7,7 +7,6 @@ import re
 import torch
 import random
 from torch.nn import functional as F
-from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
 
 from torch_geometric.nn import fps, radius, knn, voxel_grid

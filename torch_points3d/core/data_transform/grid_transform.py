@@ -159,6 +159,9 @@ class SaveOriginalPosId:
             data = self._process(data)
         return data
 
+    def __repr__(self):
+        return  self.__class__.__name__
+
 
 class ElasticDistortion:
     """Apply elastic distortion on sparse coordinate space.

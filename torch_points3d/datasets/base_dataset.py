@@ -339,34 +339,6 @@ class BaseDataset:
         return False
 
     @property
-    def has_fixed_points_transform(self):
-        """
-        This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
-        """
-        transform_train = self.train_transform
-        transform_test = self.test_transform
-
-        if transform_train is None or transform_test is None:
-            return False
-
-        if not isinstance(transform_train, Compose):
-            transform_train = Compose([transform_train])
-
-        if not isinstance(transform_test, Compose):
-            transform_test = Compose([transform_test])
-
-        train_bool = False
-        test_bool = False
-
-        for transform in transform_train.transforms:
-            if isinstance(transform, FixedPoints):
-                train_bool = True
-        for transform in transform_test.transforms:
-            if isinstance(transform, FixedPoints):
-                test_bool = True
-        return train_bool and test_bool
-
-    @property
     def is_hierarchical(self):
         """ Used by the metric trackers to log hierarchical metrics
         """
