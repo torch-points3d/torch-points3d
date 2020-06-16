@@ -122,7 +122,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             return xyz, rgb
         n_ver = len(room_ver)
         del room_ver
-        nn = NearestNeighbors(1, algorithm="kd_tree").fit(xyz)
+        nn = NearestNeighbors(n_neighbors=1, algorithm="kd_tree").fit(xyz)
         room_labels = np.zeros((n_ver,), dtype="int64")
         room_object_indices = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
@@ -507,7 +507,7 @@ class S3DISSphere(S3DISOriginalFused):
         if self._sample_per_epoch > 0:
             return self._get_random()
         else:
-            return self._test_spheres[idx]
+            return self._test_spheres[idx].clone()
 
     def process(self): # We have to include this method, otherwise the parent class skips processing
         super().process()
@@ -597,7 +597,7 @@ class S3DISFusedDataset(BaseDataset):
             test_area=self.dataset_opt.fold,
             split="val",
             pre_collate_transform=self.pre_collate_transform,
-            transform=self.train_transform,
+            transform=self.val_transform,
         )
         self.test_dataset = S3DISSphere(
             self._data_path,

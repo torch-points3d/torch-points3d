@@ -149,7 +149,7 @@ def eval_detection(pred_all, gt_all, ovthresh=0.25, processes=4):
                 gt[box.classname] = {}
             if img_id not in gt[box.classname]:
                 gt[box.classname][img_id] = []
-            pred[box.classname][img_id].append((box.corners3d, box.objectness))
+            pred[box.classname][img_id].append((box.corners3d, box.score))
     for img_id in gt_all.keys():
         for box in gt_all[img_id]:
             if box.classname not in gt:

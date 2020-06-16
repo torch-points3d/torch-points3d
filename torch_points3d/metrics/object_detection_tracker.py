@@ -67,7 +67,7 @@ class ObjectDetectionTracker(BaseTracker):
 
     def _add_box_pred(self, outputs: VoteNetResults, input_data, conv_type):
         # Track box predictions
-        pred_boxes = outputs.get_boxes(self._dataset, apply_nms=True)
+        pred_boxes = outputs.get_boxes(self._dataset, apply_nms=True, duplicate_boxes=True)
         if input_data.id_scan is None:
             raise ValueError("Cannot track boxes without knowing in which scan they are")
 

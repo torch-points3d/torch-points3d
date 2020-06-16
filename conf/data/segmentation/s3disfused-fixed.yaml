@@ -13,7 +13,7 @@ data:
             size: ${data.first_subsampling}
   train_transforms:
     - transform: FixedPoints
-      lparams: [4096]
+      lparams: [20000]
     - transform: RandomNoise
       params:
         sigma: 0.001
@@ -47,7 +47,7 @@ data:
         scale: 0.5
   test_transform:
     - transform: FixedPoints
-      lparams: [4096]
+      lparams: [20000]
     - transform: XYZFeature
       params:
         add_x: False
