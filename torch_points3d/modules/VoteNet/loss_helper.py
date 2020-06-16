@@ -47,11 +47,14 @@ def compute_vote_loss(input, output: VoteNetResults):
     #   non-object point has no GT vote mask = 0, object point has mask = 1
     # vote_label: Use gather to select B,num_seed,9 from B,num_point,9
     #   with inds in shape B,num_seed,9 and 9 = GT_VOTE_FACTOR * 3
-    seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 1, seed_inds)
-    seed_inds_expand = seed_inds.view(batch_size, num_seed, 1).repeat(1, 1, 3 * GT_VOTE_FACTOR)
-
-    seed_gt_votes = torch.gather(input["vote_label"], 1, seed_inds_expand)
-    seed_gt_votes += output["seed_pos"].repeat(1, 1, 3)
+    if seed_inds.dim() == 1:
+        seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 0, seed_inds).view((batch_size, -1))
+        seed_gt_votes = torch.gather(input["vote_label"], 0, seed_inds.unsqueeze(-1).repeat(1, 3 * GT_VOTE_FACTOR))
+    else:
+        seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 1, seed_inds)
+        seed_inds_expand = seed_inds.view(batch_size, num_seed, 1).repeat(1, 1, 3 * GT_VOTE_FACTOR)
+        seed_gt_votes = torch.gather(input["vote_label"], 1, seed_inds_expand)
+        seed_gt_votes += output["seed_pos"].repeat(1, 1, 3)
 
     # Compute the min of min of distance
     vote_xyz_reshape = vote_xyz.view(
@@ -115,15 +118,22 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
 
     # Compute center loss
     pred_center = outputs["center"]
-    gt_center = inputs["center_label"][:, :, 0:3]
+    if inputs["center_label"].dim() == 2:
+        gt_center = inputs["center_label"][:, :3].view((batch_size, -1, 3))
+    else:
+        gt_center = inputs["center_label"][:, :, :3]
     dist1, ind1, dist2, _ = nn_distance(pred_center, gt_center)  # dist1: BxK, dist2: BxK2
     box_label_mask = inputs["box_label_mask"]
     objectness_label = outputs["objectness_label"].float()
     centroid_reg_loss1 = torch.sum(dist1 * objectness_label) / (torch.sum(objectness_label) + 1e-6)
+    if box_label_mask.dim() == 1:
+        box_label_mask = box_label_mask.view((batch_size, -1))
     centroid_reg_loss2 = torch.sum(dist2 * box_label_mask) / (torch.sum(box_label_mask) + 1e-6)
     center_loss = centroid_reg_loss1 + centroid_reg_loss2
 
     # Compute heading loss
+    if inputs["heading_class_label"].dim() == 1:
+        inputs["heading_class_label"] = inputs["heading_class_label"].view((batch_size, -1))
     heading_class_label = torch.gather(inputs["heading_class_label"], 1, object_assignment)  # select (B,K) from (B,K2)
     criterion_heading_class = nn.CrossEntropyLoss(reduction="none")
 
@@ -132,6 +142,8 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     )  # (B,K)
     heading_class_loss = torch.sum(heading_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
 
+    if inputs["heading_residual_label"].dim() == 1:
+        inputs["heading_residual_label"] = inputs["heading_residual_label"].view((batch_size, -1))
     heading_residual_label = torch.gather(
         inputs["heading_residual_label"], 1, object_assignment
     )  # select (B,K) from (B,K2)
@@ -152,12 +164,16 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     )
 
     # Compute size loss
+    if inputs["size_class_label"].dim() == 1:
+        inputs["size_class_label"] = inputs["size_class_label"].view((batch_size, -1))
     size_class_label = torch.gather(inputs["size_class_label"], 1, object_assignment)  # select (B,K) from (B,K2)
     criterion_size_class = nn.CrossEntropyLoss(reduction="none")
     if num_size_cluster != 0:
         size_class_loss = criterion_size_class(outputs["size_scores"].transpose(2, 1), size_class_label.long())  # (B,K)
         size_class_loss = torch.sum(size_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
 
+        if inputs["size_residual_label"].dim() == 2:
+            inputs["size_residual_label"] = inputs["size_residual_label"].view((batch_size, -1, 3))
         size_residual_label = torch.gather(
             inputs["size_residual_label"], 1, object_assignment.unsqueeze(-1).repeat(1, 1, 3)
         )  # select (B,K,3) from (B,K2,3)
@@ -187,6 +203,8 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
         size_residual_normalized_loss = 0
 
     # 3.4 Semantic cls loss
+    if inputs["sem_cls_label"].dim() == 1:
+        inputs["sem_cls_label"] = inputs["sem_cls_label"].view((batch_size, -1))
     sem_cls_label = torch.gather(inputs["sem_cls_label"], 1, object_assignment)  # select (B,K) from (B,K2)
     criterion_sem_cls = nn.CrossEntropyLoss(reduction="none")
     sem_cls_loss = criterion_sem_cls(outputs["sem_cls_scores"].transpose(2, 1), sem_cls_label.long())  # (B,K)

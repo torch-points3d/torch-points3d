@@ -69,7 +69,7 @@ class VotingModule(nn.Module):
             vote_x = data.x.transpose(2, 1).unsqueeze(2) + res_x
             vote_x = vote_x.contiguous().view(batch_size, num_votes, self.out_dim)
             vote_x = vote_x.transpose(2, 1).contiguous()
-            Data(pos=vote_pos, x=vote_x, seed_pos=data.pos)
+            data_out = Data(pos=vote_pos, x=vote_x, seed_pos=data.pos)
         else:
             x = F.relu(self.bn1(self.conv1(data.x)))
             x = F.relu(self.bn2(self.conv2(x)))

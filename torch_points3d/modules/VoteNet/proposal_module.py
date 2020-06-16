@@ -73,16 +73,16 @@ class ProposalModule(nn.Module):
 
         if self.sampling == "seed_fps":
             if self.conv_type == "DENSE":
-                sample_idx = fps(data.seed_pos, data.batch, ratio=0.5, random_start=False)
-            else:
                 sample_idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
+            else:
+                sample_idx = fps(data.seed_pos, data.batch, ratio=0.5, random_start=True)
         else:
             raise ValueError("Unknown sampling strategy: %s. Exiting!" % (self.sampling))
 
         if self.conv_type == "DENSE":
             data_features = self.vote_aggregation(data, sampled_idx=sample_idx)
         else:
-            pass
+            raise NotImplementedError
 
         # --------- PROPOSAL GENERATION ---------
         x = F.relu(self.bn1(self.conv1(data_features.x)))

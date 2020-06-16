@@ -343,7 +343,8 @@ class TestAPIVoteNet(unittest.TestCase):
     def test_votenet_paper(self):
         from torch_points3d.applications.votenet import VoteNet
 
-        cfg = OmegaConf.load(os.path.join(DIR_PATH, "data/scannet-fixed/config_object_detection.yaml"))
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        cfg = OmegaConf.load(os.path.join(current_dir, "data/scannet-fixed/config_object_detection.yaml"))
         config_data = cfg.data
         config_data.is_test = True
         dataset = ScannetDataset(config_data)
@@ -396,6 +397,7 @@ class TestAPIVoteNet(unittest.TestCase):
             num_classes=dataset.num_classes,
             mean_size_arr=dataset.mean_size_arr,
             compute_loss=True,
+            in_feat=4,
         )
 
         dataset.create_dataloaders(model, batch_size=2, shuffle=True, num_workers=0, precompute_multi_scale=False)
@@ -403,7 +405,6 @@ class TestAPIVoteNet(unittest.TestCase):
         train_loader = dataset.train_dataloader
         data = next(iter(train_loader))
         data = GridSampling3D(0.1)(data)
-        print(data)
         model.verify_data(data)
         model.forward(data)
 
@@ -419,7 +420,7 @@ class TestAPIVoteNet(unittest.TestCase):
             "objectness_mask": [2, 256],
             "objectness_scores": [2, 256, 2],
             "sampled_votes": [2, 256, 3],
-            "seed_inds": [2, 1024],
+            "seed_inds": [2048],
             "seed_pos": [2, 1024, 3],
             "seed_votes": [2, 1024, 3],
             "sem_cls_scores": [2, 256, 20],

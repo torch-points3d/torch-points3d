@@ -75,7 +75,7 @@ def VoteNet(
             mean_size_arr=mean_size_arr,
             compute_loss=compute_loss,
             *args,
-            **kwargs
+            **kwargs,
         )
     else:
         model_config = OmegaConf.load(os.path.join(PATH_TO_CONFIG, "votenet_backbones.yaml"))
@@ -89,7 +89,7 @@ def VoteNet(
             mean_size_arr=mean_size_arr,
             compute_loss=compute_loss,
             *args,
-            **kwargs
+            **kwargs,
         )
 
 
@@ -138,11 +138,22 @@ class VoteNetBackbones(VoteNetBase):
             data.x = torch.gather(data.x, 2, idx.unsqueeze(1).repeat(1, data.x.shape[1], 1))
             return data, idx
         else:
-            idx = torch.randint(0, data.pos.shape[0], (self._num_batches * self._num_points_to_sample,))
-            data.pos = torch.gather(data.pos, 0, idx.unsqueeze(-1).repeat(1, data.pos.shape[-1]))
-            data.x = torch.gather(data.x, 0, idx.unsqueeze(1).repeat(1, data.x.shape[1]))
-            data.batch = torch.gather(data.batch, 0, idx)
-            return data, idx
+            pos = []
+            x = []
+            idx_out = []
+            num_points = 0
+            for batch_idx in range(self._num_batches):
+                batch_mask = data.batch == batch_idx
+                pos_masked = data.pos[batch_mask, :]
+                x_masked = data.x[batch_mask]
+                idx = torch.randint(0, pos_masked.shape[0], (self._num_points_to_sample,))
+                pos.append(pos_masked[idx])
+                x.append(x_masked[idx])
+                idx_out.append(idx + num_points)
+                num_points += pos_masked.shape[0]
+            data.pos = torch.stack(pos)
+            data.x = torch.stack(x).permute(0, 2, 1)
+            return data, torch.cat(idx_out, dim=0)
 
     def __init__(
         self,
@@ -178,7 +189,7 @@ class VoteNetBackbones(VoteNetBase):
             input_nc=input_nc,
             num_layers=4,
             output_nc=self.get_attr(voting_option, "feat_dim"),
-            in_feat=4,
+            **kwargs,
         )
         self.conv_type = self.backbone_model.conv_type
 
@@ -188,7 +199,6 @@ class VoteNetBackbones(VoteNetBase):
         self.voting_module = voting_cls(
             vote_factor=self.get_attr(voting_option, "vote_factor"),
             seed_feature_dim=self.get_attr(voting_option, "feat_dim"),
-            conv_type=self.conv_type,
         )
 
         # 3 - CREATE PROPOSAL MODULE
@@ -201,7 +211,6 @@ class VoteNetBackbones(VoteNetBase):
             mean_size_arr=mean_size_arr,
             num_proposal=proposal_option.num_proposal,
             sampling=proposal_option.sampling,
-            conv_type=self.conv_type,
         )
 
         # Loss params
@@ -227,8 +236,10 @@ class VoteNetBackbones(VoteNetBase):
                 data.x = torch.cat([data.x, data.ones.float()], dim=-1)
             else:
                 data.x = data.ones.float()
-        self._num_batches = len(data.id_scan)
-        self.input = Data(pos=data.pos, x=data.x, batch=data.batch).to(self.device)
+            self.input = Data(pos=data.pos, x=data.x, batch=data.batch).to(self.device)
+            self._num_batches = len(data.id_scan)
+        else:
+            self.input = data
 
     def forward(self, data):
         self._set_input(data)
@@ -242,7 +253,11 @@ class VoteNetBackbones(VoteNetBase):
         outputs: votenet_module.VoteNetResults = self.proposal_cls_module(data_votes)
 
         # Associate proposal and GT objects by point-to-point distances
-        gt_center = self.input.center_label[:, :, 0:3]
+        if not self._kpconv_backbone:
+            gt_center = self.input.center_label[:, :, 0:3]
+        else:
+            gt_center = data.center_label[:, 0:3].view((self._num_batches, -1, 3))
+            self.input = data
         outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
         # Set output and compute losses
