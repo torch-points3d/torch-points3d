@@ -19,9 +19,9 @@ class TestFilter(unittest.TestCase):
         plane = torch.rand(1000, 3) @ U @ torch.diag(torch.tensor([1, 1, 0.001])) @ U
         data1 = Data(pos=plane)
         # random isotropic gaussian
-        data2 = Data(pos=torch.randn(100, 3))
+        # data2 = Data(pos=torch.randn(100, 3))
         plane_filter = PlanarityFilter(0.3)
-        # self.assertTrue(plane_filter(data2).item()) TODO THIS TESTS SEEM BROKEN
+        # self.assertTrue(plane_filter(data2).item()) #TODO THIS TEST SEEM BROKEN
         self.assertFalse(plane_filter(data1).item())
 
     def test_composition(self):
