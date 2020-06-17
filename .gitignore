@@ -29,6 +29,6 @@ dist/*
 .venv
 .mypy_cache
 lightning_logs
-data
+/data
 .tox
 tp3d

@@ -40,7 +40,7 @@ jobs:
           python -m pip install -U pip
           pip install setuptools>=41.0.0
           pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-          pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
+          pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
           pip install .
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}

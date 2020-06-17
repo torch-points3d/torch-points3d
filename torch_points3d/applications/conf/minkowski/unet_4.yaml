@@ -1,4 +1,3 @@
-
 class: minkowski.Minkowski_Model
 conv_type: "SPARSE"
 define_constants:

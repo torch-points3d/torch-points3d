@@ -1,0 +1,30 @@
+data:
+  class: scannet.ScannetDataset
+  dataset_name: 'scannet-sparse'
+  task: panoptic
+  dataroot: data
+  version: 'v2'
+  use_instance_labels: True
+  donotcare_class_ids: []
+  process_workers: 8
+
+  grid_size: 0.02
+  mode: last
+
+  pre_transform:
+    - transform: GridSampling3D
+      lparams: [0.02]
+
+  train_transform:
+    - transform: GridSampling3D
+      params:
+        size: ${data.grid_size}
+        quantize_coords: True
+        mode: ${data.mode}
+
+    - transform: FixedPoints
+      lparams: [40000] 
+
+  val_transform:
+    - transform: FixedPoints
+      lparams: [40000]
