@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 # Label will be the majority label in each voxel
-_INTEGER_LABEL_KEYS = ["y", "instance_labels"]
+INTEGER_LABEL_KEYS = ["y", "instance_labels"]
 
 
 def shuffle_data(data):
@@ -65,17 +65,16 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
             if mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
-                if key in _INTEGER_LABEL_KEYS:
+                is_item_bool = item.dtype == torch.bool
+                if is_item_bool: item = item.int()
+                if key in INTEGER_LABEL_KEYS:
                     item_min = item.min()
                     item = F.one_hot(item - item_min)
                     item = scatter_add(item, cluster, dim=0)
                     data[key] = item.argmax(dim=-1) + item_min
                 else:
-                    try:
-                        data[key] = scatter_mean(item, cluster, dim=0)
-                    except:
-                        log.warning("There is potentially a bug there")
-                        data[key] = item[unique_pos_indices]
+                    data[key] = scatter_mean(item, cluster, dim=0)
+                if is_item_bool: data[key] = data[key].bool()
     return data
 
 

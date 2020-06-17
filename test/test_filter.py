@@ -14,14 +14,16 @@ from torch_points3d.core.data_transform import FCompose, PlanarityFilter, euler_
 class TestFilter(unittest.TestCase):
     def test_planarity_filter(self):
 
+        torch.manual_seed(0)
+
         # Plane with high planarity
         U = euler_angles_to_rotation_matrix(torch.rand(3) * np.pi)
         plane = torch.rand(1000, 3) @ U @ torch.diag(torch.tensor([1, 1, 0.001])) @ U
         data1 = Data(pos=plane)
         # random isotropic gaussian
-        # data2 = Data(pos=torch.randn(100, 3))
+        data2 = Data(pos=torch.randn(100, 3))
         plane_filter = PlanarityFilter(0.3)
-        # self.assertTrue(plane_filter(data2).item()) #TODO THIS TEST SEEM BROKEN
+        self.assertTrue(plane_filter(data2).item())
         self.assertFalse(plane_filter(data1).item())
 
     def test_composition(self):
