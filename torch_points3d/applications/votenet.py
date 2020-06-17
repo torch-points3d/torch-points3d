@@ -1,8 +1,8 @@
 import os
+from typing import *
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 import logging
-
 import torch
 from torch_geometric.data import Data
 from torch_points3d.models.base_model import BaseModel
@@ -152,7 +152,7 @@ class VoteNetModel(BaseModel):
     def __init__(
         self,
         option,
-        backbone: str = "rsconv",
+        backbone: Union[str, None] = "rsconv",
         input_nc: int = None,
         num_classes: int = None,
         mean_size_arr=[],
