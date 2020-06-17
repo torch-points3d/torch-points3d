@@ -119,7 +119,10 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
 
     # Compute center loss
     pred_center = outputs["center"]
-    gt_center = inputs["gt_center"]
+    if inputs["center_label"].dim() == 3:
+        gt_center = inputs["center_label"][:, :, 0:3]
+    else:
+        gt_center = inputs["center_label"][:, 0:3].view((batch_size, -1, 3))
     dist1, ind1, dist2, _ = nn_distance(pred_center, gt_center)  # dist1: BxK, dist2: BxK2
     box_label_mask = inputs["box_label_mask"]
     objectness_label = outputs["objectness_label"].float()

@@ -278,7 +278,6 @@ class VoteNetModel(BaseModel):
             gt_center = data.center_label[:, :, 0:3]
         else:
             gt_center = data.center_label[:, 0:3].view((self._num_batches, -1, 3))
-        data.gt_center = gt_center
         outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
     def _convert_tensors_to_dense_format(self, data, outputs):
