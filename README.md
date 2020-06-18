@@ -150,7 +150,7 @@ model = RSConv(
 from torch_points3d.applications.votenet import VoteNet
 
 model = VoteNet(
-  original=False, # Wether to create model from paper or use backbone.
+  original=False, # Wether to create official VoteNet or use custom backbone.
   backbone="kpconv",
   input_nc=3,
   num_classes=20,
