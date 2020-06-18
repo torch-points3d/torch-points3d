@@ -104,9 +104,8 @@ class VoteNet(BaseModel):
             backbone_option = option.backbone
             backbone_cls = getattr(models, backbone_option.model_type)
             self.backbone_model = backbone_cls(architecture="unet", input_nc=input_nc, config=backbone_option)
-            self.conv_type = "DENSE"
         else:
-            backbone_cls = getattr(models, backbone)
+            backbone_cls = getattr(models, self._backbone)
             voting_option = option.voting
             self.backbone_model = backbone_cls(
                 architecture="unet",
@@ -115,9 +114,13 @@ class VoteNet(BaseModel):
                 output_nc=self._get_attr(voting_option, "feat_dim"),
                 **kwargs,
             )
-            self._kpconv_backbone = backbone == "KPConv"
+            self._kpconv_backbone = self._backbone == "KPConv"
             self.sampler = RandomSamplerToDense(num_to_sample=voting_option.num_points_to_sample)
-            self.conv_type = self.backbone_model.conv_type
+
+        import pdb
+
+        pdb.set_trace()
+        self.conv_type = self.backbone_model.conv_type
         self.is_dense_format = self.conv_type == "DENSE"
 
         # 2 - CREATE VOTING MODEL
@@ -180,7 +183,7 @@ class VoteNet(BaseModel):
             num_seeds = data_features.pos.shape[1]
             seed_inds = getattr(data_features, sampling_id_key, None)[:, :num_seeds]
         else:
-            data_features, seed_inds = self.sampler(data_features, self._num_batches, self.conv_type)
+            data_features, seed_inds = self.sampler.sample(data_features, self._num_batches, self.conv_type)
         data_votes = self.voting_module(data_features)
         setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
 

@@ -7,6 +7,7 @@ define_constants:
   num_features: 256
   num_classes: 18 # Should be $(data.num_classes)
 backbone:
+  conv_type: 'DENSE'
   model_type: 'PointNet2'
   down_conv:
     module_name: PointNetMSGDown
