@@ -117,9 +117,6 @@ class VoteNet(BaseModel):
             self._kpconv_backbone = self._backbone == "KPConv"
             self.sampler = RandomSamplerToDense(num_to_sample=voting_option.num_points_to_sample)
 
-        import pdb
-
-        pdb.set_trace()
         self.conv_type = self.backbone_model.conv_type
         self.is_dense_format = self.conv_type == "DENSE"
 
