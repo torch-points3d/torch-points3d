@@ -26,7 +26,6 @@ def Minkowski(
     input_nc: int = None,
     num_layers: int = None,
     config: DictConfig = None,
-    multiscale=True,
     *args,
     **kwargs
 ):

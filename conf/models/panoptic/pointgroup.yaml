@@ -1,0 +1,9 @@
+models:
+    PointGroup:
+        class: pointgroup.PointGroup
+        conv_type: "SPARSE"
+        loss_weights:
+            semantic: 1
+            offset_norm_loss: 1 
+            offset_dir_loss: 1
+            score_loss: 1

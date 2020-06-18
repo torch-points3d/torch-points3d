@@ -63,12 +63,21 @@ def get_dataset(conv_type, task):
     else:
         if conv_type.lower() == "dense":
             num_points = 2048
-            return MockDataset(features, num_points=num_points, include_box=include_box, batch_size=batch_size)
+            return MockDataset(
+                features,
+                num_points=num_points,
+                include_box=include_box,
+                panoptic=task == "panoptic",
+                batch_size=batch_size,
+            )
         if conv_type.lower() == "sparse":
             return MockDatasetGeometric(
                 features,
                 include_box=include_box,
-                transform=GridSampling3D(size=0.01, quantize_coords=True, mode="last"),
+                panoptic=task == "panoptic",
+                transform=Compose(
+                    [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
+                ),
                 num_points=num_points,
                 batch_size=batch_size,
             )
