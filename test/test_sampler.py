@@ -1,11 +1,14 @@
 import unittest
 import torch
 
+from torch_geometric.data import Data
+
 from torch_points3d.core.spatial_ops import (
     FPSSampler,
     RandomSampler,
     RadiusNeighbourFinder,
     MultiscaleRadiusNeighbourFinder,
+    RandomSamplerToDenseFormat,
 )
 
 
@@ -27,6 +30,12 @@ class TestSampler(unittest.TestCase):
 
         sampler = RandomSampler(num_to_sample=5)
         self.assertEqual(sampler(pos, batch).shape[0], 5)
+
+    def test_random_to_dense(self):
+        batch_size = 2
+        data = Data(pos=torch.randn((batch_size, 2048, 3)), x=torch.randn((batch_size, 2048, 64)))
+        sampler = RandomSamplerToDenseFormat(num_to_sample=1024)
+        sampler(data, batch_size, "DENSE")
 
 
 class TestNeighboorhoodSearch(unittest.TestCase):

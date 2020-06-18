@@ -99,6 +99,17 @@ class VoteNetResults(Data):
             data.size_residuals = size_residuals_normalized * mean_size_arr.unsqueeze(0).unsqueeze(0)
         sem_cls_scores = x_transposed[:, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :]  # Bxnum_proposalx10
         data.sem_cls_scores = sem_cls_scores
+
+        return data
+
+    @staticmethod
+    def convert_tensors_to_dense_format(data, num_batches):
+        data["heading_class_label"] = data["heading_class_label"].view((num_batches, -1))
+        data["heading_residual_label"] = data["heading_residual_label"].view((num_batches, -1))
+        data["size_class_label"] = data["size_class_label"].view((num_batches, -1))
+        data["size_residual_label"] = data["size_residual_label"].view((num_batches, -1, 3))
+        data["sem_cls_label"] = data["sem_cls_label"].view((num_batches, -1))
+        data["box_label_mask"] = data["box_label_mask"].view((num_batches, -1))
         return data
 
     def assign_objects(self, gt_center: torch.Tensor, near_threshold: float, far_threshold: float):

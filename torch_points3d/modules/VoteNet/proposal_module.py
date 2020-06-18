@@ -56,7 +56,7 @@ class ProposalModule(nn.Module):
             VoteNetResults
         """
         if data.pos.dim() != 3:
-            raise Exception("data.pos doesn t have the correct dimension. Should be either 2 or 3")
+            raise ValueError("This method only supports dense convolutions for now")
 
         if self.sampling == "seed_fps":
             sample_idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)

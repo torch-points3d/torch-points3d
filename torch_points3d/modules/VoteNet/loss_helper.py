@@ -127,8 +127,6 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     box_label_mask = inputs["box_label_mask"]
     objectness_label = outputs["objectness_label"].float()
     centroid_reg_loss1 = torch.sum(dist1 * objectness_label) / (torch.sum(objectness_label) + 1e-6)
-    if box_label_mask.dim() == 1:
-        box_label_mask = box_label_mask.view((batch_size, -1))
     centroid_reg_loss2 = torch.sum(dist2 * box_label_mask) / (torch.sum(box_label_mask) + 1e-6)
     center_loss = centroid_reg_loss1 + centroid_reg_loss2
 

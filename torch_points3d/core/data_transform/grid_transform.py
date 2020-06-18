@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 # Label will be the majority label in each voxel
-INTEGER_LABEL_KEYS = ["y", "instance_labels"]
+_INTEGER_LABEL_KEYS = ["y", "instance_labels"]
 
 
 def shuffle_data(data):
@@ -67,7 +67,7 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
             elif mode == "mean":
                 is_item_bool = item.dtype == torch.bool
                 if is_item_bool: item = item.int()
-                if key in INTEGER_LABEL_KEYS:
+                if key in _INTEGER_LABEL_KEYS:
                     item_min = item.min()
                     item = F.one_hot(item - item_min)
                     item = scatter_add(item, cluster, dim=0)

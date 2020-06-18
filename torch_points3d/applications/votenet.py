@@ -1,5 +1,4 @@
 import os
-from typing import *
 import numpy as np
 from omegaconf import DictConfig, OmegaConf
 import logging
@@ -10,8 +9,9 @@ from torch_points3d.applications import models
 import torch_points3d.modules.VoteNet as votenet_module
 from torch_points3d.models.base_architectures import UnetBasedModel
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
-from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve
+from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.core.data_transform import AddOnes
+from torch_points3d.core.spatial_ops import RandomSamplerToDense
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -22,69 +22,8 @@ log = logging.getLogger(__name__)
 MAPPING_BACKBONES_TO_API_NAMES = {"kpconv": "KPConv", "pointnet2": "PointNet2", "rsconv": "RSConv"}
 
 
-def resolve_model(model_config, num_features, kwargs):
-    """ Parses the model config and evaluates any expression that may contain constants
-    Overrides any argument in the `define_constants` with keywords wrgument to the constructor
-    """
-    # placeholders to subsitute
-    constants = {
-        "FEAT": max(num_features, 0),
-    }
+class VoteNet(BaseModel):
 
-    # user defined contants to subsitute
-    if "define_constants" in model_config.keys():
-        constants.update(dict(model_config.define_constants))
-        define_constants = model_config.define_constants
-        for key in define_constants.keys():
-            value = kwargs.get(key)
-            if value:
-                constants[key] = value
-    resolve(model_config, constants)
-
-
-def sample_to_dense_format(data, num_batches, conv_type, num_points_to_sample):
-    if conv_type == "DENSE":
-        assert (
-            num_points_to_sample <= data.pos.shape[0]
-        ), "num_points_to_sample: {} should be smaller than num_pos: {}".format(num_points_to_sample, data.pos.shape[0])
-        idx = torch.randint(0, data.pos.shape[1], (data.pos.shape[0], num_points_to_sample,))
-        data.pos = torch.gather(data.pos, 1, idx.unsqueeze(-1).repeat(1, 1, data.pos.shape[-1]))
-        data.x = torch.gather(data.x, 2, idx.unsqueeze(1).repeat(1, data.x.shape[1], 1))
-        return data, idx
-    else:
-        pos = []
-        x = []
-        idx_out = []
-        num_points = 0
-        for batch_idx in range(num_batches):
-            batch_mask = data.batch == batch_idx
-            pos_masked = data.pos[batch_mask, :]
-            x_masked = data.x[batch_mask]
-            assert (
-                num_points_to_sample <= pos_masked.shape[0]
-            ), "num_points_to_sample: {} should be smaller than num_pos: {}".format(
-                num_points_to_sample, pos_masked.shape[0]
-            )
-            idx = torch.randint(0, pos_masked.shape[0], (num_points_to_sample,))
-            pos.append(pos_masked[idx])
-            x.append(x_masked[idx])
-            idx_out.append(idx + num_points)
-            num_points += pos_masked.shape[0]
-        data.pos = torch.stack(pos)
-        data.x = torch.stack(x).permute(0, 2, 1)
-        return data, torch.cat(idx_out, dim=0)
-
-
-def VoteNet(
-    original: bool = False,
-    backbone: str = "rsconv",
-    input_nc: int = None,
-    num_classes: int = None,
-    mean_size_arr=[],
-    compute_loss=False,
-    *args,
-    **kwargs
-):
     """ Create a VoteNet model based on the architecture proposed in
     https://arxiv.org/abs/1904.09664
 
@@ -106,33 +45,6 @@ def VoteNet(
         Path VoteNet losses: /torch_points3d/modules/VoteNet/loss_helper.py
     """
 
-    if original:
-        model_config = OmegaConf.load(os.path.join(PATH_TO_CONFIG, "votenet.yaml"))
-        resolve_model(model_config, input_nc, kwargs)
-        return VoteNetModel(
-            model_config,
-            backbone=None,
-            input_nc=input_nc,
-            num_classes=num_classes,
-            mean_size_arr=mean_size_arr,
-            compute_loss=compute_loss,
-            **kwargs,
-        )
-    else:
-        model_config = OmegaConf.load(os.path.join(PATH_TO_CONFIG, "votenet_backbones.yaml"))
-        resolve_model(model_config, input_nc, kwargs)
-        return VoteNetModel(
-            model_config,
-            backbone=MAPPING_BACKBONES_TO_API_NAMES[backbone.lower()],
-            input_nc=input_nc,
-            num_classes=num_classes,
-            mean_size_arr=mean_size_arr,
-            compute_loss=compute_loss,
-            **kwargs,
-        )
-
-
-class VoteNetModel(BaseModel):
     __REQUIRED_DATA__ = [
         "pos",
     ]
@@ -151,12 +63,13 @@ class VoteNetModel(BaseModel):
 
     def __init__(
         self,
-        option,
-        backbone: Union[str, None] = "rsconv",
+        original: bool = True,
+        backbone: str = "pointnet2",
         input_nc: int = None,
         num_classes: int = None,
         mean_size_arr=[],
-        compute_loss: bool = False,
+        compute_loss=False,
+        *args,
         **kwargs
     ):
         """Initialize this model class.
@@ -168,13 +81,26 @@ class VoteNetModel(BaseModel):
         """
         assert input_nc is not None, "VoteNet requieres input_nc to be defined"
         assert num_classes is not None, "VoteNet requieres num_classes to be defined"
-        super(VoteNetModel, self).__init__(option)
+        try:
+            self._backbone = MAPPING_BACKBONES_TO_API_NAMES[backbone.lower()]
+        except:
+            raise Exception("Backbone should be within {}".format(MAPPING_BACKBONES_TO_API_NAMES.keys()))
+
+        if original:
+            option = OmegaConf.load(os.path.join(PATH_TO_CONFIG, "votenet.yaml"))
+        else:
+            option = OmegaConf.load(os.path.join(PATH_TO_CONFIG, "votenet_backbones.yaml"))
+
+        ModelFactory.resolve_model(option, input_nc, kwargs)
+
+        self._original = original
         self._kwargs = kwargs
         self._compute_loss = compute_loss
-        self._backbone = backbone
+
+        super(VoteNet, self).__init__(option)
 
         # 1 - CREATE BACKBONE MODEL
-        if backbone is None:
+        if original:
             backbone_option = option.backbone
             backbone_cls = getattr(models, backbone_option.model_type)
             self.backbone_model = backbone_cls(architecture="unet", input_nc=input_nc, config=backbone_option)
@@ -186,11 +112,11 @@ class VoteNetModel(BaseModel):
                 architecture="unet",
                 input_nc=input_nc,
                 num_layers=4,
-                output_nc=self.get_attr(voting_option, "feat_dim"),
+                output_nc=self._get_attr(voting_option, "feat_dim"),
                 **kwargs,
             )
             self._kpconv_backbone = backbone == "KPConv"
-            self._num_points_to_sample = voting_option.num_points_to_sample
+            self.sampler = RandomSamplerToDense(num_to_sample=voting_option.num_points_to_sample)
             self.conv_type = self.backbone_model.conv_type
         self.is_dense_format = self.conv_type == "DENSE"
 
@@ -198,8 +124,8 @@ class VoteNetModel(BaseModel):
         voting_option = option.voting
         voting_cls = getattr(votenet_module, voting_option.module_name)
         self.voting_module = voting_cls(
-            vote_factor=self.get_attr(voting_option, "vote_factor"),
-            seed_feature_dim=self.get_attr(voting_option, "feat_dim"),
+            vote_factor=self._get_attr(voting_option, "vote_factor"),
+            seed_feature_dim=self._get_attr(voting_option, "feat_dim"),
         )
 
         # 3 - CREATE PROPOSAL MODULE
@@ -249,14 +175,12 @@ class VoteNetModel(BaseModel):
 
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         data_features = self.backbone_model.forward(self.input)
-        if self._backbone is None:
+        if self._original:
             sampling_id_key = "sampling_id_0"
             num_seeds = data_features.pos.shape[1]
             seed_inds = getattr(data_features, sampling_id_key, None)[:, :num_seeds]
         else:
-            data_features, seed_inds = sample_to_dense_format(
-                data_features, self._num_batches, self.conv_type, self._num_points_to_sample
-            )
+            data_features, seed_inds = self.sampler(data_features, self._num_batches, self.conv_type)
         data_votes = self.voting_module(data_features)
         setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
 
@@ -264,8 +188,8 @@ class VoteNetModel(BaseModel):
 
         # Set output and compute losses
         self._extract_gt_center(data, outputs)
-        self.input = data
-        self.output = outputs if self.is_dense_format else self._convert_tensors_to_dense_format(data, outputs)
+        self.input = votenet_module.VoteNetResults.convert_tensors_to_dense_format(data, self._num_batches)
+        self.output = outputs
         if self._compute_loss:
             self._compute_losses()
 
@@ -280,16 +204,7 @@ class VoteNetModel(BaseModel):
             gt_center = data.center_label[:, 0:3].view((self._num_batches, -1, 3))
         outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
-    def _convert_tensors_to_dense_format(self, data, outputs):
-        data["heading_class_label"] = data["heading_class_label"].view((self._num_batches, -1))
-        data["heading_residual_label"] = data["heading_residual_label"].view((self._num_batches, -1))
-        data["size_class_label"] = data["size_class_label"].view((self._num_batches, -1))
-        data["size_residual_label"] = data["size_residual_label"].view((self._num_batches, -1, 3))
-        data["sem_cls_label"] = data["sem_cls_label"].view((self._num_batches, -1))
-        self.input = data
-        return outputs
-
-    def get_attr(self, opt, arg_name):
+    def _get_attr(self, opt, arg_name):
         arg = self._kwargs.get(arg_name, None)
         if arg is None:
             arg = opt.get(arg_name, None)

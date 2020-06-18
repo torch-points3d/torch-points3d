@@ -404,6 +404,7 @@ class TestAPIVoteNet(unittest.TestCase):
 
         train_loader = dataset.train_dataloader
         data = next(iter(train_loader))
+        print(data)
         data = GridSampling3D(0.1)(data)
         # for key in data.keys:
         #    print(key, data[key].shape, data[key].dtype)
