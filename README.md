@@ -17,6 +17,7 @@ It also provide a high level API to democratize deep learning on pointclouds.
 - MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
 
 Install with
+
 ```bash
 pip install torch
 pip install torch-points3d
@@ -58,15 +59,16 @@ where each folder contains the dataset related to each task.
 
 ## Methods currently implemented
 
-* **[PointNet](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/modules/PointNet/modules.py#L54)** from Charles R. Qi *et al.*: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
-* **[PointNet++](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/pointnet2)** from Charles from Charles R. Qi *et al.*: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
-* **[RSConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RSConv)** from Yongcheng Liu *et al.*: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
-* **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RandLANet)** from Qingyong Hu *et al.*: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
-* **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li *et al.*: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
-* **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas *et al.*: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
-* **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy *et al.*: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR19)
-* **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi *et al.*: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
-- **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
+- **[PointNet](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/modules/PointNet/modules.py#L54)** from Charles R. Qi _et al._: [PointNet: Deep Learning on Point Sets for 3D Classification and Segmentation](https://arxiv.org/abs/1612.00593) (CVPR 2017)
+- **[PointNet++](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/pointnet2)** from Charles from Charles R. Qi _et al._: [PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space](https://arxiv.org/abs/1706.02413)
+- **[RSConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RSConv)** from Yongcheng Liu _et al._: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
+- **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RandLANet)** from Qingyong Hu _et al._: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
+- **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li _et al._: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
+- **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas _et al._: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
+- **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy _et al._: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR19)
+- **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi _et al._: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
+
+* **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
 
 ## Available datasets
 
@@ -85,8 +87,8 @@ where each folder contains the dataset related to each task.
 - **[Shapenet](https://www.shapenet.org/)** from Angel X. Chang _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
 
 ### Object detection and panoptic
-* **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai *et al.*: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 
+- **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai _et al._: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 
 ### Registration
 
@@ -97,7 +99,9 @@ where each folder contains the dataset related to each task.
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
 ## API
+
 ### KPConv
+
 ```python
 from torch_points3d.applications.kpconv import KPConv
 
@@ -109,6 +113,7 @@ model = KPConv(
     num_layers=4,
 )
 ```
+
 ### PointNet2
 
 ```python
@@ -139,11 +144,29 @@ model = RSConv(
 )
 ```
 
+### VoteNet
+
+```python
+from torch_points3d.applications.votenet import VoteNet
+
+model = VoteNet(
+  original=False, # Wether to create official VoteNet or use custom backbone.
+  backbone="kpconv",
+  input_nc=3,
+  num_classes=20,
+  mean_size_arr=[], # (num_classes, 3) If available, prior mean box sizes for each class
+  compute_loss=True,
+  in_feat=64, # Used for the bakcbone
+)
+```
+
 ## Developer guidelines
 
 ### Setup repo
+
 We use [Poetry](https://poetry.eustace.io/) for managing our packages.
 In order to get started, clone this repositories and run the following command from the root of the repo
+
 ```
 poetry install --no-root
 ```
@@ -245,16 +268,16 @@ pointnet2_onehot:
 
 ## S3DIS 1x1
 
-| Model Name                                                           | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
-| -------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
+| Model Name                                                                                                                        | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
 | [`pointnet2_original`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/s3dis_fold5/Pointnet2_original.md) | 3,026,829 | 04:29 / 01:07(RTX 2060) | 0.0512        | 85.26 | 45.58 | 73.11 |
 
 ## Shapenet part segmentation
 
 The data reported below correspond to the part segmentation problem for Shapenet for all categories. We report against mean instance IoU and mean class IoU (average of the mean instance IoU per class)
 
-| Model Name                                                            | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
-| --------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
+| Model Name                                                                                                                         | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
 | [`pointnet2_charlesmsg`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes         | 1,733,946 | 15:07 / 01:20 (K80)     | 0.089         | 82.1   | 85.1  |
 | [`RSCNN_MSG`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/rscnn_original.md)                  | No          | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04          | 82.811 | 85.3  |
 

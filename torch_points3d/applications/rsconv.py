@@ -52,7 +52,7 @@ class RSConvFactory(ModelFactory):
         else:
             path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return RSConvUnet(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -62,7 +62,7 @@ class RSConvFactory(ModelFactory):
         else:
             path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return RSConvEncoder(model_config, None, None, modules_lib, **self.kwargs)
 

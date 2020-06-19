@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import OmegaConf
-
 from torch_points3d.modules.pointnet2 import PointNetMSGDown
 import torch_points_kernels as tp
 from .votenet_results import VoteNetResults
@@ -33,15 +32,14 @@ class ProposalModule(nn.Module):
         self.sampling = sampling
         self.seed_feat_dim = seed_feat_dim
 
+        # Object proposal/detection
+        # Objectness scores (2), center residual (3),
+        # heading class+residual (num_heading_bin*2), size class+residual(num_size_cluster*4)
         assert (
             vote_aggregation_config.module_name == "PointNetMSGDown"
         ), "Proposal Module support only PointNet2 for now"
         params = OmegaConf.to_container(vote_aggregation_config)
         self.vote_aggregation = PointNetMSGDown(**params)
-
-        # Object proposal/detection
-        # Objectness scores (2), center residual (3),
-        # heading class+residual (num_heading_bin*2), size class+residual(num_size_cluster*4)
         self.conv1 = torch.nn.Conv1d(128, 128, 1)
         self.conv2 = torch.nn.Conv1d(128, 128, 1)
         self.conv3 = torch.nn.Conv1d(128, 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class, 1)
@@ -59,6 +57,7 @@ class ProposalModule(nn.Module):
         """
         if data.pos.dim() != 3:
             raise ValueError("This method only supports dense convolutions for now")
+
         if self.sampling == "seed_fps":
             sample_idx = tp.furthest_point_sample(data.seed_pos, self.num_proposal)
         else:
