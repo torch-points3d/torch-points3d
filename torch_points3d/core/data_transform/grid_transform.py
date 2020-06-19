@@ -65,6 +65,8 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
             if mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
+                is_item_bool = item.dtype == torch.bool
+                if is_item_bool: item = item.int()
                 if key in _INTEGER_LABEL_KEYS:
                     item_min = item.min()
                     item = F.one_hot(item - item_min)
@@ -72,6 +74,7 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
                     data[key] = item.argmax(dim=-1) + item_min
                 else:
                     data[key] = scatter_mean(item, cluster, dim=0)
+                if is_item_bool: data[key] = data[key].bool()
     return data
 
 

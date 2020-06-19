@@ -47,11 +47,15 @@ def compute_vote_loss(input, output: VoteNetResults):
     #   non-object point has no GT vote mask = 0, object point has mask = 1
     # vote_label: Use gather to select B,num_seed,9 from B,num_point,9
     #   with inds in shape B,num_seed,9 and 9 = GT_VOTE_FACTOR * 3
-    seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 1, seed_inds)
-    seed_inds_expand = seed_inds.view(batch_size, num_seed, 1).repeat(1, 1, 3 * GT_VOTE_FACTOR)
-
-    seed_gt_votes = torch.gather(input["vote_label"], 1, seed_inds_expand)
-    seed_gt_votes += output["seed_pos"].repeat(1, 1, 3)
+    if seed_inds.dim() == 1:
+        seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 0, seed_inds).view((batch_size, -1))
+        seed_gt_votes = torch.gather(input["vote_label"], 0, seed_inds.unsqueeze(-1).repeat(1, 3 * GT_VOTE_FACTOR))
+        seed_gt_votes += output["seed_pos"].view((-1, 3)).repeat((1, 3))
+    else:
+        seed_gt_votes_mask = torch.gather(input["vote_label_mask"], 1, seed_inds)
+        seed_inds_expand = seed_inds.view(batch_size, num_seed, 1).repeat(1, 1, 3 * GT_VOTE_FACTOR)
+        seed_gt_votes = torch.gather(input["vote_label"], 1, seed_inds_expand)
+        seed_gt_votes += output["seed_pos"].repeat(1, 1, 3)
 
     # Compute the min of min of distance
     vote_xyz_reshape = vote_xyz.view(
@@ -115,7 +119,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
 
     # Compute center loss
     pred_center = outputs["center"]
-    gt_center = inputs["center_label"][:, :, 0:3]
+    gt_center = inputs["gt_center"]
     dist1, ind1, dist2, _ = nn_distance(pred_center, gt_center)  # dist1: BxK, dist2: BxK2
     box_label_mask = inputs["box_label_mask"]
     objectness_label = outputs["objectness_label"].float()
@@ -154,33 +158,37 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     # Compute size loss
     size_class_label = torch.gather(inputs["size_class_label"], 1, object_assignment)  # select (B,K) from (B,K2)
     criterion_size_class = nn.CrossEntropyLoss(reduction="none")
-    size_class_loss = criterion_size_class(outputs["size_scores"].transpose(2, 1), size_class_label.long())  # (B,K)
-    size_class_loss = torch.sum(size_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
+    if num_size_cluster != 0:
+        size_class_loss = criterion_size_class(outputs["size_scores"].transpose(2, 1), size_class_label.long())  # (B,K)
+        size_class_loss = torch.sum(size_class_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
 
-    size_residual_label = torch.gather(
-        inputs["size_residual_label"], 1, object_assignment.unsqueeze(-1).repeat(1, 1, 3)
-    )  # select (B,K,3) from (B,K2,3)
+        size_residual_label = torch.gather(
+            inputs["size_residual_label"], 1, object_assignment.unsqueeze(-1).repeat(1, 1, 3)
+        )  # select (B,K,3) from (B,K2,3)
 
-    size_label_one_hot = torch.zeros(batch_size, size_class_label.shape[1], num_size_cluster).to(inputs.pos.device)
-    size_label_one_hot.scatter_(
-        2, size_class_label.unsqueeze(-1).long(), 1
-    )  # src==1 so it's *one-hot* (B,K,num_size_cluster)
-    size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
-    predicted_size_residual_normalized = torch.sum(
-        outputs["size_residuals_normalized"] * size_label_one_hot_tiled, 2
-    )  # (B,K,3)
+        size_label_one_hot = torch.zeros(batch_size, size_class_label.shape[1], num_size_cluster).to(inputs.pos.device)
+        size_label_one_hot.scatter_(
+            2, size_class_label.unsqueeze(-1).long(), 1
+        )  # src==1 so it's *one-hot* (B,K,num_size_cluster)
+        size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
+        predicted_size_residual_normalized = torch.sum(
+            outputs["size_residuals_normalized"] * size_label_one_hot_tiled, 2
+        )  # (B,K,3)
 
-    mean_size_arr_expanded = (
-        torch.from_numpy(mean_size_arr.astype(np.float32)).unsqueeze(0).unsqueeze(0).to(inputs.pos.device)
-    )  # (1,1,num_size_cluster,3)
-    mean_size_label = torch.sum(size_label_one_hot_tiled * mean_size_arr_expanded, 2)  # (B,K,3)
-    size_residual_label_normalized = size_residual_label / mean_size_label  # (B,K,3)
-    size_residual_normalized_loss = torch.mean(
-        huber_loss(predicted_size_residual_normalized - size_residual_label_normalized, delta=1.0), -1
-    )  # (B,K,3) -> (B,K)
-    size_residual_normalized_loss = torch.sum(size_residual_normalized_loss * objectness_label) / (
-        torch.sum(objectness_label) + 1e-6
-    )
+        mean_size_arr_expanded = (
+            torch.from_numpy(mean_size_arr.astype(np.float32)).unsqueeze(0).unsqueeze(0).to(inputs.pos.device)
+        )  # (1,1,num_size_cluster,3)
+        mean_size_label = torch.sum(size_label_one_hot_tiled * mean_size_arr_expanded, 2)  # (B,K,3)
+        size_residual_label_normalized = size_residual_label / mean_size_label  # (B,K,3)
+        size_residual_normalized_loss = torch.mean(
+            huber_loss(predicted_size_residual_normalized - size_residual_label_normalized, delta=1.0), -1
+        )  # (B,K,3) -> (B,K)
+        size_residual_normalized_loss = torch.sum(size_residual_normalized_loss * objectness_label) / (
+            torch.sum(objectness_label) + 1e-6
+        )
+    else:
+        size_class_loss = 0
+        size_residual_normalized_loss = 0
 
     # 3.4 Semantic cls loss
     sem_cls_label = torch.gather(inputs["sem_cls_label"], 1, object_assignment)  # select (B,K) from (B,K2)
@@ -198,8 +206,30 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     )
 
 
+def to_dense_labels(data):
+
+    if data.batch is not None:
+        batch_size = len(torch.unique(data.batch))
+    else:
+        batch_size = data.pos.shape[0]
+
+    data["heading_class_label"] = data["heading_class_label"].view((batch_size, -1))
+    data["heading_residual_label"] = data["heading_residual_label"].view((batch_size, -1))
+    data["size_class_label"] = data["size_class_label"].view((batch_size, -1))
+    data["size_residual_label"] = data["size_residual_label"].view((batch_size, -1, 3))
+    data["sem_cls_label"] = data["sem_cls_label"].view((batch_size, -1))
+    data["box_label_mask"] = data["box_label_mask"].view((batch_size, -1))
+    if data["center_label"].dim() == 3:
+        data["gt_center"] = data["center_label"][:, :, 0:3]
+    else:
+        data["gt_center"] = data["center_label"][:, 0:3].view((batch_size, -1, 3))
+    return data
+
+
 def get_loss(inputs, outputs: VoteNetResults, loss_params):
     losses = {}
+
+    inputs = to_dense_labels(inputs)
 
     # Vote loss
     vote_loss = compute_vote_loss(inputs, outputs)

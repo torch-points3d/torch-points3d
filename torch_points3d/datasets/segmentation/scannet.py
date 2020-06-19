@@ -669,7 +669,11 @@ class Scannet(InMemoryDataset):
         metadata_path = osp.join(self.raw_dir, "metadata")
         self.label_map_file = osp.join(metadata_path, LABEL_MAP_FILE)
         split_files = ["scannetv2_{}.txt".format(s) for s in Scannet.SPLITS]
-        self.scan_names = [sorted([line.rstrip() for line in open(osp.join(metadata_path, sf))]) for sf in split_files]
+        self.scan_names = []
+        for sf in split_files:
+            f = open(osp.join(metadata_path, sf))
+            self.scan_names.append(sorted([line.rstrip() for line in f]))
+            f.close()
 
         for idx_split, split in enumerate(Scannet.SPLITS):
             idx_mapping = {idx: scan_name for idx, scan_name in enumerate(self.scan_names[idx_split])}

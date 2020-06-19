@@ -101,6 +101,10 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     def conv_type(self):
         return self._conv_type
 
+    @conv_type.setter
+    def conv_type(self, conv_type):
+        self._conv_type = conv_type
+
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:

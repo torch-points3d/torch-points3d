@@ -78,14 +78,14 @@ class ModelFactory:
         else:
             raise NotImplementedError
 
-    def resolve_model(self, model_config):
+    @staticmethod
+    def resolve_model(model_config, num_features, kwargs):
         """ Parses the model config and evaluates any expression that may contain constants
         Overrides any argument in the `define_constants` with keywords wrgument to the constructor
         """
         # placeholders to subsitute
         constants = {
-            "FEAT": max(self.num_features, 0),
-            "TASK": "segmentation",
+            "FEAT": max(num_features, 0),
         }
 
         # user defined contants to subsitute
@@ -93,7 +93,7 @@ class ModelFactory:
             constants.update(dict(model_config.define_constants))
             define_constants = model_config.define_constants
             for key in define_constants.keys():
-                value = self.kwargs.get(key)
+                value = kwargs.get(key)
                 if value:
                     constants[key] = value
         resolve(model_config, constants)

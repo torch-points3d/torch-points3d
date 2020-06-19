@@ -2,6 +2,7 @@ import unittest
 
 from omegaconf import OmegaConf
 import torch
+from torch.utils.data import Dataset
 from torch_geometric.data import Batch
 import os
 import sys
@@ -12,7 +13,7 @@ sys.path.append(ROOT)
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 
 
-class MockDataset(torch.utils.data.Dataset):
+class MockDataset(Dataset):
     def __init__(self, feature_size=6):
         self.feature_dimension = feature_size
         self.num_classes = 10

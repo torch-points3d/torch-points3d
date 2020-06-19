@@ -1,0 +1,26 @@
+define_constants:
+  num_proposal: 256
+  num_features: 256
+  num_classes: 18 # Should be $(data.num_classes)
+voting:
+  num_points_to_sample: 1024
+  module_name: VotingModule
+  vote_factor: 1
+  feat_dim: num_features
+proposal:
+  module_name: ProposalModule
+  vote_aggregation:
+    module_name: PointNetMSGDown
+    npoint: num_proposal
+    radii: [0.3]
+    nsample: [16]
+    down_conv_nn: [[num_features + 3, 64 * 2, 64 * 2, 64 * 2]]
+  num_class: num_classes
+  num_heading_bin: 1
+  num_proposal: num_proposal
+  sampling: 'seed_fps'
+loss_params:
+  far_threshold: 0.6
+  near_threshold: 0.3
+  gt_vote_factor: 3 # number of GT votes per point
+  objectness_cls_weights: [0.2, 0.8]
