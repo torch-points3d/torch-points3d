@@ -73,8 +73,7 @@ class VoteNetModel(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         # Forward through backbone model
-        batch_size = data.pos.shape[0]
-        self.input = votenet_module.VoteNetResults.convert_tensors_to_dense_format(data.to(device), batch_size)
+        self.input = data.to(device)
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""

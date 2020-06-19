@@ -188,7 +188,7 @@ class VoteNet(BaseModel):
 
         # Set output and compute losses
         self._extract_gt_center(data, outputs)
-        self.input = votenet_module.VoteNetResults.convert_tensors_to_dense_format(data, self._num_batches)
+        self.input = data
         self.output = outputs
         if self._compute_loss:
             self._compute_losses()

@@ -206,8 +206,30 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
     )
 
 
+def to_dense_labels(data):
+
+    if data.batch is not None:
+        batch_size = len(torch.unique(data.batch))
+    else:
+        batch_size = data.pos.shape[0]
+
+    data["heading_class_label"] = data["heading_class_label"].view((batch_size, -1))
+    data["heading_residual_label"] = data["heading_residual_label"].view((batch_size, -1))
+    data["size_class_label"] = data["size_class_label"].view((batch_size, -1))
+    data["size_residual_label"] = data["size_residual_label"].view((batch_size, -1, 3))
+    data["sem_cls_label"] = data["sem_cls_label"].view((batch_size, -1))
+    data["box_label_mask"] = data["box_label_mask"].view((batch_size, -1))
+    if data["center_label"].dim() == 3:
+        data["gt_center"] = data["center_label"][:, :, 0:3]
+    else:
+        data["gt_center"] = data["center_label"][:, 0:3].view((batch_size, -1, 3))
+    return data
+
+
 def get_loss(inputs, outputs: VoteNetResults, loss_params):
     losses = {}
+
+    inputs = to_dense_labels(inputs)
 
     # Vote loss
     vote_loss = compute_vote_loss(inputs, outputs)
