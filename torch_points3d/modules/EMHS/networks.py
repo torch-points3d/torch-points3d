@@ -2,7 +2,14 @@ from typing import *
 import numpy as np
 from torch import nn
 
-from torch_points3d.modules.EMHS.modules import EMHSResidualLayer
+from torch_points3d.modules.EMHS.modules import EMHSLayer
+
+
+class Inputs(NamedTuple):
+    pos: torch.Tensor
+    x: torch.Tensor
+    pooling_idx: torch.Tensor
+    broadcasting_idx: torch.Tensor
 
 
 class EMHSModel(nn.Module):
@@ -25,6 +32,9 @@ class EMHSModel(nn.Module):
         assert output_nc is not None, "output_nc is undefined"
         assert module_name is not None, "module_name is undefined"
         assert layers_slice is not None, "layers_slice is undefined"
+        if use_attention:
+            assert latent_classes is not None, "latent_classes is undefined"
+            assert len(latent_classes) == len(layers_slice), "latent_classes and layers_slice should have the same size"
 
         # VALIDATION FOR IDX SLICES
         layers_idx = []
@@ -36,21 +46,24 @@ class EMHSModel(nn.Module):
 
         super().__init__()
 
-        for ls in layers_slice:
+        for idx_ls, ls in enumerate(layers_slice):
             s, e = ls.split("-")
             for layer_idx in range(int(s), int(e)):
                 is_first = layer_idx == min(layers_idx)
                 is_last = layer_idx == max(layers_idx)
-                module = EMHSResidualLayer(
+                module = EMHSLayer(
                     input_nc if is_first else feat_dim,
                     output_nc if is_last else feat_dim,
                     feat_dim,
-                    latent_classes,
+                    num_elm,
+                    use_attention if not is_last else False,
+                    latent_classes[idx_ls] if latent_classes is not None else None,
                     kernel_size,
                 )
                 self.add_module(str(layer_idx), module)
 
         print(self)
 
-        def forward(self, x, pos):
-            pass
+    def forward(self, x, pos):
+
+        pass

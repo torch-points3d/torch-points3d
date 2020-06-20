@@ -12,6 +12,8 @@ def initialize_emhs(
     output_nc,
     num_layers,
     module_name,
+    num_elm,
+    use_attention,
     layers_slice,
     latent_classes,
     voxelization,
@@ -25,7 +27,7 @@ def initialize_emhs(
         input_nc, output_nc, num_layers, module_name, layers_slice, latent_classes, voxelization, kernel_size, feat_dim
     )
 
-    model_cls(
+    return model_cls(
         input_nc=input_nc,
         output_nc=output_nc,
         num_layers=num_layers,

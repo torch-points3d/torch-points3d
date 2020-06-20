@@ -3,6 +3,7 @@ from omegaconf import OmegaConf
 import os
 import sys
 from glob import glob
+import numpy as np
 import torch
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -12,7 +13,6 @@ sys.path.insert(0, ROOT)
 from test.mockdatasets import MockDatasetGeometric, MockDataset
 from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 from test.utils import test_hasgrad
-
 from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling3D
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
@@ -138,6 +138,27 @@ class TestModels(unittest.TestCase):
             option.layers.kernel_size,
             option.layers.feat_dim,
         )
+
+        batch_size = 2
+        num_points = 100
+        num_features = 2
+
+        pos = torch.randn((batch_size, num_points, 3))
+        x = torch.randn((batch_size, num_points, num_features))
+        model.forward(pos, x)
+
+    def test_emhs_attention_op(self):
+        num_pos = 100
+        batch_size = 2
+        in_feat = 12
+        latent_dim = 8
+        x = np.zeros((batch_size, num_pos, in_feat))
+        w3 = np.zeros((in_feat, latent_dim))
+        w4 = np.zeros((latent_dim, latent_dim, in_feat, in_feat))
+        pi = np.einsum("bpc, fl -> bpl", x, w3)
+        pi_x = np.einsum("bpc, bpl -> bpc", x, pi)
+        pi_t_w4 = np.einsum("bpl, lmcd -> bpc", pi, w4)
+        np.einsum("bpc, bpc -> bpc", pi_t_w4, pi_x)
 
 
 if __name__ == "__main__":

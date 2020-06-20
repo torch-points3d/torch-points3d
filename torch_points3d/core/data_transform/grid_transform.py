@@ -77,6 +77,58 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
                 if is_item_bool: data[key] = data[key].bool()
     return data
 
+class GridSampling3DIdx:
+    """ Get cluster idx for creating dynamically voxels.
+    Parameters
+    ----------
+    voxelization: List[Int]:
+        Example: [9, 9, 9]
+    """
+
+    def __init__(self, voxelization, verbose=False):
+        assert len(voxelization) == 3, 'voxelization should contains 3 values'
+        for v in voxelization:
+            assert (v is not None) or (v == 0), 'v should not be equal to 0 or None'
+        self._voxelization = torch.Tensor(voxelization)
+        if verbose:
+            log.warning(
+                "If you need to keep track of the position of your points, use SaveOriginalPosId transform before using GridSampling3D"
+            )
+
+            if self._mode == "last":
+                log.warning(
+                    "The tensors within data will be shuffled each time this transform is applied. Be careful that if an attribute doesn't have the size of num_points, it won't be shuffled"
+                )
+
+    def _process(self, data):
+
+        start = data.pos.min(0)[0]
+        end = data.pos.max(0)[0]
+        size = (end - start) / self._voxelization
+
+        if "batch" not in data:
+            cluster = grid_cluster(data.pos, size, start, end)
+        else:
+            raise NotImplementedError
+        
+        data.cluster_non_consecutive = cluster
+        cluster, unique_pos_indices = consecutive_cluster(cluster)
+        data.consecutive_cluster = cluster
+        data.unique_pos_indices = unique_pos_indices
+
+        return data
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(grid_size={}, quantize_coords={}, mode={})".format(
+            self.__class__.__name__, self._grid_size, self._quantize_coords, self._mode
+        )
 
 class GridSampling3D:
     """ Clusters points into voxels with size :attr:`size`.

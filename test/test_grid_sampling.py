@@ -65,6 +65,30 @@ class TestGridSampling3D(unittest.TestCase):
         self.assertEqual(quantized.num_nodes, quantized.pos.shape[0])
         self.assertEqual(quantized.pos.dtype, torch.int)
 
+    def test_grid_sampling_idx(self):
+        num_points = 100
+        data = Data(pos=torch.randn(num_points, 3), x=torch.ones((num_points, 1)))
+        gr = cT.GridSampling3DIdx([9, 9, 9])
+        data_out = gr(data)
+        data_voxelized = cT.group_data(
+            data,
+            cluster=data_out.consecutive_cluster,
+            unique_pos_indices=data_out.unique_pos_indices,
+            mode="mean",
+            skip_keys=[],
+        )
+
+        grid = torch.zeros((9, 9, 9))
+        import pdb
+
+        pdb.set_trace()
+        grid[data_voxelized.cluster_non_consecutive] = data_voxelized.x
+        assert data_voxelized.pos.shape[0]
+
+        import pdb
+
+        pdb.set_trace()
+
 
 if __name__ == "__main__":
     unittest.main()
