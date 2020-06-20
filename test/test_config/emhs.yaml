@@ -1,0 +1,15 @@
+# Equivariant Maps for Hierarchical Structures (https://arxiv.org/pdf/2006.03627.pdf)
+# EMHS support format_type="[DENSE]"
+class: emhs.EMHSPaper
+conv_type: 'DENSE'
+num_layers: 56
+layers:
+  model_name: EMHSModel
+  module_name: EMHSResidualLayer
+  num_elm: 2
+  use_attention: True
+  layers_slice: [1-20, 20-30, 30-40, 40-50, 50-57]
+  latent_classes: [5, 10, 15, 25, 50]
+  voxelization: [9, 9, 9]
+  kernel_size: [3, 3, 3]
+  feat_dim: 64

@@ -18,6 +18,7 @@ from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSa
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
+from torch_points3d.modules.EMHS import initialize_emhs
 
 
 HAS_MINKOWSKI = True
@@ -118,6 +119,25 @@ class TestModels(unittest.TestCase):
                         except Exception as e:
                             print("Model with zero gradient %s: %s" % (type_file, model_name))
                             raise e
+
+    def test_emhs(self):
+
+        option = OmegaConf.load(os.path.join(DIR, "test_config/emhs.yaml"))
+
+        model = initialize_emhs(
+            option.layers.model_name,
+            3,
+            20,
+            option.num_layers,
+            option.layers.module_name,
+            option.layers.num_elm,
+            option.layers.use_attention,
+            option.layers.layers_slice,
+            option.layers.latent_classes,
+            option.layers.voxelization,
+            option.layers.kernel_size,
+            option.layers.feat_dim,
+        )
 
 
 if __name__ == "__main__":
