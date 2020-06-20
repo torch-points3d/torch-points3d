@@ -127,6 +127,7 @@ class TestModels(unittest.TestCase):
         option = OmegaConf.load(os.path.join(DIR, "test_config/emhs.yaml"))
 
         num_points = 100
+        num_classes = 20
         num_features = 2
         pos = torch.randn((num_points, 3))
         x = torch.randn((num_points, num_features))
@@ -134,7 +135,7 @@ class TestModels(unittest.TestCase):
         model = initialize_emhs(
             option.layers.model_name,
             num_features,
-            20,
+            num_classes,
             option.num_layers,
             option.layers.module_name,
             option.layers.num_elm,
@@ -149,7 +150,8 @@ class TestModels(unittest.TestCase):
         data = Data(pos=pos, x=x)
         gr = cT.GridSampling3DIdx([9, 9, 9])
         data = gr(data)
-        model.forward(data.x, data.consecutive_cluster, data.cluster_non_consecutive)
+        x = model.forward(data.x, data.consecutive_cluster, data.cluster_non_consecutive)
+        self.assertEqual(x.shape, torch.Size([num_points, num_classes]))
 
     def test_emhs_attention_op(self):
         num_pos = 100
