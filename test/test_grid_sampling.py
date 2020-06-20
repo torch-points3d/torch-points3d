@@ -70,24 +70,18 @@ class TestGridSampling3D(unittest.TestCase):
         data = Data(pos=torch.randn(num_points, 3), x=torch.ones((num_points, 1)))
         gr = cT.GridSampling3DIdx([9, 9, 9])
         data_out = gr(data)
+
         data_voxelized = cT.group_data(
-            data,
+            data_out.clone(),
             cluster=data_out.consecutive_cluster,
             unique_pos_indices=data_out.unique_pos_indices,
             mode="mean",
-            skip_keys=[],
         )
 
         grid = torch.zeros((9, 9, 9))
-        import pdb
+        grid.flatten()[torch.unique(data_out.cluster_non_consecutive)] = data_voxelized.x.squeeze()
 
-        pdb.set_trace()
-        grid[data_voxelized.cluster_non_consecutive] = data_voxelized.x
-        assert data_voxelized.pos.shape[0]
-
-        import pdb
-
-        pdb.set_trace()
+        self.assertEqual(grid.flatten()[data_out.cluster_non_consecutive].shape[0], num_points)
 
 
 if __name__ == "__main__":

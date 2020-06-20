@@ -104,7 +104,7 @@ class GridSampling3DIdx:
 
         start = data.pos.min(0)[0]
         end = data.pos.max(0)[0]
-        size = (end - start) / self._voxelization
+        size = (end - start) / (self._voxelization  - 1)
 
         if "batch" not in data:
             cluster = grid_cluster(data.pos, size, start, end)
