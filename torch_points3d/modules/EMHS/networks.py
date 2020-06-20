@@ -1,7 +1,7 @@
 from typing import *
 import numpy as np
+import torch
 from torch import nn
-
 from torch_points3d.modules.EMHS.modules import EMHSLayer
 
 
@@ -64,6 +64,7 @@ class EMHSModel(nn.Module):
 
         print(self)
 
-    def forward(self, x, pos):
-
-        pass
+    def forward(self, x, consecutive_cluster, cluster_non_consecutive):
+        for m in self._modules.values():
+            x = m(x, consecutive_cluster, cluster_non_consecutive)
+        return x

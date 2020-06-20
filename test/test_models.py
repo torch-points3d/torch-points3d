@@ -13,12 +13,14 @@ sys.path.insert(0, ROOT)
 from test.mockdatasets import MockDatasetGeometric, MockDataset
 from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 from test.utils import test_hasgrad
+from torch_geometric.data import Data
 from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling3D
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
 from torch_points3d.modules.EMHS import initialize_emhs
+import torch_points3d.core.data_transform as cT
 
 
 HAS_MINKOWSKI = True
@@ -124,9 +126,14 @@ class TestModels(unittest.TestCase):
 
         option = OmegaConf.load(os.path.join(DIR, "test_config/emhs.yaml"))
 
+        num_points = 100
+        num_features = 2
+        pos = torch.randn((num_points, 3))
+        x = torch.randn((num_points, num_features))
+
         model = initialize_emhs(
             option.layers.model_name,
-            3,
+            num_features,
             20,
             option.num_layers,
             option.layers.module_name,
@@ -139,13 +146,10 @@ class TestModels(unittest.TestCase):
             option.layers.feat_dim,
         )
 
-        batch_size = 2
-        num_points = 100
-        num_features = 2
-
-        pos = torch.randn((batch_size, num_points, 3))
-        x = torch.randn((batch_size, num_points, num_features))
-        model.forward(pos, x)
+        data = Data(pos=pos, x=x)
+        gr = cT.GridSampling3DIdx([9, 9, 9])
+        data = gr(data)
+        model.forward(data.x, data.consecutive_cluster, data.cluster_non_consecutive)
 
     def test_emhs_attention_op(self):
         num_pos = 100

@@ -1,4 +1,5 @@
 from typing import *
+from torch_scatter import scatter_mean
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -35,8 +36,10 @@ class EMHSLayer(nn.Module):
 
         self.model = nn.Sequential(*modules)
 
-    def forward(self, x, pos):
-        pass
+    def forward(self, x, consecutive_cluster, cluster_non_consecutive):
+        for m in self.model._modules.values():
+            x = m(x, consecutive_cluster, cluster_non_consecutive)
+        return x
 
 
 class EquivariantLinearMapsModule(nn.Module):
@@ -47,18 +50,22 @@ class EquivariantLinearMapsModule(nn.Module):
         use_attention: bool = True,
         latent_dim: int = 50,
         kernel_size: List = [3, 3, 3],
+        voxelization=[9, 9, 9],
     ):
 
         super().__init__()
 
-        self.use_attention = use_attention
+        self.input_nc = input_nc
+        self.output_nc = output_nc
+        self.use_attention = False  # use_attention
+        self.voxelization = voxelization
 
         if self.use_attention:
             self.lin = nn.Linear(input_nc, latent_dim)
             self.weight = torch.nn.Parameter(torch.zeros(latent_dim, latent_dim, input_nc, output_nc))
         else:
             self.lin = nn.Linear(input_nc, output_nc)
-        self.conv = nn.Conv3d(input_nc, output_nc, kernel_size=kernel_size)
+        self.conv = nn.Conv3d(input_nc, output_nc, kernel_size=kernel_size, padding=1)
 
     def _attention_ops(self, x):
         pi = self.lin(x)
@@ -67,13 +74,14 @@ class EquivariantLinearMapsModule(nn.Module):
         pi_t_w4 = torch.einsum("bpl, lmcd -> bpc", pi, self.weight)
         return torch.einsum("bpc, bpc -> bpc", pi_t_w4, pi_x)
 
-    def forward(self, x, pooling_idx, broadcasting_idx):
-
+    def forward(self, x, consecutive_cluster, cluster_non_consecutive):
         if self.use_attention:
             inner_equivariant_map = self._attention_ops(x)
         else:
             inner_equivariant_map = self.lin(x)
 
-        outer_equivariant_map = 0
-
-        return (inner_equivariant_map + outer_equivariant_map, pooling_idx, broadcasting_idx)
+        grid = torch.zeros([self.input_nc] + self.voxelization).view((self.input_nc, -1))
+        grid[:, torch.unique(cluster_non_consecutive)] = scatter_mean(x, consecutive_cluster, dim=0).t()
+        grid = self.conv(grid.view(([1] + [self.input_nc] + self.voxelization)))
+        outer_equivariant_map = grid.view((self.output_nc, -1))[:, cluster_non_consecutive].t()
+        return inner_equivariant_map + outer_equivariant_map
