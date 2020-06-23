@@ -109,7 +109,7 @@ class GridSampling3DIdx:
         if "batch" not in data:
             cluster = grid_cluster(data.pos, size, start, end)
         else:
-            raise NotImplementedError
+            cluster = voxel_grid(data.pos, data.batch, size)
         
         data.cluster_non_consecutive = cluster
         cluster, unique_pos_indices = consecutive_cluster(cluster)

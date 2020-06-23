@@ -2,6 +2,7 @@ from typing import *
 import numpy as np
 import torch
 from torch import nn
+from omegaconf.listconfig import ListConfig
 from torch_points3d.modules.EMHS.modules import EMHSLayer
 
 
@@ -35,6 +36,7 @@ class EMHSModel(nn.Module):
         if use_attention:
             assert latent_classes is not None, "latent_classes is undefined"
             assert len(latent_classes) == len(layers_slice), "latent_classes and layers_slice should have the same size"
+        self._voxelization = voxelization.to_container() if isinstance(voxelization, ListConfig) else voxelization
 
         # VALIDATION FOR IDX SLICES
         layers_idx = []
@@ -59,12 +61,29 @@ class EMHSModel(nn.Module):
                     use_attention if not is_last else False,
                     latent_classes[idx_ls] if latent_classes is not None else None,
                     kernel_size,
+                    voxelization,
                 )
                 self.add_module(str(layer_idx), module)
 
         print(self)
 
-    def forward(self, x, consecutive_cluster, cluster_non_consecutive):
+    @property
+    def voxelization(self):
+        return self._voxelization
+
+    def forward(self, x, consecutive_cluster, cluster_non_consecutive, batch=None):
+        unique_cluster_non_consecutive = torch.unique(cluster_non_consecutive)
+        if batch is not None:
+            batch_size = len(torch.unique(batch))
+        else:
+            batch_size = x.shape[0]
         for m in self._modules.values():
-            x = m(x, consecutive_cluster, cluster_non_consecutive)
+            x = m(
+                x,
+                consecutive_cluster,
+                cluster_non_consecutive,
+                unique_cluster_non_consecutive,
+                batch=batch,
+                batch_size=batch_size,
+            )
         return x

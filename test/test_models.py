@@ -128,9 +128,11 @@ class TestModels(unittest.TestCase):
 
         num_points = 100
         num_classes = 20
-        num_features = 2
+        num_features = 3
         pos = torch.randn((num_points, 3))
         x = torch.randn((num_points, num_features))
+        batch = (torch.randn((num_points)) > 0).int()
+        batch = batch.sort().values
 
         model = initialize_emhs(
             option.layers.model_name,
@@ -147,10 +149,10 @@ class TestModels(unittest.TestCase):
             option.layers.feat_dim,
         )
 
-        data = Data(pos=pos, x=x)
-        gr = cT.GridSampling3DIdx([9, 9, 9])
+        data = Data(pos=pos, x=x, batch=batch)
+        gr = cT.GridSampling3DIdx(model.voxelization)
         data = gr(data)
-        x = model.forward(data.x, data.consecutive_cluster, data.cluster_non_consecutive)
+        x = model.forward(data.x, data.consecutive_cluster, data.cluster_non_consecutive, batch=data.batch)
         self.assertEqual(x.shape, torch.Size([num_points, num_classes]))
 
     def test_emhs_attention_op(self):
@@ -160,11 +162,11 @@ class TestModels(unittest.TestCase):
         latent_dim = 8
         x = np.zeros((batch_size, num_pos, in_feat))
         w3 = np.zeros((in_feat, latent_dim))
-        w4 = np.zeros((latent_dim, latent_dim, in_feat, in_feat))
-        pi = np.einsum("bpc, fl -> bpl", x, w3)
-        pi_x = np.einsum("bpc, bpl -> bpc", x, pi)
-        pi_t_w4 = np.einsum("bpl, lmcd -> bpc", pi, w4)
-        np.einsum("bpc, bpc -> bpc", pi_t_w4, pi_x)
+        w4 = np.zeros((latent_dim, in_feat, in_feat))
+        pi = np.einsum("bpc, cl -> bpcl", x, w3)
+        pi_x = np.einsum("bpc, bpcl -> bpcl", x, pi)
+        pi_t_w4 = np.einsum("bpcl, lcd -> bpcl", pi, w4)
+        np.einsum("bpcl, bpcl -> bpc", pi_t_w4, pi_x)
 
 
 if __name__ == "__main__":
