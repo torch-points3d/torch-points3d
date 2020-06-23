@@ -6,15 +6,27 @@ models:
     conv_type: 'DENSE'
     num_layers: 56
     layers:
-      generator: EMHSLayerGenerator
-      module_names:
-        [
-          EquivariantLinearMapsModule,
-          EquivariantLinearMapsModule,
-          AdaptivePoolingAndAttentionModule,
-        ]
-      layers_slice: [1-19, 19-29, 30-39, 40-49, 50-56]
+      model_name: EMHSModel
+      module_name: EMHSResidualLayer
+      num_elm: 2
+      use_attention: True
+      layers_slice: [1-20, 20-30, 30-40, 40-50, 50-57]
       latent_classes: [5, 10, 15, 25, 50]
+      voxelization: [9, 9, 9]
+      kernel_size: [3, 3, 3]
+      feat_dim: 64
+
+  EMHSPaperVKITTI:
+    class: emhs.EMHSPaper
+    conv_type: 'DENSE'
+    num_layers: 22
+    layers:
+      model_name: EMHSModel
+      module_name: EMHSResidualLayer
+      num_elm: 2
+      use_attention: True
+      layers_slice: [1-10, 10-15, 15-20, 20-23]
+      latent_classes: [5, 10, 15, 20]
       voxelization: [9, 9, 9]
       kernel_size: [3, 3, 3]
       feat_dim: 64
