@@ -53,7 +53,7 @@ class PatchSiamese(BackboneBasedModel):
     def set_loss(self):
         raise NotImplementedError("Choose a loss for the metric learning")
 
-    def forward(self) -> Any:
+    def forward(self, *args, **kwargs) -> Any:
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
 
         data = self.input
@@ -117,7 +117,7 @@ class FragmentBaseModel(BaseModel):
     def apply_nn(self, input):
         raise NotImplementedError("Model still not defined")
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
         self.output = self.apply_nn(self.input)
         if self.match is None:
             return self.output

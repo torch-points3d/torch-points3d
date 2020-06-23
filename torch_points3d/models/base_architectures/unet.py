@@ -283,7 +283,7 @@ class UnetSkipConnectionBlock(nn.Module):
             self.submodule = submodule
             self.up = upconv
 
-    def forward(self, data, **kwargs):
+    def forward(self, data, *args, **kwargs):
         if self.innermost:
             data_out = self.inner(data, **kwargs)
             data = (data_out, data)
@@ -487,7 +487,7 @@ class UnwrappedUnetBasedModel(BaseModel):
 
         return flattenedOpts
 
-    def forward(self, data, precomputed_down=None, precomputed_up=None):
+    def forward(self, data, precomputed_down=None, precomputed_up=None, **kwargs):
         """ This method does a forward on the Unet assuming symmetrical skip connections
 
         Parameters

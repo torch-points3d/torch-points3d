@@ -119,7 +119,7 @@ class RSConvEncoder(RSConvBase):
             model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
         )
 
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """ This method does a forward on the Unet
 
         Parameters:
@@ -161,7 +161,7 @@ class RSConvUnet(RSConvBase):
             model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
         )
 
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """ This method does a forward on the Unet
 
         Parameters:

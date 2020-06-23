@@ -87,7 +87,7 @@ class PatchKPConv(BackboneBasedModel):
         output = self.FC_layer(last_feature)
         return F.normalize(output, p=2, dim=1)
 
-    def forward(self) -> Any:
+    def forward(self, *args, **kwargs) -> Any:
 
         self.output = self.apply_nn(self.input, self.pre_computed, self.batch_idx)
         if self.labels is None:
@@ -220,7 +220,7 @@ class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
         else:
             return output
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
         self.output = self.apply_nn(self.input, self.pre_computed, self.upsample)
         if self.match is None:
             return self.output

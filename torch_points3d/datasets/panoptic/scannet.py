@@ -82,7 +82,7 @@ class ScannetPanoptic(Scannet):
             ind = np.where(data.instance_labels == i_instance)[0]
             # find the semantic label
             instance_class = semantic_labels[ind[0]].item()
-            if instance_class in self.NYU40IDS: # We keep this instance
+            if instance_class in self.NYU40IDS:  # We keep this instance
                 pos = data.pos[ind, :3]
                 max_pox = pos.max(0)[0]
                 min_pos = pos.min(0)[0]
@@ -91,13 +91,13 @@ class ScannetPanoptic(Scannet):
                 centers.append(torch.tensor(center))
                 instance_labels[ind] = instance_idx
                 instance_idx += 1
-        
+
         num_instances = len(centers)
         if num_instances > self.NUM_MAX_OBJECTS:
             raise ValueError("We have more objects than expected. Please increase the NUM_MAX_OBJECTS variable.")
-        data.center_label = torch.zeros((self.NUM_MAX_OBJECTS,3))
+        data.center_label = torch.zeros((self.NUM_MAX_OBJECTS, 3))
         if num_instances:
-            data.center_label[:num_instances,:] = torch.stack(centers)
+            data.center_label[:num_instances, :] = torch.stack(centers)
 
         data.vote_label = point_votes.float()
         data.instance_labels = instance_labels
@@ -109,7 +109,6 @@ class ScannetPanoptic(Scannet):
         return data
 
     def _remap_labels(self, data):
-        log.info("Keeping original labels in y. Please do not use data.y in your network.")
         return data
 
     def process(self):
@@ -153,6 +152,12 @@ class ScannetDataset(BaseDataset):
             max_num_point=max_num_point,
             is_test=is_test,
         )
+
+    @property
+    def stuff_classes(self):
+        """ Returns a list of classes that are not instances
+        """
+        return self.train_dataset.STUFFCLASSES
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker

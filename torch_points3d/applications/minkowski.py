@@ -22,12 +22,7 @@ log = logging.getLogger(__name__)
 
 
 def Minkowski(
-    architecture: str = None,
-    input_nc: int = None,
-    num_layers: int = None,
-    config: DictConfig = None,
-    *args,
-    **kwargs
+    architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
 ):
     """ Create a Minkowski backbone model based on architecture proposed in
     https://arxiv.org/abs/1904.08755
@@ -117,7 +112,7 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
 
 
 class MinkowskiEncoder(BaseMinkowski):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """
         Parameters:
         -----------
@@ -147,7 +142,7 @@ class MinkowskiEncoder(BaseMinkowski):
 
 
 class MinkowskiUnet(BaseMinkowski):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
                    |      |_________|     |

@@ -118,7 +118,7 @@ class BaseKPConv(UnwrappedUnetBasedModel):
 
 
 class KPConvEncoder(BaseKPConv):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """
         Parameters
         -----------
@@ -153,7 +153,7 @@ class KPConvEncoder(BaseKPConv):
 
 
 class KPConvUnet(BaseKPConv):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
                    |      |_________|     |

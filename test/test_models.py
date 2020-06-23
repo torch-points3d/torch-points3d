@@ -37,6 +37,7 @@ def load_model_config(task, model_type, model_name):
     config = OmegaConf.load(models_conf)
     config.update("model_name", model_name)
     config.update("data.task", task)
+    config.update("data.grid_size", 1)
     return config
 
 

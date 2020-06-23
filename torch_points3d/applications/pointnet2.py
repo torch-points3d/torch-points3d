@@ -124,7 +124,7 @@ class BasePointnet2(UnwrappedUnetBasedModel):
 
 
 class PointNet2Encoder(BasePointnet2):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """
         Parameters:
         -----------
@@ -151,7 +151,7 @@ class PointNet2Encoder(BasePointnet2):
 
 
 class PointNet2Unet(BasePointnet2):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
            |       |      |________|      |    |

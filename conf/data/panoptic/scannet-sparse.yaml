@@ -8,7 +8,7 @@ data:
   donotcare_class_ids: []
   process_workers: 8
 
-  grid_size: 0.02
+  grid_size: 0.05
   mode: last
 
   pre_transform:
@@ -16,15 +16,20 @@ data:
       lparams: [0.02]
 
   train_transform:
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: ['rgb', 'pos_z']
+        delete_feats: [True, False]
 
-    - transform: FixedPoints
-      lparams: [40000] 
-
-  val_transform:
-    - transform: FixedPoints
-      lparams: [40000]
+  val_transform: ${data.train_transform}

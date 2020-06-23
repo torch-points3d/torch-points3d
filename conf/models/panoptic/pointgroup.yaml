@@ -7,3 +7,9 @@ models:
             offset_norm_loss: 1 
             offset_dir_loss: 1
             score_loss: 1
+
+        prepare_epoch: 150
+        cluster_radius_search: 1.5 * ${data.grid_size}
+
+        min_iou_threshold: 0.25
+        max_iou_threshold: 0.75

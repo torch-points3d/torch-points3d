@@ -66,7 +66,7 @@ class PatchPointNet2_D(BackboneBasedModel):
 
         self.input = Data(x=x, pos=pos, y=labels).to(device)
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
         r"""
         forward pass of the network
         """
