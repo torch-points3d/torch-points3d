@@ -13,6 +13,8 @@ from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
 from torch_geometric.transforms import FixedPoints as FP
+from torch_points_kernels.points_cpu import ball_query
+import numba
 
 from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.datasets.registration.pair import Pair
@@ -20,6 +22,8 @@ from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
 from .grid_transform import group_data, GridSampling3D, shuffle_data
+
+
 
 
 class RemoveAttributes(object):
@@ -546,3 +550,62 @@ class RandomDropout:
         return "{}(dropout_ratio={}, dropout_application_ratio={})".format(
             self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio
         )
+
+
+@numba.jit(nopython=True)
+def rw_mask(pos, ind, dist, mask_vertices, random_ratio=0.04, num_iter=5000):
+    rand_ind = np.random.randint(0, len(pos))
+    for _ in range(num_iter):
+        mask_vertices[rand_ind] = False
+        if np.random.rand() < random_ratio:
+            rand_ind = np.random.randint(0, len(pos))
+        else:
+            neighbors = ind[rand_ind][dist[rand_ind] > 0]
+            if(len(neighbors) == 0):
+                rand_ind = np.random.randint(0, len(pos))
+            else:
+                n_i = np.random.randint(0, len(neighbors))
+                rand_ind = neighbors[n_i]
+    return mask_vertices
+
+
+class RandomWalkDropout(object):
+    """
+    randomly drop points from input data using random walk
+
+    Parameters
+    ----------
+    dropout_ratio : float, optional
+        Ratio that gets dropped
+    num_iter: int, optional
+        number of iterations
+    radius: float, optional
+        radius of the neighborhood search to create the graph
+    max_num: int optional
+       max number of neighbors
+    """
+
+    def __init__(self, dropout_ratio=0.05, num_iter=5000, radius=0.5, max_num=-1):
+        self.dropout_ratio = dropout_ratio
+        self.num_iter = num_iter
+        self.radius = radius
+        self.max_num = max_num
+
+    def __call__(self, data):
+
+        pos = data.pos.detach().cpu().numpy()
+        ind, dist = ball_query(data.pos, data.pos,
+                               radius=self.radius,
+                               max_num=self.max_num, mode=0)
+        mask = np.ones(len(pos), dtype=bool)
+        mask = rw_mask(pos,
+                       ind.detach().cpu().numpy(),
+                       dist.detach().cpu().numpy(),
+                       mask,
+                       num_iter=self.num_iter,
+                       random_ratio=self.dropout_ratio)
+        data.pos = data.pos[mask]
+        return data
+
+    def __repr__(self):
+        return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={})".format(self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num)
