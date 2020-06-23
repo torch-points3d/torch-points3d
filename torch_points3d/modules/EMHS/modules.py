@@ -116,7 +116,7 @@ class EquivariantLinearMapsModule(nn.Module):
     ):
         inner_equivariant_map = self.lin(x)
         if self.use_attention:
-            inner_equivariant_map = self._attention_ops(x)
+            inner_equivariant_map += self._attention_ops(x)
 
         if batch is None:
             grid = torch.zeros([self.input_nc] + self._voxelization).view((self.input_nc, -1))
