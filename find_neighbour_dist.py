@@ -21,7 +21,7 @@ from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 # Utils import
 from torch_points3d.utils.colors import COLORS
-from torch_points3d.utils.config import determine_stage, launch_wandb
+from torch_points3d.utils.config import determine_stage
 from torch_points3d.visualization import Visualizer
 from torch_points3d.utils.config import set_debugging_vars_to_global
 from torch_points3d.utils.debugging_vars import extract_histogram

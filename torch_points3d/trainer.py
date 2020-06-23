@@ -61,7 +61,7 @@ class Trainer:
 
         # Start Wandb if public
         if self.has_wandb:
-            launch_wandb(self._cfg, self._cfg.wandb.public and self.wandb_log)
+            Wandb.launch(self._cfg, self._cfg.wandb.public and self.wandb_log)
 
         # Checkpoint
         self._checkpoint: ModelCheckpoint = ModelCheckpoint(
