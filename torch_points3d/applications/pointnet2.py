@@ -64,7 +64,7 @@ class PointNet2Factory(ModelFactory):
                 PATH_TO_CONFIG, "unet_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss")
             )
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return PointNet2Unet(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -77,7 +77,7 @@ class PointNet2Factory(ModelFactory):
                 "encoder_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss"),
             )
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return PointNet2Encoder(model_config, None, None, modules_lib, **self.kwargs)
 

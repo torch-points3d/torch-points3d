@@ -95,10 +95,11 @@ class VoteNetResults(Data):
         )  # Bxnum_proposalxnum_size_clusterx3
         data.size_scores = size_scores
         data.size_residuals_normalized = size_residuals_normalized
-        data.size_residuals = size_residuals_normalized * mean_size_arr.unsqueeze(0).unsqueeze(0)
-
+        if len(mean_size_arr) > 0:
+            data.size_residuals = size_residuals_normalized * mean_size_arr.unsqueeze(0).unsqueeze(0)
         sem_cls_scores = x_transposed[:, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :]  # Bxnum_proposalx10
         data.sem_cls_scores = sem_cls_scores
+
         return data
 
     def assign_objects(self, gt_center: torch.Tensor, near_threshold: float, far_threshold: float):
