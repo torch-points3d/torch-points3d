@@ -348,6 +348,22 @@ python -m torch.utils.bottleneck /path/to/source/script.py [args]
 
 ## Troubleshooting
 
+#### Cannot compile certain CUDA Kernels or seg faults while running the tests
+Ensure that at least PyTorch 1.4.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
+```
+$ python -c "import torch; print(torch.__version__)"
+>>> 1.4.0
+
+$ python -c "import torch; print(torch.__version__)"
+>>> 1.1.0
+
+$ echo $PATH
+>>> /usr/local/cuda/bin:...
+
+$ echo $CPATH
+>>> /usr/local/cuda/include:...
+```
+
 #### Undefined symbol / Updating Pytorch
 
 When we update the version of Pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
