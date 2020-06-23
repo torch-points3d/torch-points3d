@@ -44,6 +44,8 @@ class EMHSLayer(nn.Module):
         self.model = nn.Sequential(*modules)
         self.lin_first = nn.Linear(input_nc, feat_dim)
         self.lin_fast = nn.Linear(feat_dim, output_nc)
+        self.norm_first = nn.BatchNorm1d(feat_dim)
+        self.norm_last = nn.BatchNorm1d(output_nc)
 
     def forward(
         self,
@@ -68,9 +70,9 @@ class EMHSLayer(nn.Module):
         if xs[0].shape[-1] == xs[-1].shape[-1]:
             return xs[0] + xs[-1]
         elif xs[0].shape[-1] < xs[-1].shape[-1]:
-            return x + self.lin_first(xs[0])
+            return x + F.leaky_relu(self.norm_first(self.lin_first(xs[0])), negative_slope=0.2)
         else:
-            return x + self.lin_fast(xs[0])
+            return x + F.leaky_relu(self.norm_last(self.lin_fast(xs[0])), negative_slope=0.2)
 
 
 class EquivariantLinearMapsModule(nn.Module):
@@ -97,6 +99,7 @@ class EquivariantLinearMapsModule(nn.Module):
         else:
             self.lin = nn.Linear(input_nc, output_nc)
         self.conv = nn.Conv3d(input_nc, output_nc, kernel_size=kernel_size, padding=1)
+        self.norm = nn.BatchNorm1d(output_nc)
 
     def _attention_ops(self, x):
         pi = self.lin(x)
@@ -128,4 +131,4 @@ class EquivariantLinearMapsModule(nn.Module):
             grid[:, unique_cluster_non_consecutive] = scatter_mean(x, consecutive_cluster, dim=0).t()
             grid = self.conv(grid.view(([batch_size] + [self.input_nc] + self._voxelization)))
             outer_equivariant_map = grid.view((self.output_nc, -1))[:, cluster_non_consecutive].t()
-        return inner_equivariant_map + outer_equivariant_map
+        return F.leaky_relu(self.norm(inner_equivariant_map + outer_equivariant_map), negative_slope=0.2)

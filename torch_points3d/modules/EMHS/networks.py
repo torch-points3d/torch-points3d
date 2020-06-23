@@ -65,8 +65,6 @@ class EMHSModel(nn.Module):
                 )
                 self.add_module(str(layer_idx), module)
 
-        print(self)
-
     @property
     def voxelization(self):
         return self._voxelization
