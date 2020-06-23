@@ -5,6 +5,7 @@ import time
 import logging
 from omegaconf import OmegaConf
 from tqdm.auto import tqdm
+import wandb
 
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
