@@ -10,14 +10,14 @@ from torch.nn import functional as F
 class EMHSLayer(nn.Module):
     def __init__(
         self,
-        input_nc: int = None,
-        output_nc: int = None,
-        feat_dim: int = None,
+        input_nc: int = 3,
+        output_nc: int = 20,
+        feat_dim: int = 64,
         num_elm: int = 2,
         use_attention: bool = True,
-        latent_dim: int = None,
-        kernel_size: List = [3, 3, 3],
-        voxelization: List = [9, 9, 9],
+        latent_dim: int = 5,
+        kernel_size: List[int] = [3, 3, 3],
+        voxelization: List[int] = [9, 9, 9],
     ):
 
         assert num_elm > 0, "num_elm should be greater than 0"
@@ -80,8 +80,8 @@ class EquivariantLinearMapsModule(nn.Module):
         output_nc: int = 64,
         use_attention: bool = True,
         latent_dim: int = 50,
-        kernel_size: List = [3, 3, 3],
-        voxelization: List = [9, 9, 9],
+        kernel_size=[3, 3, 3],
+        voxelization=[9, 9, 9],
     ):
 
         super().__init__()
