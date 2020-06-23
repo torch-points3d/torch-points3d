@@ -150,6 +150,8 @@ class Trainer:
         if self._is_training:
             metrics = self._tracker.publish(epoch)
             self._checkpoint.save_best_models_under_current_metrics(self._model, metrics, self._tracker.metric_func)
+            if self.has_wandb:
+                wandb.save(self._checkpoint.checkpoint_path)
             if self._tracker._stage == "train":
                 log.info("Learning rate = %f" % self._model.learning_rate)
 

@@ -46,7 +46,11 @@ class Checkpoint:
         for key, value in self.__dict__.items():
             if not key.startswith("_"):
                 to_save[key] = value
-        torch.save(to_save, self._check_path)
+        torch.save(to_save, self.path)
+
+    @property
+    def path(self):
+        return self._check_path
 
     @staticmethod
     def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig, strict=False, resume=True):
@@ -200,6 +204,10 @@ class ModelCheckpoint(object):
     @property
     def is_empty(self):
         return self._checkpoint.is_empty
+
+    @property
+    def checkpoint_path(self):
+        return self._checkpoint.path
 
     def get_starting_epoch(self):
         return len(self._checkpoint.stats["train"]) + 1
