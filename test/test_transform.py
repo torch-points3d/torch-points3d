@@ -29,6 +29,7 @@ from torch_points3d.core.data_transform import (
     RemoveDuplicateCoords,
     XYZFeature,
     ScalePos,
+    RandomWalkDropout,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -185,6 +186,13 @@ class Testhelpers(unittest.TestCase):
         tr = RandomDropout(dropout_ratio=0.5, dropout_application_ratio=1.1)
         data = tr(data)
         self.assertEqual(len(data.pos), 3)
+
+    def test_rwdropout(self):
+        pos = torch.randn(500, 3)
+        data = Data(pos=pos)
+        tr = RandomWalkDropout(dropout_ratio=0.01, radius=0.3, max_num=15, num_iter=500)
+        data = tr(data)
+        self.assertGreater(500, len(data.pos))
 
     def test_shiftvoxels(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
