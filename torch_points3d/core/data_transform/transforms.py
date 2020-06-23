@@ -13,6 +13,8 @@ from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
 from torch_geometric.transforms import FixedPoints as FP
+from torch_points_kernels.points_cpu import ball_query
+import numba
 
 from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.datasets.registration.pair import Pair
@@ -21,8 +23,7 @@ from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
 from .grid_transform import group_data, GridSampling3D, shuffle_data
 
-from torch_points_kernels.points_cpu import ball_query
-from numba import jit
+
 
 
 class RemoveAttributes(object):
@@ -551,7 +552,7 @@ class RandomDropout:
         )
 
 
-@jit(nopython=True)
+@numba.jit(nopython=True)
 def rw_mask(pos, ind, dist, mask_vertices, random_ratio=0.04, num_iter=5000):
     rand_ind = np.random.randint(0, len(pos))
     for _ in range(num_iter):
