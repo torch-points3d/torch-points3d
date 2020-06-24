@@ -29,4 +29,4 @@ models:
       voxelization: [9, 9, 9]
       kernel_size: [3, 3, 3]
       feat_dim: 64
-      attention_type: 'CLL'
+      attention_type: 'CL'
