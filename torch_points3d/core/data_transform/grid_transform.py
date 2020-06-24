@@ -107,6 +107,7 @@ class GridSampling3DIdx:
         size = (end - start) / (self._voxelization  - 1)
 
         if "batch" not in data:
+            import pdb; pdb.set_trace()
             cluster = grid_cluster(data.pos, size, start, end)
         else:
             cluster = voxel_grid(data.pos, data.batch, size)
@@ -126,8 +127,8 @@ class GridSampling3DIdx:
         return data
 
     def __repr__(self):
-        return "{}(grid_size={}, quantize_coords={}, mode={})".format(
-            self.__class__.__name__, self._grid_size, self._quantize_coords, self._mode
+        return "{}(voxelization={})".format(
+            self.__class__.__name__, self._voxelization
         )
 
 class GridSampling3D:

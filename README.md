@@ -67,8 +67,8 @@ where each folder contains the dataset related to each task.
 - **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas _et al._: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
 - **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy _et al._: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR19)
 - **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi _et al._: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
-
-* **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
+- **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
+- **[EMHS](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/EMHS)** from Renhao Wang _et al._: [Equivariant Maps for Hierarchical Structures](https://arxiv.org/pdf/2006.03627.pdf)
 
 ## Available datasets
 
@@ -349,7 +349,9 @@ python -m torch.utils.bottleneck /path/to/source/script.py [args]
 ## Troubleshooting
 
 #### Cannot compile certain CUDA Kernels or seg faults while running the tests
+
 Ensure that at least PyTorch 1.4.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
+
 ```
 $ python -c "import torch; print(torch.__version__)"
 >>> 1.4.0

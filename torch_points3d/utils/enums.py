@@ -12,3 +12,8 @@ class ConvolutionFormat(enum.Enum):
     PARTIAL_DENSE = "partial_dense"
     MESSAGE_PASSING = "message_passing"
     SPARSE = "sparse"
+
+
+class AttentionType(enum.Enum):
+    CL = "CL"
+    CLL = "CLL"

@@ -147,7 +147,6 @@ class TestModels(unittest.TestCase):
             num_features,
             num_classes,
             option.num_layers,
-            option.layers.module_name,
             option.layers.num_elm,
             option.layers.use_attention,
             option.layers.layers_slice,
@@ -155,6 +154,7 @@ class TestModels(unittest.TestCase):
             option.layers.voxelization,
             option.layers.kernel_size,
             option.layers.feat_dim,
+            option.layers.attention_type,
         )
 
         data = Data(pos=pos, x=x, batch=batch)

@@ -4,13 +4,14 @@ import torch
 from torch import nn
 from omegaconf.listconfig import ListConfig
 from torch_points3d.modules.EMHS.modules import EMHSLayer
+from torch_points3d.utils.enums import AttentionType
 
 
 class Inputs(NamedTuple):
-    pos: torch.Tensor
     x: torch.Tensor
-    pooling_idx: torch.Tensor
-    broadcasting_idx: torch.Tensor
+    consecutive_cluster: torch.Tensor
+    cluster_non_consecutive: torch.Tensor
+    batch: torch.Tensor
 
 
 class EMHSModel(nn.Module):
@@ -19,7 +20,6 @@ class EMHSModel(nn.Module):
         input_nc: int = None,
         output_nc: int = None,
         num_layers: int = 56,
-        module_name: List = None,
         num_elm: int = 2,
         use_attention: bool = True,
         layers_slice: List = None,
@@ -27,29 +27,31 @@ class EMHSModel(nn.Module):
         voxelization: List = [9, 9, 9],
         kernel_size: List = [3, 3, 3],
         feat_dim: int = 64,
+        attention_type: str = AttentionType.CLL.value,
     ):
 
         assert input_nc is not None, "input_nc is undefined"
         assert output_nc is not None, "output_nc is undefined"
-        assert module_name is not None, "module_name is undefined"
         assert layers_slice is not None, "layers_slice is undefined"
         if use_attention:
             assert latent_classes is not None, "latent_classes is undefined"
-            assert len(latent_classes) == len(layers_slice), "latent_classes and layers_slice should have the same size"
+            assert len(latent_classes) + 1 == len(
+                layers_slice
+            ), "latent_classes and layers_slice should have the same size"
         self._voxelization = voxelization.to_container() if isinstance(voxelization, ListConfig) else voxelization
 
         # VALIDATION FOR IDX SLICES
         layers_idx = []
-        for ls in layers_slice:
-            s, e = ls.split("-")
+        for idx_ls in range(len(layers_slice) - 1):
+            s, e = layers_slice[idx_ls], layers_slice[idx_ls + 1]
             for layer_idx in range(int(s), int(e)):
                 layers_idx.append(layer_idx)
         assert len(np.unique(layers_idx)) == num_layers, (len(np.unique(layers_idx)), num_layers)
 
         super().__init__()
 
-        for idx_ls, ls in enumerate(layers_slice):
-            s, e = ls.split("-")
+        for idx_ls in range(len(layers_slice) - 1):
+            s, e = layers_slice[idx_ls], layers_slice[idx_ls + 1]
             for layer_idx in range(int(s), int(e)):
                 is_first = layer_idx == min(layers_idx)
                 is_last = layer_idx == max(layers_idx)
@@ -62,6 +64,7 @@ class EMHSModel(nn.Module):
                     latent_classes[idx_ls] if latent_classes is not None else None,
                     kernel_size,
                     voxelization,
+                    attention_type,
                 )
                 self.add_module(str(layer_idx), module)
 

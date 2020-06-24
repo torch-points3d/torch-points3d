@@ -5,6 +5,7 @@ from torch_scatter import scatter_mean
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch_points3d.utils.enums import AttentionType
 
 
 class EMHSLayer(nn.Module):
@@ -18,6 +19,7 @@ class EMHSLayer(nn.Module):
         latent_dim: int = 5,
         kernel_size: List[int] = [3, 3, 3],
         voxelization: List[int] = [9, 9, 9],
+        attention_type=AttentionType.CLL.value,
     ):
 
         assert num_elm > 0, "num_elm should be greater than 0"
@@ -38,14 +40,19 @@ class EMHSLayer(nn.Module):
                     latent_dim,
                     kernel_size,
                     voxelization,
+                    attention_type,
                 )
             )
 
         self.model = nn.Sequential(*modules)
-        self.lin_first = nn.Linear(input_nc, feat_dim)
-        self.lin_fast = nn.Linear(feat_dim, output_nc)
-        self.norm_first = nn.BatchNorm1d(feat_dim)
-        self.norm_last = nn.BatchNorm1d(output_nc)
+
+        if input_nc < output_nc:
+            self.lin_first = nn.Linear(input_nc, feat_dim)
+            self.norm_first = nn.BatchNorm1d(feat_dim)
+
+        if output_nc < input_nc:
+            self.lin_fast = nn.Linear(feat_dim, output_nc)
+            self.norm_last = nn.BatchNorm1d(output_nc)
 
     def forward(
         self,
@@ -84,29 +91,66 @@ class EquivariantLinearMapsModule(nn.Module):
         latent_dim: int = 50,
         kernel_size=[3, 3, 3],
         voxelization=[9, 9, 9],
+        attention_type=AttentionType.CLL.value,
     ):
 
         super().__init__()
 
+        assert attention_type in [v.value for v in AttentionType], "attention_type should be in {}".format(
+            [v.value for v in AttentionType]
+        )
+
         self.input_nc = input_nc
         self.output_nc = output_nc
-        self.use_attention = False  # use_attention
+        self.use_attention = use_attention
+        self.latent_dim = latent_dim
         self._voxelization = voxelization.to_container() if isinstance(voxelization, ListConfig) else voxelization
 
+        self.lin = nn.Linear(input_nc, output_nc)
         if self.use_attention:
-            self.lin = nn.Linear(input_nc, latent_dim)
-            self.weight = torch.nn.Parameter(torch.zeros(latent_dim, latent_dim, input_nc, output_nc))
-        else:
-            self.lin = nn.Linear(input_nc, output_nc)
+            self.lin_attention = nn.Linear(input_nc, latent_dim)
+            if attention_type == AttentionType.CLL.value:
+                self.weight = torch.nn.Parameter(torch.zeros(output_nc, latent_dim, latent_dim))
+                self._attention_ops = self._attention_cll_ops
+            else:
+                self.weight = torch.nn.Parameter(torch.zeros(output_nc, latent_dim))
+                self._attention_ops = self._attention_cl_ops
+
         self.conv = nn.Conv3d(input_nc, output_nc, kernel_size=kernel_size, padding=1)
         self.norm = nn.BatchNorm1d(output_nc)
 
-    def _attention_ops(self, x):
-        pi = self.lin(x)
-        pi = F.softmax(pi, dim=-1)
-        pi_x = torch.einsum("bpc, bpl -> bpc", x, pi)
-        pi_t_w4 = torch.einsum("bpl, lmcd -> bpc", pi, self.weight)
-        return torch.einsum("bpc, bpc -> bpc", pi_t_w4, pi_x)
+        if self.use_attention:
+            self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.weight)
+
+    def _attention_cll_ops(self, x):
+        H = self.lin_attention(x)
+        H = F.softmax(H, dim=-1)
+        # (L, N), (N, C) -> (L, C)
+        HX = torch.matmul(H.t(), x)  # size L x C: how much class l contains of feature c
+        # (C', L, L), (L, C) -> (C', L, C)
+        W4HX = torch.matmul(self.weight, HX)  # size Cp x L x C : how much channel c' for class l from channel c
+        HW4HX = torch.einsum(
+            "nl, mlc-> nmc", H, W4HX
+        )  # size N x C'x C : for point n how much channel c' from channel c
+        SHW4HX = torch.sum(HW4HX, dim=-1)  # size N x C' : for point n how much channel c'
+        return SHW4HX
+
+    def _attention_cl_ops(self, x):
+        H = self.lin_attention(x)
+        H = F.softmax(H, dim=-1)
+        # (L, N), (N, C) -> (L, C)
+        HX = torch.matmul(H.t(), x)  # size L x C: how much class l contains of feature c
+        W5HX = (
+            self.weight[:, :, None] * HX[None, :, :]
+        )  # size Cp x L x C : how much channel c' for class l from channel c
+        HW5HX = torch.einsum(
+            "nl, mlc-> nmc", H, W5HX
+        )  # size N x C'x C : for point n how much channel c' from channel c
+        SHW5HX = torch.sum(HW5HX, dim=-1)  # size N x C' : for point n how much channel c'
+        return SHW5HX
 
     def forward(
         self,
