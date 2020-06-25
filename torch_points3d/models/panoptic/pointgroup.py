@@ -2,6 +2,7 @@ import torch
 from typing import NamedTuple, List
 from torch_points_kernels import region_grow, instance_iou
 from torch_geometric.data import Data
+import random
 
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.models.base_model import BaseModel
@@ -84,6 +85,7 @@ class PointGroup(BaseModel):
 
             all_clusters = clusters_pos + clusters_votes
             all_clusters = [c.to(self.device) for c in all_clusters]
+
             if len(all_clusters):
                 x = []
                 pos = []
@@ -103,6 +105,10 @@ class PointGroup(BaseModel):
             cluster_scores=cluster_scores,
         )
 
+        # Sets visual data for debugging
+        self._dump_visuals(epoch)
+
+        # Compute loss
         self._compute_loss()
 
     def _compute_loss(self):
@@ -159,3 +165,25 @@ class PointGroup(BaseModel):
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         self.loss.backward()
+
+    def _dump_visuals(self, epoch):
+        if random.random() < self.cfg.vizual_ratio:
+            if not hasattr(self, "visual_count"):
+                self.visual_count = 0
+            data_visual = Data(
+                pos=self.raw_pos, y=self.input.y, instance_labels=self.input.instance_labels, batch=self.input.batch
+            )
+            data_visual.semantic_pred = torch.max(self.output, -1)[1]
+            if self.all_outputs.clusters is not None:
+                # Instance offset when flatten
+                instance_offsets = [0]
+                cum_offset = 0
+                for instance in self.all_outputs.clusters:
+                    cum_offset += instance.shape[0]
+                    instance_offsets.append(cum_offset)
+                # Store
+                data_visual.instance_idx = torch.cat(self.all_outputs.clusters)
+                data_visual.instance_offsets = torch.tensor(instance_offsets)
+
+            torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
+            self.visual_count += 1
