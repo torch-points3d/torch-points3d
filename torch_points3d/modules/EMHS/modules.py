@@ -166,12 +166,12 @@ class EquivariantLinearMapsModule(nn.Module):
             inner_equivariant_map += self._attention_ops(x)
 
         if batch is None:
-            grid = torch.zeros([self.input_nc] + self._voxelization).view((self.input_nc, -1))
+            grid = torch.zeros([self.input_nc] + self._voxelization).view((self.input_nc, -1)).to(x.device)
             grid[:, torch.unique(cluster_non_consecutive)] = scatter_mean(x, consecutive_cluster, dim=0).t()
             grid = self.conv(grid.view(([1] + [self.input_nc] + self._voxelization)))
             outer_equivariant_map = grid.view((self.output_nc, -1))[:, cluster_non_consecutive].t()
         else:
-            grid = torch.zeros((self.input_nc, np.product(self._voxelization) * batch_size))
+            grid = torch.zeros((self.input_nc, np.product(self._voxelization) * batch_size)).to(x.device)
             grid[:, unique_cluster_non_consecutive] = scatter_mean(x, consecutive_cluster, dim=0).t()
             grid = self.conv(grid.view(([batch_size] + [self.input_nc] + self._voxelization)))
             outer_equivariant_map = grid.view((self.output_nc, -1))[:, cluster_non_consecutive].t()

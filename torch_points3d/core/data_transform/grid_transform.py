@@ -66,7 +66,8 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
                 is_item_bool = item.dtype == torch.bool
-                if is_item_bool: item = item.int()
+                if is_item_bool:
+                    item = item.int()
                 if key in _INTEGER_LABEL_KEYS:
                     item_min = item.min()
                     item = F.one_hot(item - item_min)
@@ -74,8 +75,10 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
                     data[key] = item.argmax(dim=-1) + item_min
                 else:
                     data[key] = scatter_mean(item, cluster, dim=0)
-                if is_item_bool: data[key] = data[key].bool()
+                if is_item_bool:
+                    data[key] = data[key].bool()
     return data
+
 
 class GridSampling3DIdx:
     """ Get cluster idx for creating dynamically voxels.
@@ -86,9 +89,9 @@ class GridSampling3DIdx:
     """
 
     def __init__(self, voxelization, verbose=False):
-        assert len(voxelization) == 3, 'voxelization should contains 3 values'
+        assert len(voxelization) == 3, "voxelization should contains 3 values"
         for v in voxelization:
-            assert (v is not None) or (v == 0), 'v should not be equal to 0 or None'
+            assert (v is not None) or (v == 0), "v should not be equal to 0 or None"
         self._voxelization = torch.Tensor(voxelization)
         if verbose:
             log.warning(
@@ -104,13 +107,13 @@ class GridSampling3DIdx:
 
         start = data.pos.min(0)[0]
         end = data.pos.max(0)[0]
-        size = (end - start) / (self._voxelization  - 1)
+        size = (end - start) / (self._voxelization.to(data.pos.device) - 1)
 
         if "batch" not in data:
             cluster = grid_cluster(data.pos, size, start, end)
         else:
             cluster = voxel_grid(data.pos, data.batch, size)
-        
+
         data.cluster_non_consecutive = cluster
         cluster, unique_pos_indices = consecutive_cluster(cluster)
         data.consecutive_cluster = cluster
@@ -126,9 +129,8 @@ class GridSampling3DIdx:
         return data
 
     def __repr__(self):
-        return "{}(voxelization={})".format(
-            self.__class__.__name__, self._voxelization
-        )
+        return "{}(voxelization={})".format(self.__class__.__name__, self._voxelization)
+
 
 class GridSampling3D:
     """ Clusters points into voxels with size :attr:`size`.
@@ -215,7 +217,7 @@ class SaveOriginalPosId:
         return data
 
     def __repr__(self):
-        return  self.__class__.__name__
+        return self.__class__.__name__
 
 
 class ElasticDistortion:
