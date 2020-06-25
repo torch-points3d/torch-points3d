@@ -132,7 +132,7 @@ class MinkowskiEncoder(BaseMinkowski):
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
 
-        out = Batch(x=data.F, batch=data.C[:, 0].long())
+        out = Batch(x=data.F, batch=data.C[:, 0].long().cuda())
         if not isinstance(self.inner_modules[0], Identity):
             out = self.inner_modules[0](out)
 

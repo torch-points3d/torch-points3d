@@ -1,5 +1,5 @@
 import torch
-from typing import NamedTuple
+from typing import NamedTuple, List
 from torch_points_kernels import region_grow, instance_iou
 from torch_geometric.data import Data
 
@@ -13,7 +13,7 @@ class PointGroupResults(NamedTuple):
     semantic_logits: torch.Tensor
     offset_logits: torch.Tensor
     cluster_scores: torch.Tensor
-    clusters: torch.Tensor
+    clusters: List[torch.Tensor]
 
 
 class PointGrouplabels(NamedTuple):
@@ -83,6 +83,7 @@ class PointGroup(BaseModel):
             )
 
             all_clusters = clusters_pos + clusters_votes
+            all_clusters = [c.to(self.device) for c in all_clusters]
             if len(all_clusters):
                 x = []
                 pos = []
@@ -101,6 +102,7 @@ class PointGroup(BaseModel):
             clusters=all_clusters,
             cluster_scores=cluster_scores,
         )
+
         self._compute_loss()
 
     def _compute_loss(self):
@@ -115,7 +117,9 @@ class PointGroup(BaseModel):
 
         # Score loss
         if self.all_outputs.cluster_scores is not None:
-            ious = instance_iou(self.all_outputs.clusters, self.input.instance_labels.to(self.device)).max(1)[0]
+            ious = instance_iou(
+                self.all_outputs.clusters, self.input.instance_labels.to(self.device), self.input.batch.to(self.device)
+            ).max(1)[0]
             lower_mask = ious < self.opt.min_iou_threshold
             higher_mask = ious > self.opt.max_iou_threshold
             middle_mask = torch.logical_and(torch.logical_not(lower_mask), torch.logical_not(higher_mask))
