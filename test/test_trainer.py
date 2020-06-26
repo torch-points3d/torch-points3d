@@ -17,7 +17,6 @@ class TestTrainer(unittest.TestCase):
         self.path = os.getcwd()
 
     def test_trainer_on_shapenet_fixed(self):
-
         self.path_outputs = os.path.join(DIR_PATH, "data/shapenet/outputs")
         if not os.path.exists(self.path_outputs):
             os.makedirs(self.path_outputs)
