@@ -66,7 +66,8 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
                 is_item_bool = item.dtype == torch.bool
-                if is_item_bool: item = item.int()
+                if is_item_bool:
+                    item = item.int()
                 if key in _INTEGER_LABEL_KEYS:
                     item_min = item.min()
                     item = F.one_hot(item - item_min)
@@ -74,7 +75,8 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
                     data[key] = item.argmax(dim=-1) + item_min
                 else:
                     data[key] = scatter_mean(item, cluster, dim=0)
-                if is_item_bool: data[key] = data[key].bool()
+                if is_item_bool:
+                    data[key] = data[key].bool()
     return data
 
 
@@ -85,7 +87,8 @@ class GridSampling3D:
     size: float
         Size of a voxel (in each dimension).
     quantize_coords: bool
-            If True, it will convert the points into their associated sparse coordinates within the grid. \
+        If True, it will convert the points into their associated sparse coordinates within the grid and store
+        the value into a new `coords` attribute
     mode: string:
         The mode can be either `last` or `mean`.
         If mode is `mean`, all the points and their features within a cell will be averaged
@@ -117,14 +120,9 @@ class GridSampling3D:
             cluster = voxel_grid(coords, data.batch, 1)
         cluster, unique_pos_indices = consecutive_cluster(cluster)
 
-        skip_keys = []
+        data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
         if self._quantize_coords:
-            skip_keys.append("pos")
-
-        data = group_data(data, cluster, unique_pos_indices, mode=self._mode, skip_keys=skip_keys)
-
-        if self._quantize_coords:
-            data.pos = coords[unique_pos_indices]
+            data.coords = coords[unique_pos_indices]
 
         return data
 
@@ -163,7 +161,7 @@ class SaveOriginalPosId:
         return data
 
     def __repr__(self):
-        return  self.__class__.__name__
+        return self.__class__.__name__
 
 
 class ElasticDistortion:

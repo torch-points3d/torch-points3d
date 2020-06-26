@@ -61,9 +61,10 @@ class TestGridSampling3D(unittest.TestCase):
         data_random = Data(pos=torch.randn(100, 3) * 0.1, x=torch.ones((100, 1)))
         gr = cT.GridSampling3D(0.2, quantize_coords=True)
         quantized = gr(data_random)
-        self.assertEqual(quantized.x.shape[0], quantized.pos.shape[0])
-        self.assertEqual(quantized.num_nodes, quantized.pos.shape[0])
-        self.assertEqual(quantized.pos.dtype, torch.int)
+        self.assertTrue(hasattr(quantized, "coords"))
+        self.assertEqual(quantized.x.shape[0], quantized.coords.shape[0])
+        self.assertEqual(quantized.num_nodes, quantized.coords.shape[0])
+        self.assertEqual(quantized.coords.dtype, torch.int)
 
 
 if __name__ == "__main__":

@@ -34,11 +34,6 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
@@ -61,11 +56,6 @@ data:
         rot_x: 180
         rot_y: 180
         rot_z: 180
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}

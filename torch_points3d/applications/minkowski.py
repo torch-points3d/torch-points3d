@@ -109,12 +109,9 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
         data:
             a dictionary that contains the data itself and its metadata information.
         """
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(self.device)
-        if hasattr(data, "xyz"):
-            self.xyz = data.xyz.to(self.device)
-        else:
-            self.xyz = data.pos.to(data.x.dtype).to(self.device)
+        self.xyz = data.pos.to(self.device)
 
 
 class MinkowskiEncoder(BaseMinkowski):
