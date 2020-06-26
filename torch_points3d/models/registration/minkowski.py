@@ -48,9 +48,9 @@ class BaseMinkowski(FragmentBaseModel):
             self.FC_layer = torch.nn.Identity()
 
     def set_input(self, data, device):
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
-        self.xyz = torch.stack((data.pos_x, data.pos_y, data.pos_z), 0).T.to(device)
+        self.xyz = data.pos.to(device)
         if hasattr(data, "pos_target"):
             coords_target = torch.cat([data.batch_target.unsqueeze(-1).int(), data.pos_target.int()], -1)
             self.input_target = ME.SparseTensor(data.x_target, coords=coords_target).to(device)

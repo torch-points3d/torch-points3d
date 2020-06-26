@@ -26,8 +26,8 @@ class TestSparse(unittest.TestCase):
         transform = ToSparseInput(grid_size=1, mode="last")
         data_out = transform(data.clone())
 
-        self.assertEqual(data_out.pos.dtype, torch.int)
-        self.assertEqual(2, data_out.pos.shape[0])
+        self.assertEqual(data_out.coords.dtype, torch.int)
+        self.assertEqual(2, data_out.coords.shape[0])
 
         combi = list(combinations(np_feat, 2))
         tensors = [torch.tensor(t) for t in combi] + [torch.tensor(t[::-1]) for t in combi]
@@ -45,8 +45,8 @@ class TestSparse(unittest.TestCase):
         transform = ToSparseInput(grid_size=1, mode="mean")
         data_out = transform(data.clone())
 
-        self.assertEqual(data_out.pos.dtype, torch.int)
-        self.assertEqual(2, data_out.pos.shape[0])
+        self.assertEqual(data_out.coords.dtype, torch.int)
+        self.assertEqual(2, data_out.coords.shape[0])
         torch.testing.assert_allclose(data_out.x, torch.tensor([2, 1.5]))
 
 

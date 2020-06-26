@@ -22,7 +22,7 @@ class Minkowski_Baseline_Model(BaseModel):
     def set_input(self, data, device):
 
         self.batch_idx = data.batch.squeeze()
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y.to(device)
 
@@ -42,7 +42,7 @@ class Minkowski_Model(UnwrappedUnetBasedModel):
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y
 
