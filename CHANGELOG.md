@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - evaluation output folder is now a subfolder of the checkpoint it uses
+- saves model checkpoints to wandb
 
 ### Removed
 
