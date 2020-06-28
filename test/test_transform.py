@@ -196,10 +196,10 @@ class Testhelpers(unittest.TestCase):
 
     def test_shiftvoxels(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(pos=torch.from_numpy(indices).int())
+        data = Data(coords=torch.from_numpy(indices).int())
         tr = ShiftVoxels()
         tr_data = tr(data.clone())
-        self.assertGreaterEqual(tr_data.pos[0][0], data.pos[0][0])
+        self.assertGreaterEqual(tr_data.coords[0][0], data.coords[0][0])
 
     def test_PCACompute(self):
         vec1 = torch.randn(3)
