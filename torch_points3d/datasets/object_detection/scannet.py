@@ -155,9 +155,9 @@ class ScannetObjectDetection(Scannet):
         delattr(data, "y")
         return data
 
-    def _remap_labels(self, data):
+    def _remap_labels(self, semantic_label):
         log.info("Keeping original labels in y. Please do not use data.y in your network.")
-        return data
+        return semantic_label
 
     def process(self):
         super().process()

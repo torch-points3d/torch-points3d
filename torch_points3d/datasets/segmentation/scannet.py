@@ -488,7 +488,7 @@ class Scannet(InMemoryDataset):
                 delattr(self.data, "instance_bboxes")
             if not use_instance_labels:
                 delattr(self.data, "instance_labels")
-            self.data = self._remap_labels(self.data)
+            self.data.y = self._remap_labels(self.data.y)
             self.has_labels = True
         else:
             self.has_labels = False
@@ -519,7 +519,7 @@ class Scannet(InMemoryDataset):
         data.scan_name = scan_name
         data.path_to_raw_scan = path_to_raw_scan
         if self.has_labels and remap_labels:
-            data = self._remap_labels(data)
+            data.y = self._remap_labels(data.y)
         return data
 
     @property
@@ -756,10 +756,10 @@ class Scannet(InMemoryDataset):
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
 
-    def _remap_labels(self, data):
+    def _remap_labels(self, semantic_label):
         """ Remaps labels to [0 ; num_labels -1]. Can be overriden.
         """
-        original_labels = data.y.clone()
+        new_labels = semantic_label.clone()
         mapping_dict = {indice: idx for idx, indice in enumerate(self.valid_class_idx)}
         for idx in range(NUM_CLASSES):
             if idx not in mapping_dict:
@@ -767,10 +767,10 @@ class Scannet(InMemoryDataset):
         for idx in self.donotcare_class_ids:
             mapping_dict[idx] = IGNORE_LABEL
         for source, target in mapping_dict.items():
-            mask = original_labels == source
-            data.y[mask] = target
+            mask = semantic_label == source
+            new_labels[mask] = target
 
-        return data
+        return new_labels
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, len(self))

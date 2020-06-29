@@ -35,7 +35,7 @@ class PointGroup(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
-        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
+        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4, in_feat=64, in_feat_tr=128)
 
         self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=2)
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
@@ -49,7 +49,7 @@ class PointGroup(BaseModel):
         self._stuff_classes = dataset.stuff_classes
 
     def set_input(self, data, device):
-        self.raw_pos = torch.stack((data.pos_x, data.pos_y, data.pos_z), 0).T.to(device)
+        self.raw_pos = data.pos.to(device)
         self.input = data
         self.labels = data.y.to(device)
         all_labels = {l: data[l].to(device) for l in self.__REQUIRED_LABELS__}
@@ -88,13 +88,13 @@ class PointGroup(BaseModel):
 
             if len(all_clusters):
                 x = []
-                pos = []
+                coords = []
                 batch = []
                 for i, cluster in enumerate(all_clusters):
                     x.append(backbone_features[cluster])
-                    pos.append(self.input.pos[cluster])
+                    coords.append(self.input.coords[cluster])
                     batch.append(i * torch.ones(cluster.shape[0]))
-                batch_cluster = Data(x=torch.cat(x).cpu(), pos=torch.cat(pos).cpu(), batch=torch.cat(batch).cpu())
+                batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu())
                 cluster_scores = self.ScorerHead(self.Scorer(batch_cluster).x)
 
         self.output = semantic_logits

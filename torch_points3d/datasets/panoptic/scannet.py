@@ -38,7 +38,7 @@ class ScannetPanoptic(Scannet):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.STUFFCLASSES = [i for i in self.VALID_CLASS_IDS if i not in self.NYU40IDS]
+        self.STUFFCLASSES = torch.tensor([i for i in self.VALID_CLASS_IDS if i not in self.NYU40IDS])
         self.CLASS2TYPE = {self.TYPE2CLASS[t]: t for t in self.TYPE2CLASS}
         self.NYU40ID2CLASS = {nyu40id: i for i, nyu40id in enumerate(list(self.NYU40IDS))}
 
@@ -105,11 +105,15 @@ class ScannetPanoptic(Scannet):
         data.num_instances = torch.tensor([num_instances])
 
         # Remap labels
-        data = super()._remap_labels(data)
+        data.y = super()._remap_labels(data.y)
         return data
 
-    def _remap_labels(self, data):
-        return data
+    def _remap_labels(self, semantic_label):
+        return semantic_label
+
+    @property
+    def stuff_classes(self):
+        return super()._remap_labels(self.STUFFCLASSES)
 
     def process(self):
         super().process()
@@ -157,7 +161,7 @@ class ScannetDataset(BaseDataset):
     def stuff_classes(self):
         """ Returns a list of classes that are not instances
         """
-        return self.train_dataset.STUFFCLASSES
+        return self.train_dataset.stuff_classes
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
