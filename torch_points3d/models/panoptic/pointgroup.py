@@ -167,7 +167,7 @@ class PointGroup(BaseModel):
         self.loss.backward()
 
     def _dump_visuals(self, epoch):
-        if random.random() < self.cfg.vizual_ratio:
+        if random.random() < self.opt.vizual_ratio:
             if not hasattr(self, "visual_count"):
                 self.visual_count = 0
             data_visual = Data(
