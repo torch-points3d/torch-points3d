@@ -451,7 +451,7 @@ class Scannet(InMemoryDataset):
         process_workers=4,
         types=[".txt", "_vh_clean_2.ply", "_vh_clean_2.0.010000.segs.json", ".aggregation.json"],
         normalize_rgb=True,
-        is_test=False
+        is_test=False,
     ):
 
         assert self.SPLITS == ["train", "val", "test"]
@@ -553,7 +553,7 @@ class Scannet(InMemoryDataset):
     def download_scans(self):
         release_file = BASE_URL + RELEASE + ".txt"
         release_scans = get_release_scans(release_file)
-        #release_scans = ["scene0191_00","scene0191_01", "scene0568_00", "scene0568_01"]
+        # release_scans = ["scene0191_00","scene0191_01", "scene0568_00", "scene0568_01"]
         file_types = FILETYPES
         release_test_file = BASE_URL + RELEASE + "_test.txt"
         release_test_scans = get_release_scans(release_test_file)
@@ -593,7 +593,8 @@ class Scannet(InMemoryDataset):
             # download_file(os.path.join(BASE_URL, RELEASE_TASKS, TEST_FRAMES_FILE[0]), os.path.join(out_dir_tasks, TEST_FRAMES_FILE[0]))
 
     def download(self):
-        if self.is_test: return 
+        if self.is_test:
+            return
         log.info(
             "By pressing any key to continue you confirm that you have agreed to the ScanNet terms of use as described at:"
         )
@@ -710,7 +711,8 @@ class Scannet(InMemoryDataset):
         return cT.SaveOriginalPosId()(data)
 
     def process(self):
-        if self.is_test: return 
+        if self.is_test:
+            return
         self.read_from_metadata()
 
         scannet_dir = osp.join(self.raw_dir, "scans")
@@ -757,6 +759,7 @@ class Scannet(InMemoryDataset):
     def _remap_labels(self, data):
         """ Remaps labels to [0 ; num_labels -1]. Can be overriden.
         """
+        original_labels = data.y.clone()
         mapping_dict = {indice: idx for idx, indice in enumerate(self.valid_class_idx)}
         for idx in range(NUM_CLASSES):
             if idx not in mapping_dict:
@@ -764,8 +767,9 @@ class Scannet(InMemoryDataset):
         for idx in self.donotcare_class_ids:
             mapping_dict[idx] = IGNORE_LABEL
         for source, target in mapping_dict.items():
-            mask = data.y == source
+            mask = original_labels == source
             data.y[mask] = target
+
         return data
 
     def __repr__(self):

@@ -14,11 +14,6 @@ data:
         size: ${data.first_subsampling}
   test_transforms:
     - transform: SaveOriginalPosId
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
