@@ -517,9 +517,11 @@ class ShiftVoxels:
 
     def __call__(self, data):
         if self._apply_shift:
-            if not isinstance(data.pos, torch.IntTensor):
+            if not hasattr(data, "coords"):
+                raise Exception("should quantize first using GridSampling3D")
+            if not isinstance(data.coords, torch.IntTensor):
                 raise Exception("The pos are expected to be coordinates, so torch.IntTensor")
-            data.pos[:, :3] += (torch.rand(3) * 100).type_as(data.pos)
+            data.coords[:, :3] += (torch.rand(3) * 100).type_as(data.coords)
         return data
 
     def __repr__(self):
