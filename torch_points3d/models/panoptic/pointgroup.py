@@ -72,14 +72,14 @@ class PointGroup(BaseModel):
                 self.raw_pos.to(self.device),
                 predicted_labels,
                 self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes,
+                ignore_labels=self._stuff_classes.to(self.device),
                 radius=self.opt.cluster_radius_search,
             )
             clusters_votes = region_grow(
                 self.raw_pos.to(self.device) + offset_logits,
                 predicted_labels,
                 self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes,
+                ignore_labels=self._stuff_classes.to(self.device),
                 radius=self.opt.cluster_radius_search,
             )
 

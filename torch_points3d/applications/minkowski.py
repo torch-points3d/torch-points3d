@@ -105,7 +105,10 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
         """
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(self.device)
-        self.xyz = data.pos.to(self.device)
+        if data.pos is not None:
+            self.xyz = data.pos.to(self.device)
+        else:
+            self.xyz = data.coords.to(self.device)
 
 
 class MinkowskiEncoder(BaseMinkowski):
