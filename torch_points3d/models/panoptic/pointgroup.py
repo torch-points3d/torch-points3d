@@ -1,5 +1,4 @@
 import torch
-from typing import NamedTuple, List
 from torch_points_kernels import region_grow, instance_iou
 from torch_geometric.data import Data
 import random
@@ -8,22 +7,7 @@ from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP
-
-
-class PointGroupResults(NamedTuple):
-    semantic_logits: torch.Tensor
-    offset_logits: torch.Tensor
-    cluster_scores: torch.Tensor
-    clusters: List[torch.Tensor]
-
-
-class PointGrouplabels(NamedTuple):
-    center_label: torch.Tensor
-    y: torch.Tensor
-    num_instances: torch.Tensor
-    instance_labels: torch.Tensor
-    instance_mask: torch.Tensor
-    vote_label: torch.Tensor
+from .structures import PanopticLabels, PanopticResults
 
 
 class PointGroup(BaseModel):
@@ -31,13 +15,13 @@ class PointGroup(BaseModel):
         "pos",
     ]
 
-    __REQUIRED_LABELS__ = list(PointGrouplabels._fields)
+    __REQUIRED_LABELS__ = list(PanopticLabels._fields)
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
         self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4, in_feat=64, in_feat_tr=128)
 
-        self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=2)
+        self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=4)
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([[self.Backbone.output_nc, self.Backbone.output_nc]], bias=False))
@@ -53,7 +37,7 @@ class PointGroup(BaseModel):
         self.input = data
         self.labels = data.y.to(device)
         all_labels = {l: data[l].to(device) for l in self.__REQUIRED_LABELS__}
-        self.all_labels = PointGrouplabels(**all_labels)
+        self.labels = PanopticLabels(**all_labels)
 
     def forward(self, epoch=-1, **kwargs):
         # Backbone
@@ -66,6 +50,7 @@ class PointGroup(BaseModel):
         # Grouping and scoring
         cluster_scores = None
         all_clusters = None
+        cluster_type = None
         if epoch == -1 or epoch > self.opt.prepare_epoch:  # Active by default
             predicted_labels = torch.max(semantic_logits, 1)[1]
             clusters_pos = region_grow(
@@ -85,6 +70,8 @@ class PointGroup(BaseModel):
 
             all_clusters = clusters_pos + clusters_votes
             all_clusters = [c.to(self.device) for c in all_clusters]
+            cluster_type = torch.zeros(len(all_clusters), dtype=torch.uint8).to(self.device)
+            cluster_type[len(clusters_pos) :] = 1
 
             if len(all_clusters):
                 x = []
@@ -97,12 +84,12 @@ class PointGroup(BaseModel):
                 batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu())
                 cluster_scores = self.ScorerHead(self.Scorer(batch_cluster).x)
 
-        self.output = semantic_logits
-        self.all_outputs = PointGroupResults(
+        self.output = PanopticResults(
             semantic_logits=semantic_logits,
             offset_logits=offset_logits,
             clusters=all_clusters,
             cluster_scores=cluster_scores,
+            cluster_type=cluster_type,
         )
 
         # Sets visual data for debugging
@@ -114,17 +101,17 @@ class PointGroup(BaseModel):
     def _compute_loss(self):
         # Semantic loss
         self.semantic_loss = torch.nn.functional.nll_loss(
-            self.all_outputs.semantic_logits, self.labels, ignore_index=IGNORE_LABEL
+            self.output.semantic_logits, self.labels.y, ignore_index=IGNORE_LABEL
         )
         self.loss = self.opt.loss_weights.semantic * self.semantic_loss
 
         # Offset loss
-        offset_losses = self._offset_loss(self.all_labels, self.all_outputs)
+        offset_losses = self._offset_loss(self.labels, self.output)
 
         # Score loss
-        if self.all_outputs.cluster_scores is not None:
+        if self.output.cluster_scores is not None:
             ious = instance_iou(
-                self.all_outputs.clusters, self.input.instance_labels.to(self.device), self.input.batch.to(self.device)
+                self.output.clusters, self.labels.instance_labels.to(self.device), self.input.batch.to(self.device)
             ).max(1)[0]
             lower_mask = ious < self.opt.min_iou_threshold
             higher_mask = ious > self.opt.max_iou_threshold
@@ -136,7 +123,7 @@ class PointGroup(BaseModel):
             shat[middle_mask] = (iou_middle - self.opt.min_iou_threshold) / (
                 self.opt.max_iou_threshold - self.opt.min_iou_threshold
             )
-            self.score_loss = torch.nn.functional.binary_cross_entropy(self.all_outputs.cluster_scores, shat)
+            self.score_loss = torch.nn.functional.binary_cross_entropy(self.output.cluster_scores, shat)
             self.loss += self.score_loss * self.opt.loss_weights["score_loss"]
 
         for loss_name, loss in offset_losses.items():
@@ -144,7 +131,7 @@ class PointGroup(BaseModel):
             self.loss += self.opt.loss_weights[loss_name] * loss
 
     @staticmethod
-    def _offset_loss(data_labels: PointGrouplabels, result: PointGroupResults):
+    def _offset_loss(data_labels: PanopticLabels, result: PanopticResults):
         instance_mask = data_labels.instance_mask
         pt_offsets = result.offset_logits[instance_mask, :]
 
@@ -173,17 +160,18 @@ class PointGroup(BaseModel):
             data_visual = Data(
                 pos=self.raw_pos, y=self.input.y, instance_labels=self.input.instance_labels, batch=self.input.batch
             )
-            data_visual.semantic_pred = torch.max(self.output, -1)[1]
-            if self.all_outputs.clusters is not None:
+            data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
+            if self.output.clusters is not None:
                 # Instance offset when flatten
                 instance_offsets = [0]
                 cum_offset = 0
-                for instance in self.all_outputs.clusters:
+                for instance in self.output.clusters:
                     cum_offset += instance.shape[0]
                     instance_offsets.append(cum_offset)
                 # Store
-                data_visual.instance_idx = torch.cat(self.all_outputs.clusters)
+                data_visual.instance_idx = torch.cat(self.output.clusters)
                 data_visual.instance_offsets = torch.tensor(instance_offsets)
+                data_visual.cluster_type = self.output.cluster_type
 
             torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
             self.visual_count += 1

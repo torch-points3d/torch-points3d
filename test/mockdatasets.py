@@ -87,7 +87,7 @@ class MockDataset(torch.utils.data.Dataset):
 
     @property
     def stuff_classes(self):
-        return [0, 1]
+        return torch.tensor([0, 1])
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()

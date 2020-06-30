@@ -60,8 +60,7 @@ class ScannetObjectDetection(Scannet):
             raise ValueError("Only integer indices supported")
 
         # Get raw data and apply transforms
-        data = self.get(idx)
-        data = data if self.transform is None else self.transform(data)
+        data = super().__getitem__(idx)
 
         # Extract instance and box labels
         self._set_extra_labels(data)

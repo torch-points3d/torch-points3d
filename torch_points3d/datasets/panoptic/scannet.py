@@ -13,33 +13,12 @@ log = logging.getLogger(__name__)
 
 
 class ScannetPanoptic(Scannet):
-    TYPE2CLASS = {
-        "cabinet": 0,
-        "bed": 1,
-        "chair": 2,
-        "sofa": 3,
-        "table": 4,
-        "door": 5,
-        "window": 6,
-        "bookshelf": 7,
-        "picture": 8,
-        "counter": 9,
-        "desk": 10,
-        "curtain": 11,
-        "refrigerator": 12,
-        "showercurtrain": 13,
-        "toilet": 14,
-        "sink": 15,
-        "bathtub": 16,
-        "garbagebin": 17,
-    }
     NYU40IDS = np.array([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
     NUM_MAX_OBJECTS = 64
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.STUFFCLASSES = torch.tensor([i for i in self.VALID_CLASS_IDS if i not in self.NYU40IDS])
-        self.CLASS2TYPE = {self.TYPE2CLASS[t]: t for t in self.TYPE2CLASS}
         self.NYU40ID2CLASS = {nyu40id: i for i, nyu40id in enumerate(list(self.NYU40IDS))}
 
     def __getitem__(self, idx):
@@ -52,8 +31,7 @@ class ScannetPanoptic(Scannet):
             raise ValueError("Only integer indices supported")
 
         # Get raw data and apply transforms
-        data = self.get(idx)
-        data = data if self.transform is None else self.transform(data)
+        data = super().__getitem__(idx)
 
         # Extract instance and box labels
         self._set_extra_labels(data)
@@ -116,9 +94,13 @@ class ScannetPanoptic(Scannet):
         return super()._remap_labels(self.STUFFCLASSES)
 
     def process(self):
+        if self.is_test:
+            pass
         super().process()
 
     def download(self):
+        if self.is_test:
+            pass
         super().download()
 
 

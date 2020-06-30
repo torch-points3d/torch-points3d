@@ -1,0 +1,55 @@
+data:
+    class: scannet.ScannetDataset
+    dataset_name: 'scannet'
+    task: panoptic
+    dataroot: "test/data"
+    version: 'v2'
+    use_instance_labels: True
+    donotcare_class_ids: []
+    process_workers: 8
+    is_test: True
+  
+    grid_size: 0.05
+    mode: last
+  
+    pre_transform:
+      - transform: GridSampling3D
+        lparams: [0.02]
+  
+    train_transform:
+      - transform: XYZFeature
+        params:
+          add_x: False
+          add_y: False
+          add_z: True
+      - transform: GridSampling3D
+        params:
+          size: ${data.grid_size}
+          quantize_coords: True
+          mode: ${data.mode}
+      - transform: AddFeatsByKeys
+        params:
+          list_add_to_x: [True, True]
+          feat_names: ['rgb', 'pos_z']
+          input_nc_feats: [3, 1]
+          delete_feats: [True, True]
+          stricts: [False, True]
+  
+    val_transform:
+      - transform: XYZFeature
+        params:
+          add_x: False
+          add_y: False
+          add_z: True
+      - transform: GridSampling3D
+        params:
+          size: ${data.grid_size}
+          quantize_coords: True
+          mode: ${data.mode}
+      - transform: AddFeatsByKeys
+        params:
+          list_add_to_x: [True, True]
+          feat_names: ['rgb', 'pos_z']
+          input_nc_feats: [3, 1]
+          delete_feats: [True, True]
+          stricts: [False, True]
