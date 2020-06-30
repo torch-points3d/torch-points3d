@@ -98,8 +98,9 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
         mock_metrics = {"current_metrics": {"acc": 15}, "stage": "train", "epoch": 11}
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
+        self.assertEqual(model_checkpoint.checkpoint_path, os.path.join(self.run_path, self.model_name + ".pt"))
 
-        ckp = torch.load(os.path.join(self.run_path, self.model_name + ".pt"))
+        ckp = torch.load(model_checkpoint.checkpoint_path)
 
         self.assertEqual(ckp["models"]["best_acc"]["state"].item(), optimal_state)
         self.assertEqual(ckp["models"]["latest"]["state"].item(), model.state.item())
