@@ -45,7 +45,11 @@ class Trainer:
     def _initialize_trainer(self):
 
         # Get device
-        self._device = torch.device("cuda" if (torch.cuda.is_available() and self._cfg.training.cuda) else "cpu")
+        if self._cfg.training.cuda > -1 and torch.cuda.is_available():
+            device = "cuda:" + str(self._cfg.training.cuda)
+        else:
+            device = "cpu"
+        self._device = torch.device(device)
         log.info("DEVICE : {}".format(self._device))
 
         # Enable CUDNN BACKEND
