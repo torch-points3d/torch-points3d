@@ -43,6 +43,8 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
         self.FC_layer.append(Conv1D(last_mlp_opt.nn[-1], self._num_classes, activation=None, bias=True, bn=False))
         self.loss_names = ["loss_seg"]
 
+        self.visual_names = ["data_visual"]
+
     def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -108,6 +110,10 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
 
         if self.labels is not None:
             self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
+
+        self.data_visual = self.input
+        self.data_visual.y = torch.reshape(self.labels, data.pos.shape[0:2])
+        self.data_visual.pred = torch.max(self.output, -1)[1].reshape(data.pos.shape[0:2])
 
         return self.output
 
