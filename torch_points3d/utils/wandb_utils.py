@@ -35,19 +35,24 @@ class Wandb:
             wandb_args = {}
             wandb_args["project"] = cfg.wandb.project
             wandb_args["tags"] = tags
-            try:
-                wandb_args["config"] = {
-                    "run_path": os.getcwd(),
-                    "commit": subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip(),
-                }
-            except:
-                wandb_args["config"] = {
-                    "run_path": os.getcwd(),
-                    "commit": "n/a",
-                }
             Wandb._set_to_wandb_args(wandb_args, cfg, "name")
             Wandb._set_to_wandb_args(wandb_args, cfg, "entity")
             Wandb._set_to_wandb_args(wandb_args, cfg, "notes")
+            Wandb._set_to_wandb_args(wandb_args, cfg, "config")
+
+            try:
+                commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+                gitdiff = subprocess.check_output(["git", "diff", "--", "':!notebooks'"]).decode()
+            except:
+                commit_sha = "n/a"
+                gitdiff = ""
+
+            config = wandb_args.get("config", {})
+            wandb_args["config"] = {
+                **config,
+                "run_path": os.getcwd(),
+                "commit": commit_sha,
+            }
 
             wandb.init(**wandb_args)
             shutil.copyfile(
@@ -55,6 +60,10 @@ class Wandb:
             )
             wandb.save(os.path.join(os.getcwd(), ".hydra/hydra-config.yaml"))
             wandb.save(os.path.join(os.getcwd(), ".hydra/overrides.yaml"))
+
+            with open("change.patch", "w") as f:
+                f.write(gitdiff)
+            wandb.save(os.path.join(os.getcwd(), "change.patch"))
 
     @staticmethod
     def add_file(file_path: str):

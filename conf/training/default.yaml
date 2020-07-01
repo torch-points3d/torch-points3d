@@ -31,10 +31,12 @@ training:
 wandb:
     entity: ""
     project: default
-    log: False
+    log: True
     notes:
     name:
     public: True # It will be display the model within wandb log, else not.
+    config:
+        model_name: ${model_name}
 
     # parameters for TensorBoard Visualization
 tensorboard:
