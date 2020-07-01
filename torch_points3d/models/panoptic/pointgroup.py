@@ -30,7 +30,7 @@ class PointGroup(BaseModel):
             Seq().append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes)).append(torch.nn.LogSoftmax())
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
-        self._stuff_classes = dataset.stuff_classes
+        self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), dataset.stuff_classes])
 
     def set_input(self, data, device):
         self.raw_pos = data.pos.to(device)
@@ -161,16 +161,9 @@ class PointGroup(BaseModel):
                 pos=self.raw_pos, y=self.input.y, instance_labels=self.input.instance_labels, batch=self.input.batch
             )
             data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
+            data_visual.vote = self.output.offset_logits
             if self.output.clusters is not None:
-                # Instance offset when flatten
-                instance_offsets = [0]
-                cum_offset = 0
-                for instance in self.output.clusters:
-                    cum_offset += instance.shape[0]
-                    instance_offsets.append(cum_offset)
-                # Store
-                data_visual.instance_idx = torch.cat(self.output.clusters)
-                data_visual.instance_offsets = torch.tensor(instance_offsets)
+                data_visual.clusters = [c.cpu() for c in self.output.clusters]
                 data_visual.cluster_type = self.output.cluster_type
 
             torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
