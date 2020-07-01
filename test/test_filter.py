@@ -44,3 +44,7 @@ class TestFilter(unittest.TestCase):
         self.assertTrue(compose_filter(data_1).item())
         self.assertFalse(compose_filter(data_2).item())
         self.assertFalse(compose_filter(data_3).item())
+
+
+if __name__ == "__main__":
+    unittest.main()

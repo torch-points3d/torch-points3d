@@ -17,7 +17,7 @@ class MockModel(BaseModel):
     def set_input(self, data, device):
         pass
 
-    def forward(self):
+    def forward(self, **kwargs):
         pass
 
     def backward(self):
@@ -33,7 +33,7 @@ class DifferentiableMockModel(BaseModel):
     def set_input(self, data, device):
         self.pos = data.pos
 
-    def forward(self):
+    def forward(self, **kwargs):
         self.output = self.nn(self.pos)
         self.loss = self.output.sum()
 

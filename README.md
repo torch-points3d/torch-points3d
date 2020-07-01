@@ -208,7 +208,7 @@ export PATH="/usr/local/cuda-10.2/bin:$PATH"
 You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
-poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#7087411269605b8cb5b9f61246d474f507ca3781
+poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
 ```
 
 #### Pycuda

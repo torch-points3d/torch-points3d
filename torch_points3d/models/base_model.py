@@ -172,7 +172,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._num_batches += 1
         self._num_samples += batch_size
 
-        self.forward()  # first call forward to calculate intermediate results
+        self.forward(epoch=epoch)  # first call forward to calculate intermediate results
         make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
 

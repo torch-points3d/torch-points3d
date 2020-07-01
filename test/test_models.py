@@ -37,6 +37,7 @@ def load_model_config(task, model_type, model_name):
     config = OmegaConf.load(models_conf)
     config.update("model_name", model_name)
     config.update("data.task", task)
+    config.update("data.grid_size", 1)
     return config
 
 
@@ -63,16 +64,33 @@ def get_dataset(conv_type, task):
     else:
         if conv_type.lower() == "dense":
             num_points = 2048
-            return MockDataset(features, num_points=num_points, include_box=include_box, batch_size=batch_size)
+            return MockDataset(
+                features,
+                num_points=num_points,
+                include_box=include_box,
+                panoptic=task == "panoptic",
+                batch_size=batch_size,
+            )
         if conv_type.lower() == "sparse":
             return MockDatasetGeometric(
                 features,
                 include_box=include_box,
-                transform=GridSampling3D(size=0.01, quantize_coords=True, mode="last"),
+                panoptic=task == "panoptic",
+                transform=Compose(
+                    [XYZFeature(True, True, True), GridSampling3D(size=0.01, quantize_coords=True, mode="last")]
+                ),
                 num_points=num_points,
                 batch_size=batch_size,
             )
         return MockDatasetGeometric(features, batch_size=batch_size)
+
+
+def has_zero_grad(model_name):
+    has_zero_grad = ["PointGroup"]
+    for zg in has_zero_grad:
+        if zg.lower() in model_name.lower():
+            return True
+    return False
 
 
 class TestModels(unittest.TestCase):
@@ -95,6 +113,7 @@ class TestModels(unittest.TestCase):
             models_config = OmegaConf.load(type_file)
             models_config = OmegaConf.merge(models_config, self.data_config)
             models_config.update("data.task", associated_task)
+            models_config.update("data.grid_size", 0.05)
             for model_name in models_config.models.keys():
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
@@ -109,7 +128,10 @@ class TestModels(unittest.TestCase):
                             print("Forward or backward failing")
                             raise e
                         try:
-                            ratio = test_hasgrad(model)
+                            if has_zero_grad(model_name):
+                                ratio = 1
+                            else:
+                                ratio = test_hasgrad(model)
                             if ratio < 1:
                                 print(
                                     "Model %s.%s.%s has %i%% of parameters with 0 gradient"

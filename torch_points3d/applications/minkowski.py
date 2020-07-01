@@ -22,13 +22,7 @@ log = logging.getLogger(__name__)
 
 
 def Minkowski(
-    architecture: str = None,
-    input_nc: int = None,
-    num_layers: int = None,
-    config: DictConfig = None,
-    multiscale=True,
-    *args,
-    **kwargs
+    architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
 ):
     """ Create a Minkowski backbone model based on architecture proposed in
     https://arxiv.org/abs/1904.08755
@@ -111,11 +105,14 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
         """
         coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(self.device)
-        self.xyz = data.pos.to(self.device)
+        if data.pos is not None:
+            self.xyz = data.pos.to(self.device)
+        else:
+            self.xyz = data.coords.to(self.device)
 
 
 class MinkowskiEncoder(BaseMinkowski):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """
         Parameters:
         -----------
@@ -135,7 +132,7 @@ class MinkowskiEncoder(BaseMinkowski):
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
 
-        out = Batch(x=data.F, batch=data.C[:, 0].long())
+        out = Batch(x=data.F, batch=data.C[:, 0].long().to(data.F.device))
         if not isinstance(self.inner_modules[0], Identity):
             out = self.inner_modules[0](out)
 
@@ -145,7 +142,7 @@ class MinkowskiEncoder(BaseMinkowski):
 
 
 class MinkowskiUnet(BaseMinkowski):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
                    |      |_________|     |

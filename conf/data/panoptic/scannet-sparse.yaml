@@ -1,0 +1,73 @@
+data:
+  class: scannet.ScannetDataset
+  dataset_name: 'scannet-sparse'
+  task: panoptic
+  dataroot: data
+  version: 'v2'
+  use_instance_labels: True
+  donotcare_class_ids: []
+  process_workers: 8
+
+  grid_size: 0.05
+  mode: last
+
+  pre_transform:
+    - transform: GridSampling3D
+      lparams: [0.02]
+
+  train_transform:
+    - transform: RandomDropout
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
+    - transform: RandomScaleAnisotropic
+      params:
+        scales: [0.8, 1.2]
+    - transform: Random3AxisRotation
+      params:
+        rot_x: 5
+        rot_y: 5
+        rot_z: 180
+    - transform: GridSampling3D
+      params:
+        size: ${data.grid_size}
+        quantize_coords: True
+        mode: ${data.mode}
+    - transform: RandomCoordsFlip
+      params:
+        ignored_axis: ['z']
+    - transform: ShiftVoxels
+    - transform: ChromaticTranslation
+    - transform: ChromaticJitter
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: ['rgb', 'pos_z']
+        input_nc_feats: [3, 1]
+        delete_feats: [True, True]
+        stricts: [False, True]
+
+  val_transform:
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True
+    - transform: GridSampling3D
+      params:
+        size: ${data.grid_size}
+        quantize_coords: True
+        mode: ${data.mode}
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True]
+        feat_names: ['rgb', 'pos_z']
+        input_nc_feats: [3, 1]
+        delete_feats: [True, True]
+        stricts: [False, True]

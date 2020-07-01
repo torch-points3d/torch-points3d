@@ -60,8 +60,7 @@ class ScannetObjectDetection(Scannet):
             raise ValueError("Only integer indices supported")
 
         # Get raw data and apply transforms
-        data = self.get(idx)
-        data = data if self.transform is None else self.transform(data)
+        data = super().__getitem__(idx)
 
         # Extract instance and box labels
         self._set_extra_labels(data)
@@ -155,9 +154,9 @@ class ScannetObjectDetection(Scannet):
         delattr(data, "y")
         return data
 
-    def _remap_labels(self, data):
+    def _remap_labels(self, semantic_label):
         log.info("Keeping original labels in y. Please do not use data.y in your network.")
-        return data
+        return semantic_label
 
     def process(self):
         super().process()

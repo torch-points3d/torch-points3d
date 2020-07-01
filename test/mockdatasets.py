@@ -20,7 +20,7 @@ class MockDatasetConfig(object):
 
 
 class MockDataset(torch.utils.data.Dataset):
-    def __init__(self, feature_size=0, transform=None, num_points=100, include_box=False, batch_size=2):
+    def __init__(self, feature_size=0, transform=None, num_points=100, panoptic=False, include_box=False, batch_size=2):
         self.feature_dimension = feature_size
         self.num_classes = 10
         self.num_points = num_points
@@ -37,6 +37,7 @@ class MockDataset(torch.utils.data.Dataset):
         self._transform = transform
         self.mean_size_arr = torch.rand((11, 3))
         self.include_box = include_box
+        self.panoptic = panoptic
 
     def __len__(self):
         return self.num_points
@@ -59,6 +60,13 @@ class MockDataset(torch.utils.data.Dataset):
             data.box_label_mask = torch.randint(0, 1, (num_boxes,)).bool()
             data.vote_label = torch.randn(self.num_points, 9)
             data.vote_label_mask = torch.randint(0, 1, (self.num_points,)).bool()
+        if self.panoptic:
+            data.num_instances = torch.tensor([10])
+            data.center_label = torch.randn((self.num_points, 3))
+            data.y = torch.randint(0, 10, (self.num_points,))
+            data.instance_labels = torch.randint(0, 20, (self.num_points,))
+            data.instance_mask = torch.rand(self.num_points).bool()
+            data.vote_label = torch.randn((self.num_points, 3))
         return data
 
     @property
@@ -76,6 +84,10 @@ class MockDataset(torch.utils.data.Dataset):
     @property
     def class_to_segments(self):
         return {"class1": [0, 1, 2, 3, 4, 5], "class2": [6, 7, 8, 9]}
+
+    @property
+    def stuff_classes(self):
+        return torch.tensor([0, 1])
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()

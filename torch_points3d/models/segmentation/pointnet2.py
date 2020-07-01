@@ -84,7 +84,7 @@ class PointNet2_D(UnetBasedModel):
         if self._use_category:
             self.category = data.category
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
         r"""
             Forward pass of the network
             self.input:

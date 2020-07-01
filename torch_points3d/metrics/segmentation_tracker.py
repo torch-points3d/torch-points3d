@@ -58,20 +58,21 @@ class SegmentationTracker(BaseTracker):
 
         outputs = model.get_output()
         targets = model.get_labels()
+        self._compute_metrics(outputs, targets)
 
-        # Mask ignored label
-        mask = targets != self._ignore_label
+    def _compute_metrics(self, outputs, labels):
+        mask = labels != self._ignore_label
         outputs = outputs[mask]
-        targets = targets[mask]
+        labels = labels[mask]
 
         outputs = self._convert(outputs)
-        targets = self._convert(targets)
+        labels = self._convert(labels)
 
-        if len(targets) == 0:
+        if len(labels) == 0:
             return
 
-        assert outputs.shape[0] == len(targets)
-        self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
+        assert outputs.shape[0] == len(labels)
+        self._confusion_matrix.count_predicted_batch(labels, np.argmax(outputs, 1))
 
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
