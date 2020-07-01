@@ -14,7 +14,7 @@ repos:
     rev: stable
     hooks:
       - id: black
-        language_version: python3.6
+        language_version: python3.7
 
   - repo: https://github.com/humitos/mirrors-autoflake.git
     rev: v1.3

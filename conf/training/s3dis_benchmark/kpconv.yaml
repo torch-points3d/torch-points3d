@@ -3,7 +3,7 @@ training:
     epochs: 300
     num_workers: 4
     batch_size: 8
-    cuda: 1
+    cuda: 0
     precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
     optim:
         base_lr: 0.01
