@@ -15,7 +15,7 @@ class EMHS_Model(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(EMHS_Model, self).__init__(option)
         self.model = initialize_minkowski_emls(
-            dataset.feature_dimension,
+            input_nc=dataset.feature_dimension,
             dim_feat=option.dim_feat,
             output_nc=dataset.num_classes,
             num_layer=option.num_layer,
