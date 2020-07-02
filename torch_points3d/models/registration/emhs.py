@@ -11,6 +11,7 @@ class EMHS_Model(BaseMinkowski):
         BaseMinkowski.__init__(self, option, model_type, dataset, modules)
 
         self.model = initialize_minkowski_emls(
+            model_name=option.model_name,
             input_nc=dataset.feature_dimension,
             dim_feat=option.dim_feat,
             output_nc=option.output_nc,
