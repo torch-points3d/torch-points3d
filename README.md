@@ -394,6 +394,11 @@ export TORCH_CUDA_ARCH_LIST="7.0;7.5"
 ```
 See [this useful chart](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) for more architecture compatibility.
 
+#### Cannot use wandb on Windows
+
+Raises `OSError: [WinError 6] The handle is invalid` / `wandb: ERROR W&B process failed to launch`
+Wandb is currently broken on Windows (see [this issue](https://github.com/wandb/client/issues/862)), a workaround is to use the command line argument `wandb.log=false`
+
 ## Contributing
 
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!

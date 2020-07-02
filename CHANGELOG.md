@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Segmentation: KPConv on scannetV2
   - Object Detection: VoteNet on scannetV2
 - Add VoteNet Paper / Backbones within API
+- Windows support
 
 ### Changed
 
