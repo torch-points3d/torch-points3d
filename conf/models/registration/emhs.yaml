@@ -11,6 +11,7 @@ models:
         stride: 16
         dilation: 1
         normalize_feature: True
+        loss_mode: "match"
         metric_loss:
           class: "ContrastiveHardestNegativeLoss"
           params:

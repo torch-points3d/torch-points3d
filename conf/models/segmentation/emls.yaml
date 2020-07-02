@@ -1,0 +1,13 @@
+models:
+    # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngin
+    # STILL NOT FULLY WORKING !
+    MinkEMHS:
+        class: emhs.EMHS_Model
+        conv_type: "SPARSE"
+        model_name: "EquivariantMapNetwork"
+        D: 3
+        dim_feat: 64
+        num_layer: 20
+        kernel_size: 16
+        stride: 16
+        dilation: 1
