@@ -154,7 +154,7 @@ class Visualizer(object):
             for idx in np.argwhere(self._seen_batch == batch_indices).flatten():
                 pos_idx = pos_indices[idx]
                 for visual_name, item in visuals.items():
-                    if hasattr(item, "batch"):  # The PYG dataloader has been used
+                    if hasattr(item, "batch") and item.batch is not None:  # The PYG dataloader has been used
                         out_item = self._extract_from_PYG(item, pos_idx)
                     else:
                         out_item = self._extract_from_dense(item, pos_idx)
