@@ -22,12 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Object Detection: VoteNet on scannetV2
 - Add VoteNet Paper / Backbones within API
 - Windows support
+- Weights are uploaded to wandb at the end of the run
 
 ### Changed
 
 - evaluation output folder is now a subfolder of the checkpoint it uses
 - saves model checkpoints to wandb
 - GridSampling3D now creates a new attribute `coords` that stores the non quantized position when the transform is called in `quantize` mode
+- cuda parameter can be given in command line to select the GPU to use
 
 ### Removed
 
