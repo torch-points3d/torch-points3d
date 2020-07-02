@@ -132,18 +132,16 @@ class BaseDataset:
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
-                return lambda datalist: MultiScaleBatch.from_data_list(datalist)
+                return MultiScaleBatch.from_data_list
             else:
                 raise NotImplementedError(
                     "MultiscaleTransform is activated and supported only for partial_dense format"
                 )
-
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_dense:
-            return lambda datalist: SimpleBatch.from_data_list(datalist)
+            return SimpleBatch.from_data_list
         else:
-            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
-
+            return torch_geometric.data.batch.Batch.from_data_list
     @staticmethod
     def get_num_samples(batch, conv_type):
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
@@ -176,7 +174,7 @@ class BaseDataset:
 
         batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(
-            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
+            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
         )
 
         if self.train_sampler:

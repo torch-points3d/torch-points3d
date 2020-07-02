@@ -46,7 +46,7 @@ class Trainer:
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
-            device = "cuda" + str(self._cfg.training.cuda)
+            device = "cuda"
             torch.cuda.set_device(self._cfg.training.cuda)
         else:
             device = "cpu"
