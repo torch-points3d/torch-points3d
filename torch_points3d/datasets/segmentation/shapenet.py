@@ -248,7 +248,7 @@ class ShapeNet(InMemoryDataset):
             path = osp.join(self.raw_dir, "train_test_split", f"shuffled_{split}_file_list.json")
             with open(path, "r") as f:
                 filenames = [
-                    osp.sep.join(name.split(osp.sep)[1:]) + ".txt" for name in json.load(f)
+                    osp.sep.join(name.split('/')[1:]) + ".txt" for name in json.load(f)
                 ]  # Removing first directory.
             data_raw_list, data_list = self._process_filenames(sorted(filenames))
             if split == "train" or split == "val":
