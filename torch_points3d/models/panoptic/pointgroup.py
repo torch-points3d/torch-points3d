@@ -19,7 +19,7 @@ class PointGroup(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
-        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4, in_feat=64, in_feat_tr=128)
+        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
 
         self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=4)
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
@@ -54,17 +54,17 @@ class PointGroup(BaseModel):
         if epoch == -1 or epoch > self.opt.prepare_epoch:  # Active by default
             predicted_labels = torch.max(semantic_logits, 1)[1]
             clusters_pos = region_grow(
-                self.raw_pos.to(self.device),
-                predicted_labels,
-                self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes.to(self.device),
+                self.raw_pos.cpu(),
+                predicted_labels.cpu(),
+                self.input.batch.cpu(),
+                ignore_labels=self._stuff_classes.cpu(),
                 radius=self.opt.cluster_radius_search,
             )
             clusters_votes = region_grow(
-                self.raw_pos.to(self.device) + offset_logits,
-                predicted_labels,
-                self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes.to(self.device),
+                self.raw_pos.cpu() + offset_logits.cpu(),
+                predicted_labels.cpu(),
+                self.input.batch.cpu(),
+                ignore_labels=self._stuff_classes.cpu(),
                 radius=self.opt.cluster_radius_search,
             )
 
