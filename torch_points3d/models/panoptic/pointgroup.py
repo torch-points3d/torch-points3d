@@ -1,6 +1,7 @@
 import torch
 from torch_points_kernels import region_grow, instance_iou
 from torch_geometric.data import Data
+from torch_scatter import scatter_max
 import random
 
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -21,7 +22,8 @@ class PointGroup(BaseModel):
         super(PointGroup, self).__init__(option)
         self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
 
-        self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=4)
+        self._scorer_is_encoder = option.scorer.architecture == "encoder"
+        self.Scorer = Minkowski(option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=2)
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
@@ -83,7 +85,12 @@ class PointGroup(BaseModel):
                     coords.append(self.input.coords[cluster])
                     batch.append(i * torch.ones(cluster.shape[0]))
                 batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu())
-                cluster_scores = self.ScorerHead(self.Scorer(batch_cluster).x)
+                score_backbone_out = self.Scorer(batch_cluster)
+                if self._scorer_is_encoder:
+                    cluster_feats = score_backbone_out.x
+                else:
+                    cluster_feats = scatter_max(score_backbone_out.x, score_backbone_out.batch, dim=0)
+                cluster_scores = self.ScorerHead(cluster_feats)
 
         self.output = PanopticResults(
             semantic_logits=semantic_logits,
