@@ -1,6 +1,7 @@
 import torch
 from torch_points_kernels import region_grow, instance_iou
 from torch_geometric.data import Data
+from torch_scatter import scatter_max
 import random
 
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -19,13 +20,15 @@ class PointGroup(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
-        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4, in_feat=64, in_feat_tr=128)
+        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
 
-        self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=4)
+        self._scorer_is_encoder = option.scorer.architecture == "encoder"
+        self.Scorer = Minkowski(option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=2)
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
-        self.Offset = Seq().append(MLP([[self.Backbone.output_nc, self.Backbone.output_nc]], bias=False))
+        self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
         self.Offset.append(torch.nn.Linear(self.Backbone.output_nc, 3))
+
         self.Semantic = (
             Seq().append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes)).append(torch.nn.LogSoftmax())
         )
@@ -54,17 +57,17 @@ class PointGroup(BaseModel):
         if epoch == -1 or epoch > self.opt.prepare_epoch:  # Active by default
             predicted_labels = torch.max(semantic_logits, 1)[1]
             clusters_pos = region_grow(
-                self.raw_pos.to(self.device),
-                predicted_labels,
-                self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes.to(self.device),
+                self.raw_pos.cpu(),
+                predicted_labels.cpu(),
+                self.input.batch.cpu(),
+                ignore_labels=self._stuff_classes.cpu(),
                 radius=self.opt.cluster_radius_search,
             )
             clusters_votes = region_grow(
-                self.raw_pos.to(self.device) + offset_logits,
-                predicted_labels,
-                self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes.to(self.device),
+                self.raw_pos.cpu() + offset_logits.cpu(),
+                predicted_labels.cpu(),
+                self.input.batch.cpu(),
+                ignore_labels=self._stuff_classes.cpu(),
                 radius=self.opt.cluster_radius_search,
             )
 
@@ -82,7 +85,12 @@ class PointGroup(BaseModel):
                     coords.append(self.input.coords[cluster])
                     batch.append(i * torch.ones(cluster.shape[0]))
                 batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu())
-                cluster_scores = self.ScorerHead(self.Scorer(batch_cluster).x)
+                score_backbone_out = self.Scorer(batch_cluster)
+                if self._scorer_is_encoder:
+                    cluster_feats = score_backbone_out.x
+                else:
+                    cluster_feats = scatter_max(score_backbone_out.x, score_backbone_out.batch, dim=0)
+                cluster_scores = self.ScorerHead(cluster_feats)
 
         self.output = PanopticResults(
             semantic_logits=semantic_logits,

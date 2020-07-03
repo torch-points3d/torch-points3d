@@ -390,12 +390,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
                         state[k] = v.to(*args, **kwargs)
         return self
 
-    def cpu(self):
-        return self.to(torch.device("cpu"))
-
-    def cuda(self):
-        return self.to(torch.device("cuda"))
-
     def verify_data(self, data, forward_only=False):
         """ Goes through the __REQUIRED_DATA__ and __REQUIRED_LABELS__ attribute of the model
         and verifies that the passed data object contains all required members.
