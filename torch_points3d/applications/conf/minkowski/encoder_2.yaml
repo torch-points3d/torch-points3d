@@ -2,7 +2,6 @@ class: minkowski.Minkowski_Model
 conv_type: "SPARSE"
 define_constants:
   in_feat: 32
-  in_feat_tr: 64
 down_conv:
     module_name: Res2BlockDown
     dimension: 3
@@ -15,15 +14,10 @@ down_conv:
     kernel_size: [5, 3]
     stride: [1, 2]
     dilation: [1, 1]
-up_conv:
-    module_name: Res2BlockUp
-    dimension: 3
-    bn_momentum: 0.2
-    up_conv_nn:
-        [
-            [2*in_feat, in_feat_tr],
-            [in_feat_tr + in_feat, in_feat_tr, in_feat]
-        ]
-    kernel_size: [3, 1]
-    stride: [2, 1]
-    dilation: [1, 1]
+innermost:
+    module_name: GlobalBaseModule
+    activation:
+        name: LeakyReLU
+        negative_slope: 0.2
+    aggr: "mean"
+    nn: [2*in_feat, 2*in_feat]

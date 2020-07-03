@@ -7,8 +7,11 @@ models:
             offset_norm_loss: 1 
             offset_dir_loss: 1
             score_loss: 1
+        
+        scorer: 
+            architecture: unet # unet or encoder 
 
-        prepare_epoch: 90
+        prepare_epoch: 120
         cluster_radius_search: 1.5 * ${data.grid_size}
 
         min_iou_threshold: 0.25
