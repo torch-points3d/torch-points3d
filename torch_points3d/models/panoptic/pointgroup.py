@@ -24,8 +24,9 @@ class PointGroup(BaseModel):
         self.Scorer = Minkowski("encoder", input_nc=self.Backbone.output_nc, num_layers=4)
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
-        self.Offset = Seq().append(MLP([[self.Backbone.output_nc, self.Backbone.output_nc]], bias=False))
+        self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
         self.Offset.append(torch.nn.Linear(self.Backbone.output_nc, 3))
+
         self.Semantic = (
             Seq().append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes)).append(torch.nn.LogSoftmax())
         )
