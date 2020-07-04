@@ -17,18 +17,13 @@ RUN python3 -m pip install -U pip \
     && pip3 install pycuda \
     && rm -rf /root/.cache
 
-#COPY requirements.txt requirements.txt
-COPY pyproject.toml pyproject.toml
+ENV WORKDIR=/tp3d
+WORKDIR $WORKDIR
 
-#RUN FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST="3.5 5.2 6.0 6.1 7.0+PTX" pip3 install -r requirements.txt \
-#    && rm -rf /root/.cache
+COPY pyproject.toml pyproject.toml
+COPY torch_points3d/__init__.py torch_points3d/__init__.py
+COPY README.md README.md
 
 RUN FORCE_CUDA=1 TORCH_CUDA_ARCH_LIST="3.5 5.2 6.0 6.1 7.0+PTX" pip3 install . && rm -rf /root/.cache
 
-# we need to specify TORCH_CUDA_ARCH_LIST to compile with non-gpu docker machines
-# this list was taken from pytorch's list of deafult architectures (https://github.com/pytorch/pytorch/blob/master/docker/pytorch/Dockerfile#L28)
-
-ENV WORKDIR=/dpb
-
-WORKDIR $WORKDIR
 COPY . .
