@@ -9,7 +9,8 @@ models:
             score_loss: 1
         
         scorer: 
-            architecture: unet # unet or encoder 
+            architecture: encoder # unet or encoder 
+            depth: 4
 
         prepare_epoch: 120
         cluster_radius_search: 1.5 * ${data.grid_size}

@@ -1,7 +1,8 @@
+from typing import List
 import torch
 from torch_points_kernels import region_grow, instance_iou
 from torch_geometric.data import Data
-from torch_scatter import scatter_max
+from torch_scatter import scatter
 import random
 
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -9,6 +10,49 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP
 from .structures import PanopticLabels, PanopticResults
+
+
+def offset_loss(pred_offsets, gt_offsets, total_instance_points):
+    """ Computes the L1 norm between prediction and ground truth and
+    also computes cosine similarity between both vectors.
+    see https://arxiv.org/pdf/2004.01658.pdf equations 2 and 3
+    """
+    pt_diff = pred_offsets - gt_offsets
+    pt_dist = torch.sum(torch.abs(pt_diff), dim=-1)
+    offset_norm_loss = torch.sum(pt_dist) / (total_instance_points + 1e-6)
+
+    gt_offsets_norm = torch.norm(gt_offsets, p=2, dim=1)  # (N), float
+    gt_offsets_ = gt_offsets / (gt_offsets_norm.unsqueeze(-1) + 1e-8)
+    pred_offsets_norm = torch.norm(pred_offsets, p=2, dim=1)
+    pred_offsets_ = pred_offsets / (pred_offsets_norm.unsqueeze(-1) + 1e-8)
+    direction_diff = -(gt_offsets_ * pred_offsets_).sum(-1)  # (N)
+    offset_dir_loss = torch.sum(direction_diff) / (total_instance_points + 1e-6)
+
+    return {"offset_norm_loss": offset_norm_loss, "offset_dir_loss": offset_dir_loss}
+
+
+def instance_iou_loss(
+    predicted_clusters: List[torch.Tensor],
+    cluster_scores: torch.Tensor,
+    instance_labels: torch.Tensor,
+    batch: torch.Tensor,
+    min_iou_threshold=0.25,
+    max_iou_threshold=0.75,
+):
+    """ Loss that promotes higher scores for clusters wuth higher instance iou,
+    see https://arxiv.org/pdf/2004.01658.pdf equation (7)
+    """
+    assert len(predicted_clusters) == cluster_scores.shape[0]
+    ious = instance_iou(predicted_clusters, instance_labels, batch).max(1)[0]
+    lower_mask = ious < min_iou_threshold
+    higher_mask = ious > max_iou_threshold
+    middle_mask = torch.logical_and(torch.logical_not(lower_mask), torch.logical_not(higher_mask))
+    assert torch.sum(lower_mask + higher_mask + middle_mask) == ious.shape[0]
+    shat = torch.zeros_like(ious)
+    iou_middle = ious[middle_mask]
+    shat[higher_mask] = 1
+    shat[middle_mask] = (iou_middle - min_iou_threshold) / (max_iou_threshold - min_iou_threshold)
+    return torch.nn.functional.binary_cross_entropy(cluster_scores, shat)
 
 
 class PointGroup(BaseModel):
@@ -23,7 +67,9 @@ class PointGroup(BaseModel):
         self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
-        self.Scorer = Minkowski(option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=2)
+        self.Scorer = Minkowski(
+            option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=self.scorer.depth
+        )
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
@@ -57,17 +103,17 @@ class PointGroup(BaseModel):
         if epoch == -1 or epoch > self.opt.prepare_epoch:  # Active by default
             predicted_labels = torch.max(semantic_logits, 1)[1]
             clusters_pos = region_grow(
-                self.raw_pos.cpu(),
-                predicted_labels.cpu(),
-                self.input.batch.cpu(),
-                ignore_labels=self._stuff_classes.cpu(),
+                self.raw_pos,
+                predicted_labels,
+                self.input.batch.to(self.device),
+                ignore_labels=self._stuff_classes.to(self.device),
                 radius=self.opt.cluster_radius_search,
             )
             clusters_votes = region_grow(
-                self.raw_pos.cpu() + offset_logits.cpu(),
-                predicted_labels.cpu(),
-                self.input.batch.cpu(),
-                ignore_labels=self._stuff_classes.cpu(),
+                self.raw_pos + offset_logits,
+                predicted_labels,
+                self.input.batch.to(self.device),
+                ignore_labels=self._stuff_classes.to(self.device),
                 radius=self.opt.cluster_radius_search,
             )
 
@@ -84,12 +130,16 @@ class PointGroup(BaseModel):
                     x.append(backbone_features[cluster])
                     coords.append(self.input.coords[cluster])
                     batch.append(i * torch.ones(cluster.shape[0]))
-                batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu())
+                batch_cluster = Data(
+                    x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),
+                )
                 score_backbone_out = self.Scorer(batch_cluster)
                 if self._scorer_is_encoder:
                     cluster_feats = score_backbone_out.x
                 else:
-                    cluster_feats = scatter_max(score_backbone_out.x, score_backbone_out.batch, dim=0)
+                    cluster_feats = scatter(
+                        score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
+                    )
                 cluster_scores = self.ScorerHead(cluster_feats)
 
         self.output = PanopticResults(
@@ -114,48 +164,28 @@ class PointGroup(BaseModel):
         self.loss = self.opt.loss_weights.semantic * self.semantic_loss
 
         # Offset loss
-        offset_losses = self._offset_loss(self.labels, self.output)
-
-        # Score loss
-        if self.output.cluster_scores is not None:
-            ious = instance_iou(
-                self.output.clusters, self.labels.instance_labels.to(self.device), self.input.batch.to(self.device)
-            ).max(1)[0]
-            lower_mask = ious < self.opt.min_iou_threshold
-            higher_mask = ious > self.opt.max_iou_threshold
-            middle_mask = torch.logical_and(torch.logical_not(lower_mask), torch.logical_not(higher_mask))
-            assert torch.sum(lower_mask + higher_mask + middle_mask) == ious.shape[0]
-            shat = torch.zeros_like(ious)
-            iou_middle = ious[middle_mask]
-            shat[higher_mask] = 1
-            shat[middle_mask] = (iou_middle - self.opt.min_iou_threshold) / (
-                self.opt.max_iou_threshold - self.opt.min_iou_threshold
-            )
-            self.score_loss = torch.nn.functional.binary_cross_entropy(self.output.cluster_scores, shat)
-            self.loss += self.score_loss * self.opt.loss_weights["score_loss"]
-
+        self.input.instance_mask = self.input.instance_mask.to(self.device)
+        self.input.vote_label = self.input.vote_label.to(self.device)
+        offset_losses = offset_loss(
+            self.output.offset_logits[self.input.instance_mask],
+            self.input.vote_label[self.input.instance_mask],
+            torch.sum(self.input.instance_mask),
+        )
         for loss_name, loss in offset_losses.items():
             setattr(self, loss_name, loss)
             self.loss += self.opt.loss_weights[loss_name] * loss
 
-    @staticmethod
-    def _offset_loss(data_labels: PanopticLabels, result: PanopticResults):
-        instance_mask = data_labels.instance_mask
-        pt_offsets = result.offset_logits[instance_mask, :]
-
-        gt_offsets = data_labels.vote_label[instance_mask, :]
-        pt_diff = pt_offsets - gt_offsets
-        pt_dist = torch.sum(torch.abs(pt_diff), dim=-1)
-        offset_norm_loss = torch.sum(pt_dist) / (torch.sum(instance_mask) + 1e-6)
-
-        gt_offsets_norm = torch.norm(gt_offsets, p=2, dim=1)  # (N), float
-        gt_offsets_ = gt_offsets / (gt_offsets_norm.unsqueeze(-1) + 1e-8)
-        pt_offsets_norm = torch.norm(pt_offsets, p=2, dim=1)
-        pt_offsets_ = pt_offsets / (pt_offsets_norm.unsqueeze(-1) + 1e-8)
-        direction_diff = -(gt_offsets_ * pt_offsets_).sum(-1)  # (N)
-        offset_dir_loss = torch.sum(direction_diff) / (torch.sum(instance_mask) + 1e-6)
-
-        return {"offset_norm_loss": offset_norm_loss, "offset_dir_loss": offset_dir_loss}
+        # Score loss
+        if self.output.cluster_scores is not None:
+            self.score_loss = instance_iou_loss(
+                self.output.clusters,
+                self.output.cluster_scores,
+                self.input.instance_labels.to(self.device),
+                self.input.batch.to(self.device),
+                min_iou_threshold=self.opt.min_iou_threshold,
+                max_iou_threshold=self.opt.max_iou_threshold,
+            )
+            self.loss += self.score_loss * self.opt.loss_weights["score_loss"]
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
