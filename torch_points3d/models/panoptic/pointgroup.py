@@ -68,7 +68,7 @@ class PointGroup(BaseModel):
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
         self.Scorer = Minkowski(
-            option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=self.scorer.depth
+            option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=option.scorer.depth
         )
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 

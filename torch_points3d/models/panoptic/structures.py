@@ -9,6 +9,10 @@ class PanopticResults(NamedTuple):
     clusters: List[torch.Tensor]  # Each item contains the list of indices in the cluster
     cluster_type: torch.Tensor  # Wether a cluster is coming from the votes or the original points. 0->original pos, 1->vote
 
+    def get_instances(self, nms=True):
+        """ Returns instance labels using nms
+        """
+
 
 class PanopticLabels(NamedTuple):
     center_label: torch.Tensor
