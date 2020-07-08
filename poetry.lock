@@ -28,7 +28,7 @@ version = "1.4.4"
 [[package]]
 category = "dev"
 description = "Disable App Nap on OS X 10.9"
-marker = "python_version >= \"3.3\" and sys_platform == \"darwin\" or platform_system == \"Darwin\""
+marker = "sys_platform == \"darwin\" or platform_system == \"Darwin\" or python_version >= \"3.3\" and sys_platform == \"darwin\""
 name = "appnope"
 optional = false
 python-versions = "*"
@@ -126,7 +126,6 @@ pytz = ">=2015.7"
 [[package]]
 category = "dev"
 description = "Specifications for callback functions passed in to an API"
-marker = "python_version >= \"3.3\""
 name = "backcall"
 optional = false
 python-versions = "*"
@@ -706,7 +705,6 @@ xdg_home = ["appdirs (>=1.4.0)"]
 [[package]]
 category = "dev"
 description = "An autocompletion tool for Python that can be used for text editors."
-marker = "python_version >= \"3.3\""
 name = "jedi"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
@@ -1261,7 +1259,7 @@ version = "0.1.2"
 [[package]]
 category = "dev"
 description = "Pexpect allows easy control of interactive console applications."
-marker = "python_version >= \"3.3\" and sys_platform != \"win32\""
+marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\""
 name = "pexpect"
 optional = false
 python-versions = "*"
@@ -1273,7 +1271,6 @@ ptyprocess = ">=0.5"
 [[package]]
 category = "dev"
 description = "Tiny 'shelve'-like database with concurrency support"
-marker = "python_version >= \"3.3\""
 name = "pickleshare"
 optional = false
 python-versions = "*"
@@ -1286,6 +1283,17 @@ name = "pillow"
 optional = false
 python-versions = ">=3.5"
 version = "7.2.0"
+
+[[package]]
+category = "main"
+description = "PLY file reader/writer"
+name = "plyfile"
+optional = false
+python-versions = "*"
+version = "0.7.2"
+
+[package.dependencies]
+numpy = ">=1.8"
 
 [[package]]
 category = "dev"
@@ -1349,7 +1357,6 @@ test = ["pytest (>=2.7.3)", "pytest-cov", "coveralls", "futures", "pytest-benchm
 [[package]]
 category = "dev"
 description = "Library for building powerful interactive command lines in Python"
-marker = "python_version >= \"3.3\""
 name = "prompt-toolkit"
 optional = false
 python-versions = ">=3.6.1"
@@ -2401,7 +2408,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "99b9bd3d9ff0e312f046075639e6884cbd749b993b86a443b9acc5fc15426d60"
+content-hash = "260b92007d6056ea9265570299b3b02613543909f1d509080cb4928a64760063"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -3075,6 +3082,10 @@ pillow = [
     {file = "Pillow-7.2.0-cp38-cp38-win_amd64.whl", hash = "sha256:a060cf8aa332052df2158e5a119303965be92c3da6f2d93b6878f0ebca80b2f6"},
     {file = "Pillow-7.2.0-pp36-pypy36_pp73-win32.whl", hash = "sha256:25930fadde8019f374400f7986e8404c8b781ce519da27792cbe46eabec00c4d"},
     {file = "Pillow-7.2.0.tar.gz", hash = "sha256:97f9e7953a77d5a70f49b9a48da7776dc51e9b738151b22dacf101641594a626"},
+]
+plyfile = [
+    {file = "plyfile-0.7.2-py3-none-any.whl", hash = "sha256:5010d57edf4971287bab71610bdf8df7f600efdbe08b3dcc596328f83cb80550"},
+    {file = "plyfile-0.7.2.tar.gz", hash = "sha256:59a25845d00a51098e6c9147c3c96ce89ad97395e256a4fabb4aed7cf7db5541"},
 ]
 port-for = [
     {file = "port-for-0.3.1.tar.gz", hash = "sha256:b16a84bb29c2954db44c29be38b17c659c9c27e33918dec16b90d375cc596f1c"},
