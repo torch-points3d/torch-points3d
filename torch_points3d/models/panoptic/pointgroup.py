@@ -8,7 +8,7 @@ import random
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications.minkowski import Minkowski
-from torch_points3d.core.common_modules import Seq, MLP
+from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
 from .structures import PanopticLabels, PanopticResults
 
 
@@ -65,12 +65,20 @@ class PointGroup(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
         self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
+        self.BackboneHead = Seq().append(FastBatchNorm1d(self.Backbone.output_nc)).append(torch.nn.ReLU())
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
+        self._activate_scorer = option.scorer.activate
         self.Scorer = Minkowski(
             option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=option.scorer.depth
         )
-        self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
+        self.ScorerHead = (
+            Seq()
+            .append(FastBatchNorm1d(self.Scorer.output_nc))
+            .append(torch.nn.ReLU())
+            .append(torch.nn.Linear(self.Scorer.output_nc, 1))
+            .append(torch.nn.Sigmoid())
+        )
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
         self.Offset.append(torch.nn.Linear(self.Backbone.output_nc, 3))
@@ -90,7 +98,7 @@ class PointGroup(BaseModel):
 
     def forward(self, epoch=-1, **kwargs):
         # Backbone
-        backbone_features = self.Backbone(self.input).x
+        backbone_features = self.BackboneHead(self.Backbone(self.input).x)
 
         # Semantic and offset heads
         semantic_logits = self.Semantic(backbone_features)
@@ -123,24 +131,37 @@ class PointGroup(BaseModel):
             cluster_type[len(clusters_pos) :] = 1
 
             if len(all_clusters):
-                x = []
-                coords = []
-                batch = []
-                for i, cluster in enumerate(all_clusters):
-                    x.append(backbone_features[cluster])
-                    coords.append(self.input.coords[cluster])
-                    batch.append(i * torch.ones(cluster.shape[0]))
-                batch_cluster = Data(
-                    x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),
-                )
-                score_backbone_out = self.Scorer(batch_cluster)
-                if self._scorer_is_encoder:
-                    cluster_feats = score_backbone_out.x
-                else:
-                    cluster_feats = scatter(
-                        score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
+                if self._activate_scorer:
+                    x = []
+                    coords = []
+                    batch = []
+                    for i, cluster in enumerate(all_clusters):
+                        x.append(backbone_features[cluster])
+                        coords.append(self.input.coords[cluster])
+                        batch.append(i * torch.ones(cluster.shape[0]))
+                    batch_cluster = Data(
+                        x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),
                     )
-                cluster_scores = self.ScorerHead(cluster_feats)
+                    score_backbone_out = self.Scorer(batch_cluster)
+                    if self._scorer_is_encoder:
+                        cluster_feats = score_backbone_out.x
+                    else:
+                        cluster_feats = scatter(
+                            score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
+                        )
+                    cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
+                else:
+                    # Use semantic certainty as cluster confidence
+                    with torch.no_grad():
+                        cluster_semantic = []
+                        batch = []
+                        for i, cluster in enumerate(all_clusters):
+                            cluster_semantic.append(semantic_logits[cluster, :])
+                            batch.append(i * torch.ones(cluster.shape[0]))
+                        cluster_semantic = torch.cat(cluster_semantic)
+                        batch = torch.cat(batch)
+                        cluster_semantic = scatter(cluster_semantic, batch.long().to(self.device), dim=0, reduce="mean")
+                        cluster_scores = torch.max(cluster_semantic, 1)[0]
 
         self.output = PanopticResults(
             semantic_logits=semantic_logits,
@@ -151,7 +172,8 @@ class PointGroup(BaseModel):
         )
 
         # Sets visual data for debugging
-        self._dump_visuals(epoch)
+        with torch.no_grad():
+            self._dump_visuals(epoch)
 
         # Compute loss
         self._compute_loss()
@@ -176,7 +198,7 @@ class PointGroup(BaseModel):
             self.loss += self.opt.loss_weights[loss_name] * loss
 
         # Score loss
-        if self.output.cluster_scores is not None:
+        if self.output.cluster_scores is not None and self._activate_scorer:
             self.score_loss = instance_iou_loss(
                 self.output.clusters,
                 self.output.cluster_scores,
@@ -200,9 +222,10 @@ class PointGroup(BaseModel):
             )
             data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
             data_visual.vote = self.output.offset_logits
+            nms_idx = self.output.get_nms_instances()
             if self.output.clusters is not None:
-                data_visual.clusters = [c.cpu() for c in self.output.clusters]
-                data_visual.cluster_type = self.output.cluster_type
+                data_visual.clusters = [self.output.clusters[i].cpu() for i in nms_idx]
+                data_visual.cluster_type = self.output.cluster_type[nms_idx]
 
             torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
             self.visual_count += 1

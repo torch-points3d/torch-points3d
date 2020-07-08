@@ -9,6 +9,7 @@ models:
             score_loss: 1
         
         scorer: 
+            activate: true
             architecture: encoder # unet or encoder 
             depth: 4
 
