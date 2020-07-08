@@ -32,3 +32,6 @@ lightning_logs
 /data
 .tox
 tp3d
+eval
+cv_s3dis_models/
+test/test_data
