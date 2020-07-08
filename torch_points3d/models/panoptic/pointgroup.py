@@ -72,19 +72,16 @@ class PointGroup(BaseModel):
         self.Scorer = Minkowski(
             option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=option.scorer.depth
         )
-        self.ScorerHead = (
-            Seq()
-            .append(FastBatchNorm1d(self.Scorer.output_nc))
-            .append(torch.nn.ReLU())
-            .append(torch.nn.Linear(self.Scorer.output_nc, 1))
-            .append(torch.nn.Sigmoid())
-        )
+        self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
         self.Offset.append(torch.nn.Linear(self.Backbone.output_nc, 3))
 
         self.Semantic = (
-            Seq().append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes)).append(torch.nn.LogSoftmax())
+            Seq()
+            .append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
+            .append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes))
+            .append(torch.nn.LogSoftmax())
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
         self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), dataset.stuff_classes])
