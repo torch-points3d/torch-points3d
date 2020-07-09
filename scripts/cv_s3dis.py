@@ -4,7 +4,6 @@ from omegaconf import OmegaConf
 import urllib.request
 import logging
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
-import glob
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -17,7 +16,7 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), CV_S3DIS_DI
 POINTNET_2_URL_MODELS = {
     "1": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt",
     "2": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2i499g2e/pointnet2_largemsg.pt",
-    "3": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt",
+    "3": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1gyokj69/pointnet2_largemsg.pt",
     "4": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ejjs4s2/pointnet2_largemsg.pt",
     "5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/etxij0j6/pointnet2_largemsg.pt",
     "6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt",
@@ -52,16 +51,18 @@ def main(cfg):
 
     cfg.checkpoint_dir = workdir
     cfg.tracker_options.full_res = True
+    local_models = {}
     for fold, url in MODELS_URL[cfg.model_name].items():
-        download_file(url, os.path.join(workdir, "{}_{}.pt".format(cfg.model_name, fold)))
-
-    model_lists = glob.glob(os.path.join(workdir, "*.pt"))
+        local_file = os.path.join(workdir, "{}_{}.pt".format(cfg.model_name, fold))
+        local_models[fold] = local_file
+        download_file(url, local_file)
 
     conf_paths = []
-    for model_name in model_lists:
+    for fold, model_name in local_models.items():
         cfg.model_name = model_name.replace(".pt", "")
         cfg.tracker_options.full_res = True
         trainer = Trainer(cfg)
+        assert trainer._checkpoint.data_config.data.fold == fold
         trainer.eval(stage_name="test")
 
         conf_path = os.path.join(workdir, "{}.npy".format(cfg.model_name))
