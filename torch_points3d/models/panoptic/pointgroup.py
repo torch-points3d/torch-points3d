@@ -1,6 +1,5 @@
-from typing import List
 import torch
-from torch_points_kernels import region_grow, instance_iou
+from torch_points_kernels import region_grow
 from torch_geometric.data import Data
 from torch_scatter import scatter
 import random
@@ -9,50 +8,8 @@ from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
+from torch_points3d.core.losses import offset_loss, instance_iou_loss
 from .structures import PanopticLabels, PanopticResults
-
-
-def offset_loss(pred_offsets, gt_offsets, total_instance_points):
-    """ Computes the L1 norm between prediction and ground truth and
-    also computes cosine similarity between both vectors.
-    see https://arxiv.org/pdf/2004.01658.pdf equations 2 and 3
-    """
-    pt_diff = pred_offsets - gt_offsets
-    pt_dist = torch.sum(torch.abs(pt_diff), dim=-1)
-    offset_norm_loss = torch.sum(pt_dist) / (total_instance_points + 1e-6)
-
-    gt_offsets_norm = torch.norm(gt_offsets, p=2, dim=1)  # (N), float
-    gt_offsets_ = gt_offsets / (gt_offsets_norm.unsqueeze(-1) + 1e-8)
-    pred_offsets_norm = torch.norm(pred_offsets, p=2, dim=1)
-    pred_offsets_ = pred_offsets / (pred_offsets_norm.unsqueeze(-1) + 1e-8)
-    direction_diff = -(gt_offsets_ * pred_offsets_).sum(-1)  # (N)
-    offset_dir_loss = torch.sum(direction_diff) / (total_instance_points + 1e-6)
-
-    return {"offset_norm_loss": offset_norm_loss, "offset_dir_loss": offset_dir_loss}
-
-
-def instance_iou_loss(
-    predicted_clusters: List[torch.Tensor],
-    cluster_scores: torch.Tensor,
-    instance_labels: torch.Tensor,
-    batch: torch.Tensor,
-    min_iou_threshold=0.25,
-    max_iou_threshold=0.75,
-):
-    """ Loss that promotes higher scores for clusters wuth higher instance iou,
-    see https://arxiv.org/pdf/2004.01658.pdf equation (7)
-    """
-    assert len(predicted_clusters) == cluster_scores.shape[0]
-    ious = instance_iou(predicted_clusters, instance_labels, batch).max(1)[0]
-    lower_mask = ious < min_iou_threshold
-    higher_mask = ious > max_iou_threshold
-    middle_mask = torch.logical_and(torch.logical_not(lower_mask), torch.logical_not(higher_mask))
-    assert torch.sum(lower_mask + higher_mask + middle_mask) == ious.shape[0]
-    shat = torch.zeros_like(ious)
-    iou_middle = ious[middle_mask]
-    shat[higher_mask] = 1
-    shat[middle_mask] = (iou_middle - min_iou_threshold) / (max_iou_threshold - min_iou_threshold)
-    return torch.nn.functional.binary_cross_entropy(cluster_scores, shat)
 
 
 class PointGroup(BaseModel):
@@ -106,59 +63,9 @@ class PointGroup(BaseModel):
         all_clusters = None
         cluster_type = None
         if epoch == -1 or epoch > self.opt.prepare_epoch:  # Active by default
-            predicted_labels = torch.max(semantic_logits, 1)[1]
-            clusters_pos = region_grow(
-                self.raw_pos,
-                predicted_labels,
-                self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes.to(self.device),
-                radius=self.opt.cluster_radius_search,
-            )
-            clusters_votes = region_grow(
-                self.raw_pos + offset_logits,
-                predicted_labels,
-                self.input.batch.to(self.device),
-                ignore_labels=self._stuff_classes.to(self.device),
-                radius=self.opt.cluster_radius_search,
-            )
-
-            all_clusters = clusters_pos + clusters_votes
-            all_clusters = [c.to(self.device) for c in all_clusters]
-            cluster_type = torch.zeros(len(all_clusters), dtype=torch.uint8).to(self.device)
-            cluster_type[len(clusters_pos) :] = 1
-
+            all_clusters, cluster_type = self._cluster(semantic_logits, offset_logits)
             if len(all_clusters):
-                if self._activate_scorer:
-                    x = []
-                    coords = []
-                    batch = []
-                    for i, cluster in enumerate(all_clusters):
-                        x.append(backbone_features[cluster])
-                        coords.append(self.input.coords[cluster])
-                        batch.append(i * torch.ones(cluster.shape[0]))
-                    batch_cluster = Data(
-                        x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),
-                    )
-                    score_backbone_out = self.Scorer(batch_cluster)
-                    if self._scorer_is_encoder:
-                        cluster_feats = score_backbone_out.x
-                    else:
-                        cluster_feats = scatter(
-                            score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
-                        )
-                    cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
-                else:
-                    # Use semantic certainty as cluster confidence
-                    with torch.no_grad():
-                        cluster_semantic = []
-                        batch = []
-                        for i, cluster in enumerate(all_clusters):
-                            cluster_semantic.append(semantic_logits[cluster, :])
-                            batch.append(i * torch.ones(cluster.shape[0]))
-                        cluster_semantic = torch.cat(cluster_semantic)
-                        batch = torch.cat(batch)
-                        cluster_semantic = scatter(cluster_semantic, batch.long().to(self.device), dim=0, reduce="mean")
-                        cluster_scores = torch.max(cluster_semantic, 1)[0]
+                cluster_scores = self._compute_score(all_clusters, backbone_features, semantic_logits)
 
         self.output = PanopticResults(
             semantic_logits=semantic_logits,
@@ -174,6 +81,63 @@ class PointGroup(BaseModel):
 
         # Compute loss
         self._compute_loss()
+
+    def _cluster(self, semantic_logits, offset_logits):
+        """ Compute clusters from positions and votes """
+        predicted_labels = torch.max(semantic_logits, 1)[1]
+        clusters_pos = region_grow(
+            self.raw_pos,
+            predicted_labels,
+            self.input.batch.to(self.device),
+            ignore_labels=self._stuff_classes.to(self.device),
+            radius=self.opt.cluster_radius_search,
+        )
+        clusters_votes = region_grow(
+            self.raw_pos + offset_logits,
+            predicted_labels,
+            self.input.batch.to(self.device),
+            ignore_labels=self._stuff_classes.to(self.device),
+            radius=self.opt.cluster_radius_search,
+        )
+
+        all_clusters = clusters_pos + clusters_votes
+        all_clusters = [c.to(self.device) for c in all_clusters]
+        cluster_type = torch.zeros(len(all_clusters), dtype=torch.uint8).to(self.device)
+        cluster_type[len(clusters_pos) :] = 1
+        return all_clusters, cluster_type
+
+    def _compute_score(self, all_clusters, backbone_features, semantic_logits):
+        """ Score the clusters """
+        if self._activate_scorer:
+            x = []
+            coords = []
+            batch = []
+            for i, cluster in enumerate(all_clusters):
+                x.append(backbone_features[cluster])
+                coords.append(self.input.coords[cluster])
+                batch.append(i * torch.ones(cluster.shape[0]))
+            batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),)
+            score_backbone_out = self.Scorer(batch_cluster)
+            if self._scorer_is_encoder:
+                cluster_feats = score_backbone_out.x
+            else:
+                cluster_feats = scatter(
+                    score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
+                )
+            cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
+        else:
+            # Use semantic certainty as cluster confidence
+            with torch.no_grad():
+                cluster_semantic = []
+                batch = []
+                for i, cluster in enumerate(all_clusters):
+                    cluster_semantic.append(semantic_logits[cluster, :])
+                    batch.append(i * torch.ones(cluster.shape[0]))
+                cluster_semantic = torch.cat(cluster_semantic)
+                batch = torch.cat(batch)
+                cluster_semantic = scatter(cluster_semantic, batch.long().to(self.device), dim=0, reduce="mean")
+                cluster_scores = torch.max(cluster_semantic, 1)[0]
+        return cluster_scores
 
     def _compute_loss(self):
         # Semantic loss
