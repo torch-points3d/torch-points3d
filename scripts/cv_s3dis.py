@@ -4,6 +4,7 @@ from omegaconf import OmegaConf
 import urllib.request
 import logging
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
+import glob
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -11,7 +12,7 @@ log = logging.getLogger(__name__)
 from torch_points3d.trainer import Trainer
 
 CV_S3DIS_DIR = "cv_s3dis_models"
-CHECKPOINT_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), CV_S3DIS_DIR)
+BASE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), CV_S3DIS_DIR)
 
 POINTNET_2_URL_MODELS = {
     "1": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt",
@@ -45,17 +46,16 @@ def log_confusion_matrix(conf):
 def main(cfg):
     OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
     log.info(cfg.pretty())
+    workdir = os.path.join(BASE_DIR, cfg.model_name)
+    if not os.path.exists(workdir):
+        os.makedirs(workdir)
 
-    if not os.path.exists(CHECKPOINT_DIR):
-        os.makedirs(CHECKPOINT_DIR)
-
-    cfg.checkpoint_dir = CHECKPOINT_DIR
+    cfg.checkpoint_dir = workdir
     cfg.tracker_options.full_res = True
-
     for fold, url in MODELS_URL[cfg.model_name].items():
-        download_file(url, os.path.join(CHECKPOINT_DIR, "{}_{}.pt".format(cfg.model_name, fold)))
+        download_file(url, os.path.join(workdir, "{}_{}.pt".format(cfg.model_name, fold)))
 
-    model_lists = os.listdir(CHECKPOINT_DIR)
+    model_lists = glob.glob(os.path.join(workdir, "*.pt"))
 
     conf_paths = []
     for model_name in model_lists:
@@ -64,8 +64,8 @@ def main(cfg):
         trainer = Trainer(cfg)
         trainer.eval(stage_name="test")
 
-        conf_path = os.path.join(CHECKPOINT_DIR, "{}.npy".format(cfg.model_name))
-        np.save(conf_path, trainer._tracker.full_confusion_matrix)
+        conf_path = os.path.join(workdir, "{}.npy".format(cfg.model_name))
+        np.save(conf_path, trainer._tracker.full_confusion_matrix.get_confusion_matrix())
         conf_paths.append(conf_path)
 
     confusion_matrix = ConfusionMatrix.create_from_matrix(np.sum([np.load(p) for p in conf_paths], axis=0))
@@ -73,5 +73,5 @@ def main(cfg):
 
 
 if __name__ == "__main__":
-    # EXAMPLE: python scripts/cv_s3dis.py checkpoint_dir={PATH_TO_TORCHPOINTS3D} model_name=pointnet2
+    # EXAMPLE: python scripts/cv_s3dis.py checkpoint_dir=`pwd` model_name=pointnet2
     main()
