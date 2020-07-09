@@ -1,9 +1,10 @@
 import os
 import hydra
 from omegaconf import OmegaConf
-import wget
+import urllib.request
 import logging
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
+import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -26,24 +27,24 @@ MODELS_URL = {"pointnet2": POINTNET_2_URL_MODELS}
 
 def download_file(url, out_file):
     if not os.path.exists(out_file):
-        wget.download(url, out_file)
+        urllib.request.urlretrieve(url, out_file)
     else:
-        log("WARNING: skipping download of existing file " + out_file)
+        log.warning("WARNING: skipping download of existing file " + out_file)
 
 
 def log_confusion_matrix(conf):
-    log("====================================================")
-    log("NUM POINTS : {}".format(np.sum(conf.confusion_matrix)))
-    log("OA: {}".format(100 * conf.get_overall_accuracy()))
-    log("MACC: {}".format(100 * conf.get_mean_class_accuracy()))
-    log("MIOU : {}".format(100 * conf.get_average_intersection_union()))
-    log("====================================================")
+    log.info("====================================================")
+    log.info("NUM POINTS : {}".format(np.sum(conf.confusion_matrix)))
+    log.info("OA: {}".format(100 * conf.get_overall_accuracy()))
+    log.info("MACC: {}".format(100 * conf.get_mean_class_accuracy()))
+    log.info("MIOU : {}".format(100 * conf.get_average_intersection_union()))
+    log.info("====================================================")
 
 
 @hydra.main(config_path="../conf/eval.yaml")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
-    log(cfg.pretty())
+    log.info(cfg.pretty())
 
     if not os.path.exists(CHECKPOINT_DIR):
         os.makedirs(CHECKPOINT_DIR)
@@ -61,7 +62,7 @@ def main(cfg):
         cfg.model_name = model_name.replace(".pt", "")
         cfg.tracker_options.full_res = True
         trainer = Trainer(cfg)
-        trainer.eval()
+        trainer.eval(stage_name="test")
 
         conf_path = os.path.join(CHECKPOINT_DIR, "{}.npy".format(cfg.model_name))
         np.save(conf_path, trainer._tracker.confusion_matrix)

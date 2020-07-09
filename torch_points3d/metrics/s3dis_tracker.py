@@ -21,7 +21,7 @@ class S3DISTracker(SegmentationTracker):
         self._vote_miou = None
         self._iou_per_class = {}
 
-    def track(self, model: model_interface.TrackerInterface, full_res=False, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res=False, data=None, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)
@@ -40,7 +40,7 @@ class S3DISTracker(SegmentationTracker):
             self._test_area.to(model.device)
 
         # Gather origin ids and check that it fits with the test set
-        inputs = model.get_input()
+        inputs = data if data is not None else model.get_input()
         if inputs[SaveOriginalPosId.KEY] is None:
             raise ValueError("The inputs given to the model do not have a %s attribute." % SaveOriginalPosId.KEY)
 

@@ -43,6 +43,10 @@ class Trainer:
         self._initialize_trainer()
 
     def _initialize_trainer(self):
+        # Enable CUDNN BACKEND
+        torch.backends.cudnn.enabled = self.enable_cudnn
+        if not self.has_training:
+            self._cfg.training = self._cfg
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
@@ -52,12 +56,6 @@ class Trainer:
             device = "cpu"
         self._device = torch.device(device)
         log.info("DEVICE : {}".format(self._device))
-
-        # Enable CUDNN BACKEND
-        torch.backends.cudnn.enabled = self.enable_cudnn
-
-        if not self.has_training:
-            self._cfg.training = self._cfg
 
         # Profiling
         if self.profiling:
@@ -141,15 +139,17 @@ class Trainer:
             if self._dataset.has_test_loaders:
                 self._test_epoch(epoch, "test")
 
-    def eval(self):
+    def eval(self, stage_name=""):
         self._is_training = False
 
         epoch = self._checkpoint.start_epoch
         if self._dataset.has_val_loader:
-            self._test_epoch(epoch, "val")
+            if not stage_name or stage_name == "val":
+                self._test_epoch(epoch, "val")
 
         if self._dataset.has_test_loaders:
-            self._test_epoch(epoch, "test")
+            if not stage_name or stage_name == "test":
+                self._test_epoch(epoch, "test")
 
     def _finalize_epoch(self, epoch):
         self._tracker.finalise(**self.tracker_options)
