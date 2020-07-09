@@ -25,7 +25,7 @@ repos:
             '--in-place',
             '--remove-unused-variable',
             '--ignore-init-module-imports',
-            '--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy',
+            '--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy,sklearn,scipy,torch_sparse,torch_points_kernels',
           ]
   - repo: https://github.com/kynan/nbstripout
     rev: master

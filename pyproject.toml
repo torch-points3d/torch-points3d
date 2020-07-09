@@ -23,10 +23,11 @@ torch-sparse = "^0.6.0"
 torch-cluster = "^1.4.5"
 torch-geometric = "^1.3.2"
 pytorch_metric_learning = "^0.9.87.dev0"
-torch-points-kernels = "^0.6.3"
+torch-points-kernels = "^0.6.6"
 numpy = "^1.18.2"
 scikit-image = "^0.16.2"
 numba = "^0.49.0"
+plyfile = "^0.7.2"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
