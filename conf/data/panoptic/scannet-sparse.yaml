@@ -33,6 +33,10 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
+    - transform: FixedPoints
+      lparams: [100000]
+      params:
+        replace: False
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
@@ -46,6 +50,10 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
+    - transform: FixedPoints
+      lparams: [100000]
+      params:
+        replace: False
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 1.1.0
 
 ### Added
 
@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add VoteNet Paper / Backbones within API
 - Windows support
 - Weights are uploaded to wandb at the end of the run
+- Added PointGroup https://arxiv.org/pdf/2007.01294.pdf
 
 ### Changed
 
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - saves model checkpoints to wandb
 - GridSampling3D now creates a new attribute `coords` that stores the non quantized position when the transform is called in `quantize` mode
 - cuda parameter can be given in command line to select the GPU to use
+- Updated to pytorch geometric 1.6.0
 
 ### Removed
 
