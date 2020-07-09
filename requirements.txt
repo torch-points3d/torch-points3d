@@ -20,15 +20,17 @@ grpcio==1.30.0
 h5py==2.10.0
 hydra-core==0.11.3
 idna==2.10
-imageio==2.8.0
+imageio==2.9.0
 importlib-metadata==1.7.0; python_version < "3.8"
 isodate==0.6.0
-joblib==0.15.1
+jinja2==2.11.2
+joblib==0.16.0
 jsonpatch==1.26
 jsonpointer==2.0
 kiwisolver==1.2.0
 llvmlite==0.32.1
 markdown==3.2.2
+markupsafe==1.1.1
 matplotlib==3.2.2
 networkx==2.4
 numba==0.49.1
@@ -47,7 +49,7 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pyparsing==2.4.7
 python-dateutil==2.8.1
-pytorch-metric-learning==0.9.89.dev0
+pytorch-metric-learning==0.9.89.dev1
 pytz==2020.1
 pywavelets==1.1.1
 pyyaml==5.3.1
@@ -58,8 +60,8 @@ requests-oauthlib==1.3.0
 rsa==4.6; python_version >= "3"
 scikit-image==0.16.2
 scikit-learn==0.23.1
-scipy==1.5.0
-sentry-sdk==0.15.1
+scipy==1.5.1
+sentry-sdk==0.16.0
 shortuuid==1.0.1
 six==1.15.0
 smmap==3.0.4
@@ -69,10 +71,10 @@ tensorboard-plugin-wit==1.7.0
 threadpoolctl==2.1.0
 torch==1.5.1
 torch-cluster==1.5.5
-torch-geometric==1.5.0
-torch-points-kernels==0.6.5
+torch-geometric==1.6.0
+torch-points-kernels==0.6.6
 torch-scatter==2.0.5
-torch-sparse==0.6.5
+torch-sparse==0.6.6
 torchfile==0.1.0
 torchnet==0.0.4
 torchvision==0.6.1

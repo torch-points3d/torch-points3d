@@ -74,6 +74,7 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
 
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
         super(BaseMinkowski, self).__init__(model_config, model_type, dataset, modules)
+        self.weight_initialization()
         try:
             default_output_nc = extract_output_nc(model_config)
         except:
@@ -94,6 +95,15 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
     @property
     def output_nc(self):
         return self._output_nc
+
+    def weight_initialization(self):
+        for m in self.modules():
+            if isinstance(m, ME.MinkowskiConvolution):
+                ME.utils.kaiming_normal_(m.kernel, mode="fan_out", nonlinearity="relu")
+
+            if isinstance(m, ME.MinkowskiBatchNorm):
+                nn.init.constant_(m.bn.weight, 1)
+                nn.init.constant_(m.bn.bias, 0)
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
