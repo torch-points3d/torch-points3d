@@ -65,7 +65,7 @@ def main(cfg):
         trainer.eval(stage_name="test")
 
         conf_path = os.path.join(CHECKPOINT_DIR, "{}.npy".format(cfg.model_name))
-        np.save(conf_path, trainer._tracker.confusion_matrix)
+        np.save(conf_path, trainer._tracker.full_confusion_matrix)
         conf_paths.append(conf_path)
 
     confusion_matrix = ConfusionMatrix.create_from_matrix(np.sum([np.load(p) for p in conf_paths], axis=0))

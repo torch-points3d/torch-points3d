@@ -19,6 +19,7 @@ class S3DISTracker(SegmentationTracker):
         self._test_area = None
         self._full_vote_miou = None
         self._vote_miou = None
+        self._full_confusion = None
         self._iou_per_class = {}
 
     def track(self, model: model_interface.TrackerInterface, full_res=False, data=None, **kwargs):
@@ -98,9 +99,13 @@ class S3DISTracker(SegmentationTracker):
         )
 
         # Full res pred
-        c = ConfusionMatrix(self._num_classes)
-        c.count_predicted_batch(self._test_area.y.numpy(), torch.argmax(full_pred, 1).numpy())
-        self._full_vote_miou = c.get_average_intersection_union() * 100
+        self._full_confusion = ConfusionMatrix(self._num_classes)
+        self._full_confusion.count_predicted_batch(self._test_area.y.numpy(), torch.argmax(full_pred, 1).numpy())
+        self._full_vote_miou = self._full_confusion.get_average_intersection_union() * 100
+
+    @property
+    def full_confusion_matrix(self):
+        return self._full_confusion
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
