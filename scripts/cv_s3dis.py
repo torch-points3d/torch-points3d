@@ -62,7 +62,7 @@ def main(cfg):
         cfg.model_name = model_name.replace(".pt", "")
         cfg.tracker_options.full_res = True
         trainer = Trainer(cfg)
-        assert trainer._checkpoint.data_config.data.fold == fold
+        assert str(trainer._checkpoint.data_config.fold) == fold
         trainer.eval(stage_name="test")
 
         conf_path = os.path.join(workdir, "{}.npy".format(cfg.model_name))
