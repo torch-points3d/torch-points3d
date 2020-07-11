@@ -360,14 +360,14 @@ class BaseDataset:
             return sample.y is not None
         return False
 
-    @property
+    @property  # type: ignore
     @save_used_properties
     def is_hierarchical(self):
         """ Used by the metric trackers to log hierarchical metrics
         """
         return False
 
-    @property
+    @property  # type: ignore
     @save_used_properties
     def class_to_segments(self):
         """ Use this property to return the hierarchical map between classes and segment ids, example:
@@ -378,7 +378,7 @@ class BaseDataset:
         """
         return None
 
-    @property
+    @property  # type: ignore
     @save_used_properties
     def num_classes(self):
         return self.train_dataset.num_classes
@@ -387,7 +387,7 @@ class BaseDataset:
     def weight_classes(self):
         return getattr(self.train_dataset, "weight_classes", None)
 
-    @property
+    @property  # type: ignore
     @save_used_properties
     def feature_dimension(self):
         if self.train_dataset:

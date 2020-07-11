@@ -66,7 +66,7 @@ class PretainedRegistry(object):
                     url = dataset
             else:
                 raise Exception("This model {} doesn't have this dataset {}. Only {}".format(
-                    dataset, model.keys()))
+                    model_name, dataset_name, model.keys()))
         else:
             raise Exception(
                 "The model_name {} doesn't exist within the registry. List of available models: {}".format(
