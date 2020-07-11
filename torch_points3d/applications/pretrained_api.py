@@ -10,9 +10,7 @@ from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.base_dataset import BaseDataset
 
-# Import from metrics
-from torch_points3d.metrics.base_tracker import BaseTracker
-from torch_points3d.metrics.colored_tqdm import Coloredtqdm as Ctq
+from torch_points3d.utils.wandb_utils import Wandb
 from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 log = logging.getLogger(__name__)
@@ -93,7 +91,7 @@ class PretainedRegistry(object):
                 CHECKPOINT_DIR,
                 checkpoint_model_name,
                 weight_name if weight_name is not None else "latest",
-                resume=True,
+                resume=False,
             )
             if mock_dataset:
                 dataset = instantiate_mock_dataset(
@@ -105,9 +103,9 @@ class PretainedRegistry(object):
                 dataset, weight_name=weight_name
             )
 
-            return model, url
-        else:
-            return None, url
+            Wandb.set_urls_to_model(model, url)
+
+            return model
 
     @ staticmethod
     def available_models():

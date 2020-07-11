@@ -43,8 +43,10 @@ class TestPretainedRegistry(unittest.TestCase):
             _ = PretainedRegistry.from_pretrained(
                 "pointnet2_largemsg", "s3dis", fold=i, download=False)
 
-        PretainedRegistry.from_pretrained(
+        model = PretainedRegistry.from_pretrained(
             "pointnet2_largemsg", "s3dis", fold=1, download=True)
+
+        print(model.wandb)
 
 
 class TestAPIUnet(unittest.TestCase):
