@@ -45,9 +45,12 @@ def explode_transform(transforms):
 def save_used_properties(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        result = func(self, *args, **kwargs)
-        self.used_properties[func.__name__] = result
-        return func(*args, **kwargs)
+        if self.used_properties.get(func.__name__) is None:
+            result = func(self, *args, **kwargs)
+            self.used_properties[func.__name__] = result
+            return func(*args, **kwargs)
+        else:
+            return self.used_properties.get(func.__name__)
     return wrapper
 
 
@@ -387,20 +390,17 @@ class BaseDataset:
     @property
     @save_used_properties
     def feature_dimension(self):
-        if hasattr(self.used_properties, "feature_dimension"):
-            return self.used_properties["feature_dimension"]
-        else:
-            if self.train_dataset:
-                return self.train_dataset.num_features
-            elif self.test_dataset is not None:
-                if isinstance(self.test_dataset, list):
-                    return self.test_dataset[0].num_features
-                else:
-                    return self.test_dataset.num_features
-            elif self.val_dataset is not None:
-                return self.val_dataset.num_features
+        if self.train_dataset:
+            return self.train_dataset.num_features
+        elif self.test_dataset is not None:
+            if isinstance(self.test_dataset, list):
+                return self.test_dataset[0].num_features
             else:
-                raise NotImplementedError()
+                return self.test_dataset.num_features
+        elif self.val_dataset is not None:
+            return self.val_dataset.num_features
+        else:
+            raise NotImplementedError()
 
     @property
     def batch_size(self):
@@ -528,14 +528,5 @@ class BaseDataset:
 class PretrainedMockDataset(BaseDataset):
 
     def __init__(self, dataset_opt, used_properties):
-
-        BaseDataset.__init__(self, dataset_opt)
-
+        super().__init__(dataset_opt)
         self.used_properties = used_properties
-
-        import pdb
-        pdb.set_trace
-
-        for func_name, func_value in used_properties.items():
-            delattr(self, func_name)
-            setattr(self, func_name, func_value)

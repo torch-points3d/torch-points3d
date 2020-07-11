@@ -47,10 +47,10 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
     return dataset
 
 
-def instantiate_mock_dataset(dataset_config) -> BaseDataset:
+def instantiate_mock_dataset(dataset_config, used_properties) -> BaseDataset:
     """Import the module "data/[module].py".
     In the file, the class called {class_name}() will
     be instantiated. It has to be a subclass of BaseDataset,
     and it is case-insensitive.
     """
-    return PretrainedMockDataset(dataset_config, {"feature_dimension": 3})
+    return PretrainedMockDataset(dataset_config, used_properties)

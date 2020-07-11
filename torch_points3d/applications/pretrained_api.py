@@ -96,12 +96,10 @@ class PretainedRegistry(object):
                 resume=True,
             )
             if mock_dataset:
-                dataset = instantiate_mock_dataset(checkpoint.data_config)
+                dataset = instantiate_mock_dataset(
+                    checkpoint.data_config, {"feature_dimension": 4, "num_classes": 13})
             else:
                 dataset = instantiate_dataset(checkpoint.data_config)
-
-            import pdb
-            pdb.set_trace()
 
             model: BaseModel = checkpoint.create_model(
                 dataset, weight_name=weight_name
