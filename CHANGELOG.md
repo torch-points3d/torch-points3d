@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Windows support
 - Weights are uploaded to wandb at the end of the run
 - Added PointGroup https://arxiv.org/pdf/2007.01294.pdf
+- Added PretrainedRegistry allowing model weight to be downloaded directly from wandb and DatasetMocking
 
 ### Changed
 
