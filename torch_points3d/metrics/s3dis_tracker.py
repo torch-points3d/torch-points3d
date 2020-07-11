@@ -19,9 +19,10 @@ class S3DISTracker(SegmentationTracker):
         self._test_area = None
         self._full_vote_miou = None
         self._vote_miou = None
+        self._full_confusion = None
         self._iou_per_class = {}
 
-    def track(self, model: model_interface.TrackerInterface, full_res=False, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, full_res=False, data=None, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
         super().track(model)
@@ -40,7 +41,7 @@ class S3DISTracker(SegmentationTracker):
             self._test_area.to(model.device)
 
         # Gather origin ids and check that it fits with the test set
-        inputs = model.get_input()
+        inputs = data if data is not None else model.get_input()
         if inputs[SaveOriginalPosId.KEY] is None:
             raise ValueError("The inputs given to the model do not have a %s attribute." % SaveOriginalPosId.KEY)
 
@@ -98,9 +99,13 @@ class S3DISTracker(SegmentationTracker):
         )
 
         # Full res pred
-        c = ConfusionMatrix(self._num_classes)
-        c.count_predicted_batch(self._test_area.y.numpy(), torch.argmax(full_pred, 1).numpy())
-        self._full_vote_miou = c.get_average_intersection_union() * 100
+        self._full_confusion = ConfusionMatrix(self._num_classes)
+        self._full_confusion.count_predicted_batch(self._test_area.y.numpy(), torch.argmax(full_pred, 1).numpy())
+        self._full_vote_miou = self._full_confusion.get_average_intersection_union() * 100
+
+    @property
+    def full_confusion_matrix(self):
+        return self._full_confusion
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked

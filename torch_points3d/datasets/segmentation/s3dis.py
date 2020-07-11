@@ -509,10 +509,10 @@ class S3DISSphere(S3DISOriginalFused):
         else:
             return self._test_spheres[idx].clone()
 
-    def process(self): # We have to include this method, otherwise the parent class skips processing
+    def process(self):  # We have to include this method, otherwise the parent class skips processing
         super().process()
 
-    def download(self): # We have to include this method, otherwise the parent class skips download
+    def download(self):  # We have to include this method, otherwise the parent class skips download
         super().download()
 
     def _get_random(self):
