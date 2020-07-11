@@ -3,7 +3,7 @@ import copy
 import hydra
 import logging
 
-from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.datasets.base_dataset import BaseDataset, PretrainedMockDataset
 
 log = logging.getLogger(__name__)
 
@@ -12,7 +12,8 @@ def get_dataset_class(dataset_config):
     task = dataset_config.task
     # Find and create associated dataset
     try:
-        dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
+        dataset_config.dataroot = hydra.utils.to_absolute_path(
+            dataset_config.dataroot)
     except Exception:
         log.error("This should happen only during testing")
     dataset_class = getattr(dataset_config, "class")
@@ -44,3 +45,12 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
     dataset_cls = get_dataset_class(dataset_config)
     dataset = dataset_cls(dataset_config)
     return dataset
+
+
+def instantiate_mock_dataset(dataset_config) -> BaseDataset:
+    """Import the module "data/[module].py".
+    In the file, the class called {class_name}() will
+    be instantiated. It has to be a subclass of BaseDataset,
+    and it is case-insensitive.
+    """
+    return PretrainedMockDataset(dataset_config, {"feature_dimension": 3})
