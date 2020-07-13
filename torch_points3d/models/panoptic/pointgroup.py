@@ -98,6 +98,7 @@ class PointGroup(BaseModel):
             self.input.batch.to(self.device),
             ignore_labels=self._stuff_classes.to(self.device),
             radius=self.opt.cluster_radius_search,
+            nsample=200,
         )
 
         all_clusters = clusters_pos + clusters_votes
