@@ -21,6 +21,8 @@ CHECKPOINT_DIR = os.path.join(DIR, "weights")
 
 def download_file(url, out_file):
     if not os.path.exists(out_file):
+        if not os.path.exists(os.path.dirname(out_file)):
+            os.makedirs(os.path.dirname(out_file))
         urllib.request.urlretrieve(url, out_file)
     else:
         log.warning("WARNING: skipping download of existing file " + out_file)
