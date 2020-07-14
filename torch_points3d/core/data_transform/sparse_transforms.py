@@ -139,9 +139,9 @@ class RandomCoordsFlip(object):
     def __call__(self, data):
         for curr_ax in self._horz_axes:
             if random.random() < self._p:
-                coords = data.pos
+                coords = data.coords
                 coord_max = torch.max(coords[:, curr_ax])
-                data.pos[:, curr_ax] = coord_max - coords[:, curr_ax]
+                data.coords[:, curr_ax] = coord_max - coords[:, curr_ax]
         return data
 
     def __repr__(self):

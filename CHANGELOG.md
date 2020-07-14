@@ -33,6 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - cuda parameter can be given in command line to select the GPU to use
 - Updated to pytorch geometric 1.6.0
 
+### Bugfix
+
+- ElasticDistortion transform is now fully functional
+
 ### Removed
 
 ## 1.0.1
