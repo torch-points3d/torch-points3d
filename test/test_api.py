@@ -25,9 +25,8 @@ class TestPretainedRegistry(unittest.TestCase):
 
         print(model.wandb)
 
-        model = PretainedRegistry.from_pretrained("pointgroup-scannet", download=True)
-
-        print(model.wandb)
+        # model = PretainedRegistry.from_pretrained("pointgroup-scannet", download=True)
+        # print(model.wandb)
 
 
 class TestAPIUnet(unittest.TestCase):
