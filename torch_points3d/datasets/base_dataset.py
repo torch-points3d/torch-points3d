@@ -47,6 +47,8 @@ def save_used_properties(func):
     def wrapper(self, *args, **kwargs):
         # Save used_properties for mocking dataset when calling pretrained registry
         result = func(self, *args, **kwargs)
+        if isinstance(result, torch.Tensor):
+            self.used_properties[func.__name__] = result.numpy().tolist()
         if isinstance(result, np.ndarray):
             self.used_properties[func.__name__] = result.tolist()
         else:
