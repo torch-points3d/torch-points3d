@@ -5,6 +5,18 @@ from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 
 
+def re_instantiate_model(config, checkpoint, dataset) -> BaseModel:
+    """This function is called to gather used_properties within dataset
+       and make sure the model can be built directly from configuration file"""
+
+    used_properties = dataset.used_properties
+    checkpoint._checkpoint.run_config.data["used_properties"] = {}
+    if used_properties is not None:
+        for k, v in used_properties.items():
+            checkpoint._checkpoint.run_config.data[k] = v
+    return instantiate_model(config, checkpoint._checkpoint.run_config.data)
+
+
 def instantiate_model(config, dataset) -> BaseModel:
     """ Creates a model given a datset and a training config. The config should contain the following:
     - config.data.task: task that will be evaluated

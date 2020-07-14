@@ -3,7 +3,7 @@ import copy
 import hydra
 import logging
 
-from torch_points3d.datasets.base_dataset import BaseDataset, PretrainedMockDataset
+from torch_points3d.datasets.base_dataset import BaseDataset
 
 log = logging.getLogger(__name__)
 
@@ -45,12 +45,3 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
     dataset_cls = get_dataset_class(dataset_config)
     dataset = dataset_cls(dataset_config)
     return dataset
-
-
-def instantiate_mock_dataset(dataset_config, used_properties) -> PretrainedMockDataset:
-    """Import the module "data/[module].py".
-    In the file, the class called {class_name}() will
-    be instantiated. It has to be a subclass of BaseDataset,
-    and it is case-insensitive.
-    """
-    return PretrainedMockDataset(dataset_config, used_properties)  # type: ignore

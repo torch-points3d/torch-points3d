@@ -45,12 +45,13 @@ def explode_transform(transforms):
 def save_used_properties(func):
     @functools.wraps(func)
     def wrapper(self, *args, **kwargs):
-        if self.used_properties.get(func.__name__) is None:
-            result = func(self, *args, **kwargs)
-            self.used_properties[func.__name__] = result
-            return func(*args, **kwargs)
+        # Save used_properties for mocking dataset when calling pretrained registry
+        result = func(self, *args, **kwargs)
+        if isinstance(result, np.ndarray):
+            self.used_properties[func.__name__] = result.tolist()
         else:
-            return self.used_properties.get(func.__name__)
+            self.used_properties[func.__name__] = result
+        return result
     return wrapper
 
 
@@ -523,10 +524,3 @@ class BaseDataset:
         message += "{}Batch size ={} {}".format(
             COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
         return message
-
-
-class PretrainedMockDataset(BaseDataset):
-
-    def __init__(self, dataset_opt, used_properties):
-        super().__init__(dataset_opt)
-        self.used_properties = used_properties

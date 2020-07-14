@@ -1,4 +1,5 @@
 import os
+import copy
 import torch
 import hydra
 import time
@@ -9,7 +10,7 @@ import wandb
 
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
-from torch_points3d.models.model_factory import instantiate_model
+from torch_points3d.models.model_factory import instantiate_model, re_instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
 from torch_points3d.models.base_model import BaseModel
@@ -83,8 +84,12 @@ class Trainer:
             )
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
-            self._model: BaseModel = instantiate_model(self._cfg, self._dataset)
+            self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
             self._model.instantiate_optimizers(self._cfg)
+
+        # Make sure the model can be built directly from configuration and update checkpoint
+        re_instantiate_model(self._cfg, self._checkpoint, self._dataset)
+
         log.info(self._model)
         self._model.log_optimizers()
         log.info("Model size = %i", sum(param.numel() for param in self._model.parameters() if param.requires_grad))

@@ -21,30 +21,11 @@ device = "cpu"
 class TestPretainedRegistry(unittest.TestCase):
     def test_from_pretrained(self):
 
-        with self.assertRaises(Exception) as context:
-            PretainedRegistry.from_pretrained(
-                "absent_model", "s3dis", download=False)
-        self.assertEqual("The model_name absent_model doesn't exist within the registry. List of available models: {}".format(PretainedRegistry.available_models()
-                                                                                                                              ), str(context.exception))
+        model = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
 
-        with self.assertRaises(Exception) as context:
-            PretainedRegistry.from_pretrained(
-                "pointnet2_largemsg", "s3dis", download=False)
-        self.assertEqual(
-            "Fold should be provided. Here are options ['1', '2', '3', '4', '5', '6']", str(context.exception))
+        print(model.wandb)
 
-        with self.assertRaises(Exception) as context:
-            PretainedRegistry.from_pretrained(
-                "pointnet2_largemsg", "s3dis", fold=8, download=False)
-        self.assertEqual(
-            "Fold 8 doesn't exist within the dataset registry. Here are options ['1', '2', '3', '4', '5', '6']", str(context.exception))
-
-        for i in range(1, 7):
-            _ = PretainedRegistry.from_pretrained(
-                "pointnet2_largemsg", "s3dis", fold=i, download=False)
-
-        model = PretainedRegistry.from_pretrained(
-            "pointnet2_largemsg", "s3dis", fold=1, download=True)
+        model = PretainedRegistry.from_pretrained("pointgroup-scannet", download=True)
 
         print(model.wandb)
 
@@ -65,8 +46,7 @@ class TestAPIUnet(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(
-            input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
@@ -95,8 +75,7 @@ class TestAPIUnet(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(
-            input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
@@ -171,10 +150,8 @@ class TestAPIUnet(unittest.TestCase):
         input_nc = 3
         num_layers = 4
         in_feat = 32
-        model = Minkowski(architecture="unet", input_nc=input_nc,
-                          in_feat=in_feat, num_layers=num_layers, config=None,)
-        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(
-            0.01, quantize_coords=True), num_points=128)
+        model = Minkowski(architecture="unet", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,)
+        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
@@ -196,8 +173,7 @@ class TestAPIUnet(unittest.TestCase):
         model = Minkowski(
             architecture="unet", input_nc=input_nc, output_nc=output_nc, num_layers=num_layers, config=None,
         )
-        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(
-            0.01, quantize_coords=True), num_points=128)
+        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertEqual(len(model._modules["up_modules"]), 4)
@@ -229,8 +205,7 @@ class TestAPIEncoder(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(
-            input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertFalse(model.has_mlp_head)
@@ -258,8 +233,7 @@ class TestAPIEncoder(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(
-            input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
+        dataset = MockDatasetGeometric(input_nc + 1, transform=GridSampling3D(0.01), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertTrue(model.has_mlp_head)
@@ -334,8 +308,7 @@ class TestAPIEncoder(unittest.TestCase):
         model = Minkowski(
             architecture="encoder", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,
         )
-        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(
-            0.01, quantize_coords=True), num_points=128)
+        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertFalse(model.has_mlp_head)
@@ -363,8 +336,7 @@ class TestAPIEncoder(unittest.TestCase):
             num_layers=num_layers,
             config=None,
         )
-        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(
-            0.01, quantize_coords=True), num_points=128)
+        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertTrue(model.has_mlp_head)
@@ -384,8 +356,7 @@ class TestAPIVoteNet(unittest.TestCase):
         from torch_points3d.applications.votenet import VoteNet
 
         current_dir = os.path.dirname(os.path.realpath(__file__))
-        cfg = OmegaConf.load(os.path.join(
-            current_dir, "data/scannet-fixed/config_object_detection.yaml"))
+        cfg = OmegaConf.load(os.path.join(current_dir, "data/scannet-fixed/config_object_detection.yaml"))
         config_data = cfg.data
         config_data.is_test = True
         dataset = ScannetDataset(config_data)
@@ -393,8 +364,7 @@ class TestAPIVoteNet(unittest.TestCase):
             original=True, input_nc=dataset.feature_dimension, num_classes=dataset.num_classes, compute_loss=True
         )
 
-        dataset.create_dataloaders(
-            model, batch_size=2, shuffle=True, num_workers=0, precompute_multi_scale=False)
+        dataset.create_dataloaders(model, batch_size=2, shuffle=True, num_workers=0, precompute_multi_scale=False)
 
         train_loader = dataset.train_dataloader
         data = next(iter(train_loader))
@@ -429,8 +399,7 @@ class TestAPIVoteNet(unittest.TestCase):
     def test_votenet_backbones(self):
         from torch_points3d.applications.votenet import VoteNet
 
-        cfg = OmegaConf.load(os.path.join(
-            DIR_PATH, "data/scannet-fixed/config_object_detection.yaml"))
+        cfg = OmegaConf.load(os.path.join(DIR_PATH, "data/scannet-fixed/config_object_detection.yaml"))
         config_data = cfg.data
         config_data.is_test = True
         dataset = ScannetDataset(config_data)
@@ -444,8 +413,7 @@ class TestAPIVoteNet(unittest.TestCase):
             in_feat=4,
         )
 
-        dataset.create_dataloaders(
-            model, batch_size=2, shuffle=True, num_workers=0, precompute_multi_scale=False)
+        dataset.create_dataloaders(model, batch_size=2, shuffle=True, num_workers=0, precompute_multi_scale=False)
 
         train_loader = dataset.train_dataloader
         data = next(iter(train_loader))
