@@ -252,7 +252,7 @@ class Testhelpers(unittest.TestCase):
         upright_axis = ["y", "z"]
         t = RandomCoordsFlip(upright_axis, p=1)
 
-        pos_out = t(data.clone()).pos
+        pos_out = t(data.clone()).coords
 
         self.assertEqual(np.array_equal(pos_out, pos_target), True)
 
