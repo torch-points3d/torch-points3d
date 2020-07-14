@@ -339,7 +339,7 @@ class ShapeNetDataset(BaseDataset):
         )
         self._categories = self.train_dataset.categories
 
-    @property
+    @property  # type: ignore
     @save_used_properties
     def class_to_segments(self):
         classes_to_segment = {}

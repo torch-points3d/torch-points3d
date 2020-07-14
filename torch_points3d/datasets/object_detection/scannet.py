@@ -209,7 +209,7 @@ class ScannetDataset(BaseDataset):
             is_test=is_test,
         )
 
-    @property
+    @property  # type: ignore
     @save_used_properties
     def mean_size_arr(self):
         return self.train_dataset.MEAN_SIZE_ARR.copy()
