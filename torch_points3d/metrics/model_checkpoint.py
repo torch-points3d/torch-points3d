@@ -291,9 +291,9 @@ class ModelCheckpoint(object):
                     models_to_save["best_{}".format(metric_name)] = state_dict
 
         kwargs["model_props"] = {
-            "_num_epochs": model._num_epochs,
-            "_num_batches": model._num_batches,
-            "_num_samples": model._num_samples,
+            "_num_epochs": model._num_epochs,  # type: ignore
+            "_num_batches": model._num_batches,  # type: ignore
+            "_num_samples": model._num_samples,  # type: ignore
         }
 
         self._checkpoint.stats[stage].append(current_stat)

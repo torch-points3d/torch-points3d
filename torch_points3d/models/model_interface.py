@@ -5,18 +5,6 @@ class CheckpointInterface(ABC):
     """This class is a minimal interface class for models.
     """
 
-    @abstractproperty
-    def _num_epochs(self):
-        pass
-
-    @abstractproperty
-    def _num_batches(self):
-        pass
-
-    @abstractproperty
-    def _num_samples(self):
-        pass
-
     @abstractproperty  # type: ignore
     def schedulers(self):
         pass
