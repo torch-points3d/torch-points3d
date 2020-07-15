@@ -245,14 +245,14 @@ class Testhelpers(unittest.TestCase):
 
     def test_RandomCoordsFlip(self):
 
-        pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        coords = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
         pos_target = torch.from_numpy(np.asarray([[6, 2, 3], [3, 5, 6], [0, 8, 9]]))
-        data = Data(pos=pos)
+        data = Data(coords=coords)
 
         upright_axis = ["y", "z"]
         t = RandomCoordsFlip(upright_axis, p=1)
 
-        pos_out = t(data.clone()).pos
+        pos_out = t(data.clone()).coords
 
         self.assertEqual(np.array_equal(pos_out, pos_target), True)
 
