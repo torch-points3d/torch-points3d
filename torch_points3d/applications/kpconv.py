@@ -55,7 +55,7 @@ class KPConvFactory(ModelFactory):
         else:
             path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return KPConvUnet(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -65,7 +65,7 @@ class KPConvFactory(ModelFactory):
         else:
             path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return KPConvEncoder(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -118,7 +118,7 @@ class BaseKPConv(UnwrappedUnetBasedModel):
 
 
 class KPConvEncoder(BaseKPConv):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """
         Parameters
         -----------
@@ -153,28 +153,7 @@ class KPConvEncoder(BaseKPConv):
 
 
 class KPConvUnet(BaseKPConv):
-    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        super(KPConvUnet, self).__init__(model_config, model_type, dataset, modules)
-
-        self._args = args
-        self._kwargs = kwargs
-
-        if self.contains_output_nc:
-            self.mlp = Seq()
-            self.mlp.append(Conv1D(self.in_feat, self.output_nc, activation=None, bias=True, bn=False))
-
-    @property
-    def in_feat(self):
-        return self._kwargs["in_feat"] if "in_feat" in self._kwargs else 64
-
-    @property
-    def output_nc(self):
-        if self.contains_output_nc:
-            return self._kwargs["output_nc"]
-        else:
-            return self.in_feat
-
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
                    |      |_________|     |

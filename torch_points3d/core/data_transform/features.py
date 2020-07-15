@@ -1,5 +1,5 @@
 from typing import List, Optional
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import itertools
 import numpy as np
 import math
@@ -7,7 +7,6 @@ import re
 import torch
 import random
 from torch.nn import functional as F
-from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
 
 from torch_geometric.nn import fps, radius, knn, voxel_grid
@@ -19,7 +18,8 @@ from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
-from torch_points3d.core.data_transform.transforms import euler_angles_to_rotation_matrix
+from torch_points3d.utils.geometry import euler_angles_to_rotation_matrix
+
 
 class Random3AxisRotation(object):
     """
@@ -199,6 +199,8 @@ class AddFeatByKey(object):
             if x is None:
                 if self._strict and data.pos.shape[0] != feat.shape[0]:
                     raise Exception("We expected to have an attribute x")
+                if feat.dim() == 1:
+                    feat = feat.unsqueeze(-1)
                 data.x = feat
             else:
                 if x.shape[0] == feat.shape[0]:

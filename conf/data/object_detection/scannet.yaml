@@ -1,0 +1,22 @@
+data:
+  class: scannet.ScannetDataset
+  dataset_name: 'scannet-fixed'
+  task: object_detection
+  dataroot: data
+  version: 'v2'
+  use_instance_labels: True
+  use_instance_bboxes: True
+  donotcare_class_ids: []
+  process_workers: 8
+
+  pre_transform:
+    - transform: GridSampling3D
+      lparams: [0.02]
+
+  train_transform:
+    - transform: FixedPoints
+      lparams: [40000] 
+
+  val_transform:
+    - transform: FixedPoints
+      lparams: [40000]

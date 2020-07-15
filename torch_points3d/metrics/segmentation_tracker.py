@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Any
 import torch
 import numpy as np
 
@@ -34,6 +34,9 @@ class SegmentationTracker(BaseTracker):
     def reset(self, stage="train"):
         super().reset(stage=stage)
         self._confusion_matrix = ConfusionMatrix(self._num_classes)
+        self._acc = 0
+        self._macc = 0
+        self._miou = 0
 
     @staticmethod
     def detach_tensor(tensor):
@@ -48,30 +51,34 @@ class SegmentationTracker(BaseTracker):
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
+        if not self._dataset.has_labels(self._stage):
+            return
+
         super().track(model)
 
         outputs = model.get_output()
         targets = model.get_labels()
+        self._compute_metrics(outputs, targets)
 
-        # Mask ignored label
-        mask = targets != self._ignore_label
+    def _compute_metrics(self, outputs, labels):
+        mask = labels != self._ignore_label
         outputs = outputs[mask]
-        targets = targets[mask]
+        labels = labels[mask]
 
         outputs = self._convert(outputs)
-        targets = self._convert(targets)
+        labels = self._convert(labels)
 
-        if len(targets) == 0:
+        if len(labels) == 0:
             return
 
-        assert outputs.shape[0] == len(targets)
-        self._confusion_matrix.count_predicted_batch(targets, np.argmax(outputs, 1))
+        assert outputs.shape[0] == len(labels)
+        self._confusion_matrix.count_predicted_batch(labels, np.argmax(outputs, 1))
 
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
 
-    def get_metrics(self, verbose=False) -> Dict[str, float]:
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)

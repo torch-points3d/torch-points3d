@@ -64,7 +64,7 @@ class PointNet2Factory(ModelFactory):
                 PATH_TO_CONFIG, "unet_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss")
             )
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return PointNet2Unet(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -77,7 +77,7 @@ class PointNet2Factory(ModelFactory):
                 "encoder_{}_{}.yaml".format(self.num_layers, "ms" if self.kwargs["multiscale"] else "ss"),
             )
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return PointNet2Encoder(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -117,14 +117,14 @@ class BasePointnet2(UnwrappedUnetBasedModel):
         assert len(data.pos.shape) == 3
         data = data.to(self.device)
         if data.x is not None:
-            x = data.x.transpose(1, 2).contiguous()
+            data.x = data.x.transpose(1, 2).contiguous()
         else:
-            x = None
-        self.input = Data(x=x, pos=data.pos)
+            data.x = None
+        self.input = data
 
 
 class PointNet2Encoder(BasePointnet2):
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """
         Parameters:
         -----------
@@ -151,24 +151,7 @@ class PointNet2Encoder(BasePointnet2):
 
 
 class PointNet2Unet(BasePointnet2):
-    def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        super(PointNet2Unet, self).__init__(model_config, model_type, dataset, modules)
-
-        self._args = args
-        self._kwargs = kwargs
-
-        if self.contains_output_nc:
-            self.mlp = Seq()
-            self.mlp.append(Conv1D(128, self.output_nc, activation=None, bias=True, bn=False))
-
-    @property
-    def output_nc(self):
-        if self.contains_output_nc:
-            return self._kwargs["output_nc"]
-        else:
-            return 128
-
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """ This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
            |       |      |________|      |    |
@@ -194,9 +177,15 @@ class PointNet2Unet(BasePointnet2):
             stack_down.append(data)
             data = self.inner_modules[0](data)
 
+        sampling_ids = self._collect_sampling_ids(stack_down)
+
         for i in range(len(self.up_modules)):
             data = self.up_modules[i]((data, stack_down.pop()))
 
+        for key, value in sampling_ids.items():
+            setattr(data, key, value)
+
         if self.has_mlp_head:
             data.x = self.mlp(data.x)
+
         return data

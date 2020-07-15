@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(DIR_PATH, ".."))
 from torch_points3d.core.data_transform import (
     instantiate_transform,
     instantiate_transforms,
-    GridSampling,
+    GridSampling3D,
     MultiScaleTransform,
     Random3AxisRotation,
     AddFeatByKey,
@@ -29,6 +29,7 @@ from torch_points3d.core.data_transform import (
     RemoveDuplicateCoords,
     XYZFeature,
     ScalePos,
+    RandomWalkDropout,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -39,22 +40,22 @@ np.random.seed(0)
 
 class Testhelpers(unittest.TestCase):
     def test_Instantiate(self):
-        conf = DictConfig({"transform": "GridSampling", "params": {"size": 0.1}})
+        conf = DictConfig({"transform": "GridSampling3D", "params": {"size": 0.1}})
         t = instantiate_transform(conf)
-        self.assertIsInstance(t, GridSampling)
+        self.assertIsInstance(t, GridSampling3D)
 
         conf = DictConfig({"transform": "None", "params": {"size": 0.1}})
         with self.assertRaises(ValueError):
             t = instantiate_transform(conf)
 
     def test_InstantiateTransforms(self):
-        conf = ListConfig([{"transform": "GridSampling", "params": {"size": 0.1}}, {"transform": "Center"},])
+        conf = ListConfig([{"transform": "GridSampling3D", "params": {"size": 0.1}}, {"transform": "Center"},])
         t = instantiate_transforms(conf)
-        self.assertIsInstance(t.transforms[0], GridSampling)
+        self.assertIsInstance(t.transforms[0], GridSampling3D)
         self.assertIsInstance(t.transforms[1], T.Center)
 
     def test_multiscaleTransforms(self):
-        samplers = [GridSampling(0.25), None, GridSampling(0.5)]
+        samplers = [GridSampling3D(0.25), None, GridSampling3D(0.5)]
         search = [
             RadiusNeighbourFinder(0.5, 100, ConvolutionFormat.PARTIAL_DENSE.value),
             RadiusNeighbourFinder(0.5, 150, ConvolutionFormat.PARTIAL_DENSE.value),
@@ -186,12 +187,19 @@ class Testhelpers(unittest.TestCase):
         data = tr(data)
         self.assertEqual(len(data.pos), 3)
 
+    def test_rwdropout(self):
+        pos = torch.randn(500, 3)
+        data = Data(pos=pos)
+        tr = RandomWalkDropout(dropout_ratio=0.01, radius=0.3, max_num=15, num_iter=500)
+        data = tr(data)
+        self.assertGreater(500, len(data.pos))
+
     def test_shiftvoxels(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(pos=torch.from_numpy(indices).int())
+        data = Data(coords=torch.from_numpy(indices).int())
         tr = ShiftVoxels()
         tr_data = tr(data.clone())
-        self.assertGreaterEqual(tr_data.pos[0][0], data.pos[0][0])
+        self.assertGreaterEqual(tr_data.coords[0][0], data.coords[0][0])
 
     def test_PCACompute(self):
         vec1 = torch.randn(3)
@@ -237,14 +245,14 @@ class Testhelpers(unittest.TestCase):
 
     def test_RandomCoordsFlip(self):
 
-        pos = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
+        coords = torch.from_numpy(np.asarray([[1, 2, 3], [4, 5, 6], [7, 8, 9]]))
         pos_target = torch.from_numpy(np.asarray([[6, 2, 3], [3, 5, 6], [0, 8, 9]]))
-        data = Data(pos=pos)
+        data = Data(coords=coords)
 
         upright_axis = ["y", "z"]
         t = RandomCoordsFlip(upright_axis, p=1)
 
-        pos_out = t(data.clone()).pos
+        pos_out = t(data.clone()).coords
 
         self.assertEqual(np.array_equal(pos_out, pos_target), True)
 

@@ -1,6 +1,8 @@
 import sys
 
 from .losses import *
+from .huber_loss import *
+from .panoptic_losses import *
 from pytorch_metric_learning.miners import *
 from pytorch_metric_learning.losses import *
 

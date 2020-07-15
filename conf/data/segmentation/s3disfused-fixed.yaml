@@ -8,12 +8,12 @@ data:
   pre_collate_transform:
       - transform: PointCloudFusion   # One point cloud per area
       - transform: SaveOriginalPosId    # Required so that one can recover the original point in the fused point cloud
-      - transform: GridSampling       # Samples on a grid
+      - transform: GridSampling3D       # Samples on a grid
         params:
             size: ${data.first_subsampling}
   train_transforms:
     - transform: FixedPoints
-      lparams: [4096]
+      lparams: [20000]
     - transform: RandomNoise
       params:
         sigma: 0.001
@@ -47,7 +47,7 @@ data:
         scale: 0.5
   test_transform:
     - transform: FixedPoints
-      lparams: [4096]
+      lparams: [20000]
     - transform: XYZFeature
       params:
         add_x: False
@@ -62,3 +62,4 @@ data:
     - transform: ScalePos
       params:
         scale: 0.5
+  val_transform: ${data.test_transform}

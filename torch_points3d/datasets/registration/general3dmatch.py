@@ -1,20 +1,19 @@
-import random
 import numpy as np
 import os
 import os.path as osp
 import torch
-from torch_geometric.data import Batch, Data
+from torch_geometric.data import Data
 
-from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.datasets.registration.base3dmatch import Base3DMatch
 from torch_points3d.datasets.registration.utils import PatchExtractor
 from torch_points3d.datasets.registration.utils import tracked_matches
-from torch_points3d.datasets.registration.pair import Pair
+from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
 from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
-from torch_points3d.core.data_transform.transforms import GridSampling
+
 from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
-from torch_points3d.datasets.registration.utils import compute_overlap_and_matches, compute_subsampled_matches
+from torch_points3d.datasets.registration.utils import compute_overlap_and_matches
+
 
 
 class Patch3DMatch(Base3DMatch):
@@ -128,8 +127,8 @@ class Patch3DMatch(Base3DMatch):
         p_extractor = PatchExtractor(self.radius_patch)
 
         match = np.load(osp.join(self.path_data, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
-        data_source = torch.load(match["path_source"])
-        data_target = torch.load(match["path_target"])
+        data_source = torch.load(match["path_source"]).to(torch.float)
+        data_target = torch.load(match["path_target"]).to(torch.float)
 
         # select a random match on the list of match.
         # It cannot be 0 because matches are filtered.
@@ -142,8 +141,7 @@ class Patch3DMatch(Base3DMatch):
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
         batch = Pair.make_pair(data_source, data_target)
-        batch = batch.contiguous().to(torch.float)
-
+        batch = batch.contiguous()
         return batch
 
     def get_patch_offline(self, idx):
@@ -152,9 +150,12 @@ class Patch3DMatch(Base3DMatch):
         if self.transform is not None:
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
-        batch = Pair.make_pair(data_source, data_target)
-        batch = batch.contiguous().to(torch.float)
-        return batch
+
+        if(hasattr(data_source, "multiscale")):
+            batch = MultiScalePair.make_pair(data_source, data_target)
+        else:
+            batch = Pair.make_pair(data_source, data_target)
+        return batch.contiguous()
 
     def get(self, idx):
         if self.is_offline:
@@ -222,7 +223,6 @@ class Fragment3DMatch(Base3DMatch):
                 final dataset. (default: :obj:`None`)
             num_random_pt: number of point we select when we test
         """
-
     def __init__(
         self,
         root,
@@ -243,8 +243,8 @@ class Fragment3DMatch(Base3DMatch):
         debug=False,
         is_online_matching=False,
         num_pos_pairs=1024,
-        voxel_size_search=0.1,
     ):
+
 
         self.is_patch = False
         super(Fragment3DMatch, self).__init__(
@@ -269,21 +269,22 @@ class Fragment3DMatch(Base3DMatch):
         self.list_fragment = [f for f in os.listdir(self.path_match) if "matches" in f]
         self.is_online_matching = is_online_matching
         self.num_pos_pairs = num_pos_pairs
-        self.voxel_size_search = voxel_size_search
 
     def get_fragment(self, idx):
 
         match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
-        data_source = torch.load(match["path_source"])
-        data_target = torch.load(match["path_target"])
-        # new_pair = compute_subsampled_matches(data_source, data_target,self.voxel_size_search,self.max_dist_overlap)
+        data_source = torch.load(match["path_source"]).to(torch.float)
+        data_target = torch.load(match["path_target"]).to(torch.float)
         new_pair = torch.from_numpy(match["pair"])
 
         if self.transform is not None:
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
 
-        batch = Pair.make_pair(data_source, data_target)
+        if(hasattr(data_source, "multiscale")):
+            batch = MultiScalePair.make_pair(data_source, data_target)
+        else:
+            batch = Pair.make_pair(data_source, data_target)
         if self.is_online_matching:
             new_match = compute_overlap_and_matches(
                 Data(pos=data_source.pos), Data(pos=data_target.pos), self.max_dist_overlap
@@ -300,7 +301,7 @@ class Fragment3DMatch(Base3DMatch):
         rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
         batch.pair_ind = batch.pair_ind[rand_ind]
         batch.size_pair_ind = torch.tensor([num_pos_pairs])
-        return batch.contiguous().to(torch.float)
+        return batch.contiguous()
 
     def get(self, idx):
         return self.get_fragment(idx)
@@ -354,6 +355,7 @@ class General3DMatchDataset(BaseSiameseDataset):
                 pre_filter=test_pre_filter,
             )
         else:
+
             self.train_dataset = Fragment3DMatch(
                 root=self._data_path,
                 mode="train",
@@ -367,8 +369,7 @@ class General3DMatchDataset(BaseSiameseDataset):
                 transform=train_transform,
                 pre_filter=pre_filter,
                 is_online_matching=dataset_opt.is_online_matching,
-                num_pos_pairs=dataset_opt.num_pos_pairs,
-            )
+                num_pos_pairs=dataset_opt.num_pos_pairs)
 
             self.test_dataset = Fragment3DMatch(
                 root=self._data_path,

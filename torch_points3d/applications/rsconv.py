@@ -52,7 +52,7 @@ class RSConvFactory(ModelFactory):
         else:
             path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return RSConvUnet(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -62,7 +62,7 @@ class RSConvFactory(ModelFactory):
         else:
             path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
-        self.resolve_model(model_config)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
         return RSConvEncoder(model_config, None, None, modules_lib, **self.kwargs)
 
@@ -102,10 +102,10 @@ class RSConvBase(UnwrappedUnetBasedModel):
         assert len(data.pos.shape) == 3
         data = data.to(self.device)
         if data.x is not None:
-            x = data.x.transpose(1, 2).contiguous()
+            data.x = data.x.transpose(1, 2).contiguous()
         else:
-            x = None
-        self.input = Data(x=x, pos=data.pos)
+            data.x = None
+        self.input = data
 
 
 class RSConvEncoder(RSConvBase):
@@ -119,7 +119,7 @@ class RSConvEncoder(RSConvBase):
             model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
         )
 
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """ This method does a forward on the Unet
 
         Parameters:
@@ -161,7 +161,7 @@ class RSConvUnet(RSConvBase):
             model_config, model_type, dataset, modules, default_output_nc=default_output_nc, *args, **kwargs
         )
 
-    def forward(self, data):
+    def forward(self, data, *args, **kwargs):
         """ This method does a forward on the Unet
 
         Parameters:

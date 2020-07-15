@@ -7,9 +7,9 @@ import torch
 from torch_geometric.data import Data
 from torch_points_kernels.points_cpu import ball_query
 import imageio
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
-from torch_points3d.core.data_transform import GridSampling, SaveOriginalPosId
+from torch_points3d.core.data_transform import GridSampling3D, SaveOriginalPosId
 from torch_geometric.transforms import Compose
 import torch_points3d.datasets.registration.fusion as fusion
 
@@ -172,7 +172,7 @@ def compute_subsampled_matches(data1, data2, voxel_size=0.1, max_distance_overla
     """
     compute matches on subsampled version of data and track ind
     """
-    grid_sampling = Compose([SaveOriginalPosId(), GridSampling(voxel_size, mode='last')])
+    grid_sampling = Compose([SaveOriginalPosId(), GridSampling3D(voxel_size, mode='last')])
     subsampled_data = grid_sampling(data1.clone())
     origin_id = subsampled_data.origin_id.numpy()
     pair = compute_overlap_and_matches(subsampled_data, data2, max_distance_overlap)['pair']

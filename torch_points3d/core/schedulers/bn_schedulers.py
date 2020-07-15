@@ -39,6 +39,7 @@ class BNMomentumScheduler(object):
         self.model = model
         self.setter = setter
         self.bn_lambda = bn_lambda
+        self._current_momemtum = None
         self.step(last_epoch + 1)
         self.last_epoch = last_epoch
         self._scheduler_opt = None
@@ -62,14 +63,11 @@ class BNMomentumScheduler(object):
             epoch = self.last_epoch + 1
 
         self.last_epoch = epoch
-        current_momemtum = self.bn_lambda(epoch)
-        if not hasattr(self, "current_momemtum"):
-            self._current_momemtum = current_momemtum
-        else:
-            if self._current_momemtum != current_momemtum:
-                self._current_momemtum = current_momemtum
-                log.info("Setting batchnorm momentum at {}".format(current_momemtum))
-        self.model.apply(self.setter(current_momemtum))
+        new_momemtum = self.bn_lambda(epoch)
+        if self._current_momemtum != new_momemtum:
+            self._current_momemtum = new_momemtum
+            log.info("Setting batchnorm momentum at {}".format(new_momemtum))
+            self.model.apply(self.setter(new_momemtum))
 
     def state_dict(self):
         return {
@@ -83,7 +81,7 @@ class BNMomentumScheduler(object):
 
     def __repr__(self):
         return "{}(base_momentum: {}, update_scheduler_on={})".format(
-            self.__class__.__name__, self.bn_lambda(self.last_epoch), self._update_scheduler_on
+            self.__class__.__name__, self._current_momemtum, self._update_scheduler_on
         )
 
 

@@ -18,6 +18,8 @@ class PointNet(BaseModel):
         self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
         self._is_dense = ConvolutionFormatFactory.check_is_dense_format(self.conv_type)
 
+        self.visual_names = ["data_visual"]
+
     def set_input(self, data, device):
         data = data.to(device)
         self.input = data
@@ -25,8 +27,7 @@ class PointNet(BaseModel):
 
         self.pointnet_seg.set_scatter_pooling(not self._is_dense)
 
-    def forward(self):
-
+    def forward(self, *args, **kwargs):
         x = self.pointnet_seg(self.input.pos, self.input.batch)
         self.output = F.log_softmax(x, dim=-1)
         internal_loss = self.get_internal_loss()
@@ -35,6 +36,9 @@ class PointNet(BaseModel):
                 F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
                 + (internal_loss if internal_loss.item() != 0 else 0) * 0.001
             )
+
+        self.data_visual = self.input
+        self.data_visual.pred = torch.max(self.output, -1)[1]
         return self.output
 
     def backward(self):
@@ -64,7 +68,7 @@ class SegPointNetModel(BaseModel):
     def get_local_feat(self):
         return self.pointnet_seg.local_nn(self.pos)
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
         x = self.pointnet_seg.forward_embedding(self.pos, self.batch_idx)
         x = self.seg_nn(x)
         self.output = F.log_softmax(x, dim=-1)

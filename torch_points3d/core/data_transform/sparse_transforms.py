@@ -7,9 +7,8 @@ import re
 import torch
 import scipy
 import random
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 from torch.nn import functional as F
-from sklearn.neighbors import NearestNeighbors, KDTree
 from functools import partial
 from torch_geometric.nn import fps, radius, knn, voxel_grid
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
@@ -20,7 +19,7 @@ from torch_cluster import grid_cluster
 from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
-from .grid_transform import group_data, GridSampling, shuffle_data
+from .grid_transform import group_data, GridSampling3D, shuffle_data
 
 
 class RemoveDuplicateCoords(object):
@@ -92,7 +91,7 @@ class ToSparseInput(object):
         self._grid_size = grid_size
         self._mode = mode
 
-        self._transform = GridSampling(grid_size, quantize_coords=True, mode=mode)
+        self._transform = GridSampling3D(grid_size, quantize_coords=True, mode=mode)
 
     def _process(self, data):
         return self._transform(data)
@@ -140,9 +139,9 @@ class RandomCoordsFlip(object):
     def __call__(self, data):
         for curr_ax in self._horz_axes:
             if random.random() < self._p:
-                coords = data.pos
+                coords = data.coords
                 coord_max = torch.max(coords[:, curr_ax])
-                data.pos[:, curr_ax] = coord_max - coords[:, curr_ax]
+                data.coords[:, curr_ax] = coord_max - coords[:, curr_ax]
         return data
 
     def __repr__(self):

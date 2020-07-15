@@ -1,0 +1,22 @@
+models:
+    PointGroup:
+        class: pointgroup.PointGroup
+        conv_type: "SPARSE"
+        loss_weights:
+            semantic: 1
+            offset_norm_loss: 1 
+            offset_dir_loss: 1
+            score_loss: 1
+        
+        scorer: 
+            activate: true
+            architecture: encoder # unet or encoder 
+            depth: 4
+
+        prepare_epoch: 120
+        cluster_radius_search: 1.5 * ${data.grid_size}
+
+        min_iou_threshold: 0.25
+        max_iou_threshold: 0.75
+
+        vizual_ratio: 0

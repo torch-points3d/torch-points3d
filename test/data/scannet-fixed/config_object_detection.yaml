@@ -1,0 +1,270 @@
+data:
+  class: scannet.ScannetDataset
+  dataroot: test/data
+  dataset_name: scannet-fixed
+  donotcare_class_ids: []
+  pre_transform:
+    - lparams:
+        - 0.02
+      transform: GridSampling3D
+  process_workers: 8
+  task: object_detection
+  test_transform: ${data.val_transform}
+  train_transform:
+    - lparams:
+        - 40000
+      transform: FixedPoints
+    - params:
+        sigma: 0.001
+      transform: RandomNoise
+    - params:
+        axis: 2
+        degrees: 180
+      transform: RandomRotate
+    - params:
+        scales:
+          - 0.8
+          - 1.2
+      transform: RandomScaleAnisotropic
+    - params:
+        axis:
+          - true
+          - false
+          - false
+      transform: RandomSymmetry
+    - params:
+        drop_proba: 0.2
+        feature_name: rgb
+      transform: DropFeature
+    - params:
+        add_x: false
+        add_y: false
+        add_z: true
+      transform: XYZFeature
+    - params:
+        delete_feats:
+          - true
+          - true
+        feat_names:
+          - rgb
+          - pos_z
+        input_nc_feats:
+          - 3
+          - 1
+        list_add_to_x:
+          - true
+          - true
+        stricts:
+          - false
+          - true
+      transform: AddFeatsByKeys
+  use_instance_bboxes: true
+  use_instance_labels: true
+  val_transform:
+    - lparams:
+        - 40000
+      transform: FixedPoints
+    - params:
+        add_x: false
+        add_y: false
+        add_z: true
+      transform: XYZFeature
+    - params:
+        delete_feats:
+          - true
+          - true
+        feat_names:
+          - rgb
+          - pos_z
+        input_nc_feats:
+          - 3
+          - 1
+        list_add_to_x:
+          - true
+          - true
+        stricts:
+          - false
+          - true
+      transform: AddFeatsByKeys
+  version: v2
+debugging:
+  early_break: true
+  find_neighbour_dist: false
+  num_batches: 50
+  profiling: false
+lr_scheduler:
+  class: ExponentialLR
+  params:
+    gamma: 0.9885
+model_name: VoteNetPaper
+models:
+  VoteNetPaper:
+    backbone:
+      down_conv:
+        down_conv_nn:
+          - - - FEAT + 3
+              - in_feat
+              - in_feat
+              - in_feat * 2
+          - - - in_feat * 2 + 3
+              - in_feat * 2
+              - in_feat * 2
+              - in_feat * 4
+          - - - in_feat * 4 + 3
+              - in_feat * 2
+              - in_feat * 2
+              - in_feat * 4
+          - - - in_feat * 4 + 3
+              - in_feat * 2
+              - in_feat * 2
+              - in_feat * 4
+        module_name: PointNetMSGDown
+        npoint:
+          - 2048
+          - 1024
+          - 512
+          - 256
+        nsamples:
+          - - 64
+          - - 32
+          - - 16
+          - - 16
+        radii:
+          - - 0.2
+          - - 0.4
+          - - 0.8
+          - - 1.2
+        save_sampling_id:
+          - true
+          - false
+          - false
+          - false
+      model_type: PointNet2
+      up_conv:
+        module_name: DenseFPModule
+        skip: true
+        up_conv_nn:
+          - - in_feat * 4 + in_feat * 4
+            - in_feat * 4
+            - in_feat * 4
+          - - in_feat * 4 + in_feat * 4
+            - in_feat * 4
+            - num_features
+    class: votenet.VoteNetModel
+    conv_type: DENSE
+    define_constants:
+      in_feat: 64
+      num_classes: 18
+      num_features: 256
+      num_layers_down: 4
+      num_layers_up: 2
+      num_proposal: 256
+    loss_params:
+      far_threshold: 0.6
+      gt_vote_factor: 3
+      near_threshold: 0.3
+      objectness_cls_weights:
+        - 0.2
+        - 0.8
+    proposal:
+      module_name: ProposalModule
+      num_class: num_classes
+      num_heading_bin: 1
+      num_proposal: num_proposal
+      sampling: seed_fps
+      vote_aggregation:
+        down_conv_nn:
+          - - num_features + 3
+            - in_feat * 2
+            - in_feat * 2
+            - in_feat * 2
+        module_name: PointNetMSGDown
+        npoint: num_proposal
+        nsample:
+          - 16
+        radii:
+          - 0.3
+    voting:
+      feat_dim: num_features
+      module_name: VotingModule
+      vote_factor: 1
+pretty_print: false
+selection_stage: ''
+sota:
+  modelnet40:
+    acc: 92.9
+  s3dis:
+    acc: 88.2
+    macc: 81.5
+    miou: 70.6
+  s3dis5:
+    miou: 67.1
+    mrec: 72.8
+  scannet:
+    miou: 72.5
+  semantic3d:
+    acc: 94.4
+    miou: 76.0
+  semantickitti:
+    miou: 50.3
+  shapenet:
+    mciou: 85.1
+    miou: 86.4
+tensorboard:
+  log: true
+tracker_options:
+  full_res: false
+  make_submission: false
+  track_boxes: true
+training:
+  batch_size: 2
+  checkpoint_dir: ''
+  cuda: 0
+  enable_cudnn: true
+  epochs: 100
+  num_workers: 6
+  optim:
+    base_lr: 0.001
+    bn_scheduler:
+      bn_policy: step_decay
+      params:
+        bn_clip: 0.01
+        bn_decay: 0.9
+        bn_momentum: 0.1
+        decay_step: 10
+    grad_clip: -1
+    lr_scheduler: ${lr_scheduler}
+    optimizer:
+      class: Adam
+      params:
+        lr: ${training.optim.base_lr}
+  precompute_multi_scale: false
+  shuffle: true
+  weight_name: latest
+update_lr_scheduler_on: on_epoch
+visualization:
+  activate: false
+  deterministic: true
+  format: pointcloud
+  num_samples_per_epoch: 10
+  saved_keys:
+    pos:
+      - - x
+        - float
+      - - y
+        - float
+      - - z
+        - float
+    pred:
+      - - p
+        - float
+    y:
+      - - l
+        - float
+wandb:
+  entity: ''
+  log: false
+  name: null
+  notes: null
+  project: default
+  public: true

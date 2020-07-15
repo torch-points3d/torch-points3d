@@ -40,6 +40,11 @@ class DatasetInterface(ABC):
 
 
 class TrackerInterface(ABC):
+    @property
+    @abstractmethod
+    def conv_type(self):
+        pass
+
     @abstractmethod
     def get_labels(self):
         """ returns a trensor of size ``[N_points]`` where each value is the label of a point

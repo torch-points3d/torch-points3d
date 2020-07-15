@@ -5,21 +5,25 @@ import math
 import re
 import torch
 import random
-from tqdm import tqdm as tq
-from sklearn.neighbors import NearestNeighbors, KDTree
+from tqdm.auto import tqdm as tq
+from sklearn.neighbors import KDTree
 from functools import partial
 from torch.nn import functional as F
 from torch_geometric.nn.pool.pool import pool_pos, pool_batch
 from torch_geometric.data import Data, Batch
 from torch_scatter import scatter_add, scatter_mean
 from torch_geometric.transforms import FixedPoints as FP
+from torch_points_kernels.points_cpu import ball_query
+import numba
 
 from torch_points3d.datasets.multiscale_data import MultiScaleData
 from torch_points3d.datasets.registration.pair import Pair
 from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
-from .grid_transform import group_data, GridSampling, shuffle_data
+from .grid_transform import group_data, GridSampling3D, shuffle_data
+
+
 
 
 class RemoveAttributes(object):
@@ -90,7 +94,7 @@ class GridSphereSampling(object):
     radius: float
         Radius of the sphere to be sampled.
     grid_size: float, optional
-        Grid_size to be used with GridSampling to select spheres center. If None, radius will be used
+        Grid_size to be used with GridSampling3D to select spheres center. If None, radius will be used
     delattr_kd_tree: bool, optional
         If True, KDTREE_KEY should be deleted as an attribute if it exists
     center: bool, optional
@@ -102,7 +106,7 @@ class GridSphereSampling(object):
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
         grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
-        self._grid_sampling = GridSampling(size=grid_size if grid_size else self._radius)
+        self._grid_sampling = GridSampling3D(size=grid_size if grid_size else self._radius)
         self._delattr_kd_tree = delattr_kd_tree
         self._center = center
 
@@ -366,23 +370,6 @@ class RandomScaleAnisotropic:
         return "{}({})".format(self.__class__.__name__, self.scales)
 
 
-def euler_angles_to_rotation_matrix(theta):
-    R_x = torch.tensor(
-        [[1, 0, 0], [0, torch.cos(theta[0]), -torch.sin(theta[0])], [0, torch.sin(theta[0]), torch.cos(theta[0])]]
-    )
-
-    R_y = torch.tensor(
-        [[torch.cos(theta[1]), 0, torch.sin(theta[1])], [0, 1, 0], [-torch.sin(theta[1]), 0, torch.cos(theta[1])]]
-    )
-
-    R_z = torch.tensor(
-        [[torch.cos(theta[2]), -torch.sin(theta[2]), 0], [torch.sin(theta[2]), torch.cos(theta[2]), 0], [0, 0, 1]]
-    )
-
-    R = torch.mm(R_z, torch.mm(R_y, R_x))
-    return R
-
-
 class MeshToNormal(object):
     """ Computes mesh normals (IN PROGRESS)
     """
@@ -530,9 +517,11 @@ class ShiftVoxels:
 
     def __call__(self, data):
         if self._apply_shift:
-            if not isinstance(data.pos, torch.IntTensor):
+            if not hasattr(data, "coords"):
+                raise Exception("should quantize first using GridSampling3D")
+            if not isinstance(data.coords, torch.IntTensor):
                 raise Exception("The pos are expected to be coordinates, so torch.IntTensor")
-            data.pos[:, :3] += (torch.rand(3) * 100).type_as(data.pos)
+            data.coords[:, :3] += (torch.rand(3) * 100).type_as(data.coords)
         return data
 
     def __repr__(self):
@@ -563,3 +552,62 @@ class RandomDropout:
         return "{}(dropout_ratio={}, dropout_application_ratio={})".format(
             self.__class__.__name__, self.dropout_ratio, self.dropout_application_ratio
         )
+
+
+@numba.jit(nopython=True)
+def rw_mask(pos, ind, dist, mask_vertices, random_ratio=0.04, num_iter=5000):
+    rand_ind = np.random.randint(0, len(pos))
+    for _ in range(num_iter):
+        mask_vertices[rand_ind] = False
+        if np.random.rand() < random_ratio:
+            rand_ind = np.random.randint(0, len(pos))
+        else:
+            neighbors = ind[rand_ind][dist[rand_ind] > 0]
+            if(len(neighbors) == 0):
+                rand_ind = np.random.randint(0, len(pos))
+            else:
+                n_i = np.random.randint(0, len(neighbors))
+                rand_ind = neighbors[n_i]
+    return mask_vertices
+
+
+class RandomWalkDropout(object):
+    """
+    randomly drop points from input data using random walk
+
+    Parameters
+    ----------
+    dropout_ratio : float, optional
+        Ratio that gets dropped
+    num_iter: int, optional
+        number of iterations
+    radius: float, optional
+        radius of the neighborhood search to create the graph
+    max_num: int optional
+       max number of neighbors
+    """
+
+    def __init__(self, dropout_ratio=0.05, num_iter=5000, radius=0.5, max_num=-1):
+        self.dropout_ratio = dropout_ratio
+        self.num_iter = num_iter
+        self.radius = radius
+        self.max_num = max_num
+
+    def __call__(self, data):
+
+        pos = data.pos.detach().cpu().numpy()
+        ind, dist = ball_query(data.pos, data.pos,
+                               radius=self.radius,
+                               max_num=self.max_num, mode=0)
+        mask = np.ones(len(pos), dtype=bool)
+        mask = rw_mask(pos,
+                       ind.detach().cpu().numpy(),
+                       dist.detach().cpu().numpy(),
+                       mask,
+                       num_iter=self.num_iter,
+                       random_ratio=self.dropout_ratio)
+        data.pos = data.pos[mask]
+        return data
+
+    def __repr__(self):
+        return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={})".format(self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num)

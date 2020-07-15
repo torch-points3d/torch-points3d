@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch_geometric
 from torch_geometric.transforms import Compose, FixedPoints
+import copy
 
 from torch_points3d.models import model_interface
 from torch_points3d.core.data_transform import instantiate_transforms, MultiScaleTransform
@@ -18,6 +19,25 @@ from torch_points3d.utils.colors import COLORS, colored_print
 
 # A logger for this file
 log = logging.getLogger(__name__)
+
+
+def explode_transform(transforms):
+    """ Returns a flattened list of transform
+    Arguments:
+        transforms {[list | T.Compose]} -- Contains list of transform to be added
+
+    Returns:
+        [list] -- [List of transforms]
+    """
+    out = []
+    if transforms is not None:
+        if isinstance(transforms, Compose):
+            out = copy.deepcopy(transforms.transforms)
+        elif isinstance(transforms, list):
+            out = copy.deepcopy(transforms)
+        else:
+            raise Exception("transforms should be provided either within a list or a Compose")
+    return out
 
 
 class BaseDataset:
@@ -45,27 +65,6 @@ class BaseDataset:
 
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
-
-    @staticmethod
-    def add_transform(transform_list_to_be_added, out=[]):
-        """[Add transforms to an existing list or not]
-        Arguments:
-            transform_list_to_be_added {[list | T.Compose]} -- [Contains list of transform to be added]
-            out {[type]} -- [Should be a lis]
-
-        Returns:
-            [list] -- [List of transforms]
-        """
-        if out is None:
-            out = []
-        if transform_list_to_be_added is not None:
-            if isinstance(transform_list_to_be_added, Compose):
-                out += transform_list_to_be_added.transforms
-            elif isinstance(transform_list_to_be_added, list):
-                out += transform_list_to_be_added
-            else:
-                raise Exception("transform_list_to_be_added should be provided either within a list or a Compose")
-        return out
 
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
@@ -111,8 +110,8 @@ class BaseDataset:
                     continue
                 setattr(obj, new_name, transform)
 
-        inference_transform = BaseDataset.add_transform(obj.pre_transform)
-        inference_transform = BaseDataset.add_transform(obj.test_transform, out=inference_transform)
+        inference_transform = explode_transform(obj.pre_transform)
+        inference_transform += explode_transform(obj.test_transform)
         obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
     def set_filter(self, dataset_opt):
@@ -133,18 +132,16 @@ class BaseDataset:
     def _get_collate_function(conv_type, is_multiscale):
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
-                return lambda datalist: MultiScaleBatch.from_data_list(datalist)
+                return MultiScaleBatch.from_data_list
             else:
                 raise NotImplementedError(
                     "MultiscaleTransform is activated and supported only for partial_dense format"
                 )
-
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_dense:
-            return lambda datalist: SimpleBatch.from_data_list(datalist)
+            return SimpleBatch.from_data_list
         else:
-            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
-
+            return torch_geometric.data.batch.Batch.from_data_list
     @staticmethod
     def get_num_samples(batch, conv_type):
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
@@ -177,7 +174,7 @@ class BaseDataset:
 
         batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(
-            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
+            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
         )
 
         if self.train_sampler:
@@ -210,6 +207,10 @@ class BaseDataset:
 
         if precompute_multi_scale:
             self.set_strategies(model)
+
+    @property
+    def has_train_loader(self):
+        return hasattr(self, "_train_loader")
 
     @property
     def has_val_loader(self):
@@ -277,11 +278,22 @@ class BaseDataset:
         return self._test_loaders
 
     @property
+    def _loaders(self):
+        loaders = []
+        if self.has_train_loader:
+            loaders += [self.train_dataloader]
+        if self.has_val_loader:
+            loaders += [self.val_dataloader]
+        if self.has_test_loaders:
+            loaders += self.test_dataloaders
+        return loaders
+
+    @property
     def num_test_datasets(self):
         return len(self._test_dataset) if self._test_dataset else 0
 
     @property
-    def test_datatset_names(self):
+    def _test_datatset_names(self):
         if self.test_dataset:
             return [d.name for d in self.test_dataset]
         else:
@@ -289,38 +301,40 @@ class BaseDataset:
 
     @property
     def available_stage_names(self):
-        out = self.test_datatset_names
+        out = self._test_datatset_names
         if self.has_val_loader:
             out += [self._val_dataset.name]
         return out
 
     @property
-    def has_fixed_points_transform(self):
+    def available_dataset_names(self):
+        return ["train"] + self.available_stage_names
+
+    def get_raw_data(self, stage, idx, **kwargs):
+        assert stage in self.available_dataset_names
+        dataset = self.get_dataset(stage)
+        if hasattr(dataset, "get_raw_data"):
+            return dataset.get_raw_data(idx, **kwargs)
+        else:
+            raise Exception("Dataset {} doesn t have a get_raw_data function implemented".format(dataset))
+
+    def has_labels(self, stage: str) -> bool:
+        """ Tests if a given dataset has labels or not
+
+        Parameters
+        ----------
+        stage : str
+            name of the dataset to test
         """
-        This property checks if the dataset contains T.FixedPoints transform, meaning the number of points is fixed
-        """
-        transform_train = self.train_transform
-        transform_test = self.test_transform
+        assert stage in self.available_dataset_names
+        dataset = self.get_dataset(stage)
+        if hasattr(dataset, "has_labels"):
+            return dataset.has_labels
 
-        if transform_train is None or transform_test is None:
-            return False
-
-        if not isinstance(transform_train, Compose):
-            transform_train = Compose([transform_train])
-
-        if not isinstance(transform_test, Compose):
-            transform_test = Compose([transform_test])
-
-        train_bool = False
-        test_bool = False
-
-        for transform in transform_train.transforms:
-            if isinstance(transform, FixedPoints):
-                train_bool = True
-        for transform in transform_test.transforms:
-            if isinstance(transform, FixedPoints):
-                test_bool = True
-        return train_bool and test_bool
+        sample = dataset[0]
+        if hasattr(sample, "y"):
+            return sample.y is not None
+        return False
 
     @property
     def is_hierarchical(self):
@@ -383,9 +397,11 @@ class BaseDataset:
         ----------
         name : str
         """
-        all_datasets = [self.train_dataset, self.val_dataset] + [t for t in self.test_dataset]
+        all_datasets = [self.train_dataset, self.val_dataset]
+        if self.test_dataset:
+            all_datasets += self.test_dataset
         for dataset in all_datasets:
-            if dataset.name == name:
+            if dataset is not None and dataset.name == name:
                 return dataset
         raise ValueError("No dataset with name %s was found." % name)
 

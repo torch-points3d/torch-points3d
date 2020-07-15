@@ -161,3 +161,4 @@ class Seq(nn.Sequential):
     def append(self, module):
         self.add_module(str(self._num_modules), module)
         self._num_modules += 1
+        return self

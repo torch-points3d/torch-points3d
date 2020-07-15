@@ -22,11 +22,11 @@ class Minkowski_Baseline_Model(BaseModel):
     def set_input(self, data, device):
 
         self.batch_idx = data.batch.squeeze()
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y.to(device)
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
         self.output = F.log_softmax(self.model(self.input).feats, dim=-1)
         self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
 
@@ -42,11 +42,11 @@ class Minkowski_Model(UnwrappedUnetBasedModel):
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.pos.int()], -1)
+        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
         self.input = ME.SparseTensor(data.x, coords=coords).to(device)
         self.labels = data.y
 
-    def forward(self):
+    def forward(self, *args, **kwargs):
 
         stack_down = []
 

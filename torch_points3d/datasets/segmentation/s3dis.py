@@ -14,7 +14,7 @@ from torch_geometric.datasets import S3DIS as S3DIS1x1
 import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors, KDTree
-from tqdm import tqdm as tq
+from tqdm.auto import tqdm as tq
 import csv
 import pandas as pd
 import pickle
@@ -64,6 +64,25 @@ OBJECT_COLOR = np.asarray(
 
 OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
 
+VALIDATION_ROOMS = [
+    "hallway_1",
+    "hallway_6",
+    "hallway_11",
+    "office_1",
+    "office_6",
+    "office_11",
+    "office_16",
+    "office_21",
+    "office_26",
+    "office_31",
+    "office_36",
+    "WC_2",
+    "storage_1",
+    "storage_5",
+    "conferenceRoom_2",
+    "auditorium_1",
+]
+
 ################################### UTILS #######################################
 
 
@@ -103,7 +122,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             return xyz, rgb
         n_ver = len(room_ver)
         del room_ver
-        nn = NearestNeighbors(1, algorithm="kd_tree").fit(xyz)
+        nn = NearestNeighbors(n_neighbors=1, algorithm="kd_tree").fit(xyz)
         room_labels = np.zeros((n_ver,), dtype="int64")
         room_object_indices = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
@@ -231,8 +250,8 @@ class S3DISOriginalFused(InMemoryDataset):
         path to the directory where the data will be saved
     test_area: int
         number between 1 and 6 that denotes the area used for testing
-    train: bool
-        Is this a train split or not
+    split: str
+        can be one of train, trainval, val or test
     pre_collate_transform:
         Transforms to be applied before the data is assembled into samples (apply fusing here for example)
     keep_instance: bool
@@ -251,7 +270,7 @@ class S3DISOriginalFused(InMemoryDataset):
         self,
         root,
         test_area=6,
-        train=True,
+        split="train",
         transform=None,
         pre_transform=None,
         pre_collate_transform=None,
@@ -267,12 +286,21 @@ class S3DISOriginalFused(InMemoryDataset):
         self.keep_instance = keep_instance
         self.verbose = verbose
         self.debug = debug
-        self._train = train
+        self._split = split
         super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
-        path = self.processed_paths[0] if train else self.processed_paths[1]
+        if split == "train":
+            path = self.processed_paths[0]
+        elif split == "val":
+            path = self.processed_paths[1]
+        elif split == "test":
+            path = self.processed_paths[2]
+        elif split == "trainval":
+            path = self.processed_paths[3]
+        else:
+            raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
         self._load_data(path)
 
-        if not train:
+        if split == "test":
             self.raw_test_data = torch.load(self.raw_areas_paths[test_area - 1])
 
     @property
@@ -288,8 +316,7 @@ class S3DISOriginalFused(InMemoryDataset):
 
     @property
     def pre_processed_path(self):
-        test_area = self.test_area
-        pre_processed_file_names = "pre_{}.pt".format(test_area)
+        pre_processed_file_names = "preprocessed.pt"
         return os.path.join(self.processed_dir, pre_processed_file_names)
 
     @property
@@ -300,7 +327,7 @@ class S3DISOriginalFused(InMemoryDataset):
     def processed_file_names(self):
         test_area = self.test_area
         return (
-            ["{}_{}.pt".format(s, test_area) for s in ["train", "test"]]
+            ["{}_{}.pt".format(s, test_area) for s in ["train", "val", "test", "trainval"]]
             + self.raw_areas_paths
             + [self.pre_processed_path]
         )
@@ -366,6 +393,10 @@ class S3DISOriginalFused(InMemoryDataset):
 
                     rgb_norm = rgb.float() / 255.0
                     data = Data(pos=xyz, y=room_labels, rgb=rgb_norm)
+                    if room_name in VALIDATION_ROOMS:
+                        data.validation_set = True
+                    else:
+                        data.validation_set = False
 
                     if self.keep_instance:
                         data.room_object_indices = room_object_indices
@@ -384,7 +415,6 @@ class S3DISOriginalFused(InMemoryDataset):
                 if self.pre_transform is not None:
                     for data in area_datas:
                         data = self.pre_transform(data)
-
             torch.save(data_list, self.pre_processed_path)
         else:
             data_list = torch.load(self.pre_processed_path)
@@ -392,20 +422,42 @@ class S3DISOriginalFused(InMemoryDataset):
         if self.debug:
             return
 
-        train_data_list = [data_list[i] for i in range(6) if (i != self.test_area - 1 and len(data_list[i]))]
+        train_data_list = {}
+        val_data_list = {}
+        trainval_data_list = {}
+        for i in range(6):
+            if i != self.test_area - 1:
+                train_data_list[i] = []
+                val_data_list[i] = []
+                for data in data_list[i]:
+                    validation_set = data.validation_set
+                    del data.validation_set
+                    if validation_set:
+                        val_data_list[i].append(data)
+                    else:
+                        train_data_list[i].append(data)
+                trainval_data_list[i] = val_data_list[i] + train_data_list[i]
+
+        train_data_list = list(train_data_list.values())
+        val_data_list = list(val_data_list.values())
+        trainval_data_list = list(trainval_data_list.values())
         test_data_list = data_list[self.test_area - 1]
 
         if self.pre_collate_transform:
             log.info("pre_collate_transform ...")
             log.info(self.pre_collate_transform)
             train_data_list = self.pre_collate_transform(train_data_list)
+            val_data_list = self.pre_collate_transform(val_data_list)
             test_data_list = self.pre_collate_transform(test_data_list)
+            trainval_data_list = self.pre_collate_transform(trainval_data_list)
 
-        self._save_data(train_data_list, test_data_list)
+        self._save_data(train_data_list, val_data_list, test_data_list, trainval_data_list)
 
-    def _save_data(self, train_data_list, test_data_list):
+    def _save_data(self, train_data_list, val_data_list, test_data_list, trainval_data_list):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
-        torch.save(self.collate(test_data_list), self.processed_paths[1])
+        torch.save(self.collate(val_data_list), self.processed_paths[1])
+        torch.save(self.collate(test_data_list), self.processed_paths[2])
+        torch.save(self.collate(trainval_data_list), self.processed_paths[3])
 
     def _load_data(self, path):
         self.data, self.slices = torch.load(path)
@@ -442,7 +494,7 @@ class S3DISSphere(S3DISOriginalFused):
     def __init__(self, root, sample_per_epoch=100, radius=2, *args, **kwargs):
         self._sample_per_epoch = sample_per_epoch
         self._radius = radius
-        self._grid_sphere_sampling = cT.GridSampling(size=radius / 10.0)
+        self._grid_sphere_sampling = cT.GridSampling3D(size=radius / 10.0)
         super().__init__(root, *args, **kwargs)
 
     def __len__(self):
@@ -455,7 +507,13 @@ class S3DISSphere(S3DISOriginalFused):
         if self._sample_per_epoch > 0:
             return self._get_random()
         else:
-            return self._test_spheres[idx]
+            return self._test_spheres[idx].clone()
+
+    def process(self):  # We have to include this method, otherwise the parent class skips processing
+        super().process()
+
+    def download(self):  # We have to include this method, otherwise the parent class skips download
+        super().download()
 
     def _get_random(self):
         # Random spheres biased towards getting more low frequency classes
@@ -467,9 +525,11 @@ class S3DISSphere(S3DISOriginalFused):
         sphere_sampler = cT.SphereSampling(self._radius, centre[:3], align_origin=False)
         return sphere_sampler(area_data)
 
-    def _save_data(self, train_data_list, test_data_list):
+    def _save_data(self, train_data_list, val_data_list, test_data_list, trainval_data_list):
         torch.save(train_data_list, self.processed_paths[0])
-        torch.save(test_data_list, self.processed_paths[1])
+        torch.save(val_data_list, self.processed_paths[1])
+        torch.save(test_data_list, self.processed_paths[2])
+        torch.save(trainval_data_list, self.processed_paths[3])
 
     def _load_data(self, path):
         self._datas = torch.load(path)
@@ -496,7 +556,7 @@ class S3DISSphere(S3DISOriginalFused):
             self._label_counts = uni_counts / np.sum(uni_counts)
             self._labels = uni
         else:
-            grid_sampler = cT.GridSphereSampling(2, 2, center=False)
+            grid_sampler = cT.GridSphereSampling(self._radius, self._radius, center=False)
             self._test_spheres = grid_sampler(self._datas)
 
 
@@ -526,15 +586,24 @@ class S3DISFusedDataset(BaseDataset):
             self._data_path,
             sample_per_epoch=3000,
             test_area=self.dataset_opt.fold,
-            train=True,
+            split="train",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.train_transform,
+        )
+
+        self.val_dataset = S3DISSphere(
+            self._data_path,
+            sample_per_epoch=-1,
+            test_area=self.dataset_opt.fold,
+            split="val",
+            pre_collate_transform=self.pre_collate_transform,
+            transform=self.val_transform,
         )
         self.test_dataset = S3DISSphere(
             self._data_path,
             sample_per_epoch=-1,
             test_area=self.dataset_opt.fold,
-            train=False,
+            split="test",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.test_transform,
         )

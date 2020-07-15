@@ -10,7 +10,7 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.RandomSphere
 
-.. autoclass:: torch_points3d.core.data_transform.GridSampling
+.. autoclass:: torch_points3d.core.data_transform.GridSampling3D
 
 .. autoclass:: torch_points3d.core.data_transform.RandomSymmetry
 

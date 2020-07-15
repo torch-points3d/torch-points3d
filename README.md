@@ -2,29 +2,33 @@
   <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
 </p>
 
-[![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) and [Facebook Hydra](https://hydra.cc/).
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
+It also provide a high level API to democratize deep learning on pointclouds.
 
-## Torch-Points3d Templates
+## Requirements
 
-[Secondary repo](https://github.com/tchaton/torch-points3d-templates) containing code templates for [Pytorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) and [FastAI](https://github.com/fastai/fastai) framework.
+- CUDA 10 or higher (if you want GPU version)
+- Python 3.6 or higher + headers (python-dev)
+- PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
+- MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
 
-For Pytorch Lightning, you will find a script running a point cloud classifier with several bakcbones  on ModelNet `under 100 lines`.
+Install with
 
-Available Backbones:
-- `KPConv`,
-- `PointNet2`
-- `RSconv`
+```bash
+pip install torch
+pip install torch-points3d
+```
 
 ## Project structure
 
 ```bash
 ├─ benchmark               # Output from various benchmark runs
 ├─ conf                    # All configurations for training nad evaluation leave there
-├─ dashboard               # A collection of notebooks that allow result exploration and network debugging
+├─ notebooks               # A collection of notebooks that allow result exploration and network debugging
 ├─ docker                  # Docker image that can be used for inference or training
 ├─ docs                    # All the doc
 ├─ eval.py                 # Eval script
@@ -49,6 +53,7 @@ As a general philosophy we have split datasets and models by task. For example, 
 - segmentation
 - classification
 - registration
+- object_detection
 
 where each folder contains the dataset related to each task.
 
@@ -60,9 +65,11 @@ where each folder contains the dataset related to each task.
 - **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RandLANet)** from Qingyong Hu _et al._: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
 - **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li _et al._: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
 - **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas _et al._: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
-- **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy _et al._: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR'19)
-- **[PointAugment](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointAugment)** from Ruihui Li _et al._: [PointAugment: an Auto-Augmentation Framework for Point Cloud Classification](https://arxiv.org/abs/2002.10876) (CVPR'20)
+- **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy _et al._: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR19)
+- **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi _et al._: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
 - **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
+- **[PointGroup](https://github.com/Jia-Research-Lab/PointGroup)** from Li Jiang _et al._: [PointGroup: Dual-Set Point Grouping for 3D Instance Segmentation](https://arxiv.org/abs/2004.01658)
+- **[PointAugment](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointAugment)** from Ruihui Li _et al._: [PointAugment: an Auto-Augmentation Framework for Point Cloud Classification](https://arxiv.org/abs/2002.10876) (CVPR'20)
 
 ## Available datasets
 
@@ -78,7 +85,11 @@ where each folder contains the dataset related to each task.
 * S3DIS Fused
 ```
 
-- **[Shapenet](https://www.shapenet.org/)** from Iro Armeni _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
+- **[Shapenet](https://www.shapenet.org/)** from Angel X. Chang _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
+
+### Object detection and panoptic
+
+- **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai _et al._: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 
 ### Registration
 
@@ -88,19 +99,74 @@ where each folder contains the dataset related to each task.
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
-## Getting started
+## API
 
-### Requirements:
+### KPConv
 
-- CUDA > 10
-- Python 3 + headers (python-dev)
-- [Poetry](https://poetry.eustace.io/) (Optional but highly recommended)
+```python
+from torch_points3d.applications.kpconv import KPConv
+
+model = KPConv(
+    architecture="unet",
+    input_nc=3,
+    output_nc=5,
+    in_feat=32,
+    num_layers=4,
+)
+```
+
+### PointNet2
+
+```python
+from torch_points3d.applications.pointnet2 import PointNet2
+
+model = PointNet2(
+   architecture="unet",
+   input_nc=3,
+   output_nc=5,
+   num_layers=3,
+   multiscale=True,
+   config=None,
+)
+```
+
+### RSConv
+
+```python
+from torch_points3d.applications.rsconv import RSConv
+
+model = RSConv(
+   architecture="unet",
+   input_nc=3,
+   output_nc=5,
+   num_layers=3,
+   multiscale=True,
+   config=None,
+)
+```
+
+### VoteNet
+
+```python
+from torch_points3d.applications.votenet import VoteNet
+
+model = VoteNet(
+  original=False, # Wether to create official VoteNet or use custom backbone.
+  backbone="kpconv",
+  input_nc=3,
+  num_classes=20,
+  mean_size_arr=[], # (num_classes, 3) If available, prior mean box sizes for each class
+  compute_loss=True,
+  in_feat=64, # Used for the bakcbone
+)
+```
+
+## Developer guidelines
 
 ### Setup repo
 
-Clone the repo to your local machine
-
-Run the following command from the root of the repo
+We use [Poetry](https://poetry.eustace.io/) for managing our packages.
+In order to get started, clone this repositories and run the following command from the root of the repo
 
 ```
 poetry install --no-root
@@ -108,7 +174,7 @@ poetry install --no-root
 
 This will install all required dependencies in a new virtual environment.
 
-Activate it
+Activate the environment
 
 ```bash
 poetry shell
@@ -118,12 +184,6 @@ You can check that the install has been successful by running
 
 ```bash
 python -m unittest -v
-```
-
-or from pypi
-
-```bash
-pip install torch_points3d
 ```
 
 #### [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine)
@@ -149,7 +209,7 @@ export PATH="/usr/local/cuda-10.2/bin:$PATH"
 You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
-poetry install -E MinkowskiEngine --no-root
+poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
 ```
 
 #### Pycuda
@@ -209,22 +269,22 @@ pointnet2_onehot:
 
 ## S3DIS 1x1
 
-| Model Name                                                           | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
-| -------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
+| Model Name                                                                                                                        | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
 | [`pointnet2_original`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/s3dis_fold5/Pointnet2_original.md) | 3,026,829 | 04:29 / 01:07(RTX 2060) | 0.0512        | 85.26 | 45.58 | 73.11 |
 
 ## Shapenet part segmentation
 
 The data reported below correspond to the part segmentation problem for Shapenet for all categories. We report against mean instance IoU and mean class IoU (average of the mean instance IoU per class)
 
-| Model Name                                                            | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
-| --------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
+| Model Name                                                                                                                         | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
 | [`pointnet2_charlesmsg`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes         | 1,733,946 | 15:07 / 01:20 (K80)     | 0.089         | 82.1   | 85.1  |
 | [`RSCNN_MSG`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/rscnn_original.md)                  | No          | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04          | 82.811 | 85.3  |
 
 ## Explore your experiments
 
-We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/dashboard/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 
 ```
 jupyter labextension install @pyviz/jupyterlab_pyviz
@@ -289,6 +349,19 @@ python -m torch.utils.bottleneck /path/to/source/script.py [args]
 
 ## Troubleshooting
 
+#### Cannot compile certain CUDA Kernels or seg faults while running the tests
+Ensure that at least PyTorch 1.4.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
+```
+$ python -c "import torch; print(torch.__version__)"
+>>> 1.4.0
+
+$ echo $PATH
+>>> /usr/local/cuda/bin:...
+
+$ echo $CPATH
+>>> /usr/local/cuda/include:...
+```
+
 #### Undefined symbol / Updating Pytorch
 
 When we update the version of Pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
@@ -299,7 +372,7 @@ When we update the version of Pytorch that is used, the compiled packages need t
 
 This can happen for the following libraries:
 
-- torch-points
+- torch-points-kernels
 - torch-scatter
 - torch-cluster
 - torch-sparse
@@ -311,6 +384,19 @@ pip uninstall torch-scatter torch-sparse torch-cluster torch-points-kernels -y
 rm -rf ~/.cache/pip
 poetry install
 ```
+
+#### CUDA kernel failed : no kernel image is available for execution on the device
+
+This can happen when trying to run the code on a different GPU than the one used to compile the `torch-points-kernels` library. Uninstall `torch-points-kernels`, clear cache, and reinstall after setting the `TORCH_CUDA_ARCH_LIST` environment variable. For example, for compiling with a Tesla T4 (Turing 7.5) and running the code on a Tesla V100 (Volta 7.0) use:
+```
+export TORCH_CUDA_ARCH_LIST="7.0;7.5"
+```
+See [this useful chart](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) for more architecture compatibility.
+
+#### Cannot use wandb on Windows
+
+Raises `OSError: [WinError 6] The handle is invalid` / `wandb: ERROR W&B process failed to launch`
+Wandb is currently broken on Windows (see [this issue](https://github.com/wandb/client/issues/862)), a workaround is to use the command line argument `wandb.log=false`
 
 ## Contributing
 
@@ -328,3 +414,19 @@ When it comes to docstrings we use [numpy style](https://numpydoc.readthedocs.io
 Visual Studio Code, there is a great [extension](https://github.com/NilsJPWerner/autoDocstring) that can help with that. Install it and set the format to numpy and you should be good to go!
 
 Finaly, if you want to have a direct chat with us feel free to join our slack, just shoot us an email and we'll add you.
+
+## Citing
+If you find our work useful, do not hesitate to cite it:
+```
+@misc{
+  tp3d,
+  author = {Chaton, T. and Chaulet N.},
+  title = {Torch Points3D}, year = {2020},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
+}
+```
+and please also include a citation to the
+[models](https://github.com/nicolas-chaulet/torch-points3d#methods-currently-implemented)
+or the [datasets](https://github.com/nicolas-chaulet/torch-points3d#available-datasets) you have used in your experiments!

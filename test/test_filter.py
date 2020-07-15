@@ -14,6 +14,8 @@ from torch_points3d.core.data_transform import FCompose, PlanarityFilter, euler_
 class TestFilter(unittest.TestCase):
     def test_planarity_filter(self):
 
+        torch.manual_seed(0)
+
         # Plane with high planarity
         U = euler_angles_to_rotation_matrix(torch.rand(3) * np.pi)
         plane = torch.rand(1000, 3) @ U @ torch.diag(torch.tensor([1, 1, 0.001])) @ U
@@ -42,3 +44,7 @@ class TestFilter(unittest.TestCase):
         self.assertTrue(compose_filter(data_1).item())
         self.assertFalse(compose_filter(data_2).item())
         self.assertFalse(compose_filter(data_3).item())
+
+
+if __name__ == "__main__":
+    unittest.main()
