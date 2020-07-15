@@ -276,7 +276,10 @@ class BaseDataset:
 
     @property
     def test_dataloaders(self):
-        return self._test_loaders
+        if self.has_test_loaders:
+            return self._test_loaders
+        else:
+            return []
 
     @property
     def _loaders(self):
@@ -424,9 +427,8 @@ class BaseDataset:
         for _, attr in self.__dict__.items():
             if isinstance(attr, torch.utils.data.DataLoader):
                 self._set_composed_multiscale_transform(attr, transform)
-        if self._test_loaders:
-            for loader in self._test_loaders:
-                self._set_composed_multiscale_transform(loader, transform)
+        for loader in self.test_dataloaders:
+            self._set_composed_multiscale_transform(loader, transform)
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()
