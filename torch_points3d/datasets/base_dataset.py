@@ -142,6 +142,7 @@ class BaseDataset:
             return SimpleBatch.from_data_list
         else:
             return torch_geometric.data.batch.Batch.from_data_list
+
     @staticmethod
     def get_num_samples(batch, conv_type):
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
@@ -423,9 +424,9 @@ class BaseDataset:
         for _, attr in self.__dict__.items():
             if isinstance(attr, torch.utils.data.DataLoader):
                 self._set_composed_multiscale_transform(attr, transform)
-
-        for loader in self._test_loaders:
-            self._set_composed_multiscale_transform(loader, transform)
+        if self._test_loaders:
+            for loader in self._test_loaders:
+                self._set_composed_multiscale_transform(loader, transform)
 
     def set_strategies(self, model):
         strategies = model.get_spatial_ops()

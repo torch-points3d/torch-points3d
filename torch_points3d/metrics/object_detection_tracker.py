@@ -79,8 +79,6 @@ class ObjectDetectionTracker(BaseTracker):
 
             # Ground truth
             sample_mask = idx
-            if conv_type != "DENSE":
-                sample_mask = input_data.batch == idx
             gt_boxes = input_data.instance_box_corners[sample_mask]
             gt_boxes = gt_boxes[input_data.box_label_mask[sample_mask]]
             sample_labels = input_data.sem_cls_label[sample_mask]

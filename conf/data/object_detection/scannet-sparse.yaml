@@ -1,3 +1,4 @@
+
 data:
   class: scannet.ScannetDataset
   dataset_name: 'scannet-sparse'
@@ -8,7 +9,9 @@ data:
   use_instance_bboxes: True
   donotcare_class_ids: []
   process_workers: 8
+
   grid_size: 0.05
+  mode: last
 
   pre_transform:
     - transform: GridSampling3D
@@ -18,16 +21,33 @@ data:
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
+        quantize_coords: True
+        mode: ${data.mode}
     - transform: FixedPoints
-      lparams: [40000] 
+      lparams: [40000]
       params:
         replace: False
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True]
+        feat_names: ['rgb']
+        input_nc_feats: [3]
+        delete_feats: [True]
+    
 
   val_transform:
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
+        quantize_coords: True
+        mode: ${data.mode}
     - transform: FixedPoints
       lparams: [40000]
       params:
         replace: False
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True]
+        feat_names: ['rgb']
+        input_nc_feats: [3]
+        delete_feats: [True]

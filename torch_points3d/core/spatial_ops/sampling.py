@@ -75,7 +75,7 @@ class RandomSamplerToDense(BaseSampler):
             num_points = 0
             for batch_idx in range(num_batches):
                 batch_mask = data.batch == batch_idx
-                pos_masked = data.pos[batch_mask, :]
+                pos_masked = data.pos[batch_mask]
                 x_masked = data.x[batch_mask]
                 assert (
                     self._num_to_sample <= pos_masked.shape[0]

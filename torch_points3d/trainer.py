@@ -128,6 +128,9 @@ class Trainer:
             if self.profiling:
                 return 0
 
+            if epoch % self._cfg.eval_frequency != 0:
+                continue
+
             if self._dataset.has_val_loader:
                 self._test_epoch(epoch, "val")
 

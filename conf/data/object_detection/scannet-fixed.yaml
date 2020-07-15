@@ -8,26 +8,15 @@ data:
   use_instance_bboxes: True
   donotcare_class_ids: []
   process_workers: 8
-  grid_size: 0.05
 
   pre_transform:
     - transform: GridSampling3D
       lparams: [0.02]
 
   train_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.grid_size}
     - transform: FixedPoints
       lparams: [40000] 
-      params:
-        replace: False
 
   val_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.grid_size}
     - transform: FixedPoints
       lparams: [40000]
-      params:
-        replace: False
