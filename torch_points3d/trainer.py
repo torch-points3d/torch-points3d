@@ -85,10 +85,9 @@ class Trainer:
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
             self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
+            # Make sure the model can be built directly from configuration and update checkpoint
+            self._model: BaseModel = self._checkpoint.re_instantiate_model(self._dataset)
             self._model.instantiate_optimizers(self._cfg)
-
-        # Make sure the model can be built directly from configuration and update checkpoint
-        self._model = self._checkpoint.re_instantiate_model(self._dataset)
 
         log.info(self._model)
         self._model.log_optimizers()
