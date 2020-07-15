@@ -95,12 +95,13 @@ class VoteNet2(BaseModel):
         sampling_id_key = "sampling_id_0"
         if hasattr(data_features, sampling_id_key):
             seed_inds = getattr(data_features, sampling_id_key, None)[:, : self._num_seeds]
-            data_features.pos = torch.gather(
-                data_features.pos, 1, seed_inds.unsqueeze(-1).repeat(1, 1, data_features.pos.shape[-1])
-            )
-            data_features.x = torch.gather(
-                data_features.x, 2, seed_inds.unsqueeze(1).repeat(1, data_features.x.shape[1], 1)
-            )
+            if data_features.pos.shape[1] != self._num_seeds:
+                data_features.pos = torch.gather(
+                    data_features.pos, 1, seed_inds.unsqueeze(-1).repeat(1, 1, data_features.pos.shape[-1])
+                )
+                data_features.x = torch.gather(
+                    data_features.x, 2, seed_inds.unsqueeze(1).repeat(1, data_features.x.shape[1], 1)
+                )
         else:
             sampler = RandomSamplerToDense(num_to_sample=self._num_seeds)
             data_features, seed_inds = sampler.sample(data_features, self._n_batches, self.conv_type)

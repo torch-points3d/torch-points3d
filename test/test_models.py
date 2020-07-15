@@ -147,14 +147,14 @@ class TestModels(unittest.TestCase):
                             print("Model with zero gradient %s: %s" % (type_file, model_name))
                             raise e
 
-    def test_votenet(self):
-        config = load_model_config("object_detection", "votenet2", "VoteNetKPConv")
-        dataset = get_dataset("partial_dense", "object_detection")
+    def test_one_model(self):
+        # Use this test to test any model when debugging
+        config = load_model_config("object_detection", "votenet2", "VoteNetPaper")
+        dataset = get_dataset("dense", "object_detection")
         model = instantiate_model(config, dataset)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()
-        print(model)
 
 
 if __name__ == "__main__":
