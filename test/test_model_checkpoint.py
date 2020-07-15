@@ -64,6 +64,13 @@ class TestModelCheckpoint(unittest.TestCase):
         model.set_input(dataset[0], "cpu")
         model.instantiate_optimizers(self.config)
 
+        num_batches = 100
+        num_epochs = 5
+        num_samples = 3
+        model._num_batches = num_batches
+        model._num_epochs = num_epochs
+        model._num_samples = num_samples
+
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
         metric_func = {"acc": max}
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
@@ -73,6 +80,10 @@ class TestModelCheckpoint(unittest.TestCase):
         model2 = model_checkpoint.create_model(dataset, weight_name="acc")
 
         self.assertEqual(str(model.optimizer.__class__.__name__), str(model2.optimizer.__class__.__name__))
+
+        self.assertEqual(model2._num_batches, num_batches)
+        self.assertEqual(model2._num_epochs, num_epochs)
+        self.assertEqual(model2._num_samples, num_samples)
         self.assertEqual(model.optimizer.defaults, model2.optimizer.defaults)
         self.assertEqual(model.schedulers["lr_scheduler"].state_dict(), model2.schedulers["lr_scheduler"].state_dict())
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
