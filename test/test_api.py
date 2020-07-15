@@ -21,7 +21,7 @@ device = "cpu"
 class TestPretainedRegistry(unittest.TestCase):
     def test_from_pretrained(self):
 
-        model = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
+        _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
 
 
 class TestAPIUnet(unittest.TestCase):

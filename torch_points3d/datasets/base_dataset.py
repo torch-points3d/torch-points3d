@@ -38,7 +38,7 @@ def explode_transform(transforms):
             out = copy.deepcopy(transforms)
         else:
             raise Exception(
-                "transforms should be provided either within a list or a Compose")
+                "Transforms should be provided either within a list or a Compose")
     return out
 
 
