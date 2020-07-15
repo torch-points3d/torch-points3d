@@ -35,6 +35,7 @@ models:
             module_name: VotingModule
             vote_factor: 1
             feat_dim: num_features
+            num_points_to_sample: 1024
         proposal:
             module_name: ProposalModule
             vote_aggregation:

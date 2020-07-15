@@ -128,7 +128,7 @@ class Trainer:
             if self.profiling:
                 return 0
 
-            if epoch % self._cfg.eval_frequency != 0:
+            if epoch % self.eval_frequency != 0:
                 continue
 
             if self._dataset.has_val_loader:
@@ -297,3 +297,7 @@ class Trainer:
     @property
     def tracker_options(self):
         return self._cfg.get("tracker_options", {})
+
+    @property
+    def eval_frequency(self):
+        return self._cfg.get("eval_frequency", 1)

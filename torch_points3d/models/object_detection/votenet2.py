@@ -41,10 +41,7 @@ class VoteNet2(BaseModel):
 
         # 2 - CREATE VOTING MODEL
         voting_option = option.voting
-        if voting_option.num_points_to_sample:
-            self.sampler = RandomSamplerToDense(num_to_sample=voting_option.num_points_to_sample)
-        else:
-            self.sampler = None
+        self._num_seeds = voting_option.num_points_to_sample
         voting_cls = getattr(votenet_module, voting_option.module_name)
         self.voting_module = voting_cls(
             vote_factor=voting_option.vote_factor, seed_feature_dim=self.backbone_model.output_nc
@@ -97,10 +94,16 @@ class VoteNet2(BaseModel):
         data_features = self.backbone_model.forward(self.input)
         sampling_id_key = "sampling_id_0"
         if hasattr(data_features, sampling_id_key):
-            num_seeds = data_features.pos.shape[1]
-            seed_inds = getattr(data_features, sampling_id_key, None)[:, :num_seeds]
+            seed_inds = getattr(data_features, sampling_id_key, None)[:, : self._num_seeds]
+            data_features.pos = torch.gather(
+                data_features.pos, 1, seed_inds.unsqueeze(-1).repeat(1, 1, data_features.pos.shape[-1])
+            )
+            data_features.x = torch.gather(
+                data_features.x, 2, seed_inds.unsqueeze(1).repeat(1, data_features.x.shape[1], 1)
+            )
         else:
-            data_features, seed_inds = self.sampler.sample(data_features, self._n_batches, self.conv_type)
+            sampler = RandomSamplerToDense(num_to_sample=self._num_seeds)
+            data_features, seed_inds = sampler.sample(data_features, self._n_batches, self.conv_type)
         data_votes = self.voting_module(data_features)
         setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
 
