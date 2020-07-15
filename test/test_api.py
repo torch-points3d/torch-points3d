@@ -23,11 +23,6 @@ class TestPretainedRegistry(unittest.TestCase):
 
         model = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
 
-        print(model.wandb)
-
-        # model = PretainedRegistry.from_pretrained("pointgroup-scannet", download=True)
-        # print(model.wandb)
-
 
 class TestAPIUnet(unittest.TestCase):
     def test_kpconv(self):

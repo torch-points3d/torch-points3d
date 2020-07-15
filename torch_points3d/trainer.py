@@ -10,7 +10,7 @@ import wandb
 
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
-from torch_points3d.models.model_factory import instantiate_model, re_instantiate_model
+from torch_points3d.models.model_factory import instantiate_model
 
 # Import BaseModel / BaseDataset for type checking
 from torch_points3d.models.base_model import BaseModel
@@ -88,7 +88,7 @@ class Trainer:
             self._model.instantiate_optimizers(self._cfg)
 
         # Make sure the model can be built directly from configuration and update checkpoint
-        re_instantiate_model(self._cfg, self._checkpoint, self._dataset)
+        self._model = self._checkpoint.re_instantiate_model(self._dataset)
 
         log.info(self._model)
         self._model.log_optimizers()
