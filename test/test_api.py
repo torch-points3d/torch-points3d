@@ -22,6 +22,7 @@ class TestPretainedRegistry(unittest.TestCase):
     def test_from_pretrained(self):
 
         _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
+        _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-2", download=True)
 
 
 class TestAPIUnet(unittest.TestCase):
