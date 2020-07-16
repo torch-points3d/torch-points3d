@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 import torch
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications import models
@@ -62,7 +63,12 @@ class VoteNetModel(BaseModel):
         # Loss params
         self.loss_params = option.loss_params
         self.loss_params.num_heading_bin = proposal_option.num_heading_bin
-        self.loss_params.mean_size_arr = dataset.mean_size_arr.tolist()
+        mean_size_arr = dataset.mean_size_arr
+        if isinstance(mean_size_arr, torch.Tensor):
+            mean_size_arr = mean_size_arr.numpy().tolist()
+        if isinstance(dataset.mean_size_arr, np.ndarray):
+            mean_size_arr = mean_size_arr.tolist()
+        self.loss_params.mean_size_arr = mean_size_arr
 
         self.losses_has_been_added = False
         self.loss_names = []

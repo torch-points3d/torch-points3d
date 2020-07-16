@@ -41,7 +41,10 @@ class PointGroup(BaseModel):
             .append(torch.nn.LogSoftmax())
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
-        self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), dataset.stuff_classes])
+        stuff_classes = dataset.stuff_classes
+        if isinstance(stuff_classes, list):
+            stuff_classes = torch.Tensor(stuff_classes)
+        self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), stuff_classes])
 
     def set_input(self, data, device):
         self.raw_pos = data.pos.to(device)
