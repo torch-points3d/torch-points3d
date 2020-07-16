@@ -151,11 +151,13 @@ def from_data_list_token(data_list, follow_batch=[]):
     for key in batch.keys:
         item = batch[key][0]
         if torch.is_tensor(item):
-            batch[key] = torch.cat(batch[key], dim=data_list[0].__cat_dim__(key, item))
+            batch[key] = torch.cat(
+                batch[key], dim=data_list[0].__cat_dim__(key, item))
         elif isinstance(item, int) or isinstance(item, float):
             batch[key] = torch.tensor(batch[key])
         else:
-            raise ValueError("Unsupported attribute type {} : {}".format(type(item), item))
+            raise ValueError(
+                "Unsupported attribute type {} : {}".format(type(item), item))
 
     if torch_geometric.is_debug_enabled():
         batch.debug()
