@@ -190,6 +190,10 @@ class ModelCheckpoint(object):
             return 1
 
     @property
+    def run_config(self):
+        return self._checkpoint.run_config
+
+    @property
     def data_config(self):
         return self._checkpoint.run_config.data
 
@@ -289,3 +293,13 @@ class ModelCheckpoint(object):
 
         self._checkpoint.stats[stage].append(current_stat)
         self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
+
+    def re_instantiate_model(self, dataset):
+        """This function is called to gather used_properties from dataset
+        and saved within the checkpoint. Then try to create the model directly from configuration file"""
+
+        used_properties = dataset.used_properties
+        if used_properties is not None:
+            for k, v in used_properties.items():
+                self.data_config[k] = v
+        return instantiate_model(self.run_config, self.data_config)

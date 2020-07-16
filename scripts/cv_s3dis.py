@@ -22,7 +22,11 @@ POINTNET_2_URL_MODELS = {
     "6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt",
 }
 
-MODELS_URL = {"pointnet2": POINTNET_2_URL_MODELS}
+RSCONV_URL_MODELS = {}
+
+KPCONV_URL_MODELS = {}
+
+MODELS_URL = {"pointnet2": POINTNET_2_URL_MODELS, "rsconv": RSCONV_URL_MODELS, "kpconv": KPCONV_URL_MODELS}
 
 
 def download_file(url, out_file):
