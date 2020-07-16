@@ -63,8 +63,6 @@ models:
             num_classes: 18 # Should be $(data.num_classes)
         backbone:
             model_type: "Minkowski"
-            extra_options:
-                in_feat: 64
         voting:
             module_name: VotingModule
             vote_factor: 1
