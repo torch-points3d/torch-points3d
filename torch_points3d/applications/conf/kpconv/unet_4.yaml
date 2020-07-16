@@ -54,7 +54,7 @@ down_conv:
             [False, False],
             [False, False],
         ]
-    max_neighbors:
+    max_num_neighbors:
         [[max_neighbors,max_neighbors], [max_neighbors, max_neighbors], [max_neighbors, max_neighbors], [max_neighbors, max_neighbors], [max_neighbors, max_neighbors]]
     module_name: KPDualBlock
 up_conv:
