@@ -40,9 +40,9 @@ class MockModel(torch.nn.Module):
         self.state = torch.nn.parameter.Parameter(torch.tensor([1.0]))
         self.optimizer = torch.nn.Module()
         self.schedulers = {}
-        self._num_epochs = None
-        self._num_batches = 0
-        self._num_samples = -1
+        self.num_epochs = None
+        self.num_batches = 0
+        self.num_samples = -1
 
 
 class TestModelCheckpoint(unittest.TestCase):
