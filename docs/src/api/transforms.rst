@@ -48,6 +48,10 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.RandomDropout
 
+.. autoclass:: torch_points3d.core.data_transform.DropFeature
+
+.. autoclass:: torch_points3d.core.data_transform.NormalizeFeature
+
 .. autoclass:: torch_points3d.core.data_transform.PCACompute
 
 .. autofunction:: torch_points3d.core.data_transform.NormalizeRGB
