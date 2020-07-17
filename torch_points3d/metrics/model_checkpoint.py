@@ -177,9 +177,10 @@ class ModelCheckpoint(object):
         if not self.is_empty:
             run_config = copy.deepcopy(self._checkpoint.run_config)
             model = instantiate_model(run_config, dataset)
-            for k, v in self._checkpoint.model_props.items():
-                setattr(model, k, v)
-            delattr(self._checkpoint, "model_props")
+            if hasattr(self._checkpoint, "model_props"):
+                for k, v in self._checkpoint.model_props.items():
+                    setattr(model, k, v)
+                delattr(self._checkpoint, "model_props")
             self._initialize_model(model, weight_name)
             return model
         else:
@@ -291,9 +292,9 @@ class ModelCheckpoint(object):
                     models_to_save["best_{}".format(metric_name)] = state_dict
 
         kwargs["model_props"] = {
-            "_num_epochs": model._num_epochs,  # type: ignore
-            "_num_batches": model._num_batches,  # type: ignore
-            "_num_samples": model._num_samples,  # type: ignore
+            "num_epochs": model.num_epochs,  # type: ignore
+            "num_batches": model.num_batches,  # type: ignore
+            "num_samples": model.num_samples,  # type: ignore
         }
 
         self._checkpoint.stats[stage].append(current_stat)
