@@ -41,7 +41,7 @@ class NormalizeFeature(object):
         feature = data[self._feature_name]
         if self._standardize:
             feature = (feature - feature.mean()) / (feature.std())
-        else:
+        elif feature.max() - feature.min() > 0:
             feature = (feature - feature.min()) / (feature.max() - feature.min())
         data[self._feature_name] = feature
         return data
