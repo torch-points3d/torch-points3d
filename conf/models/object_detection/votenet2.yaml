@@ -93,6 +93,8 @@ models:
             num_classes: 18 # Should be $(data.num_classes)
         backbone:
             model_type: "KPConv"
+            extra_options:
+                in_grid_size: ${data.grid_size}
         voting:
             module_name: VotingModule
             vote_factor: 1
