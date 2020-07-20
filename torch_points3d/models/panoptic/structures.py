@@ -36,7 +36,7 @@ class PanopticResults(NamedTuple):
         cluster_scores = self.cluster_scores[valid_clusters_ids]
         n_prop = len(clusters)
         proposal_masks = torch.zeros(n_prop, self.semantic_logits.shape[0])
-        for i, cluster in enumerate(self.clusters):
+        for i, cluster in enumerate(clusters):
             proposal_masks[i, cluster] = 1
 
         intersection = torch.mm(proposal_masks, proposal_masks.t())  # (nProposal, nProposal), float, cuda
