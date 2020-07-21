@@ -45,7 +45,7 @@ class InstanceAPMeter:
                 self._gt_clusters[instance.classname] = {instance.scan_id: [instance]}
 
     def _eval_cls(self, classname, iou_threshold):
-        preds = (self._pred_clusters.get(classname, []),)
+        preds = self._pred_clusters.get(classname, [])
         allgts = self._gt_clusters.get(classname, {})
         visited = {scan_id: len(gt) * [False] for scan_id, gt in allgts.items()}
         ngt = 0
