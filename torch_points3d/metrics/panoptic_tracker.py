@@ -2,7 +2,6 @@ import torchnet as tnt
 from typing import NamedTuple, Dict, Any, List
 import torch
 import numpy as np
-from multiprocessing import Pool
 from torch_scatter import scatter_add
 from collections import OrderedDict
 
@@ -45,9 +44,9 @@ class InstanceAPMeter:
             else:
                 self._gt_clusters[instance.classname] = {instance.scan_id: [instance]}
 
-    @staticmethod
-    def _eval_cls(args):
-        preds, allgts, iou_threshold = args
+    def _eval_cls(self, classname, iou_threshold):
+        preds = (self._pred_clusters.get(classname, []),)
+        allgts = self._gt_clusters.get(classname, {})
         visited = {scan_id: len(gt) * [False] for scan_id, gt in allgts.items()}
         ngt = 0
         for gts in allgts.values():
@@ -83,8 +82,7 @@ class InstanceAPMeter:
                 visited[scan_id][best_match] = True
                 tp[p] = 1
 
-            fp = np.cumsum(fp)
-
+        fp = np.cumsum(fp)
         tp = np.cumsum(tp)
         rec = tp / float(ngt)
 
@@ -94,23 +92,15 @@ class InstanceAPMeter:
         ap = voc_ap(rec, prec)
         return rec, prec, ap
 
-    def eval(self, iou_threshold, processes=4):
+    def eval(self, iou_threshold, processes=1):
         rec = {}
         prec = {}
         ap = {}
-        p = Pool(processes=processes)
-        ret_values = p.map(
-            self._eval_cls,
-            [
-                (self._pred_clusters.get(classname, []), self._gt_clusters.get(classname, {}), iou_threshold)
-                for classname in self._gt_clusters.keys()
-            ],
-        )
-        p.close()
+        for classname in self._gt_clusters.keys():
+            rec[classname], prec[classname], ap[classname] = self._eval_cls(classname, iou_threshold)
+
         for i, classname in enumerate(self._gt_clusters.keys()):
-            if classname in self._pred_clusters:
-                rec[classname], prec[classname], ap[classname] = ret_values[i]
-            else:
+            if classname not in self._pred_clusters:
                 rec[classname] = 0
                 prec[classname] = 0
                 ap[classname] = 0
@@ -137,7 +127,7 @@ class PanopticTracker(SegmentationTracker):
         model: TrackerInterface,
         data=None,
         iou_threshold=0.5,
-        track_instances=False,
+        track_instances=True,
         min_cluster_points=50,
         **kwargs
     ):
@@ -156,8 +146,13 @@ class PanopticTracker(SegmentationTracker):
 
         # Object accuracy
         clusters = PanopticTracker._extract_clusters(outputs, min_cluster_points)
+        if not clusters:
+            return
+
         predicted_labels = outputs.semantic_logits.max(1)[1]
-        tp, fp, acc = self._compute_acc(clusters, predicted_labels, labels, data.batch, iou_threshold)
+        tp, fp, acc = self._compute_acc(
+            clusters, predicted_labels, labels, data.batch, labels.num_instances, iou_threshold
+        )
         self._pos.add(tp)
         self._neg.add(fp)
         self._acc_meter.add(acc)
@@ -171,9 +166,9 @@ class PanopticTracker(SegmentationTracker):
                 labels.instance_labels, labels.y, data.batch, self._scan_id_offset
             )
             self._ap_meter.add(pred_clusters, gt_clusters)
-            self._scan_id_offset += data.batch[-1] + 1
+            self._scan_id_offset += data.batch[-1].item() + 1
 
-    def finalise(self, track_instances=False, iou_threshold=0.5, **kwargs):
+    def finalise(self, track_instances=True, iou_threshold=0.5, **kwargs):
         if not track_instances:
             return
 
@@ -188,22 +183,28 @@ class PanopticTracker(SegmentationTracker):
             self._rec[key] = value
 
     @staticmethod
-    def _compute_acc(clusters, predicted_labels, labels, batch, iou_threshold):
+    def _compute_acc(clusters, predicted_labels, labels, batch, num_instances, iou_threshold):
         """ Computes the ratio of True positives, False positives and accuracy
         """
         iou_values, gt_ids = instance_iou(clusters, labels.instance_labels, batch).max(1)
         gt_ids += 1
-
+        instance_offsets = torch.cat((torch.tensor([0]).to(num_instances.device), num_instances.cumsum(-1)))
         tp = 0
         fp = 0
         for i, iou in enumerate(iou_values):
             # Too low iou, no match in ground truth
             if iou < iou_threshold:
                 fp += 1
+                continue
 
             # Check that semantic is correct
-            gt_mask = labels.instance_labels == gt_ids[i]
-            gt_class = labels.y[torch.nonzero(gt_mask, as_tuple=False)[0]]
+            sample_idx = batch[clusters[i][0]]
+            sample_mask = batch == sample_idx
+            instance_offset = instance_offsets[sample_idx]
+            gt_mask = labels.instance_labels[sample_mask] == (gt_ids[i] - instance_offset)
+            gt_classes = labels.y[sample_mask][torch.nonzero(gt_mask, as_tuple=False)]
+            gt_classes, counts = torch.unique(gt_classes, return_counts=True)
+            gt_class = gt_classes[counts.max(-1)[1]]
             pred_class = predicted_labels[clusters[i][0]]
             if gt_class == pred_class:
                 tp += 1
@@ -251,7 +252,7 @@ class PanopticTracker(SegmentationTracker):
             num_instances = torch.max(instances_in_sample)
             scan_id = b + scan_id_offset
             for i in range(num_instances):
-                instance_indices = torch.where(instances_in_sample == i + 1)[0]
+                instance_indices = torch.where(instances_in_sample == i + 1)[0].cpu().numpy()
                 instances.append(
                     _Instance(
                         classname=gt_labels_sample[instance_indices[0]].item(),

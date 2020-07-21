@@ -1,4 +1,5 @@
 import torch
+import os
 from torch_points_kernels import region_grow
 from torch_geometric.data import Data
 from torch_scatter import scatter
@@ -187,10 +188,11 @@ class PointGroup(BaseModel):
             )
             data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
             data_visual.vote = self.output.offset_logits
-            nms_idx = self.output.get_nms_instances()
+            nms_idx = self.output.get_instances()
             if self.output.clusters is not None:
                 data_visual.clusters = [self.output.clusters[i].cpu() for i in nms_idx]
                 data_visual.cluster_type = self.output.cluster_type[nms_idx]
-
+            if not os.path.exists("viz"):
+                os.mkdir("viz")
             torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
             self.visual_count += 1

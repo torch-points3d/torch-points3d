@@ -23,20 +23,15 @@ class PanopticResults(NamedTuple):
     clusters: List[torch.Tensor]  # Each item contains the list of indices in the cluster
     cluster_type: torch.Tensor  # Wether a cluster is coming from the votes or the original points. 0->original pos, 1->vote
 
-    def get_instances(self, nms_threshold=0.3, min_cluster_points=50, min_score=0.09) -> List:
+    def get_instances(self, nms_threshold=0.3, min_cluster_points=100, min_score=0.2) -> List:
         """ Returns index of clusters that pass nms test, min size test and score test
         """
-        valid_clusters_ids = []
-        clusters = []
-        for i, cl in enumerate(self.clusters):
-            if len(cl) > min_cluster_points and self.cluster_scores[i] > min_score:
-                valid_clusters_ids.append(i)
-                clusters.append(cl)
+        if not self.clusters:
+            return []
 
-        cluster_scores = self.cluster_scores[valid_clusters_ids]
-        n_prop = len(clusters)
+        n_prop = len(self.clusters)
         proposal_masks = torch.zeros(n_prop, self.semantic_logits.shape[0])
-        for i, cluster in enumerate(clusters):
+        for i, cluster in enumerate(self.clusters):
             proposal_masks[i, cluster] = 1
 
         intersection = torch.mm(proposal_masks, proposal_masks.t())  # (nProposal, nProposal), float, cuda
@@ -44,8 +39,14 @@ class PanopticResults(NamedTuple):
         proposals_pn_h = proposals_pointnum.unsqueeze(-1).repeat(1, proposals_pointnum.shape[0])
         proposals_pn_v = proposals_pointnum.unsqueeze(0).repeat(proposals_pointnum.shape[0], 1)
         cross_ious = intersection / (proposals_pn_h + proposals_pn_v - intersection)
-        pick_idxs = non_max_suppression(cross_ious.cpu().numpy(), cluster_scores.cpu().numpy(), nms_threshold)
-        return pick_idxs
+        pick_idxs = non_max_suppression(cross_ious.cpu().numpy(), self.cluster_scores.cpu().numpy(), nms_threshold)
+
+        valid_pick_ids = []
+        for i in pick_idxs:
+            cl = self.clusters
+            if len(cl) > min_cluster_points and self.cluster_scores[i] > min_score:
+                valid_pick_ids.append(i)
+        return valid_pick_ids
 
 
 class PanopticLabels(NamedTuple):
