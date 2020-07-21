@@ -126,13 +126,14 @@ class PanopticTracker(SegmentationTracker):
         self,
         model: TrackerInterface,
         data=None,
-        iou_threshold=0.5,
+        iou_threshold=0.25,
         track_instances=True,
-        min_cluster_points=50,
+        min_cluster_points=10,
         **kwargs
     ):
         """ Track metrics for panoptic segmentation
         """
+        self._iou_threshold = iou_threshold
         BaseTracker.track(self, model)
         outputs: PanopticResults = model.get_output()
         labels: PanopticLabels = model.get_labels()
@@ -168,11 +169,11 @@ class PanopticTracker(SegmentationTracker):
             self._ap_meter.add(pred_clusters, gt_clusters)
             self._scan_id_offset += data.batch[-1].item() + 1
 
-    def finalise(self, track_instances=True, iou_threshold=0.5, **kwargs):
+    def finalise(self, track_instances=True, **kwargs):
         if not track_instances:
             return
 
-        rec, _, ap = self._ap_meter.eval(iou_threshold)
+        rec, _, ap = self._ap_meter.eval(self._iou_threshold)
         self._ap = OrderedDict(sorted(ap.items()))
         self._rec = OrderedDict({})
         for key, val in sorted(rec.items()):
