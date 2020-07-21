@@ -112,6 +112,10 @@ class PanopticTracker(SegmentationTracker):
     """ Class that provides tracking of semantic segmentation as well as
     instance segmentation """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._metric_func = {**self._metric_func, "pos": max, "neg": min, "map": max}
+
     def reset(self, stage="train"):
         super().reset(stage=stage)
         self._pos = tnt.meter.AverageValueMeter()

@@ -22,12 +22,12 @@ class PointGroup(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
-        backbone_architecture = option.get("backbone", {"architecture": "unet"})
+        backbone_options = option.get("backbone", {"architecture": "unet"})
         self.Backbone = Minkowski(
-            backbone_architecture,
+            backbone_options.architecture,
             input_nc=dataset.feature_dimension,
             num_layers=4,
-            config=backbone_architecture.config,
+            config=backbone_options.config,
         )
         self.BackboneHead = Seq().append(FastBatchNorm1d(self.Backbone.output_nc)).append(torch.nn.ReLU())
 
