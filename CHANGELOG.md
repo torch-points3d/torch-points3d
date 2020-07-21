@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bugfix
 
+- LR secheduler resume is broken for update on batch number #328
 - ElasticDistortion transform is now fully functional
 
 ### Removed
