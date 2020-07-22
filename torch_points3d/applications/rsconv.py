@@ -199,4 +199,6 @@ class RSConvUnet(RSConvBase):
 
         if self.has_mlp_head:
             data.x = self.mlp(last_feature)
+        else:
+            data.x = last_feature
         return data
