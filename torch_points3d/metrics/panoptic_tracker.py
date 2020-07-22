@@ -1,9 +1,9 @@
 import torchnet as tnt
-from typing import NamedTuple, Dict, Any, List
+from typing import NamedTuple, Dict, Any, List, Tuple
 import torch
 import numpy as np
 from torch_scatter import scatter_add
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from torch_points3d.models.model_interface import TrackerInterface
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
@@ -20,29 +20,31 @@ class _Instance(NamedTuple):
     scan_id: int
 
     def iou(self, other: "_Instance") -> float:
+        assert self.scan_id == other.scan_id
         intersection = float(len(np.intersect1d(other.indices, self.indices)))
         return intersection / float(len(other.indices) + len(self.indices) - intersection)
+
+    def find_best_match(self, others: List["_Instance"]) -> Tuple[float, int]:
+        ioumax = -np.inf
+        best_match = -1
+        for i, other in enumerate(others):
+            iou = self.iou(other)
+            if iou > ioumax:
+                ioumax = iou
+                best_match = i
+        return ioumax, best_match
 
 
 class InstanceAPMeter:
     def __init__(self):
-        self._pred_clusters = {}  # {classname: List[_Instance]}
-        self._gt_clusters = {}  # {classname:{scan_id: List[_Instance]}
+        self._pred_clusters = defaultdict(list)  # {classname: List[_Instance]}
+        self._gt_clusters = defaultdict(lambda: defaultdict(list))  # {classname:{scan_id: List[_Instance]}
 
     def add(self, pred_clusters: List[_Instance], gt_clusters: List[_Instance]):
         for instance in pred_clusters:
-            if instance.classname in self._pred_clusters:
-                self._pred_clusters[instance.classname].append(instance)
-            else:
-                self._pred_clusters[instance.classname] = [instance]
+            self._pred_clusters[instance.classname].append(instance)
         for instance in gt_clusters:
-            if instance.classname in self._gt_clusters:
-                if instance.scan_id in self._gt_clusters[instance.classname]:
-                    self._gt_clusters[instance.classname][instance.scan_id].append(instance)
-                else:
-                    self._gt_clusters[instance.classname][instance.scan_id] = [instance]
-            else:
-                self._gt_clusters[instance.classname] = {instance.scan_id: [instance]}
+            self._gt_clusters[instance.classname][instance.scan_id].append(instance)
 
     def _eval_cls(self, classname, iou_threshold):
         preds = self._pred_clusters.get(classname, [])
@@ -64,13 +66,7 @@ class InstanceAPMeter:
                 continue
 
             # Find best macth in ground truth
-            ioumax = -np.inf
-            best_match = -1
-            for i, gt in enumerate(gts):
-                iou = gt.iou(pred)
-                if iou > ioumax:
-                    ioumax = iou
-                    best_match = i
+            ioumax, best_match = pred.find_best_match(gts)
 
             if ioumax < iou_threshold:
                 fp[p] = 1
