@@ -38,6 +38,12 @@ class PretainedRegistry(object):
         "pointnet2_largemsg-s3dis-5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/etxij0j6/pointnet2_largemsg.pt",
         "pointnet2_largemsg-s3dis-6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt",
         "pointgroup-scannet": "https://api.wandb.ai/files/nicolas/panoptic/2ta6vfu2/PointGroup.pt",
+        "minkowski-res16-s3dis-1": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1fyr7ri9/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-2": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1gdgx2ni/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-3": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/gt3ttamp/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-4": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/36yxu3yc/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-5": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/2r0tsub1/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-6": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/30yrkk5p/Res16UNet34C.pt",
     }
 
     MOCK_USED_PROPERTIES = {
@@ -48,6 +54,12 @@ class PretainedRegistry(object):
         "pointnet2_largemsg-s3dis-5": {"feature_dimension": 4, "num_classes": 13},
         "pointnet2_largemsg-s3dis-6": {"feature_dimension": 4, "num_classes": 13},
         "pointgroup-scannet": {},
+        "minkowski-res16-s3dis-1": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-2": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-3": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-4": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-5": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-6": {"feature_dimension": 4, "num_classes": 13},
     }
 
     @staticmethod
