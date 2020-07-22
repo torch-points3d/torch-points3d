@@ -35,7 +35,7 @@ models:
         conv_type: "SPARSE"
         model_name: "MinkUNet18B"
         D: 3
-  
+
     MinkUNet18D:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
@@ -77,83 +77,82 @@ models:
         conv_type: "SPARSE"
         model_name: "Res16UNet34"
         D: 3
-          
+
     Res16UNet14A:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14A"
-        D: 3  
-        
+        D: 3
+
     Res16UNet14A2:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14A2"
-        D: 3   
+        D: 3
 
     Res16UNet14B:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14B"
-        D: 3  
-          
+        D: 3
+
     Res16UNet14B2:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14B2"
-        D: 3 
-            
+        D: 3
+
     Res16UNet14B3:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14B3"
-        D: 3 
-                
+        D: 3
+
     Res16UNet14C:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14C"
-        D: 3  
+        D: 3
 
     Res16UNet14D:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet14D"
-        D: 3  
+        D: 3
 
     Res16UNet18A:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet18A"
-        D: 3  
+        D: 3
 
     Res16UNet18B:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet18B"
-        D: 3  
-        
+        D: 3
+
     Res16UNet18D:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet18D"
-        D: 3  
+        D: 3
 
     Res16UNet34A:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet34A"
-        D: 3  
+        D: 3
 
     Res16UNet34B:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet34B"
-        D: 3   
-        
+        D: 3
+
     Res16UNet34C:
         class: minkowski.Minkowski_Baseline_Model
         conv_type: "SPARSE"
         model_name: "Res16UNet34C"
-        D: 3 
-        conv1_kernel_size: 3
-        dilations: [1, 1, 1, 1]
+        extra_options:
+            conv1_kernel_size: 5

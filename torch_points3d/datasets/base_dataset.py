@@ -37,8 +37,7 @@ def explode_transform(transforms):
         elif isinstance(transforms, list):
             out = copy.deepcopy(transforms)
         else:
-            raise Exception(
-                "Transforms should be provided either within a list or a Compose")
+            raise Exception("Transforms should be provided either within a list or a Compose")
     return out
 
 
@@ -49,11 +48,12 @@ def save_used_properties(func):
         result = func(self, *args, **kwargs)
         if isinstance(result, torch.Tensor):
             self.used_properties[func.__name__] = result.numpy().tolist()
-        if isinstance(result, np.ndarray):
+        elif isinstance(result, np.ndarray):
             self.used_properties[func.__name__] = result.tolist()
         else:
             self.used_properties[func.__name__] = result
         return result
+
     return wrapper
 
 
@@ -99,8 +99,7 @@ class BaseDataset:
         if isinstance(transform_in, Compose) or isinstance(transform_in, list):
             if len(list_transform_class) > 0:
                 transform_out = []
-                transforms = transform_in.transforms if isinstance(
-                    transform_in, Compose) else transform_in
+                transforms = transform_in.transforms if isinstance(transform_in, Compose) else transform_in
                 for t in transforms:
                     if not isinstance(t, tuple(list_transform_class)):
                         transform_out.append(t)
@@ -123,18 +122,15 @@ class BaseDataset:
             if "transform" in key_name:
                 new_name = key_name.replace("transforms", "transform")
                 try:
-                    transform = instantiate_transforms(
-                        getattr(dataset_opt, key_name))
+                    transform = instantiate_transforms(getattr(dataset_opt, key_name))
                 except Exception:
-                    log.exception("Error trying to create {}, {}".format(
-                        new_name, getattr(dataset_opt, key_name)))
+                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
                 setattr(obj, new_name, transform)
 
         inference_transform = explode_transform(obj.pre_transform)
         inference_transform += explode_transform(obj.test_transform)
-        obj.inference_transform = Compose(inference_transform) if len(
-            inference_transform) > 0 else None
+        obj.inference_transform = Compose(inference_transform) if len(inference_transform) > 0 else None
 
     def set_filter(self, dataset_opt):
         """This function create and set the pre_filter to the obj as attributes
@@ -146,8 +142,7 @@ class BaseDataset:
                 try:
                     filt = instantiate_filters(getattr(dataset_opt, key_name))
                 except Exception:
-                    log.exception("Error trying to create {}, {}".format(
-                        new_name, getattr(dataset_opt, key_name)))
+                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
                     continue
                 setattr(self, new_name, filt)
 
@@ -196,8 +191,7 @@ class BaseDataset:
         conv_type = model.conv_type
         self._batch_size = batch_size
 
-        batch_collate_function = self.__class__._get_collate_function(
-            conv_type, precompute_multi_scale)
+        batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
         dataloader = partial(
             torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
         )
@@ -288,8 +282,7 @@ class BaseDataset:
         # Check for uniqueness
         all_names = [d.name for d in self.test_dataset]
         if len(set(all_names)) != len(all_names):
-            raise ValueError(
-                "Datasets need to have unique names. Current names are {}".format(all_names))
+            raise ValueError("Datasets need to have unique names. Current names are {}".format(all_names))
 
     @property
     def train_dataloader(self):
@@ -342,8 +335,7 @@ class BaseDataset:
         if hasattr(dataset, "get_raw_data"):
             return dataset.get_raw_data(idx, **kwargs)
         else:
-            raise Exception(
-                "Dataset {} doesn t have a get_raw_data function implemented".format(dataset))
+            raise Exception("Dataset {} doesn t have a get_raw_data function implemented".format(dataset))
 
     def has_labels(self, stage: str) -> bool:
         """ Tests if a given dataset has labels or not
@@ -442,14 +434,12 @@ class BaseDataset:
             setattr(attr.dataset, "transform", transform)
         else:
             if (
-                isinstance(
-                    current_transform, Compose) and transform not in current_transform.transforms
+                isinstance(current_transform, Compose) and transform not in current_transform.transforms
             ):  # The transform contains several transformations
                 current_transform.transforms += [transform]
             elif current_transform != transform:
                 setattr(
-                    attr.dataset, "transform", Compose(
-                        [current_transform, transform]),
+                    attr.dataset, "transform", Compose([current_transform, transform]),
                 )
 
     def _set_multiscale_transform(self, transform):
@@ -501,8 +491,7 @@ class BaseDataset:
         message = "Dataset: %s \n" % self.__class__.__name__
         for attr in self.__dict__:
             if "transform" in attr:
-                message += "{}{} {}= {}\n".format(COLORS.IPurple,
-                                                  attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
         for attr in self.__dict__:
             if attr.endswith("_dataset"):
                 dataset = getattr(self, attr)
@@ -517,12 +506,9 @@ class BaseDataset:
                     size = 0
                 if attr.startswith("_"):
                     attr = attr[1:]
-                message += "Size of {}{} {}= {}\n".format(
-                    COLORS.IPurple, attr, COLORS.END_NO_TOKEN, size)
+                message += "Size of {}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, size)
         for key, attr in self.__dict__.items():
             if key.endswith("_sampler") and attr:
-                message += "{}{} {}= {}\n".format(COLORS.IPurple,
-                                                  key, COLORS.END_NO_TOKEN, attr)
-        message += "{}Batch size ={} {}".format(
-            COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, key, COLORS.END_NO_TOKEN, attr)
+        message += "{}Batch size ={} {}".format(COLORS.IPurple, COLORS.END_NO_TOKEN, self.batch_size)
         return message

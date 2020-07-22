@@ -121,14 +121,6 @@ class ObjectDetectionTracker(BaseTracker):
                 value = val
             self._rec[key] = value
 
-    @staticmethod
-    def _dict_to_str(dictionnary):
-        string = "{"
-        for key, value in dictionnary.items():
-            string += "%s: %.2f," % (str(key), value)
-        string += "}"
-        return string
-
     @property
     def _has_box_data(self):
         return len(self._rec)

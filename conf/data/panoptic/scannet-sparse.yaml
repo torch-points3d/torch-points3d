@@ -1,9 +1,9 @@
 data:
   class: scannet.ScannetDataset
-  dataset_name: 'scannet-sparse'
+  dataset_name: "scannet-sparse"
   task: panoptic
   dataroot: data
-  version: 'v2'
+  version: "v2"
   use_instance_labels: True
   donotcare_class_ids: []
   process_workers: 8
@@ -16,26 +16,20 @@ data:
       lparams: [0.02]
 
   train_transform:
-    - transform: RandomDropout
-    - transform: XYZFeature
+    - transform: ElasticDistortion
       params:
-        add_x: True
-        add_y: True
-        add_z: True
+        spatial_resolution: ${data.grid_size}
     - transform: RandomNoise
       params:
         sigma: 0.01
         clip: 0.05
     - transform: RandomScaleAnisotropic
       params:
-        scales: [0.8, 1.2]
-    - transform: RandomSymmetry
-      params:
-        axis: [True, False, False]
+        scales: [0.9, 1.1]
     - transform: Random3AxisRotation
       params:
-        rot_x: 5
-        rot_y: 5
+        rot_x: 2
+        rot_y: 2
         rot_z: 180
     - transform: GridSampling3D
       params:
@@ -47,20 +41,13 @@ data:
       params:
         replace: False
     - transform: ShiftVoxels
-    - transform: ChromaticTranslation
-    - transform: ChromaticJitter
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True,True,True]
-        feat_names: ['rgb','pos_x','pos_y', 'pos_z']
-        delete_feats: [True, True, True,True]
+        list_add_to_x: [True]
+        feat_names: ["rgb"]
+        delete_feats: [True]
 
   val_transform:
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
@@ -72,6 +59,8 @@ data:
         replace: False
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True,True,True]
-        feat_names: ['rgb','pos_x','pos_y', 'pos_z']
-        delete_feats: [True, True, True,True]
+        list_add_to_x: [True]
+        feat_names: ["rgb"]
+        delete_feats: [True]
+
+  test_transform: ${data.val_transform}

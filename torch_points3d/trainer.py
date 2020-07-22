@@ -180,7 +180,8 @@ class Trainer:
                 self._model.set_input(data, self._device)
                 self._model.optimize_parameters(epoch, self._dataset.batch_size)
                 if i % 10 == 0:
-                    self._tracker.track(self._model, data=data, **self.tracker_options)
+                    with torch.no_grad():
+                        self._tracker.track(self._model, data=data, **self.tracker_options)
 
                 tq_train_loader.set_postfix(
                     **self._tracker.get_metrics(),
@@ -231,8 +232,7 @@ class Trainer:
                         with torch.no_grad():
                             self._model.set_input(data, self._device)
                             self._model.forward(epoch=epoch)
-
-                        self._tracker.track(self._model, data=data, **self.tracker_options)
+                            self._tracker.track(self._model, data=data, **self.tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
                         if self.early_break:
