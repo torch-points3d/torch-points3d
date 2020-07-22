@@ -84,9 +84,11 @@ class Trainer:
             )
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
+            if not self._checkpoint.validate(self._dataset.used_properties):
+                log.warning(
+                    "The model will not be able to be used from pretrained weights without the corresponding dataset."
+                )
             self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
-            # Make sure the model can be built directly from configuration and update checkpoint
-            self._model: BaseModel = self._checkpoint.re_instantiate_model(self._dataset)
             self._model.instantiate_optimizers(self._cfg)
 
         log.info(self._model)
@@ -131,6 +133,9 @@ class Trainer:
 
             if self.profiling:
                 return 0
+
+            if epoch % self.eval_frequency != 0:
+                continue
 
             if self._dataset.has_val_loader:
                 self._test_epoch(epoch, "val")
@@ -298,3 +303,7 @@ class Trainer:
     @property
     def tracker_options(self):
         return self._cfg.get("tracker_options", {})
+
+    @property
+    def eval_frequency(self):
+        return self._cfg.get("eval_frequency", 1)
