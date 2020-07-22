@@ -4,6 +4,7 @@ define_constants:
     in_grid_size: 0.02
     in_feat: 64
     bn_momentum: 0.2
+    max_neighbors: 25
 down_conv:
     down_conv_nn:
         [
@@ -54,7 +55,7 @@ down_conv:
             [False, False],
         ]
     max_num_neighbors:
-        [[25, 25], [25, 30], [30, 38], [38, 38], [38, 38]]
+        [[max_neighbors,max_neighbors], [max_neighbors, max_neighbors], [max_neighbors, max_neighbors], [max_neighbors, max_neighbors], [max_neighbors, max_neighbors]]
     module_name: KPDualBlock
 up_conv:
     module_name: FPModule_PD
