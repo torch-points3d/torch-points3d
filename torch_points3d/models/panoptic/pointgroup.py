@@ -11,6 +11,7 @@ from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
 from torch_points3d.core.losses import offset_loss, instance_iou_loss
 from .structures import PanopticLabels, PanopticResults
+from torch_points3d.utils import is_list
 
 
 class PointGroup(BaseModel):
@@ -49,8 +50,8 @@ class PointGroup(BaseModel):
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
         stuff_classes = dataset.stuff_classes
-        if isinstance(stuff_classes, list):
-            stuff_classes = torch.Tensor(stuff_classes)
+        if is_list(stuff_classes):
+            stuff_classes = torch.Tensor(stuff_classes).long()
         self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), stuff_classes])
 
     def set_input(self, data, device):
