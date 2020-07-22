@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added PointGroup https://arxiv.org/pdf/2007.01294.pdf
 - Added PretrainedRegistry allowing model weight to be downloaded directly from wandb and DatasetMocking
 - Added script for s3dis cross-validation [scripts/cv_s3dis.py]. 6 different pretrained models will be downloaded, evaluated on full resolution and confusion matrice will be summed to get all metrics.
+- mAP tracker for Panoptic segmentation
 
 ### Changed
 
