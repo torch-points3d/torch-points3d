@@ -275,7 +275,7 @@ class Res16UNetBase(ResNetBase):
         self.conv0p1s1 = conv(
             in_channels,
             self.inplanes,
-            kernel_size=space_n_time_m(5, 1),
+            kernel_size=space_n_time_m(self.conv1_kernel_size, 1),
             stride=1,
             dilation=1,
             conv_type=self.NON_BLOCK_CONV_TYPE,

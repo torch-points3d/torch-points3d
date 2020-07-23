@@ -82,7 +82,13 @@ def get_dataset(conv_type, task):
                 num_points=num_points,
                 batch_size=batch_size,
             )
-        return MockDatasetGeometric(features, batch_size=batch_size)
+        return MockDatasetGeometric(
+            features,
+            batch_size=batch_size,
+            num_points=num_points,
+            include_box=include_box,
+            panoptic=task == "panoptic",
+        )
 
 
 def has_zero_grad(model_name):
@@ -140,6 +146,15 @@ class TestModels(unittest.TestCase):
                         except Exception as e:
                             print("Model with zero gradient %s: %s" % (type_file, model_name))
                             raise e
+
+    def test_one_model(self):
+        # Use this test to test any model when debugging
+        config = load_model_config("object_detection", "votenet2", "VoteNetPaper")
+        dataset = get_dataset("dense", "object_detection")
+        model = instantiate_model(config, dataset)
+        model.set_input(dataset[0], device)
+        model.forward()
+        model.backward()
 
 
 if __name__ == "__main__":

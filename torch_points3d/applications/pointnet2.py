@@ -24,7 +24,7 @@ def PointNet2(
     input_nc: int = None,
     num_layers: int = None,
     config: DictConfig = None,
-    multiscale=True,
+    multiscale=False,
     *args,
     **kwargs
 ):
