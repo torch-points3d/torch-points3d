@@ -27,11 +27,11 @@ for idx_batch in range(batch_size):
 data = Batch.from_data_list(samples)
 
 print(data)
-# Batch(batch=[50], pos=[50, 3], x=[50, 1], y=[50])
+# Batch(batch=[18], pos=[18, 3], x=[18, 1], y=[18])
 
 print(data.batch)
 # tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2])
 
 output = model.forward(data)
 print(output)
-# Batch(batch=[50], block_idx=2, idx_neighboors=[50, 25], pos=[50, 3], x=[50, 10], y=[50])
+# Batch(batch=[18], block_idx=2, idx_neighboors=[18, 25], pos=[18, 3], x=[18, 10], y=[18])
