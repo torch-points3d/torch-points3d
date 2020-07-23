@@ -11,7 +11,7 @@ batch_size = 3
 num_points_per_sample = [5, 10, 3]
 
 model = KPConv(
-    architecture="unet",  # Could be encoder here to perform classification
+    architecture="unet",  # Could be unet here to perform segmentation
     input_nc=input_nc,  # KPconv is particular. Pos aren't features. It needs a tensor of ones + any features available as rgb or intensity
     output_nc=num_classes,
     num_layers=4,
