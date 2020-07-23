@@ -11,16 +11,17 @@ training:
         optimizer:
             class: SGD
             params:
-                momentum: 0.98
+                momentum: 0.9
                 lr: ${training.optim.base_lr} # The path is cut from training
-                weight_decay: 1e-3
+                weight_decay: 1e-4
+                dampening: 0.1
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:
             bn_policy: "step_decay"
             params:
-                bn_momentum: 0.98
+                bn_momentum: 0.1
                 bn_decay: 0.9
-                decay_step: 1000
+                decay_step: 20
                 bn_clip: 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True

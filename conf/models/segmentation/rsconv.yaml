@@ -207,3 +207,6 @@ models:
                     [256 + FEAT, 128, 128],
                 ]
             skip: True
+        mlp_cls:
+            nn: [128 * 2 + 2 * 64, 128]
+            dropout: 0.
