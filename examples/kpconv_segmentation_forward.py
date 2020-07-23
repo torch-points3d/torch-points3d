@@ -7,8 +7,8 @@ from torch_geometric.data import Batch, Data
 
 input_nc = 0
 num_classes = 10
-batch_size = 2
-num_points_per_sample = [20, 30]
+batch_size = 3
+num_points_per_sample = [5, 10, 3]
 
 model = KPConv(
     architecture="unet",  # Could be encoder here to perform classification
@@ -30,8 +30,7 @@ print(data)
 # Batch(batch=[50], pos=[50, 3], x=[50, 1], y=[50])
 
 print(data.batch)
-# tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-#        1, 1,
+# tensor([0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2])
 
 output = model.forward(data)
 print(output)

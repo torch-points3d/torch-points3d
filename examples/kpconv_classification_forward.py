@@ -31,7 +31,8 @@ print(data)
 
 print(data.batch)
 # tensor([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
-#        1, 1,
+#        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+#        1, 1])
 
 output = model.forward(data)
 print(output)
