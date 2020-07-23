@@ -1,0 +1,26 @@
+conv_type: "DENSE"
+define_constants:
+  in_feat: 64
+down_conv:
+    module_name: PointNetMSGDown
+    npoint: [2048, 1024, 512, 256]
+    radii: [[0.2], [0.4], [0.8], [1.2]]
+    nsamples: [[64], [32], [16], [16]]
+    down_conv_nn: [[[FEAT + 3, in_feat, in_feat, in_feat * 2]], 
+                [[in_feat * 2 + 3, in_feat * 2, in_feat * 2, in_feat * 4]], 
+                [[in_feat * 4 + 3, in_feat * 2, in_feat * 2, in_feat * 4]]]
+    save_sampling_id: [True, False, False, False]
+    normalize_xyz: [True, True, True, True]
+innermost:
+    module_name: GlobalDenseBaseModule
+    nn: [ in_feat * 4 + 3,  in_feat * 8, in_feat * 16]
+up_conv:
+    module_name: DenseFPModule
+    up_conv_nn:
+        [
+            [in_feat * 16 + in_feat * 4, in_feat * 8, in_feat * 8],
+            [in_feat * 8 + in_feat * 4, in_feat * 8, in_feat * 8],
+            [in_feat * 8 + in_feat * 2, in_feat * 4, in_feat * 4],
+            [in_feat * 4 + FEAT, in_feat * 2, in_feat * 2]
+        ]
+    skip: True

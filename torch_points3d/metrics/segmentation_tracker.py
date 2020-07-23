@@ -30,6 +30,13 @@ class SegmentationTracker(BaseTracker):
         self._ignore_label = ignore_label
         self._dataset = dataset
         self.reset(stage)
+        self._metric_func = {
+            "miou": max,
+            "macc": max,
+            "acc": max,
+            "loss": min,
+            "map": max,
+        }  # Those map subsentences to their optimization functions
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
@@ -90,11 +97,4 @@ class SegmentationTracker(BaseTracker):
 
     @property
     def metric_func(self):
-        self._metric_func = {
-            "miou": max,
-            "macc": max,
-            "acc": max,
-            "loss": min,
-            "map": max,
-        }  # Those map subsentences to their optimization functions
         return self._metric_func

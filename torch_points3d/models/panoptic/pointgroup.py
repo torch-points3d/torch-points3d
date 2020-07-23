@@ -1,4 +1,5 @@
 import torch
+import os
 from torch_points_kernels import region_grow
 from torch_geometric.data import Data
 from torch_scatter import scatter
@@ -10,6 +11,7 @@ from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
 from torch_points3d.core.losses import offset_loss, instance_iou_loss
 from .structures import PanopticLabels, PanopticResults
+from torch_points3d.utils import is_list
 
 
 class PointGroup(BaseModel):
@@ -21,7 +23,13 @@ class PointGroup(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
-        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
+        backbone_options = option.get("backbone", {"architecture": "unet"})
+        self.Backbone = Minkowski(
+            backbone_options.architecture,
+            input_nc=dataset.feature_dimension,
+            num_layers=4,
+            config=backbone_options.config,
+        )
         self.BackboneHead = Seq().append(FastBatchNorm1d(self.Backbone.output_nc)).append(torch.nn.ReLU())
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
@@ -42,8 +50,8 @@ class PointGroup(BaseModel):
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
         stuff_classes = dataset.stuff_classes
-        if isinstance(stuff_classes, list):
-            stuff_classes = torch.Tensor(stuff_classes)
+        if is_list(stuff_classes):
+            stuff_classes = torch.Tensor(stuff_classes).long()
         self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), stuff_classes])
 
     def set_input(self, data, device):
@@ -187,10 +195,11 @@ class PointGroup(BaseModel):
             )
             data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
             data_visual.vote = self.output.offset_logits
-            nms_idx = self.output.get_nms_instances()
+            nms_idx = self.output.get_instances()
             if self.output.clusters is not None:
                 data_visual.clusters = [self.output.clusters[i].cpu() for i in nms_idx]
                 data_visual.cluster_type = self.output.cluster_type[nms_idx]
-
+            if not os.path.exists("viz"):
+                os.mkdir("viz")
             torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
             self.visual_count += 1
