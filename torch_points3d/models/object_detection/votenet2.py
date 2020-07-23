@@ -5,7 +5,7 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications import models
 import torch_points3d.modules.VoteNet as votenet_module
 from torch_points3d.core.data_transform import AddOnes
-from torch_points3d.core.spatial_ops import RandomSamplerToDense
+from torch_points3d.modules.VoteNet.dense_samplers import RandomSamplerToDense, FPSSamplerToDense
 
 
 class VoteNet2(BaseModel):
@@ -92,6 +92,19 @@ class VoteNet2(BaseModel):
     def forward(self, **kwargs):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         data_features = self.backbone_model.forward(self.input)
+        data_features, seed_inds = self._select_seeds(data_features)
+        data_votes = self.voting_module(data_features)
+        setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
+
+        outputs: votenet_module.VoteNetResults = self.proposal_cls_module(data_votes.to(self.device))
+
+        # Set output and compute losses
+        self.input = self.input.to(self.device)
+        self._extract_gt_center(self.input, outputs)
+        self.output = outputs
+        self._compute_losses()
+
+    def _select_seeds(self, data_features):
         sampling_id_key = "sampling_id_0"
         if hasattr(data_features, sampling_id_key):
             seed_inds = getattr(data_features, sampling_id_key, None)[:, : self._num_seeds]
@@ -103,18 +116,9 @@ class VoteNet2(BaseModel):
                     data_features.x, 2, seed_inds.unsqueeze(1).repeat(1, data_features.x.shape[1], 1)
                 )
         else:
-            sampler = RandomSamplerToDense(num_to_sample=self._num_seeds)
+            sampler = FPSSamplerToDense(num_to_sample=self._num_seeds)
             data_features, seed_inds = sampler.sample(data_features, self._n_batches, self.conv_type)
-        data_votes = self.voting_module(data_features)
-        setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
-
-        outputs: votenet_module.VoteNetResults = self.proposal_cls_module(data_votes.to(self.device))
-
-        # Set output and compute losses
-        self.input = self.input.to(self.device)
-        self._extract_gt_center(self.input, outputs)
-        self.output = outputs
-        self._compute_losses()
+        return data_features, seed_inds
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
