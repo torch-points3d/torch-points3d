@@ -79,8 +79,6 @@ class ObjectDetectionTracker(BaseTracker):
 
             # Ground truth
             sample_mask = idx
-            if conv_type != "DENSE":
-                sample_mask = input_data.batch == idx
             gt_boxes = input_data.instance_box_corners[sample_mask]
             gt_boxes = gt_boxes[input_data.box_label_mask[sample_mask]]
             sample_labels = input_data.sem_cls_label[sample_mask]
@@ -120,14 +118,6 @@ class ObjectDetectionTracker(BaseTracker):
             except TypeError:
                 value = val
             self._rec[key] = value
-
-    @staticmethod
-    def _dict_to_str(dictionnary):
-        string = "{"
-        for key, value in dictionnary.items():
-            string += "%s: %.2f," % (str(key), value)
-        string += "}"
-        return string
 
     @property
     def _has_box_data(self):

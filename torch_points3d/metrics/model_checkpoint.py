@@ -177,6 +177,10 @@ class ModelCheckpoint(object):
         if not self.is_empty:
             run_config = copy.deepcopy(self._checkpoint.run_config)
             model = instantiate_model(run_config, dataset)
+            if hasattr(self._checkpoint, "model_props"):
+                for k, v in self._checkpoint.model_props.items():
+                    setattr(model, k, v)
+                delattr(self._checkpoint, "model_props")
             self._initialize_model(model, weight_name)
             return model
         else:
@@ -188,6 +192,10 @@ class ModelCheckpoint(object):
             return self.get_starting_epoch()
         else:
             return 1
+
+    @property
+    def run_config(self):
+        return self._checkpoint.run_config
 
     @property
     def data_config(self):
@@ -287,5 +295,24 @@ class ModelCheckpoint(object):
                     current_stat["best_{}".format(metric_name)] = metric_value
                     models_to_save["best_{}".format(metric_name)] = state_dict
 
+        kwargs["model_props"] = {
+            "num_epochs": model.num_epochs,  # type: ignore
+            "num_batches": model.num_batches,  # type: ignore
+            "num_samples": model.num_samples,  # type: ignore
+        }
+
         self._checkpoint.stats[stage].append(current_stat)
         self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
+
+    def validate(self, dataset_config):
+        """ A checkpoint is considered as valid if it can recreate the model from
+        a dataset config only """
+        if dataset_config is not None:
+            for k, v in dataset_config.items():
+                self.data_config[k] = v
+        try:
+            instantiate_model(self.run_config, self.data_config)
+        except:
+            return False
+
+        return True

@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 import logging
+import functools
 from functools import partial
 import numpy as np
 import torch
@@ -36,8 +37,24 @@ def explode_transform(transforms):
         elif isinstance(transforms, list):
             out = copy.deepcopy(transforms)
         else:
-            raise Exception("transforms should be provided either within a list or a Compose")
+            raise Exception("Transforms should be provided either within a list or a Compose")
     return out
+
+
+def save_used_properties(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Save used_properties for mocking dataset when calling pretrained registry
+        result = func(self, *args, **kwargs)
+        if isinstance(result, torch.Tensor):
+            self.used_properties[func.__name__] = result.numpy().tolist()
+        elif isinstance(result, np.ndarray):
+            self.used_properties[func.__name__] = result.tolist()
+        else:
+            self.used_properties[func.__name__] = result
+        return result
+
+    return wrapper
 
 
 class BaseDataset:
@@ -66,9 +83,10 @@ class BaseDataset:
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
 
+        self.used_properties = {}
+
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
-
         """ Remove a transform if within list_transform_class
 
         Arguments:
@@ -142,6 +160,7 @@ class BaseDataset:
             return SimpleBatch.from_data_list
         else:
             return torch_geometric.data.batch.Batch.from_data_list
+
     @staticmethod
     def get_num_samples(batch, conv_type):
         is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
@@ -275,7 +294,10 @@ class BaseDataset:
 
     @property
     def test_dataloaders(self):
-        return self._test_loaders
+        if self.has_test_loaders:
+            return self._test_loaders
+        else:
+            return []
 
     @property
     def _loaders(self):
@@ -336,13 +358,15 @@ class BaseDataset:
             return sample.y is not None
         return False
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def is_hierarchical(self):
         """ Used by the metric trackers to log hierarchical metrics
         """
         return False
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def class_to_segments(self):
         """ Use this property to return the hierarchical map between classes and segment ids, example:
         {
@@ -352,7 +376,8 @@ class BaseDataset:
         """
         return None
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def num_classes(self):
         return self.train_dataset.num_classes
 
@@ -360,7 +385,8 @@ class BaseDataset:
     def weight_classes(self):
         return getattr(self.train_dataset, "weight_classes", None)
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def feature_dimension(self):
         if self.train_dataset:
             return self.train_dataset.num_features
@@ -423,8 +449,7 @@ class BaseDataset:
         for _, attr in self.__dict__.items():
             if isinstance(attr, torch.utils.data.DataLoader):
                 self._set_composed_multiscale_transform(attr, transform)
-
-        for loader in self._test_loaders:
+        for loader in self.test_dataloaders:
             self._set_composed_multiscale_transform(loader, transform)
 
     def set_strategies(self, model):

@@ -1,3 +1,7 @@
+from torch_points3d.datasets.object_detection.scannet import ScannetDataset
+from torch_points3d.core.data_transform import GridSampling3D
+from torch_points3d.applications.pretrained_api import PretainedRegistry
+from test.mockdatasets import MockDatasetGeometric, MockDataset
 import os
 import sys
 import unittest
@@ -9,13 +13,16 @@ sys.path.insert(0, ROOT)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-from test.mockdatasets import MockDatasetGeometric, MockDataset
-from torch_points3d.core.data_transform import GridSampling3D
-from torch_points3d.datasets.object_detection.scannet import ScannetDataset
-
 seed = 0
 torch.manual_seed(seed)
 device = "cpu"
+
+
+class TestPretainedRegistry(unittest.TestCase):
+    def test_from_pretrained(self):
+
+        _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
+        _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-2", download=True)
 
 
 class TestAPIUnet(unittest.TestCase):

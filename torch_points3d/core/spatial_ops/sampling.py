@@ -60,11 +60,11 @@ class RandomSamplerToDense(BaseSampler):
     def sample(self, data, num_batches, conv_type):
         if conv_type == "DENSE":
             assert (
-                self._num_to_sample <= data.pos.shape[0]
+                self._num_to_sample <= data.pos.shape[1]
             ), "self._num_to_sample: {} should be smaller than num_pos: {}".format(
-                self._num_to_sample, data.pos.shape[0]
+                self._num_to_sample, data.pos.shape[1]
             )
-            idx = torch.randint(0, data.pos.shape[1], (data.pos.shape[0], self._num_to_sample,))
+            idx = torch.randint(0, data.pos.shape[1], (data.pos.shape[0], self._num_to_sample,)).to(data.pos.device)
             data.pos = torch.gather(data.pos, 1, idx.unsqueeze(-1).repeat(1, 1, data.pos.shape[-1]))
             data.x = torch.gather(data.x, 2, idx.unsqueeze(1).repeat(1, data.x.shape[1], 1))
             return data, idx
@@ -75,7 +75,7 @@ class RandomSamplerToDense(BaseSampler):
             num_points = 0
             for batch_idx in range(num_batches):
                 batch_mask = data.batch == batch_idx
-                pos_masked = data.pos[batch_mask, :]
+                pos_masked = data.pos[batch_mask]
                 x_masked = data.x[batch_mask]
                 assert (
                     self._num_to_sample <= pos_masked.shape[0]

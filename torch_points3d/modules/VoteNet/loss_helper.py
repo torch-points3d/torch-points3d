@@ -218,6 +218,7 @@ def to_dense_labels(data):
     data["size_class_label"] = data["size_class_label"].view((batch_size, -1))
     data["size_residual_label"] = data["size_residual_label"].view((batch_size, -1, 3))
     data["sem_cls_label"] = data["sem_cls_label"].view((batch_size, -1))
+    data["instance_box_corners"] = data["instance_box_corners"].view((batch_size, -1, 8, 3))
     data["box_label_mask"] = data["box_label_mask"].view((batch_size, -1))
     if data["center_label"].dim() == 3:
         data["gt_center"] = data["center_label"][:, :, 0:3]

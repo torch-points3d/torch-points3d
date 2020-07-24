@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 1.1.0
 
 ### Added
 
@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add VoteNet Paper / Backbones within API
 - Windows support
 - Weights are uploaded to wandb at the end of the run
+- Added PointGroup https://arxiv.org/pdf/2007.01294.pdf
+- Added PretrainedRegistry allowing model weight to be downloaded directly from wandb and DatasetMocking
+- Added script for s3dis cross-validation [scripts/cv_s3dis.py]. 6 different pretrained models will be downloaded, evaluated on full resolution and confusion matrice will be summed to get all metrics.
+- mAP tracker for Panoptic segmentation
 
 ### Changed
 
@@ -30,6 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - saves model checkpoints to wandb
 - GridSampling3D now creates a new attribute `coords` that stores the non quantized position when the transform is called in `quantize` mode
 - cuda parameter can be given in command line to select the GPU to use
+- Updated to pytorch geometric 1.6.0
+
+### Bugfix
+
+- LR secheduler resume is broken for update on batch number #328
+- ElasticDistortion transform is now fully functional
 
 ### Removed
 

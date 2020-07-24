@@ -40,11 +40,14 @@ class ProposalModule(nn.Module):
         ), "Proposal Module support only PointNet2 for now"
         params = OmegaConf.to_container(vote_aggregation_config)
         self.vote_aggregation = PointNetMSGDown(**params)
-        self.conv1 = torch.nn.Conv1d(128, 128, 1)
-        self.conv2 = torch.nn.Conv1d(128, 128, 1)
-        self.conv3 = torch.nn.Conv1d(128, 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class, 1)
-        self.bn1 = torch.nn.BatchNorm1d(128)
-        self.bn2 = torch.nn.BatchNorm1d(128)
+        pn2_output_nc = vote_aggregation_config.down_conv_nn[-1][-1]
+        output_feat = 2 + 3 + num_heading_bin * 2 + self.num_size_cluster * 4 + self.num_class
+        mid_feat = (pn2_output_nc + output_feat) // 2
+        self.conv1 = torch.nn.Conv1d(pn2_output_nc, pn2_output_nc, 1)
+        self.conv2 = torch.nn.Conv1d(pn2_output_nc, mid_feat, 1)
+        self.conv3 = torch.nn.Conv1d(mid_feat, output_feat, 1)
+        self.bn1 = torch.nn.BatchNorm1d(pn2_output_nc)
+        self.bn2 = torch.nn.BatchNorm1d(mid_feat)
 
     def forward(self, data):
         """

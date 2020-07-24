@@ -12,7 +12,8 @@ def get_dataset_class(dataset_config):
     task = dataset_config.task
     # Find and create associated dataset
     try:
-        dataset_config.dataroot = hydra.utils.to_absolute_path(dataset_config.dataroot)
+        dataset_config.dataroot = hydra.utils.to_absolute_path(
+            dataset_config.dataroot)
     except Exception:
         log.error("This should happen only during testing")
     dataset_class = getattr(dataset_config, "class")

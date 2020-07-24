@@ -1,0 +1,46 @@
+# Ref: https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/config.py
+training:
+    epochs: 300
+    num_workers: 4
+    batch_size: 8
+    shuffle: True
+    cuda: 0
+    precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
+    optim:
+        base_lr: 0.1
+        # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
+        grad_clip: 100
+        optimizer:
+            class: SGD
+            params:
+                momentum: 0.9
+                lr: ${training.optim.base_lr} # The path is cut from training
+                weight_decay: 1e-4
+                dampening: 0.1
+        lr_scheduler: ${lr_scheduler}
+        bn_scheduler:
+            bn_policy: "step_decay"
+            params:
+                bn_momentum: 0.1
+                bn_decay: 0.9
+                decay_step: 20
+                bn_clip: 1e-2
+    weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
+    enable_cudnn: True
+    checkpoint_dir: ""
+
+# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
+# parameters for Weights and Biases
+wandb:
+    entity: "nicolas"
+    project: scannet-benchmark
+    log: True
+    notes: "Minkowski baseline"
+    name: "Res16UNet34C"
+    public: True # It will be display the model within wandb log, else not.
+    config:
+        model_name: ${model_name}
+
+    # parameters for TensorBoard Visualization
+tensorboard:
+    log: False

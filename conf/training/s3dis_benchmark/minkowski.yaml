@@ -34,8 +34,12 @@ wandb:
     project: s3dis-benchmark
     log: True
     notes: "Minkowski baseline"
-    name: "Mink-Res16UNet34C "
+    name: "Res16UNet34C "
     public: True # It will be display the model within wandb log, else not.
+    config:
+        fold: ${data.fold}
+        model_name: ${model_name}
+
 
     # parameters for TensorBoard Visualization
 tensorboard:
