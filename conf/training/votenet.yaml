@@ -1,5 +1,5 @@
 training:
-    epochs: 500
+    epochs: 200
     num_workers: 4
     batch_size: 4
     shuffle: True
@@ -20,8 +20,8 @@ training:
             params:
                 bn_momentum: 0.5
                 bn_decay: 0.5
-                decay_step : 20
-                bn_clip : 1e-2
+                decay_step: 20
+                bn_clip: 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
     checkpoint_dir: ""
@@ -29,7 +29,7 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    entity: 
+    entity:
     project: scannet_object_detection
     log: False
     notes: "Corrected box prediction"
