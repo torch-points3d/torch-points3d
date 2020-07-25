@@ -72,13 +72,13 @@ where each folder contains the dataset related to each task.
 
 ## Available Tasks
 
-|                 Tasks                  |                          Examples                           |
-| :------------------------------------: | :---------------------------------------------------------: |
-| Classification / Semantic Segmentation |  <img src="docs/imgs/segmentation.png" width="256"> <br />  |
-|              Registration              |     <img src="docs/imgs/registration.png" width="256">      |
-|            Object Detection            |   <img src="docs/imgs/object_detection.png" width="256">    |
-|         Panoptic Segmentation          | <img src="docs/imgs/panoptic_segmentation.png" width="256"> |
-|               Completion               |      <img src="docs/imgs/completion.png" width="256">       |
+|                 <h2> Tasks </h2>                 |                     <h2> Examples </h2>                     |
+| :----------------------------------------------: | :---------------------------------------------------------: |
+| <h4>Classification / Semantic Segmentation </h4> |  <img src="docs/imgs/segmentation.png" width="512"> <br />  |
+|             <h4> Registration </h4>              |     <img src="docs/imgs/registration.png" width="512">      |
+|           <h4> Object Detection </h4>            |   <img src="docs/imgs/object_detection.png" width="512">    |
+|         <h4> Panoptic Segmentation </h4>         | <img src="docs/imgs/panoptic_segmentation.png" width="512"> |
+|              <h4> Completion </h4>               |      <img src="docs/imgs/completion.png" width="512">       |
 
 ## Available datasets
 
