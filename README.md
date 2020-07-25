@@ -72,13 +72,14 @@ where each folder contains the dataset related to each task.
 
 ## Available Tasks
 
-|                 <h2> Tasks </h2>                 |                     <h2> Examples </h2>                     |
-| :----------------------------------------------: | :---------------------------------------------------------: |
-| <h4>Classification / Semantic Segmentation </h4> |  <img src="docs/imgs/segmentation.png" width="512"> <br />  |
-|             <h4> Registration </h4>              |     <img src="docs/imgs/registration.png" width="512">      |
-|           <h4> Object Detection </h4>            |   <img src="docs/imgs/object_detection.png" width="512">    |
-|         <h4> Panoptic Segmentation </h4>         | <img src="docs/imgs/panoptic_segmentation.png" width="512"> |
-|              <h4> Completion </h4>               |      <img src="docs/imgs/completion.png" width="512">       |
+|               <h2> Tasks </h2>                |                             <h2> Examples </h2>                             |
+| :-------------------------------------------: | :-------------------------------------------------------------------------: |
+| <h4> Classification / Part Segmentation </h4> | <img src="docs/imgs/part_segmentation.png" width="512" height="180"> <br /> |
+|            <h4> Segmentation </h4>            |   <img src="docs/imgs/segmentation.png" width="512" height="180"> <br />    |
+|          <h4> Object Detection </h4>          |           <img src="docs/imgs/object_detection.png" width="512">            |
+|       <h4> Panoptic Segmentation </h4>        |         <img src="docs/imgs/panoptic_segmentation.png" width="512">         |
+|            <h4> Registration </h4>            |             <img src="docs/imgs/registration.png" width="512">              |
+|             <h4> Completion </h4>             |              <img src="docs/imgs/completion.png" width="512">               |
 
 ## Available datasets
 
