@@ -72,14 +72,14 @@ where each folder contains the dataset related to each task.
 
 ## Available Tasks
 
-|               <h3> Tasks </h3>                |                             <h3> Examples </h3>                             |
-| :-------------------------------------------: | :-------------------------------------------------------------------------: |
-| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/part_segmentation.png" width="512" height="220"> <br /> |
-|            <h3> Segmentation </h3>            |   <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />    |
-|          <h3> Object Detection </h3>          |    <img src="docs/imgs/object_detection.png" width="512" height="220" >     |
-|       <h3> Panoptic Segmentation </h3>        |  <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220">  |
-|            <h3> Registration </h3>            |      <img src="docs/imgs/registration.png" width="512"  height="220">       |
-|             <h3> Completion </h3>             |       <img src="docs/imgs/completion.png" width="512"  height="220">        |
+|               <h3> Tasks </h3>                |                            <h3> Examples </h3>                            |
+| :-------------------------------------------: | :-----------------------------------------------------------------------: |
+| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/classification.png" width="512" height="220"> <br />  |
+|            <h3> Segmentation </h3>            |  <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />   |
+|          <h3> Object Detection </h3>          |   <img src="docs/imgs/object_detection.png" width="512" height="220" >    |
+|       <h3> Panoptic Segmentation </h3>        | <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220"> |
+|            <h3> Registration </h3>            |     <img src="docs/imgs/registration.png" width="512"  height="220">      |
+|             <h3> Completion </h3>             |      <img src="docs/imgs/completion.png" width="512"  height="220">       |
 
 ## Available datasets
 
