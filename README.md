@@ -177,9 +177,9 @@ The `PretrainedRegistry` enables anyone to add their own pre-trained models and 
 
 How does it work ? Here are the steps:
 
-- 1. `[You]` Launch your model training with [Wandb](https://www.wandb.com) activated (`wandb.log=True`)
-- 2. `[TorchPoints3d]` Once the training finished, `TorchPoints3d` [trained model](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) will upload the trained model to your wandb.
-- 3. `[You]` Within [`PretainedRegistry`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/applications/pretrained_api.py#L31) class, add an `key-value pair` within the attributes `MODELS`. The `key` should be describe your model, dataset and training, the `value` should be uploaded model url on your wandb.
+- `[You]` Launch your model training with [Wandb](https://www.wandb.com) activated (`wandb.log=True`)
+- `[TorchPoints3d]` Once the training finished, `TorchPoints3d` [trained model](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) will upload the trained model to your wandb.
+- `[You]` Within [`PretainedRegistry`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/applications/pretrained_api.py#L31) class, add an `key-value pair` within the attributes `MODELS`. The `key` should be describe your model, dataset and training, the `value` should be uploaded model url on your wandb.
 
 Example: `pointnet2_largemsg-s3dis-1`: `https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt` is a `pointnet2 largemsg trained on s3dis fold 1`.
 
