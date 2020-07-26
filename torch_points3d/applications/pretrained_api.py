@@ -5,6 +5,7 @@ import urllib.request
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
 from torch_points3d.models.model_factory import instantiate_model
+from torch_points3d.core.data_transform import instantiate_transforms
 
 # Import BaseModel / BaseDataset for type checking
 from torch_points3d.models.base_model import BaseModel
@@ -115,12 +116,15 @@ class PretainedRegistry(object):
                 if PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag) is not None:
                     for k, v in PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag).items():
                         dataset[k] = v
+
             else:
                 dataset = instantiate_dataset(checkpoint.data_config)
 
             model: BaseModel = checkpoint.create_model(dataset, weight_name=weight_name)
 
             Wandb.set_urls_to_model(model, url)
+
+            BaseDataset.set_transform(model, checkpoint.data_config)
 
             return model
 
