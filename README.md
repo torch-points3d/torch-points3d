@@ -72,7 +72,7 @@ where each folder contains the dataset related to each task.
 
 ## Available Tasks
 
-|               <h2> Tasks </h2>                |                             <h2> Examples </h2>                             |
+|               <h3> Tasks </h3>                |                             <h3> Examples </h3>                             |
 | :-------------------------------------------: | :-------------------------------------------------------------------------: |
 | <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/part_segmentation.png" width="512" height="220"> <br /> |
 |            <h3> Segmentation </h3>            |   <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />    |
