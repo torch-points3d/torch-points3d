@@ -74,12 +74,12 @@ where each folder contains the dataset related to each task.
 
 |               <h2> Tasks </h2>                |                             <h2> Examples </h2>                             |
 | :-------------------------------------------: | :-------------------------------------------------------------------------: |
-| <h2> Classification / Part Segmentation </h2> | <img src="docs/imgs/part_segmentation.png" width="512" height="220"> <br /> |
-|            <h2> Segmentation </h2>            |   <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />    |
-|          <h2> Object Detection </h2>          |    <img src="docs/imgs/object_detection.png" width="512" height="220" >     |
-|       <h2> Panoptic Segmentation </h2>        |  <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220">  |
-|            <h2> Registration </h2>            |      <img src="docs/imgs/registration.png" width="512"  height="220">       |
-|             <h2> Completion </h2>             |       <img src="docs/imgs/completion.png" width="512"  height="220">        |
+| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/part_segmentation.png" width="512" height="220"> <br /> |
+|            <h3> Segmentation </h3>            |   <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />    |
+|          <h3> Object Detection </h3>          |    <img src="docs/imgs/object_detection.png" width="512" height="220" >     |
+|       <h3> Panoptic Segmentation </h3>        |  <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220">  |
+|            <h3> Registration </h3>            |      <img src="docs/imgs/registration.png" width="512"  height="220">       |
+|             <h3> Completion </h3>             |       <img src="docs/imgs/completion.png" width="512"  height="220">        |
 
 ## Available datasets
 
@@ -184,7 +184,7 @@ The `PretrainedRegistry` enables anyone to add their own pre-trained models and 
 Example: Key: `pointnet2_largemsg-s3dis-1` and URL value: `https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt` for the `pointnet2_largemsg.pt` file.
 The key desribes a `pointnet2 largemsg trained on s3dis fold 1`.
 
-- `[Anyone]` By using the `PretainedRegistry` class and by providing the `key`, the associated model weights will be `downloaded` and the pre-trained model will be `ready to use !` with its transforms.
+- `[Anyone]` By using the `PretainedRegistry` class and by providing the `key`, the associated model weights will be `downloaded` and the pre-trained model will be `ready to use` with its transforms.
 
 ```python
 [In]:
@@ -244,7 +244,6 @@ pre_collate_transform = Compose([
     SaveOriginalPosId,
     GridSampling3D(grid_size=0.04, quantize_coords=False, mode=mean),
 ])
-
 ```
 
 ## Developer guidelines
