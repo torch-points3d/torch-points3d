@@ -173,17 +173,18 @@ model = VoteNet(
 
 ## Add your model to the PretrainedRegistry.
 
-The `PretrainedRegistry` enables anyone to add their own pre-trained models and re-create them for only 2 lines of code.
+The `PretrainedRegistry` enables anyone to add their own pre-trained models and `re-create` them with only 2 lines of code for `finetunning` or `production` purposes.
 
-How does it work ? Here are the steps:
+### How does it work ? Here are the steps
 
 - `[You]` Launch your model training with [Wandb](https://www.wandb.com) activated (`wandb.log=True`)
-- `[TorchPoints3d]` Once the training finished, `TorchPoints3d` [trained model](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) will upload the trained model to your wandb.
-- `[You]` Within [`PretainedRegistry`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/applications/pretrained_api.py#L31) class, add an `key-value pair` within the attributes `MODELS`. The `key` should be describe your model, dataset and training, the `value` should be uploaded model url on your wandb.
+- `[TorchPoints3d]` Once the training finished, `TorchPoints3d` will upload your trained model within [our custom checkpoint](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) to your wandb.
+- `[You]` Within [`PretainedRegistry`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/applications/pretrained_api.py#L31) class, add a `key-value pair` within its attribute `MODELS`. The `key` should be describe your model, dataset and training hyper-parameters (possibly the best model), the `value` should be the `url` referencing the `.pt` file on your wandb.
 
-Example: `pointnet2_largemsg-s3dis-1`: `https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt` is a `pointnet2 largemsg trained on s3dis fold 1`.
+Example: Key: `pointnet2_largemsg-s3dis-1` and URL value: `https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt` for the `pointnet2_largemsg.pt` file.
+The key desribes a `pointnet2 largemsg trained on s3dis fold 1`.
 
-- `[Anyone]` By using `PretainedRegistry` class and providing the `key` will be available to `download` the model and `use it` !
+- `[Anyone]` By using the `PretainedRegistry` class and by providing the `key`, the associated model weights will be `downloaded` and the pre-trained model will be `ready to use !` with its transforms.
 
 ```python
 [In]:
@@ -195,53 +196,53 @@ print(model.wandb)
 print(model.print_transforms())
 
 [Out]:
-=================================================== WANDB URLS ===================================================================
+=================================================== WANDB URLS ======================================================
 WEIGHT_URL: https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt
 LOG_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/logs
 CHART_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk
 OVERVIEW_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/overview
 HYDRA_CONFIG_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/files/hydra-config.yaml
 OVERRIDES_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/files/overrides.yaml
-=================================================================================================================================
+======================================================================================================================
 
 pre_transform = None
 test_transform = Compose([
-FixedPoints(20000, replace=True),
-XYZFeature(axis=['z']),
-AddFeatsByKeys(rgb=True, pos_z=True),
-Center(),
-ScalePos(scale=0.5),
+    FixedPoints(20000, replace=True),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
 ])
 train_transform = Compose([
-FixedPoints(20000, replace=True),
-RandomNoise(sigma=0.001, clip=0.05),
-RandomRotate((-180, 180), axis=2),
-RandomScaleAnisotropic([0.8, 1.2]),
-Random symmetry of axes: x=True, y=False, z=False,
-DropFeature: proba = 0.2, feature = rgb,
-XYZFeature(axis=['z']),
-AddFeatsByKeys(rgb=True, pos_z=True),
-Center(),
-ScalePos(scale=0.5),
+    FixedPoints(20000, replace=True),
+    RandomNoise(sigma=0.001, clip=0.05),
+    RandomRotate((-180, 180), axis=2),
+    RandomScaleAnisotropic([0.8, 1.2]),
+    RandomAxesSymmetry(x=True, y=False, z=False),
+    DropFeature(proba=0.2, feature='rgb'),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
 ])
 val_transform = Compose([
-FixedPoints(20000, replace=True),
-XYZFeature(axis=['z']),
-AddFeatsByKeys(rgb=True, pos_z=True),
-Center(),
-ScalePos(scale=0.5),
+    FixedPoints(20000, replace=True),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
 ])
 inference_transform = Compose([
-FixedPoints(20000, replace=True),
-XYZFeature(axis=['z']),
-AddFeatsByKeys(rgb=True, pos_z=True),
-Center(),
-ScalePos(scale=0.5),
+    FixedPoints(20000, replace=True),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
 ])
 pre_collate_transform = Compose([
-PointCloudFusion(),
-SaveOriginalPosId,
-GridSampling3D(grid_size=0.04, quantize_coords=False, mode=mean),
+    PointCloudFusion(),
+    SaveOriginalPosId,
+    GridSampling3D(grid_size=0.04, quantize_coords=False, mode=mean),
 ])
 
 ```
