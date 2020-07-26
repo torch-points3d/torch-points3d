@@ -5,7 +5,6 @@ import urllib.request
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
 from torch_points3d.models.model_factory import instantiate_model
-from torch_points3d.core.data_transform import instantiate_transforms
 
 # Import BaseModel / BaseDataset for type checking
 from torch_points3d.models.base_model import BaseModel

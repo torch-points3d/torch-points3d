@@ -522,7 +522,3 @@ If you find our work useful, do not hesitate to cite it:
 and please also include a citation to the
 [models](https://github.com/nicolas-chaulet/torch-points3d#methods-currently-implemented)
 or the [datasets](https://github.com/nicolas-chaulet/torch-points3d#available-datasets) you have used in your experiments!
-
-```
-
-```
