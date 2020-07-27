@@ -115,12 +115,15 @@ class PretainedRegistry(object):
                 if PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag) is not None:
                     for k, v in PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag).items():
                         dataset[k] = v
+
             else:
                 dataset = instantiate_dataset(checkpoint.data_config)
 
             model: BaseModel = checkpoint.create_model(dataset, weight_name=weight_name)
 
             Wandb.set_urls_to_model(model, url)
+
+            BaseDataset.set_transform(model, checkpoint.data_config)
 
             return model
 
