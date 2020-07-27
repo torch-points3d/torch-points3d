@@ -91,7 +91,7 @@ def get_dataset(conv_type, task):
 
 
 def has_zero_grad(model_name):
-    has_zero_grad = ["PointGroup"]
+    has_zero_grad = ["PointGroup", "VoteNetPaper", "VoteNetRSConvTruncated"]
     for zg in has_zero_grad:
         if zg.lower() in model_name.lower():
             return True
@@ -148,8 +148,8 @@ class TestModels(unittest.TestCase):
 
     def test_one_model(self):
         # Use this test to test any model when debugging
-        config = load_model_config("object_detection", "votenet2", "VoteNetKPConv")
-        dataset = get_dataset("partial_dense", "object_detection")
+        config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
+        dataset = get_dataset("dense", "object_detection")
         model = instantiate_model(config, dataset)
         model.set_input(dataset[0], device)
         model.forward()
