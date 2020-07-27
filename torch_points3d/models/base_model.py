@@ -428,6 +428,13 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
                 "Missing attributes in your data object: {}. The model will fail to forward.".format(missing_keys)
             )
 
+    def print_transforms(self):
+        message = ""
+        for attr in self.__dict__:
+            if "transform" in attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+        print(message)
+
 
 class BaseInternalLossModule(torch.nn.Module):
     """ABC for modules which have internal loss(es)

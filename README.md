@@ -64,11 +64,22 @@ where each folder contains the dataset related to each task.
 - **[RSConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RSConv)** from Yongcheng Liu _et al._: [Relation-Shape Convolutional Neural Network for Point Cloud Analysis](https://arxiv.org/abs/1904.07601) (CVPR 2019)
 - **[RandLA-Net](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/RandLANet)** from Qingyong Hu _et al._: [RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds](https://arxiv.org/abs/1911.11236)
 - **[PointCNN](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/PointCNN)** from Yangyan Li _et al._: [PointCNN: Convolution On X-Transformed Points](https://arxiv.org/abs/1801.07791) (NIPS 2018)
-- **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas _et al._: [KPConv: Flexible and Deformable Convolution for Point Clouds] (https://arxiv.org/abs/1801.07791) (ICCV 2019)
+- **[KPConv](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/KPConv)** from Hugues Thomas _et al._: [KPConv: Flexible and Deformable Convolution for Point Clouds](https://arxiv.org/abs/1801.07791) (ICCV 2019)
 - **[MinkowskiEngine](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/modules/MinkowskiEngine)** from Christopher Choy _et al._: [4D Spatio-Temporal ConvNets: Minkowski Convolutional Neural Networks](https://arxiv.org/abs/1904.08755) (CVPR19)
 - **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi _et al._: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
 - **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
 - **[PointGroup](https://github.com/Jia-Research-Lab/PointGroup)** from Li Jiang _et al._: [PointGroup: Dual-Set Point Grouping for 3D Instance Segmentation](https://arxiv.org/abs/2004.01658)
+
+## Available Tasks
+
+|               <h3> Tasks </h3>                |                            <h3> Examples </h3>                            |
+| :-------------------------------------------: | :-----------------------------------------------------------------------: |
+| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/classification.png" width="512" height="220"> <br />  |
+|            <h3> Segmentation </h3>            |  <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />   |
+|          <h3> Object Detection </h3>          |   <img src="docs/imgs/object_detection.png" width="512" height="220" >    |
+|       <h3> Panoptic Segmentation </h3>        | <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220"> |
+|            <h3> Registration </h3>            |     <img src="docs/imgs/registration.png" width="512"  height="220">      |
+|             <h3> Completion </h3>             |      <img src="docs/imgs/completion.png" width="512"  height="220">       |
 
 ## Available datasets
 
@@ -158,6 +169,81 @@ model = VoteNet(
   compute_loss=True,
   in_feat=64, # Used for the bakcbone
 )
+```
+
+## Add your model to the PretrainedRegistry.
+
+The `PretrainedRegistry` enables anyone to add their own pre-trained models and `re-create` them with only 2 lines of code for `finetunning` or `production` purposes.
+
+### How does it work ? Here are the steps
+
+- `[You]` Launch your model training with [Wandb](https://www.wandb.com) activated (`wandb.log=True`)
+- `[TorchPoints3d]` Once the training finished, `TorchPoints3d` will upload your trained model within [our custom checkpoint](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) to your wandb.
+- `[You]` Within [`PretainedRegistry`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/applications/pretrained_api.py#L31) class, add a `key-value pair` within its attribute `MODELS`. The `key` should be describe your model, dataset and training hyper-parameters (possibly the best model), the `value` should be the `url` referencing the `.pt` file on your wandb.
+
+Example: Key: `pointnet2_largemsg-s3dis-1` and URL value: `https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt` for the `pointnet2_largemsg.pt` file.
+The key desribes a `pointnet2 largemsg trained on s3dis fold 1`.
+
+- `[Anyone]` By using the `PretainedRegistry` class and by providing the `key`, the associated model weights will be `downloaded` and the pre-trained model will be `ready to use` with its transforms.
+
+```python
+[In]:
+from torch_points3d.applications.pretrained_api import PretainedRegistry
+
+model = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1")
+
+print(model.wandb)
+print(model.print_transforms())
+
+[Out]:
+=================================================== WANDB URLS ======================================================
+WEIGHT_URL: https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt
+LOG_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/logs
+CHART_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk
+OVERVIEW_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/overview
+HYDRA_CONFIG_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/files/hydra-config.yaml
+OVERRIDES_URL: https://app.wandb.ai/loicland/benchmark-torch-points-3d-s3dis/runs/1e1p0csk/files/overrides.yaml
+======================================================================================================================
+
+pre_transform = None
+test_transform = Compose([
+    FixedPoints(20000, replace=True),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
+])
+train_transform = Compose([
+    FixedPoints(20000, replace=True),
+    RandomNoise(sigma=0.001, clip=0.05),
+    RandomRotate((-180, 180), axis=2),
+    RandomScaleAnisotropic([0.8, 1.2]),
+    RandomAxesSymmetry(x=True, y=False, z=False),
+    DropFeature(proba=0.2, feature='rgb'),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
+])
+val_transform = Compose([
+    FixedPoints(20000, replace=True),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
+])
+inference_transform = Compose([
+    FixedPoints(20000, replace=True),
+    XYZFeature(axis=['z']),
+    AddFeatsByKeys(rgb=True, pos_z=True),
+    Center(),
+    ScalePos(scale=0.5),
+])
+pre_collate_transform = Compose([
+    PointCloudFusion(),
+    SaveOriginalPosId,
+    GridSampling3D(grid_size=0.04, quantize_coords=False, mode=mean),
+])
 ```
 
 ## Developer guidelines
@@ -349,7 +435,9 @@ python -m torch.utils.bottleneck /path/to/source/script.py [args]
 ## Troubleshooting
 
 #### Cannot compile certain CUDA Kernels or seg faults while running the tests
+
 Ensure that at least PyTorch 1.4.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
+
 ```
 $ python -c "import torch; print(torch.__version__)"
 >>> 1.4.0
@@ -387,9 +475,11 @@ poetry install
 #### CUDA kernel failed : no kernel image is available for execution on the device
 
 This can happen when trying to run the code on a different GPU than the one used to compile the `torch-points-kernels` library. Uninstall `torch-points-kernels`, clear cache, and reinstall after setting the `TORCH_CUDA_ARCH_LIST` environment variable. For example, for compiling with a Tesla T4 (Turing 7.5) and running the code on a Tesla V100 (Volta 7.0) use:
+
 ```
 export TORCH_CUDA_ARCH_LIST="7.0;7.5"
 ```
+
 See [this useful chart](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) for more architecture compatibility.
 
 #### Cannot use wandb on Windows
@@ -415,7 +505,9 @@ Visual Studio Code, there is a great [extension](https://github.com/NilsJPWerner
 Finaly, if you want to have a direct chat with us feel free to join our slack, just shoot us an email and we'll add you.
 
 ## Citing
+
 If you find our work useful, do not hesitate to cite it:
+
 ```
 @misc{
   tp3d,
@@ -426,6 +518,7 @@ If you find our work useful, do not hesitate to cite it:
   howpublished = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
 }
 ```
+
 and please also include a citation to the
 [models](https://github.com/nicolas-chaulet/torch-points3d#methods-currently-implemented)
 or the [datasets](https://github.com/nicolas-chaulet/torch-points3d#available-datasets) you have used in your experiments!
