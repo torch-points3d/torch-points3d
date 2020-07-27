@@ -99,7 +99,7 @@ models:
                     [512 * 3 + 256 * 3, 512, 512],
                     [128 * 3 + 512, 512, 512],
                     [64 * 3 + 512, 256, 256],
-                    [256 + FEAT , 128, 128],
+                    [256 + FEAT, 128, 128],
                     [],
                 ]
             skip: True
@@ -159,4 +159,55 @@ models:
         mlp_cls:
             nn: [128 * 2 + 2 * 64, 128]
             dropout: 0.
-        
+
+    RSConv_Indoor:
+        class: rsconv.RSConvLogicModel
+        conv_type: "DENSE"
+        down_conv:
+            module_name: RSConvOriginalMSGDown
+            npoint: [2048, 1024, 512, 256]
+            radii:
+                [
+                    [0.125, 0.2, 0.25],
+                    [0.2, 0.3, 0.4],
+                    [0.4, 0.6, 0.8],
+                    [0.8, 1.2, 1.6],
+                ]
+            nsamples: [[16, 32, 48], [16, 48, 64], [16, 32, 48], [16, 24, 32]]
+            down_conv_nn:
+                [
+                    [[10, 64//2, 16], [FEAT + 3, 16]],
+                    [10, 128//4, 64 * 3 + 3],
+                    [10, 256//4, 128 * 3  + 3],
+                    [10, 512//4, 256 * 3  + 3],
+                ]
+            channel_raising_nn:
+                [
+                    [16, 64],
+                    [64 * 3  + 3, 128],
+                    [128 * 3  + 3, 256],
+                    [256 * 3  + 3, 512],
+                ]
+        innermost:
+            - module_name: GlobalDenseBaseModule
+              nn: [512 * 3 + 3, 128]
+              aggr: "mean"
+            - module_name: GlobalDenseBaseModule
+              nn: [256 * 3 + 3, 128]
+              aggr: "mean"
+        up_conv:
+            bn: True
+            bias: False
+            module_name: DenseFPModule
+            up_conv_nn:
+                [
+                    [512 * 3 + 256 * 3, 512, 512],
+                    [128 * 3 + 512, 512, 512],
+                    [64 * 3 + 512, 256, 256],
+                    [256 + FEAT, 128, 128],
+                    [],
+                ]
+            skip: True
+        mlp_cls:
+            nn: [128 * 2 + 2 * 64, 128]
+            dropout: 0.

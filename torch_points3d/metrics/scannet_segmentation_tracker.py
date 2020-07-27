@@ -112,7 +112,7 @@ class ScannetSegmentationTracker(SegmentationTracker):
                 batch_mask = data.batch == idx_batch
             idx = data[SaveOriginalPosId.KEY][batch_mask]
 
-            self._votes[id_scan][idx] += output[batch_mask]
+            self._votes[id_scan][idx] += output[batch_mask].cpu()
             self._vote_counts[id_scan][idx] += 1
 
     def _predict_full_res(self):

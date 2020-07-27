@@ -22,11 +22,39 @@ POINTNET_2_URL_MODELS = {
     "6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt",
 }
 
-RSCONV_URL_MODELS = {}
+RSCONV_URL_MODELS = {
+    "1": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2b99o12e/RSConv_MSN_S3DIS.pt",
+    "2": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1onl4h59/RSConv_MSN_S3DIS.pt",
+    "3": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2cau6jua/RSConv_MSN_S3DIS.pt",
+    "4": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1qqmzgnz/RSConv_MSN_S3DIS.pt",
+    "5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/378enxsu/RSConv_MSN_S3DIS.pt",
+    "6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/23f4upgc/RSConv_MSN_S3DIS.pt",
+}
 
-KPCONV_URL_MODELS = {}
+KPCONV_URL_MODELS = {
+    "1": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/okiba8gp/KPConvPaper.pt",
+    "2": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2at56wrm/KPConvPaper.pt",
+    "3": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ipv9lso/KPConvPaper.pt",
+    "4": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2c13jhi0/KPConvPaper.pt",
+    "5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1kf8yg5s/KPConvPaper.pt",
+    "6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2ph7ejss/KPConvPaper.pt",
+}
 
-MODELS_URL = {"pointnet2": POINTNET_2_URL_MODELS, "rsconv": RSCONV_URL_MODELS, "kpconv": KPCONV_URL_MODELS}
+MINKOWSKI_URL_MODELS = {
+    "1": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1fyr7ri9/Res16UNet34C.pt",
+    "2": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1gdgx2ni/Res16UNet34C.pt",
+    "3": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/gt3ttamp/Res16UNet34C.pt",
+    "4": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/36yxu3yc/Res16UNet34C.pt",
+    "5": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/2r0tsub1/Res16UNet34C.pt",
+    "6": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/30yrkk5p/Res16UNet34C.pt",
+}
+
+MODELS_URL = {
+    "pointnet2": POINTNET_2_URL_MODELS,
+    "rsconv": RSCONV_URL_MODELS,
+    "kpconv": KPCONV_URL_MODELS,
+    "minkowski": MINKOWSKI_URL_MODELS,
+}
 
 
 def download_file(url, out_file):

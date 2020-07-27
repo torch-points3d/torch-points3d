@@ -38,6 +38,24 @@ class PretainedRegistry(object):
         "pointnet2_largemsg-s3dis-5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/etxij0j6/pointnet2_largemsg.pt",
         "pointnet2_largemsg-s3dis-6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt",
         "pointgroup-scannet": "https://api.wandb.ai/files/nicolas/panoptic/2ta6vfu2/PointGroup.pt",
+        "minkowski-res16-s3dis-1": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1fyr7ri9/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-2": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1gdgx2ni/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-3": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/gt3ttamp/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-4": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/36yxu3yc/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-5": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/2r0tsub1/Res16UNet34C.pt",
+        "minkowski-res16-s3dis-6": "https://api.wandb.ai/files/nicolas/s3dis-benchmark/30yrkk5p/Res16UNet34C.pt",
+        "rsconv-s3dis-1": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2b99o12e/RSConv_MSN_S3DIS.pt",
+        "rsconv-s3dis-2": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1onl4h59/RSConv_MSN_S3DIS.pt",
+        "rsconv-s3dis-3": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2cau6jua/RSConv_MSN_S3DIS.pt",
+        "rsconv-s3dis-4": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1qqmzgnz/RSConv_MSN_S3DIS.pt",
+        "rsconv-s3dis-5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/378enxsu/RSConv_MSN_S3DIS.pt",
+        "rsconv-s3dis-6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/23f4upgc/RSConv_MSN_S3DIS.pt",
+        "kpconv-s3dis-1": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/okiba8gp/KPConvPaper.pt",
+        "kpconv-s3dis-2": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2at56wrm/KPConvPaper.pt",
+        "kpconv-s3dis-3": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ipv9lso/KPConvPaper.pt",
+        "kpconv-s3dis-4": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2c13jhi0/KPConvPaper.pt",
+        "kpconv-s3dis-5": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1kf8yg5s/KPConvPaper.pt",
+        "kpconv-s3dis-6": "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2ph7ejss/KPConvPaper.pt",
     }
 
     MOCK_USED_PROPERTIES = {
@@ -48,6 +66,24 @@ class PretainedRegistry(object):
         "pointnet2_largemsg-s3dis-5": {"feature_dimension": 4, "num_classes": 13},
         "pointnet2_largemsg-s3dis-6": {"feature_dimension": 4, "num_classes": 13},
         "pointgroup-scannet": {},
+        "rsconv-s3dis-1": {"feature_dimension": 4, "num_classes": 13},
+        "rsconv-s3dis-2": {"feature_dimension": 4, "num_classes": 13},
+        "rsconv-s3dis-3": {"feature_dimension": 4, "num_classes": 13},
+        "rsconv-s3dis-4": {"feature_dimension": 4, "num_classes": 13},
+        "rsconv-s3dis-5": {"feature_dimension": 4, "num_classes": 13},
+        "rsconv-s3dis-6": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-1": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-2": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-3": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-4": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-5": {"feature_dimension": 4, "num_classes": 13},
+        "minkowski-res16-s3dis-6": {"feature_dimension": 4, "num_classes": 13},
+        "kpconv-s3dis-1": {"feature_dimension": 4, "num_classes": 13},
+        "kpconv-s3dis-2": {"feature_dimension": 4, "num_classes": 13},
+        "kpconv-s3dis-3": {"feature_dimension": 4, "num_classes": 13},
+        "kpconv-s3dis-4": {"feature_dimension": 4, "num_classes": 13},
+        "kpconv-s3dis-5": {"feature_dimension": 4, "num_classes": 13},
+        "kpconv-s3dis-6": {"feature_dimension": 4, "num_classes": 13},
     }
 
     @staticmethod
@@ -79,12 +115,15 @@ class PretainedRegistry(object):
                 if PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag) is not None:
                     for k, v in PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag).items():
                         dataset[k] = v
+
             else:
                 dataset = instantiate_dataset(checkpoint.data_config)
 
             model: BaseModel = checkpoint.create_model(dataset, weight_name=weight_name)
 
             Wandb.set_urls_to_model(model, url)
+
+            BaseDataset.set_transform(model, checkpoint.data_config)
 
             return model
 
