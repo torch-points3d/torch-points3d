@@ -91,6 +91,7 @@ models:
     VoteNetMink:
         class: votenet2.VoteNet2
         conv_type: "SPARSE"
+        semantic_supervision: True
         define_constants:
             num_proposal: 256
             num_classes: 18 # Should be $(data.num_classes)
@@ -121,6 +122,7 @@ models:
     VoteNetKPConv:
         class: votenet2.VoteNet2
         conv_type: "PARTIAL_DENSE"
+        semantic_supervision: True
         define_constants:
             num_proposal: 256
             num_classes: 18 # Should be $(data.num_classes)
@@ -152,6 +154,7 @@ models:
 
     VoteNetPN2:
         class: votenet2.VoteNet2
+        semantic_supervision: True
         conv_type: "DENSE"
         define_constants:
             num_proposal: 256
@@ -183,6 +186,7 @@ models:
     VoteNetRSConv:
         class: votenet2.VoteNet2
         conv_type: "DENSE"
+        semantic_supervision: True
         define_constants:
             num_proposal: 256
             num_classes: 18 # Should be $(data.num_classes)
@@ -359,11 +363,11 @@ models:
                             [16, 64],
                             [64  + 3, 128],
                             [128   + 3, 256],
-                            [256   + 3, 512],
+                            [256   + 3, 256],
                         ]
                 innermost:
                     - module_name: GlobalDenseBaseModule
-                      nn: [512  + 3, 128]
+                      nn: [256  + 3, 128]
                       aggr: "mean"
                     - module_name: GlobalDenseBaseModule
                       nn: [256 + 3, 128]
@@ -372,8 +376,8 @@ models:
                     module_name: DenseFPModule
                     up_conv_nn:
                         [
-                            [512  + 256, 512, 512],
-                            [128  + 512, 256, 256],
+                            [256  + 256, 256, 256],
+                            [128  + 256, 256, 256],
                             [64  + 256, 256, 256],
                             [256 + FEAT, 128, 128],
                         ]
