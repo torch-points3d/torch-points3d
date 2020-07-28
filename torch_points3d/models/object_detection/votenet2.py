@@ -1,6 +1,8 @@
 import torch
 from torch_geometric.data import Data
+import os
 
+from torch_points3d.datasets.object_detection.box_data import BoxData
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.applications.votenet import VoteNet
 from torch_points3d.models.base_model import BaseModel
@@ -30,7 +32,7 @@ class VoteNet2(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(VoteNet2, self).__init__(option)
-
+        self._dataset = dataset
         # 1 - CREATE BACKBONE MODEL
         input_nc = dataset.feature_dimension
         backbone_option = option.backbone
@@ -126,6 +128,11 @@ class VoteNet2(BaseModel):
         self.input = self.input.to(self.device)
         self._extract_gt_center(self.input, outputs)
         self.output = outputs
+
+        # Sets visual data for debugging
+        with torch.no_grad():
+            self._dump_visuals()
+
         self._compute_losses(semantic_logits)
 
     def _select_seeds(self, data_features):
@@ -175,3 +182,27 @@ class VoteNet2(BaseModel):
 
     def get_spatial_ops(self):
         return self.backbone_model.get_spatial_ops()
+
+    def _dump_visuals(self):
+        if True:
+            return
+        if not hasattr(self, "visual_count"):
+            self.visual_count = 0
+
+        pred_boxes = self.output.get_boxes(self._dataset, apply_nms=True)
+        gt_boxes = []
+
+        for idx in range(len(pred_boxes)):
+            # Ground truth
+            sample_boxes = self.input.instance_box_corners[idx]
+            sample_boxes = sample_boxes[self.input.box_label_mask[idx]]
+            sample_labels = self.input.sem_cls_label[idx]
+            gt_box_data = [BoxData(sample_labels[i].item(), sample_boxes[i]) for i in range(len(sample_boxes))]
+            gt_boxes.append(gt_box_data)
+
+        data_visual = Data(pos=self.input.pos, batch=self.input.batch, gt_boxes=gt_boxes, pred_boxes=pred_boxes)
+
+        if not os.path.exists("viz"):
+            os.mkdir("viz")
+        torch.save(data_visual.to("cpu"), "viz/data_%i.pt" % (self.visual_count))
+        self.visual_count += 1

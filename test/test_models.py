@@ -91,7 +91,7 @@ def get_dataset(conv_type, task):
 
 
 def has_zero_grad(model_name):
-    has_zero_grad = ["PointGroup", "VoteNetPaper", "VoteNetRSConvTruncated"]
+    has_zero_grad = ["PointGroup", "VoteNetPaper", "VoteNetRSConvTruncated", "VoteNetRSConvSmall"]
     for zg in has_zero_grad:
         if zg.lower() in model_name.lower():
             return True
