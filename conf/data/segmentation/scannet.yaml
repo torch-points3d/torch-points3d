@@ -24,9 +24,10 @@ data:
         size: ${data.first_subsampling}
         quantize_coords: False
         mode: ${data.mode}
-    - transform: ElasticDistortion
+    - transform: RandomNoise
       params:
-        spatial_resolution: ${data.first_subsampling}
+        sigma: 0.01
+        clip: 0.05
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}
@@ -40,7 +41,6 @@ data:
       lparams: [100000]
       params:
         replace: False
-    - transform: ShiftVoxels
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
