@@ -601,11 +601,11 @@ class S3DISFusedDataset(BaseDataset):
         )
         self.test_dataset = S3DISSphere(
             self._data_path,
-            sample_per_epoch=-1,
+            sample_per_epoch=10000,
             test_area=self.dataset_opt.fold,
             split="test",
             pre_collate_transform=self.pre_collate_transform,
-            transform=self.test_transform,
+            transform=self.train_transform,
         )
 
         if dataset_opt.class_weight_method:
