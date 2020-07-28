@@ -30,6 +30,7 @@ from torch_points3d.core.data_transform import (
     XYZFeature,
     ScalePos,
     RandomWalkDropout,
+    NormalizeFeature,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -283,6 +284,17 @@ class Testhelpers(unittest.TestCase):
         d = Data(pos=torch.tensor([[1, 0, 0], [0, 1, 1]]).float())
         d = tr(d)
         torch.testing.assert_allclose(d.pos, torch.tensor([[2, 0, 0], [0, 2, 2]]).float())
+
+    def test_normalizeFeature(self):
+        tr = NormalizeFeature(feature_name='new_feature', standardize=False)
+        d = Data(new_feature=torch.tensor([[-3,-2,-1,0,1,2]]).float())
+        d = tr(d)
+        torch.testing.assert_allclose(d.new_feature, torch.tensor([[0, 0.2, 0.4, 0.6, 0.8, 1]]).float())
+
+        tr = NormalizeFeature(feature_name='new_feature', standardize=True)
+        d = Data(new_feature=torch.tensor([[0, 1]]).float())
+        d = tr(d)
+        torch.testing.assert_allclose(d.new_feature, torch.tensor([[-1, 1]]).float())
 
 
 if __name__ == "__main__":
