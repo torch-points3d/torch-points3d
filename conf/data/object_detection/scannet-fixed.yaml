@@ -22,14 +22,14 @@ data:
         clip: 0.05
     - transform: RandomScaleAnisotropic
       params:
-        scales: [0.8, 1.2]
+        scales: [0.9, 1.1]
     - transform: RandomSymmetry
       params:
         axis: [True, False, False]
     - transform: Random3AxisRotation
       params:
-        rot_x: 5
-        rot_y: 5
+        rot_x: 2
+        rot_y: 2
         rot_z: 180
 
   val_transform:
