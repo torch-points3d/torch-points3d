@@ -18,9 +18,6 @@ data:
       lparams: [0.02]
 
   train_transform:
-    - transform: ElasticDistortion
-      params:
-        spatial_resolution: ${data.grid_size}
     - transform: FixedPoints
       lparams: [40000]
     - transform: Random3AxisRotation

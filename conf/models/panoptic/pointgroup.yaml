@@ -4,18 +4,18 @@ models:
         conv_type: "SPARSE"
         loss_weights:
             semantic: 1
-            offset_norm_loss: 1 
+            offset_norm_loss: 1
             offset_dir_loss: 1
             score_loss: 1
         backbone:
             architecture: "unet"
 
-        scorer: 
+        scorer:
             activate: true
-            architecture: encoder # unet or encoder 
+            architecture: encoder # unet or encoder
             depth: 4
 
-        prepare_epoch: 200
+        prepare_epoch: 120
         cluster_radius_search: 1.5 * ${data.grid_size}
 
         min_iou_threshold: 0.25
@@ -28,15 +28,15 @@ models:
         conv_type: "SPARSE"
         loss_weights:
             semantic: 1
-            offset_norm_loss: 1 
+            offset_norm_loss: 1
             offset_dir_loss: 1
             score_loss: 1
-        
-        scorer: 
+
+        scorer:
             activate: true
-            architecture: encoder # unet or encoder 
+            architecture: encoder # unet or encoder
             depth: 4
-        
+
         backbone:
             architecture: "unet"
             config:
@@ -51,17 +51,17 @@ models:
                     bn_momentum: 0.2
                     down_conv_nn:
                         [
-                        [FEAT, in_feat],
-                        [in_feat, 2*in_feat],
-                        [2*in_feat, 3*in_feat],
-                        [3*in_feat, 4*in_feat],
-                        [4*in_feat, 5*in_feat],
-                        [5*in_feat, 6*in_feat],
-                        [6*in_feat, 7*in_feat]
+                            [FEAT, in_feat],
+                            [in_feat, 2*in_feat],
+                            [2*in_feat, 3*in_feat],
+                            [3*in_feat, 4*in_feat],
+                            [4*in_feat, 5*in_feat],
+                            [5*in_feat, 6*in_feat],
+                            [6*in_feat, 7*in_feat],
                         ]
-                    kernel_size: [5, 3, 3, 3,3,3,3]
-                    stride: [1, 2, 2, 2,2,2,2]
-                    dilation: [1, 1, 1, 1,1,1,1]
+                    kernel_size: [5, 3, 3, 3, 3, 3, 3]
+                    stride: [1, 2, 2, 2, 2, 2, 2]
+                    dilation: [1, 1, 1, 1, 1, 1, 1]
                 up_conv:
                     module_name: Res2BlockUp
                     dimension: 3
@@ -74,11 +74,11 @@ models:
                             [in_feat_tr + 4*in_feat, in_feat_tr],
                             [in_feat_tr + 3*in_feat, in_feat_tr],
                             [in_feat_tr + 2*in_feat, in_feat_tr],
-                            [in_feat_tr + in_feat, in_feat_tr, in_feat]
+                            [in_feat_tr + in_feat, in_feat_tr, in_feat],
                         ]
-                    kernel_size: [3, 3, 3,3,3,3,1]
-                    stride: [2, 2, 2,2,2,2,1]
-                    dilation: [1, 1, 1,1,1,1,1]
+                    kernel_size: [3, 3, 3, 3, 3, 3, 1]
+                    stride: [2, 2, 2, 2, 2, 2, 1]
+                    dilation: [1, 1, 1, 1, 1, 1, 1]
 
         prepare_epoch: 120
         cluster_radius_search: 1.5 * ${data.grid_size}

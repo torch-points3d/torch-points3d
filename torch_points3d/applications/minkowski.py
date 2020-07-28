@@ -1,11 +1,12 @@
 import os
+import sys
 from omegaconf import DictConfig, OmegaConf
 import logging
 import torch
 from torch_geometric.data import Batch
 
 from torch_points3d.applications.modelfactory import ModelFactory
-from torch_points3d.modules.MinkowskiEngine import *
+from torch_points3d.modules.MinkowskiEngine.srmodules import *
 from torch_points3d.core.base_conv.message_passing import *
 from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
@@ -75,11 +76,9 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
         super(BaseMinkowski, self).__init__(model_config, model_type, dataset, modules)
         self.weight_initialization()
-        try:
+        default_output_nc = kwargs.get("default_output_nc", None)
+        if not default_output_nc:
             default_output_nc = extract_output_nc(model_config)
-        except:
-            default_output_nc = -1
-            log.warning("Could not resolve number of output channels")
 
         self._output_nc = default_output_nc
         self._has_mlp_head = False
