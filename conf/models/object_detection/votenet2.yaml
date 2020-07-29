@@ -296,6 +296,7 @@ models:
     VoteNetRSConvTruncated:
         class: votenet2.VoteNet2
         conv_type: "DENSE"
+        dropout: 0.5
         define_constants:
             num_proposal: 256
             num_classes: 18 # Should be $(data.num_classes)

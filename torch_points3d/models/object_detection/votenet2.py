@@ -43,15 +43,23 @@ class VoteNet2(BaseModel):
         )
         self._kpconv_backbone = backbone_cls.__name__ == "KPConv"
         self.is_dense_format = self.conv_type == "DENSE"
+        dropout = option.get("dropout", None)
+        if dropout is not None:
+            self.dropout = torch.nn.Dropout(dropout)
+        else:
+            self.dropout = None
 
         # 2 - SEGMENTATION HEAD
-        self.semantic_supervision = option.get("semantic_supervision", False)
-        self.Semantic = (
-            Seq()
-            .append(MLP([self.backbone_model.output_nc, self.backbone_model.output_nc], bias=False))
-            .append(torch.nn.Linear(self.backbone_model.output_nc, dataset.num_classes))
-            .append(torch.nn.LogSoftmax())
-        )
+        semantic_supervision = option.get("semantic_supervision", False)
+        if semantic_supervision:
+            self.Semantic = (
+                Seq()
+                .append(MLP([self.backbone_model.output_nc, self.backbone_model.output_nc], bias=False))
+                .append(torch.nn.Linear(self.backbone_model.output_nc, dataset.num_classes))
+                .append(torch.nn.LogSoftmax())
+            )
+        else:
+            self.Semantic = None
 
         # 3 - CREATE VOTING MODEL
         voting_option = option.voting
@@ -106,11 +114,13 @@ class VoteNet2(BaseModel):
     def forward(self, **kwargs):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
         data_features = self.backbone_model.forward(self.input)
+        if self.dropout:
+            data_features.x = self.dropout(data_features.x)
         data_seeds, seed_inds = self._select_seeds(data_features)
 
         # Semantic prediction only if full Unet
         semantic_logits = None
-        if self.semantic_supervision:
+        if self.Semantic:
             backbone_feats = data_features.x.clone()
             if backbone_feats.dim() == 3:
                 backbone_feats = backbone_feats.transpose(2, 1)
