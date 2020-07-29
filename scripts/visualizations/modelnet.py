@@ -90,7 +90,8 @@ colors = {}
 while True:
     try:
         pcds = []
-        for idx in range(25):
+        for idx in range(40):
+            print(idx)
             i = np.random.randint(0, len(dataset))
             sample = dataset[i]
             label = sample.y.item()
@@ -102,7 +103,8 @@ while True:
             pcd = torch2o3d(sample)
             pcd.paint_uniform_color(color)
             points = np.asarray(pcd.points) + np.tile(
-                np.asarray([2 * idx, (idx * 2) % 5, 0])[np.newaxis, ...], (np.asarray(pcd.points).shape[0], 1)
+                np.asarray([4 * ((idx * 1) % 5), 3 * ((idx * 1) // 5), 0])[np.newaxis, ...],
+                (np.asarray(pcd.points).shape[0], 1),
             )
             pcd.points = open3d.utility.Vector3dVector(points)
             pcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=0.1, max_nn=70))

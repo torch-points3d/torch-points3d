@@ -33,8 +33,6 @@ sys.path.append(DIR)
 
 import torch
 import open3d
-import random
-import numpy as np
 
 from torch_points3d.datasets.panoptic.scannet import ScannetDataset, ScannetPanoptic
 from torch_points3d.datasets.segmentation.scannet import Scannet, SCANNET_COLOR_MAP
