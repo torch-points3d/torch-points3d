@@ -7,12 +7,14 @@ from itertools import repeat, product
 import numpy as np
 import torch
 
-from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
+from torch_geometric.data import Data, InMemoryDataset, extract_zip
 from torch_geometric.io import read_txt_array
 import torch_geometric.transforms as T
 from torch_points3d.core.data_transform import SaveOriginalPosId
 from torch_points3d.metrics.shapenet_part_tracker import ShapenetPartTracker
 from torch_points3d.datasets.base_dataset import BaseDataset, save_used_properties
+from torch_points3d.utils.download import download_url
+
 
 
 class ShapeNet(InMemoryDataset):
