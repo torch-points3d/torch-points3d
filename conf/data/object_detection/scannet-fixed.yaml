@@ -35,5 +35,7 @@ data:
         rot_z: 180
 
   val_transform:
+    - transform: GridSampling3D
+      lparams: [0.05]
     - transform: FixedPoints
-      lparams: [40000]
+      lparams: [50000]
