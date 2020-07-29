@@ -154,7 +154,6 @@ models:
     VoteNetKPConv:
         class: votenet2.VoteNet2
         conv_type: "PARTIAL_DENSE"
-        semantic_supervision: True
         define_constants:
             num_proposal: 256
             num_classes: 18 # Should be $(data.num_classes)

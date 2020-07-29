@@ -14,8 +14,10 @@ data:
       lparams: [0.02]
 
   train_transform:
+    - transform: GridSampling3D
+      lparams: [0.05]
     - transform: FixedPoints
-      lparams: [40000]
+      lparams: [50000]
     - transform: RandomNoise
       params:
         sigma: 0.01

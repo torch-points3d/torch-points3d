@@ -25,7 +25,7 @@ training:
                 bn_clip: 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
-    checkpoint_dir: "/home/ChauletN/torch-points3d/outputs/2020-07-13/21-05-53"
+    checkpoint_dir: ""
 
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
