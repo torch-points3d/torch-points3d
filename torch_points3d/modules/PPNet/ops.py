@@ -3,16 +3,6 @@ import torch.nn as nn
 from torch_points3d.core.common_modules.base_modules import FastBatchNorm1d
 
 
-def add_ones(query_points, x, add_one):
-    if add_one:
-        ones = torch.ones(query_points.shape[0], dtype=torch.float).unsqueeze(-1).to(query_points.device)
-        if x is not None:
-            x = torch.cat([ones.to(x.dtype), x], dim=-1)
-        else:
-            x = ones
-    return x
-
-
 def gather(x, idx, method=2):
     """
     https://github.com/pytorch/pytorch/issues/15245

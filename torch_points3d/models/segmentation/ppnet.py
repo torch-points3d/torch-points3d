@@ -80,7 +80,6 @@ class PPNet(UnwrappedUnetBasedModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         data = data.to(device)
-        data.x = add_ones(data.pos, data.x, True)
 
         if isinstance(data, MultiScaleBatch):
             self.pre_computed = data.multiscale
