@@ -542,7 +542,7 @@ class RandomDropout:
         chances of the dropout to be applied
     """
 
-    def __init__(self, dropout_ratio=0.2, dropout_application_ratio=0.5):
+    def __init__(self, dropout_ratio: float = 0.2, dropout_application_ratio: float = 0.5):
         self.dropout_ratio = dropout_ratio
         self.dropout_application_ratio = dropout_application_ratio
 
@@ -588,7 +588,7 @@ class RandomWalkDropout(object):
 
     Parameters
     ----------
-    dropout_ratio : float, optional
+    dropout_ratio: float, optional
         Ratio that gets dropped
     num_iter: int, optional
         number of iterations
@@ -596,11 +596,12 @@ class RandomWalkDropout(object):
         radius of the neighborhood search to create the graph
     max_num: int optional
        max number of neighbors
-    skip_keys: list of string.
+    skip_keys: List optional
         skip_keys where we don't apply the mask
     """
 
-    def __init__(self, dropout_ratio=0.05, num_iter=5000, radius=0.5, max_num=-1, skip_keys=[]):
+    def __init__(self, dropout_ratio: float = 0.05, num_iter: int = 5000,
+                 radius: float = 0.5, max_num: int =- 1, skip_keys: List = []):
         self.dropout_ratio = dropout_ratio
         self.num_iter = num_iter
         self.radius = radius
@@ -639,7 +640,8 @@ class SphereDropout(object):
     radius: float, optional
         radius of the spheres
     """
-    def __init__(self, num_sphere=10, radius=5):
+    def __init__(self, num_sphere: int = 10,
+                 radius: float = 5):
         self.num_sphere = num_sphere
         self.radius = radius
 
@@ -666,9 +668,13 @@ class SphereDropout(object):
 class SphereCrop(object):
     """
     crop the point cloud on a sphere
+    Parameters
+    ----------
+    radius: float, optional
+        radius of the sphere
     """
 
-    def __init__(self, radius=50):
+    def __init__(self, radius: float = 50):
         self.radius = radius
 
     def __call__(self, data):
@@ -689,12 +695,26 @@ class SphereCrop(object):
             self.__class__.__name__, self.radius)
 
 
-class SquareCrop(object):
+class CubeCrop(object):
     """
-    crop the point cloud on a square
+    Crop cubically the point cloud
+
+    Parameters
+    ----------
+    c: float, optional
+        half size of the cube
+    rot_x: float_otional
+        rotation of the cube around x axis
+    rot_y: float_otional
+        rotation of the cube around x axis
+    rot_z: float_otional
+        rotation of the cube around x axis
     """
 
-    def __init__(self, c=1, rot_x=180, rot_y=180, rot_z=180):
+    def __init__(self, c: float = 1,
+                 rot_x: float = 180,
+                 rot_y: float = 180,
+                 rot_z: float = 180):
         self.c = c
         self.random_rotation = Random3AxisRotation(
             rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
@@ -714,45 +734,28 @@ class SquareCrop(object):
         data = apply_mask(data, mask)
         return data
 
-
     def __repr__(self):
         return "{}(c={}, rotation={})".format(
             self.__class__.__name__,
             self.c,
-            self.random_rotation.__class__.__name__)
+            self.random_rotation)
 
-
-class NormEstimation(object):
-    """
-    Estimation of normal using PCA (open3d implementation)
-    with hybrid
-    """
-
-    def __init__(self, radius_nn=0.1, max_nn=38):
-        self.radius_nn = radius_nn
-        self.max_nn = 38
-
-    def __call__(self, data):
-        import open3d
-        pcd = open3d.geometry.PointCloud()
-        pcd.points = open3d.utility.Vector3dVector(data.pos.cpu().numpy())
-        pcd.estimate_normals(
-            search_param=open3d.geometry.KDTreeSearchParamHybrid(
-                radius=self.radius_nn, max_nn=self.max_nn))
-        data.norm = torch.from_numpy(np.asarray(pcd.normals))
-        return data
-
-    def __repr__(self):
-        return "{}(radius_nn={}, max_nn={})".format(self.__class__.__name__,
-                                                    self.radius_nn,
-                                                    self.max_nn)
 
 class DensityFilter(object):
     """
-    Remove points with a low density
+    Remove points with a low density(compute the density with a radius search and remove points with)
+    a low number of neighbors
+    Parameter
+    radius_nn: float, optional
+        radius for the neighbors search
+    min_num: int, otional
+        minimum number of neighbors to be dense
+    skip_keys: int, otional
+        list of attributes of data to skip when we apply the mask
     """
 
-    def __init__(self, radius_nn=0.04, min_num=6, skip_keys=[]):
+    def __init__(self, radius_nn: float = 0.04,
+                 min_num: int = 6, skip_keys: List = []):
         self.radius_nn = radius_nn
         self.min_num = min_num
         self.skip_keys = skip_keys
