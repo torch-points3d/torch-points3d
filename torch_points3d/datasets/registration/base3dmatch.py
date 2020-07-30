@@ -144,7 +144,7 @@ class Base3DMatch(Dataset):
         # we download the raw RGBD file for the train and the validation data
         folder = osp.join(self.raw_dir, self.mode)
         if files_exist([folder]):  # pragma: no cover
-            log.warning("already downloaded {}".format(mod))
+            log.warning("already downloaded {}".format(self.mode))
             return
         log.info("Download elements in the file {}...".format(folder))
         for url in self.dict_urls[self.mode]:
