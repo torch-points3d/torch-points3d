@@ -1,78 +1,51 @@
 data:
   class: scannet.ScannetDataset
-  dataset_name: 'scannet-fixed'
+  dataset_name: "scannet-sparse"
   task: segmentation
   dataroot: data
-  first_subsampling: 0.05
-  version: 'v2'
+  grid_size: 0.02
+  version: "v2"
   use_instance_labels: False
   use_instance_bboxes: False
   donotcare_class_ids: []
   process_workers: 0
   apply_rotation: True
   use_category: False
-  mode: 'mean'
+  mode: "mean"
 
   pre_transform:
     - transform: GridSampling3D
       lparams: [0.02]
 
   train_transform:
-    - transform: RandomDropout
-    - transform: XYZFeature
-      params:
-        add_x: False
-        add_y: False
-        add_z: True
+    - transform: FixedPoints
+      lparams: [40000]
     - transform: RandomNoise
       params:
         sigma: 0.01
         clip: 0.05
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.8, 1.2]
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}
-        rot_x: 5
-        rot_y: 5
+        rot_x: 2
+        rot_y: 2
         rot_z: 180
-    - transform: GridSampling3D
+    - transform: RandomScaleAnisotropic
       params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: ${data.mode}
-    - transform: ChromaticTranslation
-    - transform: ChromaticJitter
+        scales: [0.9, 1.1]
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True]
-        feat_names: ['rgb', 'pos_z']
-        input_nc_feats: [3, 1]
-        delete_feats: [True, True]
-        stricts: [False, True]
-    - transform: FixedPoints
-      lparams: [8192]
+        list_add_to_x: [True]
+        feat_names: ["rgb"]
+        delete_feats: [True]
 
   val_transform:
-    - transform: XYZFeature
-      params:
-        add_x: False
-        add_y: False
-        add_z: True
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: ${data.mode}
+    - transform: FixedPoints
+      lparams: [40000]
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True]
-        feat_names: ['rgb', 'pos_z']
-        input_nc_feats: [3, 1]
-        delete_feats: [True, True]
-        stricts: [False, True]
-    - transform: FixedPoints
-      lparams: [8192]
+        list_add_to_x: [True]
+        feat_names: ["rgb"]
+        delete_feats: [True]
 
   test_transform: ${data.val_transform}

@@ -37,13 +37,13 @@ class MultiScaleData(Data):
     def num_scales(self):
         """ Number of scales in the multiscale array
         """
-        return len(self.multiscale) if self.multiscale else 0
+        return len(self.multiscale) if hasattr(self, "multiscale") and self.multiscale else 0
 
     @property
     def num_upsample(self):
         """ Number of upsample operations
         """
-        return len(self.upsample) if self.upsample else 0
+        return len(self.upsample) if hasattr(self, "upsample") and self.upsample else 0
 
     @classmethod
     def from_data(cls, data):

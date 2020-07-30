@@ -20,6 +20,7 @@ model_name: ??? # Name of the specific model to load
 update_lr_scheduler_on: 'on_epoch' # ["on_epoch", "on_num_batch", "on_num_sample"]
 selection_stage: ''
 pretty_print: False
+eval_frequency: 1
 
 tracker_options: # Extra options for the tracker
   full_res: False

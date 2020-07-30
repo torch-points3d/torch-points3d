@@ -114,3 +114,11 @@ class BaseTracker:
         for key, value in metrics.items():
             log.info("    {} = {}".format(key, value))
         log.info("".join(["=" for i in range(50)]))
+
+    @staticmethod
+    def _dict_to_str(dictionnary):
+        string = "{"
+        for key, value in dictionnary.items():
+            string += "%s: %.2f," % (str(key), value)
+        string += "}"
+        return string

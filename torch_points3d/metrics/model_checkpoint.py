@@ -304,12 +304,15 @@ class ModelCheckpoint(object):
         self._checkpoint.stats[stage].append(current_stat)
         self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
 
-    def re_instantiate_model(self, dataset):
-        """This function is called to gather used_properties from dataset
-        and saved within the checkpoint. Then try to create the model directly from configuration file"""
-
-        used_properties = dataset.used_properties
-        if used_properties is not None:
-            for k, v in used_properties.items():
+    def validate(self, dataset_config):
+        """ A checkpoint is considered as valid if it can recreate the model from
+        a dataset config only """
+        if dataset_config is not None:
+            for k, v in dataset_config.items():
                 self.data_config[k] = v
-        return instantiate_model(self.run_config, self.data_config)
+        try:
+            instantiate_model(self.run_config, self.data_config)
+        except:
+            return False
+
+        return True
