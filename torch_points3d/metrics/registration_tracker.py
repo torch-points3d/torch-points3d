@@ -4,12 +4,10 @@ import torch
 
 from .base_tracker import BaseTracker
 from .registration_metrics import compute_accuracy
-from .registration_metrics import estimate_transfo
-from .registration_metrics import fast_global_registration
 from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
-from .registration_metrics import get_matches
 from torch_points3d.models import model_interface
+from torch_points3d.utils.registration import estimate_transfo, fast_global_registration, get_matches
 
 
 class PatchRegistrationTracker(BaseTracker):

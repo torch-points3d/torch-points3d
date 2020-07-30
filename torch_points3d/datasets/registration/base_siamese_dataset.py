@@ -46,8 +46,55 @@ class BaseSiameseDataset(BaseDataset):
 class GeneralFragment(object):
 
     """
-    implementation of get_fragment and __get__ to avoid repetition
+    implementation of get_fragment and get_name to avoid repetitions
     """
+
+    def get_same_pair(self, match):
+        """
+        same pairs for self supervised learning
+        """
+        if(random.random() < 0.5):
+            data_source_o = torch.load(match["path_source"]).to(torch.float)
+            data_target_o = torch.load(match["path_source"]).to(torch.float)
+        else:
+            data_source_o = torch.load(match["path_target"]).to(torch.float)
+            data_target_o = torch.load(match["path_target"]).to(torch.float)
+
+        len_col = 0
+
+        while(len_col < self.min_points):
+            # choose only one data augmentation randomly in the ss_transform (usually a crop)
+            if(self.ss_transform is not None):
+                n1 = np.random.randint(0, len(self.ss_transform.transforms))
+                t1 = self.ss_transform.transforms[n1]
+                n2 = np.random.randint(0, len(self.ss_transform.transforms))
+                t2 = self.ss_transform.transforms[n2]
+                data_source = t1(data_source_o.clone())
+                data_target = t2(data_target_o.clone())
+            else:
+                data_source = data_source_o
+                data_target = data_target_o
+            pos = data_source.pos
+            i = torch.randint(0, len(pos), (1,))
+            size_block = random.random()*(self.max_size_block - self.min_size_block) + self.min_size_block
+            point = pos[i].view(1, 3)
+            ind, dist = ball_query(point,
+                                   pos,
+                                   radius=size_block,
+                                   max_num=-1,
+                                   mode=1)
+            _, col = ind[dist[:, 0] > 0].t()
+            ind_t, dist_t = ball_query(data_target.pos,
+                                       pos[col],
+                                       radius=self.max_dist_overlap,
+                                       max_num=1,
+                                       mode=1)
+            col_target, ind_col = ind_t[dist_t[:, 0] > 0].t()
+            col = col[ind_col]
+            new_pair = torch.stack((col, col_target)).T
+            len_col = len(new_pair)
+        return data_source, data_target, new_pair
+
     def get_fragment(self, idx):
 
         match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
@@ -56,47 +103,7 @@ class GeneralFragment(object):
             data_target = torch.load(match["path_target"]).to(torch.float)
             new_pair = torch.from_numpy(match["pair"])
         else:
-            if(random.random() < 0.5):
-                data_source_o = torch.load(match["path_source"]).to(torch.float)
-                data_target_o = torch.load(match["path_source"]).to(torch.float)
-            else:
-                data_source_o = torch.load(match["path_target"]).to(torch.float)
-                data_target_o = torch.load(match["path_target"]).to(torch.float)
-
-            len_col = 0
-
-            while(len_col < self.min_points):
-                if(self.ss_transform is not None):
-                    n1 = np.random.randint(0, len(self.ss_transform.transforms))
-                    t1 = self.ss_transform.transforms[n1]
-                    n2 = np.random.randint(0, len(self.ss_transform.transforms))
-                    t2 = self.ss_transform.transforms[n2]
-                    data_source = t1(data_source_o.clone())
-                    data_target = t2(data_target_o.clone())
-                else:
-                    data_source = data_source_o
-                    data_target = data_target_o
-                pos = data_source.pos
-                i = torch.randint(0, len(pos), (1,))
-                size_block = random.random()*(self.max_size_block - self.min_size_block) + self.min_size_block
-                point = pos[i].view(1, 3)
-                ind, dist = ball_query(point,
-                                       pos,
-                                       radius=size_block,
-                                       max_num=-1,
-                                       mode=1)
-                _, col = ind[dist[:, 0] > 0].t()
-
-                ind_t, dist_t = ball_query(data_target.pos,
-                                           pos[col],
-                                           radius=self.max_dist_overlap,
-                                           max_num=1,
-                                           mode=1)
-                col_target, ind_col = ind_t[dist_t[:, 0] > 0].t()
-                col = col[ind_col]
-
-                new_pair = torch.stack((col, col_target)).T
-                len_col = len(new_pair)
+            data_source, data_target, new_pair = self.get_same_pair(match)
 
         if self.transform is not None:
             data_source = self.transform(data_source)
