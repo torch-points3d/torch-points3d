@@ -370,6 +370,15 @@ class UnwrappedUnetBasedModel(BaseModel):
         kwargs.pop(name)
         return module
 
+    def _add_kpconv_kwargs(self, args, opt):
+        if "KPConvLayer" in opt.keys():
+            for k, v in opt["KPConvLayer"].items():
+                args[k] = v
+        if "KPConvDeformableLayer" in opt.keys():
+            for k, v in opt["KPConvDeformableLayer"].items():
+                args[k] = v
+        return args
+
     def _create_inner_modules(self, args_innermost, modules_lib):
         inners = []
         if is_list(args_innermost):
@@ -417,6 +426,7 @@ class UnwrappedUnetBasedModel(BaseModel):
         # Down modules
         for i in range(len(opt.down_conv.down_conv_nn)):
             args = self._fetch_arguments(opt.down_conv, i, "DOWN")
+            args = self._add_kpconv_kwargs(args, opt)
             conv_cls = self._get_from_kwargs(args, "conv_cls")
             down_module = conv_cls(**args)
             self._save_sampling_and_search(down_module)

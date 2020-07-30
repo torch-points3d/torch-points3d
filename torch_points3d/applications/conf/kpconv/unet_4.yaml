@@ -1,5 +1,7 @@
 class: kpconv.KPConvPaper
 conv_type: "PARTIAL_DENSE"
+KPConvLayer:
+    n_kernel_points: 15
 define_constants:
     in_grid_size: 0.02
     in_feat: 64
