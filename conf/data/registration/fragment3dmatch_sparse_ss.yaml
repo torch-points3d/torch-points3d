@@ -31,15 +31,11 @@ data:
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
-    - transform: NormEstimation
-      params:
-        radius_nn: 0.1
-        max_nn: 30
   ss_transform:
-    - transform: SquareCrop
+    - transform: CubeCrop
       params:
         c: 1
-    - transform: SquareCrop
+    - transform: CubeCrop
       params:
         c: 1.5
   train_transform:

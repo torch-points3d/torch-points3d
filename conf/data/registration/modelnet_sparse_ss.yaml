@@ -29,7 +29,7 @@ data:
       params:
         size: ${data.first_subsampling}
   ss_transform:
-    - transform: SquareCrop
+    - transform: CubeCrop
       params:
         c: 1
   train_transform:
@@ -71,7 +71,7 @@ data:
     - transform: Center
     - transform: FixedPoints
       lparams: [2048]
-    - transform: SquareCrop
+    - transform: CubeCrop
       params:
         c: 1
     - transform: Random3AxisRotation
@@ -99,7 +99,7 @@ data:
   test_transform:
     - transform: SaveOriginalPosId
     - transform: Center
-    - transform: SquareCrop
+    - transform: CubeCrop
       params:
         c: 1
     - transform: RandomNoise
