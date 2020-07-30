@@ -294,7 +294,7 @@ class Testhelpers(unittest.TestCase):
         tr = NormalizeFeature(feature_name='new_feature', standardize=True)
         d = Data(new_feature=torch.tensor([[0, 1]]).float())
         d = tr(d)
-        torch.testing.assert_allclose(d.new_feature, torch.tensor([[-1, 1]]).float())
+        torch.testing.assert_allclose(d.new_feature, (d.new_feature - d.new_feature.mean()) / d.new_feature.std())
 
 
 if __name__ == "__main__":
