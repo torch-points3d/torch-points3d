@@ -49,7 +49,8 @@ class SiameseModelNet(SampledModelNet, GeneralFragment):
                                  transform,
                                  pre_transform,
                                  pre_filter)
-        self.self_supervised = True
+        self.self_supervised = True # only self supervised is allowed for modelnet
+        self.is_online_matching = False
         self.num_pos_pairs = num_pos_pairs
         self.min_size_block = min_size_block
         self.max_size_block = max_size_block
@@ -82,68 +83,14 @@ class SiameseModelNet(SampledModelNet, GeneralFragment):
             data[key] = item[s]
         return data
 
-    def get_fragment(self, idx):
-
+    def get_raw_pair(self, idx):
+        """
+        """
         data_source_o = self.get_model(idx)
         data_target_o = self.get_model(idx)
-
-        len_col = 0
-
-        while(len_col < self.min_points):
-            if(self.ss_transform is not None):
-                n1 = np.random.randint(0, len(self.ss_transform.transforms))
-                t1 = self.ss_transform.transforms[n1]
-                n2 = np.random.randint(0, len(self.ss_transform.transforms))
-                t2 = self.ss_transform.transforms[n2]
-                data_source = t1(data_source_o.clone())
-                data_target = t2(data_target_o.clone())
-            else:
-                data_source = data_source_o
-                data_target = data_target_o
-            pos = data_source.pos
-            i = torch.randint(0, len(pos), (1,))
-            size_block = random.random()*(self.max_size_block - self.min_size_block) + self.min_size_block
-            point = pos[i].view(1, 3)
-            ind, dist = ball_query(point,
-                                   pos,
-                                   radius=size_block,
-                                   max_num=-1,
-                                   mode=1)
-            _, col = ind[dist[:, 0] > 0].t()
-
-            ind_t, dist_t = ball_query(data_target.pos,
-                                       pos[col],
-                                       radius=self.max_dist_overlap,
-                                       max_num=1,
-                                       mode=1)
-            col_target, ind_col = ind_t[dist_t[:, 0] > 0].t()
-            col = col[ind_col]
-
-            new_pair = torch.stack((col, col_target)).T
-            len_col = len(new_pair)
-
-        if self.transform is not None:
-            data_source = self.transform(data_source)
-            data_target = self.transform(data_target)
-
-        if(hasattr(data_source, "multiscale")):
-            batch = MultiScalePair.make_pair(data_source, data_target)
-        else:
-            batch = Pair.make_pair(data_source, data_target)
-
-        pair = tracked_matches(data_source, data_target, new_pair)
-        batch.pair_ind = pair
-
-        num_pos_pairs = len(batch.pair_ind)
-        if self.num_pos_pairs < len(batch.pair_ind):
-            num_pos_pairs = self.num_pos_pairs
-
-        rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
-        batch.pair_ind = batch.pair_ind[rand_ind]
-        batch.size_pair_ind = torch.tensor([num_pos_pairs])
-        if(len(batch.pair_ind) == 0):
-            print("Warning")
-        return batch.contiguous()
+        data_source, data_target, new_pair = self.unsupervised_preprocess(
+            data_source_o, data_target_o)
+        return data_source, data_target, new_pair
 
     def __getitem__(self, idx):
         res = self.get_fragment(idx)

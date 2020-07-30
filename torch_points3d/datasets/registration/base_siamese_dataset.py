@@ -49,17 +49,32 @@ class GeneralFragment(object):
     implementation of get_fragment and get_name to avoid repetitions
     """
 
-    def get_same_pair(self, match):
+    def get_raw_pair(self, idx):
+        """
+        get the pair before the data augmentation
+        """
+        match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)),
+                        allow_pickle=True).item()
+        if(not self.self_supervised):
+            data_source = torch.load(match["path_source"]).to(torch.float)
+            data_target = torch.load(match["path_target"]).to(torch.float)
+            new_pair = torch.from_numpy(match["pair"])
+        else:
+            if(random.random() < 0.5):
+                data_source_o = torch.load(match["path_source"]).to(torch.float)
+                data_target_o = torch.load(match["path_source"]).to(torch.float)
+            else:
+                data_source_o = torch.load(match["path_target"]).to(torch.float)
+                data_target_o = torch.load(match["path_target"]).to(torch.float)
+            data_source, data_target, new_pair = self.unsupervised_preprocess(
+                data_source_o, data_target_o)
+
+        return data_source, data_target, new_pair
+
+    def unsupervised_preprocess(self, data_source_o, data_target_o):
         """
         same pairs for self supervised learning
         """
-        if(random.random() < 0.5):
-            data_source_o = torch.load(match["path_source"]).to(torch.float)
-            data_target_o = torch.load(match["path_source"]).to(torch.float)
-        else:
-            data_source_o = torch.load(match["path_target"]).to(torch.float)
-            data_target_o = torch.load(match["path_target"]).to(torch.float)
-
         len_col = 0
 
         while(len_col < self.min_points):
@@ -97,14 +112,7 @@ class GeneralFragment(object):
 
     def get_fragment(self, idx):
 
-        match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)), allow_pickle=True).item()
-        if(not self.self_supervised):
-            data_source = torch.load(match["path_source"]).to(torch.float)
-            data_target = torch.load(match["path_target"]).to(torch.float)
-            new_pair = torch.from_numpy(match["pair"])
-        else:
-            data_source, data_target, new_pair = self.get_same_pair(match)
-
+        data_source, data_target, new_pair = self.get_raw_pair(idx)
         if self.transform is not None:
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
