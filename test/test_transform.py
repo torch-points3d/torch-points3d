@@ -309,7 +309,7 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(len(data.pos) < 100, True)
 
     def test_sphere_dropout(self):
-        tr = SphereDropout(radius=0.5, num_sphere=1)
+        tr = SphereDropout(radius=1, num_sphere=1)
         pos = torch.randn(100, 3)
         x = torch.randn(100, 6)
         data = Data(pos=pos, x=x)
