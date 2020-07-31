@@ -3,13 +3,14 @@ models:
   # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
   KPConvPaper:
     class: kpconv.KPConvPaper
-    conv_type: 'PARTIAL_DENSE'
+    conv_type: "PARTIAL_DENSE"
     use_category: ${data.use_category}
     define_constants:
       in_grid_size: ${data.first_subsampling}
       in_feat: 64
       bn_momentum: 0.02
     down_conv:
+      n_kernel_points: 15
       down_conv_nn:
         [
           [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
@@ -36,11 +37,11 @@ models:
         ]
       block_names:
         [
-          ['SimpleBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
+          ["SimpleBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
         ]
       has_bottleneck:
         [[False, True], [True, True], [True, True], [True, True], [True, True]]
@@ -76,7 +77,7 @@ models:
 
   KPDeformableConvPaper:
     class: kpconv.KPConvPaper
-    conv_type: 'PARTIAL_DENSE'
+    conv_type: "PARTIAL_DENSE"
     use_category: ${data.use_category}
     define_constants:
       in_grid_size: ${data.first_subsampling}
@@ -109,11 +110,11 @@ models:
         ]
       block_names:
         [
-          ['SimpleBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
+          ["SimpleBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
         ]
       has_bottleneck:
         [[False, True], [True, True], [True, True], [True, True], [True, True]]
@@ -149,7 +150,7 @@ models:
 
   KPConvPaper_innermost:
     class: kpconv.KPConvPaper
-    conv_type: 'PARTIAL_DENSE'
+    conv_type: "PARTIAL_DENSE"
     in_grid_size: ${data.first_subsampling}
     define_constants:
       in_grid_size: ${data.first_subsampling}
@@ -182,11 +183,11 @@ models:
         ]
       block_names:
         [
-          ['SimpleBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
-          ['ResnetBBlock', 'ResnetBBlock'],
+          ["SimpleBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
+          ["ResnetBBlock", "ResnetBBlock"],
         ]
       has_bottleneck:
         [[False, True], [True, True], [True, True], [True, True], [True, True]]
@@ -205,7 +206,7 @@ models:
       activation:
         name: LeakyReLU
         negative_slope: 0.2
-      aggr: 'mean'
+      aggr: "mean"
       nn: [32*in_feat + 3, 8*in_feat, 32*in_feat]
     up_conv:
       module_name: FPModule_PD
@@ -230,7 +231,7 @@ models:
 
   KPConvPaper2LDMini:
     class: kpconv.KPConvPaper
-    conv_type: 'PARTIAL_DENSE'
+    conv_type: "PARTIAL_DENSE"
     use_category: ${data.use_category}
     define_constants:
       in_grid_size: ${data.first_subsampling}
@@ -247,7 +248,7 @@ models:
       prev_grid_size:
         [[in_grid_size, in_grid_size], [in_grid_size, 2*in_grid_size]]
       block_names:
-        [['SimpleBlock', 'ResnetBBlock'], ['ResnetBBlock', 'ResnetBBlock']]
+        [["SimpleBlock", "ResnetBBlock"], ["ResnetBBlock", "ResnetBBlock"]]
       has_bottleneck: [[False, True], [True, True]]
       deformable: [[False, False], [False, False]]
       max_num_neighbors: [[15, 15], [15, 15]]
