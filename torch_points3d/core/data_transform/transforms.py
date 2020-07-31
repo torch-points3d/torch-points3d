@@ -632,7 +632,10 @@ class RandomWalkDropout(object):
 
 class SphereDropout(object):
     """
-    drop out of points on random spheres of fixed radius. This function takes n random balls of fixed radius r and drop out points inside these balls.
+    drop out of points on random spheres of fixed radius.
+    This function takes n random balls of fixed radius r and drop
+    out points inside these balls.
+
     Parameters
     ----------
     num_sphere: int, optional
