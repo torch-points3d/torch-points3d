@@ -22,19 +22,101 @@ from torch_points3d.datasets.dataset_factory import instantiate_dataset, get_dat
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.base_dataset import BaseDataset
 
-from torch_points3d.metrics.registration_metrics import estimate_transfo
-from torch_points3d.metrics.registration_metrics import compute_metrics
+from torch_points3d.utils.registration import (
+    estimate_transfo,
+    teaser_pp_registration,
+    fast_global_registration,
+    get_matches,
+)
+from torch_points3d.metrics.registration_metrics import compute_hit_ratio, compute_transfo_error
+
 from torch_points3d.metrics.colored_tqdm import Coloredtqdm as Ctq
 from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 log = logging.getLogger(__name__)
 
 
-def torch2o3d(xyz, color=[1, 0, 0]):
-    pcd = open3d.geometry.PointCloud()
-    pcd.points = open3d.utility.Vector3dVector(xyz.detach().cpu().numpy())
-    pcd.paint_uniform_color(color)
-    return pcd
+def compute_metrics(
+    xyz,
+    xyz_target,
+    feat,
+    feat_target,
+    T_gt,
+    sym=False,
+    tau_1=0.1,
+    tau_2=0.05,
+    rot_thresh=5,
+    trans_thresh=5,
+    use_ransac=False,
+    ransac_thresh=0.02,
+    use_teaser=False,
+    noise_bound_teaser=0.1,
+):
+    """
+    compute all the necessary metrics
+    compute the hit ratio,
+    compute the feat_match_ratio
+
+    using fast global registration
+    compute the translation error
+    compute the rotation error
+    compute rre, and compute the rte
+
+    using ransac
+    compute the translation error
+    compute the rotation error
+    compute rre, and compute the rte
+
+    using Teaser++
+    compute the translation error
+    compute the rotation error
+    compute rre, and compute the rtr
+
+    Parameters
+    ----------
+
+    xyz: torch tensor of size N x 3
+    xyz_target: torch tensor of size N x 3
+
+    feat: torch tensor of size N x C
+    feat_target: torch tensor of size N x C
+
+
+    T_gt; 4 x 4 matrix
+    """
+
+    res = dict()
+
+    matches_pred = get_matches(feat, feat_target, sym=sym)
+
+    hit_ratio = compute_hit_ratio(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 1]], T_gt, tau_1)
+    res["hit_ratio"] = hit_ratio.item()
+    res["feat_match_ratio"] = float(hit_ratio.item() > tau_2)
+
+    # fast global registration
+
+    T_fgr = fast_global_registration(xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 1]])
+    trans_error_fgr, rot_error_fgr = compute_transfo_error(T_fgr, T_gt)
+    res["trans_error_fgr"] = trans_error_fgr.item()
+    res["rot_error_fgr"] = rot_error_fgr.item()
+    res["rre_fgr"] = float(rot_error_fgr.item() < rot_thresh)
+    res["rte_fgr"] = float(trans_error_fgr.item() < trans_thresh)
+
+    # teaser pp
+    if use_teaser:
+        T_teaser = teaser_pp_registration(
+            xyz[matches_pred[:, 0]], xyz_target[matches_pred[:, 1]], noise_bound=noise_bound_teaser
+        )
+        trans_error_teaser, rot_error_teaser = compute_transfo_error(T_teaser, T_gt)
+        res["trans_error_teaser"] = trans_error_teaser.item()
+        res["rot_error_teaser"] = rot_error_teaser.item()
+        res["rre_teaser"] = float(rot_error_teaser.item() < rot_thresh)
+        res["rte_teaser"] = float(trans_error_teaser.item() < trans_thresh)
+
+    if use_ransac:
+        raise NotImplementedError
+
+    return res
 
 
 def run(model: BaseModel, dataset: BaseDataset, device, cfg):
@@ -75,14 +157,9 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
                     use_teaser=cfg.data.use_teaser,
                     noise_bound_teaser=cfg.data.noise_bound_teaser,
                 )
-
                 res = dict(**res, **metric)
-                print(res)
                 list_res.append(res)
-                # pcd = torch2o3d(input.pos, color=[1,0,0])
-                # pcd_t = torch2o3d(input_target.pos, color=[0,1,0])
-                # open3d.visualization.draw_geometries([pcd, pcd_t])
-                # open3d.visualization.draw_geometries([pcd.transform(T_gt.detach().cpu().numpy()),pcd_t])
+
     df = pd.DataFrame(list_res)
     output_path = os.path.join(cfg.training.checkpoint_dir, cfg.data.name, "matches")
     if not os.path.exists(output_path):
