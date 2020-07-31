@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
+torch.manual_seed(0)
 
 from torch_points3d.core.data_transform import (
     instantiate_transform,
@@ -309,11 +310,12 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(len(data.pos) < 100, True)
 
     def test_sphere_dropout(self):
-        tr = SphereDropout(radius=1, num_sphere=1)
+        tr = SphereDropout(radius=1, num_sphere=3)
         pos = torch.randn(100, 3)
         x = torch.randn(100, 6)
         data = Data(pos=pos, x=x)
         data = tr(data)
+        print(data)
         self.assertEqual(len(data.x), len(data.pos))
         self.assertEqual(len(data.x) < 100, True)
         self.assertEqual(len(data.pos) < 100, True)
