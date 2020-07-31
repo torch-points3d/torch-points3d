@@ -315,7 +315,6 @@ class Testhelpers(unittest.TestCase):
         x = torch.randn(100, 6)
         data = Data(pos=pos, x=x)
         data = tr(data)
-        print(data)
         self.assertEqual(len(data.x), len(data.pos))
         self.assertEqual(len(data.x) < 100, True)
         self.assertEqual(len(data.pos) < 100, True)
