@@ -5,6 +5,14 @@ from torch_points3d.core.common_modules import Seq, Identity
 
 
 class SRBlockDown(ME.MinkowskiNetwork):
+    """
+    Resnet block that looks like
+
+    in --- strided conv --- 3x3 (N times) --- sum --
+                         |                     |
+                         |-------- 1x1 --------|
+    """
+
     CONVOLUTION = ME.MinkowskiConvolution
 
     def __init__(self, down_conv_nn=[], kernel_size=2, dilation=1, dimension=3, stride=2, N=1, **kwargs):
@@ -40,7 +48,7 @@ class SRBlockDown(ME.MinkowskiNetwork):
                         self.CONVOLUTION(
                             in_channels=conv1_output,
                             out_channels=down_conv_nn[1],
-                            kernel_size=2,
+                            kernel_size=3,
                             stride=1,
                             dilation=dilation,
                             has_bias=False,
@@ -61,8 +69,8 @@ class SRBlockDown(ME.MinkowskiNetwork):
                     self.CONVOLUTION(
                         in_channels=down_conv_nn[0],
                         out_channels=down_conv_nn[1],
-                        kernel_size=3,
-                        stride=stride,
+                        kernel_size=1,
+                        stride=1,
                         dilation=dilation,
                         has_bias=False,
                         dimension=dimension,
@@ -76,7 +84,7 @@ class SRBlockDown(ME.MinkowskiNetwork):
     def forward(self, x):
         out = self.conv_in(x)
         if self.block:
-            residual = self.downsample(x)
+            residual = self.downsample(out)
             out = self.block(out) + residual
         return out
 
@@ -107,6 +115,6 @@ class SRBlockUp(SRBlockDown):
             inp = x
         out = self.conv_in(inp)
         if self.block:
-            residual = self.downsample(inp)
+            residual = self.downsample(out)
             out = self.block(out) + residual
         return out
