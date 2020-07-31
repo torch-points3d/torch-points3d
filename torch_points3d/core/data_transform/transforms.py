@@ -632,7 +632,7 @@ class RandomWalkDropout(object):
 
 class SphereDropout(object):
     """
-    drop out of points on random spheres of fixed radius
+    drop out of points on random spheres of fixed radius. This function takes n random balls of fixed radius r and drop out points inside these balls.
     Parameters
     ----------
     num_sphere: int, optional
@@ -667,7 +667,10 @@ class SphereDropout(object):
 
 class SphereCrop(object):
     """
-    crop the point cloud on a sphere
+    crop the point cloud on a sphere. this function.
+    takes a ball of radius radius centered on a random point and points
+    outside the ball are rejected.
+
     Parameters
     ----------
     radius: float, optional
@@ -697,7 +700,8 @@ class SphereCrop(object):
 
 class CubeCrop(object):
     """
-    Crop cubically the point cloud
+    Crop cubically the point cloud. This function take a cube of size c
+    centered on a random point, then points outside the cube are rejected.
 
     Parameters
     ----------
