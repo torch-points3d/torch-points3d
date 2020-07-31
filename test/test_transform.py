@@ -295,6 +295,8 @@ class Testhelpers(unittest.TestCase):
         data = Data(pos=pos, x=x)
         data = tr(data)
         self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.x) < 100, True)
+        self.assertEqual(len(data.pos) < 100, True)
 
     def test_sphere_crop(self):
         tr = SphereCrop(radius=0.5)
@@ -303,6 +305,8 @@ class Testhelpers(unittest.TestCase):
         data = Data(pos=pos, x=x)
         data = tr(data)
         self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.x) < 100, True)
+        self.assertEqual(len(data.pos) < 100, True)
 
     def test_sphere_dropout(self):
         tr = SphereDropout(radius=0.5, num_sphere=1)
@@ -311,6 +315,8 @@ class Testhelpers(unittest.TestCase):
         data = Data(pos=pos, x=x)
         data = tr(data)
         self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.x) < 100, True)
+        self.assertEqual(len(data.pos) < 100, True)
 
     def test_density_filter(self):
         tr = DensityFilter(radius_nn=0.04, min_num=6, skip_keys=["dummy"])
@@ -321,6 +327,8 @@ class Testhelpers(unittest.TestCase):
         data = tr(data)
         self.assertEqual(len(data.x), len(data.pos))
         self.assertEqual(len(data.dummy), 10000)
+        self.assertEqual(len(data.x) < 10000, True)
+        self.assertEqual(len(data.pos) < 100, True)
 
 
 if __name__ == "__main__":
