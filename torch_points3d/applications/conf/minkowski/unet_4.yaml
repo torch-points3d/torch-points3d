@@ -13,7 +13,7 @@ down_conv:
             [2*in_feat, 4*in_feat],
             [4*in_feat, 8*in_feat],
         ]
-    kernel_size: [3, 2, 2, 2, 2]
+    kernel_size: [3, 3, 3, 3, 3]
     stride: [1, 2, 2, 2, 2]
 up_conv:
     module_name: SRBlockUp
@@ -26,5 +26,5 @@ up_conv:
             [3*in_feat + in_feat, 3*in_feat],
             [3*in_feat + in_feat, 3*in_feat],
         ]
-    kernel_size: [2, 2, 2, 2, 3]
+    kernel_size: [3, 3, 3, 3, 3]
     stride: [2, 2, 2, 2, 1]
