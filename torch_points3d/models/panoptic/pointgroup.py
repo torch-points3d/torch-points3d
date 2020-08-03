@@ -25,10 +25,10 @@ class PointGroup(BaseModel):
         super(PointGroup, self).__init__(option)
         backbone_options = option.get("backbone", {"architecture": "unet"})
         self.Backbone = Minkowski(
-            backbone_options.architecture,
+            backbone_options.get("architecture", "unet"),
             input_nc=dataset.feature_dimension,
             num_layers=4,
-            config=backbone_options.config,
+            config=backbone_options.get("config", {}),
         )
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
@@ -36,6 +36,7 @@ class PointGroup(BaseModel):
         self.Scorer = Minkowski(
             option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=option.scorer.depth
         )
+        self.Scorer2 = MLP([self.Backbone.output_nc, self.Backbone.output_nc, self.Scorer.output_nc])
         self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
@@ -128,12 +129,12 @@ class PointGroup(BaseModel):
                 coords.append(self.input.coords[cluster])
                 batch.append(i * torch.ones(cluster.shape[0]))
             batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),)
-            score_backbone_out = self.Scorer(batch_cluster)
-            if self._scorer_is_encoder:
+            score_backbone_out = self.Scorer2(batch_cluster.x.to(self.device))
+            if False:
                 cluster_feats = score_backbone_out.x
             else:
                 cluster_feats = scatter(
-                    score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
+                    score_backbone_out, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
                 )
             cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
         else:
