@@ -60,4 +60,12 @@ Transforms
 
 .. autofunction:: torch_points3d.core.data_transform.ScalePos
 
+.. autofunction:: torch_points3d.core.data_transform.RandomWalkDropout
+
+.. autofunction:: torch_points3d.core.data_transform.SphereDropout
+
+.. autofunction:: torch_points3d.core.data_transform.SphereCrop
+
+.. autofunction:: torch_points3d.core.data_transform.CubeCrop
+
 .. autofunction:: torch_points3d.core.data_transform.compute_planarity

@@ -22,7 +22,7 @@ from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
 from .grid_transform import group_data, GridSampling3D, shuffle_data
-
+from .features import Random3AxisRotation
 
 
 
@@ -364,6 +364,9 @@ class RandomScaleAnisotropic:
     def __call__(self, data):
         scale = self.scales[0] + torch.rand((3,)) * (self.scales[1] - self.scales[0])
         data.pos = data.pos * scale
+        if(data.norm is not None):
+            data.norm = data.norm / scale
+            data.norm = torch.nn.functional.normalize(data.norm, dim=1)
         return data
 
     def __repr__(self):
@@ -519,6 +522,7 @@ class ShiftVoxels:
         if self._apply_shift:
             if not hasattr(data, "coords"):
                 raise Exception("should quantize first using GridSampling3D")
+
             if not isinstance(data.coords, torch.IntTensor):
                 raise Exception("The pos are expected to be coordinates, so torch.IntTensor")
             data.coords[:, :3] += (torch.rand(3) * 100).type_as(data.coords)
@@ -538,7 +542,7 @@ class RandomDropout:
         chances of the dropout to be applied
     """
 
-    def __init__(self, dropout_ratio=0.2, dropout_application_ratio=0.5):
+    def __init__(self, dropout_ratio: float = 0.2, dropout_application_ratio: float = 0.5):
         self.dropout_ratio = dropout_ratio
         self.dropout_application_ratio = dropout_application_ratio
 
@@ -554,7 +558,14 @@ class RandomDropout:
         )
 
 
-@numba.jit(nopython=True)
+def apply_mask(data, mask, skip_keys=[]):
+    size_pos = len(data.pos)
+    for k in data.keys:
+        if(size_pos == len(data[k]) and k not in skip_keys):
+            data[k] = data[k][mask]
+    return data
+
+@numba.jit(nopython=True, cache=True)
 def rw_mask(pos, ind, dist, mask_vertices, random_ratio=0.04, num_iter=5000):
     rand_ind = np.random.randint(0, len(pos))
     for _ in range(num_iter):
@@ -577,7 +588,7 @@ class RandomWalkDropout(object):
 
     Parameters
     ----------
-    dropout_ratio : float, optional
+    dropout_ratio: float, optional
         Ratio that gets dropped
     num_iter: int, optional
         number of iterations
@@ -585,13 +596,17 @@ class RandomWalkDropout(object):
         radius of the neighborhood search to create the graph
     max_num: int optional
        max number of neighbors
+    skip_keys: List optional
+        skip_keys where we don't apply the mask
     """
 
-    def __init__(self, dropout_ratio=0.05, num_iter=5000, radius=0.5, max_num=-1):
+    def __init__(self, dropout_ratio: float = 0.05, num_iter: int = 5000,
+                 radius: float = 0.5, max_num: int =- 1, skip_keys: List = []):
         self.dropout_ratio = dropout_ratio
         self.num_iter = num_iter
         self.radius = radius
         self.max_num = max_num
+        self.skip_keys = skip_keys
 
     def __call__(self, data):
 
@@ -606,8 +621,164 @@ class RandomWalkDropout(object):
                        mask,
                        num_iter=self.num_iter,
                        random_ratio=self.dropout_ratio)
-        data.pos = data.pos[mask]
+
+        data = apply_mask(data, mask, self.skip_keys)
+
         return data
 
     def __repr__(self):
-        return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={})".format(self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num)
+        return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={}, skip_keys={})".format(self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num, self.skip_keys)
+
+
+class SphereDropout(object):
+    """
+    drop out of points on random spheres of fixed radius.
+    This function takes n random balls of fixed radius r and drop
+    out points inside these balls.
+
+    Parameters
+    ----------
+    num_sphere: int, optional
+        number of random spheres
+    radius: float, optional
+        radius of the spheres
+    """
+    def __init__(self, num_sphere: int = 10,
+                 radius: float = 5):
+        self.num_sphere = num_sphere
+        self.radius = radius
+
+    def __call__(self, data):
+
+        pos = data.pos
+        list_ind = torch.randint(0, len(pos), (self.num_sphere, ))
+
+        ind, dist = ball_query(data.pos, data.pos[list_ind],
+                               radius=self.radius,
+                               max_num=-1, mode=1)
+        ind = ind[dist[:, 0] > 0]
+        mask = torch.ones(len(pos), dtype=torch.bool)
+        mask[ind[:, 0]] = False
+        data = apply_mask(data, mask)
+
+        return data
+
+    def __repr__(self):
+        return "{}(num_sphere={}, radius={})".format(
+            self.__class__.__name__, self.num_sphere, self.radius)
+
+
+class SphereCrop(object):
+    """
+    crop the point cloud on a sphere. this function.
+    takes a ball of radius radius centered on a random point and points
+    outside the ball are rejected.
+
+    Parameters
+    ----------
+    radius: float, optional
+        radius of the sphere
+    """
+
+    def __init__(self, radius: float = 50):
+        self.radius = radius
+
+    def __call__(self, data):
+        i = torch.randint(0, len(data.pos), (1, ))
+        ind, dist = ball_query(data.pos,
+                               data.pos[i].view(1, 3),
+                               radius=self.radius,
+                               max_num=-1, mode=1)
+        ind = ind[dist[:, 0] > 0]
+        size_pos = len(data.pos)
+        for k in data.keys:
+            if(size_pos == len(data[k])):
+                data[k] = data[k][ind[:, 0]]
+        return data
+
+    def __repr__(self):
+        return "{}(radius={})".format(
+            self.__class__.__name__, self.radius)
+
+
+class CubeCrop(object):
+    """
+    Crop cubically the point cloud. This function take a cube of size c
+    centered on a random point, then points outside the cube are rejected.
+
+    Parameters
+    ----------
+    c: float, optional
+        half size of the cube
+    rot_x: float_otional
+        rotation of the cube around x axis
+    rot_y: float_otional
+        rotation of the cube around x axis
+    rot_z: float_otional
+        rotation of the cube around x axis
+    """
+
+    def __init__(self, c: float = 1,
+                 rot_x: float = 180,
+                 rot_y: float = 180,
+                 rot_z: float = 180):
+        self.c = c
+        self.random_rotation = Random3AxisRotation(
+            rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
+
+    def __call__(self, data):
+        data_temp = data.clone()
+        i = torch.randint(0, len(data.pos), (1, ))
+        center = data_temp.pos[i]
+        min_square = center - self.c
+        max_square = center + self.c
+        data_temp.pos = data_temp.pos - center
+        data_temp = self.random_rotation(data_temp)
+        data_temp.pos = data_temp.pos + center
+        mask = torch.prod((data_temp.pos - min_square)>0, dim=1) * torch.prod(
+            (max_square - data_temp.pos) > 0, dim=1)
+        mask = mask.to(torch.bool)
+        data = apply_mask(data, mask)
+        return data
+
+    def __repr__(self):
+        return "{}(c={}, rotation={})".format(
+            self.__class__.__name__,
+            self.c,
+            self.random_rotation)
+
+
+class DensityFilter(object):
+    """
+    Remove points with a low density(compute the density with a radius search and remove points with)
+    a low number of neighbors
+    Parameter
+    radius_nn: float, optional
+        radius for the neighbors search
+    min_num: int, otional
+        minimum number of neighbors to be dense
+    skip_keys: int, otional
+        list of attributes of data to skip when we apply the mask
+    """
+
+    def __init__(self, radius_nn: float = 0.04,
+                 min_num: int = 6, skip_keys: List = []):
+        self.radius_nn = radius_nn
+        self.min_num = min_num
+        self.skip_keys = skip_keys
+
+    def __call__(self, data):
+
+        ind, dist = ball_query(data.pos, data.pos,
+                               radius=self.radius_nn,
+                               max_num=-1, mode=0)
+
+        mask = ((dist > 0).sum(1) > self.min_num)
+        data = apply_mask(data, mask, self.skip_keys)
+        return data
+
+    def __repr__(self):
+        return "{}(radius_nn={}, min_num={}, skip_keys={})".format(self.__class__.__name__,
+                                                                   self.radius_nn,
+                                                                   self.min_num,
+                                                                   self.skip_keys)

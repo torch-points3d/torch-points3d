@@ -3,12 +3,12 @@ import torch
 import unittest
 import numpy.testing as npt
 
-from torch_points3d.metrics.registration_metrics import estimate_transfo
-from torch_points3d.metrics.registration_metrics import fast_global_registration
+from torch_points3d.utils.registration import estimate_transfo
+from torch_points3d.utils.registration import fast_global_registration
 from torch_points3d.metrics.registration_metrics import compute_hit_ratio
 from torch_points3d.metrics.registration_metrics import compute_transfo_error
-from torch_points3d.metrics.registration_metrics import rodrigues
-from torch_points3d.core.data_transform import euler_angles_to_rotation_matrix
+from torch_points3d.utils.geometry import rodrigues
+from torch_points3d.utils.geometry import euler_angles_to_rotation_matrix
 
 
 class TestRegistrationMetrics(unittest.TestCase):
