@@ -13,7 +13,7 @@ training:
             params:
                 momentum: 0.9
                 lr: ${training.optim.base_lr} # The path is cut from training
-                weight_decay: 1e-4
+                weight_decay: 1e-3
                 dampening: 0.1
         lr_scheduler: ${lr_scheduler}
         bn_scheduler:

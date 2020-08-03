@@ -20,6 +20,10 @@ data:
   train_transform:
     - transform: FixedPoints
       lparams: [40000]
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}

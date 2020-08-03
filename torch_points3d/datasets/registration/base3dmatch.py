@@ -143,6 +143,9 @@ class Base3DMatch(Dataset):
     def download(self):
         # we download the raw RGBD file for the train and the validation data
         folder = osp.join(self.raw_dir, self.mode)
+        if files_exist([folder]):  # pragma: no cover
+            log.warning("already downloaded {}".format(self.mode))
+            return
         log.info("Download elements in the file {}...".format(folder))
         for url in self.dict_urls[self.mode]:
             path = download_url(url, folder, self.verbose)
@@ -331,7 +334,6 @@ class Base3DMatch(Dataset):
         if(self.is_offline):
             log.info("precompute patches and save it")
             self._save_patches(self.mode)
-
 
     def get(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")

@@ -67,11 +67,40 @@ class Random3AxisRotation(object):
             pos = data.pos
             M = self.generate_random_rotation_matrix()
             data.pos = pos @ M.T
+            if(data.norm is not None):
+                data.norm = data.norm @ M.T
         return data
 
     def __repr__(self):
         return "{}(apply_rotation={}, rot_x={}, rot_y={}, rot_z={})".format(
             self.__class__.__name__, self._apply_rotation, self._rot_x, self._rot_y, self._rot_z
+        )
+
+
+class RandomTranslation(object):
+    """
+    random translation
+    Parameters
+    -----------
+    delta_min: list
+        min translation
+    delta_max: list
+        max translation
+    """
+    def __init__(self, delta_max: List = [1.0, 1.0, 1.0],
+                 delta_min: List = [-1.0, -1.0, -1.0]):
+        self.delta_max = torch.tensor(delta_max)
+        self.delta_min = torch.tensor(delta_min)
+
+    def __call__(self, data):
+        pos = data.pos
+        trans = torch.rand(3) * (self.delta_max - self.delta_min) + self.delta_min
+        data.pos = pos + trans
+        return data
+
+    def __repr__(self):
+        return "{}(delta_min={}, delta_max={})".format(
+            self.__class__.__name__, self.delta_min, self.delta_max
         )
 
 
