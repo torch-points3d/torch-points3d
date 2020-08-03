@@ -25,8 +25,8 @@ class ObjectDetectionTracker(BaseTracker):
         super().reset(stage=stage)
         self._pred_boxes: Dict[str, List[BoxData]] = {}
         self._gt_boxes: Dict[str, List[BoxData]] = {}
-        self._rec: Dict[str, float] = {}
-        self._ap: Dict[str, float] = {}
+        self._rec: Dict[str, Dict[str, float]] = {}
+        self._ap: Dict[str, Dict[str, float]] = {}
         self._neg_ratio = tnt.meter.AverageValueMeter()
         self._obj_acc = tnt.meter.AverageValueMeter()
         self._pos_ratio = tnt.meter.AverageValueMeter()
@@ -67,7 +67,7 @@ class ObjectDetectionTracker(BaseTracker):
 
     def _add_box_pred(self, outputs: VoteNetResults, input_data, conv_type):
         # Track box predictions
-        pred_boxes = outputs.get_boxes(self._dataset, apply_nms=True, duplicate_boxes=True)
+        pred_boxes = outputs.get_boxes(self._dataset, apply_nms=True, duplicate_boxes=False)
         if input_data.id_scan is None:
             raise ValueError("Cannot track boxes without knowing in which scan they are")
 
@@ -95,29 +95,34 @@ class ObjectDetectionTracker(BaseTracker):
         metrics["{}_neg".format(self._stage)] = meter_value(self._neg_ratio)
 
         if self._has_box_data:
-            mAP = sum(self._ap.values()) / len(self._ap)
-            metrics["{}_map".format(self._stage)] = mAP
+            for thresh, ap in self._ap.items():
+                mAP = sum(ap.values()) / len(ap)
+                metrics["{}_map{}".format(self._stage, thresh)] = mAP
 
         if verbose and self._has_box_data:
-            metrics["{}_class_rec".format(self._stage)] = self._dict_to_str(self._rec)
-            metrics["{}_class_ap".format(self._stage)] = self._dict_to_str(self._ap)
+            for thresh in self._ap:
+                metrics["{}_class_rec{}".format(self._stage, thresh)] = self._dict_to_str(self._rec[thresh])
+                metrics["{}_class_ap{}".format(self._stage, thresh)] = self._dict_to_str(self._ap[thresh])
 
         return metrics
 
-    def finalise(self, track_boxes=False, overlap_threshold=0.25, **kwargs):
+    def finalise(self, track_boxes=False, overlap_thresholds=[0.25, 0.5], **kwargs):
         if not track_boxes or len(self._gt_boxes) == 0:
             return
 
         # Compute box detection metrics
-        rec, _, ap = eval_detection(self._pred_boxes, self._gt_boxes, ovthresh=overlap_threshold)
-        self._ap = OrderedDict(sorted(ap.items()))
-        self._rec = OrderedDict({})
-        for key, val in sorted(rec.items()):
-            try:
-                value = val[-1]
-            except TypeError:
-                value = val
-            self._rec[key] = value
+        self._ap = {}
+        self._rec = {}
+        for thresh in overlap_thresholds:
+            rec, _, ap = eval_detection(self._pred_boxes, self._gt_boxes, ovthresh=thresh)
+            self._ap[str(thresh)] = OrderedDict(sorted(ap.items()))
+            self._rec[str(thresh)] = OrderedDict({})
+            for key, val in sorted(rec.items()):
+                try:
+                    value = val[-1]
+                except TypeError:
+                    value = val
+                self._rec[str(thresh)][key] = value
 
     @property
     def _has_box_data(self):
