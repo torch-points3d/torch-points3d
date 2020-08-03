@@ -1,43 +1,44 @@
 data:
   task: registration
-  class: general3dmatch.General3DMatchDataset
+  class: modelnet.SiameseModelNetDataset
   dataroot: data
-  name: 3DMatch
+  name: modelnet
+  name_modelnet: "10"
   is_patch: False
-  num_frame_per_fragment: 101
   max_dist_overlap: 0.05
   min_overlap_ratio: 0.3
-  tsdf_voxel_size: 0.006
-  limit_size: 850
-  depth_thresh: 4.5
   first_subsampling: 0.02
-  is_online_matching: False
-  self_supervised: False
-  min_size_block: 0.5
-  max_size_block: 1
+
+  self_supervised: true
+  min_size_block: 1.5
+  max_size_block: 2
   num_pos_pairs: 30000
-  min_points: 400
+  min_points: 500
   num_points: 5000
   tau_1: 0.1
   tau_2: 0.05
   use_ransac: False
   use_teaser: True
   sym: True
-  rot_thresh: 15
-  trans_thresh: 0.3
+  rot_thresh: 4
+  trans_thresh: 0.15
   ransac_thresh: 0.02
   noise_bound_teaser: 0.1
   pre_transform:
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
+  ss_transform:
+    - transform: CubeCrop
+      params:
+        c: 1
   train_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
-      lparams: [20000]
+      lparams: [2048]
     - transform: RandomNoise
       params:
-        sigma: 0.005
+        sigma: 0.01
         clip: 0.05
     - transform: Random3AxisRotation
       params:
@@ -48,6 +49,11 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
@@ -62,14 +68,23 @@ data:
 
   val_transform:
     - transform: SaveOriginalPosId
+    - transform: Center
     - transform: FixedPoints
-      lparams: [20000]
+      lparams: [2048]
+    - transform: CubeCrop
+      params:
+        c: 1
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
         rot_x: 180
         rot_y: 180
         rot_z: 180
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
@@ -83,6 +98,24 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
+    - transform: Center
+    - transform: CubeCrop
+      params:
+        c: 1
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 45
+        rot_y: 45
+        rot_z: 45
+    - transform: RandomTranslation
+      params:
+        delta_min: [-0.5, -0.5, -0.5]
+        delta_max: [0.5, 0.5, 0.5]
     - transform: XYZFeature
       params:
         add_x: True

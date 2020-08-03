@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
-from torch_points3d.metrics.registration_metrics import rodrigues
+from torch_points3d.utils.geometry import rodrigues
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 
 

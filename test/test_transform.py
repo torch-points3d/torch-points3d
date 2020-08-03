@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))
+torch.manual_seed(0)
 
 from torch_points3d.core.data_transform import (
     instantiate_transform,
@@ -30,6 +31,10 @@ from torch_points3d.core.data_transform import (
     XYZFeature,
     ScalePos,
     RandomWalkDropout,
+    SphereCrop,
+    CubeCrop,
+    SphereDropout,
+    DensityFilter,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -283,6 +288,48 @@ class Testhelpers(unittest.TestCase):
         d = Data(pos=torch.tensor([[1, 0, 0], [0, 1, 1]]).float())
         d = tr(d)
         torch.testing.assert_allclose(d.pos, torch.tensor([[2, 0, 0], [0, 2, 2]]).float())
+
+    def test_cube_crop(self):
+        tr = CubeCrop(c=0.5)
+        pos = torch.randn(100, 3)
+        x = torch.randn(100, 6)
+        data = Data(pos=pos, x=x)
+        data = tr(data)
+        self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.x) < 100, True)
+        self.assertEqual(len(data.pos) < 100, True)
+
+    def test_sphere_crop(self):
+        tr = SphereCrop(radius=0.5)
+        pos = torch.randn(100, 3)
+        x = torch.randn(100, 6)
+        data = Data(pos=pos, x=x)
+        data = tr(data)
+        self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.x) < 100, True)
+        self.assertEqual(len(data.pos) < 100, True)
+
+    def test_sphere_dropout(self):
+        tr = SphereDropout(radius=1, num_sphere=3)
+        pos = torch.randn(100, 3)
+        x = torch.randn(100, 6)
+        data = Data(pos=pos, x=x)
+        data = tr(data)
+        self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.x) < 100, True)
+        self.assertEqual(len(data.pos) < 100, True)
+
+    def test_density_filter(self):
+        tr = DensityFilter(radius_nn=0.04, min_num=6, skip_keys=["dummy"])
+        pos = torch.randn(10000, 3)
+        x = torch.randn(10000, 6)
+        dummy = torch.randn(10000, 6)
+        data = Data(pos=pos, x=x, dummy=dummy)
+        data = tr(data)
+        self.assertEqual(len(data.x), len(data.pos))
+        self.assertEqual(len(data.dummy), 10000)
+        self.assertEqual(len(data.x) < 10000, True)
+        self.assertEqual(len(data.pos) < 100, True)
 
 
 if __name__ == "__main__":
