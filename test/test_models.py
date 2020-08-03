@@ -149,9 +149,12 @@ class TestModels(unittest.TestCase):
 
     def test_one_model(self):
         # Use this test to test any model when debugging
-        config = load_model_config("object_detection", "votenet2", "VoteNetPaper")
-        dataset = get_dataset("dense", "object_detection")
+        config = load_model_config("segmentation", "kpconv", "KPConvPaper")
+        config.update("data.first_subsampling", 0.05)
+        config.update("data.use_category", False)
+        dataset = get_dataset("partial_dense", "segmentation")
         model = instantiate_model(config, dataset)
+        print(model)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()
