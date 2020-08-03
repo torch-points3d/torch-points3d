@@ -314,7 +314,7 @@ class TestAPIEncoder(unittest.TestCase):
             architecture="encoder", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertFalse(model.has_mlp_head)
         self.assertEqual(model.output_nc, 8 * in_feat)
@@ -342,7 +342,7 @@ class TestAPIEncoder(unittest.TestCase):
             config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertTrue(model.has_mlp_head)
         self.assertEqual(model.output_nc, output_nc)
