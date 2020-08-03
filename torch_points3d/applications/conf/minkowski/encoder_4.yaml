@@ -4,7 +4,7 @@ define_constants:
     in_feat: 32
 down_conv:
     module_name: SRBlockDown
-    N: [0, 2, 3, 4, 6]
+    N: [0, 1, 2, 2, 3]
     down_conv_nn:
         [
             [FEAT, in_feat],
@@ -13,7 +13,7 @@ down_conv:
             [2*in_feat, 4*in_feat],
             [4*in_feat, 8*in_feat],
         ]
-    kernel_size: [3, 2, 2, 2, 2]
+    kernel_size: [3, 3, 3, 3, 3]
     stride: [1, 2, 2, 2, 2]
 innermost:
     module_name: GlobalBaseModule

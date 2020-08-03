@@ -4,13 +4,74 @@ from .common import NormType, get_norm
 from torch_points3d.core.common_modules import Seq, Identity
 
 
+class ResBlock(ME.MinkowskiNetwork):
+    def __init__(self, input_nc, output_nc, convolution, dimension=3):
+        ME.MinkowskiNetwork.__init__(self, dimension)
+        self.block = (
+            Seq()
+            .append(
+                convolution(
+                    in_channels=input_nc,
+                    out_channels=output_nc,
+                    kernel_size=3,
+                    stride=1,
+                    dilation=1,
+                    has_bias=False,
+                    dimension=dimension,
+                )
+            )
+            .append(ME.MinkowskiBatchNorm(output_nc))
+            .append(ME.MinkowskiReLU())
+            .append(
+                convolution(
+                    in_channels=output_nc,
+                    out_channels=output_nc,
+                    kernel_size=3,
+                    stride=1,
+                    dilation=1,
+                    has_bias=False,
+                    dimension=dimension,
+                )
+            )
+            .append(ME.MinkowskiBatchNorm(output_nc))
+            .append(ME.MinkowskiReLU())
+        )
+
+        if input_nc != output_nc:
+            self.downsample = (
+                Seq()
+                .append(
+                    convolution(
+                        in_channels=input_nc,
+                        out_channels=output_nc,
+                        kernel_size=1,
+                        stride=1,
+                        dilation=1,
+                        has_bias=False,
+                        dimension=dimension,
+                    )
+                )
+                .append(ME.MinkowskiBatchNorm(output_nc))
+            )
+        else:
+            self.downsample = None
+
+    def forward(self, x):
+        out = self.block(x)
+        if self.downsample:
+            out += self.downsample(x)
+        else:
+            out += x
+        return out
+
+
 class SRBlockDown(ME.MinkowskiNetwork):
     """
     Resnet block that looks like
 
-    in --- strided conv --- 3x3 (N times) --- sum --
-                         |                     |
-                         |-------- 1x1 --------|
+    in --- strided conv --- 3x3 - BN - RELU (2 times) --- sum --[... N times]
+                         |                                  |
+                         |--------------- 1x1 --------------|
     """
 
     CONVOLUTION = ME.MinkowskiConvolution
@@ -40,57 +101,21 @@ class SRBlockDown(ME.MinkowskiNetwork):
         )
 
         if N > 0:
-            self.block = Seq()
+            self.blocks = Seq()
             for _ in range(N):
-                self.block.append(
-                    Seq()
-                    .append(
-                        self.CONVOLUTION(
-                            in_channels=conv1_output,
-                            out_channels=down_conv_nn[1],
-                            kernel_size=3,
-                            stride=1,
-                            dilation=dilation,
-                            has_bias=False,
-                            dimension=dimension,
-                        )
-                    )
-                    .append(ME.MinkowskiBatchNorm(down_conv_nn[1]))
-                    .append(ME.MinkowskiReLU())
-                )
+                self.blocks.append(ResBlock(conv1_output, down_conv_nn[1], self.CONVOLUTION, dimension=dimension))
                 conv1_output = down_conv_nn[1]
         else:
-            self.block = None
-
-        if self.block:
-            self.downsample = (
-                Seq()
-                .append(
-                    self.CONVOLUTION(
-                        in_channels=down_conv_nn[0],
-                        out_channels=down_conv_nn[1],
-                        kernel_size=1,
-                        stride=1,
-                        dilation=dilation,
-                        has_bias=False,
-                        dimension=dimension,
-                    )
-                )
-                .append(ME.MinkowskiBatchNorm(down_conv_nn[1]))
-            )
-        else:
-            self.downsample = None
+            self.blocks = None
 
     def forward(self, x):
         out = self.conv_in(x)
-        if self.block:
-            residual = self.downsample(out)
-            out = self.block(out) + residual
+        if self.blocks:
+            out = self.blocks(out)
         return out
 
 
 class SRBlockUp(SRBlockDown):
-
     """
     block for unwrapped Resnet
     """
@@ -113,8 +138,4 @@ class SRBlockUp(SRBlockDown):
             inp = ME.cat(x, skip)
         else:
             inp = x
-        out = self.conv_in(inp)
-        if self.block:
-            residual = self.downsample(out)
-            out = self.block(out) + residual
-        return out
+        return super().forward(inp)
