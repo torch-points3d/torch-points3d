@@ -13,6 +13,14 @@ data:
   first_subsampling: 0.025
   is_online_matching: False
   num_pos_pairs: 30000
+  tau_1: 0.1
+  tau_2: 0.05
+  use_ransac: False
+  use_teaser: False
+  sym: True
+  rot_thresh: 2
+  trans_thresh: 0.1
+  ransac_thresh: 0.02
   pre_transforms:
     - transform: GridSampling3D
       params:
@@ -36,7 +44,7 @@ data:
       params:
         scales: [0.9,1.2]
 
-  test_transform:
+  val_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [16384]
@@ -47,3 +55,9 @@ data:
         rot_x: 180
         rot_y: 180
         rot_z: 180
+
+  test_transform:
+    - transform: SaveOriginalPosId
+    - transform: FixedPoints
+      lparams: [16384]
+    - transform: Center

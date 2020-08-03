@@ -142,22 +142,24 @@ def filter_pair(pair, dist):
     return pair
 
 
-def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=False, num_pos=1, rot_gt=torch.eye(3)):
+def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=False, num_pos=1, trans_gt=torch.eye(4)):
 
     # we can use ball query on cpu because the points are sorted
     # print(len(data1.pos), len(data2.pos), max_distance_overlap)
-    pair, dist = ball_query(data2.pos.to(torch.float),
-                            data1.pos.to(torch.float) @ rot_gt.T,
-                            radius=max_distance_overlap,
-                            max_num=num_pos, mode=1, sorted=True)
+    pair, dist = ball_query(
+        data2.pos.to(torch.float),
+        data1.pos.to(torch.float) @ trans_gt[:3, :3].T + trans_gt[:3, 3],
+        radius=max_distance_overlap,
+        max_num=num_pos, mode=1, sorted=True)
     pair = filter_pair(pair, dist)
     pair2 = []
     overlap = [pair.shape[0] / len(data1.pos)]
     if reciprocity:
-        pair2, dist2 = ball_query(data1.pos.to(torch.float) @ rot_gt.T,
-                                  data2.pos.to(torch.float),
-                                  radius=max_distance_overlap,
-                                  max_num=num_pos, mode=1, sorted=True)
+        pair2, dist2 = ball_query(
+            data1.pos.to(torch.float) @ trans_gt[:3, :3].T + trans_gt[:3, 3],
+            data2.pos.to(torch.float),
+            radius=max_distance_overlap,
+            max_num=num_pos, mode=1, sorted=True)
         pair2 = filter_pair(pair2, dist2)
         overlap.append(pair2.shape[0] / len(data2.pos))
     # overlap = pair.shape[0] / \
