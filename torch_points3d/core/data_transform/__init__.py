@@ -8,6 +8,7 @@ from .inference_transforms import *
 from .feature_augment import *
 from .features import *
 from .filters import *
+from .precollate import *
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]

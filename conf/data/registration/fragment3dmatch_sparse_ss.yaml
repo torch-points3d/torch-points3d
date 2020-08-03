@@ -5,41 +5,55 @@ data:
   name: 3DMatch
   is_patch: False
   num_frame_per_fragment: 101
-  max_dist_overlap: 0.04
-  min_overlap_ratio: 0.2
+  max_dist_overlap: 0.05
+  min_overlap_ratio: 0.3
   tsdf_voxel_size: 0.006
   limit_size: 850
   depth_thresh: 4.5
-  first_subsampling: 0.03
+  first_subsampling: 0.02
   is_online_matching: False
+  self_supervised: true
+  min_size_block: 1.5
+  max_size_block: 2
   num_pos_pairs: 30000
+  min_points: 700
   num_points: 5000
   tau_1: 0.1
   tau_2: 0.05
   use_ransac: False
   use_teaser: True
   sym: True
-  rot_thresh: 2
-  trans_thresh: 0.1
+  rot_thresh: 4
+  trans_thresh: 0.15
   ransac_thresh: 0.02
   noise_bound_teaser: 0.1
-  pre_transforms:
+  pre_transform:
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
-        mode: "mean"
+  ss_transform:
+    - transform: CubeCrop
+      params:
+        c: 1
+    - transform: CubeCrop
+      params:
+        c: 1.5
   train_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
-    - transform: GridSampling3D
+    - transform: RandomWalkDropout
       params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: "last"
+        dropout_ratio: 2e-5
+        num_iter: 6e3
+        radius: 0.035
+    - transform: DensityFilter
+      params:
+        radius_nn: 0.08
+        min_num: 16
     - transform: RandomNoise
       params:
-        sigma: 0.005
+        sigma: 0.01
         clip: 0.05
     - transform: Random3AxisRotation
       params:
@@ -50,6 +64,17 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
+    - transform: ShiftVoxels
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -61,17 +86,22 @@ data:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [20000]
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: "last"
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
         rot_x: 180
         rot_y: 180
         rot_z: 180
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
@@ -80,10 +110,21 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 180
+        rot_y: 180
+        rot_z: 180
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
-        quantize_coords: False
+        quantize_coords: True
         mode: "last"
     - transform: AddOnes
     - transform: AddFeatByKey
