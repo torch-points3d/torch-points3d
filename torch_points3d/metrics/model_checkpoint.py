@@ -223,7 +223,7 @@ class ModelCheckpoint(object):
     def _initialize_model(self, model: model_interface.CheckpointInterface, weight_name):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
-            model.load_state_dict(state_dict)
+            model.load_state_dict(state_dict, strict=False)
             if self._resume:
                 model.optimizer = self._checkpoint.get_optimizer(model)
                 model.schedulers = self._checkpoint.get_schedulers(model)
