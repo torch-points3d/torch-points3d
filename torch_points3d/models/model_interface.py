@@ -25,7 +25,6 @@ class CheckpointInterface(ABC):
     def state_dict(self):
         pass
 
-    @abstractmethod
     def load_state_dict(self, state, strict=False):
         pass
 

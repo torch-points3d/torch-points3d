@@ -1,10 +1,9 @@
-
 data:
   class: scannet.ScannetDataset
-  dataset_name: 'scannet-sparse'
+  dataset_name: "scannet-sparse"
   task: object_detection
   dataroot: data
-  version: 'v2'
+  version: "v2"
   use_instance_labels: True
   use_instance_bboxes: True
   donotcare_class_ids: []
@@ -18,7 +17,6 @@ data:
       lparams: [0.02]
 
   train_transform:
-    - transform: RandomDropout
     - transform: XYZFeature
       params:
         add_x: True
@@ -30,14 +28,14 @@ data:
         clip: 0.05
     - transform: RandomScaleAnisotropic
       params:
-        scales: [0.8, 1.2]
+        scales: [0.9, 1.1]
     - transform: RandomSymmetry
       params:
         axis: [True, False, False]
     - transform: Random3AxisRotation
       params:
-        rot_x: 5
-        rot_y: 5
+        rot_x: 2
+        rot_y: 2
         rot_z: 180
     - transform: GridSampling3D
       params:
@@ -45,17 +43,15 @@ data:
         quantize_coords: True
         mode: ${data.mode}
     - transform: FixedPoints
-      lparams: [100000]
+      lparams: [50000]
       params:
         replace: False
     - transform: ShiftVoxels
-    - transform: ChromaticTranslation
-    - transform: ChromaticJitter
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True,True,True]
-        feat_names: ['rgb','pos_x','pos_y', 'pos_z']
-        delete_feats: [True, True, True,True]
+        list_add_to_x: [True, True, True]
+        feat_names: ["pos_x", "pos_y", "pos_z"]
+        delete_feats: [True, True, True]
 
   val_transform:
     - transform: XYZFeature
@@ -69,11 +65,11 @@ data:
         quantize_coords: True
         mode: ${data.mode}
     - transform: FixedPoints
-      lparams: [100000]
+      lparams: [50000]
       params:
         replace: False
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True,True,True]
-        feat_names: ['rgb','pos_x','pos_y', 'pos_z']
-        delete_feats: [True, True, True,True]
+        list_add_to_x: [True, True, True]
+        feat_names: ["pos_x", "pos_y", "pos_z"]
+        delete_feats: [True, True, True]
