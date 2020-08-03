@@ -37,18 +37,15 @@ class ScannetObjectDetection(Scannet):
         "bathtub": 16,
         "garbagebin": 17,
     }
-    NYU40IDS = np.array([3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                         14, 16, 24, 28, 33, 34, 36, 39])
+    NYU40IDS = np.array([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
     MEAN_COLOR_RGB = np.array([109.8, 97.2, 83.8])
 
     def __init__(self, *args, **kwargs):
         super(ScannetObjectDetection, self).__init__(*args, **kwargs)
 
         self.CLASS2TYPE = {self.TYPE2CLASS[t]: t for t in self.TYPE2CLASS}
-        self.NYU40ID2CLASS = {nyu40id: i for i,
-                              nyu40id in enumerate(list(self.NYU40IDS))}
-        self.MEAN_SIZE_ARR = np.load(os.path.join(
-            DIR, "scannet_metadata/scannet_means.npz"))["arr_0"]
+        self.NYU40ID2CLASS = {nyu40id: i for i, nyu40id in enumerate(list(self.NYU40IDS))}
+        self.MEAN_SIZE_ARR = np.load(os.path.join(DIR, "scannet_metadata/scannet_means.npz"))["arr_0"]
         self.TYPE_MEAN_SIZE = {}
         for i in range(len(self.NYU40IDS)):
             self.TYPE_MEAN_SIZE[self.CLASS2TYPE[i]] = self.MEAN_SIZE_ARR[i, :]
@@ -116,8 +113,7 @@ class ScannetObjectDetection(Scannet):
                 point_votes[ind, :] = center - pos
                 point_votes_mask[ind] = True
                 box_size = max_pox - min_pos
-                instance_box_corners.append(
-                    box_corners_from_param(box_size, 0, center))
+                instance_box_corners.append(box_corners_from_param(box_size, 0, center))
                 box_sizes.append(box_size)
                 centers.append(center)
                 instance_classes.append(self.NYU40ID2CLASS[instance_class])
@@ -137,8 +133,7 @@ class ScannetObjectDetection(Scannet):
         if num_instances > 0:
             box_sizes = torch.stack(box_sizes)
             centers = torch.stack(centers)
-            size_residuals[0:num_instances, :] = box_sizes - \
-                torch.from_numpy(self.MEAN_SIZE_ARR[instance_classes, :])
+            size_residuals[0:num_instances, :] = box_sizes - torch.from_numpy(self.MEAN_SIZE_ARR[instance_classes, :])
             center_label[0:num_instances, :] = centers
 
         data.center_label = center_label
@@ -152,17 +147,16 @@ class ScannetObjectDetection(Scannet):
         data.vote_label_mask = point_votes_mask
         data.instance_box_corners = torch.zeros((self.MAX_NUM_OBJ, 8, 3))
         if len(instance_box_corners):
-            data.instance_box_corners[: len(instance_box_corners), :, :] = torch.stack(
-                instance_box_corners)
+            data.instance_box_corners[: len(instance_box_corners), :, :] = torch.stack(instance_box_corners)
 
         delattr(data, "instance_bboxes")
         delattr(data, "instance_labels")
-        delattr(data, "y")
+
+        # Remap labels
+        data.y = super()._remap_labels(data.y)
         return data
 
     def _remap_labels(self, semantic_label):
-        log.info(
-            "Keeping original labels in y. Please do not use data.y in your network.")
         return semantic_label
 
     def process(self):
@@ -178,8 +172,7 @@ class ScannetDataset(BaseDataset):
 
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
-        donotcare_class_ids: [
-        ] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
+        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
         max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
         is_test: bool = dataset_opt.is_test if dataset_opt.is_test is not None else False
 
@@ -222,8 +215,7 @@ class ScannetDataset(BaseDataset):
     def class2size(self, pred_cls, residual):
         """ Inverse function to size2class """
         if torch.is_tensor(residual):
-            mean = torch.tensor(
-                self.mean_size_arr[pred_cls, :]).to(residual.device)
+            mean = torch.tensor(self.mean_size_arr[pred_cls, :]).to(residual.device)
         else:
             mean = self.mean_size_arr[pred_cls, :]
         return mean + residual
