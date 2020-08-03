@@ -1,6 +1,10 @@
 import logging
 import numpy as np
 import torch
+import os
+from torch_geometric.data import Data
+
+from torch_points3d.datasets.object_detection.box_data import BoxData
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications import models
 import torch_points3d.modules.VoteNet as votenet_module
@@ -36,6 +40,7 @@ class VoteNetModel(BaseModel):
         - define loss function, visualization images, model names, and optimizers
         """
         super(VoteNetModel, self).__init__(option)
+        self._dataset = dataset
 
         # 1 - CREATE BACKBONE MODEL
         input_nc = dataset.feature_dimension
@@ -98,6 +103,8 @@ class VoteNetModel(BaseModel):
 
         # Set output and compute losses
         self.output = outputs
+        with torch.no_grad():
+            self._dump_visuals()
         self._compute_losses()
 
     def _compute_losses(self):
@@ -108,6 +115,30 @@ class VoteNetModel(BaseModel):
                     self.loss_names += [loss_name]
                 setattr(self, loss_name, loss)
         self.losses_has_been_added = True
+
+    def _dump_visuals(self):
+        if True:
+            return
+        if not hasattr(self, "visual_count"):
+            self.visual_count = 0
+
+        pred_boxes = self.output.get_boxes(self._dataset, apply_nms=True)
+        gt_boxes = []
+
+        for idx in range(len(pred_boxes)):
+            # Ground truth
+            sample_boxes = self.input.instance_box_corners[idx]
+            sample_boxes = sample_boxes[self.input.box_label_mask[idx]]
+            sample_labels = self.input.sem_cls_label[idx]
+            gt_box_data = [BoxData(sample_labels[i].item(), sample_boxes[i]) for i in range(len(sample_boxes))]
+            gt_boxes.append(gt_box_data)
+
+        data_visual = Data(pos=self.input.pos, batch=self.input.batch, gt_boxes=gt_boxes, pred_boxes=pred_boxes)
+
+        if not os.path.exists("viz"):
+            os.mkdir("viz")
+        torch.save(data_visual.to("cpu"), "viz/data_%i.pt" % (self.visual_count))
+        self.visual_count += 1
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
