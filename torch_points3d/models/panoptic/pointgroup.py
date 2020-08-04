@@ -46,7 +46,7 @@ class PointGroup(BaseModel):
             Seq()
             .append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
             .append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes))
-            .append(torch.nn.LogSoftmax())
+            .append(torch.nn.LogSoftmax(dim=-1))
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
         stuff_classes = dataset.stuff_classes
