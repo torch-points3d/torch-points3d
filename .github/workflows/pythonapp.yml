@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-            python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install system dependencies
         run: sudo apt-get install libopenblas-dev
@@ -39,7 +39,7 @@ jobs:
           source ${pythonEnv}/bin/activate
           python -m pip install -U pip
           pip install setuptools>=41.0.0
-          pip install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+          pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
           pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
           pip install .
         env:

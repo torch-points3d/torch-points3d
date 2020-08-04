@@ -14,7 +14,7 @@ from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 from test.utils import test_hasgrad
 
 from torch_points3d.models.model_factory import instantiate_model
-from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling3D
+from torch_points3d.core.data_transform import XYZFeature, GridSampling3D
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
