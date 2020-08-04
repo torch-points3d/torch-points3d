@@ -11,7 +11,7 @@ from torch_points3d.models.base_architectures import UnetBasedModel
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.applications.modelfactory import ModelFactory
 from torch_points3d.core.data_transform import AddOnes
-from torch_points3d.core.spatial_ops import RandomSamplerToDense
+from torch_points3d.modules.VoteNet.dense_samplers import RandomSamplerToDense
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))

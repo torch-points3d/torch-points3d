@@ -69,6 +69,7 @@ where each folder contains the dataset related to each task.
 - **[VoteNet](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection/votenet.py)** from Charles R. Qi _et al._: [Deep Hough Voting for 3D Object Detection in Point Clouds](https://arxiv.org/abs/1904.09664) (ICCV 19)
 - **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
 - **[PointGroup](https://github.com/Jia-Research-Lab/PointGroup)** from Li Jiang _et al._: [PointGroup: Dual-Set Point Grouping for 3D Instance Segmentation](https://arxiv.org/abs/2004.01658)
+- **[PPNet (PosPool)](https://github.com/zeliu98/CloserLook3D)** from Ze Liu _et al._: [A Closer Look at Local Aggregation Operators in Point Cloud Analysis](https://arxiv.org/pdf/2007.01294.pdf) (ECCV 2020)
 
 ## Available Tasks
 

@@ -27,7 +27,6 @@ from torch_points3d.core.data_transform import (
     ShiftVoxels,
     PCACompute,
     RandomCoordsFlip,
-    RemoveDuplicateCoords,
     XYZFeature,
     ScalePos,
     RandomWalkDropout,
@@ -179,13 +178,6 @@ class Testhelpers(unittest.TestCase):
         for key in keys[mask]:
             self.assertNotIn(key, list(data_out.keys))
 
-    def test_RemoveDuplicateCoords(self):
-        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(pos=torch.from_numpy(indices))
-        transform = RemoveDuplicateCoords()
-        data_out = transform(data)
-        self.assertEqual(data_out.pos.shape[0], 5)
-
     def test_dropout(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
         data = Data(pos=torch.from_numpy(indices))
@@ -291,12 +283,12 @@ class Testhelpers(unittest.TestCase):
         torch.testing.assert_allclose(d.pos, torch.tensor([[2, 0, 0], [0, 2, 2]]).float())
 
     def test_normalizeFeature(self):
-        tr = NormalizeFeature(feature_name='new_feature', standardize=False)
-        d = Data(new_feature=torch.tensor([[-3,-2,-1,0,1,2]]).float())
+        tr = NormalizeFeature(feature_name="new_feature", standardize=False)
+        d = Data(new_feature=torch.tensor([[-3, -2, -1, 0, 1, 2]]).float())
         d = tr(d)
         torch.testing.assert_allclose(d.new_feature, torch.tensor([[0, 0.2, 0.4, 0.6, 0.8, 1]]).float())
 
-        tr = NormalizeFeature(feature_name='new_feature', standardize=True)
+        tr = NormalizeFeature(feature_name="new_feature", standardize=True)
         d = Data(new_feature=torch.tensor([[0, 1]]).float())
         d = tr(d)
         torch.testing.assert_allclose(d.new_feature, (d.new_feature - d.new_feature.mean()) / d.new_feature.std())

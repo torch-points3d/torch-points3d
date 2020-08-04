@@ -47,7 +47,10 @@ class Trainer:
         # Enable CUDNN BACKEND
         torch.backends.cudnn.enabled = self.enable_cudnn
         if not self.has_training:
+            resume = False
             self._cfg.training = self._cfg
+        else:
+            resume = bool(self._cfg.training.checkpoint_dir)
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
@@ -73,7 +76,7 @@ class Trainer:
             self._cfg.model_name,
             self._cfg.training.weight_name,
             run_config=self._cfg,
-            resume=bool(self._cfg.training.checkpoint_dir),
+            resume=resume,
         )
 
         # Create model and datasets
