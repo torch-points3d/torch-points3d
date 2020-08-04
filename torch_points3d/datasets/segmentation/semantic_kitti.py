@@ -1,6 +1,3 @@
-"""
-Dataset related entries
-"""
 labels = { 
   0 : "unlabeled",
   1 : "outlier",
@@ -112,9 +109,7 @@ content = {
   259: 4.3840131989471124e-05
 }
 
-"""
-some objects are not identifiable from a single scan and hence are mapped to their closest class
-"""
+# objects which are not identifiable from a single scan are mapped to their closest
 learning_map = {
   0 : 0,     # "unlabeled"
   1 : 0,     # "outlier" mapped to "unlabeled" --------------------------mapped
@@ -175,7 +170,7 @@ learning_map_inv = {
   19: 81     # "traffic-sign"
 }
 
-# Ignore classes
+# classes to ignore
 learning_ignore = { 
   0: True,      # "unlabeled", and others ignored
   1: False,     # "car"
@@ -198,59 +193,129 @@ learning_ignore = {
   18: False,    # "pole"
   19: False     # "traffic-sign"
 }
-# sequence numbers
+# sequences in split types
 split = { 
   "train" : [0,1,2,3,4,5,6,7,9,10],
   "valid" : [8],
   "test"  : [11,12,13,14,15,16,17,18,19,20,21]
 }
-
+# sensor configuration
 sensor_config = {
     "name": "HDL64",
     "type": "spherical",
     "fov_up": 3,
     "fov_down": -25
 }
+# projected image properties
 img_prop = {
-    "width": 1024,
-    "height": 64,
     # range, x, y, z signal
     "img_means": [12.12, 10.88, 0.23, -1.04, 0.21],
     "img_stds": [12.32, 11,47, 6,91, 0.86, 0.16] 
 }
 
-import numpy as np
-from torch.utils.data.dataset import Dataset
+from torch_geometric.data import Dataset
 import os
 from glob import glob
-import torch
+import numpy as np
 
-class LidarScan:
+class SemanticKitti(Dataset):
+    r"""SemanticKITTI: A Dataset for Semantic Scene Understanding of LiDAR Sequences"
+    from the <https://arxiv.org/pdf/1904.01416.pdf> paper, 
+    containing about 21 lidar scan sequences with dense point-wise annotations.
+    
+    root dir should be structured as
+    rootdir
+        └── sequences/
+            ├── 00/
+            │   ├── labels/
+            │   │     ├ 000000.label
+            │   │     └ 000001.label
+            │   └── velodyne/
+            │         ├ 000000.bin
+            │         └ 000001.bin
+            ├── 01/
+            ├── 02/
+            .
+            .
+            .
+            └── 21/
+
+    Args:
+        root (string): Root directory of the dataset.
+        split (string, optional): If :obj:`"train"`, loads the training
+            dataset.
+            If :obj:`"val"`, loads the validation dataset.
+            If :obj:`"trainval"`, loads the training and validation dataset.
+            If :obj:`"test"`, loads the test dataset.
+            (default: :obj:`"trainval"`)
+        transform (callable, optional): A function/transform that takes in an
+            :obj:`torch_geometric.data.Data` object and returns a transformed
+            version. The data object will be transformed before every access.
+            (default: :obj:`None`)
     """
-    class for handling lidar scans and corresponding labels
-    inputs: H, W - height, width of projected image
-            FOV_UP, FOV_DOWN - field of view in upward and downward direction for a vertical lidar
-    """
-    def __init__(self, H, W, FOV_UP, FOV_DOWN):
-    
-        self.H = H
-        self.W = W
-        self.FOV_UP = FOV_UP/180*np.pi # convert to radians
-        self.FOV_DOWN = FOV_DOWN/180*np.pi
-        self.FOV = abs(self.FOV_UP) + abs(self.FOV_DOWN)
-    
-    def populate_colormap(self):
-        """
-        populate colormaps - both reduced and complete color map in RGB.
-        """
-        self.colormap = np.zeros((max(list(learning_map.keys()))+1, 3), dtype=np.float32)
-        for key, value in color_map.items():
-            value = [value[i] for i in [2,1,0]]
-            self.colormap[key] = np.array(value, np.float32) / 255.0
-        self.reduced_colormap = np.zeros((max(list(learning_map_inv.keys()))+1, 3), dtype=np.float32)
-        for red_cl, map_cl in learning_map_inv.items():
-            self.reduced_colormap[red_cl] = self.colormap[map_cl]
-    
+
+    LABELS = labels
+    COLOR_MAP = color_map
+    CONTENT = content
+    LEARNING_MAP = learning_map
+    LEARNING_MAP_INV = learning_map_inv
+    LEARNING_IGNORE = learning_ignore
+    SPLIT = split
+
+    def __init__(
+            self,
+            root,
+            split="trainval",
+            transform=None,
+            is_test=False,
+            normalise=True
+        ):
+        super(SemanticKittiDataset, self).__init__(
+            root, transform)
+        
+        self.normalise = normalise
+        self.populate_colormap()
+
+        if split == "train":
+            self.scan_path = []
+            for seq in self.SPLIT["train"]:
+                self.scan_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "velodyne", '*.bin'))))
+            self.label_path = []
+            for seq in self.SPLIT["train"]:
+                self.label_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "labels", '*.label'))))
+            if len(self.scan_path)!=len(self.label_path):
+                raise ValueError((f"number of scans {len(self.scan_path)} not equal to number of labels {len(self.label_path)}"))
+
+        elif split == "val":
+            self.scan_path = []
+            for seq in self.SPLIT["val"]:
+                self.scan_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "velodyne", '*.bin'))))
+            self.label_path = []
+            for seq in self.SPLIT["val"]:
+                self.label_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "labels", '*.label'))))
+            if len(self.scan_path)!=len(self.label_path):
+                raise ValueError((f"number of scans {len(self.scan_path)} not equal to number of labels {len(self.label_path)}"))
+
+        elif split == "test":
+            self.scan_path = []
+            for seq in self.SPLIT["test"]:
+                self.scan_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "velodyne", '*.bin'))))
+            self.label_path = None
+
+        elif split == "trainval":
+            self.scan_path = []
+            for seq in self.SPLIT["train"] + self.SPLIT["val"]:
+                self.scan_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "velodyne", '*.bin'))))
+            self.label_path = []
+            for seq in self.SPLIT["train"] + self.SPLIT["val"]:
+                self.label_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "labels", '*.label'))))
+            if len(self.scan_path)!=len(self.label_path):
+                raise ValueError((f"number of scans {len(self.scan_path)} not equal to number of labels {len(self.label_path)}"))
+
+        else:
+            raise ValueError(
+                (f"Split {split} found, but expected either " "train, val, trainval or test"))
+
     def open_scan(self, file_name):
         """
         open scan file - [x, y, z, remissions]
@@ -272,170 +337,107 @@ class LidarScan:
         semantic_label = label & 0xFFFF
         instance_label = label >> 16
         return semantic_label, instance_label
+
+    def __getitem__(self, idx):
+        pts, rem = self.open_scan(self.scan_path[idx])
+        sem_label = None
+        if self.label_path is not None:
+            sem_label, _ = self.open_label(self.label_path[idx])
+        if self.transform is None:
+            data = {"pts": pts, "rem": rem, "sem_label": sem_label}
+        else:
+            proj, proj_label, _, _, _, _, _ = self.transform(pts, rem, sem_label, self.normalise)
+            data = {"proj_img": proj, "proj_label": proj_label}
+        return data
     
-    def project_scan(self, unproj_points, unproj_remissions):
-        """
-        project the lidar scan to a spherical image
-        return ordered points, ordered remissions, projected range, projected xyz, projected remissions, projected index, projected mask, proj_x (index mapping to image width), proj_y (index mapping to image height)
-        """
-        depth = np.linalg.norm(unproj_points, 2, axis=1) # calculate depth
-        # get x, y, z seperately
-        scan_x, scan_y, scan_z = unproj_points[:, 0], unproj_points[:, 1], unproj_points[:, 2]
-        yaw = -np.arctan2(scan_y, scan_x) # yaw angle -> -tan-1(left/forward) -> (-pi,pi)
-        pitch = np.arcsin(scan_z/depth) # pitch angle -> sin-1(top/depth)
-
-        proj_x = 0.5*(yaw/np.pi+1.0) # yaw/pi + 1 --> (0,2)/2 -> (0,1)
-        proj_x = np.floor(proj_x*self.W) # convert to (0,W) and find nearest integer
-        proj_x = np.minimum(self.W-1, proj_x) # ensure values lie in range
-        proj_x = np.maximum(0, proj_x).astype(np.int32) 
-
-        proj_y = (abs(self.FOV_UP)-pitch)/self.FOV # convert pitch values to 0,1
-        proj_y = np.floor(proj_y*self.H) # convert to (0,H) and find nearest integer
-        proj_y = np.minimum(self.H-1, proj_y) # ensure values lie in range
-        proj_y = np.maximum(0, proj_y).astype(np.int32) 
-
-        # order by decreasing depth
-        indices = np.arange(depth.shape[0])
-        order = np.argsort(depth)[::-1]
-        depth = depth[order]
-        indices = indices[order]
-        points = unproj_points[order]
-        remissions = unproj_remissions[order]
-        proj_x = proj_x[order]
-        proj_y = proj_y[order]
-
-        # initializing empty arrays
-        proj_range = np.full((self.H, self.W), -1, dtype=np.float32)
-        proj_xyz = np.full((self.H, self.W, 3), -1, dtype=np.float32)
-        proj_remissions = np.full((self.H, self.W), -1, dtype=np.float32)
-        proj_index = np.full((self.H, self.W), -1, dtype=np.int32)
-
-        # assigning values!
-        proj_range[proj_y, proj_x] = depth
-        proj_xyz[proj_y, proj_x] = points
-        proj_remissions[proj_y, proj_x] = remissions
-        proj_index[proj_y, proj_x] = indices
-        proj_mask = (proj_index >= 0).astype(np.bool)
-
-        return points, remissions, proj_range, proj_xyz, proj_remissions, proj_index, proj_mask, proj_x, proj_y
-
-    def project_sem_label(self, proj_index, proj_mask, unproj_sem_label):
-        """
-        project label for corresponding scan
-        """
-        proj_sem_label = np.zeros((self.H, self.W), dtype=np.int32)
-        proj_sem_label[proj_mask] = unproj_sem_label[proj_index[proj_mask]]
-        return proj_sem_label
+    def download(self):
+        url = "http://semantic-kitti.org/"
+        print(f"please download the dataset from {url} with the following folder structure")
+        print("""
+                rootdir
+                    └── sequences/
+                        ├── 00/
+                        │   ├── labels/
+                        │   │     ├ 000000.label
+                        │   │     └ 000001.label
+                        │   └── velodyne/
+                        │         ├ 000000.bin
+                        │         └ 000001.bin
+                        ├── 01/
+                        ├── 02/
+                        .
+                        .
+                        .
+                        └── 21/
+            """)
     
-    def colorise_points(self, unproj_label, reduced=True):
-        """
-        returns color labels for unprojected points. reduced=True/False based on reduced color map requirement
-        """
+    def convert_labels(self, labels, reduced=True):
         if reduced:
-            unproj_label = np.vectorize(learning_map.get)(unproj_label)
-            colored_unproj_label = self.reduced_colormap[unproj_label]
+            return np.vectorize(self.LEARNING_MAP.get)(labels)
         else:
-            colored_unproj_label = self.colormap[unproj_label]
-        return colored_unproj_label
+            return np.vectorize(self.LEARNING_MAP_INV.get)(labels)
     
-    def unproject_labels(self, proj_label, proj_x, proj_y):
-        """
-        unproject projected labels
-        """
-        return proj_label[proj_y, proj_x]
+    def populate_colormap(self):
+        self.CMAP = np.zeros((max(list(self.LEARNING_MAP.keys()))+1, 3), dtype=np.float32)
+        for key, value in self.COLOR_MAP.items():
+            value = [value[i] for i in [2,1,0]]
+            self.CMAP[key] = np.array(value, np.float32) / 255.0
     
-    def colorise_projection(self, proj_label, proj_mask, reduced=True):
-        """
-        colorise projected image
-        """
-        proj_color_labels = np.zeros((self.H, self.W, 3), dtype=np.float)
-        if reduced:
-            proj_label = np.vectorize(learning_map.get)(proj_label)
-            proj_color_labels[proj_mask] = self.reduced_colormap[proj_label[proj_mask]]
+    def colorise(self, labels):
+        if len(labels.shape)>1:
+            proj_color_labels = np.zeros((self.H, self.W, 3), dtype=np.float)
+            proj_labels = self.convert_labels(labels, False) # sanity check
+            proj_color_labels = self.CMAP[labels]
+            return proj_color_labels
         else:
-            proj_color_labels[proj_mask] = self.colormap[proj_label[proj_mask]]
-        return proj_color_labels
+            labels = self.convert_labels(labels, False) # sanity check
+            color_labels = self.CMAP[labels]
+            return color_labels
 
+class SemanticKittiDataset(BaseDataset):
+    """ Wrapper around Semantic Kitti that creates train and test datasets.
 
-class SemanticKitti(Dataset):
-    def __init__(self, base_dir, sensor_config, mode=None):
-        self.base_dir = base_dir
-        if mode == None:
-            self.mode = "train"
-        else:
-            self.mode = mode
-        self.train_scans, self.train_labels = self.get_filenames(split["train"])
-        self.val_scans, self.val_labels = self.get_filenames(split["valid"])
-        self.test_scans = self.get_filenames(split["test"], False)
-        self.lidar_scan = LidarScan(img_prop["height"], img_prop["width"], sensor_config["fov_up"], sensor_config["fov_down"])
-        self.sensor_means = torch.tensor(sensor_config["img_means"], dtype=torch.float)
-        self.sensor_stds = torch.tensor(sensor_config["img_stds"], dtype=torch.float)
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
 
-    def get_filenames(self, sequences, labels=True):
-        velodyne_files = []
-        label_files = []
-        for sequence in sequences:
-            velodyne_dir = os.path.join(self.base_dir, "{0:02d}".format(int(sequence)), "velodyne")
-            v = sorted(glob(os.path.join(velodyne_dir, '*.bin')))
-            velodyne_files.extend(v)
-            if labels:
-                label_dir = os.path.join(self.base_dir, "{0:02d}".format(int(sequence)), "labels")
-                l = sorted(glob(os.path.join(label_dir, '*.label')))
-                label_files.extend(l)
-                if len(v) != len(l):
-                    raise Exception("Sequence {} has unequal label and velodyne files")
-            print("Sequence {} has {} files".format(sequence, len(v)))
-        if labels:
-            return velodyne_files, label_files
-        else:
-            return velodyne_files
+            - root,
+            - split,
+            - transform,
+            - is_test,
+            - normalise
+    """
 
-    def __getitem__(self, index):
-        if self.mode == "train":
-            velodyne_file = self.train_scans[index]
-            label_file = self.train_labels[index]
-        elif self.mode == "val":
-            velodyne_file = self.val_scans[index]
-            label_file = self.val_labels[index]
-        else:
-            velodyne_file = self.test_scans[index]
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
+        try:
+            is_test = dataset_opt.get("is_test", False)
+            normalise = dataset_opt.get("normalise", True)
 
-        points, remissions = self.lidar_scan.open_scan(velodyne_file)
-        _, _, proj_range, proj_xyz, proj_remissions, _, proj_mask, _, _ = self.lidar_scan.project_scan(points, remissions)
-        proj_range, proj_xyz, proj_remissions = torch.from_numpy(proj_range).clone(), torch.from_numpy(proj_xyz).clone(), torch.from_numpy(proj_remissions).clone()
-        proj_inp = torch.cat([proj_range.unsqueeze(0).clone(), proj_xyz.clone().permute(2, 0, 1), proj_remissions.unsqueeze(0).clone()])
-        proj_inp = (proj_inp - self.sensor_means[:, None, None])/self.sensor_stds[:, None, None]
+        self.train_dataset = SemanticKitti(
+            self._data_path,
+            split="train",
+            transform=self.train_transform,
+            is_test=is_test,
+            normalise=normalise
+        )
 
-        if self.mode == "train" or self.mode == "val":
-            sem_label, _ = self.lidar_scan.open_label(label_file)
-            sem_label = np.vectorize(learning_map.get)(sem_label)
-            proj_sem_label = self.lidar_scan.project_sem_label(sem_label)
-            proj_sem_label = torch.from_numpy(proj_sem_label).clone()
-            return proj_inp, proj_sem_label
-        else:
-            return proj_inp
-   
-    def __len__(self):
-        if self.mode == "train":
-            return len(self.train_scans)
-        elif self.mode == "val":
-            return len(self.val_scans)
-        else:
-            return len(self.test_scans)
+        self.val_dataset = SemanticKitti(
+            self._data_path,
+            split="val",
+            transform=self.val_transform,
+            is_test=is_test,
+            normalise=normalise
+        )
 
+        self.test_dataset = SemanticKitti(
+            self._data_path,
+            split="test",
+            transform=self.test_transform,
+            is_test=True,
+            normalise=normalise
+        )
 
+        self._categories = list(self.train_dataset.LABELS.values)
 
-
-
-
-
-
-
- 
-    
-
-
-
-
-
-    
