@@ -62,11 +62,11 @@ class VotingModule(nn.Module):
 
             x = x.transpose(2, 1).view(batch_size, num_points, self.vote_factor, 3 + self.out_dim)
             offset = x[:, :, :, 0:3]
-            vote_pos = data.pos.unsqueeze(2) + offset
+            vote_pos = data.pos.unsqueeze(2) + offset.contiguous()
             vote_pos = vote_pos.contiguous().view(batch_size, num_votes, 3)
 
             res_x = x[:, :, :, 3:]  # (batch_size, num_seed, vote_factor, out_dim)
-            vote_x = data.x.transpose(2, 1).unsqueeze(2) + res_x
+            vote_x = data.x.transpose(2, 1).unsqueeze(2).contiguous() + res_x.contiguous()
             vote_x = vote_x.contiguous().view(batch_size, num_votes, self.out_dim)
             vote_x = vote_x.transpose(2, 1).contiguous()
             data_out = Data(pos=vote_pos, x=vote_x, seed_pos=data.pos)

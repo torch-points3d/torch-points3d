@@ -1,32 +1,32 @@
 data:
-    class: shapenet.ShapeNetDataset
-    dataset_name: "shapenet_sparse"
-    task: segmentation
-    dataroot: data
-    normal: True
-    use_category: True
-    grid_size: 0.02
-    pre_transforms:
-        - transform: NormalizeScale
-    train_transforms:
-        - transform: RandomNoise
-          params:
-            sigma: 0.01
-            clip: 0.05
-        - transform: ToSparseInput
-          params:
-            grid_size: ${data.grid_size}
-            save_delta: False
-            mode: "mean"
-    test_transforms:
-        - transform: ToSparseInput
-          params:
-            grid_size: ${data.grid_size}
-            save_delta: False
-            mode: "mean"
-    val_transforms:
-        - transform: ToSparseInput
-          params:
-            grid_size: ${data.grid_size}
-            save_delta: False
-            mode: "mean" 
+  class: shapenet.ShapeNetDataset
+  dataset_name: "shapenet_sparse"
+  task: segmentation
+  dataroot: data
+  normal: True
+  use_category: True
+  grid_size: 0.02
+  pre_transforms:
+    - transform: NormalizeScale
+  train_transforms:
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
+    - transform: GridSampling3D
+      params:
+        grid_size: ${data.grid_size}
+        mode: "mean"
+        quantize_coords: True
+  test_transforms:
+    - transform: GridSampling3D
+      params:
+        grid_size: ${data.grid_size}
+        quantize_coords: True
+        mode: "mean"
+  val_transforms:
+    - transform: GridSampling3D
+      params:
+        grid_size: ${data.grid_size}
+        quantize_coords: True
+        mode: "mean"
