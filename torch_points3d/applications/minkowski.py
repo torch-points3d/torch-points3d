@@ -40,6 +40,10 @@ def Minkowski(
         Depth of the network
     config : DictConfig, optional
         Custom config, overrides the num_layers and architecture parameters
+    in_feat:
+        Size of the first layer
+    block:
+        Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
     """
 
     factory = MinkowskiFactory(
