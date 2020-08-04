@@ -1,0 +1,57 @@
+data:
+  task: segmentation
+  class: s3dis.S3DISFusedDataset
+  dataroot: data
+  fold: 5
+  first_subsampling: 0.04
+  use_category: False
+  pre_collate_transform:
+      - transform: PointCloudFusion   # One point cloud per area
+      - transform: SaveOriginalPosId    # Required so that one can recover the original point in the fused point cloud
+      - transform: GridSampling3D       # Samples on a grid
+        params:
+            size: ${data.first_subsampling}
+  train_transforms:
+    - transform: RandomNoise
+      params:
+        sigma: 0.001
+    - transform: RandomRotate
+      params:
+        degrees: 180
+        axis: 2
+    - transform: RandomScaleAnisotropic
+      params:
+        scales: [0.8, 1.2]
+    - transform: RandomSymmetry
+      params:
+        axis: [True, False, False]
+    - transform: DropFeature
+      params:
+        drop_proba: 0.2
+        feature_name: rgb
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True
+    - transform: AddOnes
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True, True]
+        feat_names: [rgb, pos_z, ones]
+        delete_feats: [True, True, True]
+    - transform: Center
+  test_transform:
+    - transform: XYZFeature
+      params:
+        add_x: False
+        add_y: False
+        add_z: True
+    - transform: AddOnes
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True, True]
+        feat_names: [rgb, pos_z, ones]
+        delete_feats: [True, True, True]
+    - transform: Center
+  val_transform: ${data.test_transform}

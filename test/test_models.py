@@ -51,7 +51,7 @@ def get_dataset(conv_type, task):
         include_box = False
 
     if conv_type.lower() == "dense":
-        num_points = 2048
+        num_points = 2050
         batch_size = 1
 
     if task == "registration":
@@ -63,7 +63,6 @@ def get_dataset(conv_type, task):
         return PairMockDatasetGeometric(features, batch_size=batch_size)
     else:
         if conv_type.lower() == "dense":
-            num_points = 2048
             return MockDataset(
                 features,
                 num_points=num_points,
@@ -149,10 +148,8 @@ class TestModels(unittest.TestCase):
 
     def test_one_model(self):
         # Use this test to test any model when debugging
-        config = load_model_config("segmentation", "kpconv", "KPConvPaper")
-        config.update("data.first_subsampling", 0.05)
-        config.update("data.use_category", False)
-        dataset = get_dataset("partial_dense", "segmentation")
+        config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
+        dataset = get_dataset("dense", "object_detection")
         model = instantiate_model(config, dataset)
         model.set_input(dataset[0], device)
         model.forward()
