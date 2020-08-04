@@ -103,21 +103,23 @@ models:
                     in_feat: 32
                     in_feat_tr: 128
                 down_conv:
-                    module_name: Res2BlockDown
+                    module_name: ResNetDown
                     dimension: 3
                     bn_momentum: 0.2
                     down_conv_nn:
                         [
                             [FEAT, in_feat],
+                            [in_feat, in_feat],
                             [in_feat, 2*in_feat],
                             [2*in_feat, 4*in_feat],
                             [4*in_feat, 8*in_feat],
                         ]
-                    kernel_size: [5, 3, 3, 3]
-                    stride: [1, 2, 2, 2]
-                    dilation: [1, 1, 1, 1]
+                    kernel_size: 3
+                    stride: [1, 2, 2, 2, 2]
+                    dilation: 1
+                    N: [0, 1, 1, 1, 1, 1]
                 up_conv:
-                    module_name: Res2BlockUp
+                    module_name: ResNetUp
                     dimension: 3
                     bn_momentum: 0.2
                     up_conv_nn:
@@ -125,11 +127,13 @@ models:
                             [8*in_feat, in_feat_tr],
                             [in_feat_tr + 4*in_feat, in_feat_tr],
                             [in_feat_tr + 2*in_feat, in_feat_tr],
-                            [in_feat_tr + in_feat, in_feat_tr, in_feat_tr],
+                            [in_feat_tr + in_feat, in_feat_tr],
+                            [in_feat_tr + in_feat, in_feat_tr],
                         ]
-                    kernel_size: [3, 3, 3, 1]
-                    stride: [2, 2, 2, 1]
-                    dilation: [1, 1, 1, 1]
+                    kernel_size: 3
+                    stride: [2, 2, 2, 2, 1]
+                    dilation: 1
+                    N: [1, 1, 1, 1, 1, 0]
         voting:
             module_name: VotingModule
             vote_factor: 1

@@ -30,7 +30,6 @@ class PointGroup(BaseModel):
             num_layers=4,
             config=backbone_options.get("config", None),
         )
-        self.BackboneHead = Seq().append(FastBatchNorm1d(self.Backbone.output_nc)).append(torch.nn.ReLU())
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
         self._activate_scorer = option.scorer.activate
@@ -63,7 +62,7 @@ class PointGroup(BaseModel):
 
     def forward(self, epoch=-1, **kwargs):
         # Backbone
-        backbone_features = self.BackboneHead(self.Backbone(self.input).x)
+        backbone_features = self.Backbone(self.input).x
 
         # Semantic and offset heads
         semantic_logits = self.Semantic(backbone_features)
