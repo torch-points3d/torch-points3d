@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+### Added
+
+- Teaser support for registration
+- Examples for using pretrained registration models
+
+
 ## 1.1.0
 
 ### Added
@@ -40,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - LR secheduler resume is broken for update on batch number #328
 - ElasticDistortion transform is now fully functional
+- Add `context = ssl._create_unverified_context()`, `data = urllib.request.urlopen(url, context=context)` within `download_ulr`, so ModelNet and ShapeNet can download.
 
 ### Removed
 

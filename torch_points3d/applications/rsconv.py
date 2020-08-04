@@ -181,6 +181,7 @@ class RSConvUnet(RSConvBase):
         for i in range(len(self.down_modules) - 1):
             data = self.down_modules[i](data)
             stack_down.append(data)
+        sampling_ids = self._collect_sampling_ids(stack_down)
 
         data = self.down_modules[-1](data)
         queue_up.put(data)
@@ -201,4 +202,6 @@ class RSConvUnet(RSConvBase):
             data.x = self.mlp(last_feature)
         else:
             data.x = last_feature
+        for key, value in sampling_ids.items():
+            setattr(data, key, value)
         return data
