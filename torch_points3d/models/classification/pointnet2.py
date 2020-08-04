@@ -84,7 +84,6 @@ class PointNet2_D(BackboneBasedModel):
                 pos -- Points [B, N, 3]
         """
         data = self.input
-        labels = data.y
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
         data = self.innermost_module(data)

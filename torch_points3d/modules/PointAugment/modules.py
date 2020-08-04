@@ -4,6 +4,7 @@ torch.autograd.set_detect_anomaly(True)
 from torch import nn
 from random import shuffle
 import torch.nn.functional as F
+from torch_points3d.core.data_transform import AddOnes
 from torch_scatter import scatter_mean
 from torch_points3d.core.common_modules.dense_modules import MLP, MLP1D, Conv1D
 from torch_points3d.utils.model_utils import freeze_params, unfreeze_params
