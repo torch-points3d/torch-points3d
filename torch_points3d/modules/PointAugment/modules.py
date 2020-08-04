@@ -5,145 +5,117 @@ from torch import nn
 from random import shuffle
 import torch.nn.functional as F
 from torch_scatter import scatter_mean
-from torch_points3d.core.common_modules.dense_modules import MLP, MLP1D
+from torch_points3d.core.common_modules.dense_modules import MLP, MLP1D, Conv1D
 from torch_points3d.utils.model_utils import freeze_params, unfreeze_params
+from torch_points3d.applications import models
+from torch_points3d.core.common_modules.base_modules import Seq
 
 
-class PointAugment(nn.Module):
+class AugmentationModule(nn.Module):
 
     """
     PointAugment: an Auto-Augmentation Framework for Point Cloud Classification
     https://arxiv.org/pdf/2002.10876.pdf
     """
 
-    def __init__(self, opt, input_model):
-        super(PointAugment, self).__init__()
-        self.input_model = input_model
-        self._conv_type = input_model.conv_type.lower()
-        self._num_classes = input_model.num_classes
-        self._shuffle = opt.shuffle
-        self._activate = opt.activate
-        self._opt = opt.to_container()
+    def __init__(self, config, conv_type="DENSE"):
+        super(AugmentationModule, self).__init__()
+        self._conv_type = conv_type
 
-        self.forward = self.forward_active if self._activate else self.forward_non_active
-        self.backward = self.backward_active if self._activate else self.backward_non_active
-        if self._activate:
-            self._build()
-
-    def _build(self):
-        self.model = nn.ModuleDict()
-        if self._conv_type == "dense":
-            nn_raising = [3] + self._opt["nn_raising"]
-            nn_rotation = [nn_raising[-1] * 2] + self._opt["nn_rotation"] + [9]
-            nn_translation = [nn_raising[-1] * 3] + self._opt["nn_translation"] + [3]
-            self.model["nn_raising"] = MLP1D(nn_raising)
-            self.model["nn_rotation"] = MLP1D(nn_rotation)
-            self.model["nn_translation"] = MLP1D(nn_translation)
+        if conv_type == "DENSE":
+            #per point feature extraction
+            self.nn_raising = MLP1D(config.nn_raising)
+            #shape-wise regression
+            self.nn_rotation = MLP1D(config.nn_rotation)
+            #point-wise regression
+            self.nn_translation = MLP1D(config.nn_translation)
         else:
-            nn_raising = [3] + self._opt["nn_raising"]
-            nn_rotation = [nn_raising[-1] * 2] + self._opt["nn_rotation"] + [9]
-            nn_translation = [nn_raising[-1] * 3] + self._opt["nn_translation"] + [3]
-            self.model["nn_raising"] = MLP(nn_raising)
-            self.model["nn_rotation"] = MLP(nn_rotation)
-            self.model["nn_translation"] = MLP(nn_translation)
+            self.nn_raising = MLP(config.nn_raising)
+            self.nn_rotation = MLP(config.nn_rotation)
+            self.nn_translation = MLP(config.nn_translation)
 
-    def _forward(self, data):
-        pos = data.pos
-
-        if pos.dim() == 3:
-            batch_size = pos.shape[0]
-            num_points = pos.shape[1]
-            F = self.model["nn_raising"](pos.permute(0, 2, 1))
-            G = F.mean(-1)
+    def forward(self, data):
+        if 3 < data.pos.dim() and data.pos.dim() <= 1:
+            raise Exception("data.pos doesn t have the correct dimension. Should be either 2 or 3")
+        
+        if self._conv_type == "DENSE":
+            batch_size = data.pos.shape[0]
+            num_points = data.pos.shape[1]
+            F = self.nn_raising(data.pos.permute(0, 2, 1))
+            G, _ = F.max(-1)
             noise_rotation = torch.randn(G.size()).to(G.device)
             noise_translation = torch.randn(F.size()).to(F.device)
 
             feature_rotation = [noise_rotation, G]
             feature_translation = [F, G.unsqueeze(-1).repeat((1, 1, num_points)), noise_translation]
 
-            if self._shuffle:
-                shuffle(feature_rotation)
-                shuffle(feature_translation)
-
             features_rotation = torch.cat(feature_rotation, dim=1).unsqueeze(-1)
             features_translation = torch.cat(feature_translation, dim=1)
 
-            M = self.model["nn_rotation"](features_rotation).view((batch_size, 3, 3))
-            T = self.model["nn_translation"](features_translation).permute(0, 2, 1)
+            M = self.nn_rotation(features_rotation).view((batch_size, 3, 3))
+            D = self.nn_translation(features_translation).permute(0, 2, 1)
 
             new_data = data.clone()
-            new_data.pos = T + new_data.pos @ M
-
-        elif pos.dim() == 2:
-            num_points = pos.shape[0]
-            F = self.model["nn_raising"](pos)
-            G = scatter_mean(F, data.batch, dim=0)
+            new_data.pos = D + new_data.pos @ M
+        else:
+            batch_size = data.pos.shape[0]
+            num_points = data.pos.shape[1]
+            F = self.nn_raising(data.pos.permute(0, 2, 1))
+            G, _ = F.max(-1)
             noise_rotation = torch.randn(G.size()).to(G.device)
             noise_translation = torch.randn(F.size()).to(F.device)
 
             feature_rotation = [noise_rotation, G]
-            feature_translation = [
-                F,
-                torch.gather(G, 0, data.batch.unsqueeze(-1).repeat((1, G.shape[-1]))),
-                noise_translation,
-            ]
+            feature_translation = [F, G.unsqueeze(-1).repeat((1, 1, num_points)), noise_translation]
 
-            if self._shuffle:
-                shuffle(feature_rotation)
-                shuffle(feature_translation)
-
-            features_rotation = torch.cat(feature_rotation, dim=1)
+            features_rotation = torch.cat(feature_rotation, dim=1).unsqueeze(-1)
             features_translation = torch.cat(feature_translation, dim=1)
 
-            M = self.model["nn_rotation"](features_rotation)
-            M = torch.gather(M, 0, data.batch.unsqueeze(-1).repeat((1, M.shape[-1]))).view((-1, 3, 3))
-            T = self.model["nn_translation"](features_translation)
+            M = self.nn_rotation(features_rotation).view((batch_size, 3, 3))
+            D = self.nn_translation(features_translation).permute(0, 2, 1)
 
             new_data = data.clone()
-            new_data.pos = T + (new_data.pos.unsqueeze(1) @ M).squeeze()
-        else:
-            raise Exception("pos dimension should be 2 or 3")
+            new_data.pos = D + new_data.pos @ M
 
         return new_data
 
-    def set_input(self, data):
-        self.labels = data.y.flatten()
 
-    def forward_active(self, data):
-        self.set_input(data)
+class ClassifierModule(nn.Module):
+    def __init__(self, model_opt, input_nc, num_classes):
+        super(ClassifierModule, self).__init__()
 
-        data_augmented = self._forward(data)
+        self._input_nc = input_nc
+        self._num_classes = num_classes
+        self._model_opt = model_opt
 
-        self.output, feat = self.input_model(data)
-        output_augmented, feat_augmented = self.input_model(data_augmented)
+        backbone_option = model_opt.backbone
+        backbone_cls = getattr(models, backbone_option.model_type)
+        self.backbone_model = backbone_cls(architecture="encoder", input_nc=input_nc, config=backbone_option)
 
-        self.loss_p = F.nll_loss(self.output, self.labels)
-        self.loss_pa = F.nll_loss(output_augmented, self.labels)
+        # Last MLP
+        last_mlp_opt = model_opt.mlp_cls
 
-        pv = max(1, torch.exp(torch.sum(self.output.exp() * F.one_hot(self.labels, self._num_classes))))
-        self.loss_aug = torch.abs(1 - torch.exp(self.loss_pa - pv * self.loss_p))
-        self.loss_reg = F.mse_loss(feat, feat_augmented)
-        self.loss = self.loss_pa + self.loss_p + self.loss_reg
-        return self.output
+        self.FC_layer = Seq()
+        for i in range(1, len(last_mlp_opt.nn)):
+            self.FC_layer.append(Conv1D(last_mlp_opt.nn[i - 1], last_mlp_opt.nn[i], bn=True, bias=False))
+        if last_mlp_opt.dropout:
+            self.FC_layer.append(torch.nn.Dropout(p=last_mlp_opt.dropout))
 
-    def backward_active(self):
-        # Optimize augmentor using LA = |1.0 − exp[L(P′) − ρL(P)]|.
-        freeze_params(self.input_model)
-        unfreeze_params(self.model)
-        self.loss_aug.backward(retain_graph=True)
+        self.FC_layer.append(Conv1D(last_mlp_opt.nn[-1], self._num_classes, activation=None, bias=True, bn=False))
 
-        # Optimize classifier
-        freeze_params(self.model)
-        unfreeze_params(self.input_model)
-        self.loss.backward()
 
-    def backward_non_active(self):
-        self.loss.backward()
+    def forward(self, data):
+        # returns `y` (class labels predicted by the fully connected layers) and `F_g` (per-shape global features)
+        if self._model_opt.model_type == "KPConv":  # KPConv needs added ones for its x features
+            data = AddOnes()(data)
+            data.x = (
+                torch.cat([data.x, data.ones.to(data.pos.device)], dim=-1)
+                if data.x is not None
+                else data.ones.to(data.pos.device)
+            )
+        data = self.backbone_model(data)
+        last_feature = data.x
 
-    def forward_non_active(self, data):
-        self.set_input(data)
+        self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._num_classes))
 
-        self.output, feat = self.input_model(self._data)
-        self.loss_p = F.nll_loss(self.output, self.labels)
-        self.loss = self.loss_p
-        return self.output
+        return F.log_softmax(self.output.squeeze(), dim=-1), last_feature
