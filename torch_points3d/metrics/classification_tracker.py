@@ -1,6 +1,7 @@
 from typing import Dict, Any
 import torch
 import torchnet as tnt
+import numpy as np
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
@@ -20,11 +21,16 @@ class ClassificationTracker(BaseTracker):
             wandb_log {str} --  Log using weight and biases
         """
         super(ClassificationTracker, self).__init__(stage, wandb_log, use_tensorboard)
+        self._num_classes = dataset.num_classes
+        self._dataset = dataset
         self.reset(stage)
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
-        self._acc = tnt.meter.AverageValueMeter()
+        self._confusion_matrix = ConfusionMatrix(self._num_classes)
+        self._acc = 0
+        self._macc = 0
+        self._miou = 0
 
     @staticmethod
     def detach_tensor(tensor):
@@ -32,11 +38,9 @@ class ClassificationTracker(BaseTracker):
             tensor = tensor.detach()
         return tensor
 
-    @staticmethod
-    def compute_acc(y_hat, y):
-        labels_hat = torch.argmax(y_hat, dim=1)
-        acc = torch.sum(y == labels_hat).item() / (len(y) * 1.0)
-        return acc
+    @property
+    def confusion_matrix(self):
+        return self._confusion_matrix.confusion_matrix
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
@@ -45,19 +49,39 @@ class ClassificationTracker(BaseTracker):
 
         outputs = model.get_output()
         targets = model.get_labels().flatten()
+        self._compute_metrics(outputs, targets)
 
-        self._acc.add(100 * self.compute_acc(outputs, targets))
+    def _compute_metrics(self, outputs, labels):
+        outputs = self._convert(outputs)
+        labels = self._convert(labels)
+
+        if len(labels) == 0:
+            return
+
+        assert outputs.shape[0] == len(labels)
+        self._confusion_matrix.count_predicted_batch(labels, np.argmax(outputs, 1))
+
+        self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
+        self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
+        self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
-        metrics["{}_acc".format(self._stage)] = meter_value(self._acc)
+
+        metrics["{}_acc".format(self._stage)] = self._acc
+        metrics["{}_macc".format(self._stage)] = self._macc
+        metrics["{}_miou".format(self._stage)] = self._miou
         return metrics
 
     @property
     def metric_func(self):
         self._metric_func = {
+            "miou": max,
+            "macc": max,
             "acc": max,
+            "loss": min,
+            "map": max,
         }  # Those map subsentences to their optimization functions
         return self._metric_func

@@ -4,10 +4,11 @@ data:
     name: modelnet
     dataroot: data
     number: 10
+    use_category: False
     pre_transforms:
         - transform: NormalizeScale
         - transform: GridSampling3D
-            lparams: [0.02]
+          lparams: [0.02]
     train_transforms:
         - transform: RemoveAttributes
           params:
