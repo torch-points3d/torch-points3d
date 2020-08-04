@@ -54,10 +54,11 @@ class VoteNetModel(BaseModel):
         self.voting_module = voting_cls(vote_factor=voting_option.vote_factor, seed_feature_dim=voting_option.feat_dim)
 
         # 3 - CREATE PROPOSAL MODULE
+        num_classes = dataset.num_classes
         proposal_option = option.proposal
         proposal_cls = getattr(votenet_module, proposal_option.module_name)
         self.proposal_cls_module = proposal_cls(
-            num_class=proposal_option.num_class,
+            num_class=num_classes,
             vote_aggregation_config=proposal_option.vote_aggregation,
             num_heading_bin=proposal_option.num_heading_bin,
             mean_size_arr=dataset.mean_size_arr,

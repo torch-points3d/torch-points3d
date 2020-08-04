@@ -1,56 +1,21 @@
 import torch
 import torch.nn as nn
 from torch_points3d.core.common_modules.base_modules import FastBatchNorm1d
-
-
-def gather(x, idx, method=2):
-    """
-    https://github.com/pytorch/pytorch/issues/15245
-    implementation of a custom gather operation for faster backwards.
-    :param x: input with shape [N, D_1, ... D_d]
-    :param idx: indexing with shape [n_1, ..., n_m]
-    :param method: Choice of the method
-    :return: x[idx] with shape [n_1, ..., n_m, D_1, ... D_d]
-    """
-    idx[idx == -1] = x.shape[0] - 1  # Shadow point
-    if method == 0:
-        return x[idx]
-    elif method == 1:
-        x = x.unsqueeze(1)
-        x = x.expand((-1, idx.shape[-1], -1))
-        idx = idx.unsqueeze(2)
-        idx = idx.expand((-1, -1, x.shape[-1]))
-        return x.gather(0, idx)
-    elif method == 2:
-        for i, ni in enumerate(idx.size()[1:]):
-            x = x.unsqueeze(i + 1)
-            new_s = list(x.size())
-            new_s[i + 1] = ni
-            x = x.expand(new_s)
-        n = len(idx.size())
-        for i, di in enumerate(x.size()[n:]):
-            idx = idx.unsqueeze(i + n)
-            new_s = list(idx.size())
-            new_s[i + n] = di
-            idx = idx.expand(new_s)
-        return x.gather(0, idx)
-    else:
-        raise ValueError("Unkown method")
+from torch_points3d.core.common_modules.gathering import gather
 
 
 class PosPoolLayer(torch.nn.Module):
-
     def __init__(
-            self,
-            num_inputs,
-            num_outputs,
-            radius,
-            position_embedding='xyz',
-            reduction='avg',
-            output_conv=False,
-            activation=torch.nn.LeakyReLU(negative_slope=0.2),
-            bn_momentum=0.02,
-            bn=FastBatchNorm1d,
+        self,
+        num_inputs,
+        num_outputs,
+        radius,
+        position_embedding="xyz",
+        reduction="avg",
+        output_conv=False,
+        activation=torch.nn.LeakyReLU(negative_slope=0.2),
+        bn_momentum=0.02,
+        bn=FastBatchNorm1d,
     ):
         super(PosPoolLayer, self).__init__()
         self.num_inputs = num_inputs
@@ -66,9 +31,7 @@ class PosPoolLayer(torch.nn.Module):
         self.activation = activation
         if self.output_conv:
             self.oconv = torch.nn.Sequential(
-                nn.Linear(num_inputs, num_outputs, bias=False),
-                bn(num_outputs, momentum=bn_momentum),
-                activation
+                nn.Linear(num_inputs, num_outputs, bias=False), bn(num_outputs, momentum=bn_momentum), activation
             )
 
     def forward(self, query_points, support_points, neighbors, x):
@@ -94,11 +57,11 @@ class PosPoolLayer(torch.nn.Module):
         support_features = torch.cat([x, shadow_features], dim=0)
         neighborhood_features = gather(support_features, neighbors)
 
-        if self.position_embedding == 'xyz':
+        if self.position_embedding == "xyz":
             geo_prior = relative_position
             mid_fdim = 3
             shared_channels = self.num_inputs // 3
-        elif self.position_embedding == 'sin_cos':
+        elif self.position_embedding == "sin_cos":
             position_mat = relative_position  # [N, M, 3]
             if self.num_inputs == 9:
                 feat_dim = 1
@@ -125,8 +88,7 @@ class PosPoolLayer(torch.nn.Module):
                 sin_mat = torch.sin(div_mat)  # [N, M, 3, feat_dim]
                 cos_mat = torch.cos(div_mat)  # [N, M, 3, feat_dim]
                 embedding = torch.cat([sin_mat, cos_mat], -1)  # [N, M, 3, 2*feat_dim]
-                embedding = embedding.view(N, M,
-                                           self.num_inputs)  # [N, M, 6*feat_dim]
+                embedding = embedding.view(N, M, self.num_inputs)  # [N, M, 6*feat_dim]
                 geo_prior = embedding  # [N, M, mid_dim]
             mid_fdim = self.num_inputs
             shared_channels = 1
@@ -138,14 +100,14 @@ class PosPoolLayer(torch.nn.Module):
         aggregation_feature = geo_prior * feature_map
         aggregation_feature = aggregation_feature.view(N, -1, self.num_inputs)  # [N, M, d]
 
-        if self.reduction == 'sum':
+        if self.reduction == "sum":
             aggregation_feature = torch.sum(aggregation_feature, 1)  # [N, d]
-        elif self.reduction == 'avg':
+        elif self.reduction == "avg":
             aggregation_feature = torch.sum(aggregation_feature, 1)  # [N, d]
             padding_num = torch.max(neighbors)
             neighbors_n = torch.sum((neighbors < padding_num), -1) + 1e-5
             aggregation_feature = aggregation_feature / neighbors_n.unsqueeze(-1)
-        elif self.reduction == 'max':
+        elif self.reduction == "max":
             # mask padding
             batch_mask = torch.zeros_like(x)  # [n0_points, d]
             batch_mask = torch.cat([batch_mask, -65535 * torch.ones_like(batch_mask[:1, :])], dim=0)
