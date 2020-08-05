@@ -170,9 +170,11 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
         size_label_one_hot.scatter_(
             2, size_class_label.unsqueeze(-1).long(), 1
         )  # src==1 so it's *one-hot* (B,K,num_size_cluster)
-        size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
+        size_label_one_hot_tiled = (
+            size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3).contiguous()
+        )  # (B,K,num_size_cluster,3)
         predicted_size_residual_normalized = torch.sum(
-            outputs["size_residuals_normalized"] * size_label_one_hot_tiled, 2
+            outputs["size_residuals_normalized"].contiguous() * size_label_one_hot_tiled, 2
         )  # (B,K,3)
 
         mean_size_arr_expanded = (
@@ -218,6 +220,7 @@ def to_dense_labels(data):
     data["size_class_label"] = data["size_class_label"].view((batch_size, -1))
     data["size_residual_label"] = data["size_residual_label"].view((batch_size, -1, 3))
     data["sem_cls_label"] = data["sem_cls_label"].view((batch_size, -1))
+    data["instance_box_corners"] = data["instance_box_corners"].view((batch_size, -1, 8, 3))
     data["box_label_mask"] = data["box_label_mask"].view((batch_size, -1))
     if data["center_label"].dim() == 3:
         data["gt_center"] = data["center_label"][:, :, 0:3]

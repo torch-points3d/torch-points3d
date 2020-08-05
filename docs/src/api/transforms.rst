@@ -30,10 +30,6 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.RemoveAttributes
 
-.. autoclass:: torch_points3d.core.data_transform.RemoveDuplicateCoords
-
-.. autoclass:: torch_points3d.core.data_transform.ToSparseInput
-
 .. autoclass:: torch_points3d.core.data_transform.ShuffleData
 
 .. autoclass:: torch_points3d.core.data_transform.ShiftVoxels
@@ -48,6 +44,10 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.RandomDropout
 
+.. autoclass:: torch_points3d.core.data_transform.DropFeature
+
+.. autoclass:: torch_points3d.core.data_transform.NormalizeFeature
+
 .. autoclass:: torch_points3d.core.data_transform.PCACompute
 
 .. autofunction:: torch_points3d.core.data_transform.NormalizeRGB
@@ -59,5 +59,13 @@ Transforms
 .. autofunction:: torch_points3d.core.data_transform.RandomCoordsFlip
 
 .. autofunction:: torch_points3d.core.data_transform.ScalePos
+
+.. autofunction:: torch_points3d.core.data_transform.RandomWalkDropout
+
+.. autofunction:: torch_points3d.core.data_transform.SphereDropout
+
+.. autofunction:: torch_points3d.core.data_transform.SphereCrop
+
+.. autofunction:: torch_points3d.core.data_transform.CubeCrop
 
 .. autofunction:: torch_points3d.core.data_transform.compute_planarity

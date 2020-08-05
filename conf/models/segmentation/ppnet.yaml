@@ -1,0 +1,155 @@
+models:
+  # PPNet (PosPool): A Closer Look at Local Aggregation Operators in Point Cloud Analysis (https://arxiv.org/pdf/2007.01294.pdf)
+  PPNet:
+    class: ppnet.PPNet
+    conv_type: 'PARTIAL_DENSE'
+    use_category: ${data.use_category}
+    define_constants:
+      in_grid_size: ${data.first_subsampling}
+      in_feat: 72
+      bn_momentum: 0.01
+      position_embedding: 'sin_cos'
+      reduction: 'avg'
+      output_conv: False
+      bottleneck_ratio: 2
+    down_conv:
+      down_conv_nn:
+        [
+        [[FEAT, in_feat, in_feat], [in_feat, 2*in_feat]],
+        [[2*in_feat, 4*in_feat], [4*in_feat, 4*in_feat]],
+        [[4*in_feat, 8*in_feat], [8*in_feat, 8*in_feat]],
+        [[8*in_feat, 16*in_feat], [16*in_feat, 16*in_feat]],
+        [[16*in_feat, 32*in_feat], [32*in_feat, 32*in_feat]],
+        ]
+      grid_size:
+        [
+        [in_grid_size, in_grid_size],
+        [2*in_grid_size, 2*in_grid_size],
+        [4*in_grid_size, 4*in_grid_size],
+        [8*in_grid_size, 8*in_grid_size],
+        [16*in_grid_size, 16*in_grid_size],
+        ]
+      prev_grid_size:
+        [
+        [in_grid_size, in_grid_size],
+        [in_grid_size, 2*in_grid_size],
+        [2*in_grid_size, 4*in_grid_size],
+        [4*in_grid_size, 8*in_grid_size],
+        [8*in_grid_size, 16*in_grid_size],
+        ]
+      block_names:
+        [
+        ['SimpleInputBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ]
+      has_bottleneck:
+        [[False, True], [True, True], [True, True], [True, True], [True, True]]
+      max_num_neighbors: [[26, 26], [26, 31], [31, 38], [38, 41], [41, 39]]
+      position_embedding:
+        [position_embedding, position_embedding, position_embedding, position_embedding, position_embedding]
+      reduction:
+        [reduction, reduction, reduction, reduction, reduction]
+      output_conv:
+        [output_conv, output_conv, output_conv, output_conv, output_conv]
+      bottleneck_ratio:
+        [bottleneck_ratio, bottleneck_ratio, bottleneck_ratio, bottleneck_ratio, bottleneck_ratio, bottleneck_ratio]
+      bn_momentum:
+        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
+      module_name: PPStageBlock
+    up_conv:
+      module_name: FPModule_PD
+      up_conv_nn:
+        [
+        [32*in_feat + 16*in_feat, 8*in_feat],
+        [8*in_feat + 8*in_feat, 4*in_feat],
+        [4*in_feat + 4*in_feat, 2*in_feat],
+        [2*in_feat + 2*in_feat, in_feat],
+        ]
+      skip: True
+      up_k: [1, 1, 1, 1]
+      bn_momentum:
+        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
+    mlp_cls:
+      nn: [in_feat, in_feat]
+      dropout: 0
+      bn_momentum: bn_momentum
+
+  PPNetxyz:
+    class: ppnet.PPNet
+    conv_type: 'PARTIAL_DENSE'
+    use_category: ${data.use_category}
+    define_constants:
+      in_grid_size: ${data.first_subsampling}
+      in_feat: 72
+      bn_momentum: 0.01
+      position_embedding: 'xyz'
+      reduction: 'avg'
+      output_conv: False
+      bottleneck_ratio: 2
+    down_conv:
+      down_conv_nn:
+        [
+        [[FEAT, in_feat, in_feat], [in_feat, 2*in_feat]],
+        [[2*in_feat, 4*in_feat], [4*in_feat, 4*in_feat]],
+        [[4*in_feat, 8*in_feat], [8*in_feat, 8*in_feat]],
+        [[8*in_feat, 16*in_feat], [16*in_feat, 16*in_feat]],
+        [[16*in_feat, 32*in_feat], [32*in_feat, 32*in_feat]],
+        ]
+      grid_size:
+        [
+        [in_grid_size, in_grid_size],
+        [2*in_grid_size, 2*in_grid_size],
+        [4*in_grid_size, 4*in_grid_size],
+        [8*in_grid_size, 8*in_grid_size],
+        [16*in_grid_size, 16*in_grid_size],
+        ]
+      prev_grid_size:
+        [
+        [in_grid_size, in_grid_size],
+        [in_grid_size, 2*in_grid_size],
+        [2*in_grid_size, 4*in_grid_size],
+        [4*in_grid_size, 8*in_grid_size],
+        [8*in_grid_size, 16*in_grid_size],
+        ]
+      block_names:
+        [
+        ['SimpleInputBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ['ResnetBBlock', 'ResnetBBlock'],
+        ]
+      has_bottleneck:
+        [[False, True], [True, True], [True, True], [True, True], [True, True]]
+      max_num_neighbors: [[26, 26], [26, 31], [31, 38], [38, 41], [41, 39]]
+      position_embedding:
+        [position_embedding, position_embedding, position_embedding, position_embedding, position_embedding]
+      reduction:
+        [reduction, reduction, reduction, reduction, reduction]
+      output_conv:
+        [output_conv, output_conv, output_conv, output_conv, output_conv]
+      bottleneck_ratio:
+        [bottleneck_ratio, bottleneck_ratio, bottleneck_ratio, bottleneck_ratio, bottleneck_ratio, bottleneck_ratio]
+      bn_momentum:
+        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
+      module_name: PPStageBlock
+    up_conv:
+      module_name: FPModule_PD
+      up_conv_nn:
+        [
+        [32*in_feat + 16*in_feat, 8*in_feat],
+        [8*in_feat + 8*in_feat, 4*in_feat],
+        [4*in_feat + 4*in_feat, 2*in_feat],
+        [2*in_feat + 2*in_feat, in_feat],
+        ]
+      skip: True
+      up_k: [1, 1, 1, 1]
+      bn_momentum:
+        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
+    mlp_cls:
+      nn: [in_feat, in_feat]
+      dropout: 0
+      bn_momentum: bn_momentum

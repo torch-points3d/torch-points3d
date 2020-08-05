@@ -45,6 +45,7 @@ class KPConvLayer(torch.nn.Module):
         aggregation_mode="sum",
         dimension=3,
         add_one=False,
+        **kwargs
     ):
         super(KPConvLayer, self).__init__()
         self.kernel_radius = self._INFLUENCE_TO_RADIUS * point_influence
@@ -138,6 +139,7 @@ class KPConvDeformableLayer(BaseInternalLossModule):
         modulated=False,
         loss_mode="fitting",
         add_one=False,
+        **kwargs
     ):
         super(KPConvDeformableLayer, self).__init__()
         self.kernel_radius = self._INFLUENCE_TO_RADIUS * point_influence

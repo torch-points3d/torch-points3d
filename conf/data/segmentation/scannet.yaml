@@ -1,5 +1,6 @@
 data:
   class: scannet.ScannetDataset
+  dataset_name: "scannet-sparse"
   task: segmentation
   dataroot: data
   version: v2
@@ -18,45 +19,35 @@ data:
       lparams: [0.02]
 
   train_transform:
-    - transform: RandomDropout
-    - transform: XYZFeature
+    - transform: GridSampling3D
       params:
-        add_x: False
-        add_y: False
-        add_z: True
+        size: ${data.first_subsampling}
+        quantize_coords: False
+        mode: ${data.mode}
     - transform: RandomNoise
       params:
         sigma: 0.01
         clip: 0.05
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.8, 1.2]
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}
-        rot_x: 5
-        rot_y: 5
+        rot_x: 2
+        rot_y: 2
         rot_z: 180
-    - transform: GridSampling3D
+    - transform: RandomScaleAnisotropic
       params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: ${data.mode}
-    - transform: ChromaticTranslation
-    - transform: ChromaticJitter
+        scales: [0.9, 1.1]
+    - transform: FixedPoints
+      lparams: [100000]
+      params:
+        replace: False
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True]
-        feat_names: [rgb, pos_z]
-        input_nc_feats: [3, 1]
-        delete_feats: [True, True]
+        list_add_to_x: [True]
+        feat_names: ["rgb"]
+        delete_feats: [True]
 
   val_transform:
-    - transform: XYZFeature
-      params:
-        add_x: False
-        add_y: False
-        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
@@ -64,9 +55,8 @@ data:
         mode: ${data.mode}
     - transform: AddFeatsByKeys
       params:
-        list_add_to_x: [True, True]
-        feat_names: [rgb, pos_z]
-        input_nc_feats: [3, 1]
-        delete_feats: [True, True]
+        list_add_to_x: [True]
+        feat_names: ["rgb"]
+        delete_feats: [True]
 
   test_transform: ${data.val_transform}

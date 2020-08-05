@@ -14,7 +14,7 @@ from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 from test.utils import test_hasgrad
 
 from torch_points3d.models.model_factory import instantiate_model
-from torch_points3d.core.data_transform import ToSparseInput, XYZFeature, GridSampling3D
+from torch_points3d.core.data_transform import XYZFeature, GridSampling3D
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
@@ -51,7 +51,7 @@ def get_dataset(conv_type, task):
         include_box = False
 
     if conv_type.lower() == "dense":
-        num_points = 2048
+        num_points = 2050
         batch_size = 1
 
     if task == "registration":
@@ -63,7 +63,6 @@ def get_dataset(conv_type, task):
         return PairMockDatasetGeometric(features, batch_size=batch_size)
     else:
         if conv_type.lower() == "dense":
-            num_points = 2048
             return MockDataset(
                 features,
                 num_points=num_points,
@@ -82,7 +81,13 @@ def get_dataset(conv_type, task):
                 num_points=num_points,
                 batch_size=batch_size,
             )
-        return MockDatasetGeometric(features, batch_size=batch_size)
+        return MockDatasetGeometric(
+            features,
+            batch_size=batch_size,
+            num_points=num_points,
+            include_box=include_box,
+            panoptic=task == "panoptic",
+        )
 
 
 def has_zero_grad(model_name):
@@ -140,6 +145,15 @@ class TestModels(unittest.TestCase):
                         except Exception as e:
                             print("Model with zero gradient %s: %s" % (type_file, model_name))
                             raise e
+
+    def test_one_model(self):
+        # Use this test to test any model when debugging
+        config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
+        dataset = get_dataset("dense", "object_detection")
+        model = instantiate_model(config, dataset)
+        model.set_input(dataset[0], device)
+        model.forward()
+        model.backward()
 
 
 if __name__ == "__main__":

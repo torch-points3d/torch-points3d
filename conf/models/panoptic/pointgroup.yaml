@@ -4,13 +4,15 @@ models:
         conv_type: "SPARSE"
         loss_weights:
             semantic: 1
-            offset_norm_loss: 1 
+            offset_norm_loss: 1
             offset_dir_loss: 1
             score_loss: 1
-        
-        scorer: 
+        backbone:
+            architecture: "unet"
+
+        scorer:
             activate: true
-            architecture: encoder # unet or encoder 
+            architecture: encoder # unet or encoder
             depth: 4
 
         prepare_epoch: 120

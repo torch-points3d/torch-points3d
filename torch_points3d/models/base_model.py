@@ -56,9 +56,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._num_epochs = None
         self._num_batches = 0
         self._num_samples = -1
-        self._latest_metrics = None
-        self._latest_stage = None
-        self._latest_epoch = None
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
@@ -87,6 +84,30 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     @optimizer.setter
     def optimizer(self, optimizer):
         self._optimizer = optimizer
+
+    @property
+    def num_epochs(self):
+        return self._num_epochs
+
+    @num_epochs.setter
+    def num_epochs(self, num_epochs):
+        self._num_epochs = num_epochs
+
+    @property
+    def num_batches(self):
+        return self._num_batches
+
+    @num_batches.setter
+    def num_batches(self, num_batches):
+        self._num_batches = num_batches
+
+    @property
+    def num_samples(self):
+        return self._num_samples
+
+    @num_samples.setter
+    def num_samples(self, num_samples):
+        self._num_samples = num_samples
 
     @property
     def learning_rate(self):
@@ -412,6 +433,13 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             raise KeyError(
                 "Missing attributes in your data object: {}. The model will fail to forward.".format(missing_keys)
             )
+
+    def print_transforms(self):
+        message = ""
+        for attr in self.__dict__:
+            if "transform" in attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+        print(message)
 
 
 class BaseInternalLossModule(torch.nn.Module):

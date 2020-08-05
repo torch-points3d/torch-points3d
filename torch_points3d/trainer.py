@@ -1,4 +1,5 @@
 import os
+import copy
 import torch
 import hydra
 import time
@@ -46,7 +47,10 @@ class Trainer:
         # Enable CUDNN BACKEND
         torch.backends.cudnn.enabled = self.enable_cudnn
         if not self.has_training:
+            resume = False
             self._cfg.training = self._cfg
+        else:
+            resume = bool(self._cfg.training.checkpoint_dir)
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
@@ -72,7 +76,7 @@ class Trainer:
             self._cfg.model_name,
             self._cfg.training.weight_name,
             run_config=self._cfg,
-            resume=bool(self._cfg.training.checkpoint_dir),
+            resume=resume,
         )
 
         # Create model and datasets
@@ -83,8 +87,13 @@ class Trainer:
             )
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
-            self._model: BaseModel = instantiate_model(self._cfg, self._dataset)
+            if not self._checkpoint.validate(self._dataset.used_properties):
+                log.warning(
+                    "The model will not be able to be used from pretrained weights without the corresponding dataset."
+                )
+            self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
             self._model.instantiate_optimizers(self._cfg)
+
         log.info(self._model)
         self._model.log_optimizers()
         log.info("Model size = %i", sum(param.numel() for param in self._model.parameters() if param.requires_grad))
@@ -127,6 +136,9 @@ class Trainer:
 
             if self.profiling:
                 return 0
+
+            if epoch % self.eval_frequency != 0:
+                continue
 
             if self._dataset.has_val_loader:
                 self._test_epoch(epoch, "val")
@@ -176,7 +188,8 @@ class Trainer:
                 self._model.set_input(data, self._device)
                 self._model.optimize_parameters(epoch, self._dataset.batch_size)
                 if i % 10 == 0:
-                    self._tracker.track(self._model, data=data, **self.tracker_options)
+                    with torch.no_grad():
+                        self._tracker.track(self._model, data=data, **self.tracker_options)
 
                 tq_train_loader.set_postfix(
                     **self._tracker.get_metrics(),
@@ -227,8 +240,7 @@ class Trainer:
                         with torch.no_grad():
                             self._model.set_input(data, self._device)
                             self._model.forward(epoch=epoch)
-
-                        self._tracker.track(self._model, data=data, **self.tracker_options)
+                            self._tracker.track(self._model, data=data, **self.tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
                         if self.early_break:
@@ -294,3 +306,7 @@ class Trainer:
     @property
     def tracker_options(self):
         return self._cfg.get("tracker_options", {})
+
+    @property
+    def eval_frequency(self):
+        return self._cfg.get("eval_frequency", 1)

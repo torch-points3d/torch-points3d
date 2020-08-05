@@ -1,4 +1,5 @@
 import torch
+import os
 from torch_points_kernels import region_grow
 from torch_geometric.data import Data
 from torch_scatter import scatter
@@ -10,6 +11,7 @@ from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
 from torch_points3d.core.losses import offset_loss, instance_iou_loss
 from .structures import PanopticLabels, PanopticResults
+from torch_points3d.utils import is_list
 
 
 class PointGroup(BaseModel):
@@ -21,8 +23,13 @@ class PointGroup(BaseModel):
 
     def __init__(self, option, model_type, dataset, modules):
         super(PointGroup, self).__init__(option)
-        self.Backbone = Minkowski("unet", input_nc=dataset.feature_dimension, num_layers=4)
-        self.BackboneHead = Seq().append(FastBatchNorm1d(self.Backbone.output_nc)).append(torch.nn.ReLU())
+        backbone_options = option.get("backbone", {"architecture": "unet"})
+        self.Backbone = Minkowski(
+            backbone_options.get("architecture", "unet"),
+            input_nc=dataset.feature_dimension,
+            num_layers=4,
+            config=backbone_options.get("config", None),
+        )
 
         self._scorer_is_encoder = option.scorer.architecture == "encoder"
         self._activate_scorer = option.scorer.activate
@@ -38,10 +45,13 @@ class PointGroup(BaseModel):
             Seq()
             .append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
             .append(torch.nn.Linear(self.Backbone.output_nc, dataset.num_classes))
-            .append(torch.nn.LogSoftmax())
+            .append(torch.nn.LogSoftmax(dim=-1))
         )
         self.loss_names = ["loss", "offset_norm_loss", "offset_dir_loss", "semantic_loss", "score_loss"]
-        self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), dataset.stuff_classes])
+        stuff_classes = dataset.stuff_classes
+        if is_list(stuff_classes):
+            stuff_classes = torch.Tensor(stuff_classes).long()
+        self._stuff_classes = torch.cat([torch.tensor([IGNORE_LABEL]), stuff_classes])
 
     def set_input(self, data, device):
         self.raw_pos = data.pos.to(device)
@@ -52,7 +62,7 @@ class PointGroup(BaseModel):
 
     def forward(self, epoch=-1, **kwargs):
         # Backbone
-        backbone_features = self.BackboneHead(self.Backbone(self.input).x)
+        backbone_features = self.Backbone(self.input).x
 
         # Semantic and offset heads
         semantic_logits = self.Semantic(backbone_features)
@@ -184,10 +194,11 @@ class PointGroup(BaseModel):
             )
             data_visual.semantic_pred = torch.max(self.output.semantic_logits, -1)[1]
             data_visual.vote = self.output.offset_logits
-            nms_idx = self.output.get_nms_instances()
+            nms_idx = self.output.get_instances()
             if self.output.clusters is not None:
                 data_visual.clusters = [self.output.clusters[i].cpu() for i in nms_idx]
                 data_visual.cluster_type = self.output.cluster_type[nms_idx]
-
+            if not os.path.exists("viz"):
+                os.mkdir("viz")
             torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
             self.visual_count += 1

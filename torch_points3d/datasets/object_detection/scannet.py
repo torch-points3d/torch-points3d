@@ -5,7 +5,7 @@ import logging
 from torch_geometric.data import InMemoryDataset
 from torch_points3d.datasets.segmentation.scannet import Scannet, NUM_CLASSES, IGNORE_LABEL
 from torch_points3d.metrics.object_detection_tracker import ObjectDetectionTracker
-from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.datasets.base_dataset import BaseDataset, save_used_properties
 from torch_points3d.utils.box_utils import box_corners_from_param
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -151,11 +151,12 @@ class ScannetObjectDetection(Scannet):
 
         delattr(data, "instance_bboxes")
         delattr(data, "instance_labels")
-        delattr(data, "y")
+
+        # Remap labels
+        data.y = super()._remap_labels(data.y)
         return data
 
     def _remap_labels(self, semantic_label):
-        log.info("Keeping original labels in y. Please do not use data.y in your network.")
         return semantic_label
 
     def process(self):
@@ -201,7 +202,8 @@ class ScannetDataset(BaseDataset):
             is_test=is_test,
         )
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def mean_size_arr(self):
         return self.train_dataset.MEAN_SIZE_ARR.copy()
 
