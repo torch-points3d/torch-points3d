@@ -16,3 +16,5 @@ spec.loader.exec_module(module)
 from torch_points3d.visualization.vispy_visualizer import KittiVisualizer
 
 kittiViz = KittiVisualizer()
+
+
