@@ -74,7 +74,7 @@ class SphericalProjection:
         proj_labels[proj_mask] = unproj_labels[proj_index[proj_mask]]
         return proj_labels
     
-    def __call__(self, pos, remissions, labels=None, normalise=True):
+    def __call__(self, data):
         proj_range, proj_xyz, proj_remissions, data.proj_x, data.proj_y, data.order, \
             data.proj_index, data.proj_mask = self._project_scan(data.pos, data.remissions)
         data.proj = np.concatenate([np.expand_dims(proj_range, 0), np.transpose(proj_xyz, (2, 0, 1)), np.expand_dims(proj_remissions, 0)])
