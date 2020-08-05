@@ -1,27 +1,28 @@
 import numpy as np
 
-"""
-in velodyne coordinates - forward=x, left=y, up=z
-in image coordinates -  ----> x-axis
-                        |
-                        |
-                        v y-axis
-"""
-
 class SphericalProjection:
-    def __init__(self, img_H, img_W, fov_UP=-3, fov_DOWN=25, means=None, std=None):
+    """
+    This class projects points with its labels into a 360 img.
+    in velodyne coordinates - forward=x, left=y, up=z
+    in image coordinates -  ----> x-axis
+                            |
+                            |
+                            v y-axis
+    """
+    def __init__(self, img_H, img_W, fov_UP=-3, fov_DOWN=25, normalise=True, means=None, std=None):
         self._img_H = img_H
         self._img_W = img_W
         self._fov_UP = fov_UP/180*np.pi
         self._fov_down = fov_DOWN/180*np.pi
         self._fov = abs(self.fov_UP)+abs(self.fov_DOWN)
+        self._normalise = normalise
         self._means = np.array(means, dtype=np.float)
         self._std = np.array(std, dtype=np.float)
     
-    def _project_scan(self, points, remissions):
+    def _project_scan(self, pos, remissions):
         # calculate depth
-        depth = np.linalg.norm(points, 2, axis=1)
-        scan_x, scan_y, scan_z = points[:, 0], points[:, 1], points[:, 2]
+        depth = np.linalg.norm(pos, 2, axis=1)
+        scan_x, scan_y, scan_z = pos[:, 0], pos[:, 1], pos[:, 2]
 
         # yaw angle -> -tan-1(left/forward) -> (-pi,pi)
         # pitch angle -> sin-1(top/depth) -> (-fov_down, fov_up)
@@ -43,12 +44,12 @@ class SphericalProjection:
         proj_y = np.minimum(self.img_H-1, proj_y)
         proj_y = np.maximum(0, proj_y).astype(np.int32) 
         
-        # order by decreasing depth (ensures closer points are preferred over farther ones)
+        # order by decreasing depth (ensures closer pos are preferred over farther ones)
         indices = np.arange(depth.shape[0]) 
         order = np.argsort(depth)[::-1]
         depth = depth[order]
         indices = indices[order]
-        points = points[order]
+        pos = pos[order]
         remissions = remissions[order]
         proj_x = proj_x[order]
         proj_y = proj_y[order]
@@ -61,28 +62,28 @@ class SphericalProjection:
 
         # assigning values!
         proj_range[proj_y, proj_x] = depth
-        proj_xyz[proj_y, proj_x] = points
+        proj_xyz[proj_y, proj_x] = pos
         proj_remissions[proj_y, proj_x] = remissions
         proj_index[proj_y, proj_x] = indices
         proj_mask = (proj_index >= 0).astype(np.bool)
 
         return proj_range, proj_xyz, proj_remissions, proj_x, proj_y, order, proj_index, proj_mask
     
-    def _project_label(self, proj_index, proj_mask, unproj_label):
-        
-        proj_label = np.zeros((self.img_H, self.img_W), dtype=np.int32)
-        proj_label[proj_mask] = unproj_label[proj_index[proj_mask]]
-        return proj_label
+    def _project_labels(self, proj_index, proj_mask, unproj_labels):
+        proj_labels = np.zeros((self.img_H, self.img_W), dtype=np.int32)
+        proj_labels[proj_mask] = unproj_labels[proj_index[proj_mask]]
+        return proj_labels
     
-    def __call__(self, points, remissions, label=None, normalise=True):
-        proj_range, proj_xyz, proj_remissions, proj_x, proj_y, order, proj_index, proj_mask = self._project_scan(points, remissions)
-        proj = np.concatenate([np.expand_dims(proj_range, 0), np.transpose(proj_xyz, (2, 0, 1)), np.expand_dims(proj_remissions, 0)])
+    def __call__(self, pos, remissions, labels=None, normalise=True):
+        proj_range, proj_xyz, proj_remissions, data.proj_x, data.proj_y, data.order, \
+            data.proj_index, data.proj_mask = self._project_scan(data.pos, data.remissions)
+        data.proj = np.concatenate([np.expand_dims(proj_range, 0), np.transpose(proj_xyz, (2, 0, 1)), np.expand_dims(proj_remissions, 0)])
         if normalise:
-            proj = (proj - self.means[:, None, None])/self.std[:, None, None]
-        proj_label = None
-        if label:
-            proj_label = self._project_label(proj_index, proj_mask, label)
-        return proj, proj_label, proj_x, proj_y, order, proj_index, proj_mask
+            data.proj = (data.proj - self.means[:, None, None])/self.std[:, None, None]
+        data.proj_labels = None
+        if data.labels is not None:
+            data.proj_labels = self._project_labels(proj_index, proj_mask, labels)
+        return data
         
 
         

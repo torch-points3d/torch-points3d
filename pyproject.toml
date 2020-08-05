@@ -49,6 +49,7 @@ sphinx-autobuild = "^0.7.1"
 mypy = "^0.770"
 vtk = "^8.0.0"
 ipywidgets = "^7.5.1"
+vispy = "^0.6.4"
 
 [tool.black]
 line-length = 120

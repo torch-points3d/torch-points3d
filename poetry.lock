@@ -365,6 +365,14 @@ python = "<3.8"
 version = "*"
 
 [[package]]
+category = "dev"
+description = "Freetype python bindings"
+name = "freetype-py"
+optional = false
+python-versions = ">=3.6"
+version = "2.2.0"
+
+[[package]]
 category = "main"
 description = "Clean single-source support for Python 3 and 2"
 name = "future"
@@ -609,7 +617,7 @@ version = "5.3.2"
 [package.dependencies]
 appnope = "*"
 ipython = ">=5.0.0"
-jupyter_client = "*"
+jupyter-client = "*"
 tornado = ">=4.2"
 traitlets = ">=4.1.0"
 
@@ -1231,7 +1239,6 @@ tests = ["nose", "flake8"]
 [[package]]
 category = "dev"
 description = "A Python Parser"
-marker = "python_version >= \"3.3\""
 name = "parso"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
@@ -1391,7 +1398,7 @@ enum = ["enum34"]
 [[package]]
 category = "dev"
 description = "Run a subprocess in a pseudo terminal"
-marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or os_name != \"nt\""
+marker = "python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\" or os_name != \"nt\" or python_version >= \"3.3\" and sys_platform != \"win32\" and (python_version >= \"3.3\" and sys_platform != \"win32\" or sys_platform != \"win32\")"
 name = "ptyprocess"
 optional = false
 python-versions = "*"
@@ -2275,6 +2282,30 @@ websocket-client = "*"
 
 [[package]]
 category = "dev"
+description = "Interactive visualization in Python"
+name = "vispy"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
+version = "0.6.4"
+
+[package.dependencies]
+freetype-py = "*"
+numpy = "*"
+
+[package.extras]
+doc = ["sphinx-bootstrap-theme", "numpydoc"]
+ipython-static = ["ipython"]
+ipython-vnc = ["ipython (>=7)"]
+ipython-webgl = ["ipywidgets (>=7.0)", "ipython (>=7)", "tornado"]
+pyglet = ["pyglet (>=1.2)"]
+pyqt5 = ["pyqt5"]
+pyside = ["pyside"]
+pyside2 = ["pyside2"]
+sdl2 = ["pysdl2"]
+wx = ["wxpython"]
+
+[[package]]
+category = "dev"
 description = "VTK is an open-source toolkit for 3D computer graphics, image processing, and visualization"
 name = "vtk"
 optional = false
@@ -2326,7 +2357,6 @@ watchmedo = ["PyYAML (>=3.10)", "argh (>=0.24.1)"]
 [[package]]
 category = "dev"
 description = "Measures the displayed width of unicode strings in a terminal"
-marker = "python_version >= \"3.3\""
 name = "wcwidth"
 optional = false
 python-versions = "*"
@@ -2408,7 +2438,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "260b92007d6056ea9265570299b3b02613543909f1d509080cb4928a64760063"
+content-hash = "afea2d477f0d3bfb2b9af5d54527366945de9ad87a53da6898ad55e497ba36d2"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -2579,6 +2609,12 @@ flake8 = [
     {file = "flake8-3.8.3-py2.py3-none-any.whl", hash = "sha256:15e351d19611c887e482fb960eae4d44845013cc142d42896e9862f775d8cf5c"},
     {file = "flake8-3.8.3.tar.gz", hash = "sha256:f04b9fcbac03b0a3e58c0ab3a0ecc462e023a9faf046d57794184028123aa208"},
 ]
+freetype-py = [
+    {file = "freetype-py-2.2.0.zip", hash = "sha256:cf43716bc5246cd54a64b2238b942e8dc80b79eda92f814c720286fa6fab387a"},
+    {file = "freetype_py-2.2.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:8059ebad562d465555fa556739906a2429381ba6206989afe2b7c8c87fad19d8"},
+    {file = "freetype_py-2.2.0-py3-none-manylinux1_x86_64.whl", hash = "sha256:ede78730db61dc17c4524412aa3fccf038ede65400aa49b9e0a73a7e839a91a2"},
+    {file = "freetype_py-2.2.0-py3-none-win_amd64.whl", hash = "sha256:719a639040484a063b99421d104e3911a860d2e034b67769ae438bc1d4aa6e1f"},
+]
 future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
@@ -2704,6 +2740,7 @@ importlib-resources = [
     {file = "importlib_resources-3.0.0.tar.gz", hash = "sha256:19f745a6eca188b490b1428c8d1d4a0d2368759f32370ea8fb89cad2ab1106c3"},
 ]
 ipykernel = [
+    {file = "ipykernel-5.3.2-py3-none-any.whl", hash = "sha256:0a5f1fc6f63241b9710b5960d314ffe44d8a18bf6674e3f28d2542b192fa318c"},
     {file = "ipykernel-5.3.2.tar.gz", hash = "sha256:89dc4bd19c7781f6d7eef0e666c59ce57beac56bb39b511544a71397b7b31cbb"},
 ]
 ipython = [
@@ -3601,6 +3638,30 @@ virtualenv = [
 ]
 visdom = [
     {file = "visdom-0.1.8.9.tar.gz", hash = "sha256:c73ad23723c24a48156899f78dd76bd4538eba3edf9120b6c65a9528fa677126"},
+]
+vispy = [
+    {file = "vispy-0.6.4-cp35-cp35m-macosx_10_6_intel.whl", hash = "sha256:5645ac825c726cbf751a792802846e5583bf55567d751065df943877768b1de6"},
+    {file = "vispy-0.6.4-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:1cd1ffefb462ea483fcb141deb900ac1e6a002d19338b30758069d3ec783bddd"},
+    {file = "vispy-0.6.4-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:ea2891c433e928b30e40f5c128ac7d35ce7964592bfbf579fc02c955f0096564"},
+    {file = "vispy-0.6.4-cp35-cp35m-manylinux2010_i686.whl", hash = "sha256:a6bb5926c5c4107b77fbfb7ed259e82d7a8e363650b435062aa55c6d1cf9d4df"},
+    {file = "vispy-0.6.4-cp35-cp35m-manylinux2010_x86_64.whl", hash = "sha256:85a581e995938ae4e2e6d3613c74add9e5e10448c61fac198b20d2fa18b2a150"},
+    {file = "vispy-0.6.4-cp35-cp35m-win32.whl", hash = "sha256:02929e5a2414dae33a64d4177172c0a36a71131cf3674e7d99b48d28e296a300"},
+    {file = "vispy-0.6.4-cp35-cp35m-win_amd64.whl", hash = "sha256:e8643285ee0b84dd16ea1c1261bce694454eebd3c6be6c81d10f9a92bd96bea2"},
+    {file = "vispy-0.6.4-cp36-cp36m-macosx_10_6_intel.whl", hash = "sha256:f5d27453181b4553e1c7f55435a8185effb71c554b1d2b369b8d2865c982fa92"},
+    {file = "vispy-0.6.4-cp36-cp36m-manylinux1_i686.whl", hash = "sha256:a0e587d826ad0504add75962a2a5e29dcc9fe639156d92ac8384ee2e2be873e8"},
+    {file = "vispy-0.6.4-cp36-cp36m-manylinux1_x86_64.whl", hash = "sha256:26d66815b68df401a4c50beab86cd6141ed315bbb2a12e9759db55a3c6737187"},
+    {file = "vispy-0.6.4-cp36-cp36m-manylinux2010_i686.whl", hash = "sha256:370fbbd9d398c1ee9c9fc720cfb63cf4b81c9266d1960485b20eb7af1b4083d1"},
+    {file = "vispy-0.6.4-cp36-cp36m-manylinux2010_x86_64.whl", hash = "sha256:7c021fa1592b6249197863ac3839e2a8c92c283e194053df225fa94717a7aa14"},
+    {file = "vispy-0.6.4-cp36-cp36m-win32.whl", hash = "sha256:2037341a3e1c6e31a14015a98d9f5a7cdf805900c80058690d31e8ba99fc891d"},
+    {file = "vispy-0.6.4-cp36-cp36m-win_amd64.whl", hash = "sha256:dbe1a074d4e8940a150952e22e4e163d4085a6733fa780e228441ce8e4883c2e"},
+    {file = "vispy-0.6.4-cp37-cp37m-macosx_10_6_intel.whl", hash = "sha256:45b44f3f621e4ea0e98d95d70a447a443d04793f9226ac346fb9b25e04e64160"},
+    {file = "vispy-0.6.4-cp37-cp37m-manylinux1_i686.whl", hash = "sha256:e59590a54f0b15190e0409a7a06ed210dfdc331ea9150c806d51a160df4b2bd3"},
+    {file = "vispy-0.6.4-cp37-cp37m-manylinux1_x86_64.whl", hash = "sha256:61b6ccbf701f3a022d0081d7c78760a95cb5f5e368c799a9c2294eb15918aa0e"},
+    {file = "vispy-0.6.4-cp37-cp37m-manylinux2010_i686.whl", hash = "sha256:7a08fa4578fc5e1e6b0bb52d15525233794a07cf6f80d27d96c76bf9a8a60ceb"},
+    {file = "vispy-0.6.4-cp37-cp37m-manylinux2010_x86_64.whl", hash = "sha256:c29b3973fb3fc756f43af7f9157e42cf8141cd922f3aa250dffe611139458d73"},
+    {file = "vispy-0.6.4-cp37-cp37m-win32.whl", hash = "sha256:33763666f1857f0dddeed3df19a6f611934df3a26c905e955c9ef9b2a5fb54f0"},
+    {file = "vispy-0.6.4-cp37-cp37m-win_amd64.whl", hash = "sha256:6703ccb8f76f403ef536106c5c877e7551bc5097dc567f5fcd1363d55781e550"},
+    {file = "vispy-0.6.4.tar.gz", hash = "sha256:627b6574b77c86e72a1e6b4522a5c9697c6f4cbb23678d8da9ff55c339264b1f"},
 ]
 vtk = [
     {file = "vtk-8.1.2-cp27-cp27m-macosx_10_6_x86_64.whl", hash = "sha256:ee17372ded18987480e3e07405f9b36fc4e2a0c1da1503628c4980a3957d7c98"},
