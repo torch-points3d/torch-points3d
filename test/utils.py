@@ -1,3 +1,6 @@
+import torch
+
+
 def test_hasgrad(model, strict=False, verbose=False):
     """ Tests if a pytorch module has got parameters with gradient equal to 0. Returns the
     ratio of parameters with 0 gradient against the total number of parameters
@@ -15,7 +18,7 @@ def test_hasgrad(model, strict=False, verbose=False):
         if p.requires_grad:
             total_params += 1
             assert p.grad is not None
-            if p.grad.nonzero().sum() == 0:
+            if torch.nonzero(p.grad, as_tuple=False).sum() == 0:
                 if verbose:
                     print("Param with name %s has 0 grad" % name)
                 count += 1

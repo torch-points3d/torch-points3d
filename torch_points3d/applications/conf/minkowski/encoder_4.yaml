@@ -1,21 +1,22 @@
 class: minkowski.Minkowski_Model
 conv_type: "SPARSE"
 define_constants:
-  in_feat: 32
+    in_feat: 32
+    block: ResBlock # Can be any of the blocks in modules/MinkowskiEngine/api_modules.py
 down_conv:
-    module_name: Res2BlockDown
-    dimension: 3
-    bn_momentum: 0.2
+    module_name: ResNetDown
+    block: block
+    N: [0, 1, 2, 2, 3]
     down_conv_nn:
         [
-           [FEAT, in_feat],
-           [in_feat, 2*in_feat],
-           [2*in_feat, 4*in_feat],
-           [4*in_feat, 8*in_feat]
+            [FEAT, in_feat],
+            [in_feat, in_feat],
+            [in_feat, 2*in_feat],
+            [2*in_feat, 4*in_feat],
+            [4*in_feat, 8*in_feat],
         ]
-    kernel_size: [5, 3, 3, 3]
-    stride: [1, 2, 2, 2]
-    dilation: [1, 1, 1, 1]
+    kernel_size: [3, 3, 3, 3, 3]
+    stride: [1, 2, 2, 2, 2]
 innermost:
     module_name: GlobalBaseModule
     activation:
