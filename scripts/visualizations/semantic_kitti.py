@@ -18,3 +18,4 @@ from torch_points3d.visualization.vispy_visualizer import KittiVisualizer
 kittiViz = KittiVisualizer()
 
 
+
