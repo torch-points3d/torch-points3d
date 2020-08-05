@@ -126,9 +126,9 @@ class MultiHeadClassifier(BaseModule):
 
 
 class FastBatchNorm1d(BaseModule):
-    def __init__(self, num_features, momentum=0.1):
+    def __init__(self, num_features, momentum=0.1, **kwargs):
         super().__init__()
-        self.batch_norm = nn.BatchNorm1d(num_features, momentum=momentum)
+        self.batch_norm = nn.BatchNorm1d(num_features, momentum=momentum, **kwargs)
 
     def _forward_dense(self, x):
         return self.batch_norm(x)

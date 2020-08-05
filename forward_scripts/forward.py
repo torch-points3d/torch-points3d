@@ -5,6 +5,7 @@ from omegaconf import OmegaConf
 import os
 import sys
 import numpy as np
+from typing import Dict
 
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -36,9 +37,9 @@ def save(prefix, predicted):
         np.save(os.path.join(prefix, out_file), value)
 
 
-def run(model: BaseModel, dataset: BaseDataset, device, output_path):
+def run(model: BaseModel, dataset, device, output_path):
     loaders = dataset.test_dataloaders
-    predicted = {}
+    predicted: Dict = {}
     for loader in loaders:
         loader.dataset.name
         with Ctq(loader) as tq_test_loader:

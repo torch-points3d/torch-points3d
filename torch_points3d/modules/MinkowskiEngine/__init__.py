@@ -4,7 +4,6 @@ try:
     from .networks import *
     from .res16unet import *
     from .resunet import *
-    from .modules import *
 
     _custom_models = sys.modules[__name__]
 

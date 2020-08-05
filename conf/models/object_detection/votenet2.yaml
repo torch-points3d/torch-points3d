@@ -96,6 +96,44 @@ models:
             num_classes: 18 # Should be $(data.num_classes)
         backbone:
             model_type: "Minkowski"
+            config:
+                class: minkowski.Minkowski_Model
+                conv_type: "SPARSE"
+                define_constants:
+                    in_feat: 32
+                    in_feat_tr: 128
+                down_conv:
+                    module_name: ResNetDown
+                    dimension: 3
+                    bn_momentum: 0.2
+                    down_conv_nn:
+                        [
+                            [FEAT, in_feat],
+                            [in_feat, in_feat],
+                            [in_feat, 2*in_feat],
+                            [2*in_feat, 4*in_feat],
+                            [4*in_feat, 8*in_feat],
+                        ]
+                    kernel_size: 3
+                    stride: [1, 2, 2, 2, 2]
+                    dilation: 1
+                    N: [0, 1, 1, 1, 1, 1]
+                up_conv:
+                    module_name: ResNetUp
+                    dimension: 3
+                    bn_momentum: 0.2
+                    up_conv_nn:
+                        [
+                            [8*in_feat, in_feat_tr],
+                            [in_feat_tr + 4*in_feat, in_feat_tr],
+                            [in_feat_tr + 2*in_feat, in_feat_tr],
+                            [in_feat_tr + in_feat, in_feat_tr],
+                            [in_feat_tr + in_feat, in_feat_tr],
+                        ]
+                    kernel_size: 3
+                    stride: [2, 2, 2, 2, 1]
+                    dilation: 1
+                    N: [1, 1, 1, 1, 1, 0]
         voting:
             module_name: VotingModule
             vote_factor: 1
@@ -190,6 +228,7 @@ models:
             model_type: "RSConv"
             config:
                 down_conv:
+                    save_sampling_id: [True, False, False, False]
                     module_name: RSConvOriginalMSGDown
                     npoint: [2048, 1024, 512, 256]
                     radii:
@@ -200,7 +239,7 @@ models:
                             [0.8, 1.2, 1.6],
                         ]
                     nsamples:
-                        [[16, 32, 48], [16, 48, 64], [16, 32, 48], [16, 24, 32]]
+                        [[16, 32, 64], [16, 32, 48], [16, 32, 48], [16, 24, 32]]
                     down_conv_nn:
                         [
                             [[10, 64//2, 16], [FEAT + 3, 16]],
@@ -229,6 +268,152 @@ models:
                             [512 * 3 + 256 * 3, 512, 512],
                             [128 * 3 + 512, 512, 512],
                             [64 * 3 + 512, 256, 256],
+                            [256 + FEAT, 128, 128],
+                        ]
+                    skip: True
+        voting:
+            module_name: VotingModule
+            vote_factor: 1
+            num_points_to_sample: 1024
+        proposal:
+            module_name: ProposalModule
+            vote_aggregation:
+                module_name: PointNetMSGDown
+                npoint: num_proposal
+                radii: [0.3]
+                nsample: [16]
+                down_conv_nn:
+                    [[num_features + 3, in_feat * 2, in_feat * 2, in_feat * 2]]
+                normalize_xyz: True
+            num_class: num_classes
+            num_heading_bin: 1
+            num_proposal: num_proposal
+            sampling: "seed_fps"
+        loss_params:
+            far_threshold: 0.6
+            near_threshold: 0.3
+            gt_vote_factor: 3 # number of GT votes per point
+            objectness_cls_weights: [0.2, 0.8]
+
+    VoteNetRSConvTruncated:
+        class: votenet2.VoteNet2
+        conv_type: "DENSE"
+        dropout: 0.5
+        define_constants:
+            num_proposal: 256
+            num_classes: 18 # Should be $(data.num_classes)
+        backbone:
+            model_type: "RSConv"
+            config:
+                down_conv:
+                    save_sampling_id: [True, False, False, False]
+                    module_name: RSConvOriginalMSGDown
+                    npoint: [2048, 1024, 512, 256]
+                    radii:
+                        [
+                            [0.125, 0.2, 0.25],
+                            [0.2, 0.3, 0.4],
+                            [0.4, 0.6, 0.8],
+                            [0.8, 1.2, 1.6],
+                        ]
+                    nsamples:
+                        [[16, 32, 64], [16, 32, 48], [16, 32, 48], [16, 24, 32]]
+                    down_conv_nn:
+                        [
+                            [[10, 64//2, 16], [FEAT + 3, 16]],
+                            [10, 128//4, 64 * 3 + 3],
+                            [10, 256//4, 128 * 3  + 3],
+                            [10, 512//4, 256 * 3  + 3],
+                        ]
+                    channel_raising_nn:
+                        [
+                            [16, 64],
+                            [64 * 3  + 3, 128],
+                            [128 * 3  + 3, 256],
+                            [256 * 3  + 3, 512],
+                        ]
+                innermost:
+                    - module_name: GlobalDenseBaseModule
+                      nn: [512 * 3 + 3, 128]
+                      aggr: "mean"
+                    - module_name: GlobalDenseBaseModule
+                      nn: [256 * 3 + 3, 128]
+                      aggr: "mean"
+                up_conv:
+                    module_name: DenseFPModule
+                    up_conv_nn:
+                        [
+                            [512 * 3 + 256 * 3, 512, 512],
+                            [128 * 3 + 512, 512, 256],
+                        ]
+                    skip: True
+        voting:
+            module_name: VotingModule
+            vote_factor: 1
+            num_points_to_sample: 1024
+        proposal:
+            module_name: ProposalModule
+            vote_aggregation:
+                module_name: PointNetMSGDown
+                npoint: num_proposal
+                radii: [0.3]
+                nsample: [16]
+                down_conv_nn:
+                    [[num_features + 3, in_feat * 2, in_feat * 2, in_feat * 2]]
+                normalize_xyz: True
+            num_class: num_classes
+            num_heading_bin: 1
+            num_proposal: num_proposal
+            sampling: "seed_fps"
+        loss_params:
+            far_threshold: 0.6
+            near_threshold: 0.3
+            gt_vote_factor: 3 # number of GT votes per point
+            objectness_cls_weights: [0.2, 0.8]
+
+    VoteNetRSConvSmall:
+        class: votenet2.VoteNet2
+        conv_type: "DENSE"
+        define_constants:
+            num_proposal: 256
+            num_classes: 18 # Should be $(data.num_classes)
+        backbone:
+            model_type: "RSConv"
+            config:
+                down_conv:
+                    save_sampling_id: [True, False, False, False]
+                    module_name: RSConvOriginalMSGDown
+                    npoint: [2048, 1024, 512, 256]
+                    radii: [[0.25], [0.4], [0.8], [1.6]]
+                    nsamples: [[64], [48], [48], [32]]
+                    down_conv_nn:
+                        [
+                            [[10, 64//2, 16], [FEAT + 3, 16]],
+                            [10, 64//4, 64  + 3],
+                            [10, 256//4, 128   + 3],
+                            [10, 512//4, 256   + 3],
+                        ]
+                    channel_raising_nn:
+                        [
+                            [16, 64],
+                            [64  + 3, 128],
+                            [128   + 3, 256],
+                            [256   + 3, 256],
+                        ]
+                innermost:
+                    - module_name: GlobalDenseBaseModule
+                      nn: [256  + 3, 128]
+                      aggr: "mean"
+                    - module_name: GlobalDenseBaseModule
+                      nn: [256 + 3, 128]
+                      aggr: "mean"
+                up_conv:
+                    module_name: DenseFPModule
+                    up_conv_nn:
+                        [
+                            [256  + 256, 256, 256],
+                            [128  + 256, 256, 256],
+                            [64  + 256, 256, 256],
                             [256 + FEAT, 128, 128],
                         ]
                     skip: True

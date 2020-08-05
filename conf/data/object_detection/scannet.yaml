@@ -1,9 +1,9 @@
 data:
   class: scannet.ScannetDataset
-  dataset_name: 'scannet-sparse'
+  dataset_name: "scannet-sparse"
   task: object_detection
   dataroot: data
-  version: 'v2'
+  version: "v2"
   use_instance_labels: True
   use_instance_bboxes: True
   donotcare_class_ids: []
@@ -15,19 +15,54 @@ data:
       lparams: [0.02]
 
   train_transform:
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
     - transform: FixedPoints
-      lparams: [40000] 
+      lparams: [50000]
       params:
         replace: False
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
+    - transform: RandomScaleAnisotropic
+      params:
+        scales: [0.9, 1.1]
+    - transform: RandomSymmetry
+      params:
+        axis: [True, False, False]
+    - transform: Random3AxisRotation
+      params:
+        rot_x: 2
+        rot_y: 2
+        rot_z: 180
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True, True]
+        feat_names: ["pos_x", "pos_y", "pos_z"]
+        delete_feats: [True, True, True]
 
   val_transform:
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
     - transform: FixedPoints
-      lparams: [40000]
+      lparams: [50000]
       params:
         replace: False
+    - transform: AddFeatsByKeys
+      params:
+        list_add_to_x: [True, True, True]
+        feat_names: ["pos_x", "pos_y", "pos_z"]
+        delete_feats: [True, True, True]
