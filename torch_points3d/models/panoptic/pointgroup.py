@@ -31,13 +31,13 @@ class PointGroup(BaseModel):
             config=backbone_options.get("config", {}),
         )
 
-        self._scorer_is_encoder = option.scorer.architecture == "encoder"
-        self._activate_scorer = option.scorer.activate
-        self.Scorer = Minkowski(
-            option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=option.scorer.depth
+        self._scorer_type = "encoder"
+        self.ScorerUnet = Minkowski("unet", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_unet)
+        self.ScorerEncoder = Minkowski(
+            "encoder", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_encoder
         )
-        self.Scorer2 = MLP([self.Backbone.output_nc, self.Backbone.output_nc, self.Scorer.output_nc])
-        self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
+        self.ScorerMLP = MLP([self.Backbone.output_nc, self.Backbone.output_nc, self.ScorerUnet.output_nc])
+        self.ScorerHead = Seq().append(torch.nn.Linear(self.ScorerUnet.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
         self.Offset.append(torch.nn.Linear(self.Backbone.output_nc, 3))
@@ -120,7 +120,7 @@ class PointGroup(BaseModel):
 
     def _compute_score(self, all_clusters, backbone_features, semantic_logits):
         """ Score the clusters """
-        if self._activate_scorer:
+        if self._scorer_type:
             x = []
             coords = []
             batch = []
@@ -129,13 +129,21 @@ class PointGroup(BaseModel):
                 coords.append(self.input.coords[cluster])
                 batch.append(i * torch.ones(cluster.shape[0]))
             batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),)
-            score_backbone_out = self.Scorer2(batch_cluster.x.to(self.device))
-            if False:
-                cluster_feats = score_backbone_out.x
-            else:
+
+            if self._scorer_type == "MLP":
+                score_backbone_out = self.ScorerMLP(batch_cluster.x.to(self.device))
                 cluster_feats = scatter(
                     score_backbone_out, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
                 )
+            elif self._scorer_type == "encoder":
+                score_backbone_out = self.ScorerEncoder(batch_cluster.x.to(self.device))
+                cluster_feats = score_backbone_out.x
+            else:
+                score_backbone_out = self.ScorerUnet(batch_cluster.x.to(self.device))
+                cluster_feats = scatter(
+                    score_backbone_out.x, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
+                )
+
             cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
         else:
             # Use semantic certainty as cluster confidence
