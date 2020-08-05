@@ -27,7 +27,6 @@ from torch_points3d.core.data_transform import (
     ShiftVoxels,
     PCACompute,
     RandomCoordsFlip,
-    RemoveDuplicateCoords,
     XYZFeature,
     ScalePos,
     RandomWalkDropout,
@@ -178,13 +177,6 @@ class Testhelpers(unittest.TestCase):
         data_out = transform(data)
         for key in keys[mask]:
             self.assertNotIn(key, list(data_out.keys))
-
-    def test_RemoveDuplicateCoords(self):
-        indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])
-        data = Data(pos=torch.from_numpy(indices))
-        transform = RemoveDuplicateCoords()
-        data_out = transform(data)
-        self.assertEqual(data_out.pos.shape[0], 5)
 
     def test_dropout(self):
         indices = np.asarray([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0], [0, 0, 0]])

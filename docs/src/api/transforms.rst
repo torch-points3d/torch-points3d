@@ -30,10 +30,6 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.RemoveAttributes
 
-.. autoclass:: torch_points3d.core.data_transform.RemoveDuplicateCoords
-
-.. autoclass:: torch_points3d.core.data_transform.ToSparseInput
-
 .. autoclass:: torch_points3d.core.data_transform.ShuffleData
 
 .. autoclass:: torch_points3d.core.data_transform.ShiftVoxels

@@ -3,6 +3,8 @@
 Models
 ======
 
+.. autofunction:: torch_points3d.applications.minkowski.Minkowski
+
 .. autofunction:: torch_points3d.applications.kpconv.KPConv
 
 .. autofunction:: torch_points3d.applications.pointnet2.PointNet2

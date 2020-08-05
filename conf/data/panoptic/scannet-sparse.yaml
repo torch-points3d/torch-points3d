@@ -16,9 +16,6 @@ data:
       lparams: [0.02]
 
   train_transform:
-    - transform: ElasticDistortion
-      params:
-        spatial_resolution: ${data.grid_size}
     - transform: RandomNoise
       params:
         sigma: 0.01

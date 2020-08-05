@@ -99,6 +99,7 @@ def main(cfg):
 
         conf_path = os.path.join(workdir, "{}.npy".format(cfg.model_name))
         np.save(conf_path, trainer._tracker.full_confusion_matrix.get_confusion_matrix())
+        del trainer
         conf_paths.append(conf_path)
 
     confusion_matrix = ConfusionMatrix.create_from_matrix(np.sum([np.load(p) for p in conf_paths], axis=0))

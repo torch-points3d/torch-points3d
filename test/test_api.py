@@ -154,17 +154,18 @@ class TestAPIUnet(unittest.TestCase):
         input_nc = 3
         num_layers = 4
         in_feat = 32
+        out_feat = in_feat * 3
         model = Minkowski(architecture="unet", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,)
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
-        self.assertEqual(len(model._modules["up_modules"]), 4)
+        self.assertEqual(len(model._modules["up_modules"]), 4 + 1)
         self.assertFalse(model.has_mlp_head)
-        self.assertEqual(model.output_nc, in_feat)
+        self.assertEqual(model.output_nc, out_feat)
 
         try:
             data_out = model.forward(dataset[0])
-            self.assertEqual(data_out.x.shape[1], in_feat)
+            self.assertEqual(data_out.x.shape[1], out_feat)
         except Exception as e:
             print("Model failing:")
             print(model)
@@ -178,9 +179,9 @@ class TestAPIUnet(unittest.TestCase):
             architecture="unet", input_nc=input_nc, output_nc=output_nc, num_layers=num_layers, config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
-        self.assertEqual(len(model._modules["up_modules"]), 4)
+        self.assertEqual(len(model._modules["up_modules"]), 4 + 1)
         self.assertTrue(model.has_mlp_head)
         self.assertEqual(model.output_nc, output_nc)
 
@@ -313,7 +314,7 @@ class TestAPIEncoder(unittest.TestCase):
             architecture="encoder", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertFalse(model.has_mlp_head)
         self.assertEqual(model.output_nc, 8 * in_feat)
@@ -341,7 +342,7 @@ class TestAPIEncoder(unittest.TestCase):
             config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        self.assertEqual(len(model._modules["down_modules"]), num_layers)
+        self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
         self.assertEqual(len(model._modules["inner_modules"]), 1)
         self.assertTrue(model.has_mlp_head)
         self.assertEqual(model.output_nc, output_nc)
