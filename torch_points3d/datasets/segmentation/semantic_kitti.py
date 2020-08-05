@@ -350,6 +350,14 @@ class SemanticKitti(Dataset):
             data = {"proj_img": proj, "proj_label": proj_label}
         return data
     
+    def project_returnall(self, idx):
+        pts, rem = self.open_scan(self.scan_path[idx])
+        sem_label = None
+        if self.label_path is not None:
+            sem_label, _ = self.open_label(self.label_path[idx])
+        proj, proj_label, proj_x, proj_y, order, _, _ = self.transform(pts, rem, sem_label, self.normalise)
+        return pts, sem_label, proj, proj_label, proj_x, proj_y
+    
     def download(self):
         url = "http://semantic-kitti.org/"
         print(f"please download the dataset from {url} with the following folder structure")

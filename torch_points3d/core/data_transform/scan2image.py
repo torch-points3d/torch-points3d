@@ -9,7 +9,7 @@ in image coordinates -  ----> x-axis
 """
 
 class SphericalProjection:
-    def __init__(self, img_H, img_W, fov_UP, fov_DOWN, means=None, std=None):
+    def __init__(self, img_H, img_W, fov_UP=-3, fov_DOWN=25, means=None, std=None):
         self._img_H = img_H
         self._img_W = img_W
         self._fov_UP = fov_UP/180*np.pi
