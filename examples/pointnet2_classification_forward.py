@@ -12,10 +12,13 @@ T = torch.randn((num_points, input_nc)).unsqueeze(0)
 
 data = Data(pos=pos, x=T)
 
-# Batch(batch=[2], pos=[2, 1024, 3], x=[2, 1024, 5])
 data = Batch.from_data_list([data, data])
+print(data)
+# Batch(batch=[2], pos=[2, 1024, 3], x=[2, 1024, 5])
+
 
 model = PointNet2(architecture="encoder", input_nc=input_nc, num_layers=3, output_nc=num_classes,)
 
-# Data(x=[2, 10, 1])
 res = model(data)
+print(res)
+# Data(x=[2, 10, 1])
