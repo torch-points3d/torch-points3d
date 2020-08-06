@@ -2,11 +2,11 @@ name: DockerPublish
 
 on:
   push:
-    # branches:
-    #   - master
+    branches:
+      - master
 
 jobs:
-  pdocker_publish:
+  docker_publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
