@@ -114,7 +114,7 @@ class GridSampling3D:
         if self._mode == "last":
             data = shuffle_data(data)
 
-        coords = ((data.pos) / self._grid_size).int()
+        coords = torch.round((data.pos) / self._grid_size)
         if "batch" not in data:
             cluster = grid_cluster(coords, torch.tensor([1, 1, 1]))
         else:
@@ -123,7 +123,7 @@ class GridSampling3D:
 
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
         if self._quantize_coords:
-            data.coords = coords[unique_pos_indices]
+            data.coords = coords[unique_pos_indices].int()
 
         return data
 
