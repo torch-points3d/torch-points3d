@@ -122,7 +122,6 @@ class SegmentationS3DISCylinder(SegmentationS3DISSphere):
         centre_idx = int(random.random() * (valid_centres.shape[0] - 1))
         centre = valid_centres[centre_idx]
         area_data = self._datas[centre[3].int()]
-        import pdb; pdb.set_trace()
         cylinder_sampler = cT.CylinderSampling(self._radius, centre[:3], align_origin=False)
         return cylinder_sampler(area_data)
 
@@ -143,7 +142,7 @@ class SegmentationS3DISCylinder(SegmentationS3DISSphere):
                 centres[:, 3] = i
                 centres[:, 4] = low_res.y
                 self._centres_for_sampling.append(centres)
-                tree = KDTree(np.asarray(data.pos), leaf_size=10)
+                tree = KDTree(np.asarray(data.pos[:, :-1]), leaf_size=10)
                 setattr(data, cT.CylinderSampling.KDTREE_KEY, tree)
 
             self._centres_for_sampling = torch.cat(

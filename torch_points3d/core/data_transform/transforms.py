@@ -179,7 +179,6 @@ class GridCylinderSampling(object):
 
     def _process(self, data):
         if not hasattr(data, self.KDTREE_KEY):
-            import pdb; pdb.set_trace()
             tree = KDTree(np.asarray(data.pos[:, :-1]), leaf_size=50)
         else:
             tree = getattr(data, self.KDTREE_KEY)
@@ -207,7 +206,6 @@ class GridCylinderSampling(object):
             new_data.center_label = grid_label
             
             datas.append(new_data)
-        import pdb; pdb.set_trace()
         return datas
 
     def __call__(self, data):
@@ -372,7 +370,10 @@ class CylinderSampling:
             tree = getattr(data, self.KDTREE_KEY)
 
         t_center = torch.FloatTensor(self._centre)
-        ind = torch.LongTensor(tree.query_radius(self._centre, r=self._radius)[0])
+        try:
+            ind = torch.LongTensor(tree.query_radius(self._centre, r=self._radius)[0])
+        except:
+            import pdb; pdb.set_trace()
         new_data = Data()
         for key in set(data.keys):
             if key == self.KDTREE_KEY:

@@ -13,9 +13,6 @@ data:
     - transform: GridSampling3D # Samples on a grid
       params:
         size: ${data.first_subsampling}
-    - transform: CylinderNormalizeScale
-      params:
-        normalize_z: True
   train_transforms:
     - transform: RandomNoise
       params:
@@ -58,5 +55,5 @@ data:
         delete_feats: [True, True]
     - transform: CylinderNormalizeScale
       params:
-        normalize_z: False
+        normalize_z: True
   val_transform: ${data.test_transform}
