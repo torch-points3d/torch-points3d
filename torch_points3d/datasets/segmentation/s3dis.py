@@ -427,8 +427,17 @@ class S3DISOriginalFused(InMemoryDataset):
 
             # Gather data per area
             data_list = [[] for _ in range(6)]
+            if self.debug:
+                areas = np.zeros(7)
             for (area, room_name, file_path) in tq(train_files + test_files):
-
+                if self.debug:
+                    area_idx = int(area.split('_')[-1])
+                    if areas[area_idx] == 5:
+                        continue
+                    else:
+                        print(area_idx)
+                        areas[area_idx] += 1
+                
                 area_num = int(area[-1]) - 1
                 if self.debug:
                     read_s3dis_format(
@@ -643,7 +652,6 @@ class S3DISFusedDataset(BaseDataset):
             split="train",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.train_transform,
-            keep_instance=dataset_opt.get("keep_instance", False)
         )
 
         self.val_dataset = S3DISSphere(
@@ -653,7 +661,6 @@ class S3DISFusedDataset(BaseDataset):
             split="val",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.val_transform,
-            keep_instance=dataset_opt.get("keep_instance", False)
         )
         self.test_dataset = S3DISSphere(
             self._data_path,
@@ -662,7 +669,6 @@ class S3DISFusedDataset(BaseDataset):
             split="test",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.test_transform,
-            keep_instance=dataset_opt.get("keep_instance", False)
         )
 
         if dataset_opt.class_weight_method:

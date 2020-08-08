@@ -1,8 +1,15 @@
 import numpy as np
 import torch
-from torch_points3d.datasets.segmentation.s3dis import S3DISFusedDataset as SegmentationS3DISFusedDataset
 
-INV_OBJECT_LABEL = {
+from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.datasets.segmentation.s3dis import (
+    S3DISSphere as SegmentationS3DISSphere, 
+    add_weights, 
+    INV_OBJECT_LABEL
+)
+from torch_points3d.metrics.panoptic_tracker import PanopticTracker
+
+STUFF_CLASSES_INV = {
     # 0: "ceiling",
     # 1: "floor",
     # 2: "wall",
@@ -18,10 +25,11 @@ INV_OBJECT_LABEL = {
     12: "clutter",
 }
 
-class S3DISFusedDataset(SegmentationS3DISFusedDataset):
+class PanopticS3DISSphere(SegmentationS3DISSphere):
 
-    STUFFCLASSES = INV_OBJECT_LABEL.keys()
+    INSTANCE_CLASSES = STUFF_CLASSES_INV.keys()
     NUM_MAX_OBJECTS = 64
+
 
     def __getitem__(self, idx):
         """
@@ -62,7 +70,7 @@ class S3DISFusedDataset(SegmentationS3DISFusedDataset):
             ind = np.where(data.instance_labels == i_instance)[0]
             # find the semantic label
             instance_class = semantic_labels[ind[0]].item()
-            if instance_class in self.STUFFCLASSES:  # We keep this instance
+            if instance_class in self.INSTANCE_CLASSES:  # We keep this instance
                 pos = data.pos[ind, :3]
                 max_pox = pos.max(0)[0]
                 min_pos = pos.min(0)[0]
@@ -86,7 +94,7 @@ class S3DISFusedDataset(SegmentationS3DISFusedDataset):
         data.num_instances = torch.tensor([num_instances])
 
         # Remap labels
-        data.y = super()._remap_labels(data.y)
+        data.y = self._remap_labels(data.y)
         return data
 
     def _remap_labels(self, semantic_label):
@@ -96,5 +104,96 @@ class S3DISFusedDataset(SegmentationS3DISFusedDataset):
     def stuff_classes(self):
         return super()._remap_labels(self.STUFFCLASSES)
 
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
+
+class S3DISFusedDataset(BaseDataset):
+    """ Wrapper around S3DISSphere that creates train and test datasets.
+
+    http://buildingparser.stanford.edu/dataset.html
+
+    Parameters
+    ----------
+    dataset_opt: omegaconf.DictConfig
+        Config dictionary that should contain
+
+            - dataroot
+            - fold: test_area parameter
+            - pre_collate_transform
+            - train_transforms
+            - test_transforms
+    """
+
+    INV_OBJECT_LABEL = INV_OBJECT_LABEL
+
+    def __init__(self, dataset_opt):
+        super().__init__(dataset_opt)
+
+        self.train_dataset = PanopticS3DISSphere(
+            self._data_path,
+            sample_per_epoch=3000,
+            test_area=self.dataset_opt.fold,
+            split="train",
+            pre_collate_transform=self.pre_collate_transform,
+            transform=self.train_transform,
+            keep_instance=True
+        )
+
+        self.val_dataset = PanopticS3DISSphere(
+            self._data_path,
+            sample_per_epoch=-1,
+            test_area=self.dataset_opt.fold,
+            split="val",
+            pre_collate_transform=self.pre_collate_transform,
+            transform=self.val_transform,
+            keep_instance=True
+        )
+        self.test_dataset = PanopticS3DISSphere(
+            self._data_path,
+            sample_per_epoch=-1,
+            test_area=self.dataset_opt.fold,
+            split="test",
+            pre_collate_transform=self.pre_collate_transform,
+            transform=self.test_transform,
+            keep_instance=True
+        )
+
+        if dataset_opt.class_weight_method:
+            self.train_dataset = add_weights(
+                self.train_dataset, True, dataset_opt.class_weight_method)
+
+    @property
+    def test_data(self):
+        return self.test_dataset[0].raw_test_data
+
+    @staticmethod
+    def to_ply(pos, label, file):
+        """ Allows to save s3dis predictions to disk using s3dis color scheme
+
+        Parameters
+        ----------
+        pos : torch.Tensor
+            tensor that contains the positions of the points
+        label : torch.Tensor
+            predicted label
+        file : string
+            Save location
+        """
+        to_ply(pos, label, file)
+
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
+        Returns:
+            [BaseTracker] -- tracker
+        """
+
+        return PanopticTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 
 
