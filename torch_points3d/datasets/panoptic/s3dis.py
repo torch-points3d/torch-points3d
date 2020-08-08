@@ -169,21 +169,6 @@ class S3DISFusedDataset(BaseDataset):
     def test_data(self):
         return self.test_dataset[0].raw_test_data
 
-    @staticmethod
-    def to_ply(pos, label, file):
-        """ Allows to save s3dis predictions to disk using s3dis color scheme
-
-        Parameters
-        ----------
-        pos : torch.Tensor
-            tensor that contains the positions of the points
-        label : torch.Tensor
-            predicted label
-        file : string
-            Save location
-        """
-        to_ply(pos, label, file)
-
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
 
