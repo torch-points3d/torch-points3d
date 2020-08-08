@@ -1,3 +1,5 @@
+import numpy as np
+import torch
 from torch_points3d.datasets.segmentation.s3dis import S3DISFusedDataset as SegmentationS3DISFusedDataset
 
 INV_OBJECT_LABEL = {
@@ -18,7 +20,7 @@ INV_OBJECT_LABEL = {
 
 class S3DISFusedDataset(SegmentationS3DISFusedDataset):
 
-    STUFFCLASSES = self.INV_OBJECT_LABEL.keys()
+    STUFFCLASSES = INV_OBJECT_LABEL.keys()
     NUM_MAX_OBJECTS = 64
 
     def __getitem__(self, idx):
@@ -60,7 +62,7 @@ class S3DISFusedDataset(SegmentationS3DISFusedDataset):
             ind = np.where(data.instance_labels == i_instance)[0]
             # find the semantic label
             instance_class = semantic_labels[ind[0]].item()
-            if instance_class in self.NYU40IDS:  # We keep this instance
+            if instance_class in self.STUFFCLASSES:  # We keep this instance
                 pos = data.pos[ind, :3]
                 max_pox = pos.max(0)[0]
                 min_pos = pos.min(0)[0]
