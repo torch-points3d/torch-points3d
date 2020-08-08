@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Teaser support for registration
 - Examples for using pretrained registration models
 - Pointnet2 forward examples for classification, segmentation
-- S3DIS automatic download and panoptic support
+- S3DIS automatic download and panoptic support and cylinder sampling
 
 ### Changed
 

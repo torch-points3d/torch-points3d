@@ -6,12 +6,16 @@ data:
   first_subsampling: 0.04
   keep_instance: True
   use_category: False
+  sampling_format: 'cylinder' # 'sphere'
   pre_collate_transform:
     - transform: PointCloudFusion # One point cloud per area
     - transform: SaveOriginalPosId # Required so that one can recover the original point in the fused point cloud
     - transform: GridSampling3D # Samples on a grid
       params:
         size: ${data.first_subsampling}
+    - transform: CylinderNormalizeScale
+      params:
+        normalize_z: True
   train_transforms:
     - transform: RandomNoise
       params:
@@ -52,5 +56,7 @@ data:
         list_add_to_x: [True, True]
         feat_names: [rgb, pos_z]
         delete_feats: [True, True]
-    - transform: Center
+    - transform: CylinderNormalizeScale
+      params:
+        normalize_z: False
   val_transform: ${data.test_transform}
