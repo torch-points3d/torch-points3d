@@ -102,7 +102,7 @@ class PanopticS3DISSphere(SegmentationS3DISSphere):
 
     @property
     def stuff_classes(self):
-        return super()._remap_labels(self.STUFFCLASSES)
+        return super()._remap_labels(self.INSTANCE_CLASSES)
 
     def process(self):
         super().process()
