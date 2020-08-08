@@ -25,6 +25,7 @@ from torch_points3d.datasets.samplers import BalancedRandomSampler
 import torch_points3d.core.data_transform as cT
 from torch_points3d.datasets.base_dataset import BaseDataset
 
+DIR = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger(__name__)
 
 S3DIS_NUM_CLASSES = 13
@@ -66,6 +67,20 @@ OBJECT_COLOR = np.asarray(
 
 OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
 
+ROOM_TYPES = {
+    "conferenceRoom": 0,
+    "copyRoom": 1,
+    "hallway": 2,
+    "office": 3,
+    "pantry": 4,
+    "WC": 5,
+    "auditorium": 6,
+    "storage": 7,
+    "lounge": 8,
+    "lobby": 9,
+    "openspace": 10
+}
+
 VALIDATION_ROOMS = [
     "hallway_1",
     "hallway_6",
@@ -96,6 +111,9 @@ def object_name_to_label(object_class):
 
 def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debug=False):
     """extract data from a room folder"""
+
+    room_type = room_name.split("_")[0]
+    room_label = ROOM_TYPES[room_type]
     raw_path = osp.join(train_file, "{}.txt".format(room_name))
     if debug:
         reader = pd.read_csv(raw_path, delimiter="\n")
@@ -126,7 +144,8 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         del room_ver
         nn = NearestNeighbors(n_neighbors=1, algorithm="kd_tree").fit(xyz)
         room_labels = np.zeros((n_ver,), dtype="int64")
-        room_object_indices = np.zeros((n_ver,), dtype="int64")
+        room_label = np.asarray([room_label])
+        instance_labels = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
         i_object = 1
         for single_object in objects:
@@ -139,14 +158,15 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             obj_ver = pd.read_csv(single_object, sep=" ", header=None).values
             _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
             room_labels[obj_ind] = object_label
-            room_object_indices[obj_ind] = i_object
+            instance_labels[obj_ind] = i_object
             i_object = i_object + 1
 
         return (
             torch.from_numpy(xyz),
             torch.from_numpy(rgb),
             torch.from_numpy(room_labels),
-            torch.from_numpy(room_object_indices),
+            torch.from_numpy(instance_labels),
+            torch.from_numpy(room_label),
         )
 
 
@@ -272,6 +292,7 @@ class S3DISOriginalFused(InMemoryDataset):
     form_url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
     download_url = "https://drive.google.com/uc?id=0BweDykwS9vIobkVPN0wzRzFwTDg&export=download"
     zip_name = "Stanford3dDataset_v1.2_Version.zip"
+    path_file = osp.join(DIR, "s3dis.patch")
     file_name = "Stanford3dDataset_v1.2"
     folders = ["Area_{}".format(i) for i in range(1, 7)]
     num_classes = S3DIS_NUM_CLASSES
@@ -374,6 +395,9 @@ class S3DISOriginalFused(InMemoryDataset):
             shutil.rmtree(self.raw_dir)
             os.rename(osp.join(
                 self.root, self.file_name), self.raw_dir)   
+            shutil.copy(self.path_file, self.raw_dir)
+            cmd = "patch -ruN -p0 -d  {} < {}".format(self.raw_dir, osp.join(self.raw_dir, "s3dis.patch"))
+            os.system(cmd) 
         else:
             intersection = len(set(self.folders).intersection(set(raw_folders)))
             if intersection != 6:
@@ -411,19 +435,19 @@ class S3DISOriginalFused(InMemoryDataset):
                         file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
                     continue
                 else:
-                    xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
+                    xyz, rgb, room_labels, instance_labels, room_label = read_s3dis_format(
                         file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                     )
 
                     rgb_norm = rgb.float() / 255.0
-                    data = Data(pos=xyz, y=room_labels, rgb=rgb_norm)
+                    data = Data(pos=xyz, y=room_labels, room_label=room_label, rgb=rgb_norm)
                     if room_name in VALIDATION_ROOMS:
                         data.validation_set = True
                     else:
                         data.validation_set = False
 
                     if self.keep_instance:
-                        data.room_object_indices = room_object_indices
+                        data.instance_labels = instance_labels
 
                     if self.pre_filter is not None and not self.pre_filter(data):
                         continue
@@ -619,6 +643,7 @@ class S3DISFusedDataset(BaseDataset):
             split="train",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.train_transform,
+            keep_instance=dataset_opt.get("keep_instance", False)
         )
 
         self.val_dataset = S3DISSphere(
@@ -628,6 +653,7 @@ class S3DISFusedDataset(BaseDataset):
             split="val",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.val_transform,
+            keep_instance=dataset_opt.get("keep_instance", False)
         )
         self.test_dataset = S3DISSphere(
             self._data_path,
@@ -636,6 +662,7 @@ class S3DISFusedDataset(BaseDataset):
             split="test",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.test_transform,
+            keep_instance=dataset_opt.get("keep_instance", False)
         )
 
         if dataset_opt.class_weight_method:
