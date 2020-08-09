@@ -427,10 +427,10 @@ class S3DISOriginalFused(InMemoryDataset):
 
             # Gather data per area
             data_list = [[] for _ in range(6)]
-            if True:
+            if self.debug:
                 areas = np.zeros(7)
             for (area, room_name, file_path) in tq(train_files + test_files):
-                if True:
+                if self.debug:
                     area_idx = int(area.split('_')[-1])
                     if areas[area_idx] == 5:
                         continue
