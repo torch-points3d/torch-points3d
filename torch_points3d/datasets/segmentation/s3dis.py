@@ -622,6 +622,49 @@ class S3DISSphere(S3DISOriginalFused):
                 self._radius, self._radius, center=False)
             self._test_spheres = grid_sampler(self._datas)
 
+class S3DISCylinder(S3DISSphere):
+    def _get_random(self):
+        # Random spheres biased towards getting more low frequency classes
+        chosen_label = np.random.choice(self._labels, p=self._label_counts)
+        valid_centres = self._centres_for_sampling[self._centres_for_sampling[:, 4] == chosen_label]
+        centre_idx = int(random.random() * (valid_centres.shape[0] - 1))
+        centre = valid_centres[centre_idx]
+        area_data = self._datas[centre[3].int()]
+        cylinder_sampler = cT.CylinderSampling(self._radius, centre[:3], align_origin=False)
+        return cylinder_sampler(area_data)
+
+    def _load_data(self, path):
+        self._datas = torch.load(path)
+        if not isinstance(self._datas, list):
+            self._datas = [self._datas]
+        if self._sample_per_epoch > 0:
+            self._centres_for_sampling = []
+            for i, data in enumerate(self._datas):
+                assert not hasattr(
+                    data, cT.CylinderSampling.KDTREE_KEY
+                )  # Just to make we don't have some out of date data in there
+                low_res = self._grid_sphere_sampling(data.clone())
+                centres = torch.empty(
+                    (low_res.pos.shape[0], 5), dtype=torch.float)
+                centres[:, :3] = low_res.pos
+                centres[:, 3] = i
+                centres[:, 4] = low_res.y
+                self._centres_for_sampling.append(centres)
+                tree = KDTree(np.asarray(data.pos[:, :-1]), leaf_size=10)
+                setattr(data, cT.CylinderSampling.KDTREE_KEY, tree)
+
+            self._centres_for_sampling = torch.cat(
+                self._centres_for_sampling, 0)
+            uni, uni_counts = np.unique(np.asarray(
+                self._centres_for_sampling[:, -1]), return_counts=True)
+            uni_counts = np.sqrt(uni_counts.mean() / uni_counts)
+            self._label_counts = uni_counts / np.sum(uni_counts)
+            self._labels = uni
+        else:
+            grid_sampler = cT.GridCylinderSampling(
+                self._radius, self._radius, center=False)
+            self._test_spheres = grid_sampler(self._datas)   
+
 
 class S3DISFusedDataset(BaseDataset):
     """ Wrapper around S3DISSphere that creates train and test datasets.
@@ -645,7 +688,10 @@ class S3DISFusedDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        self.train_dataset = S3DISSphere(
+        sampling_format = dataset_opt.get('sampling_format', 'sphere')
+        dataset_cls = S3DISCylinder if sampling_format == 'cylinder' else S3DISSphere
+
+        self.train_dataset = dataset_cls(
             self._data_path,
             sample_per_epoch=3000,
             test_area=self.dataset_opt.fold,
@@ -654,7 +700,7 @@ class S3DISFusedDataset(BaseDataset):
             transform=self.train_transform,
         )
 
-        self.val_dataset = S3DISSphere(
+        self.val_dataset = dataset_cls(
             self._data_path,
             sample_per_epoch=-1,
             test_area=self.dataset_opt.fold,
@@ -662,7 +708,7 @@ class S3DISFusedDataset(BaseDataset):
             pre_collate_transform=self.pre_collate_transform,
             transform=self.val_transform,
         )
-        self.test_dataset = S3DISSphere(
+        self.test_dataset = dataset_cls(
             self._data_path,
             sample_per_epoch=-1,
             test_area=self.dataset_opt.fold,
