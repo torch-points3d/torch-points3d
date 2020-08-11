@@ -10,6 +10,7 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
 from torch_points3d.core.losses import offset_loss, instance_iou_loss
+from torch_points3d.core.data_transform import GridSampling3D
 from .structures import PanopticLabels, PanopticResults
 from torch_points3d.utils import is_list
 
@@ -32,6 +33,11 @@ class PointGroup(BaseModel):
         )
 
         self._scorer_type = option.get("scorer_type", "mlp")
+        cluster_voxel_size = option.get("cluster_voxel_size", 0.1)
+        if cluster_voxel_size:
+            self._voxelizer = GridSampling3D(cluster_voxel_size, quantize_coords=True, mode="mean")
+        else:
+            self._voxelizer = None
         self.ScorerUnet = Minkowski("unet", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_unet)
         self.ScorerEncoder = Minkowski(
             "encoder", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_encoder
@@ -121,15 +127,26 @@ class PointGroup(BaseModel):
     def _compute_score(self, all_clusters, backbone_features, semantic_logits):
         """ Score the clusters """
         if self._scorer_type:
+            # Assemble batches
             x = []
             coords = []
             batch = []
+            pos = []
             for i, cluster in enumerate(all_clusters):
                 x.append(backbone_features[cluster])
                 coords.append(self.input.coords[cluster])
                 batch.append(i * torch.ones(cluster.shape[0]))
-            batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),)
+                pos.append(self.input.pos[cluster])
+            batch_cluster = Data(x=torch.cat(x), coords=torch.cat(coords), batch=torch.cat(batch),)
 
+            # Voxelise if required
+            if self._voxelizer:
+                batch_cluster.pos = torch.cat(pos)
+                batch_cluster = batch_cluster.to(self.device)
+                batch_cluster = self._voxelizer(batch_cluster)
+
+            # Score
+            batch_cluster = batch_cluster.to("cpu")
             if self._scorer_type == "MLP":
                 score_backbone_out = self.ScorerMLP(batch_cluster.x.to(self.device))
                 cluster_feats = scatter(
