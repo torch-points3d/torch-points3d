@@ -31,7 +31,7 @@ class PointGroup(BaseModel):
             config=backbone_options.get("config", {}),
         )
 
-        self._scorer_type = "unet"
+        self._scorer_type = option.get("scorer_type", "mlp")
         self.ScorerUnet = Minkowski("unet", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_unet)
         self.ScorerEncoder = Minkowski(
             "encoder", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_encoder
