@@ -19,7 +19,9 @@ class SphericalProjection:
         self._means = np.array(means, dtype=np.float)
         self._std = np.array(std, dtype=np.float)
     
-    def _project_scan(self, pos, remissions):
+    def _project_scan(self, scan):
+        pos = scan[:, 0:3]
+        remissions = scan[:, 3]
         # calculate depth
         depth = np.linalg.norm(pos, 2, axis=1)
         scan_x, scan_y, scan_z = pos[:, 0], pos[:, 1], pos[:, 2]
@@ -35,13 +37,13 @@ class SphericalProjection:
         convert to closest integer and ensure end limits are not crossed
         """
         proj_x = 0.5*(yaw/np.pi+1.0)
-        proj_x = np.floor(proj_x*self.img_W)
-        proj_x = np.minimum(self.img_W-1, proj_x)
+        proj_x = np.floor(proj_x*self._img_W)
+        proj_x = np.minimum(self._img_W-1, proj_x)
         proj_x = np.maximum(0, proj_x).astype(np.int32) 
 
-        proj_y = (abs(self.fov_UP)-pitch)/self.fov
-        proj_y = np.floor(proj_y*self.img_H)
-        proj_y = np.minimum(self.img_H-1, proj_y)
+        proj_y = (abs(self._fov_UP)-pitch)/self._fov
+        proj_y = np.floor(proj_y*self._img_H)
+        proj_y = np.minimum(self._img_H-1, proj_y)
         proj_y = np.maximum(0, proj_y).astype(np.int32) 
         
         # order by decreasing depth (ensures closer pos are preferred over farther ones)
@@ -55,10 +57,10 @@ class SphericalProjection:
         proj_y = proj_y[order]
 
         # initializing empty arrays
-        proj_range = np.full((self.img_H, self.img_W), -1, dtype=np.float32)
-        proj_xyz = np.full((self.img_H, self.img_W, 3), -1, dtype=np.float32)
-        proj_remissions = np.full((self.img_H, self.img_W), -1, dtype=np.float32)
-        proj_index = np.full((self.img_H, self.img_W), -1, dtype=np.int32)
+        proj_range = np.full((self._img_H, self._img_W), -1, dtype=np.float32)
+        proj_xyz = np.full((self._img_H, self._img_W, 3), -1, dtype=np.float32)
+        proj_remissions = np.full((self._img_H, self._img_W), -1, dtype=np.float32)
+        proj_index = np.full((self._img_H, self._img_W), -1, dtype=np.int32)
 
         # assigning values!
         proj_range[proj_y, proj_x] = depth
@@ -67,7 +69,7 @@ class SphericalProjection:
         proj_index[proj_y, proj_x] = indices
         proj_mask = (proj_index >= 0).astype(np.bool)
 
-        return proj_range, proj_xyz, proj_remissions, proj_x, proj_y, order, proj_index, proj_mask
+        return pos, remissions, proj_range, proj_xyz, proj_remissions, proj_x, proj_y, order, proj_index, proj_mask
     
     def _project_labels(self, proj_index, proj_mask, unproj_labels):
         proj_labels = np.zeros((self.img_H, self.img_W), dtype=np.int32)
@@ -75,14 +77,14 @@ class SphericalProjection:
         return proj_labels
     
     def __call__(self, data):
-        proj_range, proj_xyz, proj_remissions, data.proj_x, data.proj_y, data.order, \
-            data.proj_index, data.proj_mask = self._project_scan(data.pos, data.remissions)
+        data.pos, data.remissions, proj_range, proj_xyz, proj_remissions, data.proj_x, data.proj_y, data.order, \
+            data.proj_index, data.proj_mask = self._project_scan(data.scan)
         data.proj = np.concatenate([np.expand_dims(proj_range, 0), np.transpose(proj_xyz, (2, 0, 1)), np.expand_dims(proj_remissions, 0)])
-        if normalise:
+        if self._normalise:
             data.proj = (data.proj - self.means[:, None, None])/self.std[:, None, None]
         data.proj_labels = None
         if data.labels is not None:
-            data.proj_labels = self._project_labels(proj_index, proj_mask, labels)
+            data.proj_labels = self._project_labels(data.proj_index, data.proj_mask, data.labels)
         return data
         
 

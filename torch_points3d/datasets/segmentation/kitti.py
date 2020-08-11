@@ -4,6 +4,7 @@ import numpy as np
 
 from torch_geometric.data import Dataset, Data
 from torch_points3d.datasets.segmentation.kitti_config import *
+from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 
 class SemanticKitti(Dataset):
     r"""SemanticKITTI: A Dataset for Semantic Scene Understanding of LiDAR Sequences"
@@ -78,8 +79,8 @@ class SemanticKitti(Dataset):
         else:
             seqs = self.SPLIT[split]
         for seq in seqs:
-            self._scan_paths.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "velodyne", '*.bin'))))
-            self._label_path.extend(sorted(glob(os.path.join(root, "{0:02d}".format(int(seq)), "labels", '*.label'))))
+            self._scan_paths.extend(sorted(glob(os.path.join(self.root, "{0:02d}".format(int(seq)), "velodyne", '*.bin'))))
+            self._label_path.extend(sorted(glob(os.path.join(self.root, "{0:02d}".format(int(seq)), "labels", '*.label'))))
         if len(self._scan_paths) != len(self._label_path):
             raise ValueError((f"number of scans {len(self._scan_paths)} not equal to number of labels {len(self._label_path)}"))        
 
@@ -91,9 +92,7 @@ class SemanticKitti(Dataset):
         """
         scan = np.fromfile(file_name, dtype=np.float32)
         scan = scan.reshape((-1, 4)) # just for the sake of it
-        points = scan[:, 0:3]
-        remissions = scan[:, 3]
-        return points, remissions
+        return scan
     
     @staticmethod
     def open_label(file_name):
@@ -108,11 +107,11 @@ class SemanticKitti(Dataset):
         return semantic_label, instance_label
 
     def __getitem__(self, idx):
-        pos, rem = SemanticKitti.open_scan(self._scan_paths[idx])
+        scan = SemanticKitti.open_scan(self._scan_paths[idx])
         label = None
         if self._label_path is not None:
             label, _ = SemanticKitti.open_label(self._label_path[idx])
-        data = Data(pos=pos, rem=rem, label=label)
+        data = Data(scan=scan, label=label)
         if self.transform is not None:
             data = self.transform(data)
         return data
@@ -208,4 +207,15 @@ class SemanticKittiDataset(BaseDataset):
         )
 
         self._categories = list(self.train_dataset.LABELS.values)
+    
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
+        """Factory method for the tracker
+
+        Arguments:
+            wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
 

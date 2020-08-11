@@ -5,16 +5,11 @@ data:
   train_transforms:
     - transform: SphericalProjection
       params:
-        img_H: ''
-        img_W: ''
+        img_H: 64
+        img_W: 2048
         fov_UP: -3
         fov_DOWN: 25
         normalise: True
-    - transform: AddFeatsByKeys
-      params:
-        list_add_to_x: [True, True]
-        feat_names: ['', '']
-        delete_feats: [True, True]
 
   test_transforms: ${data.train_transforms}
   val_transforms: ${data.train_transforms}

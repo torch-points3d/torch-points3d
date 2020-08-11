@@ -8,7 +8,6 @@ from torch_points3d.models.base_model import BaseModel
 
 class BaseScanAndImgVisualizer(object):
     def __init__(self, width=None, height=None):
-        self.model = model
         self.block = False
         self.counter = 0
         self.width = width
