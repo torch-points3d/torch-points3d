@@ -140,6 +140,8 @@ class GlobalBaseModule(torch.nn.Module):
         x, pos, batch = data.x, data.pos, data.batch
         if pos is not None:
             x = self.nn(torch.cat([x, pos], dim=1))
+        else:
+            x = self.nn(x)
         x = self.pool(x, batch)
         batch_obj.x = x
         if pos is not None:
