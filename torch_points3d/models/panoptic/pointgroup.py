@@ -31,7 +31,7 @@ class PointGroup(BaseModel):
             config=backbone_options.get("config", {}),
         )
 
-        self._scorer_type = "encoder"
+        self._scorer_type = "unet"
         self.ScorerUnet = Minkowski("unet", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_unet)
         self.ScorerEncoder = Minkowski(
             "encoder", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_encoder
@@ -136,14 +136,13 @@ class PointGroup(BaseModel):
                     score_backbone_out, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
                 )
             elif self._scorer_type == "encoder":
-                score_backbone_out = self.ScorerEncoder(batch_cluster.x.to(self.device))
+                score_backbone_out = self.ScorerEncoder(batch_cluster)
                 cluster_feats = score_backbone_out.x
             else:
-                score_backbone_out = self.ScorerUnet(batch_cluster.x.to(self.device))
+                score_backbone_out = self.ScorerUnet(batch_cluster)
                 cluster_feats = scatter(
                     score_backbone_out.x, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
                 )
-
             cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
         else:
             # Use semantic certainty as cluster confidence
@@ -179,7 +178,7 @@ class PointGroup(BaseModel):
             self.loss += self.opt.loss_weights[loss_name] * loss
 
         # Score loss
-        if self.output.cluster_scores is not None and self._activate_scorer:
+        if self.output.cluster_scores is not None and self._scorer_type:
             self.score_loss = instance_iou_loss(
                 self.output.clusters,
                 self.output.cluster_scores,
