@@ -131,7 +131,7 @@ class FastBatchNorm1d(BaseModule):
         self.batch_norm = nn.BatchNorm1d(num_features, momentum=momentum, **kwargs)
 
     def _forward_dense(self, x):
-        return self.batch_norm(x)
+        return self.batch_norm(x.permute(0, 2, 1)).permute(0, 2, 1)
 
     def _forward_sparse(self, x):
         """ Batch norm 1D is not optimised for 2D tensors. The first dimension is supposed to be
