@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class PointNet(BaseModel):
-    def __init__(self, opt, type, dataset, modules_lib):
+    def __init__(self, opt):
         super().__init__(opt)
 
         self._opt = opt

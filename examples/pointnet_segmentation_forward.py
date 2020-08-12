@@ -4,7 +4,7 @@ import torch
 from utils import load_local_torchpoints3d
 load_local_torchpoints3d()
 
-from torch_points3d.models.segmentation.pointnet import PointNetSeg, PointNet
+from torch_points3d.models.segmentation.pointnet import PointNet
 from torch_geometric.data import Data, Batch
 from torch_points3d.datasets.batch import SimpleBatch
 
@@ -23,7 +23,7 @@ data = Batch.from_data_list([data, data])
 print(data)
 #Batch(batch=[1000], pos=[1000, 3], x=[1000, 3])
 
-pointnet = PointNet(OmegaConf.create({'conv_type': 'PARTIAL_DENSE'}), None, None, None)
+pointnet = PointNet(OmegaConf.create({'conv_type': 'PARTIAL_DENSE'}))
 
 pointnet.set_input(data, "cpu")
 data_out = pointnet.forward()
@@ -45,7 +45,7 @@ data = SimpleBatch.from_data_list([data, data])
 print(data)
 #SimpleBatch(pos=[2, 500, 3], x=[2, 500, 3])
 
-pointnet = PointNet(OmegaConf.create({'conv_type': 'DENSE'}), None, None, None)
+pointnet = PointNet(OmegaConf.create({'conv_type': 'DENSE'}))
 
 pointnet.set_input(data, "cpu")
 data_out = pointnet.forward()
