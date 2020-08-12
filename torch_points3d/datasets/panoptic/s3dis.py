@@ -14,9 +14,9 @@ from torch_points3d.metrics.panoptic_tracker import PanopticTracker
 from torch_points3d.datasets.panoptic.utils import set_extra_labels
 
 STUFF_CLASSES_INV = {
-    # 0: "ceiling",
-    # 1: "floor",
-    # 2: "wall",
+    0: "ceiling",
+    1: "floor",
+    2: "wall",
     3: "beam",
     4: "column",
     5: "window",
@@ -50,14 +50,11 @@ class PanopticS3DISBase:
         return data   
 
     def _set_extra_labels(self, data):
-        return set_extra_labels(data, self.INSTANCE_CLASSES, self.NUM_MAX_OBJECTS, self._remap_labels)
-
-    def _remap_labels(self, semantic_label):
-        return semantic_label
+        return set_extra_labels(data, self.INSTANCE_CLASSES, self.NUM_MAX_OBJECTS)
 
     @property
     def stuff_classes(self):
-        return super()._remap_labels(self.INSTANCE_CLASSES)
+        return torch.tensor([i for i in self.INSTANCE_CLASSES.keys()])
 
 class PanopticS3DISSphere(PanopticS3DISBase, S3DISSphere):
     def process(self):

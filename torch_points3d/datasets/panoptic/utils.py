@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-def set_extra_labels(data, instance_classes, num_max_objects, remap_labels):
+def set_extra_labels(data, instance_classes, num_max_objects):
     """ Adds extra labels for the instance and object segmentation tasks
     - num_instances: number of instances
     - center_label: [64, 3] on centre per instance
@@ -46,7 +46,4 @@ def set_extra_labels(data, instance_classes, num_max_objects, remap_labels):
     data.instance_labels = instance_labels
     data.instance_mask = instance_labels != 0
     data.num_instances = torch.tensor([num_instances])
-
-    # Remap labels
-    data.y = remap_labels(data.y)
     return data

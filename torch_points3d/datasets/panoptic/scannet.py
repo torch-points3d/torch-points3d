@@ -39,10 +39,11 @@ class ScannetPanoptic(Scannet):
 
         # Extract instance and box labels
         self._set_extra_labels(data)
+        data.y = self._remap_labels(data.y)
         return data
 
     def _set_extra_labels(self, data):
-        return set_extra_labels(data, self.NYU40ID2CLASS, self.NUM_MAX_OBJECTS, self._remap_labels)
+        return set_extra_labels(data, self.NYU40ID2CLASS, self.NUM_MAX_OBJECTS)
 
     def _remap_labels(self, semantic_label):
         return semantic_label
