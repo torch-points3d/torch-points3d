@@ -1,0 +1,29 @@
+models:
+    PDGN_Paper:
+        class: DGCN.DGCN
+        conv_type: "SPARSE"
+        scales: [256, 512] #, 1024, 2048] # number of progressive points the generator generates
+        generator:
+            module_name: PointGenerator
+            out_nn: [512, 256, 64, 3] # MLP output network after each deconv
+            knn: 20 # knn for deconv
+           # initial_features: 4096 # number of features the network starts with in transforming the latent space
+                                   # must eq scales[0]/2 * in_feats[0]
+            in_feats: [32, 64] #, 128, 256] # in features for the deconv network (must match scales length)
+            out_feats: ${models.PDGN_Paper.generator.in_feats} # out features for the deconv network (must match scales length)
+            max_pool: # don't implement in this file - will always be half of the number of output points
+            use_softmax: True # performs softmax at the end of each bilateral interpolation (see fig. 9) 
+
+        discriminator:
+            module_name: Discriminator
+            fc_layers: [    # one array for each scale
+                [512, 256, 64],
+                [512, 256, 64],
+                #[512, 256, 64],
+                #[512, 256, 64],
+                # [256, 128, 64],
+                # [512, 256, 64],
+                # [1024, 256, 64],
+                # [2048, 512, 256, 64],
+            ]
+            classifier: PointNet2

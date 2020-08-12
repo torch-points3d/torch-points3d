@@ -1,0 +1,11 @@
+data:
+    task: generative
+    class: modelnet.ModelNetDataset
+    name: modelnet
+    dataroot: data
+    number: 10
+    scales: [256, 512, 1024, 2048] # must match scales in model config
+    pre_transforms:
+        - transform: NormalizeScale
+        - transform: GridSampling3D
+          lparams: [0.02]

@@ -22,6 +22,13 @@ class Conv1D(Seq):
             self.append(activation)
 
 
+class MLP1D(Seq):
+    def __init__(self, channels, bias=False, bn=True, activation=nn.LeakyReLU(negative_slope=0.01)):
+        super().__init__()
+        for i in range(len(channels) - 1):
+            self.append(Conv1D(channels[i], channels[i + 1], bn=bn, bias=bias, activation=activation))
+
+
 class MLP2D(Seq):
     def __init__(self, channels, bias=False, bn=True, activation=nn.LeakyReLU(negative_slope=0.01)):
         super().__init__()
