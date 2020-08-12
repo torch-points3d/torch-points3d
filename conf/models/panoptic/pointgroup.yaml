@@ -92,7 +92,7 @@ models:
                         ]
                     kernel_size: 3
                     stride: [1, 2, 2, 2, 2, 2, 2]
-                    N: [0, 1, 1, 2, 2, 2, 2]
+                    N: 2
                 up_conv:
                     module_name: ResNetUp
                     dimension: 3
@@ -108,7 +108,7 @@ models:
                         ]
                     kernel_size: 3
                     stride: [2, 2, 2, 2, 2, 2, 1]
-                    N: 1
+                    N: 2
 
         scorer_unet:
             class: minkowski.Minkowski_Model
@@ -121,14 +121,14 @@ models:
                 down_conv_nn: [[in_feat, 2*in_feat], [2*in_feat, 4*in_feat]]
                 kernel_size: 3
                 stride: 2
-                N: 1
+                N: 2
             up_conv:
                 module_name: ResNetUp
                 dimension: 3
                 up_conv_nn: [[4*in_feat, 2*in_feat], [4*in_feat, in_feat]]
                 kernel_size: 3
                 stride: 2
-                N: 1
+                N: 2
         scorer_encoder:
             class: minkowski.Minkowski_Model
             conv_type: "SPARSE"
@@ -140,7 +140,7 @@ models:
                 down_conv_nn: [[in_feat, 2*in_feat], [2*in_feat, 4*in_feat]]
                 kernel_size: 3
                 stride: 2
-                N: 1
+                N: 2
             innermost:
                 module_name: GlobalBaseModule
                 activation:
