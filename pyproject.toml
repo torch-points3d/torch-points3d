@@ -28,6 +28,7 @@ numpy = "^1.18.2"
 scikit-image = "^0.16.2"
 numba = "^0.49.0"
 plyfile = "^0.7.2"
+gdown = "^3.12.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.4"
