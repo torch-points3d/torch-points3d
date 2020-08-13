@@ -35,8 +35,8 @@ class DGCN(BaseModel):
         super(DGCN, self).__init__(option)
 
         self.scales = option.scales
+        self.latent_space = option.latent_space
 
-        self.latent_space = 2**dataset.num_classes
         self.generator = PointGenerator(self.scales, self.latent_space, option.generator)
         
         self.discriminators = nn.ModuleList()

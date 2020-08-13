@@ -3,6 +3,7 @@ models:
         class: DGCN.DGCN
         conv_type: "SPARSE"
         scales: [256, 512] #, 1024, 2048] # number of progressive points the generator generates
+        latent_space: 128
         generator:
             module_name: PointGenerator
             out_nn: [512, 256, 64, 3] # MLP output network after each deconv
