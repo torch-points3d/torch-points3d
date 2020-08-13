@@ -152,6 +152,73 @@ class GridSphereSampling(object):
     def __repr__(self):
         return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
 
+class GridCylinderSampling(object):
+    """Fits the point cloud to a grid and for each point in this grid,
+    create a cylinder with a radius r
+
+    Parameters
+    ----------
+    radius: float
+        Radius of the cylinder to be sampled.
+    grid_size: float, optional
+        Grid_size to be used with GridSampling3D to select cylinders center. If None, radius will be used
+    delattr_kd_tree: bool, optional
+        If True, KDTREE_KEY should be deleted as an attribute if it exists
+    center: bool, optional
+        If True, a centre transform is apply on each cylinder.
+    """
+
+    KDTREE_KEY = "kd_tree"
+
+    def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
+        self._radius = eval(radius) if isinstance(radius, str) else float(radius)
+        grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
+        self._grid_sampling = GridSampling3D(size=grid_size if grid_size else self._radius)
+        self._delattr_kd_tree = delattr_kd_tree
+        self._center = center
+
+    def _process(self, data):
+        if not hasattr(data, self.KDTREE_KEY):
+            tree = KDTree(np.asarray(data.pos[:, :-1]), leaf_size=50)
+        else:
+            tree = getattr(data, self.KDTREE_KEY)
+
+        # The kdtree has bee attached to data for optimization reason.
+        # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
+        if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
+            delattr(data, self.KDTREE_KEY)
+
+        # apply grid sampling
+        grid_data = self._grid_sampling(data.clone())
+
+        datas = []
+        for grid_center in np.unique(grid_data.pos[:, :-1], axis=0):
+            pts = np.asarray(grid_center)[np.newaxis]
+
+            # Find closest point within the original data
+            ind = torch.LongTensor(tree.query(pts, k=1)[1][0])
+            grid_label = data.y[ind]
+
+            # Find neighbours within the original data
+            ind = torch.LongTensor(tree.query_radius(pts, r=self._radius)[0])
+            sampler = CylinderSampling(self._radius, grid_center, align_origin=self._center)
+            new_data = sampler(data)
+            new_data.center_label = grid_label
+            
+            datas.append(new_data)
+        return datas
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data))  # 2d list needs to be flatten
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
+
 
 class ComputeKDTree(object):
     """Calculate the KDTree and saves it within data
@@ -270,6 +337,89 @@ class SphereSampling:
             self.__class__.__name__, self._radius, self._centre, self._align_origin
         )
 
+class CylinderSampling:
+    """ Samples points within a cylinder
+
+    Parameters
+    ----------
+    radius : float
+        Radius of the cylinder
+    cylinder_centre : torch.Tensor or np.array
+        Centre of the cylinder (1D array that contains (x,y,z) or (x,y))
+    align_origin : bool, optional
+        move resulting point cloud to origin
+    """
+
+    KDTREE_KEY = "kd_tree"
+
+    def __init__(self, radius, cylinder_centre, align_origin=True):
+        self._radius = radius
+        if cylinder_centre.shape[0] == 3:
+            cylinder_centre = cylinder_centre[:-1]
+        self._centre = np.asarray(cylinder_centre)
+        if len(self._centre.shape) == 1:
+            self._centre = np.expand_dims(self._centre, 0)
+        self._align_origin = align_origin
+
+    def __call__(self, data):
+        num_points = data.pos.shape[0]
+        if not hasattr(data, self.KDTREE_KEY):
+            tree = KDTree(np.asarray(data.pos[:, :-1]), leaf_size=50)
+            setattr(data, self.KDTREE_KEY, tree)
+        else:
+            tree = getattr(data, self.KDTREE_KEY)
+
+        t_center = torch.FloatTensor(self._centre)
+        try:
+            ind = torch.LongTensor(tree.query_radius(self._centre, r=self._radius)[0])
+        except:
+            import pdb; pdb.set_trace()
+        new_data = Data()
+        for key in set(data.keys):
+            if key == self.KDTREE_KEY:
+                continue
+            item = data[key]
+            if torch.is_tensor(item) and num_points == item.shape[0]:
+                item = item[ind]
+                if self._align_origin and key == "pos":  # Center the cylinder.
+                    item[:, :-1] -= t_center
+            elif torch.is_tensor(item):
+                item = item.clone()
+            setattr(new_data, key, item)
+        return new_data
+
+    def __repr__(self):
+        return "{}(radius={}, center={}, align_origin={})".format(
+            self.__class__.__name__, self._radius, self._centre, self._align_origin
+        )
+
+class CylinderNormalizeScale(object):
+    """ Normalize points within a cylinder
+
+    """
+    def __init__(self, normalize_z=True):
+        self._normalize_z = normalize_z
+
+    def _process(self, data):
+        data.pos -= data.pos.mean(dim=0, keepdim=True)
+        scale = (1 / data.pos[:, :-1].abs().max()) * 0.999999
+        data.pos[:, :-1] = data.pos[:, :-1] * scale
+        if self._normalize_z:
+            scale = (1 / data.pos[:, -1].abs().max()) * 0.999999
+            data.pos[:, -1] = data.pos[:, -1] * scale
+        return data
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in data]
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(normalize_z={})".format(
+            self.__class__.__name__, self._normalize_z
+        )
 
 class RandomSymmetry(object):
     """ Apply a random symmetry transformation on the data

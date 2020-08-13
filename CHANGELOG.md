@@ -12,18 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More general API for Minkowski with support for Bottleneck blocks and Squeeze and excite.
 
 ## 1.1.1
+
 ### Added
 
 - Teaser support for registration
 - Examples for using pretrained registration models
+- Pointnet2 forward examples for classification, segmentation
+- S3DIS automatic download and panoptic support and cylinder sampling
 
 ### Changed
 
 - Moved to PyTorch 1.6 as officialy supported PyTorch version
 
 ### Bug fix
-- Add `context = ssl._create_unverified_context()`, `data = urllib.request.urlopen(url, context=context)` within `download_ulr`, so ModelNet and ShapeNet can download.
 
+- Add `context = ssl._create_unverified_context()`, `data = urllib.request.urlopen(url, context=context)` within `download_ulr`, so ModelNet and ShapeNet can download.
 
 ## 1.1.0
 
