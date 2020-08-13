@@ -7,7 +7,7 @@ import torch
 import random
 import glob
 from plyfile import PlyData, PlyElement
-from torch_geometric.data import InMemoryDataset, Data, download_url, extract_zip, Dataset
+from torch_geometric.data import InMemoryDataset, Data, extract_zip, Dataset
 from torch_geometric.data.dataset import files_exist
 from torch_geometric.data import DataLoader
 from torch_geometric.datasets import S3DIS as S3DIS1x1
@@ -18,11 +18,14 @@ from tqdm.auto import tqdm as tq
 import csv
 import pandas as pd
 import pickle
+import gdown
+import shutil
 
 from torch_points3d.datasets.samplers import BalancedRandomSampler
 import torch_points3d.core.data_transform as cT
 from torch_points3d.datasets.base_dataset import BaseDataset
 
+DIR = os.path.dirname(os.path.realpath(__file__))
 log = logging.getLogger(__name__)
 
 S3DIS_NUM_CLASSES = 13
@@ -45,24 +48,38 @@ INV_OBJECT_LABEL = {
 
 OBJECT_COLOR = np.asarray(
     [
-        [233, 229, 107],  #'ceiling' .-> .yellow
-        [95, 156, 196],  #'floor' .-> . blue
-        [179, 116, 81],  #'wall'  ->  brown
-        [241, 149, 131],  #'beam'  ->  salmon
-        [81, 163, 148],  #'column'  ->  bluegreen
-        [77, 174, 84],  #'window'  ->  bright green
-        [108, 135, 75],  #'door'   ->  dark green
-        [41, 49, 101],  #'chair'  ->  darkblue
-        [79, 79, 76],  #'table'  ->  dark grey
-        [223, 52, 52],  #'bookcase'  ->  red
-        [89, 47, 95],  #'sofa'  ->  purple
-        [81, 109, 114],  #'board'   ->  grey
-        [233, 233, 229],  #'clutter'  ->  light grey
+        [233, 229, 107],  # 'ceiling' .-> .yellow
+        [95, 156, 196],  # 'floor' .-> . blue
+        [179, 116, 81],  # 'wall'  ->  brown
+        [241, 149, 131],  # 'beam'  ->  salmon
+        [81, 163, 148],  # 'column'  ->  bluegreen
+        [77, 174, 84],  # 'window'  ->  bright green
+        [108, 135, 75],  # 'door'   ->  dark green
+        [41, 49, 101],  # 'chair'  ->  darkblue
+        [79, 79, 76],  # 'table'  ->  dark grey
+        [223, 52, 52],  # 'bookcase'  ->  red
+        [89, 47, 95],  # 'sofa'  ->  purple
+        [81, 109, 114],  # 'board'   ->  grey
+        [233, 233, 229],  # 'clutter'  ->  light grey
         [0, 0, 0],  # unlabelled .->. black
     ]
 )
 
 OBJECT_LABEL = {name: i for i, name in INV_OBJECT_LABEL.items()}
+
+ROOM_TYPES = {
+    "conferenceRoom": 0,
+    "copyRoom": 1,
+    "hallway": 2,
+    "office": 3,
+    "pantry": 4,
+    "WC": 5,
+    "auditorium": 6,
+    "storage": 7,
+    "lounge": 8,
+    "lobby": 9,
+    "openspace": 10
+}
 
 VALIDATION_ROOMS = [
     "hallway_1",
@@ -94,6 +111,9 @@ def object_name_to_label(object_class):
 
 def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debug=False):
     """extract data from a room folder"""
+
+    room_type = room_name.split("_")[0]
+    room_label = ROOM_TYPES[room_type]
     raw_path = osp.join(train_file, "{}.txt".format(room_name))
     if debug:
         reader = pd.read_csv(raw_path, delimiter="\n")
@@ -124,26 +144,29 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         del room_ver
         nn = NearestNeighbors(n_neighbors=1, algorithm="kd_tree").fit(xyz)
         room_labels = np.zeros((n_ver,), dtype="int64")
-        room_object_indices = np.zeros((n_ver,), dtype="int64")
+        room_label = np.asarray([room_label])
+        instance_labels = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
         i_object = 1
         for single_object in objects:
             object_name = os.path.splitext(os.path.basename(single_object))[0]
             if verbose:
-                log.debug("adding object " + str(i_object) + " : " + object_name)
+                log.debug("adding object " +
+                          str(i_object) + " : " + object_name)
             object_class = object_name.split("_")[0]
             object_label = object_name_to_label(object_class)
             obj_ver = pd.read_csv(single_object, sep=" ", header=None).values
             _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
             room_labels[obj_ind] = object_label
-            room_object_indices[obj_ind] = i_object
+            instance_labels[obj_ind] = i_object
             i_object = i_object + 1
 
         return (
             torch.from_numpy(xyz),
             torch.from_numpy(rgb),
             torch.from_numpy(room_labels),
-            torch.from_numpy(room_object_indices),
+            torch.from_numpy(instance_labels),
+            torch.from_numpy(room_label),
         )
 
 
@@ -153,7 +176,8 @@ def to_ply(pos, label, file):
     pos = np.asarray(pos)
     colors = OBJECT_COLOR[np.asarray(label)]
     ply_array = np.ones(
-        pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1")]
+        pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"),
+                             ("red", "u1"), ("green", "u1"), ("blue", "u1")]
     )
     ply_array["x"] = pos[:, 0]
     ply_array["y"] = pos[:, 1]
@@ -171,7 +195,8 @@ def add_weights(dataset, train, class_weight_method):
         weights = torch.ones(L)
         if class_weight_method is not None:
 
-            idx_classes, counts = torch.unique(dataset.data.y, return_counts=True)
+            idx_classes, counts = torch.unique(
+                dataset.data.y, return_counts=True)
 
             dataset.idx_classes = torch.arange(L).long()
             weights[idx_classes] = counts.float()
@@ -185,12 +210,14 @@ def add_weights(dataset, train, class_weight_method):
             weights /= torch.sum(weights)
         log.info(
             "CLASS WEIGHT : {}".format(
-                {name: np.round(weights[index].item(), 4) for index, name in INV_OBJECT_LABEL.items()}
+                {name: np.round(weights[index].item(), 4)
+                 for index, name in INV_OBJECT_LABEL.items()}
             )
         )
         setattr(dataset, "weight_classes", weights)
     else:
-        setattr(dataset, "weight_classes", torch.ones((len(INV_OBJECT_LABEL.keys()))))
+        setattr(dataset, "weight_classes", torch.ones(
+            (len(INV_OBJECT_LABEL.keys()))))
 
     return dataset
 
@@ -218,7 +245,8 @@ class S3DIS1x1Dataset(BaseDataset):
             transform=self.test_transform,
         )
 
-        self.train_dataset = add_weights(train_dataset, True, dataset_opt.class_weight_method)
+        self.train_dataset = add_weights(
+            train_dataset, True, dataset_opt.class_weight_method)
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
@@ -261,8 +289,11 @@ class S3DISOriginalFused(InMemoryDataset):
     pre_filter
     """
 
-    url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
+    form_url = "https://docs.google.com/forms/d/e/1FAIpQLScDimvNMCGhy_rmBA2gHfDu3naktRm6A8BPwAWWDv-Uhm6Shw/viewform?c=0&w=1"
+    download_url = "https://drive.google.com/uc?id=0BweDykwS9vIobkVPN0wzRzFwTDg&export=download"
     zip_name = "Stanford3dDataset_v1.2_Version.zip"
+    path_file = osp.join(DIR, "s3dis.patch")
+    file_name = "Stanford3dDataset_v1.2"
     folders = ["Area_{}".format(i) for i in range(1, 7)]
     num_classes = S3DIS_NUM_CLASSES
 
@@ -287,7 +318,8 @@ class S3DISOriginalFused(InMemoryDataset):
         self.verbose = verbose
         self.debug = debug
         self._split = split
-        super(S3DISOriginalFused, self).__init__(root, transform, pre_transform, pre_filter)
+        super(S3DISOriginalFused, self).__init__(
+            root, transform, pre_transform, pre_filter)
         if split == "train":
             path = self.processed_paths[0]
         elif split == "val":
@@ -297,11 +329,13 @@ class S3DISOriginalFused(InMemoryDataset):
         elif split == "trainval":
             path = self.processed_paths[3]
         else:
-            raise ValueError((f"Split {split} found, but expected either " "train, val, trainval or test"))
+            raise ValueError(
+                (f"Split {split} found, but expected either " "train, val, trainval or test"))
         self._load_data(path)
 
         if split == "test":
-            self.raw_test_data = torch.load(self.raw_areas_paths[test_area - 1])
+            self.raw_test_data = torch.load(
+                self.raw_areas_paths[test_area - 1])
 
     @property
     def center_labels(self):
@@ -327,7 +361,8 @@ class S3DISOriginalFused(InMemoryDataset):
     def processed_file_names(self):
         test_area = self.test_area
         return (
-            ["{}_{}.pt".format(s, test_area) for s in ["train", "val", "test", "trainval"]]
+            ["{}_{}.pt".format(s, test_area)
+             for s in ["train", "val", "test", "trainval"]]
             + self.raw_areas_paths
             + [self.pre_processed_path]
         )
@@ -343,25 +378,37 @@ class S3DISOriginalFused(InMemoryDataset):
     def download(self):
         raw_folders = os.listdir(self.raw_dir)
         if len(raw_folders) == 0:
-            raise RuntimeError(
-                "Dataset not found. Please download {} from {} and move it to {} with {}".format(
-                    self.zip_name, self.url, self.raw_dir, self.folders
+            if not os.path.exists(osp.join(self.root, self.zip_name)):
+                log.info("WARNING: You are downloading S3DIS dataset")
+                log.info(
+                    "Please, register yourself by filling up the form at {}".format(
+                        self.form_url)
                 )
-            )
+                log.info("***")
+                log.info(
+                    "Press any key to continue, or CTRL-C to exit. By continuing, you confirm filling up the form.")
+                input("")
+                gdown.download(self.download_url, osp.join(
+                    self.root, self.zip_name), quiet=False)
+            extract_zip(os.path.join(
+                self.root, self.zip_name), self.root)
+            shutil.rmtree(self.raw_dir)
+            os.rename(osp.join(
+                self.root, self.file_name), self.raw_dir)   
+            shutil.copy(self.path_file, self.raw_dir)
+            cmd = "patch -ruN -p0 -d  {} < {}".format(self.raw_dir, osp.join(self.raw_dir, "s3dis.patch"))
+            os.system(cmd) 
         else:
             intersection = len(set(self.folders).intersection(set(raw_folders)))
-            if intersection == 0:
-                log.info("The data seems properly downloaded")
-            else:
-                raise RuntimeError(
-                    "Dataset not found. Please download {} from {} and move it to {} with {}".format(
-                        self.zip_name, self.url, self.raw_dir, self.folders
-                    )
-                )
+            if intersection != 6:
+                shutil.rmtree(self.raw_dir)
+                os.makedirs(self.raw_dir)
+                self.download()      
 
     def process(self):
         if not os.path.exists(self.pre_processed_path):
-            train_areas = [f for f in self.folders if str(self.test_area) not in f]
+            train_areas = [f for f in self.folders if str(
+                self.test_area) not in f]
             test_areas = [f for f in self.folders if str(self.test_area) in f]
 
             train_files = [
@@ -380,26 +427,36 @@ class S3DISOriginalFused(InMemoryDataset):
 
             # Gather data per area
             data_list = [[] for _ in range(6)]
+            if self.debug:
+                areas = np.zeros(7)
             for (area, room_name, file_path) in tq(train_files + test_files):
-
+                if self.debug:
+                    area_idx = int(area.split('_')[-1])
+                    if areas[area_idx] == 5:
+                        continue
+                    else:
+                        print(area_idx)
+                        areas[area_idx] += 1
+                
                 area_num = int(area[-1]) - 1
                 if self.debug:
-                    read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
+                    read_s3dis_format(
+                        file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
                     continue
                 else:
-                    xyz, rgb, room_labels, room_object_indices = read_s3dis_format(
+                    xyz, rgb, room_labels, instance_labels, room_label = read_s3dis_format(
                         file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                     )
 
                     rgb_norm = rgb.float() / 255.0
-                    data = Data(pos=xyz, y=room_labels, rgb=rgb_norm)
+                    data = Data(pos=xyz, y=room_labels, room_label=room_label, rgb=rgb_norm)
                     if room_name in VALIDATION_ROOMS:
                         data.validation_set = True
                     else:
                         data.validation_set = False
 
                     if self.keep_instance:
-                        data.room_object_indices = room_object_indices
+                        data.instance_labels = instance_labels
 
                     if self.pre_filter is not None and not self.pre_filter(data):
                         continue
@@ -451,7 +508,8 @@ class S3DISOriginalFused(InMemoryDataset):
             test_data_list = self.pre_collate_transform(test_data_list)
             trainval_data_list = self.pre_collate_transform(trainval_data_list)
 
-        self._save_data(train_data_list, val_data_list, test_data_list, trainval_data_list)
+        self._save_data(train_data_list, val_data_list,
+                        test_data_list, trainval_data_list)
 
     def _save_data(self, train_data_list, val_data_list, test_data_list, trainval_data_list):
         torch.save(self.collate(train_data_list), self.processed_paths[0])
@@ -522,7 +580,8 @@ class S3DISSphere(S3DISOriginalFused):
         centre_idx = int(random.random() * (valid_centres.shape[0] - 1))
         centre = valid_centres[centre_idx]
         area_data = self._datas[centre[3].int()]
-        sphere_sampler = cT.SphereSampling(self._radius, centre[:3], align_origin=False)
+        sphere_sampler = cT.SphereSampling(
+            self._radius, centre[:3], align_origin=False)
         return sphere_sampler(area_data)
 
     def _save_data(self, train_data_list, val_data_list, test_data_list, trainval_data_list):
@@ -542,7 +601,8 @@ class S3DISSphere(S3DISOriginalFused):
                     data, cT.SphereSampling.KDTREE_KEY
                 )  # Just to make we don't have some out of date data in there
                 low_res = self._grid_sphere_sampling(data.clone())
-                centres = torch.empty((low_res.pos.shape[0], 5), dtype=torch.float)
+                centres = torch.empty(
+                    (low_res.pos.shape[0], 5), dtype=torch.float)
                 centres[:, :3] = low_res.pos
                 centres[:, 3] = i
                 centres[:, 4] = low_res.y
@@ -550,14 +610,60 @@ class S3DISSphere(S3DISOriginalFused):
                 tree = KDTree(np.asarray(data.pos), leaf_size=10)
                 setattr(data, cT.SphereSampling.KDTREE_KEY, tree)
 
-            self._centres_for_sampling = torch.cat(self._centres_for_sampling, 0)
-            uni, uni_counts = np.unique(np.asarray(self._centres_for_sampling[:, -1]), return_counts=True)
+            self._centres_for_sampling = torch.cat(
+                self._centres_for_sampling, 0)
+            uni, uni_counts = np.unique(np.asarray(
+                self._centres_for_sampling[:, -1]), return_counts=True)
             uni_counts = np.sqrt(uni_counts.mean() / uni_counts)
             self._label_counts = uni_counts / np.sum(uni_counts)
             self._labels = uni
         else:
-            grid_sampler = cT.GridSphereSampling(self._radius, self._radius, center=False)
+            grid_sampler = cT.GridSphereSampling(
+                self._radius, self._radius, center=False)
             self._test_spheres = grid_sampler(self._datas)
+
+class S3DISCylinder(S3DISSphere):
+    def _get_random(self):
+        # Random spheres biased towards getting more low frequency classes
+        chosen_label = np.random.choice(self._labels, p=self._label_counts)
+        valid_centres = self._centres_for_sampling[self._centres_for_sampling[:, 4] == chosen_label]
+        centre_idx = int(random.random() * (valid_centres.shape[0] - 1))
+        centre = valid_centres[centre_idx]
+        area_data = self._datas[centre[3].int()]
+        cylinder_sampler = cT.CylinderSampling(self._radius, centre[:3], align_origin=False)
+        return cylinder_sampler(area_data)
+
+    def _load_data(self, path):
+        self._datas = torch.load(path)
+        if not isinstance(self._datas, list):
+            self._datas = [self._datas]
+        if self._sample_per_epoch > 0:
+            self._centres_for_sampling = []
+            for i, data in enumerate(self._datas):
+                assert not hasattr(
+                    data, cT.CylinderSampling.KDTREE_KEY
+                )  # Just to make we don't have some out of date data in there
+                low_res = self._grid_sphere_sampling(data.clone())
+                centres = torch.empty(
+                    (low_res.pos.shape[0], 5), dtype=torch.float)
+                centres[:, :3] = low_res.pos
+                centres[:, 3] = i
+                centres[:, 4] = low_res.y
+                self._centres_for_sampling.append(centres)
+                tree = KDTree(np.asarray(data.pos[:, :-1]), leaf_size=10)
+                setattr(data, cT.CylinderSampling.KDTREE_KEY, tree)
+
+            self._centres_for_sampling = torch.cat(
+                self._centres_for_sampling, 0)
+            uni, uni_counts = np.unique(np.asarray(
+                self._centres_for_sampling[:, -1]), return_counts=True)
+            uni_counts = np.sqrt(uni_counts.mean() / uni_counts)
+            self._label_counts = uni_counts / np.sum(uni_counts)
+            self._labels = uni
+        else:
+            grid_sampler = cT.GridCylinderSampling(
+                self._radius, self._radius, center=False)
+            self._test_spheres = grid_sampler(self._datas)   
 
 
 class S3DISFusedDataset(BaseDataset):
@@ -582,7 +688,10 @@ class S3DISFusedDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        self.train_dataset = S3DISSphere(
+        sampling_format = dataset_opt.get('sampling_format', 'sphere')
+        dataset_cls = S3DISCylinder if sampling_format == 'cylinder' else S3DISSphere
+
+        self.train_dataset = dataset_cls(
             self._data_path,
             sample_per_epoch=3000,
             test_area=self.dataset_opt.fold,
@@ -591,7 +700,7 @@ class S3DISFusedDataset(BaseDataset):
             transform=self.train_transform,
         )
 
-        self.val_dataset = S3DISSphere(
+        self.val_dataset = dataset_cls(
             self._data_path,
             sample_per_epoch=-1,
             test_area=self.dataset_opt.fold,
@@ -599,7 +708,7 @@ class S3DISFusedDataset(BaseDataset):
             pre_collate_transform=self.pre_collate_transform,
             transform=self.val_transform,
         )
-        self.test_dataset = S3DISSphere(
+        self.test_dataset = dataset_cls(
             self._data_path,
             sample_per_epoch=-1,
             test_area=self.dataset_opt.fold,
@@ -609,7 +718,8 @@ class S3DISFusedDataset(BaseDataset):
         )
 
         if dataset_opt.class_weight_method:
-            self.train_dataset = add_weights(self.train_dataset, True, dataset_opt.class_weight_method)
+            self.train_dataset = add_weights(
+                self.train_dataset, True, dataset_opt.class_weight_method)
 
     @property
     def test_data(self):

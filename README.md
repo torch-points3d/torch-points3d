@@ -93,7 +93,7 @@ where each folder contains the dataset related to each task.
 ```
 * S3DIS 1x1
 * S3DIS Room
-* S3DIS Fused
+* S3DIS Fused - Sphere | Cylinder
 ```
 
 - **[Shapenet](https://www.shapenet.org/)** from Angel X. Chang _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
@@ -101,6 +101,11 @@ where each folder contains the dataset related to each task.
 ### Object detection and panoptic
 
 - **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai _et al._: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
+- **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni _et al._: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105)
+
+```
+* S3DIS Fused - Sphere | Cylinder
+```
 
 ### Registration
 
