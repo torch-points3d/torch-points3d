@@ -115,10 +115,10 @@ class Visualizer(object):
         return out_data
 
     def _extract_from_dense(self, item, pos_idx):
-        assert (
-            item.y.shape[0] == item.pos.shape[0]
-        ), "y and pos should have the same number of samples. Something is probably wrong with your data to visualise"
-        num_samples = item.y.shape[0]
+        # assert (
+        #     item.y.shape[0] == item.pos.shape[0]
+        # ), "y and pos should have the same number of samples. Something is probably wrong with your data to visualise"
+        num_samples = item.pos.shape[0]
         out_data = {}
         for k in item.keys:
             if torch.is_tensor(item[k]) and k in self._saved_keys.keys():
@@ -164,7 +164,7 @@ class Visualizer(object):
                     if not os.path.exists(dir_path):
                         os.makedirs(dir_path)
 
-                    filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
+                    filename = "{}_{}_{}.ply".format(self._seen_batch, pos_idx, visual_name)
                     path_out = os.path.join(dir_path, filename)
                     el = PlyElement.describe(out_item, visual_name)
                     PlyData([el], byte_order=">").write(path_out)
