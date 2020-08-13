@@ -32,8 +32,8 @@ class PointGroup(BaseModel):
             config=backbone_options.get("config", {}),
         )
 
-        self._scorer_type = option.get("scorer_type", "mlp")
-        cluster_voxel_size = option.get("cluster_voxel_size", 0.1)
+        self._scorer_type = option.get("scorer_type", "encoder")
+        cluster_voxel_size = option.get("cluster_voxel_size", 0.05)
         if cluster_voxel_size:
             self._voxelizer = GridSampling3D(cluster_voxel_size, quantize_coords=True, mode="mean")
         else:
