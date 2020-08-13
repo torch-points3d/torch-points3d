@@ -282,9 +282,6 @@ class ShapeNet(InMemoryDataset):
         self._save_data_list(self._re_index_trainval(
             raw_trainval), self.processed_raw_paths[3], save_bool=len(raw_trainval) > 0)
 
-    def len(self):
-        return 100 #super().len() #* len(self.scales)
-
     def get(self, idx):
         sample = super().get(np.random.randint(0, super().len() - 1)) #// len(self.scales))
 
@@ -297,16 +294,7 @@ class ShapeNet(InMemoryDataset):
             x = transform(sample.clone())
             #x = self._transform(x)
             data["scale_" + str(scale)] = x
-
-
-        # num_points = self.scales[idx % len(self.scales)] 
-
-        # transform = T.Compose([
-        #     T.FixedPoints(num=num_points, replace=False, allow_duplicates=True)
-        # ])
-        # sample = transform(sample)
-
-        #print(samples)
+            
         return data
     def __repr__(self):
         return "{}({}, categories={})".format(self.__class__.__name__, len(self), self.categories)
