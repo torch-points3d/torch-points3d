@@ -95,23 +95,6 @@ def get_edge_features(x, k, num=-1):
     assert ee.shape == (B, 2*dims, N, k)
     return ee
 
-class conv2dbr(nn.Module):
-    """ Conv2d-bn-relu
-    [B, Fin, H, W] -> [B, Fout, H, W]
-    """
-    def __init__(self, Fin, Fout, kernel_size, stride=1):
-        super(conv2dbr, self).__init__()
-        self.conv = nn.Conv2d(Fin, Fout, kernel_size, stride)
-        self.bn = nn.BatchNorm2d(Fout)
-        self.ac = nn.ReLU(True)
-
-    def forward(self, x):
-        x = self.conv(x) # [B, Fout, H, W]
-        x = self.bn(x)
-        x = self.ac(x)
-        return x
-
-
 class ChamferLoss(nn.Module):
 
 	def __init__(self):

@@ -28,12 +28,6 @@ class DeconvModule(BaseModule):
         self.nn["upsample_cov"] = BilateralInterpolationModule(Fin, Fout, num_k//2, 1, softmax=softmax)
         self.nn["bn_uc"] = nn.BatchNorm1d(Fout)
         self.nn["relu_uc"] = nn.LeakyReLU(inplace=True)
-
-        # self.maxpool = 
-        
-        # self.upsample_cov = BilateralInterpolationModule(Fin, Fout, num_k//2, 1, softmax=softmax)   #(256->512)
-        # self.bn_uc = nn.BatchNorm1d(Fout)
-        # self.relu_uc = nn.LeakyReLU(inplace=True)        
         
         self.nn["fc"] = nn.Sequential(
             nn.Linear(Fin, Fin),
@@ -94,9 +88,6 @@ class BilateralInterpolationModule(BaseModule):
         self.softmax = softmax
         self.num = num
 
-        # self.conv = conv2dbr(2*Fin, Fout, [1, 20], [1, 20])
-        #self.conv1 = conv2dbr(2*Fin, 2*Fin, 1 ,1)
-        #self.conv2 = Conv2D(2*Fin, 2*Fout, [1, 2*k], [1, 1])
         self.conv2 = nn.Sequential(
             nn.Conv2d(2*Fin, 2*Fout,  [1, 2*k],  [1, 1]),
             nn.BatchNorm2d(2*Fout),

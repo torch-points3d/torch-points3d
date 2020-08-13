@@ -20,16 +20,6 @@ from torch_geometric.data import DataLoader, InMemoryDataset, extract_zip, Data
 
 log = logging.getLogger(__name__)
 
-def debug_memory():
-    import collections, gc, resource, torch
-    print('maxrss = {}'.format(
-        resource.getrusage(resource.RUSAGE_SELF).ru_maxrss))
-    tensors = collections.Counter((str(o.device), o.dtype, tuple(o.shape))
-                                  for o in gc.get_objects()
-                                  if torch.is_tensor(o))
-    for line in tensors.items():
-        print('{}\t{}'.format(*line))
-
 class DGCN(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(DGCN, self).__init__(option)
@@ -48,7 +38,7 @@ class DGCN(BaseModel):
         self.chamfer_loss = ChamferLoss()
 
         losses = ["g_similar_loss", "g_loss", "g_discriminator_loss"]
-        visuals = []
+        visuals = []# ["data_visual_real"]
         for i in range(len(self.scales)):
             losses.append("d_loss_%d" % (self.scales[i]))
             visuals.append("data_visual_%d" % (self.scales[i]))
@@ -64,7 +54,6 @@ class DGCN(BaseModel):
             input: a dictionary that contains the data itself and its metadata information.
         """
         self.batch_size = len(data[data.keys[0]])
-        #print("batch size: %s" % (self.batch_size))
         self.input = data.to(device)
 
     def compute_mean_covariance(self, points):
@@ -222,31 +211,8 @@ class DGCN(BaseModel):
         self._num_batches += 1
         self._num_samples += batch_size
 
-        #debug_memory()
-        print(torch.cuda.memory_allocated(0))
         self.d_step(epoch=epoch)
-        print(torch.cuda.memory_allocated(0))
-        
         self.g_step(epoch=epoch)
-        print(torch.cuda.memory_allocated(0))
-
-        # self.forward(epoch=epoch)  # first call forward to calculate intermediate results
-        # make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
-        # self.backward()  # calculate gradients
-
-        # if self._grad_clip > 0:
-        #     torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
-
-        # # if make_optimizer_step:
-        # #     self._optimizer.step()  # update parameters
-
-        # if self._lr_scheduler:
-        #     lr_scheduler_step = self._collect_scheduler_step("_update_lr_scheduler_on")
-        #     self._lr_scheduler.step(lr_scheduler_step)
-
-        # if self._bn_scheduler:
-        #     bn_scheduler_step = self._collect_scheduler_step("_update_bn_scheduler_on")
-        #     self._bn_scheduler.step(bn_scheduler_step)
 
     def d_step(self, *args, **kwargs):
         generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).cuda()
@@ -313,76 +279,3 @@ class DGCN(BaseModel):
 
         self.g_loss.backward()
         optimizer.step()
-
-
-#     def forward(self, *args, **kwargs):
-#         generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).cuda()
-#         fake_points_all = self.generator(generator_input)
-#         fake_target = torch.from_numpy(np.zeros(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).cuda() # should be all 0's since they fake
-#         real_target = torch.from_numpy(np.ones(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).cuda() # should be all 0's since they fake
-
-#         fake_loss = []
-#         self.d_losses = []
-#         for i in range(len(self.scales)):
-#             real_points = self.input["scale_" + str(self.scales[i])]
-#             real_points = SimpleBatch.from_data_list(real_points).contiguous()
-#             fake_points = fake_points_all[i].transpose(2,1)
-#             fake_points = SimpleBatch(pos=fake_points).contiguous()
-
-#             fake_preds = self.discriminators[i](fake_points)
-#             real_preds = self.discriminators[i](real_points)
-
-#             print('discriminator scale: %d' % (self.scales[i]))
-
-#             d_real = F.mse_loss(real_preds, real_target)
-#             d_fake = F.mse_loss(fake_preds, fake_target)
-#             fake_loss.append(d_fake)
-#             d_tot = (d_real + d_fake) / 2
-
-#             self.freeze_all_params()
-#             unfreeze_params(self.discriminators[i])
-#             d_tot.backward()
-        
-#         self.d_loss = sum(self.d_losses)
-            
-#         point_combos = itertools.combinations(fake_points, r=2)
-#         mu = 0
-#         cov = 0
-#         for combo in point_combos:
-#             m, c = self.get_local_pair(combo[0], combo[1])
-#             mu += m
-#             cov += c
-
-#         weight = 30
-#         self.g_similar_loss = weight * 1.0 * mu + \
-#                             weight * 5.0 * cov
-#         self.g_real_loss = 1.2 * sum(fake_loss)
-#         self.g_loss = self.g_real_loss + 0.5 * self.g_similar_loss
-
-#     def freeze_all_params(self):
-#         for i in range(len(self.scales)):
-#             freeze_params(self.discriminators[i])
-#         freeze_params(self.generator)
-
-#     def backward(self):
-#         #self.g_loss.backward()
-#         #print('done')
-#         for i in range(len(self.scales)):
-#             self.freeze_all_params()
-#             unfreeze_params(self.discriminators[i])
-#             for name, param in self.named_parameters():
-#                 print(name + ": " + str(param.requires_grad))
-
-#             loss = self.d_losses[i]
-#             print('backwards on %d' % (i))
-# #           print(self.d_losses[i])
-# #            self.discriminators[i].backward(loss)
-#             loss.backward(retain_graph=True)
-
-#         # self.freeze_all_params()
-#         # unfreeze_params(self.discriminators[0])
-#         # self.d_losses[0].backward(retain_graph=True)
-
-#         self.freeze_all_params()
-#         unfreeze_params(self.generator)
-#         self.g_loss.backward()
