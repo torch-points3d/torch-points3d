@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 class PointNet(BaseModel):
     def __init__(self, opt):
-        super().__init__(opt, model_type=None, dataset=None, modules=None)
+        super().__init__(opt, *args, **kwargs)
 
         self._opt = opt
         self._is_dense = ConvolutionFormatFactory.check_is_dense_format(self.conv_type)
