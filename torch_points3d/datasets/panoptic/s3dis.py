@@ -54,7 +54,7 @@ class PanopticS3DISBase:
 
     @property
     def stuff_classes(self):
-        return torch.tensor([i for i in self.INSTANCE_CLASSES.keys()])
+        return torch.tensor([])
 
 class PanopticS3DISSphere(PanopticS3DISBase, S3DISSphere):
     def process(self):
