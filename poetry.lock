@@ -368,7 +368,7 @@ python-versions = ">=2.7"
 version = "0.3"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "A platform independent file lock."
 name = "filelock"
 optional = false
@@ -399,6 +399,23 @@ name = "future"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 version = "0.18.2"
+
+[[package]]
+category = "main"
+description = "Google Drive direct download of big files."
+name = "gdown"
+optional = false
+python-versions = "*"
+version = "3.12.0"
+
+[package.dependencies]
+filelock = "*"
+six = "*"
+tqdm = "*"
+
+[package.dependencies.requests]
+extras = ["socks"]
+version = "*"
 
 [[package]]
 category = "main"
@@ -2446,7 +2463,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "e5debe0dbe883b066032dc96b36eeda83649a17827c15d9c096ee48c5d031873"
+content-hash = "6b69659e686001771cb12350b983f32a499214a30877b1a3451ee11c9bc1bb32"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -2667,6 +2684,9 @@ flake8 = [
 ]
 future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
+]
+gdown = [
+    {file = "gdown-3.12.0.tar.gz", hash = "sha256:bf5f001e3a7add296e5298240c64db88ba88e5c136bd1fe84fcbd542feb6fccd"},
 ]
 gitdb = [
     {file = "gitdb-4.0.5-py3-none-any.whl", hash = "sha256:91f36bfb1ab7949b3b40e23736db18231bf7593edada2ba5c3a174a7b23657ac"},
