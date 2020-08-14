@@ -35,10 +35,10 @@ wandb:
     log: True
     notes: "Minkowski baseline"
     name: "PointGroup"
+    id:
     public: True # It will be display the model within wandb log, else not.
     config:
         grid_size: ${data.grid_size}
-        scorer_arch: encoder
 
     # parameters for TensorBoard Visualization
 tensorboard:

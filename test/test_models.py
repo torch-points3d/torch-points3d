@@ -151,6 +151,7 @@ class TestModels(unittest.TestCase):
         config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
         dataset = get_dataset("dense", "object_detection")
         model = instantiate_model(config, dataset)
+        print(model)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()

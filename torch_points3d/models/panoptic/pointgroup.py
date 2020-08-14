@@ -10,6 +10,7 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications.minkowski import Minkowski
 from torch_points3d.core.common_modules import Seq, MLP, FastBatchNorm1d
 from torch_points3d.core.losses import offset_loss, instance_iou_loss
+from torch_points3d.core.data_transform import GridSampling3D
 from .structures import PanopticLabels, PanopticResults
 from torch_points3d.utils import is_list
 
@@ -28,15 +29,21 @@ class PointGroup(BaseModel):
             backbone_options.get("architecture", "unet"),
             input_nc=dataset.feature_dimension,
             num_layers=4,
-            config=backbone_options.get("config", None),
+            config=backbone_options.get("config", {}),
         )
 
-        self._scorer_is_encoder = option.scorer.architecture == "encoder"
-        self._activate_scorer = option.scorer.activate
-        self.Scorer = Minkowski(
-            option.scorer.architecture, input_nc=self.Backbone.output_nc, num_layers=option.scorer.depth
+        self._scorer_type = option.get("scorer_type", "encoder")
+        cluster_voxel_size = option.get("cluster_voxel_size", 0.05)
+        if cluster_voxel_size:
+            self._voxelizer = GridSampling3D(cluster_voxel_size, quantize_coords=True, mode="mean")
+        else:
+            self._voxelizer = None
+        self.ScorerUnet = Minkowski("unet", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_unet)
+        self.ScorerEncoder = Minkowski(
+            "encoder", input_nc=self.Backbone.output_nc, num_layers=4, config=option.scorer_encoder
         )
-        self.ScorerHead = Seq().append(torch.nn.Linear(self.Scorer.output_nc, 1)).append(torch.nn.Sigmoid())
+        self.ScorerMLP = MLP([self.Backbone.output_nc, self.Backbone.output_nc, self.ScorerUnet.output_nc])
+        self.ScorerHead = Seq().append(torch.nn.Linear(self.ScorerUnet.output_nc, 1)).append(torch.nn.Sigmoid())
 
         self.Offset = Seq().append(MLP([self.Backbone.output_nc, self.Backbone.output_nc], bias=False))
         self.Offset.append(torch.nn.Linear(self.Backbone.output_nc, 3))
@@ -89,9 +96,6 @@ class PointGroup(BaseModel):
         with torch.no_grad():
             self._dump_visuals(epoch)
 
-        # Compute loss
-        self._compute_loss()
-
     def _cluster(self, semantic_logits, offset_logits):
         """ Compute clusters from positions and votes """
         predicted_labels = torch.max(semantic_logits, 1)[1]
@@ -119,21 +123,39 @@ class PointGroup(BaseModel):
 
     def _compute_score(self, all_clusters, backbone_features, semantic_logits):
         """ Score the clusters """
-        if self._activate_scorer:
+        if self._scorer_type:
+            # Assemble batches
             x = []
             coords = []
             batch = []
+            pos = []
             for i, cluster in enumerate(all_clusters):
                 x.append(backbone_features[cluster])
                 coords.append(self.input.coords[cluster])
                 batch.append(i * torch.ones(cluster.shape[0]))
-            batch_cluster = Data(x=torch.cat(x).cpu(), coords=torch.cat(coords).cpu(), batch=torch.cat(batch).cpu(),)
-            score_backbone_out = self.Scorer(batch_cluster)
-            if self._scorer_is_encoder:
+                pos.append(self.input.pos[cluster])
+            batch_cluster = Data(x=torch.cat(x), coords=torch.cat(coords), batch=torch.cat(batch),)
+
+            # Voxelise if required
+            if self._voxelizer:
+                batch_cluster.pos = torch.cat(pos)
+                batch_cluster = batch_cluster.to(self.device)
+                batch_cluster = self._voxelizer(batch_cluster)
+
+            # Score
+            batch_cluster = batch_cluster.to("cpu")
+            if self._scorer_type == "MLP":
+                score_backbone_out = self.ScorerMLP(batch_cluster.x.to(self.device))
+                cluster_feats = scatter(
+                    score_backbone_out, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
+                )
+            elif self._scorer_type == "encoder":
+                score_backbone_out = self.ScorerEncoder(batch_cluster)
                 cluster_feats = score_backbone_out.x
             else:
+                score_backbone_out = self.ScorerUnet(batch_cluster)
                 cluster_feats = scatter(
-                    score_backbone_out.x, score_backbone_out.batch.long().to(self.device), dim=0, reduce="max"
+                    score_backbone_out.x, batch_cluster.batch.long().to(self.device), dim=0, reduce="max"
                 )
             cluster_scores = self.ScorerHead(cluster_feats).squeeze(-1)
         else:
@@ -170,7 +192,7 @@ class PointGroup(BaseModel):
             self.loss += self.opt.loss_weights[loss_name] * loss
 
         # Score loss
-        if self.output.cluster_scores is not None and self._activate_scorer:
+        if self.output.cluster_scores is not None and self._scorer_type:
             self.score_loss = instance_iou_loss(
                 self.output.clusters,
                 self.output.cluster_scores,
@@ -183,6 +205,7 @@ class PointGroup(BaseModel):
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self._compute_loss()
         self.loss.backward()
 
     def _dump_visuals(self, epoch):
