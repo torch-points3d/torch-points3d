@@ -119,14 +119,14 @@ class VoteNet2(BaseModel):
         data_seeds, seed_inds = self._select_seeds(data_features)
 
         # Semantic prediction only if full Unet
-        semantic_logits = None
+        self.semantic_logits = None
         if self.Semantic:
             backbone_feats = data_features.x.clone()
             if backbone_feats.dim() == 3:
                 backbone_feats = backbone_feats.transpose(2, 1)
                 backbone_feats = backbone_feats.reshape(-1, backbone_feats.shape[2])
             if backbone_feats.shape[0] == self.semantic_labels.shape[0]:
-                semantic_logits = self.Semantic(backbone_feats)
+                self.semantic_logits = self.Semantic(backbone_feats)
 
         # Box prediction
         data_votes = self.voting_module(data_seeds)
@@ -136,14 +136,11 @@ class VoteNet2(BaseModel):
 
         # Set output and compute losses
         self.input = self.input.to(self.device)
-        self._extract_gt_center(self.input, outputs)
         self.output = outputs
-
-        # Sets visual data for debugging
+        if hasattr(self.input, "center_label"):
+            self._extract_gt_center(self.input, outputs)
         with torch.no_grad():
             self._dump_visuals()
-
-        self._compute_losses(semantic_logits)
 
     def _select_seeds(self, data_features):
         sampling_id_key = "sampling_id_0"
@@ -164,6 +161,7 @@ class VoteNet2(BaseModel):
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self._compute_losses()
         self.loss.backward()
 
     def _extract_gt_center(self, data, outputs):
@@ -173,7 +171,7 @@ class VoteNet2(BaseModel):
             gt_center = data.center_label[:, 0:3].view((self._n_batches, -1, 3))
         outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
-    def _compute_losses(self, semantic_logits=None):
+    def _compute_losses(self):
         losses = votenet_module.get_loss(self.input, self.output, self.loss_params)
         for loss_name, loss in losses.items():
             if torch.is_tensor(loss):
@@ -181,11 +179,11 @@ class VoteNet2(BaseModel):
                     self.loss_names += [loss_name]
                 setattr(self, loss_name, loss)
 
-        if semantic_logits is not None:
+        if self.semantic_logits is not None:
             if not self.losses_has_been_added:
                 self.loss_names += ["semantic_loss"]
             self.semantic_loss = torch.nn.functional.nll_loss(
-                semantic_logits, self.semantic_labels, ignore_index=IGNORE_LABEL
+                self.semantic_logits, self.semantic_labels, ignore_index=IGNORE_LABEL
             )
             self.loss += 10 * self.semantic_loss
         self.losses_has_been_added = True

@@ -96,9 +96,6 @@ class PointGroup(BaseModel):
         with torch.no_grad():
             self._dump_visuals(epoch)
 
-        # Compute loss
-        self._compute_loss()
-
     def _cluster(self, semantic_logits, offset_logits):
         """ Compute clusters from positions and votes """
         predicted_labels = torch.max(semantic_logits, 1)[1]
@@ -208,6 +205,7 @@ class PointGroup(BaseModel):
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self._compute_loss()
         self.loss.backward()
 
     def _dump_visuals(self, epoch):
