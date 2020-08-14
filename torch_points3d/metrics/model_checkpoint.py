@@ -88,7 +88,7 @@ class Checkpoint:
     def is_empty(self):
         return not self._filled
 
-    def get_optimizer(self, model):
+    def get_optimizer(self, model, load_state=True):
         if not self.is_empty:
             try:
                 optimizer_config = self.optimizer
@@ -99,12 +99,13 @@ class Checkpoint:
                 except:
                     pass
                 optimizer = optimizer_cls(model.parameters(), **optimizer_params)
-                optimizer.load_state_dict(optimizer_config[1])
+                if load_state:
+                    optimizer.load_state_dict(optimizer_config[1])
                 return optimizer
             except:
                 raise KeyError("The checkpoint doesn t contain an optimizer")
 
-    def get_schedulers(self, model):
+    def get_schedulers(self, model, load_state=True):
         if not self.is_empty:
             try:
                 schedulers_out = {}
@@ -113,11 +114,13 @@ class Checkpoint:
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
                         scheduler = instantiate_scheduler(optimizer, scheduler_opt)
-                        scheduler.load_state_dict(scheduler_state)
+                        if load_state:
+                            scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
                     elif scheduler_type == "bn_scheduler":
                         scheduler = instantiate_bn_scheduler(model, scheduler_opt)
-                        scheduler.load_state_dict(scheduler_state)
+                        if load_state:
+                            scheduler.load_state_dict(scheduler_state)
                         schedulers_out["bn_scheduler"] = scheduler
                     else:
                         raise NotImplementedError
@@ -224,9 +227,8 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict, strict=False)
-            if self._resume:
-                model.optimizer = self._checkpoint.get_optimizer(model)
-                model.schedulers = self._checkpoint.get_schedulers(model)
+            model.optimizer = self._checkpoint.get_optimizer(model, load_state=self._resume)
+            model.schedulers = self._checkpoint.get_schedulers(model, load_state=self._resume)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
