@@ -4,28 +4,22 @@ import torch.nn.functional as F
 from typing import Any
 import torch
 import numpy as np
-from torch_points3d.models.base_model import BaseModel
-from torch_points3d.modules.DGCN.main_modules import PointGenerator, Discriminator
-from torch_points3d.modules.DGCN.helpers import ChamferLoss
-from torch_points3d.utils.model_utils import freeze_params, unfreeze_params
+from torch_points3d.models.generative.gan_base_model import BaseGanModel
+from torch_points3d.modules.DGCN.gan_modules import PointGenerator, Discriminator
+from torch_points3d.core.losses.chamfer_loss import ChamferLoss
 from torch_points3d.core.spatial_ops import KNNNeighbourFinder
 import torch_geometric
 from torch_points3d.datasets.batch import SimpleBatch
 import itertools
 import torch.nn as nn
-from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
-from torch_points3d.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 from torch_points3d.core.common_modules.gathering import gather
 from torch_geometric.data import DataLoader, InMemoryDataset, extract_zip, Data
 
 log = logging.getLogger(__name__)
 
-class DGCN(BaseModel):
+class DGCN(BaseGanModel):
     def __init__(self, option, model_type, dataset, modules):
         super(DGCN, self).__init__(option)
-
-        self.scales = option.scales
-        self.latent_space = option.latent_space
 
         self.generator = PointGenerator(self.scales, self.latent_space, option.generator)
         
@@ -33,16 +27,14 @@ class DGCN(BaseModel):
         for i in range(len(self.scales)):
             self.discriminators.append(Discriminator(option.discriminator.fc_layers[i], option.discriminator.classifier))
 
-        #self.sampler = DenseFPSSampler(num_to_sample=20)
         self.neighbour_finder = KNNNeighbourFinder(k=20)
         self.chamfer_loss = ChamferLoss()
 
         losses = ["g_similar_loss", "g_loss", "g_discriminator_loss"]
-        visuals = []# ["data_visual_real"]
+        visuals = []
         for i in range(len(self.scales)):
             losses.append("d_loss_%d" % (self.scales[i]))
             visuals.append("data_visual_%d" % (self.scales[i]))
-        #print(losses)
         self.loss_names = losses
 
         self.visual_names = visuals
@@ -53,6 +45,7 @@ class DGCN(BaseModel):
         Parameters:
             input: a dictionary that contains the data itself and its metadata information.
         """
+        
         self.batch_size = len(data[data.keys[0]])
         self.input = data.to(device)
 
@@ -70,11 +63,11 @@ class DGCN(BaseModel):
     def get_neighbors(self, pt1, pt2):
         #BxMx3 -> BMx3
         pt1_batch = np.indices(pt1.shape[0:2])[0].reshape(-1)
-        pt1_batch = torch.from_numpy(pt1_batch).cuda()
+        pt1_batch = torch.from_numpy(pt1_batch).to(self.device).long()
         pt1 = pt1.view(-1, 3)
 
         pt2_batch = np.indices(pt2.shape[0:2])[0].reshape(-1)
-        pt2_batch = torch.from_numpy(pt2_batch).cuda()
+        pt2_batch = torch.from_numpy(pt2_batch).to(self.device).long()
         pt2 = pt2.view(-1, 3)
 
         idx = self.neighbour_finder(pt1, pt2, pt1_batch, pt2_batch)
@@ -83,51 +76,25 @@ class DGCN(BaseModel):
         pt1 = gather(pt1, idx)
         pt1 = pt1.reshape(pt1.shape[0], pt2_batch.shape[-1], 3, self.neighbour_finder.k)
         pt1 = pt1.transpose(2, 1)
-        
-        #print(pt1.shape)  # Bx3xMxK
         return pt1
 
     def get_local_pair(self, pt1, pt2):
         pt1_batch,pt1_N,pt1_M = pt1.size()
         pt2_batch,pt2_N,pt2_M = pt2.size()
-        # pt1: Bx3xM    pt2: Bx3XN      (N > M)
-        #print('pt1: {}      pt2: {}'.format(pt1.size(), pt2.size()))
+        
         new_xyz = pt1.transpose(1, 2).contiguous()      # Bx3xM -> BxMx3
         pt1_trans = pt1.transpose(1, 2).contiguous()    # Bx3xM -> BxMx3
         pt2_trans = pt2.transpose(1, 2).contiguous()    # Bx3xN -> BxNx3
         
-        #g_xyz1 = self.group(pt1_trans, new_xyz)     # Bx3xMxK
         g_xyz1 = self.get_neighbors(pt1_trans, new_xyz)
-        #g_xyz1 = self.neighbour_finder(pt1_trans, new_xyz)#, batch_x=batch1, batch_y=batch1,)
-
-        #print('g_xyz1: {}'.format(g_xyz1.size()))   
-        #g_xyz2 = self.group(pt2_trans, new_xyz)     # Bx3xMxK
         g_xyz2 = self.get_neighbors(pt2_trans, new_xyz)
-        #g_xyz2 = self.neighbour_finder(pt2_trans, new_xyz) #, batch_x=batch2, batch_y=batch1,)
-        #print('g_xyz2: {}'.format(g_xyz2.size()))
-
         
         g_xyz1 = g_xyz1.transpose(1, 2).contiguous().view(-1, 3, 20)    # Bx3xMxK -> BxMx3xK -> (BM)x3xK
-        #print('g_xyz1: {}'.format(g_xyz1.size()))   
         g_xyz2 = g_xyz2.transpose(1, 2).contiguous().view(-1, 3, 20)    # Bx3xMxK -> BxMx3xK -> (BM)x3xK
-        #print('g_xyz2: {}'.format(g_xyz2.size()))   
-        # print('====================== FPS ========================')
-        # print(pt1.shape,g_xyz1.shape)
-        # print(pt2.shape,g_xyz2.shape)
+
         mu1, var1 = self.compute_mean_covariance(g_xyz1) 
         mu2, var2 = self.compute_mean_covariance(g_xyz2) 
-        #print('mu1: {} var1: {}'.format(mu1.size(), var1.size())) 
-        #print('mu2: {} var2: {}'.format(mu2.size(), var2.size()))
         
-
-        #--------------------------------------------------
-        # like_mu12 = self.shape_loss_fn(mu1, mu2)
-        # like_var12 = self.shape_loss_fn(var1, var2)
-        #----------------------------------------------------
-        #=========$$$  CD loss   $$$===============
-        
-        # print("p1,p2:",pt1.shape,pt2.shape)
-        # print("mu2:",mu1.shape,mu2.shape,pt1_batch,pt1_N,pt1_M)
         mu1 = mu1.view(pt1_batch,-1,3)
         mu2 = mu2.view(pt2_batch,-1,3)
 
@@ -135,90 +102,15 @@ class DGCN(BaseModel):
         var2 = var2.view(pt2_batch,-1,9)
 
         like_mu12 = self.chamfer_loss(mu1,mu2) / float(pt1_M)
-
         like_var12 = self.chamfer_loss(var1,var2) / float(pt1_M)
-        # import pdb
-        # pdb.set_trace()
-
-
-        #print('mu: {} var: {}'.format(like_mu12.item(), like_var12.item())) 
               
         return like_mu12, like_var12
 
-    def get_pairs(self, data1, data2):
-        #idx = np.arange(len(data1.pos()))
-
-        pos1, batch1 = data1.pos, data1.batch
-        pos2, batch2 = data2.pos, data2.batch
-        g_xyz1 = self.neighbour_finder(pos1, pos1, batch_x=batch1, batch_y=batch1,)
-        g_xyz2 = self.neighbour_finder(pos2, pos1, batch_x=batch2, batch_y=batch1,)
-
-        mu1, var1 = self.compute_mean_covariance(g_xyz1) 
-        mu2, var2 = self.compute_mean_covariance(g_xyz2) 
-
-    def instantiate_optimizers(self, config):
-        # Optimiser
-        optimizer_opt = self.get_from_opt(
-            config,
-            ["training", "optim", "optimizer"],
-            msg_err="optimizer needs to be defined within the training config",
-        )       
-        optmizer_cls_name = optimizer_opt.get("class")
-        optimizer_cls = getattr(torch.optim, optmizer_cls_name)
-        optimizer_params = {}
-        if hasattr(optimizer_opt, "params"):
-            optimizer_params = optimizer_opt.params
-        self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
-        self.g_optimizer = self._optimizer
-        self.d_optimizers = []
-        for i in range(len(self.scales)):
-            self.d_optimizers.append(optimizer_cls(self.parameters(), **optimizer_params))
-
-        # LR Scheduler
-        scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
-        if scheduler_opt:
-            update_lr_scheduler_on = config.update_lr_scheduler_on
-            if update_lr_scheduler_on:
-                self._update_lr_scheduler_on = update_lr_scheduler_on
-            scheduler_opt.update_scheduler_on = self._update_lr_scheduler_on
-            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
-            self._add_scheduler("lr_scheduler", lr_scheduler)
-
-        # BN Scheduler
-        bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
-        if bn_scheduler_opt:
-            update_bn_scheduler_on = config.update_bn_scheduler_on
-            if update_bn_scheduler_on:
-                self._update_bn_scheduler_on = update_bn_scheduler_on
-            bn_scheduler_opt.update_scheduler_on = self._update_bn_scheduler_on
-            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
-            self._add_scheduler("bn_scheduler", bn_scheduler)
-
-        # Accumulated gradients
-        self._accumulated_gradient_step = self.get_from_opt(config, ["training", "optim", "accumulated_gradient"])
-        if self._accumulated_gradient_step:
-            if self._accumulated_gradient_step > 1:
-                self._accumulated_gradient_count = 0
-            else:
-                raise Exception("When set, accumulated_gradient option should be an integer greater than 1")
-
-        # Gradient clipping
-        self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)
-
-    def optimize_parameters(self, epoch, batch_size):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        self._num_epochs = epoch
-        self._num_batches += 1
-        self._num_samples += batch_size
-
-        self.d_step(epoch=epoch)
-        self.g_step(epoch=epoch)
-
     def d_step(self, *args, **kwargs):
-        generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).cuda()
+        generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).to(self.device)
         fake_points_all = self.generator(generator_input)
-        fake_target = torch.from_numpy(np.zeros(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).cuda().detach() # should be all 0's since they fake
-        real_target = torch.from_numpy(np.ones(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).cuda().detach() # should be all 0's since they fake
+        fake_target = torch.from_numpy(np.zeros(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).to(self.device).detach() # should be all 0's since they fake
+        real_target = torch.from_numpy(np.ones(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).to(self.device).detach() # should be all 0's since they fake
 
         fake_loss = []
         for i in range(len(self.scales)):
@@ -248,9 +140,9 @@ class DGCN(BaseModel):
         optimizer = self.g_optimizer
         optimizer.zero_grad()
 
-        generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).cuda()
+        generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).to(self.device)
         gen_points_all = self.generator(generator_input)
-        real_target = torch.from_numpy(np.ones(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).cuda() # should be all 0's since they fake
+        real_target = torch.from_numpy(np.ones(self.batch_size,).astype(np.int64)).float().reshape(self.batch_size, 1).to(self.device) # should be all 0's since they fake
 
         with torch.no_grad():
             g_loss = []
@@ -279,3 +171,12 @@ class DGCN(BaseModel):
 
         self.g_loss.backward()
         optimizer.step()
+
+    def forward(self, data):
+        # forward-only for interface
+        generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).to(self.device)
+        gen_points_all = self.generator(generator_input)
+        
+        for i in range(len(self.scales)):
+            gen_points = gen_points_all[i].transpose(2,1)        
+            setattr(self, "data_visual_%d" % (self.scales[i]), Data(pos=gen_points))

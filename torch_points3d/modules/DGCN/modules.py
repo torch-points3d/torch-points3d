@@ -27,7 +27,7 @@ class DeconvModule(BaseModule):
         self.nn["maxpool"] = nn.MaxPool2d((1,maxpool),(1,1))
         self.nn["upsample_cov"] = BilateralInterpolationModule(Fin, Fout, num_k//2, 1, softmax=softmax)
         self.nn["bn_uc"] = nn.BatchNorm1d(Fout)
-        self.nn["relu_uc"] = nn.LeakyReLU(inplace=True)
+        self.nn["activation"] = nn.LeakyReLU(inplace=True)
         
         self.nn["fc"] = nn.Sequential(
             nn.Linear(Fin, Fin),
@@ -66,7 +66,7 @@ class DeconvModule(BaseModule):
         xs = xs.view(batchsize,-1,1)
         xs = xs.repeat(1, 1, 2*point_num)
 
-        x_ec = self.nn["relu_uc"](self.nn["bn_uc"](self.nn["upsample_cov"](x, pc)))
+        x_ec = self.nn["activation"](self.nn["bn_uc"](self.nn["upsample_cov"](x, pc)))
         x_out = torch.cat((xs, x_ec), 1)
 
         g_out = torch.cat((g, x_ec), dim=1)
@@ -114,7 +114,6 @@ class BilateralInterpolationModule(BaseModule):
         )
 
         self.inte_conv_hk = nn.Sequential(
-            #nn.Conv2d(2*Fin, 4*Fin, [1, k//2], [1, 1]),  # Fin, Fout, kernel_size, stride
             nn.Conv2d(2*Fin, 4*Fin, [1, k//2+1], [1, 1]),  # Fin, Fout, kernel_size, stride
             nn.BatchNorm2d(4*Fin),
             nn.LeakyReLU(inplace = True)
@@ -124,11 +123,10 @@ class BilateralInterpolationModule(BaseModule):
         B, Fin, N = x.size()
         has_points = pc is not None and pc.shape[-1] > 0
 
-        #x = get_edge_features(x, self.k, self.num); # [B, 2Fin, N, k]
         if has_points:
             x, y = get_edge_features_xyz(x, pc, self.k, self.num); # feature x: [B, 2Fin, N, k] coordinate y: [B, 6, N, k]
         else:
-            x = get_edge_features(x, self.k, self.num); # feature x: [B, 2Fin, N, k] coordinate y: [B, 6, N, k]
+            x = get_edge_features(x, self.k, self.num); # feature x: [B, 2Fin, N, k]
 
         if has_points:
             w_fea = self.conv_fea(x)
@@ -138,9 +136,7 @@ class BilateralInterpolationModule(BaseModule):
             if self.softmax == True:
                 w = F.softmax(w, dim=-1)    # [B, Fout, N, k] -> [B, Fout, N, k]
         
-        # -------------learn_v2----------------------
         BB, CC, NN, KK = x.size()
-        #x = self.conv1(x)
         inte_x = self.inte_conv_hk(x)                                   # Bx2CxNxk/2
         inte_x = inte_x.transpose(2, 1)                                 # BxNx2Cxk/2
         inte_x = inte_x.contiguous().view(BB, NN, CC, 2, KK//2)       # BxNxCx2x(k//2+1)

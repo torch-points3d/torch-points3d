@@ -10,33 +10,33 @@ from torch_points3d.core.common_modules.dense_modules import MLP1D, Conv1D
 
 class PointGenerator(nn.Module):
     def __init__(self, 
-        point_scales,
+        scales,
         latent_space,
         config,
     ):
         super(PointGenerator, self).__init__()
-        self.point_scales = point_scales
+        self.scales = scales
         self.in_feats = config.in_feats
         self.out_feats = config.out_feats
         self.latent_space = latent_space
         self.out_nn = config.out_nn
         self.softmax = config.use_softmax
-        self.num_k = config.knn
+        self.knn = config.knn
 
-        assert len(self.point_scales) == len(self.in_feats) == len(self.out_feats) 
+        #assert len(self.scales) == len(self.in_feats) == len(self.out_feats) 
 
-        initial_features = (point_scales[0] // 2) * self.in_feats[0]
+        initial_features = (self.scales[0] // 2) * self.in_feats[0]
 
         self.fc1 = nn.Sequential(
-            nn.Linear(latent_space, initial_features),
+            nn.Linear(self.latent_space, initial_features),
             nn.BatchNorm1d(initial_features),  # 128,32
             nn.LeakyReLU()
         )
 
         self.interpolations = nn.ModuleList()
         self.mlps = nn.ModuleList()
-        for i in range(len(point_scales)):
-            self.interpolations.append(DeconvModule(self.in_feats[i], self.out_feats[i], point_scales[i]//2, num_k=self.num_k, softmax=self.softmax))
+        for i in range(len(self.scales)):
+            self.interpolations.append(DeconvModule(self.in_feats[i], self.out_feats[i], self.scales[i]//2, num_k=self.knn, softmax=self.softmax))
 
             out_nn = self.out_nn[:]
             out_nn[0] += self.out_feats[i]
@@ -52,11 +52,11 @@ class PointGenerator(nn.Module):
 
         batchsize = x.size()[0]
         x = self.fc1(x)
-        x = x.view(batchsize, self.in_feats[0], self.point_scales[0]//2)  # Bx32x128
+        x = x.view(batchsize, self.in_feats[0], self.scales[0]//2)  # Bx32x128
         xs = None
 
         out_points = []
-        for i in range(len(self.point_scales)):
+        for i in range(len(self.scales)):
             x, g_x = self.interpolations[i](x, xs)
             xs = self.mlps[i](g_x) 
             out_points.append(xs)
