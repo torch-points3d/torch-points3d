@@ -5,7 +5,7 @@ data:
   normal: False # Use normal vectors as features
   first_subsampling: 0.02 # Grid size of the input data
   use_category: True # Use object category information
-  scales: [256, 512, 1024, 2048] # must match scales in model config
+  scales: [256, 512] # must match scales in model config
   category: Chair
   pre_transforms: # Offline transforms, done only once
     - transform: NormalizeScale
