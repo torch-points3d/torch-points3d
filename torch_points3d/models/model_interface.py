@@ -14,11 +14,11 @@ class CheckpointInterface(ABC):
         pass
 
     @abstractproperty  # type: ignore
-    def optimizer(self):
+    def optimizers(self):
         pass
 
-    @optimizer.setter
-    def optimizer(self, optimizer):
+    @optimizers.setter
+    def optimizers(self, optimizers):
         pass
 
     @abstractmethod

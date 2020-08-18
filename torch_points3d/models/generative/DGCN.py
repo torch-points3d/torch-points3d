@@ -114,7 +114,7 @@ class DGCN(BaseGanModel):
 
         fake_loss = []
         for i in range(len(self.scales)):
-            optimizer = self.d_optimizers[i]
+            optimizer = self.optimizers[i + 1]
             optimizer.zero_grad()
 
             real_points = self.input["scale_" + str(self.scales[i])]
@@ -137,7 +137,7 @@ class DGCN(BaseGanModel):
 
 
     def g_step(self, *args, **kwargs):
-        optimizer = self.g_optimizer
+        optimizer = self.optimizers[0]
         optimizer.zero_grad()
 
         generator_input = torch.Tensor(np.random.normal(0, 0.2, (self.batch_size, self.latent_space))).to(self.device)

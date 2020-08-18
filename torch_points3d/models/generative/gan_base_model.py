@@ -25,10 +25,10 @@ class BaseGanModel(BaseModel):
         if hasattr(optimizer_opt, "params"):
             optimizer_params = optimizer_opt.params
         self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
-        self.g_optimizer = self._optimizer
-        self.d_optimizers = []
+        optimizers = [self._optimizer]
         for i in range(len(self.scales)):
-            self.d_optimizers.append(optimizer_cls(self.parameters(), **optimizer_params))
+            optimizers.append(optimizer_cls(self.parameters(), **optimizer_params))
+        self.optimizers = optimizers
 
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
@@ -59,7 +59,16 @@ class BaseGanModel(BaseModel):
                 raise Exception("When set, accumulated_gradient option should be an integer greater than 1")
 
         # Gradient clipping
-        self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)        
+        self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)
+        
+    @property
+    def optimizers(self):
+        return self._optimizers
+
+    @optimizers.setter
+    def optimizers(self, optimizers):
+        self._optimizers = optimizers
+        self._optimizer = optimizers[0]
 
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""

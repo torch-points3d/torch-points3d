@@ -49,6 +49,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self.visual_names = []
         self.output = None
         self._conv_type = opt.conv_type
+        self._optimizers: Optional[List[Optimizer]] = []
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._bn_scheduler = None
@@ -78,12 +79,13 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._schedulers[scheduler_name] = scheduler
 
     @property
-    def optimizer(self):
-        return self._optimizer
+    def optimizers(self):
+        return self._optimizers
 
-    @optimizer.setter
-    def optimizer(self, optimizer):
-        self._optimizer = optimizer
+    @optimizers.setter
+    def optimizers(self, optimizers):
+        self._optimizers = optimizers
+        self._optimizer = optimizers[0]
 
     @property
     def num_epochs(self):
@@ -111,7 +113,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     @property
     def learning_rate(self):
-        for param_group in self.optimizer.param_groups:
+        for param_group in self.optimizers[0].param_groups:
             return param_group["lr"]
 
     @property
@@ -236,6 +238,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if hasattr(optimizer_opt, "params"):
             optimizer_params = optimizer_opt.params
         self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
+        self.optimizers = [self._optimizer]
 
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
@@ -404,8 +407,8 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     def to(self, *args, **kwargs):
         super().to(*args, *kwargs)
-        if self.optimizer:
-            for state in self.optimizer.state.values():
+        for optimizer in self.optimizers:
+            for state in optimizer.state.values():
                 for k, v in state.items():
                     if isinstance(v, torch.Tensor):
                         state[k] = v.to(*args, **kwargs)

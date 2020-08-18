@@ -30,14 +30,18 @@ class Checkpoint:
         self.run_config = None
         self.models: Dict[str, Any] = {}
         self.stats: Dict[str, List[Any]] = {"train": [], "test": [], "val": []}
-        self.optimizer: Optional[Tuple[str, Any]] = None
+        self.optimizer: Optional[str, Any] = None
+        self.optimizers: Optional[List[str, Any]] = None
         self.schedulers: Dict[str, Any] = {}
 
-    def save_objects(self, models_to_save: Dict[str, Any], stage, current_stat, optimizer, schedulers, **kwargs):
+    def save_objects(self, models_to_save: Dict[str, Any], stage, current_stat, optimizers, schedulers, **kwargs):
         """ Saves checkpoint with updated mdoels for the given stage
         """
         self.models = models_to_save
-        self.optimizer = (optimizer.__class__.__name__, optimizer.state_dict())
+        self.optimizers = [
+            (optimizer.__class__.__name__, optimizer.state_dict())
+            for optimizer in optimizers
+        ]
         self.schedulers = {
             scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
             for scheduler_name, scheduler in schedulers.items()
@@ -88,19 +92,26 @@ class Checkpoint:
     def is_empty(self):
         return not self._filled
 
-    def get_optimizer(self, model):
+    def get_optimizers(self, model):
         if not self.is_empty:
             try:
-                optimizer_config = self.optimizer
-                optimizer_cls = getattr(torch.optim, optimizer_config[0])
-                optimizer_params = {}
-                try:
-                    optimizer_params = self.run_config.training.optim.optimizer.params
-                except:
-                    pass
-                optimizer = optimizer_cls(model.parameters(), **optimizer_params)
-                optimizer.load_state_dict(optimizer_config[1])
-                return optimizer
+                optimizers_out = []
+                if self.optimizer is not None:
+                    optimizers_config = [self.optimizer]
+                else:
+                    optimizers_config = self.optimizers
+                for optimizer in optimizers_config:
+                    optimizer_config = optimizer
+                    optimizer_cls = getattr(torch.optim, optimizer_config[0])
+                    optimizer_params = {}
+                    try:
+                        optimizer_params = self.run_config.training.optim.optimizer.params
+                    except:
+                        pass
+                    optimizer = optimizer_cls(model.parameters(), **optimizer_params)
+                    optimizer.load_state_dict(optimizer_config[1])
+                    optimizers_out.append(optimizer)
+                return optimizers_out
             except:
                 raise KeyError("The checkpoint doesn t contain an optimizer")
 
@@ -111,7 +122,7 @@ class Checkpoint:
                 schedulers_config = self.schedulers
                 for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
                     if scheduler_type == "lr_scheduler":
-                        optimizer = model.optimizer
+                        optimizer = model.optimizers[0]
                         scheduler = instantiate_scheduler(optimizer, scheduler_opt)
                         scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
@@ -225,7 +236,7 @@ class ModelCheckpoint(object):
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict, strict=False)
             if self._resume:
-                model.optimizer = self._checkpoint.get_optimizer(model)
+                model.optimizers = self._checkpoint.get_optimizers(model)
                 model.schedulers = self._checkpoint.get_schedulers(model)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
@@ -302,7 +313,7 @@ class ModelCheckpoint(object):
         }
 
         self._checkpoint.stats[stage].append(current_stat)
-        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
+        self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizers, model.schedulers, **kwargs)
 
     def validate(self, dataset_config):
         """ A checkpoint is considered as valid if it can recreate the model from

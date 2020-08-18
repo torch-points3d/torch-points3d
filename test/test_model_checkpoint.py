@@ -38,7 +38,7 @@ class MockModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.state = torch.nn.parameter.Parameter(torch.tensor([1.0]))
-        self.optimizer = torch.nn.Module()
+        self.optimizers = [torch.nn.Module()]
         self.schedulers = {}
         self.num_epochs = None
         self.num_batches = 0
@@ -82,12 +82,12 @@ class TestModelCheckpoint(unittest.TestCase):
         model_checkpoint = ModelCheckpoint(self.run_path, self.model_name, "test", self.config, resume=True)
         model2 = model_checkpoint.create_model(dataset, weight_name="acc")
 
-        self.assertEqual(str(model.optimizer.__class__.__name__), str(model2.optimizer.__class__.__name__))
+        self.assertEqual(str(model.optimizers[0].__class__.__name__), str(model2.optimizers[0].__class__.__name__))
 
         self.assertEqual(model2.num_batches, num_batches)
         self.assertEqual(model2.num_epochs, num_epochs)
         self.assertEqual(model2.num_samples, num_samples)
-        self.assertEqual(model.optimizer.defaults, model2.optimizer.defaults)
+        self.assertEqual(model.optimizers[0].defaults, model2.optimizers[0].defaults)
         self.assertEqual(model.schedulers["lr_scheduler"].state_dict(), model2.schedulers["lr_scheduler"].state_dict())
         self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
 
