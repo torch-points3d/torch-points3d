@@ -67,7 +67,7 @@ class TestVisualizer(unittest.TestCase):
             run(3, visualizer, epoch, "test", data)
             run(0, visualizer, epoch, "val", data)
 
-        targets = set(["1_1.ply", "0_0.ply"])
+        targets = set(["1_1_mock_date.ply", "0_0_mock_date.ply"])
         for split in ["train"]:
             for epoch in range(epochs):
                 self.assertEqual(targets, set(os.listdir(os.path.join(self.run_path, "viz", str(epoch), split))))
