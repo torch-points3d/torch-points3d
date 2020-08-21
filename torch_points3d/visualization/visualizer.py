@@ -62,9 +62,9 @@ class Visualizer(object):
 
         if indices:
             for split in ["train", "test", "val"]:
-                if hasattr(indices, split):
-                    indices = getattr(indices, split)
-                    self._indices[split] = np.asarray(indices)
+                if split in indices:
+                    split_indices = indices[split]
+                    self._indices[split] = np.asarray(split_indices)
                     self._contains_indices = True
 
     def get_indices(self, stage):
