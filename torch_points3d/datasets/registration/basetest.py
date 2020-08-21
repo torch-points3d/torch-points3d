@@ -219,3 +219,29 @@ class Base3DMatchTest(Dataset):
 
     def __getitem__(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")
+
+
+
+class BasePCRBTest(Dataset):
+    """
+    dataset that have the same format as in Point cloud registration benchmark repo.
+    https://github.com/iralabdisco/point_clouds_registration_benchmark.
+    it
+    """
+
+    def __init__(self, root,
+                 transform=None,
+                 pre_transform=None,
+                 pre_filter=None,
+                 verbose=False,
+                 debug=False,
+                 max_dist_overlap=0.01):
+        """
+        a baseDataset that download a dataset,
+        apply preprocessing, and compute keypoints
+        """
+        self.max_dist_overlap = max_dist_overlap
+
+    @staticmethod
+    def parse_pair_files(filename):
+        pass
