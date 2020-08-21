@@ -78,7 +78,7 @@ class SimplePatch(torch.utils.data.Dataset):
         return 1 if self[0].x.dim() == 1 else self[0].x.size(1)
 
 
-class BaseTest(Dataset):
+class Base3DMatchTest(Dataset):
 
     def __init__(self, root,
                  transform=None,
@@ -92,10 +92,13 @@ class BaseTest(Dataset):
         apply preprocessing, and compute keypoints
         """
         self.max_dist_overlap = max_dist_overlap
-        super(BaseTest, self).__init__(root,
-                                       transform,
-                                       pre_transform,
-                                       pre_filter)
+        base = osp.abspath(osp.join(osp.realpath(__file__),
+                                    '..'))
+        self.list_urls_test = get_urls(osp.join(base, 'urls', 'url_test.txt'))
+        super(Base3DMatchTest, self).__init__(root,
+                                              transform,
+                                              pre_transform,
+                                              pre_filter)
 
     @property
     def raw_file_names(self):
@@ -106,7 +109,25 @@ class BaseTest(Dataset):
         return ["fragment"]
 
     def download(self):
-        raise NotImplementedError('need to download the dataset')
+        folder_test = osp.join(self.raw_dir, 'test')
+        if files_exist([folder_test]):  # pragma: no cover
+            log.warning("already downloaded {}".format('test'))
+            return
+        for url_raw in self.list_urls_test:
+            url = url_raw.split('\n')[0]
+            path = download_url(url, folder_test)
+            extract_zip(path, folder_test)
+            log.info(path)
+            folder = path.split('.zip')[0]
+            os.unlink(path)
+            path_eval = download_url(url.split('.zip')[0]+'-evaluation.zip',
+                                     folder)
+            extract_zip(path_eval, folder)
+            os.unlink(path_eval)
+            folder_eval = path_eval.split('.zip')[0]
+            for f in os.listdir(folder_eval):
+                os.rename(osp.join(folder_eval, f), osp.join(folder, f))
+            shutil.rmtree(folder_eval)
 
     def _pre_transform_fragments_ply(self):
         """
@@ -198,75 +219,3 @@ class BaseTest(Dataset):
 
     def __getitem__(self, idx):
         raise NotImplementedError("implement class to get patch or fragment or more")
-
-
-class Base3DMatchTest(BaseTest):
-
-    def __init__(self, root,
-                 transform=None,
-                 pre_transform=None,
-                 pre_filter=None,
-                 verbose=False,
-                 debug=False,
-                 max_dist_overlap=0.01):
-        """
-        Base 3D Match but for testing
-        """
-        base = osp.abspath(osp.join(osp.realpath(__file__),
-                                    '..'))
-        self.list_urls_test = get_urls(osp.join(base, 'urls', 'url_test.txt'))
-        super(Base3DMatchTest, self).__init__(root,
-                                              transform,
-                                              pre_transform,
-                                              pre_filter,
-                                              verbose,
-                                              debug,
-                                              max_dist_overlap)
-
-    def download(self):
-        folder_test = osp.join(self.raw_dir, 'test')
-        if files_exist([folder_test]):  # pragma: no cover
-            log.warning("already downloaded {}".format('test'))
-            return
-        for url_raw in self.list_urls_test:
-            url = url_raw.split('\n')[0]
-            path = download_url(url, folder_test)
-            extract_zip(path, folder_test)
-            log.info(path)
-            folder = path.split('.zip')[0]
-            os.unlink(path)
-            path_eval = download_url(url.split('.zip')[0]+'-evaluation.zip',
-                                     folder)
-            extract_zip(path_eval, folder)
-            os.unlink(path_eval)
-            folder_eval = path_eval.split('.zip')[0]
-            for f in os.listdir(folder_eval):
-                os.rename(osp.join(folder_eval, f), osp.join(folder, f))
-            shutil.rmtree(folder_eval)
-
-
-class BaseETHTest(BaseTest):
-
-    def __init__(self, root,
-                 transform=None,
-                 pre_transform=None,
-                 pre_filter=None,
-                 verbose=False,
-                 debug=False,
-                 num_random_pt=5000,
-                 max_dist_overlap=0.01):
-        """
-        Base for ETH Dataset. The main goal is to see
-        if the descriptors generalize well.
-        """
-        self.num_random_pt = num_random_pt
-        super(BaseTest, self).__init__(root,
-                                       transform,
-                                       pre_transform,
-                                       pre_filter,
-                                       verbose,
-                                       debug,
-                                       max_dist_overlap)
-
-    def download(self):
-        pass
