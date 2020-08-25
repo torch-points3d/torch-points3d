@@ -7,9 +7,14 @@ from plyfile import PlyData
 import shutil
 import torch
 import re
+import requests
+from zipfile import ZipFile
+import random
 
 from torch_geometric.data import Dataset, download_url, extract_zip
 from torch_geometric.data import Data
+
+from torch_points3d.datasets.registration.base_siamese_dataset import GeneralFragment
 
 from torch_points3d.datasets.registration.utils import rgbd2fragment_rough
 from torch_points3d.datasets.registration.utils import rgbd2fragment_fine
@@ -19,6 +24,9 @@ from torch_points3d.datasets.registration.utils import files_exist
 from torch_points3d.datasets.registration.utils import makedirs
 from torch_points3d.datasets.registration.utils import get_urls
 from torch_points3d.datasets.registration.utils import PatchExtractor
+
+from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
+from torch_points3d.datasets.registration.utils import tracked_matches
 
 
 log = logging.getLogger(__name__)
@@ -222,7 +230,7 @@ class Base3DMatchTest(Dataset):
 
 
 
-class BasePCRBTest(Dataset):
+class BasePCRBTest(Dataset, GeneralFragment):
     """
     dataset that have the same format as in Point cloud registration benchmark repo.
     https://github.com/iralabdisco/point_clouds_registration_benchmark.
@@ -235,13 +243,186 @@ class BasePCRBTest(Dataset):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
-                 max_dist_overlap=0.01):
+                 max_dist_overlap=0.01,
+                 num_pos_pairs=200):
         """
         a baseDataset that download a dataset,
         apply preprocessing, and compute keypoints
         """
         self.max_dist_overlap = max_dist_overlap
+        self.num_pos_pairs = num_pos_pairs
+        self.is_online_matching = False
+        super(BasePCRBTest, self).__init__(root,
+                                           transform,
+                                           pre_transform,
+                                           pre_filter)
+        self.path_match = osp.join(self.processed_dir, "test", "matches")
+        self.list_fragment = [f for f in os.listdir(self.path_match) if "matches" in f]
+
+    def download(self):
+        raise NotImplementedError("need to implement the download procedure")
 
     @staticmethod
     def parse_pair_files(filename):
-        pass
+        with open(filename, "r") as f:
+            data = f.readlines()
+        res = []
+        for i in range(1, len(data)):
+            elem = data[i].split(" ")
+            trans = [float(t) for t in elem[4:]]
+            dico = dict(id=int(elem[0]),
+                        source_name=elem[1],
+                        target_name=elem[2],
+                        overlap=float(elem[3]),
+                        trans=trans)
+            res.append(dico)
+        return res
+
+
+    @staticmethod
+    def read_pcd(filename):
+        with open(filename, "r") as f:
+            data = f.readlines()
+        field = data[2].split("\n")[0].split(" ")[1:]
+        num_pt = int(data[9].split("\n")[0].split(" ")[1])
+        arr = np.zeros((num_pt, len(field)))
+        for i in range(11, len(data)):
+            point = data[i].split("\n")[0].split(" ")
+            arr[i-11] = np.array([float(p) for p in point])
+        return arr, field
+
+    @property
+    def raw_file_names(self):
+        return ["test"]
+
+    @property
+    def processed_file_names(self):
+        res = [osp.join("test", "fragment"),
+               osp.join("test", "matches")]
+        return res
+
+    def _pre_transform_fragments(self):
+        """
+        apply pre_transform on fragments (ply) and save the results
+        """
+        out_dir = osp.join(self.processed_dir, 'test',
+                           'fragment')
+        if files_exist([out_dir]):  # pragma: no cover
+            return
+        makedirs(out_dir)
+
+        # table to map fragment numper with
+        self.table = dict()
+        list_scene = [f for f in os.listdir(osp.join(self.raw_dir, "test"))]
+        for scene_path in list_scene:
+            fragment_dir = osp.join(self.raw_dir,
+                                    "test",
+                                    scene_path)
+
+            print(osp.isfile(fragment_dir))
+            if(osp.isfile(fragment_dir)):
+                continue
+            list_fragment_path = sorted([f
+                                         for f in os.listdir(fragment_dir)
+                                         if 'pcd' in f])
+            for i, f_p in enumerate(list_fragment_path):
+                fragment_path = osp.join(fragment_dir, f_p)
+                out_dir = osp.join(self.processed_dir, "test",
+                                   'fragment', scene_path)
+                makedirs(out_dir)
+                out_path = osp.join(out_dir,
+                                    'fragment_{:06d}.pt'.format(find_int(f_p)))
+                pos = torch.from_numpy(BasePCRBTest.read_pcd(fragment_path)[0])
+                data = Data(pos=pos)
+                if(self.pre_transform is not None):
+                    data = self.pre_transform(data)
+                torch.save(data, out_path)
+
+    def _compute_matches_between_fragments(self):
+        ind = 0
+        out_dir = osp.join(self.processed_dir,
+                           "test", "matches")
+        if files_exist([out_dir]):  # pragma: no cover
+            return
+        makedirs(out_dir)
+
+        list_scene = os.listdir(osp.join(self.raw_dir, "test"))
+        for scene in list_scene:
+            if(osp.isfile(osp.join(self.raw_dir, "test", scene))):
+                continue
+            path_log = osp.join(self.raw_dir, "test", scene+"_global.txt")
+            list_pair = BasePCRBTest.parse_pair_files(path_log)
+            for i, pair in enumerate(list_pair):
+                path1 = osp.join(self.processed_dir, "test",
+                                 'fragment', scene,
+                                 'fragment_{:06d}.pt'.format(find_int(pair["source_name"])))
+                path2 = osp.join(self.processed_dir, "test",
+                                 'fragment', scene,
+                                 'fragment_{:06d}.pt'.format(find_int(pair["target_name"])))
+                data1 = torch.load(path1)
+                data2 = torch.load(path2)
+                match = compute_overlap_and_matches(
+                    data1, data2, self.max_dist_overlap)
+                match['path_source'] = path1
+                match['path_target'] = path2
+                match['name_source'] = pair["source_name"]
+                match['name_target'] = pair["target_name"]
+                match['scene'] = scene
+                match['trans'] = pair["trans"]
+                out_path = osp.join(
+                    self.processed_dir, "test",
+                    'matches',
+                    'matches{:06d}.npy'.format(ind))
+                np.save(out_path, match)
+                ind += 1
+
+
+
+    def process(self):
+        self._pre_transform_fragments()
+        self._compute_matches_between_fragments()
+
+
+    def download_pairs(self, path):
+        log.info("download pairs")
+        req = requests.get(self.link_pairs)
+        with open(osp.join(path, "pairs.zip"), "wb") as archive:
+            archive.write(req.content)
+
+        with ZipFile(osp.join(path, "pairs.zip"), "r") as zip_obj:
+            zip_obj.extractall(path)
+        log.info("remove pairs")
+        os.remove(osp.join(path, "pairs.zip"))
+
+    def get_raw_pair(self, idx):
+        """
+        get the pair before the data augmentation
+        """
+        match = np.load(osp.join(self.path_match, "matches{:06d}.npy".format(idx)),
+                        allow_pickle=True).item()
+
+
+        if(not self.self_supervised):
+            data_source = torch.load(match["path_source"]).to(torch.float)
+            data_target = torch.load(match["path_target"]).to(torch.float)
+            new_pair = torch.from_numpy(match["pair"])
+            trans = torch.tensor(match["trans"]).reshape(3, 4)
+            data_target.pos = data_target.pos @ trans[:3, :3].T + trans[:3, 3]
+            if(data_target.norm is not None):
+                data_target.norm = data_target.norm @ trans[:3, :3].T
+        else:
+            if(random.random() < 0.5):
+                data_source_o = torch.load(match["path_source"]).to(torch.float)
+                data_target_o = torch.load(match["path_source"]).to(torch.float)
+            else:
+                data_source_o = torch.load(match["path_target"]).to(torch.float)
+                data_target_o = torch.load(match["path_target"]).to(torch.float)
+            data_source, data_target, new_pair = self.unsupervised_preprocess(
+                data_source_o, data_target_o)
+        return data_source, data_target, new_pair
+
+    def __getitem__(self, idx):
+        return self.get_fragment(idx)
+
+    def __len__(self):
+        return len(self.list_fragment)
