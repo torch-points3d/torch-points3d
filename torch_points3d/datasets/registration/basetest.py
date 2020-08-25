@@ -244,7 +244,9 @@ class BasePCRBTest(Dataset, GeneralFragment):
                  verbose=False,
                  debug=False,
                  max_dist_overlap=0.01,
-                 num_pos_pairs=200):
+                 num_pos_pairs=200,
+                 self_supervised=False,
+                 ss_transform=None):
         """
         a baseDataset that download a dataset,
         apply preprocessing, and compute keypoints
@@ -258,6 +260,8 @@ class BasePCRBTest(Dataset, GeneralFragment):
                                            pre_filter)
         self.path_match = osp.join(self.processed_dir, "test", "matches")
         self.list_fragment = [f for f in os.listdir(self.path_match) if "matches" in f]
+        self.self_supervised = self_supervised
+        self.ss_transform = ss_transform
 
     def download(self):
         raise NotImplementedError("need to implement the download procedure")

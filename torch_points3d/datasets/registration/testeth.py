@@ -16,7 +16,9 @@ from zipfile import ZipFile
 
 
 from torch_points3d.datasets.registration.basetest import BasePCRBTest
+from torch_points3d.datasets.base_dataset import BaseDataset
 
+from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 
 from torch_points3d.datasets.registration.utils import files_exist
 from torch_points3d.datasets.registration.utils import makedirs
@@ -63,8 +65,11 @@ class TestPairETH(BasePCRBTest):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
+                 self_supervised=False,
                  num_pos_pairs=200,
-                 max_dist_overlap=0.01):
+                 max_dist_overlap=0.01,
+                 self_supervised=False,
+                 ss_transform=None):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/aIRBieRybts3kEs/download"
         BasePCRBTest.__init__(self,
                               root=root,
@@ -73,11 +78,11 @@ class TestPairETH(BasePCRBTest):
                               pre_filter=pre_filter,
                               verbose=verbose, debug=debug,
                               max_dist_overlap=max_dist_overlap,
-                              num_pos_pairs=num_pos_pairs)
-        self.self_supervised = False
+                              num_pos_pairs=num_pos_pairs,
+                              self_supervised=self_supervised,
+                              ss_transform=ss_transform)
 
     def download(self):
-
         folder = osp.join(self.raw_dir, "test")
         print(folder)
         if files_exist([folder]):  # pragma: no cover
@@ -102,3 +107,38 @@ class TestPairETH(BasePCRBTest):
                     os.remove(file_to_remove)
             os.remove(osp.join(folder, name+".zip"))
         self.download_pairs(folder)
+
+
+class ETHDataset(BaseDataset):
+    """
+    this class is a dataset for testing registration algorithm on ETH dataset
+    https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration
+    as defined in https://github.com/iralabdisco/point_clouds_registration_benchmark.
+    """
+
+
+    def __init__(self, dataset_opt):
+
+        super().__init__(dataset_opt)
+        pre_transform = self.pre_transform
+        train_transform = self.train_transform
+        ss_transform = getattr(self, "ss_transform", None)
+        test_transform = self.test_transform
+
+        # training is similar to test but only unsupervised training is allowed XD
+        self.train_dataset = TestPairETH(root=self._data_path,
+                                         pre_transform=pre_transform,
+                                         transform=train_transform,
+                                         max_dist_overlap=dataset_opt.max_dist_overlap,
+                                         num_random_pt=dataset_opt.num_random_pt,
+                                         self_supervised=True,
+                                         ss_transform=ss_transform)
+        self.test_dataset = TestPairETH(root=self._data_path,
+                                        pre_transform=pre_transform,
+                                        transform=test_transform,
+                                        max_dist_overlap=dataset_opt.max_dist_overlap,
+                                        num_random_pt=dataset_opt.num_random_pt,
+                                        self_supervised=False)
+
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
+        return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
