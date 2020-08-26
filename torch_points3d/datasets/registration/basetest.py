@@ -229,7 +229,6 @@ class Base3DMatchTest(Dataset):
         raise NotImplementedError("implement class to get patch or fragment or more")
 
 
-
 class BasePCRBTest(Dataset, GeneralFragment):
     """
     dataset that have the same format as in Point cloud registration benchmark repo.
@@ -246,10 +245,24 @@ class BasePCRBTest(Dataset, GeneralFragment):
                  max_dist_overlap=0.01,
                  num_pos_pairs=200,
                  self_supervised=False,
+                 min_points=100,
+                 min_size_block=2,
+                 max_size_block=3,
                  ss_transform=None):
         """
         a baseDataset that download a dataset,
         apply preprocessing, and compute keypoints
+
+        ----------
+        Parameters
+        max_dist_overlap: float
+            max distance between points to create a match
+        num_pos_pairs: int
+            number of positive pairs for the ground truth match
+        min_size_block: float
+            for self supervised, minimum size of the ball where points inside it will be matched
+        max_size_block: float
+            for self supervised, maximum size of the ball where points inside it will be matched
         """
         self.max_dist_overlap = max_dist_overlap
         self.num_pos_pairs = num_pos_pairs
@@ -260,8 +273,12 @@ class BasePCRBTest(Dataset, GeneralFragment):
                                            pre_filter)
         self.path_match = osp.join(self.processed_dir, "test", "matches")
         self.list_fragment = [f for f in os.listdir(self.path_match) if "matches" in f]
+        # Self supervised variables
         self.self_supervised = self_supervised
         self.ss_transform = ss_transform
+        self.min_points = min_points
+        self.min_size_block = min_size_block
+        self.max_size_block = max_size_block
 
     def download(self):
         raise NotImplementedError("need to implement the download procedure")

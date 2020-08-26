@@ -17,6 +17,7 @@ from zipfile import ZipFile
 
 from torch_points3d.datasets.registration.basetest import BasePCRBTest
 from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 
@@ -69,6 +70,9 @@ class TestPairETH(BasePCRBTest):
                  num_pos_pairs=200,
                  max_dist_overlap=0.01,
                  self_supervised=False,
+                 min_size_block=2,
+                 max_size_block=3,
+                 min_points=500,
                  ss_transform=None):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/aIRBieRybts3kEs/download"
         BasePCRBTest.__init__(self,
@@ -80,6 +84,9 @@ class TestPairETH(BasePCRBTest):
                               max_dist_overlap=max_dist_overlap,
                               num_pos_pairs=num_pos_pairs,
                               self_supervised=self_supervised,
+                              min_size_block=min_size_block,
+                              max_size_block=max_size_block,
+                              min_points=min_points,
                               ss_transform=ss_transform)
 
     def download(self):
@@ -109,7 +116,7 @@ class TestPairETH(BasePCRBTest):
         self.download_pairs(folder)
 
 
-class ETHDataset(BaseDataset):
+class ETHDataset(BaseSiameseDataset):
     """
     this class is a dataset for testing registration algorithm on ETH dataset
     https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration
@@ -130,15 +137,15 @@ class ETHDataset(BaseDataset):
                                          pre_transform=pre_transform,
                                          transform=train_transform,
                                          max_dist_overlap=dataset_opt.max_dist_overlap,
-                                         num_random_pt=dataset_opt.num_random_pt,
                                          self_supervised=True,
+                                         min_size_block=dataset_opt.min_size_block,
+                                         max_size_block=dataset_opt.max_size_block,
+                                         num_pos_pairs=dataset_opt.num_pos_pairs,
+                                         min_points=dataset_opt.min_points,
                                          ss_transform=ss_transform)
         self.test_dataset = TestPairETH(root=self._data_path,
                                         pre_transform=pre_transform,
                                         transform=test_transform,
                                         max_dist_overlap=dataset_opt.max_dist_overlap,
-                                        num_random_pt=dataset_opt.num_random_pt,
+                                        num_pos_pairs=dataset_opt.num_pos_pairs,
                                         self_supervised=False)
-
-    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
-        return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
