@@ -66,7 +66,6 @@ class TestPairETH(BasePCRBTest):
                  pre_filter=None,
                  verbose=False,
                  debug=False,
-                 self_supervised=False,
                  num_pos_pairs=200,
                  max_dist_overlap=0.01,
                  self_supervised=False,

@@ -340,7 +340,6 @@ class BasePCRBTest(Dataset, GeneralFragment):
                                     "test",
                                     scene_path)
 
-            print(osp.isfile(fragment_dir))
             if(osp.isfile(fragment_dir)):
                 continue
             list_fragment_path = sorted([f
