@@ -13,6 +13,7 @@ data:
   tau_2: 0.05
   rot_thresh: 4
   trans_thresh: 0.15
+  sym: True
   pre_transforms:
     - transform: GridSampling3D
       params:
