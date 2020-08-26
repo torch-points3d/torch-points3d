@@ -32,6 +32,7 @@ class BaseSiameseDataset(BaseDataset):
         self.trans_thresh = dataset_opt.trans_thresh
         self.rot_thresh = dataset_opt.rot_thresh
         self.is_patch = False
+        self.is_end2end = False
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
