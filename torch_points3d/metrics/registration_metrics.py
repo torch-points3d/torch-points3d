@@ -56,7 +56,7 @@ def compute_scaled_registration_error(xyz, xyz_target, match_gt, T_est, tol=1e-1
     https://arxiv.org/pdf/2003.12841.pdf
     """
     subxyz = xyz[match_gt[:, 0]] @ T_est[:3, :3].T + T_est[:3, 3]
-    subxyz_target = xyz[match_gt[:, 1]]
+    subxyz_target = xyz_target[match_gt[:, 1]]
     centroid = subxyz.mean(axis=0)
 
     dist1 = torch.sqrt(torch.sum((subxyz - subxyz_target) ** 2, axis=-1))

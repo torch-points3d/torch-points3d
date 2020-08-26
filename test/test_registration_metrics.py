@@ -80,7 +80,7 @@ class TestRegistrationMetrics(unittest.TestCase):
     def test_compute_scaled_registration_error(self):
         xyz = torch.tensor([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -1.0, 0.0]])
         xyz_target = torch.tensor(
-            [[0.0, 0.0, 0.0], [42.0, 0.0, 0.0], [0.0, -1.0, 0.0][125, -1.0, 1458.0], [1.0, 0.0, 0.0]]
+            [[0.0, 0.0, 0.0], [42.0, 0.0, 0.0], [0.0, -1.0, 0.0], [125, -1.0, 1458.0], [1.0, 0.0, 0.0]]
         )
         match_gt = torch.tensor([[0, 4], [1, 0], [2, 2]], dtype=torch.long)
         T_est = torch.eye(4)
