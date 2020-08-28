@@ -8,6 +8,8 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.core.common_modules.dense_modules import Conv1D
 from torch_points3d.core.common_modules.base_modules import Seq
 
+from torch_points3d.utils.registration import estimate_transfo
+
 log = logging.getLogger(__name__)
 
 
@@ -142,3 +144,64 @@ class FragmentBaseModel(BaseModel):
 
     def get_input(self):
         raise NotImplementedError("Need to define get_input")
+
+
+class End2EndBasedModel(BaseModel):
+    """
+    siamese model where the output is a transformation matrix
+    """
+
+    def __init__(self, option):
+        BaseModel.__init__(self, option)
+
+    def set_transfo_gt(self):
+        """
+        estimate the transformation between pairs with respect to the matches
+        """
+        batch_idx, batch_idx_target = self.get_batch()
+        input, input_target = self.get_input()
+        batch_xyz, batch_xyz_target = input.pos, input_target.pos
+        batch_ind, batch_ind_target, batch_size_ind = input.ind, input_target.ind, input.size
+        nb_batches = batch_idx.max() + 1
+        cum_sum = 0
+        cum_sum_target = 0
+        begin = 0
+        end = batch_size_ind[0].item()
+        self.trans_gt = torch.zeros(nb_batches, 4, 4).to(batch_xyz)
+        for b in range(nb_batches):
+            xyz = batch_xyz[batch_idx == b]
+            xyz_target = batch_xyz_target[batch_idx_target == b]
+            ind = batch_ind[begin:end] - cum_sum
+            ind_target = batch_ind_target[begin:end] - cum_sum_target
+            if b < nb_batches - 1:
+                begin = end
+                end = begin + batch_size_ind[b + 1].item()
+            cum_sum += len(xyz)
+            cum_sum_target += len(xyz_target)
+            matches_gt = torch.stack([ind, ind_target]).transpose(0, 1)
+            T_gt = estimate_transfo(xyz[matches_gt[:, 0]], xyz_target[matches_gt[:, 1]])
+            self.trans_gt[b] = T_gt.to(xyz)
+
+    def get_trans_gt(self):
+        # estimate the right transformation
+        return self.trans_gt
+
+    def set_input(self, data, device):
+        raise NotImplementedError("need to define set_input")
+
+    def backward(self):
+        if hasattr(self, "loss"):
+            self.loss.backward()
+
+    def get_batch(self):
+        raise NotImplementedError("Need to define get_batch")
+
+    def get_input(self):
+        raise NotImplementedError("Need to define get_input")
+
+    def get_output(self):
+        # output [B, 4, 4]
+        return self.output
+
+    def compute_loss(self):
+        raise NotImplementedError("different loss")
