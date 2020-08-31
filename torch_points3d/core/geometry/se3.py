@@ -163,7 +163,7 @@ class SE3Transform(torch.nn.Module):
         self.trans_x = trans_x
 
     @staticmethod
-    def batch_transform(trans, xyz):
+    def batch_transform(trans, xyz, norm=None):
         # trans : SE(3),  * x 4 x 4
         # xyz : R^3,    * x 3[x N]
         trans_ = trans.view(-1, 4, 4)
@@ -176,7 +176,7 @@ class SE3Transform(torch.nn.Module):
         return res
 
     @staticmethod
-    def partial_transform(trans, xyz, batch):
+    def partial_transform(trans, xyz, batch, norm=None):
         """
         trans: B x 4 x 4
         xyz : N x 3
@@ -192,7 +192,7 @@ class SE3Transform(torch.nn.Module):
         return xyz
 
     @staticmethod
-    def multi_partial_transform(trans, xyz, batch):
+    def multi_partial_transform(trans, xyz, batch, norm=None):
 
         # trans of size B x M x 4 x 4
         new_trans = trans.view(-1, 4, 4)  # size BM x 4 x 4
@@ -218,7 +218,7 @@ class SE3Transform(torch.nn.Module):
             assert hasattr(data, "batch")
             data.pos, b = SE3Transform.multi_partial_transform(trans, data.pos, data.batch)
             if self.trans_x:
-                assert data.x.size(-1) == 3
-                data.x, _ = SE3Transform.multi_partial_transform(trans, data.pos, data.batch)
+                if data.x.size(-1) == 3:
+                    data.x, _ = SE3Transform.multi_partial_transform(trans, data.pos, data.batch)
             data.batch = b
         return data
