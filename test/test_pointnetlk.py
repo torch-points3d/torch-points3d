@@ -13,4 +13,10 @@ class TestHelpers(unittest.TestCase):
         pass
 
     def test_iclk(self):
-        pass
+        """
+        check wheter the iteration passes or not
+        """
+
+
+if __name__ == "__main__":
+    unittest.main()
