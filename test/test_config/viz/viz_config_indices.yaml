@@ -9,3 +9,4 @@ visualization:
     pred: [['p', 'float']]
   indices:
     train: [0, 3]
+    test: [0]
