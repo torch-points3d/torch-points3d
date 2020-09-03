@@ -8,3 +8,9 @@ class TestHelpers(unittest.TestCase):
     """
     test different components of pointnetLK
     """
+
+    def test_approx_Jic(self):
+        pass
+
+    def test_iclk(self):
+        pass
