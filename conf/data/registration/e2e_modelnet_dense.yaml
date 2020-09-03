@@ -9,11 +9,11 @@ data:
   max_dist_overlap: 0.05
   min_overlap_ratio: 0.3
   first_subsampling: 0.02
-  self_supervised: False
-  min_size_block: 1.5
-  max_size_block: 2
-  num_pos_pairs: 30000
-  min_points: 500
+  self_supervised: True
+  min_size_block: 0.5
+  max_size_block: 1
+  num_pos_pairs: 2048
+  min_points: 100
   num_points: 5000
   rot_thresh: 4
   trans_thresh: 0.15
@@ -26,7 +26,7 @@ data:
   train_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
-      lparams: [2048]
+      lparams: [1024]
 
     - transform: RandomNoise
       params:
@@ -44,7 +44,7 @@ data:
     - transform: SaveOriginalPosId
     - transform: Center
     - transform: FixedPoints
-      lparams: [2048]
+      lparams: [1024]
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
@@ -57,8 +57,8 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
-
-
+    - transform: FixedPoints
+      lparams: [1024]
     - transform: RandomNoise
       params:
         sigma: 0.01

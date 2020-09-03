@@ -78,6 +78,7 @@ class GeneralFragment(object):
         len_col = 0
 
         while(len_col < self.min_points):
+
             # choose only one data augmentation randomly in the ss_transform (usually a crop)
             if(self.ss_transform is not None):
                 n1 = np.random.randint(0, len(self.ss_transform.transforms))
@@ -108,6 +109,7 @@ class GeneralFragment(object):
             col = col[ind_col]
             new_pair = torch.stack((col, col_target)).T
             len_col = len(new_pair)
+            print(len_col)
         return data_source, data_target, new_pair
 
     def get_fragment(self, idx):

@@ -160,8 +160,9 @@ class End2EndBasedModel(BaseModel):
         """
         batch_idx, batch_idx_target = self.get_batch()
         input, input_target = self.get_input()
-        batch_xyz, batch_xyz_target = input.pos, input_target.pos
-        batch_ind, batch_ind_target, batch_size_ind = input.ind, input_target.ind, input.size
+        batch_xyz, batch_xyz_target = input.pos.view(-1, 3), input_target.pos.view(-1, 3)
+        batch_ind, batch_ind_target = self.match[:, 0], self.match[:, 1]
+        batch_size_ind = self.size_match
         nb_batches = batch_idx.max() + 1
         cum_sum = 0
         cum_sum_target = 0
@@ -194,10 +195,36 @@ class End2EndBasedModel(BaseModel):
             self.loss.backward()
 
     def get_batch(self):
-        raise NotImplementedError("Need to define get_batch")
+        if not hasattr(self.input, "batch"):
+            # DENSE FORMAT
+            assert len(self.input.pos.shape) == 3
+            batch = (
+                torch.arange(0, self.input.pos.shape[0])
+                .view(-1, 1)
+                .repeat(1, self.input.pos.shape[1])
+                .view(-1)
+                .to(self.input.pos.device)
+            )
+            batch_target = (
+                torch.arange(0, self.input_target.pos.shape[0])
+                .view(-1, 1)
+                .repeat(1, self.input_target.pos.shape[1])
+                .view(-1)
+                .to(self.input.pos.device)
+            )
+            return batch, batch_target
+        else:
+            # PARTIAL FORMAT
+            assert self.input.batch is not None
+            assert self.input_target.batch is not None
+            return self.input.batch, self.input_target.batch
+
+    def get_batch_size(self):
+        batch, _ = self.get_batch()
+        return batch.max() + 1
 
     def get_input(self):
-        raise NotImplementedError("Need to define get_input")
+        return self.input, self.input_target
 
     def get_output(self):
         # output [B, 4, 4]

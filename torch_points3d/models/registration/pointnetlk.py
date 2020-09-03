@@ -7,8 +7,7 @@ import torch
 
 
 from torch_points3d.models.registration.base import End2EndBasedModel
-import torch_points3d.utils.se3 as se3
-import torch_points3d.utils.so3 as so3
+import torch_points3d.core.geometry.se3 as se3
 import torch_points3d.core.geometry.invmat as invmat
 from torch_points3d.applications import models
 from torch_points3d.utils.registration import estimate_transfo
@@ -32,7 +31,9 @@ class PointnetLK(End2EndBasedModel):
         backbone_cls = getattr(models, backbone_option.model_type)
         # self.encoder = ?  # TODO define abstraction
         # in case we update x by position every time
-        self.encoder = backbone_cls(architecture="encoder", input_nc=dataset.feature_dimension, config=backbone_option)
+        self.encoder = backbone_cls(
+            architecture="encoder", input_nc=dataset.feature_dimension, config=backbone_option.config
+        )
         # losses
         self.lambda_T = option.loss_options.lambda_T
         self.lambda_r = option.loss_options.lambda_r
@@ -64,7 +65,7 @@ class PointnetLK(End2EndBasedModel):
 
         inp, inp_target = data.to_data()
         self.input = inp.to(device)
-        self.input_target = inp.to(device)
+        self.input_target = inp_target.to(device)
         if hasattr(data, "pair_ind"):
             self.match = data.pair_ind.to(torch.long)
             self.size_match = data.size_pair_ind.to(torch.long)
@@ -89,8 +90,10 @@ class PointnetLK(End2EndBasedModel):
         self.loss = self.lambda_T * self.loss_T + self.lambda_r * self.loss_r
 
     def forward(self, *args, **kwargs):
+
         result = self.iclk()
         self.output = result["est_T"]
+
         if self.trans_gt is not None:
             self.compute_loss(result)
 
@@ -103,23 +106,28 @@ class PointnetLK(End2EndBasedModel):
         # Initialize
 
         batch_size = self.get_batch_size()
-
         est_T0 = torch.eye(4).to(self.input.pos).view(1, 4, 4).expand(batch_size, 4, 4).contiguous()
         est_T = est_T0
-        est_T_series = torch.zeros(self.maxiter + 1, *est_T0.size(), dtype=est_T0.dtype)
+        est_T_series = torch.zeros(self.max_iter + 1, *est_T0.size(), dtype=est_T0.dtype)
         est_T_series[0] = est_T0
-        data_t = self.transform(est_T, self.input_target)
+        data_s = self.input.clone()
+
+        data_t = self.transform(est_T, self.input_target.clone()).contiguous()
         feat_t = self.encoder.forward(data_t)
-        J = self.approx_Jic(self.input_target.pos, feat_t, self.dt)
-        pinv = self.compute_inverse_jacobian(J, feat_t, self.input.pos)
+        dt = self.dt.to(data_t.pos).expand(batch_size, 6)
+        J = self.approx_Jic(self.input_target, feat_t.x.view(batch_size, -1), dt)
+        pinv = self.compute_inverse_jacobian(J, feat_t.x.view(batch_size, -1), data_s.pos)
         prev_r = None
-        data_s = self.input
+
         for itr in range(self.max_iter):
             # Dense [B, 4, 4] x [B, N, 3] -> [B, N, 3]
             # Other [B, 4, 4] x [N, 3] -> [N, 3]
-            data_s = self.transform(est_T, data_s)
+
+            data_s = self.transform(est_T, data_s).contiguous()
+
             feat_s = self.encoder.forward(data_s)
-            r = feat_s.x - feat_t.x
+            r = (feat_s.x - feat_t.x).view(batch_size, -1)
+
             prev_r = r
             pose = -pinv.bmm(r.unsqueeze(-1)).view(batch_size, 6)
             check = pose.norm(p=2, dim=1, keepdim=True).max()
@@ -164,7 +172,7 @@ class PointnetLK(End2EndBasedModel):
             D = self.exp(-d)  # [6, 4, 4]
             transf[:, b, :, :] = D[:, :, :]
         # WARNING change the size of data_target
-        data_p = self.transform(transf, data_target)  # x [B, 1, N, 3] -> [B, 6, N, 3]
+        data_p = self.transform(transf, data_target).contiguous()  # x [B, 1, N, 3] -> [B, 6, N, 3]
         # f0 = self.feature_model(p0).unsqueeze(-1) # [B, K, 1]
         target_features = target_features.unsqueeze(-1)  # [B, K, 1]
         f = self.encoder.forward(data_p).x.view(6, batch_size, -1).transpose(0, 2).transpose(0, 1)
@@ -176,23 +184,3 @@ class PointnetLK(End2EndBasedModel):
     def update(self, g, dx):
         dg = self.exp(dx)  # [B, 6] - > [B, 4, 4]
         return dg.matmul(g)
-
-    def get_batch(self):
-        batch = (
-            torch.arange(0, self.input.pos.shape[0])
-            .view(-1, 1)
-            .repeat(1, self.input.pos.shape[1])
-            .view(-1)
-            .to(self.input.pos.device)
-        )
-        batch_target = (
-            torch.arange(0, self.input_target.pos.shape[0])
-            .view(-1, 1)
-            .repeat(1, self.input_target.pos.shape[1])
-            .view(-1)
-            .to(self.input.pos.device)
-        )
-        return batch, batch_target
-
-    def get_input(self):
-        return self.input, self.input_target

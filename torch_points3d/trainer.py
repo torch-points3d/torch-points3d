@@ -183,6 +183,8 @@ class Trainer:
         iter_data_time = time.time()
         with Ctq(train_loader) as tq_train_loader:
             for i, data in enumerate(tq_train_loader):
+                if i > 1:
+                    break
                 t_data = time.time() - iter_data_time
                 iter_start_time = time.time()
                 self._model.set_input(data, self._device)
@@ -236,11 +238,16 @@ class Trainer:
 
             for i in range(voting_runs):
                 with Ctq(loader) as tq_loader:
-                    for data in tq_loader:
+                    for ind, data in enumerate(tq_loader):
+
                         with torch.no_grad():
+
                             self._model.set_input(data, self._device)
+
                             self._model.forward(epoch=epoch)
+
                             self._tracker.track(self._model, data=data, **self.tracker_options)
+
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
                         if self._visualizer.is_active:

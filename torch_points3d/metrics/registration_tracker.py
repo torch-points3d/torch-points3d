@@ -199,6 +199,7 @@ class End2EndRegistrationTracker(BaseTracker):
         self._rte = tnt.meter.AverageValueMeter()
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
+
         super().track(model)
 
         trans_gt = model.get_trans_gt()
@@ -206,7 +207,6 @@ class End2EndRegistrationTracker(BaseTracker):
 
         for i in range(trans_gt.size(0)):
             trans_error, rot_error = compute_transfo_error(trans_est[i], trans_gt[i])
-
             self._trans_error.add(trans_error.item())
             self._rot_error.add(rot_error.item())
             self._rre.add(rot_error.item() < self.rot_thresh)
