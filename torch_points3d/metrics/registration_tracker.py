@@ -19,7 +19,15 @@ class PatchRegistrationTracker(BaseTracker):
         """
 
         super(PatchRegistrationTracker, self).__init__(stage, wandb_log, use_tensorboard)
-
+        self._metric_func = {
+            "loss": min,
+            "hit_ratio": max,
+            "feat_match_ratio": max,
+            "trans_error": min,
+            "rot_error": min,
+            "rre": max,
+            "rte": max,
+        }
         self.reset(stage)
 
     def reset(self, stage="train"):
@@ -158,13 +166,56 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
 
     @property
     def metric_func(self):
+        return self._metric_func
+
+
+class End2EndRegistrationTracker(BaseTracker):
+    def __init__(
+        self,
+        dataset,
+        stage="train",
+        wandb_log=False,
+        use_tensorboard: bool = False,
+        rot_thresh: float = 2,
+        trans_thresh: float = 0.1,
+    ):
+        super(End2EndRegistrationTracker, self).__init__(stage, wandb_log, use_tensorboard)
+        self.reset(stage)
+        self.rot_thresh = rot_thresh
+        self.trans_thresh = trans_thresh
         self._metric_func = {
             "loss": min,
-            "hit_ratio": max,
-            "feat_match_ratio": max,
             "trans_error": min,
             "rot_error": min,
             "rre": max,
             "rte": max,
         }
-        return self._metric_func
+
+    def reset(self, stage):
+        super().reset(stage=stage)
+        self._rot_error = tnt.meter.AverageValueMeter()
+        self._trans_error = tnt.meter.AverageValueMeter()
+        self._rre = tnt.meter.AverageValueMeter()
+        self._rte = tnt.meter.AverageValueMeter()
+
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
+        super().track(model)
+
+        trans_gt = model.get_trans_gt()
+        trans_est = model.get_output()
+
+        for i in range(trans_gt.size(0)):
+            trans_error, rot_error = compute_transfo_error(trans_est[i], trans_gt[i])
+
+            self._trans_error.add(trans_error.item())
+            self._rot_error.add(rot_error.item())
+            self._rre.add(rot_error.item() < self.rot_thresh)
+            self._rte.add(trans_error.item() < self.trans_thresh)
+
+    def get_metrics(self, verbose=False):
+        metrics = super().get_metrics(verbose)
+        metrics["{}_trans_error".format(self._stage)] = float(self._trans_error.value()[0])
+        metrics["{}_rot_error".format(self._stage)] = float(self._rot_error.value()[0])
+        metrics["{}_rre".format(self._stage)] = float(self._rre.value()[0])
+        metrics["{}_rte".format(self._stage)] = float(self._rte.value()[0])
+        return metrics

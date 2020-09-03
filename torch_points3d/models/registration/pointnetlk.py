@@ -26,7 +26,7 @@ class PointnetLK(End2EndBasedModel):
         End2EndBasedModel.__init__(self, option)
         self.inverse = invmat.InvMatrix.apply
         self.exp = se3.Exp  # [B, 6] -> [B, 4, 4]
-        self.transform = SE3Transform(conv_type=option.trans_options.conv_type, trans_x=option.trans_options.trans_x)
+        self.transform = SE3Transform(conv_type=option.conv_type, trans_x=option.trans_options.trans_x)
 
         backbone_option = option.backbone
         backbone_cls = getattr(models, backbone_option.model_type)
@@ -85,7 +85,7 @@ class PointnetLK(End2EndBasedModel):
             if pr is not None:
                 self.loss_r = self.feat_loss_fn(result["r"] - pr)
             else:
-                self.loss_r = self.feat_loss_fn(result["r"] - pr)
+                self.loss_r = self.feat_loss_fn(result["r"])
         self.loss = self.lambda_T * self.loss_T + self.lambda_r * self.loss_r
 
     def forward(self, *args, **kwargs):

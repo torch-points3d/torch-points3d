@@ -12,6 +12,7 @@ from torch_points3d.datasets.classification.modelnet import SampledModelNet
 from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 from torch_points3d.datasets.registration.base_siamese_dataset import GeneralFragment
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
+from torch_points3d.metrics.registration_tracker import End2EndRegistrationTracker
 from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
 from torch_points3d.datasets.registration.utils import tracked_matches
 from torch_points3d.datasets.registration.utils import compute_overlap_and_matches
@@ -130,7 +131,7 @@ class SiameseModelNetDataset(BaseSiameseDataset):
 
         self.test_dataset = SiameseModelNet(
             root=self._data_path,
-            name_modelnet=dataset_opt.name_modelnet,
+            name_modelnet=dataset_opt.name_modelnet_test,
             train=False,
             min_size_block=dataset_opt.min_size_block,
             max_size_block=dataset_opt.max_size_block,
@@ -152,3 +153,12 @@ class SiameseModelNetDataset(BaseSiameseDataset):
             [BaseTracker] -- tracker
         """
         return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, tau_1=self.tau_1, rot_thresh=self.rot_thresh, trans_thresh=self.trans_thresh)
+
+
+class End2EndSiameseModelNetDataset(SiameseModelNetDataset):
+
+    def __init__(self, dataset_opt):
+        super(End2EndSiameseModelNetDataset, self).__init__(dataset_opt)
+
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
+        return End2EndRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, rot_thresh=self.rot_thresh, trans_thresh=self.trans_thresh)

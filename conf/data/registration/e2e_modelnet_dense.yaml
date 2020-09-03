@@ -1,0 +1,76 @@
+data:
+  task: registration
+  class: modelnet.End2EndSiameseModelNetDataset
+  dataroot: data
+  name: modelnet
+  name_modelnet: "10"
+  name_modelnet_test: "40"
+  is_patch: False
+  max_dist_overlap: 0.05
+  min_overlap_ratio: 0.3
+  first_subsampling: 0.02
+  self_supervised: False
+  min_size_block: 1.5
+  max_size_block: 2
+  num_pos_pairs: 30000
+  min_points: 500
+  num_points: 5000
+  rot_thresh: 4
+  trans_thresh: 0.15
+
+  pre_transform:
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+
+  train_transform:
+    - transform: SaveOriginalPosId
+    - transform: FixedPoints
+      lparams: [2048]
+
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 45
+        rot_y: 45
+        rot_z: 45
+    - transform: Center
+
+  val_transform:
+    - transform: SaveOriginalPosId
+    - transform: Center
+    - transform: FixedPoints
+      lparams: [2048]
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 45
+        rot_y: 45
+        rot_z: 45
+    - transform: Center
+
+
+
+  test_transform:
+    - transform: SaveOriginalPosId
+
+
+    - transform: RandomNoise
+      params:
+        sigma: 0.01
+        clip: 0.05
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 45
+        rot_y: 45
+        rot_z: 45
+    - transform: RandomTranslation
+      params:
+        delta_min: [-0.5, -0.5, -0.5]
+        delta_max: [0.5, 0.5, 0.5]
+    - transform: Center

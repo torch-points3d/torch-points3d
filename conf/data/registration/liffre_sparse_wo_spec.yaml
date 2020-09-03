@@ -1,60 +1,41 @@
 data:
   task: registration
-  class: modelnet.SiameseModelNetDataset
+  class: liffre.LiffreDataset
   dataroot: data
-  name: modelnet
-  name_modelnet: "10"
-  name_modelnet_test: "40"
-  is_patch: False
-  max_dist_overlap: 0.05
-  min_overlap_ratio: 0.3
-  first_subsampling: 0.02
-
-  self_supervised: true
-  min_size_block: 1.5
-  max_size_block: 2
+  name: Liffre
+  first_subsampling: 0.1
+  self_supervised: False
+  is_head: True
+  is_tail: False
+  max_size_block: 5
+  min_size_block: 4
+  max_dist_overlap: 0.4
+  min_points: 2000
   num_pos_pairs: 30000
-  min_points: 500
-  num_points: 5000
-  tau_1: 0.1
+  tau_1: 0.5
   tau_2: 0.05
   use_ransac: False
   use_teaser: True
   sym: True
-  rot_thresh: 4
-  trans_thresh: 0.15
+  rot_thresh: 10
+  trans_thresh: 1
   ransac_thresh: 0.02
-  noise_bound_teaser: 0.1
+  noise_bound_teaser: 0.5
   pre_transform:
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
-  ss_transform:
-    - transform: CubeCrop
-      params:
-        c: 1
   train_transform:
     - transform: SaveOriginalPosId
-    - transform: FixedPoints
-      lparams: [2048]
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
-        rot_x: 180
-        rot_y: 180
-        rot_z: 180
+        rot_x: 5
+        rot_y: 5
+        rot_z: 360
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
@@ -65,27 +46,15 @@ data:
       params:
         add_to_x: True
         feat_name: 'ones'
-    - transform: Jitter
 
   val_transform:
     - transform: SaveOriginalPosId
-    - transform: Center
-    - transform: FixedPoints
-      lparams: [2048]
-    - transform: CubeCrop
-      params:
-        c: 1
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
-        rot_x: 180
-        rot_y: 180
-        rot_z: 180
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
+        rot_x: 5
+        rot_y: 5
+        rot_z: 360
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
@@ -99,24 +68,12 @@ data:
 
   test_transform:
     - transform: SaveOriginalPosId
-    - transform: Center
-    - transform: CubeCrop
-      params:
-        c: 1
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
-        rot_x: 45
-        rot_y: 45
-        rot_z: 45
-    - transform: RandomTranslation
-      params:
-        delta_min: [-0.5, -0.5, -0.5]
-        delta_max: [0.5, 0.5, 0.5]
+        rot_x: 5
+        rot_y: 5
+        rot_z: 360
     - transform: XYZFeature
       params:
         add_x: True

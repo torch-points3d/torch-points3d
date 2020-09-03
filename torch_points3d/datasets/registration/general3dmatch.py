@@ -10,6 +10,7 @@ from torch_points3d.datasets.registration.utils import tracked_matches
 from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
 from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
+from torch_points3d.metrics.registration_tracker import End2EndRegistrationTracker
 
 from torch_points3d.datasets.registration.base_siamese_dataset import BaseSiameseDataset
 from torch_points3d.datasets.registration.base_siamese_dataset import GeneralFragment
@@ -301,6 +302,8 @@ class General3DMatchDataset(BaseSiameseDataset):
         pre_filter = self.pre_filter
         test_pre_filter = getattr(self, "test_pre_filter", None)
         self.is_patch = dataset_opt.is_patch
+        self.rot_thresh = datast_opt.rot_thresh
+        self.trans_thresh = dataset_opt.trans_thresh
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(
@@ -395,3 +398,14 @@ class General3DMatchDataset(BaseSiameseDataset):
             return PatchRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
         else:
             return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+
+
+class End2End3DMatchDataset(General3DMatchDataset):
+
+    def __init__(self, dataset_opt):
+        super(General3DMatchDataset, self).__init__(dataset_opt)
+
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
+        return End2EndRegistrationTracker(
+            self, wandb_log=wandb_log, use_tensorboard=tensorboard_log,
+            rot_thresh=self.rot_thresh, trans_thresh=self.trans_thresh)
