@@ -31,6 +31,7 @@ class PointnetLK(End2EndBasedModel):
         backbone_option = option.backbone
         backbone_cls = getattr(models, backbone_option.model_type)
         # self.encoder = ?  # TODO define abstraction
+        # in case we update x by position every time
         self.encoder = backbone_cls(architecture="encoder", input_nc=dataset.feature_dimension, config=backbone_option)
         # losses
         self.lambda_T = option.loss_options.lambda_T
@@ -90,7 +91,8 @@ class PointnetLK(End2EndBasedModel):
     def forward(self, *args, **kwargs):
         result = self.iclk()
         self.output = result["est_T"]
-        self.compute_loss(result)
+        if self.trans_gt is not None:
+            self.compute_loss(result)
 
     def iclk(self):
         """ initialize
@@ -106,15 +108,16 @@ class PointnetLK(End2EndBasedModel):
         est_T = est_T0
         est_T_series = torch.zeros(self.maxiter + 1, *est_T0.size(), dtype=est_T0.dtype)
         est_T_series[0] = est_T0
-
-        feat_t = self.encoder.forward(self.input_target)
+        data_t = self.transform(est_T, self.input_target)
+        feat_t = self.encoder.forward(data_t)
         J = self.approx_Jic(self.input_target.pos, feat_t, self.dt)
         pinv = self.compute_inverse_jacobian(J, feat_t, self.input.pos)
         prev_r = None
         data_s = self.input
         for itr in range(self.max_iter):
-            # [B, 4, 4] x [B, N, 3] -> [B, N, 3]
-            data_s = self.transform(est_T.unsqueeze(1), data_s)
+            # Dense [B, 4, 4] x [B, N, 3] -> [B, N, 3]
+            # Other [B, 4, 4] x [N, 3] -> [N, 3]
+            data_s = self.transform(est_T, data_s)
             feat_s = self.encoder.forward(data_s)
             r = feat_s.x - feat_t.x
             prev_r = r
@@ -155,15 +158,17 @@ class PointnetLK(End2EndBasedModel):
         # Jk = (feature_model(p(-delta[k], p0)) - f0) / delta[k]
         batch_size = self.get_batch_size()
         # compute transforms
-        transf = torch.zeros(batch_size, 6, 4, 4).to(data_target.pos)
+        transf = torch.zeros(6, batch_size, 4, 4).to(data_target.pos)
         for b in range(batch_size):
             d = torch.diag(dt[b, :])  # [6, 6]
             D = self.exp(-d)  # [6, 4, 4]
-            transf[b, :, :, :] = D[:, :, :]
+            transf[:, b, :, :] = D[:, :, :]
+        # WARNING change the size of data_target
         data_p = self.transform(transf, data_target)  # x [B, 1, N, 3] -> [B, 6, N, 3]
         # f0 = self.feature_model(p0).unsqueeze(-1) # [B, K, 1]
         target_features = target_features.unsqueeze(-1)  # [B, K, 1]
-        f = self.encoder.forward(data_p).x.view(batch_size, 6, -1).transpose(1, 2)  # [B, K, 6]
+        f = self.encoder.forward(data_p).x.view(6, batch_size, -1).transpose(0, 2).transpose(0, 1)
+        # [B, K, 6]
         df = target_features - f  # [B, K, 6]
         J = df / dt.unsqueeze(1)
         return J

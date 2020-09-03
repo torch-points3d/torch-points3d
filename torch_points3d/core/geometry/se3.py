@@ -157,7 +157,12 @@ Exp = ExpMap.apply
 
 
 class SE3Transform(torch.nn.Module):
-    def __init__(self, conv_type="DENSE", trans_x=True):
+    """
+    Rotate and translate pointclouds
+    trans_x: transform a part of x
+    """
+
+    def __init__(self, conv_type="DENSE", trans_x=False):
         super(SE3Transform, self).__init__()
         self.conv_type = conv_type
         self.trans_x = trans_x
@@ -169,10 +174,8 @@ class SE3Transform(torch.nn.Module):
         trans_ = trans.view(-1, 4, 4)
         R = trans_[:, 0:3, 0:3].contiguous().view(*(trans.size()[0:-2]), 3, 3)
         p = trans_[:, 0:3, 3].contiguous().view(*(trans.size()[0:-2]), 3)
-        if len(trans.size()) == len(xyz.size()):
-            res = R.matmul(xyz) + p.unsqueeze(-1)
-        else:
-            res = R.matmul(xyz.unsqueeze(-1)).squeeze(-1) + p
+        assert len(trans.size()) == len(xyz.size())
+        res = (R.matmul(xyz.transpose(1, 2)) + p.unsqueeze(-1)).transpose(1, 2)
         return res
 
     @staticmethod
@@ -186,39 +189,76 @@ class SE3Transform(torch.nn.Module):
         assert num_batch == trans.size(0)
         assert xyz.size(0) == batch.size(0)
         assert trans.size(1) == trans.size(2) == 4
-        for i in range(num_batch):
-            T = trans[i]
-            xyz[batch == i] = xyz[batch == i] @ T[:3, :3].T + T[:3, 3]
-        return xyz
+        R = trans[batch, :3, :3]
+        t = trans[batch, :3, 3].unsqueeze(-1)
+        xyz = R.bmm(xyz.unsqueeze(-1)) + t
+        return xyz.squeeze(-1)
+
+    @staticmethod
+    def multi_batch_transform(trans, xyz):
+        """
+        Here trans is like [*, B, 4, 4]
+        and xyz is size [B, N, 3]
+        """
+        new_trans = trans.view(-1, 4, 4)  # size BM x 4 x 4
+        num_batch = xyz.size(0)  # B
+        size_xyz = xyz.size(1)
+        num_multi = new_trans.size(0) // num_batch  # M
+        new_xyz = xyz.unsqueeze(0).expand(num_multi, *xyz.shape).reshape(-1, size_xyz, 3)
+        new_xyz = SE3Transform.batch_transform(new_trans, new_xyz)
+        return new_xyz
 
     @staticmethod
     def multi_partial_transform(trans, xyz, batch, norm=None):
+        """
+        trans have the size [*, B, 4, 4]
+        xyz is N x 3 and batch is size N x 3 with maximum batch of B
+        """
 
-        # trans of size B x M x 4 x 4
+        # trans of size M x B x 4 x 4
         new_trans = trans.view(-1, 4, 4)  # size BM x 4 x 4
-        num_batch = batch.max().item() + 1
+        num_batch = batch.max().item() + 1  # B
         num_multi = new_trans.size(0) // num_batch  # M
         # new_size = xyz.size(0) * num_multi # MN
 
-        new_xyz = xyz.unsqueeze(0).expand(num_multi, *xyz.shape).reshape(-1, 3)  # MN
+        new_xyz = xyz.unsqueeze(0).expand(num_multi, *xyz.shape).reshape(-1, 3)  # MN x 3
         new_batch = batch.unsqueeze(0).expand(num_multi, *batch.shape).reshape(-1)  # MN
         rang = (torch.arange(num_multi) * num_batch).repeat(xyz.size(0), 1).T.reshape(-1).to(new_batch)
         new_batch = new_batch + rang  # size MN
-        new_xyz = SE3Transform.partial_transform(new_trans, new_xyz, new_batch)
+
+        new_xyz = SE3Transform.partial_transform(new_trans, new_xyz, new_batch)  # MN x 3
         return new_xyz, new_batch
 
     def forward(self, trans, data):
-
+        # TODO DEAL WITH MULTISCALE BATCHES
+        # TODO DEAL WITH SPARSE DATA
         if self.conv_type.lower() == "dense":
-            data.pos = SE3Transform.batch_transform(trans, data.pos)
+            data.pos = SE3Transform.multi_batch_transform(trans, data.pos)
             if self.trans_x:
-                assert data.x.size(-1) == 3
-                data.x = SE3Transform.batch_transform(trans, data.x)
+                assert data.x.size(2) > 2
+                data.x = SE3Transform.batch_transform(trans, data.x[:, :, 0:3])
+
         else:
             assert hasattr(data, "batch")
-            data.pos, b = SE3Transform.multi_partial_transform(trans, data.pos, data.batch)
+            num_pt = len(data.pos)
+            pos, b = SE3Transform.multi_partial_transform(trans, data.pos, data.batch)
             if self.trans_x:
-                if data.x.size(-1) == 3:
-                    data.x, _ = SE3Transform.multi_partial_transform(trans, data.pos, data.batch)
+                assert data.x.size(1) > 2
+                x, _ = SE3Transform.multi_partial_transform(trans, data.x[:, 0:3], data.batch)
+                data.x = x
+            num_multi = b.size(0) // num_pt
+            data.pos = pos
+
             data.batch = b
+            # update every elements in the data
+            for k in data.keys:
+                if torch.is_tensor(data[k]):
+                    if len(data[k]) == num_pt:
+                        sh = data[k].shape
+                        data[k] = data[k].unsqueeze(0).expand(num_multi, *sh)
+                        if len(sh) > 1:
+                            data[k] = data[k].reshape(-1, *sh[1:])
+                        else:
+                            data[k] = data[k].reshape(-1)
+
         return data
