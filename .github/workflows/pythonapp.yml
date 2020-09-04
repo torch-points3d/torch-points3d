@@ -23,12 +23,12 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install libopenblas-dev
 
-      - name: Cache python dependencies
-        uses: actions/cache@v1
-        id: cache
-        with:
-          path: /home/runner/.cache/${{ matrix.python-version }}
-          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+      # - name: Cache python dependencies
+      #   uses: actions/cache@v1
+      #   id: cache
+      #   with:
+      #     path: /home/runner/.cache/${{ matrix.python-version }}
+      #     key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
