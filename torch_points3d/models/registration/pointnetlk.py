@@ -225,7 +225,7 @@ class LKBasedModel(End2EndBasedModel):
             # Dense [B, 4, 4] x [B, N, 3] -> [B, N, 3]
             # Other [B, 4, 4] x [N, 3] -> [N, 3]
 
-            data_s = self.transform(est_T, data_s).contiguous()
+            data_s = self.transform(est_T, self.input.clone()).contiguous()
 
             feat_s = self.encoder.forward(data_s)
             r = (feat_s.x - feat_t.x).view(batch_size, -1)
