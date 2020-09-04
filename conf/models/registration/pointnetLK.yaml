@@ -1,7 +1,7 @@
 models:
 
   pointnet2LK_0:
-    class: pointnetlk.PointnetLK
+    class: pointnetlk.LKBasedModel
     conv_type: "DENSE"
     max_iter: 10
     delta: 1e-2
