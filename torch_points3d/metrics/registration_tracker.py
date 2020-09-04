@@ -218,4 +218,5 @@ class End2EndRegistrationTracker(BaseTracker):
         metrics["{}_rot_error".format(self._stage)] = float(self._rot_error.value()[0])
         metrics["{}_rre".format(self._stage)] = float(self._rre.value()[0])
         metrics["{}_rte".format(self._stage)] = float(self._rte.value()[0])
+
         return metrics

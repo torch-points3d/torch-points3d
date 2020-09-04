@@ -109,7 +109,6 @@ class GeneralFragment(object):
             col = col[ind_col]
             new_pair = torch.stack((col, col_target)).T
             len_col = len(new_pair)
-            print(len_col)
         return data_source, data_target, new_pair
 
     def get_fragment(self, idx):

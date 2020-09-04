@@ -10,11 +10,10 @@ data:
   min_overlap_ratio: 0.3
   first_subsampling: 0.02
   self_supervised: True
-  min_size_block: 0.5
-  max_size_block: 1
-  num_pos_pairs: 2048
-  min_points: 100
-  num_points: 5000
+  min_size_block: 2
+  max_size_block: 2
+  num_pos_pairs: 2048 # max number of pair
+  min_points: 25 # minimum point to track to compute the gt transfo
   rot_thresh: 4
   trans_thresh: 0.15
 

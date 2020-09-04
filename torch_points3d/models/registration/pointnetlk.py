@@ -35,6 +35,7 @@ class PointnetLK(End2EndBasedModel):
             architecture="encoder", input_nc=dataset.feature_dimension, config=backbone_option.config
         )
         # losses
+        self.loss_names = ["loss", "loss_T", "loss_r"]
         self.lambda_T = option.loss_options.lambda_T
         self.lambda_r = option.loss_options.lambda_r
         self.use_prev_r = option.loss_options.use_prev_r
@@ -93,7 +94,6 @@ class PointnetLK(End2EndBasedModel):
 
         result = self.iclk()
         self.output = result["est_T"]
-
         if self.trans_gt is not None:
             self.compute_loss(result)
 
