@@ -62,5 +62,5 @@ def compute_scaled_registration_error(xyz, xyz_target, match_gt, T_est, tol=1e-1
     dist1 = torch.sqrt(torch.sum((subxyz - subxyz_target) ** 2, axis=-1))
     dist2 = torch.sqrt(torch.sum((subxyz - centroid) ** 2, axis=-1))
 
-    err = torch.mean(dist1 / dist2 + tol)
+    err = torch.mean(dist1 / (dist2 + tol))
     return err
