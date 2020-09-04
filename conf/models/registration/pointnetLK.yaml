@@ -3,9 +3,9 @@ models:
   pointnet2LK_0:
     class: pointnetlk.PointnetLK
     conv_type: "DENSE"
-    max_iter: 6
+    max_iter: 10
     delta: 1e-2
-    learn_delta: False
+    learn_delta: True
     xtol: 1e-7
     trans_options:
       trans_x: False
@@ -31,8 +31,8 @@ models:
             ]
         innermost:
           module_name: GlobalDenseBaseModule
-          nn: [in_feat * 2   + 3, in_feat * 8]
+          nn: [in_feat * 2 + 3, in_feat * 8]
     loss_options:
       lambda_T: 1.0
-      lambda_r: 0.0
+      lambda_r: 1.0
       use_prev_r: False

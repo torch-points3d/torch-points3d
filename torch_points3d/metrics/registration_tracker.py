@@ -220,3 +220,7 @@ class End2EndRegistrationTracker(BaseTracker):
         metrics["{}_rte".format(self._stage)] = float(self._rte.value()[0])
 
         return metrics
+
+    @property
+    def metric_func(self):
+        return self._metric_func

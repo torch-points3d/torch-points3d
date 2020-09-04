@@ -26,11 +26,6 @@ data:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [1024]
-
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
@@ -41,7 +36,6 @@ data:
 
   val_transform:
     - transform: SaveOriginalPosId
-    - transform: Center
     - transform: FixedPoints
       lparams: [1024]
     - transform: Random3AxisRotation
@@ -52,16 +46,10 @@ data:
         rot_z: 45
     - transform: Center
 
-
-
   test_transform:
     - transform: SaveOriginalPosId
     - transform: FixedPoints
       lparams: [1024]
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
