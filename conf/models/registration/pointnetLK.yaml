@@ -33,6 +33,6 @@ models:
           module_name: GlobalDenseBaseModule
           nn: [in_feat * 2 + 3, in_feat * 8]
     loss_options:
-      lambda_T: 1.0
+      lambda_T: 16.0
       lambda_r: 1.0
       use_prev_r: False
