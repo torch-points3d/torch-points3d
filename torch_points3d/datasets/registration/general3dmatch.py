@@ -292,6 +292,11 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
 class General3DMatchDataset(BaseSiameseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
+        self.num_points = dataset_opt.num_points
+        self.tau_1 = dataset_opt.tau_1
+        self.tau_2 = dataset_opt.tau_2
+        self.trans_thresh = dataset_opt.trans_thresh
+        self.rot_thresh = dataset_opt.rot_thresh
 
         pre_transform = self.pre_transform
         ss_transform = getattr(self, "ss_transform", None)
@@ -394,4 +399,10 @@ class General3DMatchDataset(BaseSiameseDataset):
         if self.is_patch:
             return PatchRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
         else:
-            return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+            return FragmentRegistrationTracker(num_points=self.num_points,
+                                               tau_1=self.tau_1,
+                                               tau_2=self.tau_2,
+                                               rot_thresh=self.rot_thresh,
+                                               trans_thresh=self.trans_thresh,
+                                               wandb_log=wandb_log,
+                                               use_tensorboard=tensorboard_log)

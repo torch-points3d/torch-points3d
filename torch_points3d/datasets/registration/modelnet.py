@@ -110,9 +110,6 @@ class SiameseModelNetDataset(BaseSiameseDataset):
         train_transform = self.train_transform
         test_transform = self.test_transform
         pre_filter = self.pre_filter
-        self.tau_1 = dataset_opt.tau_1
-        self.rot_thresh = dataset_opt.rot_thresh
-        self.trans_thresh = dataset_opt.trans_thresh
 
         self.train_dataset = SiameseModelNet(
             root=self._data_path,
@@ -140,15 +137,3 @@ class SiameseModelNetDataset(BaseSiameseDataset):
             pre_filter=pre_filter,
             num_pos_pairs=dataset_opt.num_pos_pairs,
             min_points=dataset_opt.min_points)
-
-    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
-        """
-        Factory method for the tracker
-
-        Arguments:
-            wandb_log - Log using weight and biases
-            tensorboard_log - Log using tensorboard
-        Returns:
-            [BaseTracker] -- tracker
-        """
-        return FragmentRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, tau_1=self.tau_1, rot_thresh=self.rot_thresh, trans_thresh=self.trans_thresh)

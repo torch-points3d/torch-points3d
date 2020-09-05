@@ -48,3 +48,19 @@ def compute_transfo_error(T_gt, T_pred):
     cos_theta = torch.clamp(cos_theta, -1.0, 1.0)
     rre = torch.acos(cos_theta) * 180 / np.pi
     return rte, rre
+
+
+def compute_scaled_registration_error(xyz, xyz_target, match_gt, T_est, tol=1e-12):
+    """
+    compute the registration error as defined in:
+    https://arxiv.org/pdf/2003.12841.pdf
+    """
+    subxyz = xyz[match_gt[:, 0]] @ T_est[:3, :3].T + T_est[:3, 3]
+    subxyz_target = xyz_target[match_gt[:, 1]]
+    centroid = subxyz.mean(axis=0)
+
+    dist1 = torch.sqrt(torch.sum((subxyz - subxyz_target) ** 2, axis=-1))
+    dist2 = torch.sqrt(torch.sum((subxyz - centroid) ** 2, axis=-1))
+
+    err = torch.mean(dist1 / (dist2 + tol))
+    return err

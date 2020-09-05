@@ -16,6 +16,9 @@ from torch_points3d.datasets.registration.utils import tracked_matches
 from torch_points3d.datasets.registration.utils import compute_overlap_and_matches
 from torch_points3d.datasets.base_dataset import BaseDataset
 
+from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
+from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
+
 
 class BaseSiameseDataset(BaseDataset):
     def __init__(self, dataset_opt):
@@ -23,6 +26,13 @@ class BaseSiameseDataset(BaseDataset):
         base dataset for siamese inputs
         """
         super().__init__(dataset_opt)
+        self.num_points = dataset_opt.num_points
+        self.tau_1 = dataset_opt.tau_1
+        self.tau_2 = dataset_opt.tau_2
+        self.trans_thresh = dataset_opt.trans_thresh
+        self.rot_thresh = dataset_opt.rot_thresh
+        self.is_patch = False
+        self.is_end2end = False
 
     @staticmethod
     def _get_collate_function(conv_type, is_multiscale):
@@ -41,6 +51,31 @@ class BaseSiameseDataset(BaseDataset):
             return lambda datalist: DensePairBatch.from_data_list(datalist)
         else:
             return lambda datalist: PairBatch.from_data_list(datalist)
+
+    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
+        """
+        Factory method for the tracker
+
+        Arguments:
+            wandb_log - Log using weight and biases
+            tensorboard_log - Log using tensorboard
+        Returns:
+            [BaseTracker] -- tracker
+        """
+        if self.is_patch:
+            return PatchRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
+        else:
+            if self.is_end2end:
+                raise NotImplementedError("implement end2end tracker")
+            else:
+                return FragmentRegistrationTracker(
+                    num_points=self.num_points,
+                    tau_1=self.tau_1,
+                    tau_2=self.tau_2,
+                    rot_thresh=self.rot_thresh,
+                    trans_thresh=self.trans_thresh,
+                    wandb_log=wandb_log,
+                    use_tensorboard=tensorboard_log)
 
 
 class GeneralFragment(object):
