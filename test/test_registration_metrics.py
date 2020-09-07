@@ -7,6 +7,7 @@ from torch_points3d.utils.registration import estimate_transfo
 from torch_points3d.utils.registration import fast_global_registration
 from torch_points3d.metrics.registration_metrics import compute_hit_ratio
 from torch_points3d.metrics.registration_metrics import compute_transfo_error
+from torch_points3d.metrics.registration_metrics import compute_scaled_registration_error
 from torch_points3d.utils.geometry import rodrigues
 from torch_points3d.utils.geometry import euler_angles_to_rotation_matrix
 
@@ -75,6 +76,46 @@ class TestRegistrationMetrics(unittest.TestCase):
         rte, rre = compute_transfo_error(torch.eye(4), T)
         npt.assert_allclose(rte.item(), 1)
         npt.assert_allclose(rre.item(), 30, rtol=1e-3)
+
+    def test_compute_scaled_registration_error(self):
+        xyz = torch.tensor([[1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, -1.0, 0.0]])
+        xyz_target = torch.tensor(
+            [[0.0, 0.0, 0.0], [42.0, 0.0, 0.0], [0.0, -1.0, 0.0], [125, -1.0, 1458.0], [1.0, 0.0, 0.0]]
+        )
+        match_gt = torch.tensor([[0, 4], [1, 0], [2, 2]], dtype=torch.long)
+        T_est = torch.eye(4)
+        err1 = compute_scaled_registration_error(xyz, xyz_target, match_gt, T_est)
+        self.assertAlmostEqual(err1.item(), 0.0)
+        e = -1.0  # error in one point
+        xyz = torch.tensor(
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [1.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 2.0, 0.0],
+                [1.0, 2.0, 0.0],
+                [0.5, 1.5, 0.0],
+                [0.5, 2.5, 0.0],
+            ]
+        )
+
+        xyz_target = torch.tensor(
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [1.0, 1.0, 0.0],
+                [0.0, 0.0, e],
+                [0.0, 2.0, 0.0],
+                [1.0, 2.0, 0.0],
+                [0.5, 1.5, 0.0],
+                [0.5, 2.5, 0.0],
+            ]
+        )
+        match_gt = torch.tensor([[0, 0], [1, 1], [2, 2], [3, 3], [4, 4], [5, 5], [6, 6], [7, 7]], dtype=torch.long)
+        err2 = compute_scaled_registration_error(xyz, xyz_target, match_gt, T_est)
+        c = torch.norm(xyz.mean(axis=0), 2).item()
+        self.assertAlmostEqual(err2.item(), 1 / (8 * c))
 
 
 if __name__ == "__main__":
