@@ -6,6 +6,7 @@ data:
   name_modelnet: "10"
   name_modelnet_test: "40"
   is_patch: False
+  is_end2end: False
   max_dist_overlap: 0.05
   min_overlap_ratio: 0.3
   first_subsampling: 0.02

@@ -2,6 +2,8 @@ data:
   task: registration
   class: testeth.ETHDataset
   dataroot: data
+  is_patch: False
+  is_end2end: False
   first_subsampling: 0.02
   max_dist_overlap: 0.05
   min_size_block: 1.5

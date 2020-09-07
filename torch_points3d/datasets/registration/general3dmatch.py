@@ -293,11 +293,6 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
 class General3DMatchDataset(BaseSiameseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
-        self.num_points = dataset_opt.num_points
-        self.tau_1 = dataset_opt.tau_1
-        self.tau_2 = dataset_opt.tau_2
-        self.trans_thresh = dataset_opt.trans_thresh
-        self.rot_thresh = dataset_opt.rot_thresh
 
         pre_transform = self.pre_transform
         ss_transform = getattr(self, "ss_transform", None)
@@ -306,9 +301,9 @@ class General3DMatchDataset(BaseSiameseDataset):
         test_transform = self.test_transform
         pre_filter = self.pre_filter
         test_pre_filter = getattr(self, "test_pre_filter", None)
-        self.is_patch = dataset_opt.is_patch
-        self.rot_thresh = datast_opt.rot_thresh
-        self.trans_thresh = dataset_opt.trans_thresh
+
+
+
 
         if dataset_opt.is_patch:
             self.train_dataset = Patch3DMatch(
