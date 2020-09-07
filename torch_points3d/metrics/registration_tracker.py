@@ -8,6 +8,7 @@ from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
 from .registration_metrics import compute_scaled_registration_error
 from torch_points3d.models import model_interface
+from torch_points3d.models.registration.base_interface import SiameseTrackerInterface
 from torch_points3d.utils.registration import estimate_transfo, fast_global_registration, get_matches
 
 
@@ -203,7 +204,7 @@ class End2EndRegistrationTracker(BaseTracker):
         self._rre = tnt.meter.AverageValueMeter()
         self._rte = tnt.meter.AverageValueMeter()
 
-    def track(self, model: model_interface.TrackerInterface, **kwargs):
+    def track(self, model: SiameseTrackerInterface, **kwargs):
 
         super().track(model)
 
