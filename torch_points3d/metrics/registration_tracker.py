@@ -140,7 +140,7 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
 
                 trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
 
-                sr_err = compute_scaled_registration_error(xyz, xyz_target, matches_gt, T_pred)
+                sr_err = compute_scaled_registration_error(xyz, T_gt, T_pred)
                 self._hit_ratio.add(hit_ratio.item())
                 self._feat_match_ratio.add(float(hit_ratio.item() > self.tau_2))
                 self._trans_error.add(trans_error.item())
