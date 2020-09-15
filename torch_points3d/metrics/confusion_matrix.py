@@ -1,5 +1,4 @@
 import numpy as np
-import sklearn.metrics as sk
 import os
 
 
@@ -20,7 +19,9 @@ class ConfusionMatrix:
 
     def count_predicted_batch(self, ground_truth_vec, predicted):
         assert np.max(predicted) < self.number_of_labels
-        batch_confusion = sk.confusion_matrix(ground_truth_vec, predicted, labels=range(self.number_of_labels))
+        batch_confusion = np.bincount(
+            self.number_of_labels * ground_truth_vec.astype(int) + predicted, minlength=self.number_of_labels ** 2
+        ).reshape(self.number_of_labels, self.number_of_labels)
         if self.confusion_matrix is None:
             self.confusion_matrix = batch_confusion
         else:
