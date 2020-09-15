@@ -142,7 +142,7 @@ class FastBatchNorm1d(BaseModule):
         x = x.transpose(0, 2)
         x = self.batch_norm(x)
         x = x.transpose(0, 2)
-        return x.squeeze()
+        return x.squeeze(dim=2)
 
     def forward(self, x):
         if x.dim() == 2:
