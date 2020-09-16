@@ -171,8 +171,6 @@ class ElasticDistortion:
 
     Parameters
     ----------
-    spatial_resolution:
-        Resolution of the voxel grid (should the the resolution of the input point cloud)
     granularity: List[float]
         Granularity of the noise in meters
     magnitude:List[float]
@@ -184,64 +182,49 @@ class ElasticDistortion:
     """
 
     def __init__(
-        self,
-        apply_distorsion: bool = True,
-        spatial_resolution=0.02,
-        granularity: List = [0.2, 0.4],
-        magnitude=[0.8, 1.6],
+        self, apply_distorsion: bool = True, granularity: List = [0.2, 0.4], magnitude=[0.8, 1.6],
     ):
         assert len(magnitude) == len(granularity)
-        for i in range(len(magnitude)):
-            assert magnitude[i] > spatial_resolution
-            assert granularity[i] > spatial_resolution
         self._apply_distorsion = apply_distorsion
         self._granularity = granularity
         self._magnitude = magnitude
-        self._spatial_resolution = spatial_resolution
 
     @staticmethod
     def elastic_distortion(coords, granularity, magnitude):
         coords = coords.numpy()
-        blur0 = np.ones((3, 1, 1)).astype("float32") / 3
-        blur1 = np.ones((1, 3, 1)).astype("float32") / 3
-        blur2 = np.ones((1, 1, 3)).astype("float32") / 3
+        blurx = np.ones((3, 1, 1, 1)).astype("float32") / 3
+        blury = np.ones((1, 3, 1, 1)).astype("float32") / 3
+        blurz = np.ones((1, 1, 3, 1)).astype("float32") / 3
+        coords_min = coords.min(0)
 
-        bb = (coords - coords.min(0)).max(0) // granularity + 3
-        bb = bb.astype(np.int32)
-        noise = [np.random.randn(bb[0], bb[1], bb[2]).astype("float32") for _ in range(3)]
-        noise = [scipy.ndimage.filters.convolve(n, blur0, mode="constant", cval=0) for n in noise]
-        noise = [scipy.ndimage.filters.convolve(n, blur1, mode="constant", cval=0) for n in noise]
-        noise = [scipy.ndimage.filters.convolve(n, blur2, mode="constant", cval=0) for n in noise]
-        noise = [scipy.ndimage.filters.convolve(n, blur0, mode="constant", cval=0) for n in noise]
-        noise = [scipy.ndimage.filters.convolve(n, blur1, mode="constant", cval=0) for n in noise]
-        noise = [scipy.ndimage.filters.convolve(n, blur2, mode="constant", cval=0) for n in noise]
-        ax = [np.linspace(-(b - 1) * granularity, (b - 1) * granularity, b) for b in bb]
-        interp = [scipy.interpolate.RegularGridInterpolator(ax, n, bounds_error=0, fill_value=0) for n in noise]
+        # Create Gaussian noise tensor of the size given by granularity.
+        noise_dim = ((coords - coords_min).max(0) // granularity).astype(int) + 3
+        noise = np.random.randn(*noise_dim, 3).astype(np.float32)
 
-        def g(x_):
-            return np.hstack([i(x_)[:, None] for i in interp])
+        # Smoothing.
+        for _ in range(2):
+            noise = scipy.ndimage.filters.convolve(noise, blurx, mode="constant", cval=0)
+            noise = scipy.ndimage.filters.convolve(noise, blury, mode="constant", cval=0)
+            noise = scipy.ndimage.filters.convolve(noise, blurz, mode="constant", cval=0)
 
-        coords = coords + g(coords) * magnitude
-        return torch.tensor(coords).int()
+        # Trilinear interpolate noise filters for each spatial dimensions.
+        ax = [
+            np.linspace(d_min, d_max, d)
+            for d_min, d_max, d in zip(coords_min - granularity, coords_min + granularity * (noise_dim - 2), noise_dim)
+        ]
+        interp = scipy.interpolate.RegularGridInterpolator(ax, noise, bounds_error=0, fill_value=0)
+        coords = coords + interp(coords) * magnitude
+        return torch.tensor(coords)
 
     def __call__(self, data):
-        coords = data.pos / self._spatial_resolution
+        # coords = data.pos / self._spatial_resolution
         if self._apply_distorsion:
             if random.random() < 0.95:
                 for i in range(len(self._granularity)):
-                    coords = ElasticDistortion.elastic_distortion(
-                        coords,
-                        self._granularity[i] / self._spatial_resolution,
-                        self._magnitude[i] / self._spatial_resolution,
-                    )
-        data.pos = coords * self._spatial_resolution
+                    data.pos = ElasticDistortion.elastic_distortion(data.pos, self._granularity[i], self._magnitude[i],)
         return data
 
     def __repr__(self):
-        return "{}(apply_distorsion={}, granularity={}, magnitude={}, spatial_resolution={})".format(
-            self.__class__.__name__,
-            self._apply_distorsion,
-            self._granularity,
-            self._magnitude,
-            self._spatial_resolution,
+        return "{}(apply_distorsion={}, granularity={}, magnitude={})".format(
+            self.__class__.__name__, self._apply_distorsion, self._granularity, self._magnitude,
         )
