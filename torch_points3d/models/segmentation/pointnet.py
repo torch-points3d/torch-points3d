@@ -1,6 +1,6 @@
 import torch.nn.functional as F
 import logging
-
+from omegaconf import OmegaConf
 from torch_points3d.core.base_conv.base_conv import *
 from torch_points3d.core.common_modules.base_modules import *
 from torch_points3d.utils.config import ConvolutionFormatFactory
@@ -13,10 +13,10 @@ log = logging.getLogger(__name__)
 
 
 class PointNet(BaseModel):
-    def __init__(self, opt):
-        super().__init__(opt, *args, **kwargs)
+    def __init__(self, opt, model_type=None, dataset=None, modules=None):
+        super().__init__(opt)
 
-        self._opt = opt
+        self._opt = OmegaConf.to_container(opt)
         self._is_dense = ConvolutionFormatFactory.check_is_dense_format(self.conv_type)
 
         self.visual_names = ["data_visual"]
