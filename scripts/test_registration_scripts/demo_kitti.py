@@ -17,7 +17,7 @@ from torch_geometric.data import Batch
 from torch_points3d.applications.pretrained_api import PretainedRegistry
 
 # post processing
-from torch_points3d.metrics.registration_metrics import get_matches, fast_global_registration
+from torch_points3d.utils.registration import get_matches, fast_global_registration
 
 
 if __name__ == "__main__":

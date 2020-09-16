@@ -67,10 +67,11 @@ class TestVisualizer(unittest.TestCase):
             run(3, visualizer, epoch, "test", data)
             run(0, visualizer, epoch, "val", data)
 
-        targets = set(["1_1.ply", "0_0.ply"])
-        for split in ["train"]:
+        targets = {'train': set(["1_1.ply", "0_0.ply"]),
+                   'test': set(["0_0.ply"])}
+        for split in ["train", "test"]:
             for epoch in range(epochs):
-                self.assertEqual(targets, set(os.listdir(os.path.join(self.run_path, "viz", str(epoch), split))))
+                self.assertEqual(targets[split], set(os.listdir(os.path.join(self.run_path, "viz", str(epoch), split))))
         shutil.rmtree(self.run_path)
 
     def test_save_all(self):

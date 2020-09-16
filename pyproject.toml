@@ -4,7 +4,7 @@ version = "0.2.0" # This will be overriden by the CI at publish time
 description = "Point Cloud Deep Learning Extension Library for PyTorch"
 authors = ["Thomas Chaton <thomas.chaton.ai@gmail.com>", "Nicolas Chaulet <nicolas.chaulet@gmail.com>"]
 packages = [
-    { include = "torch_points3d" },
+    {include = "torch_points3d"},
 ]
 readme = "README.md"
 documentation = "https://torch-points3d.readthedocs.io/en/latest/"

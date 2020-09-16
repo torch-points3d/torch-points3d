@@ -243,6 +243,9 @@ class Trainer:
                             self._tracker.track(self._model, data=data, **self.tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
+                        if self._visualizer.is_active:
+                            self._visualizer.save_visuals(self._model.get_current_visuals())
+
                         if self.early_break:
                             break
 

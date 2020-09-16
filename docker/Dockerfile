@@ -15,21 +15,21 @@ RUN apt-get update \
 RUN python3 -m pip install -U pip \
     && python3 -m pip install -U pip \
     && pip3 install setuptools>=41.0.0 \
-    && pip3 install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
+    && pip3 install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
     && pip3 install git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3 \
     && rm -rf /root/.cache
-
-COPY pyproject.toml pyproject.toml
-COPY torch_points3d/__init__.py torch_points3d/__init__.py
-COPY README.md README.md
-
-RUN pip3 install . && rm -rf /root/.cache
 
 ARG MODEL=""
 ENV WORKDIR=/dpb
 ENV MODEL_PATH=$WORKDIR/$MODEL
 
 WORKDIR $WORKDIR
+
+COPY pyproject.toml pyproject.toml
+COPY torch_points3d/__init__.py torch_points3d/__init__.py
+COPY README.md README.md
+RUN pip3 install . && rm -rf /root/.cache
+
 COPY . .
 
 # Setup location of model for forward inference
