@@ -13,7 +13,7 @@ RUN python3 -m pip install -U pip \
     && python3 -m pip install -U pip \
     && pip3 install setuptools>=41.0.0 \
     && pip3 install torch==1.6.0 torchvision==0.7.0 \
-    && pip3 install git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3 --install-option="--force_cuda" --install-option="--cuda_home=/usr/local/cuda" \
+    && pip3 install MinkowskiEngine==v0.4.3 --install-option="--force_cuda" --install-option="--cuda_home=/usr/local/cuda" \
     && pip3 install pycuda \
     && rm -rf /root/.cache
 
