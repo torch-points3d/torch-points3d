@@ -33,6 +33,8 @@ class VoteNet2(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(VoteNet2, self).__init__(option)
         self._dataset = dataset
+        self._weight_classes = dataset.weight_classes
+
         # 1 - CREATE BACKBONE MODEL
         input_nc = dataset.feature_dimension
         backbone_option = option.backbone
@@ -172,7 +174,9 @@ class VoteNet2(BaseModel):
         outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
     def _compute_losses(self):
-        losses = votenet_module.get_loss(self.input, self.output, self.loss_params)
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.device)
+        losses = votenet_module.get_loss(self.input, self.output, self.loss_params, weight_classes=self._weight_classes)
         for loss_name, loss in losses.items():
             if torch.is_tensor(loss):
                 if not self.losses_has_been_added:

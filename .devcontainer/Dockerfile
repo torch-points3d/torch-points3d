@@ -22,8 +22,8 @@ RUN python3 -m pip install -U pip \
     && python3 -m venv $ENV \
     && $PYTHON -m pip install -U pip \
     && $PIP install setuptools>=41.0.0 \
-    && $PIP install torch==1.5.0+cpu torchvision==0.6.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
-    && $PIP install git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3 \
+    && $PIP install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
+    && $PIP MinkowskiEngine==v0.4.3 \
     && rm -rf /root/.cache
 
 WORKDIR /app

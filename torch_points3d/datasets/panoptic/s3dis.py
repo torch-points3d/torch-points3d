@@ -3,12 +3,7 @@ import torch
 import random
 
 from torch_points3d.datasets.base_dataset import BaseDataset
-from torch_points3d.datasets.segmentation.s3dis import (
-    S3DISSphere,
-    S3DISCylinder,
-    add_weights, 
-    INV_OBJECT_LABEL
-)
+from torch_points3d.datasets.segmentation.s3dis import S3DISSphere, S3DISCylinder, INV_OBJECT_LABEL
 import torch_points3d.core.data_transform as cT
 from torch_points3d.metrics.panoptic_tracker import PanopticTracker
 from torch_points3d.datasets.panoptic.utils import set_extra_labels
@@ -29,6 +24,7 @@ STUFF_CLASSES_INV = {
     12: "clutter",
 }
 
+
 class PanopticS3DISBase:
     INSTANCE_CLASSES = STUFF_CLASSES_INV.keys()
     NUM_MAX_OBJECTS = 64
@@ -47,7 +43,7 @@ class PanopticS3DISBase:
 
         # Extract instance and box labels
         self._set_extra_labels(data)
-        return data   
+        return data
 
     def _set_extra_labels(self, data):
         return set_extra_labels(data, self.INSTANCE_CLASSES, self.NUM_MAX_OBJECTS)
@@ -56,6 +52,7 @@ class PanopticS3DISBase:
     def stuff_classes(self):
         return torch.tensor([])
 
+
 class PanopticS3DISSphere(PanopticS3DISBase, S3DISSphere):
     def process(self):
         super().process()
@@ -63,12 +60,14 @@ class PanopticS3DISSphere(PanopticS3DISBase, S3DISSphere):
     def download(self):
         super().download()
 
+
 class PanopticS3DISCylinder(PanopticS3DISBase, S3DISCylinder):
     def process(self):
         super().process()
 
     def download(self):
         super().download()
+
 
 class S3DISFusedDataset(BaseDataset):
     """ Wrapper around S3DISSphere that creates train and test datasets.
@@ -92,8 +91,8 @@ class S3DISFusedDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        sampling_format = dataset_opt.get('sampling_format', 'cylinder')
-        dataset_cls = PanopticS3DISCylinder if sampling_format == 'cylinder' else PanopticS3DISSphere
+        sampling_format = dataset_opt.get("sampling_format", "cylinder")
+        dataset_cls = PanopticS3DISCylinder if sampling_format == "cylinder" else PanopticS3DISSphere
 
         self.train_dataset = dataset_cls(
             self._data_path,
@@ -102,7 +101,7 @@ class S3DISFusedDataset(BaseDataset):
             split="train",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.train_transform,
-            keep_instance=True
+            keep_instance=True,
         )
 
         self.val_dataset = dataset_cls(
@@ -112,7 +111,7 @@ class S3DISFusedDataset(BaseDataset):
             split="val",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.val_transform,
-            keep_instance=True
+            keep_instance=True,
         )
         self.test_dataset = dataset_cls(
             self._data_path,
@@ -121,12 +120,11 @@ class S3DISFusedDataset(BaseDataset):
             split="test",
             pre_collate_transform=self.pre_collate_transform,
             transform=self.test_transform,
-            keep_instance=True
+            keep_instance=True,
         )
 
         if dataset_opt.class_weight_method:
-            self.train_dataset = add_weights(
-                self.train_dataset, True, dataset_opt.class_weight_method)
+            self.add_weights(class_weight_method=dataset_opt.class_weight_method)
 
     @property
     def test_data(self):
@@ -143,5 +141,4 @@ class S3DISFusedDataset(BaseDataset):
         """
 
         return PanopticTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
-
 

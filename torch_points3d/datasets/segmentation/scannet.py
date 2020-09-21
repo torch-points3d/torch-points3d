@@ -751,7 +751,8 @@ class Scannet(InMemoryDataset):
                     path_to_raw_scan = os.path.join(self.processed_raw_paths[i], "{}.pt".format(scan_name))
                     torch.save(data, path_to_raw_scan)
 
-                datas = [self.pre_transform(data) for data in datas]
+                if self.pre_transform:
+                    datas = [self.pre_transform(data) for data in datas]
 
                 log.info("SAVING TO {}".format(self.processed_paths[i]))
                 torch.save(self.collate(datas), self.processed_paths[i])
@@ -769,6 +770,9 @@ class Scannet(InMemoryDataset):
         for source, target in mapping_dict.items():
             mask = semantic_label == source
             new_labels[mask] = target
+
+        broken_labels = new_labels >= len(self.valid_class_idx)
+        new_labels[broken_labels] = IGNORE_LABEL
 
         return new_labels
 

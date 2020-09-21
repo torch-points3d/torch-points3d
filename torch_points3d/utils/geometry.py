@@ -1,7 +1,8 @@
 import torch
+import random
 
 
-def euler_angles_to_rotation_matrix(theta):
+def euler_angles_to_rotation_matrix(theta, random_order=False):
     R_x = torch.tensor(
         [[1, 0, 0], [0, torch.cos(theta[0]), -torch.sin(theta[0])], [0, torch.sin(theta[0]), torch.cos(theta[0])]]
     )
@@ -14,7 +15,10 @@ def euler_angles_to_rotation_matrix(theta):
         [[torch.cos(theta[2]), -torch.sin(theta[2]), 0], [torch.sin(theta[2]), torch.cos(theta[2]), 0], [0, 0, 1]]
     )
 
-    R = torch.mm(R_z, torch.mm(R_y, R_x))
+    matrices = [R_x, R_y, R_z]
+    if random_order:
+        random.shuffle(matrices)
+    R = torch.mm(matrices[2], torch.mm(matrices[1], matrices[0]))
     return R
 
 

@@ -489,6 +489,31 @@ class BaseDataset:
         )
         return selection_stage
 
+    def add_weights(self, dataset_name="train", class_weight_method="sqrt"):
+        """ Add class weights to a given dataset that are then accessible using the `class_weights` attribute
+        """
+        L = self.num_classes
+        weights = torch.ones(L)
+        dataset = self.get_dataset(dataset_name)
+        idx_classes, counts = torch.unique(dataset.data.y, return_counts=True)
+
+        dataset.idx_classes = torch.arange(L).long()
+        weights[idx_classes] = counts.float()
+        weights = weights.float()
+        weights = weights.mean() / weights
+        if class_weight_method == "sqrt":
+            weights = torch.sqrt(weights)
+        elif str(class_weight_method).startswith("log"):
+            weights = torch.log(1.1 + weights / weights.sum())
+        else:
+            raise ValueError("Method %s not supported" % class_weight_method)
+
+        weights /= torch.sum(weights)
+        log.info("CLASS WEIGHT : {}".format([np.round(weight.item(), 4) for weight in weights]))
+        setattr(dataset, "weight_classes", weights)
+
+        return dataset
+
     def __repr__(self):
         message = "Dataset: %s \n" % self.__class__.__name__
         for attr in self.__dict__:
