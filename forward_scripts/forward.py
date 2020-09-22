@@ -76,14 +76,17 @@ def main(cfg):
     if cfg.data:
         for key, value in cfg.data.items():
             checkpoint.data_config.update(key, value)
+    if cfg.dataset_config:
+        for key, value in cfg.dataset_config.items():
+            checkpoint.dataset_properties.update(key, value)
 
     # Create dataset and mdoel
-    dataset = instantiate_dataset(checkpoint.data_config)
-    model = checkpoint.create_model(dataset, weight_name=cfg.weight_name)
+    model = checkpoint.create_model(checkpoint.dataset_properties, weight_name=cfg.weight_name)
     log.info(model)
     log.info("Model size = %i", sum(param.numel() for param in model.parameters() if param.requires_grad))
 
     # Set dataloaders
+    dataset = instantiate_dataset(checkpoint.data_config)
     dataset.create_dataloaders(
         model, cfg.batch_size, cfg.shuffle, cfg.num_workers, False,
     )
