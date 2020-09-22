@@ -10,16 +10,20 @@ class MiniPointNet(torch.nn.Module):
     def __init__(self, local_nn, global_nn, aggr="max", return_local_out=False):
         super().__init__()
 
-        self.local_nn = MLP(local_nn)
-        self.global_nn = MLP(global_nn) if global_nn else None
+        self._local_nn = MLP(local_nn)
+        self._global_nn = MLP(global_nn) if global_nn else None
+        self._aggr = aggr
         self.g_pool = global_max_pool if aggr == "max" else global_mean_pool
         self.return_local_out = return_local_out
 
     def forward(self, x, batch):
-        y = x = self.local_nn(x)  # [num_points, in_dim] -> [num_points, local_out_nn]
-        x = self.g_pool(x, batch)  # [num_points, local_out_nn] -> [local_out_nn]
-        if self.global_nn:
-            x = self.global_nn(x)  # [local_out_nn] -> [global_out_nn]
+        y = x = self._local_nn(x)  # [num_points, in_dim] -> [num_points, local_out_nn]
+        if batch is not None:
+            x = self.g_pool(x, batch)  # [num_points, local_out_nn] -> [local_out_nn]
+        else:
+            x = x.max(1)[0] if self._aggr == 'max' else x.mean(1)
+        if self._global_nn:
+            x = self._global_nn(x)  # [local_out_nn] -> [global_out_nn]
         if self.return_local_out:
             return x, y
         return x
@@ -54,9 +58,10 @@ class PointNetSTNkD(BaseLinearTransformSTNkD, BaseInternalLossModule):
 class PointNetSeg(torch.nn.Module):
     def __init__(
         self,
-        input_stn_local_nn=[3, 64, 128, 1024],
+        input_nc = 3,
+        input_stn_local_nn=[64, 128, 1024],
         input_stn_global_nn=[1024, 512, 256],
-        local_nn_1=[3, 64, 64],
+        local_nn_1=[64, 64],
         feat_stn_k=64,
         feat_stn_local_nn=[64, 64, 128, 1024],
         feat_stn_global_nn=[1024, 512, 256],
@@ -70,8 +75,8 @@ class PointNetSeg(torch.nn.Module):
 
         self.batch_size = batch_size
 
-        self.input_stn = PointNetSTN3D(input_stn_local_nn, input_stn_global_nn, batch_size)
-        self.local_nn_1 = MLP(local_nn_1)
+        self.input_stn = PointNetSTN3D([input_nc] + input_stn_local_nn, input_stn_global_nn, batch_size)
+        self.local_nn_1 = MLP([input_nc] + local_nn_1)
         self.feat_stn = PointNetSTNkD(feat_stn_k, feat_stn_local_nn, feat_stn_global_nn, batch_size)
         self.local_nn_2 = MLP(local_nn_2)
         self.seg_nn = MLP(seg_nn)
@@ -81,12 +86,11 @@ class PointNetSeg(torch.nn.Module):
     def set_scatter_pooling(self, use_scatter_pooling):
         self._use_scatter_pooling = use_scatter_pooling
 
-    def func_global_max_pooling(self, x3, batch):
+    def func_global_max_pooling(self, x, batch):
         if self._use_scatter_pooling:
-            return global_max_pool(x3, batch)
+            return global_max_pool(x, batch)
         else:
-            global_feature = x3.max(1)
-            return global_feature[0]
+            return x.max(1)[0]
 
     def forward(self, x, batch):
 
@@ -100,7 +104,11 @@ class PointNetSeg(torch.nn.Module):
         global_feature = self.func_global_max_pooling(x3, batch)
         # concat per-point and global feature and regress to get
         # per-point scores
-        feat_concat = torch.cat([x_feat_trans, global_feature[batch]], dim=1)
+        if x_feat_trans.dim() == 2:
+            feat_concat = torch.cat([x_feat_trans, global_feature[batch]], dim=1)
+        else:
+            feat_concat = torch.cat([x_feat_trans, 
+                                    global_feature.unsqueeze(1).repeat((1, x_feat_trans.shape[1], 1))], dim=-1)
         out = self.seg_nn(feat_concat)
 
         return out

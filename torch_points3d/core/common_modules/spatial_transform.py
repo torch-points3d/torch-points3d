@@ -41,10 +41,17 @@ class BaseLinearTransformSTNkD(torch.nn.Module):
 
         # convert trans_x from (N, K) to (B, N, K) to do batched matrix multiplication
         # batch_x = trans_x.view(self.batch_size, -1, trans_x.shape[1])
-        batch_x = trans_x.view(trans_x.shape[0], 1, trans_x.shape[1])
-        x_transformed = torch.bmm(batch_x, trans[batch])
-
-        return x_transformed.view(len(trans_x), trans_x.shape[1])
+        if trans_x.squeeze().dim() == 2:
+            batch_x = trans_x.view(trans_x.shape[0], 1, trans_x.shape[1])
+            x_transformed = torch.bmm(batch_x[:, :, :trans.shape[-1]], trans[batch])
+            if batch_x.shape[-1] > trans.shape[-1]:
+                x_transformed = torch.cat([x_transformed, batch_x[:, :, trans.shape[-1]:]], dim=-1)
+            return x_transformed.view(len(trans_x), trans_x.shape[1])
+        else:
+            x_transformed = torch.bmm(trans_x[:, :, :trans.shape[-1]], trans)
+            if trans_x.shape[-1] > trans.shape[-1]:
+                x_transformed = torch.cat([x_transformed, trans_x[:, :, trans.shape[-1]:]], dim=-1)
+            return x_transformed
 
     def get_orthogonal_regularization_loss(self):
         loss = torch.mean(
