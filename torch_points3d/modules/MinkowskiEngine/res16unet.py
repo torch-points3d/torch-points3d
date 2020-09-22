@@ -30,7 +30,7 @@ class BasicBlockBase(nn.Module):
             planes, planes, kernel_size=3, stride=1, dilation=dilation, bias=False, conv_type=conv_type, D=D
         )
         self.norm2 = get_norm(self.NORM_TYPE, planes, D, bn_momentum=bn_momentum)
-        self.relu = MinkowskiReLU(inplace=True)
+        self.relu = MinkowskiReLU()
         self.downsample = downsample
 
     def forward(self, x):
@@ -89,7 +89,7 @@ class BottleneckBase(nn.Module):
         self.conv3 = conv(planes, planes * self.expansion, kernel_size=1, D=D)
         self.norm3 = get_norm(self.NORM_TYPE, planes * self.expansion, D, bn_momentum=bn_momentum)
 
-        self.relu = MinkowskiReLU(inplace=True)
+        self.relu = MinkowskiReLU()
         self.downsample = downsample
 
     def forward(self, x):
@@ -163,7 +163,7 @@ class ResNetBase(MinkowskiNetwork):
         )
 
         self.bn1 = get_norm(NormType.BATCH_NORM, self.inplanes, D=self.D, bn_momentum=bn_momentum)
-        self.relu = ME.MinkowskiReLU(inplace=True)
+        self.relu = ME.MinkowskiReLU()
         self.pool = sum_pool(kernel_size=space_n_time_m(2, 1), stride=space_n_time_m(2, 1), D=D)
 
         self.layer1 = self._make_layer(
@@ -224,7 +224,9 @@ class ResNetBase(MinkowskiNetwork):
         )
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes, stride=1, dilation=dilation, conv_type=self.CONV_TYPE, D=self.D))
+            layers.append(
+                block(self.inplanes, planes, stride=1, dilation=dilation, conv_type=self.CONV_TYPE, D=self.D,)
+            )
 
         return nn.Sequential(*layers)
 
@@ -445,7 +447,7 @@ class Res16UNetBase(ResNetBase):
         )
 
         self.final = conv(self.PLANES[7], out_channels, kernel_size=1, stride=1, bias=True, D=D)
-        self.relu = MinkowskiReLU(inplace=True)
+        self.relu = ME.MinkowskiReLU()
 
     def forward(self, x):
         out = self.conv0p1s1(x)
@@ -573,8 +575,12 @@ class Res16UNet18D(Res16UNet18):
     PLANES = (32, 64, 128, 256, 384, 384, 384, 384)
 
 
-class Res16UNet32B(Res16UNet34):
-    PLANES = (32, 64, 128, 256, 256, 64, 64, 64)
+class Res16UNet18E(Res16UNet18):
+    PLANES = (32, 64, 128, 256, 256, 128, 64, 64)
+
+
+class Res16UNet18F(Res16UNet18):
+    PLANES = (32, 64, 128, 256, 256, 128, 64, 32)
 
 
 class Res16UNet34A(Res16UNet34):
