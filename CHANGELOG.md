@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Bug fix
+
+- Dataset configurations are saved in the checkpoints so that models can be created without requiring the actual dataset
+- BatchNorm1d fix
+
 ### Changed
 
 - More general API for Minkowski with support for Bottleneck blocks and Squeeze and excite.
