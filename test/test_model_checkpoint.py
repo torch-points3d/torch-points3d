@@ -119,6 +119,23 @@ class TestModelCheckpoint(unittest.TestCase):
         self.assertEqual(ckp["models"]["best_acc"]["state"].item(), optimal_state)
         self.assertEqual(ckp["models"]["latest"]["state"].item(), model.state.item())
 
+    def test_dataset_properties(self):
+        self.run_path = os.path.join(DIR, "checkpt")
+        if not os.path.exists(self.run_path):
+            os.makedirs(self.run_path)
+
+        model_checkpoint = ModelCheckpoint(self.run_path, self.model_name, "test", run_config=self.config, resume=False)
+        model_checkpoint.dataset_properties = {"first": 1, "num_classes": 20}
+        model = MockModel()
+        metric_func = {"acc": max}
+        mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
+        metric_func = {"acc": max}
+        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
+
+        ckp = ModelCheckpoint(self.run_path, self.model_name, "test", run_config=self.config, resume=False)
+
+        self.assertEqual(ckp.dataset_properties, model_checkpoint.dataset_properties)
+
     def tearDown(self):
         if os.path.exists(self.run_path):
             shutil.rmtree(self.run_path)
