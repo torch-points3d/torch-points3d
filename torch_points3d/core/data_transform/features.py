@@ -52,23 +52,21 @@ class Random3AxisRotation(object):
         self._degree_angles = [self._rot_x, self._rot_y, self._rot_z]
 
     def generate_random_rotation_matrix(self):
-        thetas = []
+        thetas = torch.zeros(3, dtype=torch.float)
         for axis_ind, deg_angle in enumerate(self._degree_angles):
             if deg_angle > 0:
                 rand_deg_angle = random.random() * deg_angle
                 rand_radian_angle = float(rand_deg_angle * np.pi) / 180.0
-                thetas.append(torch.tensor(rand_radian_angle))
-            else:
-                thetas.append(torch.tensor(0.0))
-        return euler_angles_to_rotation_matrix(thetas)
+                thetas[axis_ind] = rand_radian_angle
+        return euler_angles_to_rotation_matrix(thetas, random_order=True)
 
     def __call__(self, data):
         if self._apply_rotation:
-            pos = data.pos
+            pos = data.pos.float()
             M = self.generate_random_rotation_matrix()
             data.pos = pos @ M.T
-            if(data.norm is not None):
-                data.norm = data.norm @ M.T
+            if data.norm is not None:
+                data.norm = data.norm.float() @ M.T
         return data
 
     def __repr__(self):
@@ -87,8 +85,8 @@ class RandomTranslation(object):
     delta_max: list
         max translation
     """
-    def __init__(self, delta_max: List = [1.0, 1.0, 1.0],
-                 delta_min: List = [-1.0, -1.0, -1.0]):
+
+    def __init__(self, delta_max: List = [1.0, 1.0, 1.0], delta_min: List = [-1.0, -1.0, -1.0]):
         self.delta_max = torch.tensor(delta_max)
         self.delta_min = torch.tensor(delta_min)
 
@@ -99,9 +97,7 @@ class RandomTranslation(object):
         return data
 
     def __repr__(self):
-        return "{}(delta_min={}, delta_max={})".format(
-            self.__class__.__name__, self.delta_min, self.delta_max
-        )
+        return "{}(delta_min={}, delta_max={})".format(self.__class__.__name__, self.delta_min, self.delta_max)
 
 
 class AddFeatsByKeys(object):

@@ -197,6 +197,19 @@ class TestDataset(unittest.TestCase):
         with self.assertRaises(ValueError):
             mock_base_dataset.test_dataset = [test_with_name, test_with_name]
 
+    def test_add_weights(self):
+        dataset_opt = MockDatasetConfig()
+        setattr(dataset_opt, "dataroot", os.path.join(DIR, "temp_dataset"))
+
+        mock_base_dataset = MockBaseDataset(dataset_opt)
+        mock_base_dataset.train_dataset.data = Data(y=torch.tensor([1, 1, 1, 0]))
+        mock_base_dataset.add_weights()
+        self.assertGreater(mock_base_dataset.weight_classes[0], mock_base_dataset.weight_classes[1])
+
+        mock_base_dataset.add_weights(class_weight_method="log")
+        print(mock_base_dataset.weight_classes)
+        self.assertGreater(mock_base_dataset.weight_classes[0], mock_base_dataset.weight_classes[1])
+
 
 class TestBatchCollate(unittest.TestCase):
     def test_num_batches(self):
