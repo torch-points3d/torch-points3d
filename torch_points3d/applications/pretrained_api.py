@@ -1,6 +1,7 @@
 import os
 import logging
 import urllib.request
+from omegaconf import DictConfig
 
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
@@ -117,7 +118,7 @@ class PretainedRegistry(object):
                 CHECKPOINT_DIR, model_tag, weight_name if weight_name is not None else "latest", resume=False,
             )
             if mock_dataset:
-                dataset = checkpoint.data_config
+                dataset = DictConfig(checkpoint.dataset_properties.copy())
                 if PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag) is not None:
                     for k, v in PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag).items():
                         dataset[k] = v

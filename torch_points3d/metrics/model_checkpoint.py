@@ -32,6 +32,7 @@ class Checkpoint:
         self.stats: Dict[str, List[Any]] = {"train": [], "test": [], "val": []}
         self.optimizer: Optional[Tuple[str, Any]] = None
         self.schedulers: Dict[str, Any] = {}
+        self.dataset_properties: Dict[str, Any] = {}
 
     def save_objects(self, models_to_save: Dict[str, Any], stage, current_stat, optimizer, schedulers, **kwargs):
         """ Saves checkpoint with updated mdoels for the given stage
@@ -219,6 +220,14 @@ class ModelCheckpoint(object):
     @property
     def checkpoint_path(self):
         return self._checkpoint.path
+
+    @property
+    def dataset_properties(self) -> Dict[str, Any]:
+        return self._checkpoint.dataset_properties
+
+    @dataset_properties.setter
+    def dataset_properties(self, dataset_properties: Dict[str, Any]):
+        self._checkpoint.dataset_properties = dataset_properties
 
     def get_starting_epoch(self):
         return len(self._checkpoint.stats["train"]) + 1
