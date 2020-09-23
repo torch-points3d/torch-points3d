@@ -7,6 +7,7 @@ import re
 import torch
 import logging
 import torch.nn.functional as F
+import collections
 from torch_scatter import scatter_mean, scatter_add
 from torch_geometric.nn.pool.consecutive import consecutive_cluster
 from torch_geometric.nn import voxel_grid
@@ -236,3 +237,154 @@ class ElasticDistortion:
         return "{}(apply_distorsion={}, granularity={}, magnitude={})".format(
             self.__class__.__name__, self._apply_distorsion, self._granularity, self._magnitude,
         )
+
+
+from scipy.linalg import expm, norm
+
+
+def M(axis, theta):
+    return expm(np.cross(np.eye(3), axis / norm(axis) * theta))
+
+
+class SparseVoxelizer:
+    def __init__(
+        self,
+        voxel_size=0.05,
+        clip_bound=None,
+        use_augmentation=False,
+        scale_augmentation_bound=(0.9, 1.1),
+        rotation_augmentation_bound=((-np.pi / 64, np.pi / 64), (-np.pi / 64, np.pi / 64), (-np.pi, np.pi)),
+        translation_augmentation_ratio_bound=((-0.2, 0.2), (-0.2, 0.2), (0, 0)),
+        rotation_axis=2,
+        ignore_label=-1,
+    ):
+        """
+        Args:
+        voxel_size: side length of a voxel
+        clip_bound: boundary of the voxelizer. Points outside the bound will be deleted
+            expects either None or an array like ((-100, 100), (-100, 100), (-100, 100)).
+        scale_augmentation_bound: None or (0.9, 1.1)
+        rotation_augmentation_bound: None or ((np.pi / 6, np.pi / 6), None, None) for 3 axis.
+            Use random order of x, y, z to prevent bias.
+        translation_augmentation_bound: ((-5, 5), (0, 0), (-10, 10))
+        return_transformation: return the rigid transformation as well when get_item.
+        ignore_label: label assigned for ignore (not a training label).
+        """
+        self.voxel_size = voxel_size
+        self.clip_bound = clip_bound
+        self.ignore_label = ignore_label
+        self.rotation_axis = rotation_axis
+
+        # Augmentation
+        self.use_augmentation = use_augmentation
+        self.scale_augmentation_bound = scale_augmentation_bound
+        self.rotation_augmentation_bound = rotation_augmentation_bound
+        self.translation_augmentation_ratio_bound = translation_augmentation_ratio_bound
+
+    def get_transformation_matrix(self, rotation_angle=None):
+        voxelization_matrix, rotation_matrix = np.eye(4), np.eye(4)
+        # Get clip boundary from config or pointcloud.
+        # Get inner clip bound to crop from.
+
+        # Transform pointcloud coordinate to voxel coordinate.
+        # 1. Random rotation
+        rot_mat = np.eye(3)
+        if self.use_augmentation and self.rotation_augmentation_bound is not None:
+            if isinstance(self.rotation_augmentation_bound, collections.Iterable):
+                rot_mats = []
+                for axis_ind, rot_bound in enumerate(self.rotation_augmentation_bound):
+                    theta = 0
+                    axis = np.zeros(3)
+                    axis[axis_ind] = 1
+                    if rot_bound is not None:
+                        theta = np.random.uniform(*rot_bound)
+                    rot_mats.append(M(axis, theta))
+                # Use random order
+                np.random.shuffle(rot_mats)
+                rot_mat = rot_mats[0] @ rot_mats[1] @ rot_mats[2]
+            else:
+                raise ValueError()
+        if rotation_angle is not None:
+            axis = np.zeros(3)
+            axis[self.rotation_axis] = 1
+            rot_mat = M(axis, rotation_angle)
+        rotation_matrix[:3, :3] = rot_mat
+        # 2. Scale and translate to the voxel space.
+        scale = 1 / self.voxel_size
+        # if self.use_augmentation and self.scale_augmentation_bound is not None:
+        #   scale *= np.random.uniform(*self.scale_augmentation_bound)
+        np.fill_diagonal(voxelization_matrix[:3, :3], scale)
+        # Since voxelization floors points, translate all points by half.
+        # voxelization_matrix[:3, 3] = scale / 2
+        # Get final transformation matrix.
+        return voxelization_matrix, rotation_matrix
+
+    def clip(self, coords, center=None, trans_aug_ratio=None):
+        bound_min = np.min(coords, 0).astype(float)
+        bound_max = np.max(coords, 0).astype(float)
+        bound_size = bound_max - bound_min
+        if center is None:
+            center = bound_min + bound_size * 0.5
+        lim = self.clip_bound
+        if trans_aug_ratio is not None:
+            trans = np.multiply(trans_aug_ratio, bound_size)
+            center += trans
+        # Clip points outside the limit
+        clip_inds = [
+            (coords[:, 0] >= (lim[0][0] + center[0]))
+            & (coords[:, 0] < (lim[0][1] + center[0]))
+            & (coords[:, 1] >= (lim[1][0] + center[1]))
+            & (coords[:, 1] < (lim[1][1] + center[1]))
+            & (coords[:, 2] >= (lim[2][0] + center[2]))
+            & (coords[:, 2] < (lim[2][1] + center[2]))
+        ]
+        return clip_inds
+
+    def voxelize(self, coords, feats, labels, center=None, rotation_angle=None, return_transformation=False):
+        import MinkowskiEngine as ME
+
+        assert coords.shape[1] == 3 and coords.shape[0] == feats.shape[0]
+        if self.clip_bound is not None:
+            trans_aug_ratio = np.zeros(3)
+            if self.use_augmentation and self.translation_augmentation_ratio_bound is not None:
+                for axis_ind, trans_ratio_bound in enumerate(self.translation_augmentation_ratio_bound):
+                    trans_aug_ratio[axis_ind] = np.random.uniform(*trans_ratio_bound)
+
+            clip_inds = self.clip(coords, center, trans_aug_ratio)
+            coords, feats = coords[clip_inds], feats[clip_inds]
+            if labels is not None:
+                labels = labels[clip_inds]
+
+        # Get rotation and scale
+        M_v, M_r = self.get_transformation_matrix(rotation_angle=rotation_angle)
+        # Apply transformations
+        rigid_transformation = M_v
+        if self.use_augmentation or rotation_angle is not None:
+            rigid_transformation = M_r @ rigid_transformation
+
+        homo_coords = np.hstack((coords, np.ones((coords.shape[0], 1), dtype=coords.dtype)))
+        coords_aug = np.floor(homo_coords @ rigid_transformation.T)[:, :3]
+
+        coords_aug, feats, labels = ME.utils.sparse_quantize(
+            coords_aug, feats, labels=labels.astype(np.int32), ignore_label=self.ignore_label
+        )
+
+        # Normal rotation
+        if feats.shape[1] > 6:
+            feats[:, 3:6] = feats[:, 3:6] @ (M_r[:3, :3].T)
+
+        return_args = [coords_aug, feats, labels]
+        if return_transformation:
+            return_args.append(rigid_transformation.flatten())
+        return tuple(return_args)
+
+    def __call__(self, data):
+        coords = data.pos.numpy()
+        feats = data.x.numpy()
+        labels = data.y.numpy()
+        coords, x, y = self.voxelize(coords, feats, labels)
+        data.coords = torch.tensor(coords)
+        data.x = torch.tensor(x)
+        data.y = torch.tensor(y).long()
+        return data
+

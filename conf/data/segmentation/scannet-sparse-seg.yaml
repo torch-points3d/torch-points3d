@@ -1,6 +1,6 @@
 data:
   class: scannetseg.ScannetSegDataset
-  dataset_name: "scannet-sparse"
+  dataset_name: "scannet-sparse-seg"
   task: segmentation
   dataroot: data
   grid_size: 0.05
@@ -10,37 +10,24 @@ data:
 
   train_transform:
     - transform: ElasticDistortion
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: ${data.apply_rotation}
-        rot_x: 2
-        rot_y: 2
-        rot_z: 180
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9, 1.1]
-    - transform: GridSampling3D
-      params:
-        size: ${data.grid_size}
-        quantize_coords: True
-        mode: ${data.mode}
-    - transform: ShiftVoxels
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
         feat_names: ["rgb"]
         delete_feats: [True]
+    - transform: SparseVoxelizer
+      params:
+        use_augmentation: True
+    - transform: ShiftVoxels
 
   val_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.grid_size}
-        quantize_coords: True
-        mode: ${data.mode}
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
         feat_names: ["rgb"]
         delete_feats: [True]
+    - transform: SparseVoxelizer
+      params:
+        use_augmentation: False
 
   test_transform: ${data.val_transform}
