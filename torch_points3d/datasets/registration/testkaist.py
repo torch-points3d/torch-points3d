@@ -59,8 +59,6 @@ class TestPairKaist(BasePCRBTest):
             makedirs(folder)
         log.info("Download elements in the file {}...".format(folder))
         for name, url in self.DATASETS:
-            dataset_folder = os.path.join(folder,name)
-            # os.mkdir(dataset_folder)
             log.info(f'Downloading sequence {name}')
             filename = os.path.join(folder,name+".zip")
             gdown.download(url, filename, quiet=False)
