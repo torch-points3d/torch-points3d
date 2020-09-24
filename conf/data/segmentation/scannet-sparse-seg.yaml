@@ -9,7 +9,6 @@ data:
   mode: "last"
 
   train_transform:
-    - transform: ElasticDistortion
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
@@ -18,7 +17,6 @@ data:
     - transform: SparseVoxelizer
       params:
         use_augmentation: True
-    - transform: ShiftVoxels
 
   val_transform:
     - transform: AddFeatsByKeys

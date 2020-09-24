@@ -32,7 +32,8 @@ class Minkowski_Baseline_Model(BaseModel):
         input = ME.SparseTensor(self.input.x, coords=coords).to(self.device)
         self.output = self.model(input).feats
         self.loss_seg = F.cross_entropy(self.output, self.labels, ignore_index=IGNORE_LABEL)
-        self._dump_visuals(epoch)
+        with torch.no_grad():
+            self._dump_visuals(epoch)
 
     def backward(self):
         self.loss_seg.backward()
@@ -64,7 +65,8 @@ class APIModel(BaseModel):
     def forward(self, epoch=-1, **kwargs):
         self.output = self.model(self.input).x
         self.loss_seg = F.cross_entropy(self.output, self.labels, ignore_index=IGNORE_LABEL)
-        self._dump_visuals(epoch)
+        with torch.no_grad():
+            self._dump_visuals(epoch)
 
     def backward(self):
         self.loss_seg.backward()
