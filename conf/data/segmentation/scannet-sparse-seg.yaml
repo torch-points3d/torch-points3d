@@ -3,12 +3,16 @@ data:
   dataset_name: "scannet-sparse-seg"
   task: segmentation
   dataroot: data
-  grid_size: 0.05
+  grid_size: 0.02
   process_workers: 24
   apply_rotation: True
   mode: "last"
 
   train_transform:
+    - transform: FixedPoints
+      lparams: [100000]
+      params:
+        replace: False
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
@@ -17,6 +21,7 @@ data:
     - transform: SparseVoxelizer
       params:
         use_augmentation: True
+        voxel_size: ${data.grid_size}
 
   val_transform:
     - transform: AddFeatsByKeys
@@ -27,5 +32,6 @@ data:
     - transform: SparseVoxelizer
       params:
         use_augmentation: False
+        voxel_size: ${data.grid_size}
 
   test_transform: ${data.val_transform}

@@ -64,15 +64,15 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
             continue
 
         if torch.is_tensor(item) and item.size(0) == num_nodes:
-            if key in _INTEGER_LABEL_KEYS:
-                data[key] = item[unique_pos_indices]
-                item_min = item.min()
-                item = F.one_hot(item - item_min)
-                item = scatter_add(item, cluster, dim=0)
-                flatten_labels_voxels = torch.nonzero(item, as_tuple=True)[0]
-                mutli_label_voxels = torch.unique(flatten_labels_voxels, return_counts=True)[1] > 1
-                data[key][mutli_label_voxels] = -1
-            elif mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
+            # if key in _INTEGER_LABEL_KEYS:
+            #     data[key] = item[unique_pos_indices]
+            #     item_min = item.min()
+            #     item = F.one_hot(item - item_min)
+            #     item = scatter_add(item, cluster, dim=0)
+            #     flatten_labels_voxels = torch.nonzero(item, as_tuple=True)[0]
+            #     mutli_label_voxels = torch.unique(flatten_labels_voxels, return_counts=True)[1] > 1
+            #     data[key][mutli_label_voxels] = -1
+            if mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
                 is_item_bool = item.dtype == torch.bool

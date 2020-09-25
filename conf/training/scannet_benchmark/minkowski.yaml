@@ -32,11 +32,10 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-  entity: "nicolas"
-  project: scannet-benchmark
+  entity:
+  project: scannet-debug
   log: True
-  notes: "Minkowski baseline"
-  name: "Res16UNet34C"
+  name:
   public: True # It will be display the model within wandb log, else not.
   config:
     model_name: ${model_name}
