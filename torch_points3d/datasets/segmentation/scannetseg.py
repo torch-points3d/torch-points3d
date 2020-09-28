@@ -284,7 +284,9 @@ class ScannetSegDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        from torch_points3d.metrics.seg_tracker import SegTracker
+        from torch_points3d.metrics.scannet_segmentation_tracker import ScannetSegmentationTracker
 
-        return SegTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL)
+        return ScannetSegmentationTracker(
+            self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=IGNORE_LABEL
+        )
 

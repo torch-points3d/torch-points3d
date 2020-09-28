@@ -29,7 +29,7 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
-    - transform: ShiftVoxels
+    # - transform: ShiftVoxels
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]

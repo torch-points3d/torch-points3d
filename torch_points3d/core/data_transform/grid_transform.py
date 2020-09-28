@@ -191,7 +191,7 @@ class ElasticDistortion:
     """
 
     def __init__(
-        self, apply_distorsion: bool = True, granularity: List = [0.2, 0.4], magnitude=[0.8, 1.6],
+        self, apply_distorsion: bool = True, granularity: List = [0.2, 0.8], magnitude=[0.4, 1.6],
     ):
         assert len(magnitude) == len(granularity)
         self._apply_distorsion = apply_distorsion

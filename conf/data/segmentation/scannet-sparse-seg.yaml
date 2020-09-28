@@ -9,6 +9,7 @@ data:
   mode: "last"
 
   train_transform:
+    - transform: ElasticDistortion
     - transform: FixedPoints
       lparams: [100000]
       params:
