@@ -143,7 +143,7 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
         n_ver = len(room_ver)
         del room_ver
         nn = NearestNeighbors(n_neighbors=1, algorithm="kd_tree").fit(xyz)
-        room_labels = np.zeros((n_ver,), dtype="int64")
+        semantic_labels = np.zeros((n_ver,), dtype="int64")
         room_label = np.asarray([room_label])
         instance_labels = np.zeros((n_ver,), dtype="int64")
         objects = glob.glob(osp.join(train_file, "Annotations/*.txt"))
@@ -156,14 +156,14 @@ def read_s3dis_format(train_file, room_name, label_out=True, verbose=False, debu
             object_label = object_name_to_label(object_class)
             obj_ver = pd.read_csv(single_object, sep=" ", header=None).values
             _, obj_ind = nn.kneighbors(obj_ver[:, 0:3])
-            room_labels[obj_ind] = object_label
+            semantic_labels[obj_ind] = object_label
             instance_labels[obj_ind] = i_object
             i_object = i_object + 1
 
         return (
             torch.from_numpy(xyz),
             torch.from_numpy(rgb),
-            torch.from_numpy(room_labels),
+            torch.from_numpy(semantic_labels),
             torch.from_numpy(instance_labels),
             torch.from_numpy(room_label),
         )
@@ -399,12 +399,12 @@ class S3DISOriginalFused(InMemoryDataset):
                     read_s3dis_format(file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug)
                     continue
                 else:
-                    xyz, rgb, room_labels, instance_labels, room_label = read_s3dis_format(
+                    xyz, rgb, semantic_labels, instance_labels, room_label = read_s3dis_format(
                         file_path, room_name, label_out=True, verbose=self.verbose, debug=self.debug
                     )
 
                     rgb_norm = rgb.float() / 255.0
-                    data = Data(pos=xyz, y=room_labels, room_label=room_label, rgb=rgb_norm)
+                    data = Data(pos=xyz, y=semantic_labels, rgb=rgb_norm)
                     if room_name in VALIDATION_ROOMS:
                         data.validation_set = True
                     else:
