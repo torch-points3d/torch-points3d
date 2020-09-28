@@ -15,6 +15,7 @@ It also provide a high level API to democratize deep learning on pointclouds.
 - Python 3.6 or higher + headers (python-dev)
 - PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
 - MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
+- TorchSparse (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#torch-sparse) for installation instructions
 
 Install with
 
@@ -301,6 +302,32 @@ You are now in a position to install MinkowskiEngine with GPU support:
 
 ```bash
 poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
+```
+
+#### [Torch Sparse](https://github.com/StanfordVL/MinkowskiEngine)
+
+The repository is supporting [TorchSparse](https://github.com/mit-han-lab/torchsparse) which requires `libsparsehash-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
+
+```bash
+sudo apt install libsparsehash-dev
+```
+
+then make sure that `nvcc` is in your path:
+
+```bash
+nvcc -V
+```
+
+If it's not then locate it (`locate nvcc`) and add its location to your `PATH` variable. On my machine:
+
+```bash
+export PATH="/usr/local/cuda-10.2/bin:$PATH"
+```
+
+You are now in a position to install TorchSparse with GPU support:
+
+```bash
+poetry run pip install  git+https://github.com/mit-han-lab/torchsparse.git
 ```
 
 #### Pycuda
