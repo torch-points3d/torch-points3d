@@ -55,7 +55,7 @@ class Random3AxisRotation(object):
         thetas = torch.zeros(3, dtype=torch.float)
         for axis_ind, deg_angle in enumerate(self._degree_angles):
             if deg_angle > 0:
-                rand_deg_angle = random.random() * deg_angle
+                rand_deg_angle = random.random() * 2 * deg_angle - deg_angle
                 rand_radian_angle = float(rand_deg_angle * np.pi) / 180.0
                 thetas[axis_ind] = rand_radian_angle
         return euler_angles_to_rotation_matrix(thetas, random_order=True)
