@@ -23,8 +23,8 @@ from torch_points3d.utils.registration import get_matches, fast_global_registrat
 if __name__ == "__main__":
     # We read the data
     path_file = os.path.dirname(os.path.abspath(__file__))
-    path_s = osp.join(path_file, "..", "..", "notebooks", "data", "000186.bin")
-    path_t = osp.join(path_file, "..", "..", "notebooks", "data", "000200.bin")
+    path_s = osp.join(path_file, "..", "..", "notebooks", "data", "KITTI", "000186.bin")
+    path_t = osp.join(path_file, "..", "..", "notebooks", "data", "KITTI", "000200.bin")
     # path_t = "./notebooks/data/000049.bin"
     R_calib = np.asarray(
         [
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     transform = Compose(
         [
-            GridSampling3D(mode="last", size=0.3, quantize_coords=True),
+            GridSampling3D(mode="last", size=0.6, quantize_coords=True),
             AddOnes(),
             AddFeatByKey(add_to_x=True, feat_name="ones"),
         ]
