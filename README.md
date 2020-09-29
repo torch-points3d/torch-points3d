@@ -111,6 +111,12 @@ where each folder contains the dataset related to each task.
 
 - **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng _et al._: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
 
+- **[The IRALab Benchmark](https://github.com/iralabdisco/point_clouds_registration_benchmark)** from Simone Fontana _et al._:[A Benchmark for Point Clouds Registration Algorithms](https://arxiv.org/abs/2003.12841), which is composed of data from:
+    - [the ETH datasets](https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration);
+    - [the Canadian Planetary Emulation Terrain 3D Mapping datasets](http://asrl.utias.utoronto.ca/datasets/3dmap/index.html);
+    - [the TUM Vision Groud RGBD datasets](https://vision.in.tum.de/data/datasets/rgbd-dataset);
+    - [the KAIST Urban datasets](https://irap.kaist.ac.kr/dataset/).
+
 ### Classification
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
