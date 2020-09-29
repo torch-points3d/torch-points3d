@@ -36,6 +36,7 @@ wandb:
   project: scannet-debug
   log: True
   name:
+  id:
   public: True # It will be display the model within wandb log, else not.
   config:
     model_name: ${model_name}
