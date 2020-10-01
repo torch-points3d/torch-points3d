@@ -358,6 +358,17 @@ Registration
 http://3dmatch.cs.princeton.edu/
 
 
+IRALab Benchmark
+"""""""""""""""""""
+
+https://arxiv.org/abs/2003.12841 composed of data from:
+
+* the ETH datasets (https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration)
+* the Canadian Planetary Emulation Terrain 3D Mapping datasets (http://asrl.utias.utoronto.ca/datasets/3dmap/index.html)
+* the TUM Vision Groud RGBD datasets (https://vision.in.tum.de/data/datasets/rgbd-dataset)
+* the KAIST Urban datasets (https://irap.kaist.ac.kr/dataset)
+
+
 Model checkpoint
 ------------------
 
