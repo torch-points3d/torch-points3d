@@ -3,7 +3,6 @@ data:
   dataset_name: "scannet-sparse"
   task: segmentation
   dataroot: data
-  base_grid_size: 0.01
   grid_size: 0.05
   version: "v2"
   use_instance_labels: False
@@ -14,22 +13,35 @@ data:
   mode: "last"
 
   train_transform:
+    - transform: RandomDropout
+    - transform: FixedPoints
+      lparams: [100000]
+      params:
+        replace: False
     - transform: ElasticDistortion
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}
-        rot_x: 2
-        rot_y: 2
+        rot_x: 8
+        rot_y: 8
         rot_z: 180
-    - transform: RandomScaleAnisotropic
+    # - transform: RandomScaleAnisotropic
+    #   params:
+    #     scales: [0.9, 1.1]
+    - transform: RandomSymmetry
       params:
-        scales: [0.9, 1.1]
+        axis: [True, False, False]
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
     # - transform: ShiftVoxels
+    - transform: ChromaticAutoContrast
+    - transform: ChromaticTranslation
+    - transform: ChromaticJitter
+      params:
+        std: 0.05
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
