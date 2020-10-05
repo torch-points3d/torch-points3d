@@ -521,13 +521,14 @@ Finaly, if you want to have a direct chat with us feel free to join our slack, j
 If you find our work useful, do not hesitate to cite it:
 
 ```
-@misc{
+@inproceedings{
   tp3d,
-  author = {Chaton, T. and Chaulet N.},
-  title = {Torch Points3D}, year = {2020},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
+  title={Torch-Points3D: A Modular Multi-Task Frameworkfor Reproducible Deep Learning on 3D Point Clouds},
+  author={Chaton, Thomas and Chaulet Nicolas and Horache, Sofiane and Landrieu, Loic},
+  booktitle={2020 International Conference on 3D Vision (3DV)},
+  year={2020},
+  organization={IEEE}
+  url = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
 }
 ```
 
