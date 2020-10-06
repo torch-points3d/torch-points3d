@@ -112,6 +112,44 @@ class BaseKitti(Dataset):
         res = [osp.join(self.mode, "matches"),
                osp.join(self.mode, "fragment")]
         return res
+    def download(self):
+        log.info("WARNING: You need to first download the kitti dataset (velodyne laser data) on this website")
+        log.info("http://www.cvlibs.net/datasets/kitti/eval_odometry.php")
+        log.info("you also need to download the refined pose here")
+        log.info("https://cloud.mines-paristech.fr/index.php/s/1t1CdXxv4i2v1zC")
+        log.info("WARNING: ")
+        log.info("the tree should look like this:")
+        log.info("""
+        raw
+        ├── dataset
+        │   ├── refined_poses
+        │   └── sequences
+        │       ├── 00
+        │       │   └── velodyne
+        │       ├── 01
+        │       │   └── velodyne
+        │       ├── 02
+        │       │   └── velodyne
+        │       ├── 03
+        │       │   └── velodyne
+        │       ├── 04
+        │       │   └── velodyne
+        │       ├── 05
+        │       │   └── velodyne
+        │       ├── 06
+        │       │   └── velodyne
+        │       ├── 07
+        │       │   └── velodyne
+        │       ├── 08
+        │       │   └── velodyne
+        │       ├── 09
+        │       │   └── velodyne
+        │       ├── 10
+        │       │   └── velodyne
+
+        """)
+
+
 
     def _pre_transform_fragment(self, mod):
         """
