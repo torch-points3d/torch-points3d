@@ -202,7 +202,6 @@ class BaseKitti(Dataset):
 
             # pre_compute specific pair
             log.info("Compute the pairs")
-            time_frame = []
             if(self.min_dist is not None):
                 pair_time_frame = compute_spaced_time_frame(
                     list_name_frames, path_fragment, self.min_dist)
