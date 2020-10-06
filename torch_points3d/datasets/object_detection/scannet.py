@@ -73,6 +73,7 @@ class ScannetObjectDetection(Scannet):
         sem_cls_label: (MAX_NUM_OBJ,) semantic class index
         angle_residual_label: (MAX_NUM_OBJ,)
         size_residual_label: (MAX_NUM_OBJ,3)
+        size_label: (MAX_NUM_OBJ,3)
         box_label_mask: (MAX_NUM_OBJ) as 0/1 with 1 indicating a unique box
         vote_label: (N,3) with votes XYZ
         vote_label_mask: (N,) with 0/1 with 1 indicating the point is in one of the object's OBB.
@@ -83,6 +84,7 @@ class ScannetObjectDetection(Scannet):
         instance_labels = data.instance_labels
 
         center_label = torch.zeros((self.MAX_NUM_OBJ, 3))
+        size_label = torch.zeros((self.MAX_NUM_OBJ, 3))
         target_bboxes_mask = torch.zeros((self.MAX_NUM_OBJ), dtype=torch.bool)
         angle_residuals = torch.zeros((self.MAX_NUM_OBJ,))
         size_classes = torch.zeros((self.MAX_NUM_OBJ,))
@@ -131,9 +133,12 @@ class ScannetObjectDetection(Scannet):
         # Set size residual and box centres
         size_classes[0:num_instances] = instance_classes
         if num_instances > 0:
-            box_sizes = torch.stack(box_sizes)
+            size_label_tmp = torch.stack(box_sizes)
+            size_label[0:num_instances] = size_label_tmp
             centers = torch.stack(centers)
-            size_residuals[0:num_instances, :] = box_sizes - torch.from_numpy(self.MEAN_SIZE_ARR[instance_classes, :])
+            size_residuals[0:num_instances, :] = size_label_tmp - torch.from_numpy(
+                self.MEAN_SIZE_ARR[instance_classes, :]
+            )
             center_label[0:num_instances, :] = centers
 
         data.center_label = center_label
@@ -141,6 +146,7 @@ class ScannetObjectDetection(Scannet):
         data.heading_residual_label = angle_residuals.float()
         data.size_class_label = size_classes
         data.size_residual_label = size_residuals.float()
+        data.size_label = size_label.float()
         data.sem_cls_label = torch.from_numpy(target_bboxes_semcls).int()
         data.box_label_mask = target_bboxes_mask
         data.vote_label = point_votes.float()

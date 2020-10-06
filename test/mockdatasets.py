@@ -56,10 +56,11 @@ class MockDataset(torch.utils.data.Dataset):
             data.heading_residual_label = torch.randn((num_boxes,))
             data.size_class_label = torch.randint(0, len(self.mean_size_arr), (num_boxes,))
             data.size_residual_label = torch.randn(num_boxes, 3)
+            data.size_label = torch.randn(num_boxes, 3)
             data.sem_cls_label = torch.randint(0, 10, (num_boxes,))
-            data.box_label_mask = torch.randint(0, 1, (num_boxes,)).bool()
+            data.box_label_mask = torch.rand((num_boxes,)) > 0.5
             data.vote_label = torch.randn(self.num_points, 9)
-            data.vote_label_mask = torch.randint(0, 1, (self.num_points,)).bool()
+            data.vote_label_mask = data.box_label_mask
             data.instance_box_corners = torch.randn((num_boxes, 8, 3)).bool()
         if self.panoptic:
             data.num_instances = torch.tensor([10])

@@ -109,6 +109,31 @@ def box3d_iou(corners1, corners2):
     return iou
 
 
+def box3d_iou_aligned(centres1, sizes1, centres2, sizes2):
+    """ Compute 3D bounding box IoU for boxes aligned with the x,y,z axis
+
+    Input:
+        centres1: torch.tensor (N,3), centre of the boxes
+        sizes1: array (N,3), size_x, size_y, size_z
+        centres2: torch.tensor (M,3), centre of the boxes
+        sizes2: array (M,3), size_x, size_y, size_z
+    Output:
+        iou: [N,M] iou results
+    """
+    b1 = (centres1 - sizes1 / 2.0).unsqueeze(1).repeat(1, centres2.shape[0], 1)  # (N,M,3)
+    t1 = (centres1 + sizes1 / 2.0).unsqueeze(1).repeat(1, centres2.shape[0], 1)  # (N,M,3)
+    b2 = (centres2 - sizes2 / 2.0).unsqueeze(0).repeat(centres1.shape[0], 1, 1)  # (N,M,3)
+    t2 = (centres2 + sizes2 / 2.0).unsqueeze(0).repeat(centres1.shape[0], 1, 1)  # (N,M,3)
+
+    A = torch.max(b1, b2)
+    B = torch.min(t1, t2)
+
+    interArea = torch.prod(torch.max(B - A, torch.tensor([0.0]).to(centres1.device)), dim=-1)  # (N,M)
+    union = torch.prod(t1 - b1, dim=-1) + torch.prod(t2 - b2, dim=-1) - interArea
+
+    return interArea / union
+
+
 def box3d_vol(corners):
     """ corners: (8,3). No order required"""
     corners = np.asarray(corners)

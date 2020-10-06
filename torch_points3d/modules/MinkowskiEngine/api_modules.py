@@ -232,7 +232,7 @@ class SEBottleneckBlock(BottleneckBlock):
 _res_blocks = sys.modules[__name__]
 
 
-class ResNetDown(ME.MinkowskiNetwork):
+class ResNetBase(ME.MinkowskiNetwork):
     """
     Resnet block that looks like
 
@@ -241,7 +241,8 @@ class ResNetDown(ME.MinkowskiNetwork):
                          |-- 1x1 - BN --|
     """
 
-    CONVOLUTION = ME.MinkowskiConvolution
+    CONVOLUTION_IN = ME.MinkowskiConvolution
+    CONVOLUTION_BLOCK = ME.MinkowskiConvolution
 
     def __init__(
         self, down_conv_nn=[], kernel_size=2, dilation=1, dimension=3, stride=2, N=1, block="ResBlock", **kwargs
@@ -256,7 +257,7 @@ class ResNetDown(ME.MinkowskiNetwork):
         self.conv_in = (
             Seq()
             .append(
-                self.CONVOLUTION(
+                self.CONVOLUTION_IN(
                     in_channels=down_conv_nn[0],
                     out_channels=conv1_output,
                     kernel_size=kernel_size,
@@ -273,24 +274,31 @@ class ResNetDown(ME.MinkowskiNetwork):
         if N > 0:
             self.blocks = Seq()
             for _ in range(N):
-                self.blocks.append(block(conv1_output, down_conv_nn[1], self.CONVOLUTION, dimension=dimension))
+                self.blocks.append(block(conv1_output, down_conv_nn[1], self.CONVOLUTION_BLOCK, dimension=dimension))
                 conv1_output = down_conv_nn[1]
         else:
             self.blocks = None
 
-    def forward(self, x):
+    def forward(self, x, *args):
         out = self.conv_in(x)
         if self.blocks:
             out = self.blocks(out)
         return out
 
 
-class ResNetUp(ResNetDown):
+class ResNetDown(ResNetBase):
+    """
+    Resnet down block
+    """
+
+
+class ResNetUp(ResNetBase):
     """
     Same as Down conv but for the Decoder
     """
 
-    CONVOLUTION = ME.MinkowskiConvolutionTranspose
+    CONVOLUTION_IN = ME.MinkowskiConvolutionTranspose
+    CONVOLUTION_BLOCK = ME.MinkowskiConvolutionTranspose
 
     def __init__(self, up_conv_nn=[], kernel_size=2, dilation=1, dimension=3, stride=2, N=1, **kwargs):
         super().__init__(
@@ -303,7 +311,7 @@ class ResNetUp(ResNetDown):
             **kwargs
         )
 
-    def forward(self, x, skip):
+    def forward(self, x, skip=None):
         if skip is not None:
             inp = ME.cat(x, skip)
         else:

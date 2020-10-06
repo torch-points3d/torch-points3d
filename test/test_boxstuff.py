@@ -14,6 +14,7 @@ from torch_points3d.utils.box_utils import (
     convex_hull_graham,
     nms_samecls,
     box3d_iou,
+    box3d_iou_aligned,
 )
 from torch_points3d.modules.VoteNet.votenet_results import VoteNetResults
 from torch_points3d.metrics.box_detection.ap import eval_detection
@@ -76,6 +77,14 @@ class TestUtils(unittest.TestCase):
         box1 = box_corners_from_param(torch.tensor([2, 2, 3]).float(), 0, torch.tensor([1, 1, 0])).numpy()
         box2 = box_corners_from_param(torch.tensor([1, 1, 1]).float(), 0, torch.tensor([0.5, 0.5, 0.5])).numpy()
         self.assertAlmostEqual(box3d_iou(box1, box2), 1.0 / (2 * 3 * 2), places=5)
+
+    def test_aligned_box3diou(self):
+        centres1 = torch.tensor([[0, 0, 0], [10, 0, 0]]).float()
+        sizes1 = torch.tensor([[2, 1, 1], [1, 1, 1]]).float()
+        centres2 = torch.tensor([[0, 0, 0], [10, 0, 0], [0, 0, 0]]).float()
+        sizes2 = torch.tensor([[1, 1, 1], [1, 1, 1], [1, 1, 2]]).float()
+        ious = box3d_iou_aligned(centres1, sizes1, centres2, sizes2)
+        torch.testing.assert_allclose(ious, torch.tensor([[0.5, 0, 1.0 / 3.0], [0, 1, 0]]))
 
 
 class TestVotenetResults(unittest.TestCase):
