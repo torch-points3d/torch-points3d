@@ -72,7 +72,8 @@ class TestPairETH(BasePCRBTest):
                  min_size_block=2,
                  max_size_block=3,
                  min_points=500,
-                 ss_transform=None):
+                 ss_transform=None,
+                 use_fps=False):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/aIRBieRybts3kEs/download"
         BasePCRBTest.__init__(self,
                               root=root,
@@ -86,7 +87,8 @@ class TestPairETH(BasePCRBTest):
                               min_size_block=min_size_block,
                               max_size_block=max_size_block,
                               min_points=min_points,
-                              ss_transform=ss_transform)
+                              ss_transform=ss_transform,
+                              use_fps=use_fps)
 
     def download(self):
         folder = osp.join(self.raw_dir, "test")
