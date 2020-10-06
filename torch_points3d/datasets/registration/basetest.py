@@ -248,7 +248,8 @@ class BasePCRBTest(Dataset, GeneralFragment):
                  min_points=100,
                  min_size_block=2,
                  max_size_block=3,
-                 ss_transform=None):
+                 ss_transform=None,
+                 use_fps=False):
         """
         a baseDataset that download a dataset,
         apply preprocessing, and compute keypoints
@@ -279,6 +280,7 @@ class BasePCRBTest(Dataset, GeneralFragment):
         self.min_points = min_points
         self.min_size_block = min_size_block
         self.max_size_block = max_size_block
+        self.use_fps = use_fps
 
     def download(self):
         raise NotImplementedError("need to implement the download procedure")
