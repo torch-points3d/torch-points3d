@@ -10,8 +10,6 @@ import math
 from torch_points3d.modules.MinkowskiEngine.api_modules import ResNetDown
 from torch_points3d.modules.GSDN.layers import GSDNUp
 from torch_points3d.modules.GSDN.gsdn_results import GSDNResult
-from torch_points3d.datasets.segmentation import IGNORE_LABEL
-from torch_points3d.core.losses import huber_loss
 
 
 class GSDN(UnwrappedUnetBasedModel):
@@ -70,6 +68,7 @@ class GSDN(UnwrappedUnetBasedModel):
         self.sem_loss = 0
         self.regr_loss = 0
 
+        # Set labels
         with torch.no_grad():
             centre_labels, size_labels, class_labels = self._extract_gt()
             for i in range(1, len(self.boxes) + 1):
@@ -80,44 +79,19 @@ class GSDN(UnwrappedUnetBasedModel):
 
         #  Losses
         for box in self.boxes:
-            # Only enforce anchor objectness on positive and negative boxes
-            mask = torch.logical_or(box.positive_mask, box.negative_mask)
-            logits = box.objectness.reshape(-1)[mask]
-            labels = box.positive_mask.float()[mask]
-            weight = torch.sum(box.negative_mask).float() / torch.sum(box.positive_mask).float()
-            anchor_loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
+            anchor_loss = box.get_anchor_loss()
             if not torch.isnan(anchor_loss):
                 self.anchor_loss += anchor_loss
 
-            # Sparsity on positive and negative boxes
-            mask = torch.logical_or(box.sparsity_positive, box.sparsity_negative)
-            logits = box.sparsity.reshape(-1)[mask]
-            labels = box.sparsity_positive.float()[mask]
-            weight = torch.sum(box.sparsity_negative).float() / torch.sum(box.sparsity_positive).float()
-            sparsity_loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
+            sparsity_loss = box.get_sparsity_loss()
             if not torch.isnan(sparsity_loss):
                 self.sparsity_loss += sparsity_loss
 
-            # semantic on positives
-            positive_class_logits = box.class_logits[box.positive_mask]
-            positive_label = box.class_labels[box.positive_mask]
-            sem_loss = torch.nn.functional.cross_entropy(
-                positive_class_logits, positive_label, ignore_index=IGNORE_LABEL
-            )
+            sem_loss = box.get_semantic_loss()
             if not torch.isnan(sem_loss):
                 self.sem_loss += sem_loss
 
-            # centre on positives
-            centre_logits = box.centre_logits[box.positive_mask]
-            centre_labels = box.get_rescaled_centre_labels()[box.positive_mask]
-            regr_loss = huber_loss(centre_labels - centre_logits).mean()
-            if not torch.isnan(regr_loss):
-                self.regr_loss += regr_loss
-
-            # size on positives
-            size_logits = box.size_logits[box.positive_mask]
-            size_labels = box.get_rescaled_size_labels()[box.positive_mask]
-            regr_loss = huber_loss(size_labels - size_logits).mean()
+            regr_loss = box.get_regression_loss()
             if not torch.isnan(regr_loss):
                 self.regr_loss += regr_loss
 
@@ -148,7 +122,7 @@ class GSDN(UnwrappedUnetBasedModel):
     @staticmethod
     def anchors(size):
         anchors = [[1.0, 1.0, 1.0]]
-        for a in [2.0, 0.5]:
+        for a in [2.0, 4.0, 0.5, 0.25]:
             s = math.sqrt(a)
             anchors.append([s, s, 1.0 / s])
             anchors.append([1.0 / s, s, s])

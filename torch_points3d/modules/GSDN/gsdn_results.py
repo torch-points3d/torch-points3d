@@ -4,6 +4,7 @@ from typing import List
 from torch_geometric.data import Data
 
 from torch_points3d.utils.box_utils import box3d_iou_aligned
+from torch_points3d.datasets.segmentation import IGNORE_LABEL
 
 
 class GSDNResult(Data):
@@ -187,3 +188,43 @@ class GSDNResult(Data):
         for p in parents:
             self.sparsity_positive[p] = True
             self.sparsity_negative[p] = False
+
+    def get_anchor_loss(self):
+        """ Only enforces anchor/objectness loss on positive and negative boxes
+        """
+        mask = torch.logical_or(self.positive_mask, self.negative_mask)
+        logits = self.objectness.reshape(-1)[mask]
+        labels = self.positive_mask.float()[mask]
+        weight = torch.sum(self.negative_mask).float() / torch.sum(self.positive_mask).float()
+        return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
+
+    def get_sparsity_loss(self):
+        """ Sparsity on positive and negative boxes
+        """
+        mask = torch.logical_or(self.sparsity_positive, self.sparsity_negative)
+        logits = self.sparsity.reshape(-1)[mask]
+        labels = self.sparsity_positive.float()[mask]
+        weight = torch.sum(self.sparsity_negative).float() / torch.sum(self.sparsity_positive).float()
+        return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
+
+    def get_semantic_loss(self):
+        """ semantic loss on positives
+        """
+        positive_class_logits = self.class_logits[self.positive_mask]
+        positive_label = self.class_labels[self.positive_mask]
+        return torch.nn.functional.cross_entropy(positive_class_logits, positive_label, ignore_index=IGNORE_LABEL)
+
+    def get_regression_loss(self):
+        """
+        """
+        # centre loss on positives
+        centre_logits = self.centre_logits[self.positive_mask]
+        centre_labels = self.get_rescaled_centre_labels()[self.positive_mask]
+        regr_loss = torch.nn.functional.smooth_l1_loss(centre_labels, centre_logits)
+
+        # size on positives
+        size_logits = self.size_logits[self.positive_mask]
+        size_labels = self.get_rescaled_size_labels()[self.positive_mask]
+        regr_loss += torch.nn.functional.smooth_l1_loss(size_labels, size_logits)
+
+        return regr_loss
