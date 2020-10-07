@@ -170,7 +170,7 @@ class GeneralFragment(object):
         if self.num_pos_pairs < len(batch.pair_ind):
             num_pos_pairs = self.num_pos_pairs
 
-        if not self.use_fps:
+        if not self.use_fps or self.num_pos_pairs == len(batch.pair_ind):
             rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
         else:
             rand_ind = fps_sampling(batch.pair_ind, batch.pos, num_pos_pairs)

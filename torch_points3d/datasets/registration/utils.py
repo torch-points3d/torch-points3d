@@ -332,5 +332,7 @@ def fps_sampling(pair_ind, pos, num_pos_pairs, ind=0):
     small_pos_source = pos[pair_ind[:, ind]]
     batch = torch.zeros(small_pos_source.shape[0]).long()
     ratio = float(num_pos_pairs) / len(pair_ind)
+    if(ratio <= 0 or ratio >= 1):
+        raise ValueError("ratio cannot have this value: {}".format(ratio))
     index = fps(small_pos_source, batch, ratio=ratio, random_start=False)
     return index
