@@ -133,6 +133,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         """
         raise NotImplementedError
 
+    def set_weights(self, model):
+        self.load_state_dict(model, strict=False)
+
     def get_labels(self):
         """ returns a trensor of size ``[N_points]`` where each value is the label of a point
         """
