@@ -41,6 +41,7 @@ class VoteNetModel(BaseModel):
         """
         super(VoteNetModel, self).__init__(option)
         self._dataset = dataset
+        self._weight_classes = dataset.weight_classes
 
         # 1 - CREATE BACKBONE MODEL
         input_nc = dataset.feature_dimension
@@ -98,18 +99,18 @@ class VoteNetModel(BaseModel):
         setattr(data_votes, "seed_inds", seed_inds)  # [B,num_seeds]
         outputs: votenet_module.VoteNetResults = self.proposal_cls_module(data_votes)
 
-        # Associate proposal and GT objects by point-to-point distances
-        gt_center = self.input.center_label[:, :, 0:3]
-        outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
-
-        # Set output and compute losses
+        # Set output
         self.output = outputs
+        if hasattr(self.input, "center_label"):
+            gt_center = self.input.center_label[:, :, 0:3]
+            self.output.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
         with torch.no_grad():
             self._dump_visuals()
-        self._compute_losses()
 
     def _compute_losses(self):
-        losses = votenet_module.get_loss(self.input, self.output, self.loss_params)
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.device)
+        losses = votenet_module.get_loss(self.input, self.output, self.loss_params, weight_classes=self._weight_classes)
         for loss_name, loss in losses.items():
             if torch.is_tensor(loss):
                 if not self.losses_has_been_added:
@@ -143,4 +144,5 @@ class VoteNetModel(BaseModel):
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self._compute_losses()
         self.loss.backward()

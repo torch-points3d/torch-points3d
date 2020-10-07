@@ -7,6 +7,7 @@ from torch_points3d.utils.registration import estimate_transfo
 from torch_points3d.utils.registration import fast_global_registration
 from torch_points3d.metrics.registration_metrics import compute_hit_ratio
 from torch_points3d.metrics.registration_metrics import compute_transfo_error
+from torch_points3d.metrics.registration_metrics import compute_scaled_registration_error
 from torch_points3d.utils.geometry import rodrigues
 from torch_points3d.utils.geometry import euler_angles_to_rotation_matrix
 
@@ -75,6 +76,17 @@ class TestRegistrationMetrics(unittest.TestCase):
         rte, rre = compute_transfo_error(torch.eye(4), T)
         npt.assert_allclose(rte.item(), 1)
         npt.assert_allclose(rre.item(), 30, rtol=1e-3)
+
+    def test_compute_scaled_registration_error(self):
+
+        xyz = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [0.0, 2.0, 0.0], [2.0, 0.0, 0.0],])
+        R_est = euler_angles_to_rotation_matrix(torch.tensor([0, 0, np.pi / 6]))
+        T_gt = torch.eye(4)
+        T_est = torch.eye(4)
+        T_est[:3, :3] = R_est
+        err = compute_scaled_registration_error(xyz, T_gt, T_est)
+        val = 0.55901
+        self.assertAlmostEqual(err.item(), val, places=5)
 
 
 if __name__ == "__main__":

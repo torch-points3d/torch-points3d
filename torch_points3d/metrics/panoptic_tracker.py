@@ -121,6 +121,7 @@ class PanopticTracker(SegmentationTracker):
         self._scan_id_offset = 0
         self._rec: Dict[str, float] = {}
         self._ap: Dict[str, float] = {}
+        self._iou_per_class = {}
 
     def track(
         self,
@@ -170,6 +171,9 @@ class PanopticTracker(SegmentationTracker):
             self._scan_id_offset += data.batch[-1].item() + 1
 
     def finalise(self, track_instances=True, **kwargs):
+        per_class_iou = self._confusion_matrix.get_intersection_union_per_class()[0]
+        self._iou_per_class = {k: v for k, v in enumerate(per_class_iou)}
+
         if not track_instances:
             return
 
@@ -276,6 +280,9 @@ class PanopticTracker(SegmentationTracker):
         if self._has_instance_data:
             mAP = sum(self._ap.values()) / len(self._ap)
             metrics["{}_map".format(self._stage)] = mAP
+
+        if verbose:
+            metrics["{}_iou_per_class".format(self._stage)] = self._iou_per_class
 
         if verbose and self._has_instance_data:
             metrics["{}_class_rec".format(self._stage)] = self._dict_to_str(self._rec)

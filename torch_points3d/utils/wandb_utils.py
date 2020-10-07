@@ -64,10 +64,12 @@ class Wandb:
             wandb_args = {}
             wandb_args["project"] = cfg.wandb.project
             wandb_args["tags"] = tags
+            wandb_args["resume"] = "allow"
             Wandb._set_to_wandb_args(wandb_args, cfg, "name")
             Wandb._set_to_wandb_args(wandb_args, cfg, "entity")
             Wandb._set_to_wandb_args(wandb_args, cfg, "notes")
             Wandb._set_to_wandb_args(wandb_args, cfg, "config")
+            Wandb._set_to_wandb_args(wandb_args, cfg, "id")
 
             try:
                 commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()

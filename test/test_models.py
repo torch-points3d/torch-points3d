@@ -124,7 +124,11 @@ class TestModels(unittest.TestCase):
                     if not is_known_to_fail(model_name):
                         models_config.update("model_name", model_name)
                         dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
-                        model = instantiate_model(models_config, dataset)
+                        try:
+                            model = instantiate_model(models_config, dataset)
+                        except Exception as e:
+                            print(e)
+                            raise Exception(models_config)
                         model.set_input(dataset[0], device)
                         try:
                             model.forward()
@@ -151,6 +155,7 @@ class TestModels(unittest.TestCase):
         config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
         dataset = get_dataset("dense", "object_detection")
         model = instantiate_model(config, dataset)
+        print(model)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()

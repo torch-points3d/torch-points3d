@@ -1,5 +1,5 @@
 import numpy as np
-import sklearn.metrics as sk
+import torch
 import os
 
 
@@ -20,7 +20,13 @@ class ConfusionMatrix:
 
     def count_predicted_batch(self, ground_truth_vec, predicted):
         assert np.max(predicted) < self.number_of_labels
-        batch_confusion = sk.confusion_matrix(ground_truth_vec, predicted, labels=range(self.number_of_labels))
+        if torch.is_tensor(ground_truth_vec):
+            ground_truth_vec = ground_truth_vec.numpy()
+        if torch.is_tensor(predicted):
+            predicted = predicted.numpy()
+        batch_confusion = np.bincount(
+            self.number_of_labels * ground_truth_vec.astype(int) + predicted, minlength=self.number_of_labels ** 2
+        ).reshape(self.number_of_labels, self.number_of_labels)
         if self.confusion_matrix is None:
             self.confusion_matrix = batch_confusion
         else:

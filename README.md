@@ -2,7 +2,7 @@
   <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
 </p>
 
-[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest) [![slack](https://img.shields.io/badge/slack-tp3d-brightgreen)](https://torchgeometricco.slack.com/join/shared_invite/zt-hn9vter8-EQn4L4wLfE7PZEYbLMlw~Q#/)
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) and [Facebook Hydra](https://hydra.cc/).
 
@@ -93,7 +93,7 @@ where each folder contains the dataset related to each task.
 ```
 * S3DIS 1x1
 * S3DIS Room
-* S3DIS Fused
+* S3DIS Fused - Sphere | Cylinder
 ```
 
 - **[Shapenet](https://www.shapenet.org/)** from Angel X. Chang _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
@@ -101,10 +101,21 @@ where each folder contains the dataset related to each task.
 ### Object detection and panoptic
 
 - **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai _et al._: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
+- **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni _et al._: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105)
+
+```
+* S3DIS Fused - Sphere | Cylinder
+```
 
 ### Registration
 
 - **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng _et al._: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
+
+- **[The IRALab Benchmark](https://github.com/iralabdisco/point_clouds_registration_benchmark)** from Simone Fontana _et al._:[A Benchmark for Point Clouds Registration Algorithms](https://arxiv.org/abs/2003.12841), which is composed of data from:
+    - [the ETH datasets](https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration);
+    - [the Canadian Planetary Emulation Terrain 3D Mapping datasets](http://asrl.utias.utoronto.ca/datasets/3dmap/index.html);
+    - [the TUM Vision Groud RGBD datasets](https://vision.in.tum.de/data/datasets/rgbd-dataset);
+    - [the KAIST Urban datasets](https://irap.kaist.ac.kr/dataset/).
 
 ### Classification
 
@@ -510,13 +521,14 @@ Finaly, if you want to have a direct chat with us feel free to join our slack, j
 If you find our work useful, do not hesitate to cite it:
 
 ```
-@misc{
+@inproceedings{
   tp3d,
-  author = {Chaton, T. and Chaulet N.},
-  title = {Torch Points3D}, year = {2020},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
+  title={Torch-Points3D: A Modular Multi-Task Frameworkfor Reproducible Deep Learning on 3D Point Clouds},
+  author={Chaton, Thomas and Chaulet Nicolas and Horache, Sofiane and Landrieu, Loic},
+  booktitle={2020 International Conference on 3D Vision (3DV)},
+  year={2020},
+  organization={IEEE}
+  url = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
 }
 ```
 

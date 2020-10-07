@@ -1,6 +1,6 @@
 import torch.nn.functional as F
 import logging
-
+from omegaconf import OmegaConf
 from torch_points3d.core.base_conv.base_conv import *
 from torch_points3d.core.common_modules.base_modules import *
 from torch_points3d.utils.config import ConvolutionFormatFactory
@@ -13,9 +13,10 @@ log = logging.getLogger(__name__)
 
 
 class PointNet(BaseModel):
-    def __init__(self, opt, type, dataset, modules_lib):
+    def __init__(self, opt, model_type=None, dataset=None, modules=None):
         super().__init__(opt)
-        self.pointnet_seg = PointNetSeg(**flatten_dict(opt))
+
+        self._opt = OmegaConf.to_container(opt)
         self._is_dense = ConvolutionFormatFactory.check_is_dense_format(self.conv_type)
 
         self.visual_names = ["data_visual"]
@@ -23,12 +24,21 @@ class PointNet(BaseModel):
     def set_input(self, data, device):
         data = data.to(device)
         self.input = data
+        if data.x is not None:
+            self.input_features = torch.cat([data.pos, data.x], axis=-1)
+        else:
+            self.input_features = data.pos
+        self._build_model()
         self.labels = data.y
-
         self.pointnet_seg.set_scatter_pooling(not self._is_dense)
 
+    def _build_model(self):
+        if not hasattr(self, "pointnet_seg"):
+            self.pointnet_seg = PointNetSeg(input_nc=self.input_features.shape[-1], 
+                                **flatten_dict(self._opt))
+
     def forward(self, *args, **kwargs):
-        x = self.pointnet_seg(self.input.pos, self.input.batch)
+        x = self.pointnet_seg(self.input_features, self.input.batch)
         self.output = F.log_softmax(x, dim=-1)
         internal_loss = self.get_internal_loss()
         if self.labels is not None:

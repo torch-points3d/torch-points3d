@@ -6,6 +6,7 @@ from torch_geometric.data import InMemoryDataset
 from torch_points3d.datasets.segmentation.scannet import Scannet
 from torch_points3d.metrics.panoptic_tracker import PanopticTracker
 from torch_points3d.datasets.base_dataset import BaseDataset, save_used_properties
+from torch_points3d.datasets.panoptic.utils import set_extra_labels
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -38,57 +39,11 @@ class ScannetPanoptic(Scannet):
 
         # Extract instance and box labels
         self._set_extra_labels(data)
+        data.y = self._remap_labels(data.y)
         return data
 
     def _set_extra_labels(self, data):
-        """ Adds extra labels for the instance and object segmentation tasks
-        - num_instances: number of instances
-        - center_label: [64, 3] on centre per instance
-        - instance_labels: [num_points]
-        - vote_label: [num_points, 3] displacmenet between each point and the center.
-        - instance_mask: [num_points] boolean mask 
-        """
-        # Initaliase variables
-        num_points = data.pos.shape[0]
-        semantic_labels = data.y
-
-        # compute votes *AFTER* augmentation
-        instances = np.unique(data.instance_labels)
-        centers = []
-        point_votes = torch.zeros([num_points, 3])
-        instance_labels = torch.zeros(num_points, dtype=torch.long)
-        instance_idx = 1
-        for i_instance in instances:
-            # find all points belong to that instance
-            ind = np.where(data.instance_labels == i_instance)[0]
-            # find the semantic label
-            instance_class = semantic_labels[ind[0]].item()
-            if instance_class in self.NYU40IDS:  # We keep this instance
-                pos = data.pos[ind, :3]
-                max_pox = pos.max(0)[0]
-                min_pos = pos.min(0)[0]
-                center = 0.5 * (min_pos + max_pox)
-                point_votes[ind, :] = center - pos
-                centers.append(torch.tensor(center))
-                instance_labels[ind] = instance_idx
-                instance_idx += 1
-
-        num_instances = len(centers)
-        if num_instances > self.NUM_MAX_OBJECTS:
-            raise ValueError(
-                "We have more objects than expected. Please increase the NUM_MAX_OBJECTS variable.")
-        data.center_label = torch.zeros((self.NUM_MAX_OBJECTS, 3))
-        if num_instances:
-            data.center_label[:num_instances, :] = torch.stack(centers)
-
-        data.vote_label = point_votes.float()
-        data.instance_labels = instance_labels
-        data.instance_mask = instance_labels != 0
-        data.num_instances = torch.tensor([num_instances])
-
-        # Remap labels
-        data.y = super()._remap_labels(data.y)
-        return data
+        return set_extra_labels(data, self.NYU40ID2CLASS, self.NUM_MAX_OBJECTS)
 
     def _remap_labels(self, semantic_label):
         return semantic_label
