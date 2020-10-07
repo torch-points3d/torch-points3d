@@ -61,35 +61,20 @@ class GSDN(UnwrappedUnetBasedModel):
         self.output = GSDNResults(boxes)
         self.coord_manager = data.coords_man
 
-    def _compute_losses(self):
-        self.loss = 0
-        self.anchor_loss = 0
-        self.sparsity_loss = 0
-        self.sem_loss = 0
-        self.regr_loss = 0
+        if self.raw_data.center_label is not None:
+            self._compute_losses()
 
+    def _compute_losses(self):
         # Set labels
         with torch.no_grad():
             centre_labels, size_labels, class_labels = self._extract_gt()
             self.output.evaluate_labels(centre_labels, size_labels, class_labels, self.coord_manager)
 
         #  Losses
-        anchor_loss = self.output.get_anchor_loss()
-        if not torch.isnan(anchor_loss):
-            self.anchor_loss += anchor_loss
-
-        sparsity_loss = self.output.get_sparsity_loss()
-        if not torch.isnan(sparsity_loss):
-            self.sparsity_loss += sparsity_loss
-
-        sem_loss = self.output.get_semantic_loss()
-        if not torch.isnan(sem_loss):
-            self.sem_loss += sem_loss
-
-        regr_loss = self.output.get_regression_loss()
-        if not torch.isnan(regr_loss):
-            self.regr_loss += regr_loss
-
+        self.anchor_loss = self.output.get_anchor_loss()
+        self.sparsity_loss = self.output.get_sparsity_loss()
+        self.sem_loss = self.output.get_semantic_loss()
+        self.regr_loss = self.output.get_regression_loss()
         self.loss = self.sparsity_loss + self.anchor_loss + self.sem_loss + 0.1 * self.regr_loss
 
     def _extract_gt(self):
@@ -110,9 +95,7 @@ class GSDN(UnwrappedUnetBasedModel):
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        self._compute_losses()
-        if torch.is_tensor(self.loss):
-            self.loss.backward()
+        self.loss.backward()
 
     @staticmethod
     def anchors(size):

@@ -218,6 +218,7 @@ class GSDNResults:
 
         logits = torch.cat(logits, 0)
         labels = torch.cat(labels, 0)
+        positives = torch.max(positives, torch.tensor([1.0]).to(positives.device))
         return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=negatives / positives)
 
     def get_sparsity_loss(self):
@@ -234,6 +235,7 @@ class GSDNResults:
 
         logits = torch.cat(logits, 0)
         labels = torch.cat(labels, 0)
+        positives = torch.max(positives, torch.tensor([1.0]).to(positives.device))
         return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=negatives / positives)
 
     def get_semantic_loss(self):
@@ -245,7 +247,10 @@ class GSDNResults:
 
         logits = torch.cat(logits, 0)
         labels = torch.cat(labels, 0)
-        return torch.nn.functional.cross_entropy(logits, labels, ignore_index=IGNORE_LABEL)
+        if logits.shape[0] == 0:
+            return torch.tensor([0.0]).to(logits.device)
+        else:
+            return torch.nn.functional.cross_entropy(logits, labels, ignore_index=IGNORE_LABEL)
 
     def get_regression_loss(self):
         """
@@ -268,6 +273,9 @@ class GSDNResults:
         size_logits = torch.cat(size_logits, 0)
         size_labels = torch.cat(size_labels, 0)
 
-        return torch.nn.functional.smooth_l1_loss(size_labels, size_logits) + torch.nn.functional.smooth_l1_loss(
-            centre_labels, centre_logits
-        )
+        if centre_logits.shape[0] == 0:
+            return torch.tensor([0.0]).to(centre_logits.device)
+        else:
+            return torch.nn.functional.smooth_l1_loss(size_labels, size_logits) + torch.nn.functional.smooth_l1_loss(
+                centre_labels, centre_logits
+            )

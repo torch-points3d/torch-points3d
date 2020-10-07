@@ -38,10 +38,6 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
-    - transform: FixedPoints
-      lparams: [50000]
-      params:
-        replace: False
     - transform: ShiftVoxels
     - transform: AddFeatsByKeys
       params:
@@ -60,10 +56,6 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
-    - transform: FixedPoints
-      lparams: [50000]
-      params:
-        replace: False
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True, True, True]
