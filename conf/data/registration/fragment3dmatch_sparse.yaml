@@ -15,7 +15,7 @@ data:
   self_supervised: False
   min_size_block: 0.5
   max_size_block: 1
-  num_pos_pairs: 30000
+  num_pos_pairs: 400
   min_points: 400
   num_points: 5000
   tau_1: 0.1

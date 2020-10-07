@@ -173,7 +173,7 @@ class GeneralFragment(object):
         if not self.use_fps:
             rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
         else:
-            rand_ind = fps_sampling(batch.pair_ind, batch.pos_source, batch.pos_target)
+            rand_ind = fps_sampling(batch.pair_ind, batch.pos, num_pos_pairs)
         batch.pair_ind = batch.pair_ind[rand_ind]
         batch.size_pair_ind = torch.tensor([num_pos_pairs])
         if(len(batch.pair_ind) == 0):
