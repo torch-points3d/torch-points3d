@@ -7,7 +7,7 @@ from torch_points3d.utils.box_utils import box3d_iou_aligned
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 
 
-class GSDNResult(Data):
+class GSDNLayerPrediction(Data):
     """
     centres: torch.Tensor = None  # [N, len(anchors), 3]
     centre_logits: torch.Tensor = None  # [N*len(anchors), 3]
@@ -189,42 +189,85 @@ class GSDNResult(Data):
             self.sparsity_positive[p] = True
             self.sparsity_negative[p] = False
 
+
+class GSDNResults:
+    """ Aggregation of every layer prediction
+    """
+
+    def __init__(self, layer_results: List[GSDNLayerPrediction]):
+        self._layer_results = layer_results
+
+    def evaluate_labels(self, centre_labels, size_labels, class_labels, coord_manager):
+        for i in range(1, len(self._layer_results) + 1):
+            box = self._layer_results[-i]
+            box.evaluate_labels(centre_labels, size_labels, class_labels)
+            if i > 1:
+                box.set_sparsity(self._layer_results[-i + 1], coord_manager)
+
     def get_anchor_loss(self):
-        """ Only enforces anchor/objectness loss on positive and negative boxes
-        """
-        mask = torch.logical_or(self.positive_mask, self.negative_mask)
-        logits = self.objectness.reshape(-1)[mask]
-        labels = self.positive_mask.float()[mask]
-        weight = torch.sum(self.negative_mask).float() / torch.sum(self.positive_mask).float()
-        return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
+        logits = []
+        labels = []
+        positives = 0
+        negatives = 0
+        for results in self._layer_results:
+            mask = torch.logical_or(results.positive_mask, results.negative_mask)
+            logits.append(results.objectness.reshape(-1)[mask])
+            labels.append(results.positive_mask.float()[mask])
+            positives += torch.sum(results.positive_mask).float()
+            negatives += torch.sum(results.negative_mask).float()
+
+        logits = torch.cat(logits, 0)
+        labels = torch.cat(labels, 0)
+        return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=negatives / positives)
 
     def get_sparsity_loss(self):
-        """ Sparsity on positive and negative boxes
-        """
-        mask = torch.logical_or(self.sparsity_positive, self.sparsity_negative)
-        logits = self.sparsity.reshape(-1)[mask]
-        labels = self.sparsity_positive.float()[mask]
-        weight = torch.sum(self.sparsity_negative).float() / torch.sum(self.sparsity_positive).float()
-        return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=weight)
+        logits = []
+        labels = []
+        positives = 0
+        negatives = 0
+        for results in self._layer_results:
+            mask = torch.logical_or(results.sparsity_positive, results.sparsity_negative)
+            logits.append(results.sparsity.reshape(-1)[mask])
+            labels.append(results.sparsity_positive.float()[mask])
+            positives += torch.sum(results.sparsity_positive).float()
+            negatives += torch.sum(results.sparsity_negative).float()
+
+        logits = torch.cat(logits, 0)
+        labels = torch.cat(labels, 0)
+        return torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, pos_weight=negatives / positives)
 
     def get_semantic_loss(self):
-        """ semantic loss on positives
-        """
-        positive_class_logits = self.class_logits[self.positive_mask]
-        positive_label = self.class_labels[self.positive_mask]
-        return torch.nn.functional.cross_entropy(positive_class_logits, positive_label, ignore_index=IGNORE_LABEL)
+        logits = []
+        labels = []
+        for results in self._layer_results:
+            logits.append(results.class_logits[results.positive_mask])
+            labels.append(results.class_labels[results.positive_mask])
+
+        logits = torch.cat(logits, 0)
+        labels = torch.cat(labels, 0)
+        return torch.nn.functional.cross_entropy(logits, labels, ignore_index=IGNORE_LABEL)
 
     def get_regression_loss(self):
         """
         """
-        # centre loss on positives
-        centre_logits = self.centre_logits[self.positive_mask]
-        centre_labels = self.get_rescaled_centre_labels()[self.positive_mask]
-        regr_loss = torch.nn.functional.smooth_l1_loss(centre_labels, centre_logits)
+        centre_logits = []
+        centre_labels = []
+        size_logits = []
+        size_labels = []
+        for results in self._layer_results:
+            # centre loss on positives
+            centre_logits.append(results.centre_logits[results.positive_mask])
+            centre_labels.append(results.get_rescaled_centre_labels()[results.positive_mask])
 
-        # size on positives
-        size_logits = self.size_logits[self.positive_mask]
-        size_labels = self.get_rescaled_size_labels()[self.positive_mask]
-        regr_loss += torch.nn.functional.smooth_l1_loss(size_labels, size_logits)
+            # size on positives
+            size_logits.append(results.size_logits[results.positive_mask])
+            size_labels.append(results.get_rescaled_size_labels()[results.positive_mask])
 
-        return regr_loss
+        centre_logits = torch.cat(centre_logits, 0)
+        centre_labels = torch.cat(centre_labels, 0)
+        size_logits = torch.cat(size_logits, 0)
+        size_labels = torch.cat(size_labels, 0)
+
+        return torch.nn.functional.smooth_l1_loss(size_labels, size_logits) + torch.nn.functional.smooth_l1_loss(
+            centre_labels, centre_logits
+        )

@@ -60,7 +60,7 @@ class MockDataset(torch.utils.data.Dataset):
             data.sem_cls_label = torch.randint(0, 10, (num_boxes,))
             data.box_label_mask = torch.rand((num_boxes,)) > 0.5
             data.vote_label = torch.randn(self.num_points, 9)
-            data.vote_label_mask = data.box_label_mask
+            data.vote_label_mask = torch.rand((self.num_points,)) > 0.5
             data.instance_box_corners = torch.randn((num_boxes, 8, 3)).bool()
         if self.panoptic:
             data.num_instances = torch.tensor([10])

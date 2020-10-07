@@ -209,7 +209,7 @@ class KPConvDeformableLayer(BaseInternalLossModule):
             offsets = offsets.reshape((-1, self.n_kernel_points, points_dim))
 
             # Get modulations
-            modulations = 2 * torch.nn.functional.sigmoid(offset_feat[:, points_dim * self.n_kernel_points :])
+            modulations = 2 * torch.sigmoid(offset_feat[:, points_dim * self.n_kernel_points :])
         else:
             # Get offset (in normalized scale) from features
             offsets = offset_feat.reshape((-1, self.n_kernel_points, points_dim))

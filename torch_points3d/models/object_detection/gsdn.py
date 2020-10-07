@@ -9,7 +9,7 @@ import math
 
 from torch_points3d.modules.MinkowskiEngine.api_modules import ResNetDown
 from torch_points3d.modules.GSDN.layers import GSDNUp
-from torch_points3d.modules.GSDN.gsdn_results import GSDNResult
+from torch_points3d.modules.GSDN.gsdn_results import GSDNLayerPrediction, GSDNResults
 
 
 class GSDN(UnwrappedUnetBasedModel):
@@ -43,7 +43,7 @@ class GSDN(UnwrappedUnetBasedModel):
         stack_down.append(None)
 
         # Up convs
-        self.boxes = []
+        boxes = []
         anchor_size = 1
         for i in range(len(self.up_modules)):
             data, box = self.up_modules[i](data, stack_down.pop())
@@ -53,12 +53,12 @@ class GSDN(UnwrappedUnetBasedModel):
             box.grid_size = self.raw_data.grid_size[0].to(box.device)
 
             # append to hierarchy of predictions
-            self.boxes.append(box)
+            boxes.append(box)
 
             # increase anchor_size
             anchor_size *= 2
 
-        self.output = self.boxes
+        self.output = GSDNResults(boxes)
         self.coord_manager = data.coords_man
 
     def _compute_losses(self):
@@ -71,29 +71,24 @@ class GSDN(UnwrappedUnetBasedModel):
         # Set labels
         with torch.no_grad():
             centre_labels, size_labels, class_labels = self._extract_gt()
-            for i in range(1, len(self.boxes) + 1):
-                box = self.boxes[-i]
-                box.evaluate_labels(centre_labels, size_labels, class_labels)
-                if i > 1:
-                    box.set_sparsity(self.boxes[-i + 1], self.coord_manager)
+            self.output.evaluate_labels(centre_labels, size_labels, class_labels, self.coord_manager)
 
         #  Losses
-        for box in self.boxes:
-            anchor_loss = box.get_anchor_loss()
-            if not torch.isnan(anchor_loss):
-                self.anchor_loss += anchor_loss
+        anchor_loss = self.output.get_anchor_loss()
+        if not torch.isnan(anchor_loss):
+            self.anchor_loss += anchor_loss
 
-            sparsity_loss = box.get_sparsity_loss()
-            if not torch.isnan(sparsity_loss):
-                self.sparsity_loss += sparsity_loss
+        sparsity_loss = self.output.get_sparsity_loss()
+        if not torch.isnan(sparsity_loss):
+            self.sparsity_loss += sparsity_loss
 
-            sem_loss = box.get_semantic_loss()
-            if not torch.isnan(sem_loss):
-                self.sem_loss += sem_loss
+        sem_loss = self.output.get_semantic_loss()
+        if not torch.isnan(sem_loss):
+            self.sem_loss += sem_loss
 
-            regr_loss = box.get_regression_loss()
-            if not torch.isnan(regr_loss):
-                self.regr_loss += regr_loss
+        regr_loss = self.output.get_regression_loss()
+        if not torch.isnan(regr_loss):
+            self.regr_loss += regr_loss
 
         self.loss = self.sparsity_loss + self.anchor_loss + self.sem_loss + 0.1 * self.regr_loss
 

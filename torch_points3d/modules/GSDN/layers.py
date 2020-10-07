@@ -3,7 +3,7 @@ import MinkowskiEngine as ME
 from functools import partial
 
 from torch_points3d.modules.MinkowskiEngine.api_modules import ResNetBase, ResNetDown
-from .gsdn_results import GSDNResult
+from .gsdn_results import GSDNLayerPrediction
 
 
 class GSDNUp(ResNetBase):
@@ -22,7 +22,7 @@ class GSDNUp(ResNetBase):
             down_conv_nn=up_conv_nn, kernel_size=kernel_size, stride=stride, N=N, **kwargs,
         )
 
-        self.Sparsity = torch.nn.Linear(up_conv_nn[0], 1)
+        self.Sparsity = torch.nn.Linear(up_conv_nn[0], 1, bias=False)
         self.Detector = torch.nn.Linear(
             up_conv_nn[0], nb_anchors * (num_classes + 7)
         )  # 3 center offset, 3 size offset and 1 objectness
@@ -40,12 +40,22 @@ class GSDNUp(ResNetBase):
             inp = union(x, skip)
         else:
             inp = x
+
+        # Compute predictions for that layer
         boxes = self.Detector(inp.feats)
-        sparsity_score = self.Sparsity(inp.feats).squeeze(-1)
-        boxes = GSDNResult.create_from_logits(inp, boxes, self.nb_anchors, sparsity_score)
-        keep = (sparsity_score > self.tau).cpu()
+        sparsity_logits = self.Sparsity(inp.feats).squeeze(-1)
+        boxes = GSDNLayerPrediction.create_from_logits(inp, boxes, self.nb_anchors, sparsity_logits)
+
+        # Prune
+        sparsity_proba = torch.sigmoid(sparsity_logits)
+        keep = (sparsity_proba > self.tau).cpu()
+        if torch.sum(keep) > 1000:  # Too many are kept initially
+            keep[:] = False
+            topk = torch.topk(sparsity_proba, 1000)[1]
+            keep[topk] = True
         pruned = ME.MinkowskiPruning()(inp, keep)
 
+        # Conv transpose
         if self.stride > 1:
             out_tensor = super().forward(pruned)
         else:

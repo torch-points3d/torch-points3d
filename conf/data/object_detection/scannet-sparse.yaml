@@ -12,10 +12,6 @@ data:
   grid_size: 0.05
   mode: last
 
-  pre_transform:
-    - transform: GridSampling3D
-      lparams: [0.02]
-
   train_transform:
     - transform: XYZFeature
       params:

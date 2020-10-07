@@ -168,6 +168,10 @@ class ScannetObjectDetection(Scannet):
     def process(self):
         super().process()
 
+    @property
+    def num_classes(self):
+        return len(self.NYU40IDS)
+
     def download(self):
         super().download()
 

@@ -3,7 +3,7 @@ import torch
 import MinkowskiEngine as ME
 import math
 
-from torch_points3d.modules.GSDN.gsdn_results import GSDNResult
+from torch_points3d.modules.GSDN.gsdn_results import GSDNLayerPrediction, GSDNResults
 
 
 class TestGSDN(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestGSDN(unittest.TestCase):
         logits = torch.tensor([[0, 1, 0, 1, 1, 1, 1, 0, 1]]).float()
         sparsity = torch.tensor([[1]]).float()
 
-        result = GSDNResult.create_from_logits(sparsetensor, logits, 1, sparsity)
+        result = GSDNLayerPrediction.create_from_logits(sparsetensor, logits, 1, sparsity)
         result.grid_size = 0.1
         result.anchors = torch.tensor([[1.0, 2.0, 3.0]])
 
@@ -23,7 +23,7 @@ class TestGSDN(unittest.TestCase):
         torch.testing.assert_allclose(sizes, math.exp(1) * torch.tensor([[1, 2, 3]]))
 
         logits = torch.tensor([[0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0]]).float()
-        result = GSDNResult.create_from_logits(sparsetensor, logits, 2, sparsity)
+        result = GSDNLayerPrediction.create_from_logits(sparsetensor, logits, 2, sparsity)
         result.grid_size = 0.1
         result.anchors = torch.tensor([[1.0, 2.0, 3.0], [10.0, 1, 1]])
         centres, sizes = result._get_for_sample(0)
@@ -45,7 +45,7 @@ class TestGSDN(unittest.TestCase):
                 [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0],
             ]
         ).float()
-        result = GSDNResult.create_from_logits(sparsetensor, logits, 2, sparsity)
+        result = GSDNLayerPrediction.create_from_logits(sparsetensor, logits, 2, sparsity)
         result.grid_size = 0.1
         result.anchors = torch.tensor([[1.0, 2.0, 3.0], [10.0, 1, 1]])
 
@@ -72,14 +72,14 @@ class TestGSDN(unittest.TestCase):
         coords = torch.tensor([[0, 1, 1, 0], [1, 10, 0, 0]]).int()
         feats = torch.ones((coords.shape[0], 1))
         sparsetensor = ME.SparseTensor(feats=feats, coords=coords)
-        sparsity = 1000 * torch.tensor([[1, 1]]).float()
+        sparsity = torch.tensor([[1, 1]]).float()
         logits = torch.tensor(
             [
                 [0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1000, -1000, -100, 100, 100, -100],
                 [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1000, 1000, -100, 100, 100, -100],
             ]
         ).float()
-        result = GSDNResult.create_from_logits(sparsetensor, logits, 2, sparsity)
+        result = GSDNLayerPrediction.create_from_logits(sparsetensor, logits, 2, sparsity)
         result.grid_size = 0.1
         result.anchors = torch.tensor([[1.0, 2.0, 3.0], [10.0, 1, 1]])
 
@@ -87,12 +87,13 @@ class TestGSDN(unittest.TestCase):
         size_labels = [torch.tensor([[1, 2, 3], [1.0, 3.0, 1.0]]), torch.tensor([[10, 1, 1]]).float()]
         class_labels = [torch.tensor([1, 0]), torch.tensor([0])]
 
-        result.evaluate_labels(centre_labels, size_labels, class_labels)
+        results = GSDNResults([result])
+        results.evaluate_labels(centre_labels, size_labels, class_labels, sparsetensor.coords_man)
 
-        self.assertEqual(result.get_anchor_loss().item(), 0)
-        self.assertEqual(result.get_sparsity_loss().item(), 0)
-        self.assertEqual(result.get_semantic_loss().item(), 0)
-        self.assertAlmostEqual(result.get_regression_loss().item(), 0)
+        self.assertEqual(results.get_anchor_loss().item(), 0)
+        self.assertEqual(results.get_sparsity_loss().item(), 0)
+        self.assertEqual(results.get_semantic_loss().item(), 0)
+        self.assertAlmostEqual(results.get_regression_loss().item(), 0)
 
     def test_setsparsity(self):
         anchors = torch.tensor([[1.0, 2.0, 3.0], [10.0, 1, 1]])
@@ -106,7 +107,7 @@ class TestGSDN(unittest.TestCase):
 
         logits = torch.rand((coords.shape[0], (7 + nb_classes) * nb_anchors))
         sparsity = torch.tensor([[1]]).float()
-        result = GSDNResult.create_from_logits(sparsetensor, logits, 2, sparsity)
+        result = GSDNLayerPrediction.create_from_logits(sparsetensor, logits, 2, sparsity)
         result.grid_size = 0.1
         result.anchors = anchors
         result.sparsity_positive = torch.zeros(coords.shape[0]).bool()
@@ -114,7 +115,7 @@ class TestGSDN(unittest.TestCase):
 
         child_logits = torch.rand((child.C.shape[0], (7 + nb_classes) * nb_anchors))
         sparsity = torch.rand((child_logits.shape[0]))
-        child_result = GSDNResult.create_from_logits(child, child_logits, 2, sparsity)
+        child_result = GSDNLayerPrediction.create_from_logits(child, child_logits, 2, sparsity)
         child_result.grid_size = 0.1
         child_result.anchors = anchors
         child_result.sparsity_positive = torch.rand(child.C.shape[0]) > 0.5
