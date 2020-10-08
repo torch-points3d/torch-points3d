@@ -2,13 +2,13 @@ import numpy as np
 import torch
 import random
 
-from torch_points3d.datasets.base_dataset import BaseDataset
+from torch_points3d.datasets.base_dataset import BaseDataset, save_used_properties
 from torch_points3d.datasets.segmentation.s3dis import S3DISSphere, S3DISCylinder, INV_OBJECT_LABEL
 import torch_points3d.core.data_transform as cT
 from torch_points3d.metrics.panoptic_tracker import PanopticTracker
 from torch_points3d.datasets.panoptic.utils import set_extra_labels
 
-STUFF_CLASSES_INV = {
+CLASSES_INV = {
     0: "ceiling",
     1: "floor",
     2: "wall",
@@ -26,7 +26,7 @@ STUFF_CLASSES_INV = {
 
 
 class PanopticS3DISBase:
-    INSTANCE_CLASSES = STUFF_CLASSES_INV.keys()
+    INSTANCE_CLASSES = CLASSES_INV.keys()
     NUM_MAX_OBJECTS = 64
 
     def __getitem__(self, idx):
@@ -129,6 +129,13 @@ class S3DISFusedDataset(BaseDataset):
     @property
     def test_data(self):
         return self.test_dataset[0].raw_test_data
+
+    @property  # type: ignore
+    @save_used_properties
+    def stuff_classes(self):
+        """ Returns a list of classes that are not instances
+        """
+        return self.train_dataset.stuff_classes
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker

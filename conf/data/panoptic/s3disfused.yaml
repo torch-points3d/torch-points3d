@@ -6,7 +6,8 @@ data:
   first_subsampling: 0.04
   keep_instance: True
   use_category: False
-  sampling_format: 'cylinder' # 'sphere'
+  sampling_format: "cylinder" # 'sphere'
+  mode: last
   pre_collate_transform:
     - transform: PointCloudFusion # One point cloud per area
     - transform: SaveOriginalPosId # Required so that one can recover the original point in the fused point cloud
@@ -36,24 +37,30 @@ data:
         add_x: False
         add_y: False
         add_z: True
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: ${data.mode}
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True, True]
         feat_names: [rgb, pos_z]
         delete_feats: [True, True]
-    - transform: Center
   test_transform:
     - transform: XYZFeature
       params:
         add_x: False
         add_y: False
         add_z: True
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: ${data.mode}
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True, True]
         feat_names: [rgb, pos_z]
         delete_feats: [True, True]
-    - transform: CylinderNormalizeScale
-      params:
-        normalize_z: True
   val_transform: ${data.test_transform}
