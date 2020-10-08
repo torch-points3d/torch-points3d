@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from abc import abstractmethod
 from typing import Optional, Dict, Any, List
-import torch
+import os
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import logging
@@ -132,6 +132,15 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             input (dict): includes the data itself and its metadata information.
         """
         raise NotImplementedError
+
+    def set_pretrained_weights(self):
+        path_pretrained = hasattr(self.opt, "path_pretrained", " ")
+        weight_name = hasattr(self.opt, "weight_name", "latest")
+        if not os.path.exists(path_pretrained):
+            log.warning("The path does not exist")
+        else:
+            m = torch.load(path_pretrained)["models"][weight_name]
+            self.set_weights(m)
 
     def set_weights(self, model):
         self.load_state_dict(model, strict=False)
