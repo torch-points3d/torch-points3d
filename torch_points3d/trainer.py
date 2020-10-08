@@ -96,6 +96,7 @@ class Trainer:
         self._checkpoint.dataset_properties = self._dataset.used_properties
 
         log.info(self._model)
+        self._model.set_pretrained_weights()
         self._model.log_optimizers()
         log.info("Model size = %i", sum(param.numel() for param in self._model.parameters() if param.requires_grad))
 

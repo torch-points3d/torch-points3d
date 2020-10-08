@@ -134,13 +134,14 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         raise NotImplementedError
 
     def set_pretrained_weights(self):
-        path_pretrained = hasattr(self.opt, "path_pretrained", " ")
+        path_pretrained = hasattr(self.opt, "path_pretrained", None)
         weight_name = hasattr(self.opt, "weight_name", "latest")
-        if not os.path.exists(path_pretrained):
-            log.warning("The path does not exist")
-        else:
-            m = torch.load(path_pretrained)["models"][weight_name]
-            self.set_weights(m)
+        if path_pretrained is not None:
+            if not os.path.exists(path_pretrained):
+                log.warning("The path does not exist, it will not load any model")
+            else:
+                m = torch.load(path_pretrained)["models"][weight_name]
+                self.set_weights(m)
 
     def set_weights(self, model):
         self.load_state_dict(model, strict=False)
