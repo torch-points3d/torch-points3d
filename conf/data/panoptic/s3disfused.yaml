@@ -4,6 +4,7 @@ data:
   dataroot: data
   fold: 5
   first_subsampling: 0.04
+  grid_size: ${data.first_subsampling}
   keep_instance: True
   use_category: False
   sampling_format: "cylinder" # 'sphere'
