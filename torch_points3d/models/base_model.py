@@ -2,6 +2,7 @@ from collections import OrderedDict
 from abc import abstractmethod
 from typing import Optional, Dict, Any, List
 import os
+import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import logging
@@ -134,12 +135,14 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         raise NotImplementedError
 
     def set_pretrained_weights(self):
-        path_pretrained = hasattr(self.opt, "path_pretrained", None)
-        weight_name = hasattr(self.opt, "weight_name", "latest")
+        path_pretrained = getattr(self.opt, "path_pretrained", None)
+        weight_name = getattr(self.opt, "weight_name", "latest")
+
         if path_pretrained is not None:
             if not os.path.exists(path_pretrained):
                 log.warning("The path does not exist, it will not load any model")
             else:
+                log.info("load pretrained weights from {}".format(path_pretrained))
                 m = torch.load(path_pretrained)["models"][weight_name]
                 self.set_weights(m)
 
