@@ -78,7 +78,8 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
                  verbose=False,
                  debug=False,
                  num_pos_pairs=200,
-                 max_dist_overlap=0.01):
+                 max_dist_overlap=0.01,
+                 use_fps=False):
         Base3DMatchTest.__init__(self, root=root,
                                  transform=transform,
                                  pre_transform=pre_transform,
@@ -90,6 +91,7 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
         self.list_fragment = [f for f in os.listdir(self.path_match) if "matches" in f]
         self.self_supervised = False
         self.is_online_matching = False
+        self.use_fps = use_fps
 
     def __getitem__(self, idx):
         return self.get_fragment(idx)
