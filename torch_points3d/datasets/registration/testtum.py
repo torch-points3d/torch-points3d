@@ -37,9 +37,10 @@ class TestPairTUM(BasePCRBTest):
                  min_size_block=2,
                  max_size_block=3,
                  min_points=500,
-                 ss_transform=None):
+                 ss_transform=None,
+                 use_fps=False):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/yjd20Ih9ExqLlHM/download"
-        
+
         BasePCRBTest.__init__(self,
                               root=root,
                               transform=transform,
@@ -52,7 +53,8 @@ class TestPairTUM(BasePCRBTest):
                               min_size_block=min_size_block,
                               max_size_block=max_size_block,
                               min_points=min_points,
-                              ss_transform=ss_transform)
+                              ss_transform=ss_transform,
+                              use_fps=use_fps)
 
     def download(self):
         folder = os.path.join(self.raw_dir, "test")
@@ -78,7 +80,7 @@ class TestPairTUM(BasePCRBTest):
 class TUMDataset(BaseSiameseDataset):
     """
     this class is a dataset for testing registration algorithm on the TUM RGB-D Dataset
-    https://vision.in.tum.de/data/datasets/rgbd-dataset    
+    https://vision.in.tum.de/data/datasets/rgbd-dataset
     as defined in https://github.com/iralabdisco/point_clouds_registration_benchmark.
     """
 
@@ -101,7 +103,8 @@ class TUMDataset(BaseSiameseDataset):
                                          max_size_block=dataset_opt.max_size_block,
                                          num_pos_pairs=dataset_opt.num_pos_pairs,
                                          min_points=dataset_opt.min_points,
-                                         ss_transform=ss_transform)
+                                         ss_transform=ss_transform,
+                                         use_fps=dataset_opt.use_fps)
         self.test_dataset = TestPairTUM(root=self._data_path,
                                         pre_transform=pre_transform,
                                         transform=test_transform,
