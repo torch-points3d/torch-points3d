@@ -39,6 +39,48 @@ models:
             num_hn_samples: 256
             pos_thresh: 0.1
             neg_thresh: 1.4
+    MinkUNet_Fragment_pretrained:
+        class: minkowski.MinkowskiFragment
+        path_pretrained: "INSERT PATH"
+        weight_name: "latest"
+        conv_type: "SPARSE"
+        loss_mode: "match"
+        down_conv:
+            module_name: Res2BlockDown
+            dimension: 3
+            bn_momentum: 0.05
+            down_conv_nn:
+                [
+                    [FEAT, 32],
+                    [32, 64],
+                    [64, 128],
+                    [128, 256]
+                ]
+            kernel_size: [5, 3, 3, 3]
+            stride: [1, 2, 2, 2]
+            dilation: [1, 1, 1, 1]
+        up_conv:
+            module_name: Res2BlockUp
+            dimension: 3
+            bn_momentum: 0.05
+            up_conv_nn:
+                [
+                    [256, 64],
+                    [64 + 128, 64],
+                    [64 + 64, 64],
+                    [64 + 32, 64, 32]
+                ]
+            kernel_size: [3, 3, 3, 1]
+            stride: [2, 2, 2, 1]
+            dilation: [1, 1, 1, 1]
+        normalize_feature: True
+        metric_loss:
+          class: "ContrastiveHardestNegativeLoss"
+          params:
+            num_pos: 1024
+            num_hn_samples: 256
+            pos_thresh: 0.1
+            neg_thresh: 1.4
 
 
     Res16UNet32B:

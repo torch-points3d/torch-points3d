@@ -1,4 +1,5 @@
 import unittest
+import torch
 from omegaconf import OmegaConf, DictConfig
 from torch.nn import (
     Sequential,
@@ -49,6 +50,20 @@ class MockModel(BaseModel):
         self.input = a
 
 
+class MockModel_(BaseModel):
+    __REQUIRED_DATA__ = ["x"]
+    __REQUIRED_LABELS__ = ["y"]
+
+    def __init__(self):
+        super(MockModel_, self).__init__(DictConfig({"conv_type": "Dummy"}))
+
+        self._channels = [12, 12, 12, 17]
+        self.nn = MLP(self._channels)
+
+    def set_input(self, a):
+        self.input = a
+
+
 class TestBaseModel(unittest.TestCase):
     def test_getinput(self):
         model = MockModel()
@@ -70,6 +85,21 @@ class TestBaseModel(unittest.TestCase):
         for i in range(len(model._channels) - 1):
             self.assertEqual(model.nn[i][1].training, True)
             self.assertEqual(model.nn[i][2].training, False)
+
+    def test_load_pretrained_model(self):
+        """
+        test load_state_dict_with_same_shape
+        """
+        model1 = MockModel()
+        model2 = MockModel_()
+
+        w1 = model1.state_dict()
+
+        model2.load_state_dict_with_same_shape(w1)
+        w2 = model2.state_dict()
+        for k, p in w2.items():
+            if "nn.2." not in k:
+                torch.testing.assert_allclose(w1[k], p)
 
     def test_accumulated_gradient(self):
         params = load_model_config("segmentation", "pointnet2", "pointnet2ms")

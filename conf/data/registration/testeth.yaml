@@ -4,8 +4,8 @@ data:
   dataroot: data
   first_subsampling: 0.02
   max_dist_overlap: 0.05
-  min_size_block: 1.5
-  max_size_block: 2
+  min_size_block: 5
+  max_size_block: 7
   num_pos_pairs: 30000
   min_points: 300
   num_points: 5000
@@ -21,10 +21,10 @@ data:
   ss_transform:
     - transform: CubeCrop
       params:
-        c: 1
+        c: 5
     - transform: CubeCrop
       params:
-        c: 1.5
+        c: 5.5
 
   train_transform:
     - transform: SaveOriginalPosId
