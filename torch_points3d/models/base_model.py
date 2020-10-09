@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from abc import abstractmethod
 from typing import Optional, Dict, Any, List
+import os
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -132,6 +133,24 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             input (dict): includes the data itself and its metadata information.
         """
         raise NotImplementedError
+
+    def load_state_dict_with_same_shape(self, weights, strict=False):
+        model_state = self.state_dict()
+        filtered_weights = {k: v for k, v in weights.items() if k in model_state and v.size() == model_state[k].size()}
+        log.info("Loading weights:" + ", ".join(filtered_weights.keys()))
+        self.load_state_dict(filtered_weights, strict=strict)
+
+    def set_pretrained_weights(self):
+        path_pretrained = getattr(self.opt, "path_pretrained", None)
+        weight_name = getattr(self.opt, "weight_name", "latest")
+
+        if path_pretrained is not None:
+            if not os.path.exists(path_pretrained):
+                log.warning("The path does not exist, it will not load any model")
+            else:
+                log.info("load pretrained weights from {}".format(path_pretrained))
+                m = torch.load(path_pretrained)["models"][weight_name]
+                self.load_state_dict_with_same_shape(m, strict=False)
 
     def get_labels(self):
         """ returns a trensor of size ``[N_points]`` where each value is the label of a point
