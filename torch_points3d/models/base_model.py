@@ -144,10 +144,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             else:
                 log.info("load pretrained weights from {}".format(path_pretrained))
                 m = torch.load(path_pretrained)["models"][weight_name]
-                self.set_weights(m)
-
-    def set_weights(self, model):
-        self.load_state_dict(model, strict=False)
+                self.load_state_dict(m, strict=False)
 
     def get_labels(self):
         """ returns a trensor of size ``[N_points]`` where each value is the label of a point
