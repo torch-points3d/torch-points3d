@@ -114,7 +114,7 @@ class TestModels(unittest.TestCase):
             return False
 
         for type_file in self.model_type_files:
-            associated_task = type_file.split("/")[-2]
+            associated_task = os.path.normpath(type_file).split(os.path.sep)[-2]
             models_config = OmegaConf.load(type_file)
             models_config = OmegaConf.merge(models_config, self.data_config)
             models_config.update("data.task", associated_task)
