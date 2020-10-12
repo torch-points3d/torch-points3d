@@ -1,30 +1,33 @@
 data:
   task: registration
-  class: testeth.ETHDataset
+  class: kitti.KittiDataset
   dataroot: data
-  first_subsampling: 0.02
-  max_dist_overlap: 0.05
-  min_size_block: 5
-  max_size_block: 7
-  num_pos_pairs: 30000
-  min_points: 300
+  name: kitti
+  self_supervised: false
+  max_time_distance: 10
+  min_dist: 20
+  max_dist_overlap: 0.45
+  min_size_block: 3
+  max_size_block: 20
+  first_subsampling: 0.3
+  is_online_matching: False
+  num_pos_pairs: 2048
   num_points: 5000
-  tau_1: 0.1
+  tau_1: 0.5
   tau_2: 0.05
-  rot_thresh: 4
-  trans_thresh: 0.15
+  use_ransac: False
+  use_teaser: True
   sym: True
-  pre_transforms:
+  rot_thresh: 5
+  trans_thresh: 0.6
+  ransac_thresh: 0.3
+  noise_bound_teaser: 0.1
+  ss_transform:
+    - transform: Center
+  pre_transform:
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
-  ss_transform:
-    - transform: CubeCrop
-      params:
-        c: 5
-    - transform: CubeCrop
-      params:
-        c: 5.5
 
   train_transform:
     - transform: SaveOriginalPosId
@@ -32,14 +35,14 @@ data:
       lparams: [20000]
     - transform: RandomNoise
       params:
-        sigma: 0.01
-        clip: 0.05
+        sigma: 0.05
+        clip: 0.5
     - transform: Random3AxisRotation
       params:
         apply_rotation: True
-        rot_x: 360
+        rot_x: 2
         rot_y: 360
-        rot_z: 360
+        rot_z: 2
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9,1.2]
@@ -53,14 +56,47 @@ data:
         size: ${data.first_subsampling}
         quantize_coords: True
         mode: "last"
-    - transform: ShiftVoxels
     - transform: AddOnes
     - transform: AddFeatByKey
       params:
         add_to_x: True
         feat_name: 'ones'
+    - transform: Jitter
+
+  val_transform:
+    - transform: SaveOriginalPosId
+    - transform: Center
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 2
+        rot_y: 360
+        rot_z: 2
+    - transform: XYZFeature
+      params:
+        add_x: True
+        add_y: True
+        add_z: True
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
+    - transform: AddOnes
+    - transform: AddFeatByKey
+      params:
+        add_to_x: True
+        feat_name: 'ones'
+
   test_transform:
     - transform: SaveOriginalPosId
+    - transform: Center
+    - transform: Random3AxisRotation
+      params:
+        apply_rotation: True
+        rot_x: 2
+        rot_y: 360
+        rot_z: 2
     - transform: XYZFeature
       params:
         add_x: True

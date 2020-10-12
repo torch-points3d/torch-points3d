@@ -14,6 +14,7 @@ from torch_points3d.datasets.registration.pair import PairMultiScaleBatch, PairB
 from torch_points3d.datasets.registration.pair import Pair, MultiScalePair
 from torch_points3d.datasets.registration.utils import tracked_matches
 from torch_points3d.datasets.registration.utils import compute_overlap_and_matches
+from torch_points3d.datasets.registration.utils import fps_sampling
 from torch_points3d.datasets.base_dataset import BaseDataset
 
 from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
@@ -169,7 +170,10 @@ class GeneralFragment(object):
         if self.num_pos_pairs < len(batch.pair_ind):
             num_pos_pairs = self.num_pos_pairs
 
-        rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
+        if not self.use_fps or (float(num_pos_pairs) / len(batch.pair_ind) >= 1):
+            rand_ind = torch.randperm(len(batch.pair_ind))[:num_pos_pairs]
+        else:
+            rand_ind = fps_sampling(batch.pair_ind, batch.pos, num_pos_pairs)
         batch.pair_ind = batch.pair_ind[rand_ind]
         batch.size_pair_ind = torch.tensor([num_pos_pairs])
         if(len(batch.pair_ind) == 0):
