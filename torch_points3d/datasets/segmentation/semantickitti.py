@@ -248,7 +248,8 @@ class SemanticKittiDataset(BaseDataset):
 
 
 if __name__ == "__main__":
-    dataroot = "/home/ChauletN/torch-points3d/data/kitti"
+    DIR = os.path.dirname(os.path.realpath(__file__))
+    dataroot = os.path.join(DIR, "..", "..", "data", "kitti")
     SemanticKitti(
         dataroot, split="train", process_workers=10,
     )
