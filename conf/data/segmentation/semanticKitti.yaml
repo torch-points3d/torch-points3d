@@ -3,7 +3,7 @@ data:
   dataset_name: "kitti"
   task: segmentation
   dataroot: data
-  grid_size: 0.5
+  grid_size: 0.1
   process_workers: 8
   apply_rotation: True
   mode: "last"

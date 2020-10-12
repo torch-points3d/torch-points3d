@@ -65,13 +65,15 @@ class SemanticKitti(Dataset):
 
         super().__init__(root, transform=transform, pre_transform=pre_transform)
         if split == "train":
-            self._scans = glob(self.processed_paths[0])
+            self._scans = glob(os.path.join(self.processed_paths[0], "*.pt"))
         elif split == "val":
-            self._scans = glob(self.processed_paths[1])
+            self._scans = glob(os.path.join(self.processed_paths[1], "*.pt"))
         elif split == "test":
-            self._scans = glob(self.processed_paths[2])
+            self._scans = glob(os.path.join(self.processed_paths[2], "*.pt"))
         elif split == "trainval":
-            self._scans = glob(self.processed_paths[0]) + glob(self.processed_paths[1])
+            self._scans = glob(os.path.join(self.processed_paths[0], "*.pt")) + glob(
+                os.path.join(self.processed_paths[1], "*.pt")
+            )
         else:
             raise ValueError("Split %s not recognised" % split)
 
@@ -104,7 +106,7 @@ class SemanticKitti(Dataset):
     @staticmethod
     def read_raw(scan_file, label_file=None):
         scan = np.fromfile(scan_file, dtype=np.float32).reshape(-1, 4)
-        data = Data(pos=torch.tensor(scan[:, :3]), x=torch.tensor(scan[:, 3]),)
+        data = Data(pos=torch.tensor(scan[:, :3]), x=torch.tensor(scan[:, 3]).reshape(-1, 1),)
         if label_file:
             label = np.fromfile(label_file, dtype=np.uint32).astype(np.int32)
             assert scan.shape[0] == label.shape[0]
@@ -123,8 +125,8 @@ class SemanticKitti(Dataset):
         torch.save(data, out_file)
 
     def get(self, idx):
-        data = torch.read(self._scans[idx])
-        if data.y:
+        data = torch.load(self._scans[idx])
+        if data.y is not None:
             data.y = self._remap_labels(data.y)
         return data
 
@@ -239,8 +241,6 @@ class SemanticKittiDataset(BaseDataset):
             pre_transform=self.pre_transform,
             process_workers=process_workers,
         )
-
-        self._categories = list(self.train_dataset.LABELS.values)
 
     def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
         """Factory method for the tracker
