@@ -112,8 +112,8 @@ class SemanticKitti(Dataset):
             assert scan.shape[0] == label.shape[0]
             semantic_label = label & 0xFFFF
             instance_label = label >> 16
-            data.y = torch.tensor(semantic_label)
-            data.instance_labels = torch.tensor(instance_label)
+            data.y = torch.tensor(semantic_label).long()
+            data.instance_labels = torch.tensor(instance_label).long()
         return data
 
     @staticmethod
@@ -190,12 +190,6 @@ class SemanticKitti(Dataset):
             new_labels[mask] = target
 
         return new_labels
-
-    def populate_colormap(self):
-        self.CMAP = np.zeros((max(list(self.LEARNING_MAP.keys())) + 1, 3), dtype=np.float32)
-        for key, value in self.COLOR_MAP.items():
-            value = [value[i] for i in [2, 1, 0]]
-            self.CMAP[key] = np.array(value, np.float32) / 255.0
 
     @property
     def num_classes(self):
