@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for the IRALab benchmark (https://arxiv.org/abs/2003.12841), with data from the ETH, Canadian Planetary, Kaist and TUM datasets.
 - Added Kitti for semantic segmentation and registration (first outdoor dataset for semantic seg)
 - Possibility to load pretrained models by adding the path in the confs for finetuning.
+- Lottery transform to use randomly selected transforms for data augmentation
+- Batch size campling function to ensure that batches don't get too large
 
 ### Bug fix
 

@@ -10,6 +10,7 @@ from .feature_augment import *
 from .features import *
 from .filters import *
 from .precollate import *
+from .prebatchcollate import *
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
@@ -95,7 +96,6 @@ def instantiate_filters(filter_options):
     return FCompose(filters)
 
 
-
 class LotteryTransform(object):
     """
     Transforms which draw a transform randomly among several transforms indicated in transform options
@@ -104,9 +104,6 @@ class LotteryTransform(object):
     Parameters
     ----------
     transform_options Omegaconf list which contains the transform
-
-
-
     """
 
     def __init__(self, transform_options):
