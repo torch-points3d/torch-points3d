@@ -107,6 +107,8 @@ where each folder contains the dataset related to each task.
 * S3DIS Fused - Sphere | Cylinder
 ```
 
+- **[SemanticKitti](http://semantic-kitti.org/)** from J. Behley _et al_: [SemanticKITTI: A Dataset for Semantic Scene Understanding of LiDAR Sequences](https://arxiv.org/abs/1904.01416)
+
 ### Registration
 
 - **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng _et al._: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
@@ -116,6 +118,8 @@ where each folder contains the dataset related to each task.
     - [the Canadian Planetary Emulation Terrain 3D Mapping datasets](http://asrl.utias.utoronto.ca/datasets/3dmap/index.html);
     - [the TUM Vision Groud RGBD datasets](https://vision.in.tum.de/data/datasets/rgbd-dataset);
     - [the KAIST Urban datasets](https://irap.kaist.ac.kr/dataset/).
+
+- **[Kitti odometry](http://www.cvlibs.net/datasets/kitti/eval_odometry.php)** with corrected poses (thanks to @humanpose1) from A. Geiger _et al_: [Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)
 
 ### Classification
 
