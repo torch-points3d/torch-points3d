@@ -80,6 +80,7 @@ class BaseDataset:
         self._test_dataset = None
         self._val_dataset = None
 
+        self.pre_batch_collate_transform = None
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
 
