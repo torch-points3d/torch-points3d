@@ -1,5 +1,6 @@
 import sys
 
+import numpy as np
 import torch_geometric.transforms as T
 from .transforms import *
 from .grid_transform import *
@@ -92,3 +93,35 @@ def instantiate_filters(filter_options):
     for filt in filter_options:
         filters.append(instantiate_transform(filt, "filter"))
     return FCompose(filters)
+
+
+
+class LotteryTransform(object):
+    """
+    Transforms which draw a transform randomly among several transforms indicated in transform options
+    Examples
+
+    Parameters
+    ----------
+    transform_options Omegaconf list which contains the transform
+
+
+
+    """
+
+    def __init__(self, transform_options):
+        self.random_transforms = instantiate_transforms(transform_options)
+
+    def __call__(self, data):
+
+        list_transforms = self.random_transforms.transforms
+        i = np.random.randint(len(list_transforms))
+        transform = list_transforms[i]
+        return transform(data)
+
+    def __repr__(self):
+        rep = "LotteryTransform(["
+        for trans in self.random_transforms.transforms:
+            rep = rep + "{}, ".format(trans.__repr__())
+        rep = rep + "])"
+        return rep

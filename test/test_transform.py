@@ -35,6 +35,7 @@ from torch_points3d.core.data_transform import (
     CubeCrop,
     SphereDropout,
     DensityFilter,
+    LotteryTransform,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -334,6 +335,45 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(len(data.dummy), 10000)
         self.assertEqual(len(data.x) < 10000, True)
         self.assertEqual(len(data.pos) < 100, True)
+
+    def test_lottery_transform(self):
+        """
+        test the lottery transform when params are indicated in the yaml
+        """
+        pos = torch.randn(10000, 3)
+        x = torch.randn(10000, 6)
+        dummy = torch.randn(10000, 6)
+        data = Data(pos=pos, x=x, dummy=dummy)
+        conf = ListConfig([{"transform": "GridSampling3D", "params": {"size": 0.1}}, {"transform": "Center"},])
+        tr = LotteryTransform(transform_options=conf)
+        tr(data)
+        self.assertIsInstance(tr.random_transforms.transforms[0], GridSampling3D)
+        self.assertIsInstance(tr.random_transforms.transforms[1], T.Center)
+
+    def test_lottery_transform_from_yaml(self):
+        """
+        test the lottery transform when params are indicated in the yaml
+        """
+        string = """
+
+        - transform: LotteryTransform
+          params:
+            transform_options:
+              - transform: GridSampling3D
+                params:
+                  size: 0.1
+              - transform: Center
+        """
+        conf = OmegaConf.create(string)
+        pos = torch.randn(10000, 3)
+        x = torch.randn(10000, 6)
+        dummy = torch.randn(10000, 6)
+        data = Data(pos=pos, x=x, dummy=dummy)
+
+        tr = instantiate_transforms(conf).transforms[0]
+        tr(data)
+        self.assertIsInstance(tr.random_transforms.transforms[0], GridSampling3D)
+        self.assertIsInstance(tr.random_transforms.transforms[1], T.Center)
 
 
 if __name__ == "__main__":

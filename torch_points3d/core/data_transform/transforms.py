@@ -26,6 +26,7 @@ from .features import Random3AxisRotation
 
 
 
+
 class RemoveAttributes(object):
     """This transform allows to remove unnecessary attributes from data for optimization purposes
 
@@ -204,7 +205,7 @@ class GridCylinderSampling(object):
             sampler = CylinderSampling(self._radius, grid_center, align_origin=self._center)
             new_data = sampler(data)
             new_data.center_label = grid_label
-            
+
             datas.append(new_data)
         return datas
 
@@ -902,7 +903,8 @@ class DensityFilter(object):
     """
     Remove points with a low density(compute the density with a radius search and remove points with)
     a low number of neighbors
-    Parameter
+    Parameters
+    ----------
     radius_nn: float, optional
         radius for the neighbors search
     min_num: int, otional
