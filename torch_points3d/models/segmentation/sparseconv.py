@@ -4,7 +4,7 @@ import torch.nn as nn
 import torchsparse as TS
 import torch
 
-from torch_points3d.modules.TorchSparse.modules import *
+from torch_points3d.modules.SparseConv3D.modules import *
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -13,7 +13,7 @@ from torch_points3d.datasets.segmentation import IGNORE_LABEL
 log = logging.getLogger(__name__)
 
 
-class TSUNet(UnwrappedUnetBasedModel):
+class UNet(UnwrappedUnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         super().__init__(option, model_type, dataset, modules)
@@ -23,7 +23,7 @@ class TSUNet(UnwrappedUnetBasedModel):
     def set_input(self, data, device):
         self.raw_input = data
         coords = torch.cat([data.coords.int(), data.batch.unsqueeze(-1).int()], -1)
-        self.input = TS.SparseTensor(data.x, coords).to(self.device)
+        self.input = SparseTensor(data.x, coords, device)
         self.labels = data.y.to(self.device)
 
     def forward(self, *args, **kwargs):

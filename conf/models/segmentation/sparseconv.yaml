@@ -1,6 +1,6 @@
 models:
-  TS_Baseline:
-    class: torchsparse.TSUnet
+  ResUNet32:
+    class: sparseconv.Unet
     conv_type: "SPARSE"
     define_constants:
       in_feat: 32
