@@ -13,6 +13,11 @@ data:
   apply_rotation: True
   mode: "last"
 
+  pre_batch_collate_transform:
+    - transform: ClampBatchSize
+      params:
+        num_points: 400000
+
   train_transform:
     - transform: ElasticDistortion
     - transform: Random3AxisRotation

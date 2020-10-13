@@ -36,6 +36,7 @@ from torch_points3d.core.data_transform import (
     SphereDropout,
     DensityFilter,
     LotteryTransform,
+    ClampBatchSize,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -374,6 +375,14 @@ class Testhelpers(unittest.TestCase):
         tr(data)
         self.assertIsInstance(tr.random_transforms.transforms[0], GridSampling3D)
         self.assertIsInstance(tr.random_transforms.transforms[1], T.Center)
+
+    def test_clampbatchsize(self):
+        tr = ClampBatchSize(100)
+        datas = [Data(pos=torch.zeros(10)), Data(pos=torch.zeros(50)), Data(pos=torch.zeros(10))]
+
+        self.assertEqual(len(tr(datas)), 3)
+        tr = ClampBatchSize(21)
+        self.assertEqual(len(tr(datas)), 2)
 
 
 if __name__ == "__main__":
