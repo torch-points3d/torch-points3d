@@ -50,6 +50,10 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.PCACompute
 
+.. autoclass:: torch_points3d.core.data_transform.ClampBatchSize
+
+.. autoclass:: torch_points3d.core.data_transform.LotteryTransform
+
 .. autofunction:: torch_points3d.core.data_transform.NormalizeRGB
 
 .. autofunction:: torch_points3d.core.data_transform.ElasticDistortion
