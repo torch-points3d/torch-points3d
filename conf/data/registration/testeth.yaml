@@ -48,6 +48,18 @@ data:
         add_x: True
         add_y: True
         add_z: True
+    - transform: LotteryTransform
+      params:
+        transform_options:
+          - transform: GridSampling3D
+            params:
+              size: 0.02
+          - transform: GridSampling3D
+            params:
+              size: 0.03
+          - transform: GridSampling3D
+            params:
+              size: 0.04
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
