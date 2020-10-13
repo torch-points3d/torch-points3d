@@ -80,6 +80,7 @@ class BaseDataset:
         self._test_dataset = None
         self._val_dataset = None
 
+        self.pre_batch_collate_transform = None
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
 
@@ -117,6 +118,7 @@ class BaseDataset:
         obj.train_transform = None
         obj.val_transform = None
         obj.inference_transform = None
+        obj.pre_batch_collate_transform = None
 
         for key_name in dataset_opt.keys():
             if "transform" in key_name:
@@ -147,19 +149,27 @@ class BaseDataset:
                 setattr(self, new_name, filt)
 
     @staticmethod
-    def _get_collate_function(conv_type, is_multiscale):
+    def _collate_fn(batch, collate_fn=None, pre_collate_transform=None):
+        if pre_collate_transform:
+            batch = pre_collate_transform(batch)
+        return collate_fn(batch)
+
+    @staticmethod
+    def _get_collate_function(conv_type, is_multiscale, pre_collate_transform=None):
+        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
-                return MultiScaleBatch.from_data_list
+                fn = MultiScaleBatch.from_data_list
             else:
                 raise NotImplementedError(
                     "MultiscaleTransform is activated and supported only for partial_dense format"
                 )
-        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
-        if is_dense:
-            return SimpleBatch.from_data_list
         else:
-            return torch_geometric.data.batch.Batch.from_data_list
+            if is_dense:
+                fn = SimpleBatch.from_data_list
+            else:
+                fn = torch_geometric.data.batch.Batch.from_data_list
+        return partial(BaseDataset._collate_fn, collate_fn=fn, pre_collate_transform=pre_collate_transform)
 
     @staticmethod
     def get_num_samples(batch, conv_type):
@@ -191,7 +201,9 @@ class BaseDataset:
         conv_type = model.conv_type
         self._batch_size = batch_size
 
-        batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
+        batch_collate_function = self.__class__._get_collate_function(
+            conv_type, precompute_multi_scale, self.pre_batch_collate_transform
+        )
         dataloader = partial(
             torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
         )
