@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --fix-missing --no-install-recommends\
-    libffi-dev libssl-dev build-essential libopenblas-dev\
+    libffi-dev libssl-dev build-essential libopenblas-dev libsparsehash-dev\
     python3-pip python3-dev python3-venv python3-setuptools\
     git iproute2 procps lsb-release \
     libsm6 libxext6 libxrender-dev \
@@ -23,6 +23,7 @@ RUN python3 -m pip install -U pip \
     && $PYTHON -m pip install -U pip \
     && $PIP install setuptools>=41.0.0 \
     && $PIP install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html \
+    && $PIP install --upgrade git+https://github.com/mit-han-lab/torchsparse.git \
     && $PIP MinkowskiEngine==v0.4.3 \
     && rm -rf /root/.cache
 

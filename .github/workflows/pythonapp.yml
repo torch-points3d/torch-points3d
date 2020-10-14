@@ -21,7 +21,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install system dependencies
-        run: sudo apt-get install libopenblas-dev
+        run: sudo apt-get install libopenblas-dev libsparsehash-dev
 
       - name: Cache python dependencies
         uses: actions/cache@v1
@@ -41,6 +41,7 @@ jobs:
           pip install setuptools>=41.0.0
           pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
           pip install git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
+          pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git
           pip install .
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
