@@ -33,22 +33,3 @@ class Minkowski_Baseline_Model(BaseModel):
 
     def backward(self):
         self.loss_seg.backward()
-
-
-class APIModel(BaseModel):
-    def __init__(self, option, model_type, dataset, modules):
-        # call the initialization method of UnetBasedModel
-        super().__init__(option)
-        self.model = Minkowski("unet", dataset.feature_dimension, 4, output_nc=dataset.num_classes)
-        self.loss_names = ["loss_seg"]
-
-    def set_input(self, data, device):
-        self.input = data
-        self.labels = data.y.to(self.device)
-
-    def forward(self, *args, **kwargs):
-        self.output = F.log_softmax(self.model(self.input).x, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
-
-    def backward(self):
-        self.loss_seg.backward()

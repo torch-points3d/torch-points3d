@@ -41,8 +41,7 @@ def load_model_config(task, model_type, model_name):
     return config
 
 
-def get_dataset(conv_type, task):
-    num_points = 1024
+def get_dataset(conv_type, task, num_points=1024):
     features = 2
     batch_size = 2
     if task == "object_detection":
@@ -152,8 +151,8 @@ class TestModels(unittest.TestCase):
 
     def test_one_model(self):
         # Use this test to test any model when debugging
-        config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
-        dataset = get_dataset("dense", "object_detection")
+        config = load_model_config("segmentation", "sparseconv3d", "ResUNet32")
+        dataset = get_dataset("sparse", "segmentation")
         model = instantiate_model(config, dataset)
         print(model)
         model.set_input(dataset[0], device)

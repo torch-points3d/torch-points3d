@@ -40,17 +40,29 @@ class Conv3dTranspose(TS.nn.Conv3d):
         )
 
 
-class BatchNorm(TS.nn.BatchNorm):
-    pass
+class BatchNorm(torch.nn.Module):
+    def __init__(self, num_features: int, *, eps: float = 1e-5, momentum: float = 0.1) -> None:
+        super().__init__()
+        self.bn = TS.nn.BatchNorm(num_features=num_features, eps=eps, momentum=momentum)
+
+    def forward(self, feats):
+        return self.bn(feats)
+
+    def __repr__(self):
+        return self.bn.__repr__()
 
 
 class ReLU(TS.nn.ReLU):
-    pass
+    def __init__(self, inplace=True):
+        super().__init__(inplace=inplace)
 
 
 def cat(*args, dim=1):
     return TS.cat(args, dim)
 
 
-def SparseTensor(feats, coordinates, device=torch.device("cpu")):
-    return TS.SparseTensor(feats, coordinates).to(device)
+def SparseTensor(feats, coordinates, batch, device=torch.device("cpu")):
+    if batch.dim() == 1:
+        batch = batch.unsqueeze(-1)
+    coords = torch.cat([coordinates.int(), batch.int()], -1)
+    return TS.SparseTensor(feats, coords).to(device)

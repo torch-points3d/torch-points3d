@@ -1,8 +1,9 @@
 import torch
-from .nn import *
+
 import sys
 
 from torch_points3d.core.common_modules import Seq, Identity
+import torch_points3d.modules.SparseConv3d.nn as nn
 
 
 class ResBlock(torch.nn.Module):
@@ -26,16 +27,16 @@ class ResBlock(torch.nn.Module):
         self.block = (
             Seq()
             .append(convolution(input_nc, output_nc, kernel_size=3, stride=1))
-            .append(BatchNorm(output_nc))
-            .append(ReLU(True))
+            .append(nn.BatchNorm(output_nc))
+            .append(nn.ReLU())
             .append(convolution(output_nc, output_nc, kernel_size=3, stride=1))
-            .append(BatchNorm(output_nc))
-            .append(ReLU(True))
+            .append(nn.BatchNorm(output_nc))
+            .append(nn.ReLU())
         )
 
         if input_nc != output_nc:
             self.downsample = (
-                Seq().append(Conv3d(input_nc, output_nc, kernel_size=1, stride=1)).append(BatchNorm(output_nc))
+                Seq().append(nn.Conv3d(input_nc, output_nc, kernel_size=1, stride=1)).append(nn.BatchNorm(output_nc))
             )
         else:
             self.downsample = None
@@ -59,20 +60,20 @@ class BottleneckBlock(torch.nn.Module):
 
         self.block = (
             Seq()
-            .append(Conv3d(input_nc, output_nc // reduction, kernel_size=1, stride=1))
-            .append(BatchNorm(output_nc // reduction))
-            .append(ReLU(True))
+            .append(nn.Conv3d(input_nc, output_nc // reduction, kernel_size=1, stride=1))
+            .append(nn.BatchNorm(output_nc // reduction))
+            .append(nn.ReLU())
             .append(convolution(output_nc // reduction, output_nc // reduction, kernel_size=3, stride=1,))
-            .append(BatchNorm(output_nc // reduction))
-            .append(ReLU(True))
-            .append(Conv3d(output_nc // reduction, output_nc, kernel_size=1,))
-            .append(BatchNorm(output_nc))
-            .append(ReLU(True))
+            .append(nn.BatchNorm(output_nc // reduction))
+            .append(nn.ReLU())
+            .append(nn.Conv3d(output_nc // reduction, output_nc, kernel_size=1,))
+            .append(nn.BatchNorm(output_nc))
+            .append(nn.ReLU())
         )
 
         if input_nc != output_nc:
             self.downsample = (
-                Seq().append(convolution(input_nc, output_nc, kernel_size=1, stride=1)).append(BatchNorm(output_nc))
+                Seq().append(convolution(input_nc, output_nc, kernel_size=1, stride=1)).append(nn.BatchNorm(output_nc))
             )
         else:
             self.downsample = None
@@ -98,7 +99,7 @@ class ResNetDown(torch.nn.Module):
                          |-- 1x1 - BN --|
     """
 
-    CONVOLUTION = Conv3d
+    CONVOLUTION = nn.Conv3d
 
     def __init__(self, down_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, block="ResBlock", **kwargs):
         block = getattr(_res_blocks, block)
@@ -119,8 +120,8 @@ class ResNetDown(torch.nn.Module):
                     dilation=dilation,
                 )
             )
-            .append(BatchNorm(conv1_output))
-            .append(ReLU(True))
+            .append(nn.BatchNorm(conv1_output))
+            .append(nn.ReLU())
         )
 
         if N > 0:
@@ -143,7 +144,7 @@ class ResNetUp(ResNetDown):
     Same as Down conv but for the Decoder
     """
 
-    CONVOLUTION = Conv3dTranspose
+    CONVOLUTION = nn.Conv3dTranspose
 
     def __init__(self, up_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, **kwargs):
         super().__init__(
@@ -152,7 +153,7 @@ class ResNetUp(ResNetDown):
 
     def forward(self, x, skip):
         if skip is not None:
-            inp = cat(x, skip)
+            inp = nn.cat(x, skip)
         else:
             inp = x
         return super().forward(inp)

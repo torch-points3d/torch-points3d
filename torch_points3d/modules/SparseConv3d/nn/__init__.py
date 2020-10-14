@@ -12,7 +12,7 @@ except:
 
 try:
     import torch_points3d.modules.SparseConv3d.nn.minkowski as minkowski_
-    from torch_points3d.modules.SparseConv3d.nn.minkowski import *
+    from torch_points3d.modules.SparseConv3d.nn.minkowski import *  # type: ignore
 except:
     log.error("Could not import Minkowski backend for sparse convolutions")
 
@@ -44,5 +44,3 @@ else:
     backend = "torchsparse"
 
 set_backend(backend)
-
-__all__ = __all__

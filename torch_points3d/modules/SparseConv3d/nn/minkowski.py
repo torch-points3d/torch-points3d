@@ -45,7 +45,8 @@ class Conv3dTranspose(ME.MinkowskiConvolutionTranspose):
 
 
 class BatchNorm(ME.MinkowskiBatchNorm):
-    pass
+    def __repr__(self):
+        return self.bn.__repr__()
 
 
 class ReLU(ME.MinkowskiReLU):
@@ -57,5 +58,8 @@ def cat(*args):
     return ME.cat(*args)
 
 
-def SparseTensor(feats, coordinates, device=torch.device("cpu")):
-    return ME.SparseTensor(feats, coords=coordinates).to(device)
+def SparseTensor(feats, coordinates, batch, device=torch.device("cpu")):
+    if batch.dim() == 1:
+        batch = batch.unsqueeze(-1)
+    coords = torch.cat([batch.int(), coordinates.int()], -1)
+    return ME.SparseTensor(feats, coords=coords).to(device)
