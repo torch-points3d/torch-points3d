@@ -8,17 +8,17 @@ sys.path.insert(0, ROOT)
 
 log = logging.getLogger(__name__)
 
-try:
-    import torch_points3d.modules.SparseConv3d.nn.torchsparse as torchsparse_
-    from torch_points3d.modules.SparseConv3d.nn.torchsparse import *
-except:
-    log.exception("Could not import torchsparse backend for sparse convolutions")
+# try:
+#     import torch_points3d.modules.SparseConv3d.nn.torchsparse as torchsparse_
+#     from torch_points3d.modules.SparseConv3d.nn.torchsparse import *
+# except:
+#     log.exception("Could not import torchsparse backend for sparse convolutions")
 
-try:
-    import torch_points3d.modules.SparseConv3d.nn.minkowski as minkowski_
-    from torch_points3d.modules.SparseConv3d.nn.minkowski import *  # type: ignore
-except:
-    log.exception("Could not import Minkowski backend for sparse convolutions")
+# try:
+#     import torch_points3d.modules.SparseConv3d.nn.minkowski as minkowski_
+#     from torch_points3d.modules.SparseConv3d.nn.minkowski import *  # type: ignore
+# except:
+#     log.exception("Could not import Minkowski backend for sparse convolutions")
 
 
 __all__ = ["cat", "Conv3d", "Conv3dTranspose", "ReLU", "SparseTensor", "BatchNorm"]
@@ -38,8 +38,9 @@ def set_backend(backend):
         "torchsparse" or "minkowski"
     """
     assert backend in {"torchsparse", "minkowski"}
+    importlib.import_module("." + backend, __name__)
     for val in __all__:
-        exec("globals()['%s'] = %s_.%s" % (val, backend, val))
+        exec("globals()['%s'] = modules.%s" % (val, val))
 
 
 if "SPARSE_BACKEND" in os.environ:
