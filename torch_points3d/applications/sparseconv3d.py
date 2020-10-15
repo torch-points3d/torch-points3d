@@ -4,11 +4,11 @@ from omegaconf import DictConfig, OmegaConf
 import logging
 import torch
 from torch_geometric.data import Batch
-import importlib
 
 from torch_points3d.applications.modelfactory import ModelFactory
 import torch_points3d.modules.SparseConv3d as sp3d
 from torch_points3d.core.base_conv.message_passing import *
+from torch_points3d.modules.SparseConv3d.modules import *
 from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
 from torch_points3d.core.common_modules.base_modules import MLP
@@ -71,9 +71,7 @@ class SparseConv3dFactory(ModelFactory):
             path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
             model_config = OmegaConf.load(path_to_model)
         ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
-        modules = importlib.import_module("torch_points3d.modules.SparseConv3d.modules")
         modules_lib = sys.modules[__name__]
-        modules_lib.__dict__.update(modules.__dict__)
         return SparseConv3dUnet(model_config, None, None, modules_lib, **self.kwargs)
 
     def _build_encoder(self):
@@ -83,9 +81,7 @@ class SparseConv3dFactory(ModelFactory):
             path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers),)
             model_config = OmegaConf.load(path_to_model)
         ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
-        modules = importlib.import_module("torch_points3d.modules.SparseConv3d.modules")
         modules_lib = sys.modules[__name__]
-        modules_lib.__dict__.update(modules.__dict__)
         return SparseConv3dEncoder(model_config, None, None, modules_lib, **self.kwargs)
 
 
