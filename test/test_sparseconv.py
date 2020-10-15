@@ -20,6 +20,7 @@ class TestSparseConv(unittest.TestCase):
         self.assertNotIsInstance(sp3d.nn.Conv3d(1, 1), type(c))
 
     def test_weights(self):
+        sp3d.nn.set_backend("torchsparse")
         s = sp3d.modules.ResBlock(3, 10, sp3d.nn.Conv3d)
         sp3d.nn.set_backend("minkowski")
         m = sp3d.modules.ResBlock(3, 10, sp3d.nn.Conv3d)
