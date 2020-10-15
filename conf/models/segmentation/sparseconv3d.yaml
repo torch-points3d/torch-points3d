@@ -2,6 +2,7 @@ models:
     ResUNet32:
         class: sparseconv3d.APIModel
         conv_type: "SPARSE"
+        backend: "torchsparse"
         backbone:
             define_constants:
                 in_feat: 32

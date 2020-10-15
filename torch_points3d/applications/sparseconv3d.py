@@ -28,7 +28,7 @@ def SparseConv3d(
     input_nc: int = None,
     num_layers: int = None,
     config: DictConfig = None,
-    backend: str = "torchsparse",
+    backend: str = "minkowski",
     *args,
     **kwargs
 ):
@@ -104,7 +104,7 @@ class BaseSparseConv3d(UnwrappedUnetBasedModel):
         if "output_nc" in kwargs:
             self._has_mlp_head = True
             self._output_nc = kwargs["output_nc"]
-            self.mlp = MLP([default_output_nc, self.output_nc], activation=torch.nn.ReLU, bias=False)
+            self.mlp = MLP([default_output_nc, self.output_nc], activation=torch.nn.ReLU(), bias=False)
 
     @property
     def has_mlp_head(self):

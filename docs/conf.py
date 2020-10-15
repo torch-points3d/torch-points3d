@@ -60,6 +60,8 @@ autodoc_mock_imports = [
     "plyfile",
     "wandb",
     "numba",
+    "gdown",
+    "torchsparse",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

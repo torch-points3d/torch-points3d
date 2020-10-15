@@ -28,7 +28,7 @@ jobs:
         id: cache
         with:
           path: /home/runner/.cache/${{ matrix.python-version }}
-          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+          key: ${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}-sparse
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'

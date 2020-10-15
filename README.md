@@ -12,9 +12,9 @@ It also provide a high level API to democratize deep learning on pointclouds.
 ## Requirements
 
 - CUDA 10 or higher (if you want GPU version)
-- Python 3.6 or higher + headers (python-dev)
+- Python 3.7 or higher + headers (python-dev)
 - PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
-- MinkowskiEngine (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine) for installation instructions
+- A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#sparse-convolution-support) for installation instructions
 
 Install with
 
@@ -48,12 +48,13 @@ pip install torch-points3d
 └─ train.py                # Main script to launch a training
 ```
 
-As a general philosophy we have split datasets and models by task. For example, datasets has three subfolders:
+As a general philosophy we have split datasets and models by task. For example, datasets has five subfolders:
 
 - segmentation
 - classification
 - registration
 - object_detection
+- panoptic
 
 where each folder contains the dataset related to each task.
 
@@ -70,6 +71,9 @@ where each folder contains the dataset related to each task.
 - **[FCGF](https://github.com/chrischoy/FCGF)** from Christopher Choy _et al._: [Fully Convolutional Geometric Features](https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf) (ICCV'19)
 - **[PointGroup](https://github.com/Jia-Research-Lab/PointGroup)** from Li Jiang _et al._: [PointGroup: Dual-Set Point Grouping for 3D Instance Segmentation](https://arxiv.org/abs/2004.01658)
 - **[PPNet (PosPool)](https://github.com/zeliu98/CloserLook3D)** from Ze Liu _et al._: [A Closer Look at Local Aggregation Operators in Point Cloud Analysis](https://arxiv.org/pdf/2007.01294.pdf) (ECCV 2020)
+- **[TorchSparse](https://github.com/mit-han-lab/torchsparse)** from Haotian Tang _et al_: [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
+
+Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/latest/src/api/models.html) for accessing some of those models directly from the API and see our example notebooks for [KPconv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/PartSegmentationKPConv.ipynb) and [RSConv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/ObjectClassificationRSConv.ipynb) for more details.
 
 ## Available Tasks
 
@@ -80,7 +84,6 @@ where each folder contains the dataset related to each task.
 |          <h3> Object Detection </h3>          |   <img src="docs/imgs/object_detection.png" width="512" height="220" >    |
 |       <h3> Panoptic Segmentation </h3>        | <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220"> |
 |            <h3> Registration </h3>            |     <img src="docs/imgs/registration.png" width="512"  height="220">      |
-|             <h3> Completion </h3>             |      <img src="docs/imgs/completion.png" width="512"  height="220">       |
 
 ## Available datasets
 
@@ -125,66 +128,25 @@ where each folder contains the dataset related to each task.
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
-## API
 
-### KPConv
+## 3D Sparse convolution support
+We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `torchsparse` demonstrates faster training and inference on GPU but comes with limited functionalities. For example, `MinkowskiEngine` can be used    **Please be aware that `torchsparse` is still in beta and does not support CPU processing only for example.**
+
+Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
 
 ```python
-from torch_points3d.applications.kpconv import KPConv
+from torch_points3d.applications.sparseconv3d import SparseConv3d
 
-model = KPConv(
-    architecture="unet",
-    input_nc=3,
-    output_nc=5,
-    in_feat=32,
-    num_layers=4,
-)
+model = SparseConv3d("unet", input_nc=3, output_nc=5, num_layers=4, backbone="torchsparse") # minkowski by default
 ```
 
-### PointNet2
-
+You can also assemble your own networks by using the modules provided in `torch_points3d/modules/SparseConv3d/nn`. For example if you wish to use `torchsparse` backend you can do the following:
 ```python
-from torch_points3d.applications.pointnet2 import PointNet2
+import torch_points3d.modules.SparseConv3d as sp3d
 
-model = PointNet2(
-   architecture="unet",
-   input_nc=3,
-   output_nc=5,
-   num_layers=3,
-   multiscale=True,
-   config=None,
-)
-```
-
-### RSConv
-
-```python
-from torch_points3d.applications.rsconv import RSConv
-
-model = RSConv(
-   architecture="unet",
-   input_nc=3,
-   output_nc=5,
-   num_layers=3,
-   multiscale=True,
-   config=None,
-)
-```
-
-### VoteNet
-
-```python
-from torch_points3d.applications.votenet import VoteNet
-
-model = VoteNet(
-  original=False, # Wether to create official VoteNet or use custom backbone.
-  backbone="kpconv",
-  input_nc=3,
-  num_classes=20,
-  mean_size_arr=[], # (num_classes, 3) If available, prior mean box sizes for each class
-  compute_loss=True,
-  in_feat=64, # Used for the bakcbone
-)
+sp3d.nn.set_backend("torchsparse")
+conv = sp3d.nn.Conv3d(10, 10)
+bn = sp3d.nn.BatchNorm(10)
 ```
 
 ## Add your model to the PretrainedRegistry.
@@ -262,9 +224,10 @@ pre_collate_transform = Compose([
 ])
 ```
 
-## Developer guidelines
 
-### Setup repo
+# Developer guidelines
+
+## Setup repo
 
 We use [Poetry](https://poetry.eustace.io/) for managing our packages.
 In order to get started, clone this repositories and run the following command from the root of the repo
@@ -287,39 +250,13 @@ You can check that the install has been successful by running
 python -m unittest -v
 ```
 
-#### [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine)
-
-The repository is supporting [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) which requires `openblas-dev` and `nvcc` if you have a CUDA device on your machine. First install `openblas`
-
-```bash
-sudo apt install libopenblas-dev
-```
-
-then make sure that `nvcc` is in your path:
-
-```bash
-nvcc -V
-```
-
-If it's not then locate it (`locate nvcc`) and add its location to your `PATH` variable. On my machine:
-
-```bash
-export PATH="/usr/local/cuda-10.2/bin:$PATH"
-```
-
-You are now in a position to install MinkowskiEngine with GPU support:
-
-```bash
-poetry run pip install  git+git://github.com/StanfordVL/MinkowskiEngine.git#v0.4.3
-```
-
-#### Pycuda
+For `pycuda` support (only needed for the registration tasks):
 
 ```bash
 pip install pycuda
 ```
 
-## Train pointnet++ on part segmentation task for dataset shapenet
+## Getting started: Train pointnet++ on part segmentation task for dataset shapenet
 
 ```bash
 poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet-fixed
@@ -366,24 +303,7 @@ pointnet2_onehot:
     dropout: 0.5
 ```
 
-# Benchmark
-
-## S3DIS 1x1
-
-| Model Name                                                                                                                        | # params  | Speed Train / Test      | Cross Entropy | OAcc  | mIou  | mAcc  |
-| --------------------------------------------------------------------------------------------------------------------------------- | --------- | ----------------------- | ------------- | ----- | ----- | ----- |
-| [`pointnet2_original`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/s3dis_fold5/Pointnet2_original.md) | 3,026,829 | 04:29 / 01:07(RTX 2060) | 0.0512        | 85.26 | 45.58 | 73.11 |
-
-## Shapenet part segmentation
-
-The data reported below correspond to the part segmentation problem for Shapenet for all categories. We report against mean instance IoU and mean class IoU (average of the mean instance IoU per class)
-
-| Model Name                                                                                                                         | Use Normals | # params  | Speed Train / Test      | Cross Entropy | CmIou  | ImIou |
-| ---------------------------------------------------------------------------------------------------------------------------------- | ----------- | --------- | ----------------------- | ------------- | ------ | ----- |
-| [`pointnet2_charlesmsg`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/pointnet2_charlesmsg.md) | Yes         | 1,733,946 | 15:07 / 01:20 (K80)     | 0.089         | 82.1   | 85.1  |
-| [`RSCNN_MSG`](https://github.com/nicolas-chaulet/torch-points3d/blob/master/benchmark/shapenet/rscnn_original.md)                  | No          | 3,488,417 | 05:40 / 0:24 (RTX 2060) | 0.04          | 82.811 | 85.3  |
-
-## Explore your experiments
+# Explore your experiments
 
 We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 
