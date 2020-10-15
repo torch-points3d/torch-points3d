@@ -10,10 +10,10 @@ log = logging.getLogger(__name__)
 
 # Import torchsparse for documentation and linting purposes
 try:
-    from .torchsparse import *
+    from .torchsparse import *  # type: ignore
 except:
     try:
-        from .minkowski import *
+        from .minkowski import *  # type: ignore
     except:
         pass
 
