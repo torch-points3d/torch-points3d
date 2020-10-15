@@ -8,13 +8,13 @@ try:
     import torch_points3d.modules.SparseConv3d.nn.torchsparse as torchsparse_
     from torch_points3d.modules.SparseConv3d.nn.torchsparse import *
 except:
-    log.error("Could not import torchsparse backend for sparse convolutions")
+    log.exception("Could not import torchsparse backend for sparse convolutions")
 
 try:
     import torch_points3d.modules.SparseConv3d.nn.minkowski as minkowski_
     from torch_points3d.modules.SparseConv3d.nn.minkowski import *  # type: ignore
 except:
-    log.error("Could not import Minkowski backend for sparse convolutions")
+    log.exception("Could not import Minkowski backend for sparse convolutions")
 
 
 __all__ = ["cat", "Conv3d", "Conv3dTranspose", "ReLU", "SparseTensor", "BatchNorm"]
