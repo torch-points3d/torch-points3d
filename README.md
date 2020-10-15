@@ -10,12 +10,44 @@ The framework allows lean and yet complex model to be built with minimum effort 
 It also provide a high level API to democratize deep learning on pointclouds.
 See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of the framework capacities and benchmarks of state-of-the-art networks.
 
+# Table of Contents
+
+   * [Overview](#overview)
+      * [Requirements](#requirements)
+      * [Project structure](#project-structure)
+      * [Methods currently implemented](#methods-currently-implemented)
+   * [Available Tasks](#available-tasks)
+   * [Available datasets](#available-datasets)
+      * [Segmentation](#segmentation)
+      * [Object detection and panoptic](#object-detection-and-panoptic)
+      * [Registration](#registration)
+      * [Classification](#classification)
+   * [3D Sparse convolution support](#3d-sparse-convolution-support)
+   * [Add your model to the PretrainedRegistry.](#add-your-model-to-the-pretrainedregistry)
+      * [How does it work ? Here are the steps](#how-does-it-work--here-are-the-steps)
+   * [Developer guidelines](#developer-guidelines)
+      * [Setup repo](#setup-repo)
+      * [Getting started: Train pointnet   on part segmentation task for dataset shapenet](#getting-started-train-pointnet-on-part-segmentation-task-for-dataset-shapenet)
+      * [Inference](#inference)
+         * [Inference script](#inference-script)
+         * [Containerize your model with Docker](#containerize-your-model-with-docker)
+      * [Profiling](#profiling)
+      * [Troubleshooting](#troubleshooting)
+         * [Cannot compile certain CUDA Kernels or seg faults while running the tests](#cannot-compile-certain-cuda-kernels-or-seg-faults-while-running-the-tests)
+         * [Undefined symbol / Updating Pytorch](#undefined-symbol--updating-pytorch)
+         * [CUDA kernel failed : no kernel image is available for execution on the device](#cuda-kernel-failed--no-kernel-image-is-available-for-execution-on-the-device)
+         * [Cannot use wandb on Windows](#cannot-use-wandb-on-windows)
+   * [Explore your experiments](#explore-your-experiments)
+   * [Contributing](#contributing)
+   * [Citing](#citing)
+
+# Overview
 ## Requirements
 
 - CUDA 10 or higher (if you want GPU version)
 - Python 3.7 or higher + headers (python-dev)
 - PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
-- A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#sparse-convolution-support) for installation instructions
+- A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#3d-sparse-convolution-support) for installation instructions
 
 Install with
 
@@ -76,19 +108,19 @@ where each folder contains the dataset related to each task.
 
 Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/latest/src/api/models.html) for accessing some of those models directly from the API and see our example notebooks for [KPconv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/PartSegmentationKPConv.ipynb) and [RSConv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/ObjectClassificationRSConv.ipynb) for more details.
 
-## Available Tasks
+# Available Tasks
 
 |               <h3> Tasks </h3>                |                            <h3> Examples </h3>                            |
 | :-------------------------------------------: | :-----------------------------------------------------------------------: |
-| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/classification.png" width="512" height="220"> <br />  |
-|            <h3> Segmentation </h3>            |  <img src="docs/imgs/segmentation.png" width="512" height="220"> <br />   |
-|          <h3> Object Detection </h3>          |   <img src="docs/imgs/object_detection.png" width="512" height="220" >    |
-|       <h3> Panoptic Segmentation </h3>        | <img src="docs/imgs/panoptic_segmentation.png" width="512"  height="220"> |
-|            <h3> Registration </h3>            |     <img src="docs/imgs/registration.png" width="512"  height="220">      |
+| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/classification.png"  height="220"> <br />  |
+|            <h3> Segmentation </h3>            |  <img src="docs/imgs/semantic.png"  height="220"> <br />   |
+|          <h3> Object Detection </h3>          |   <img src="docs/imgs/objects.png" height="220" >    |
+|       <h3> Panoptic Segmentation </h3>        | <img src="docs/imgs/panoptic.png"  height="220"> |
+|            <h3> Registration </h3>            |     <img src="docs/imgs/registration.png" height="220">      |
 
-## Available datasets
+# Available datasets
 
-### Segmentation
+## Segmentation
 
 - **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai _et al._: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 
@@ -102,7 +134,7 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 - **[Shapenet](https://www.shapenet.org/)** from Angel X. Chang _et al._: [ShapeNet: An Information-Rich 3D Model Repository](https://arxiv.org/abs/1512.03012)
 
-### Object detection and panoptic
+## Object detection and panoptic
 
 - **[Scannet](https://github.com/ScanNet/ScanNet)** from Angela Dai _et al._: [ScanNet: Richly-annotated 3D Reconstructions of Indoor Scenes](https://arxiv.org/abs/1702.04405)
 - **[S3DIS](http://buildingparser.stanford.edu/dataset.html)** from Iro Armeni _et al._: [Joint 2D-3D-Semantic Data for Indoor Scene Understanding](https://arxiv.org/abs/1702.01105)
@@ -113,7 +145,7 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 - **[SemanticKitti](http://semantic-kitti.org/)** from J. Behley _et al_: [SemanticKITTI: A Dataset for Semantic Scene Understanding of LiDAR Sequences](https://arxiv.org/abs/1904.01416)
 
-### Registration
+## Registration
 
 - **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng _et al._: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
 
@@ -125,12 +157,12 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 - **[Kitti odometry](http://www.cvlibs.net/datasets/kitti/eval_odometry.php)** with corrected poses (thanks to @humanpose1) from A. Geiger _et al_: [Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)
 
-### Classification
+## Classification
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
 
-## 3D Sparse convolution support
+# 3D Sparse convolution support
 We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `torchsparse` demonstrates faster training and inference on GPU but comes with limited functionalities. For example, `MinkowskiEngine` can be used    **Please be aware that `torchsparse` is still in beta and does not support CPU processing only for example.**
 
 Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
@@ -150,11 +182,11 @@ conv = sp3d.nn.Conv3d(10, 10)
 bn = sp3d.nn.BatchNorm(10)
 ```
 
-## Add your model to the PretrainedRegistry.
+# Add your model to the PretrainedRegistry.
 
 The `PretrainedRegistry` enables anyone to add their own pre-trained models and `re-create` them with only 2 lines of code for `finetunning` or `production` purposes.
 
-### How does it work ? Here are the steps
+## How does it work ? Here are the steps
 
 - `[You]` Launch your model training with [Wandb](https://www.wandb.com) activated (`wandb.log=True`)
 - `[TorchPoints3d]` Once the training finished, `TorchPoints3d` will upload your trained model within [our custom checkpoint](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) to your wandb.
@@ -303,19 +335,6 @@ pointnet2_onehot:
     nn: [128, 128]
     dropout: 0.5
 ```
-
-# Explore your experiments
-
-We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
-
-```
-jupyter labextension install @pyviz/jupyterlab_pyviz
-```
-
-Run through the notebook and you should see a dashboard starting that looks like the following:
-
-![dashboard](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/Dashboard_demo.gif)
-
 ## Inference
 
 ### Inference script
@@ -371,7 +390,7 @@ python -m torch.utils.bottleneck /path/to/source/script.py [args]
 
 ## Troubleshooting
 
-#### Cannot compile certain CUDA Kernels or seg faults while running the tests
+### Cannot compile certain CUDA Kernels or seg faults while running the tests
 
 Ensure that at least PyTorch 1.4.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
 
@@ -386,7 +405,7 @@ $ echo $CPATH
 >>> /usr/local/cuda/include:...
 ```
 
-#### Undefined symbol / Updating Pytorch
+### Undefined symbol / Updating Pytorch
 
 When we update the version of Pytorch that is used, the compiled packages need to be reinstalled, otherwise you will run into an error that looks like this:
 
@@ -409,7 +428,7 @@ rm -rf ~/.cache/pip
 poetry install
 ```
 
-#### CUDA kernel failed : no kernel image is available for execution on the device
+### CUDA kernel failed : no kernel image is available for execution on the device
 
 This can happen when trying to run the code on a different GPU than the one used to compile the `torch-points-kernels` library. Uninstall `torch-points-kernels`, clear cache, and reinstall after setting the `TORCH_CUDA_ARCH_LIST` environment variable. For example, for compiling with a Tesla T4 (Turing 7.5) and running the code on a Tesla V100 (Volta 7.0) use:
 
@@ -419,12 +438,26 @@ export TORCH_CUDA_ARCH_LIST="7.0;7.5"
 
 See [this useful chart](http://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) for more architecture compatibility.
 
-#### Cannot use wandb on Windows
+### Cannot use wandb on Windows
 
 Raises `OSError: [WinError 6] The handle is invalid` / `wandb: ERROR W&B process failed to launch`
 Wandb is currently broken on Windows (see [this issue](https://github.com/wandb/client/issues/862)), a workaround is to use the command line argument `wandb.log=false`
 
-## Contributing
+
+# Explore your experiments
+
+We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
+
+```
+jupyter labextension install @pyviz/jupyterlab_pyviz
+```
+
+Run through the notebook and you should see a dashboard starting that looks like the following:
+
+![dashboard](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/Dashboard_demo.gif)
+
+
+# Contributing
 
 Contributions are welcome! The only asks are that you stick to the styling and that you add tests as you add more features!
 
@@ -441,7 +474,7 @@ Visual Studio Code, there is a great [extension](https://github.com/NilsJPWerner
 
 Finaly, if you want to have a direct chat with us feel free to join our slack, just shoot us an email and we'll add you.
 
-## Citing
+# Citing
 
 If you find our work useful, do not hesitate to cite it:
 
