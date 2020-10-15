@@ -8,6 +8,7 @@ This is a framework for running common deep learning models for point cloud anal
 
 The framework allows lean and yet complex model to be built with minimum effort and great reproducibility.
 It also provide a high level API to democratize deep learning on pointclouds.
+See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of the framework capacities and benchmarks of state-of-the-art networks.
 
 ## Requirements
 
