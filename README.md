@@ -23,21 +23,16 @@ See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of 
       * [Registration](#registration)
       * [Classification](#classification)
    * [3D Sparse convolution support](#3d-sparse-convolution-support)
-   * [Add your model to the PretrainedRegistry.](#add-your-model-to-the-pretrainedregistry)
-      * [How does it work ? Here are the steps](#how-does-it-work--here-are-the-steps)
+   * [Adding your model to the PretrainedRegistry.](#adding-your-model-to-the-pretrainedregistry)
    * [Developer guidelines](#developer-guidelines)
-      * [Setup repo](#setup-repo)
+      * [Setting repo](#setting-repo)
       * [Getting started: Train pointnet   on part segmentation task for dataset shapenet](#getting-started-train-pointnet-on-part-segmentation-task-for-dataset-shapenet)
       * [Inference](#inference)
          * [Inference script](#inference-script)
-         * [Containerize your model with Docker](#containerize-your-model-with-docker)
+         * [Containerizing your model with Docker](#containerizing-your-model-with-docker)
       * [Profiling](#profiling)
       * [Troubleshooting](#troubleshooting)
-         * [Cannot compile certain CUDA Kernels or seg faults while running the tests](#cannot-compile-certain-cuda-kernels-or-seg-faults-while-running-the-tests)
-         * [Undefined symbol / Updating Pytorch](#undefined-symbol--updating-pytorch)
-         * [CUDA kernel failed : no kernel image is available for execution on the device](#cuda-kernel-failed--no-kernel-image-is-available-for-execution-on-the-device)
-         * [Cannot use wandb on Windows](#cannot-use-wandb-on-windows)
-   * [Explore your experiments](#explore-your-experiments)
+   * [Exploring your experiments](#exploring-your-experiments)
    * [Contributing](#contributing)
    * [Citing](#citing)
 
@@ -182,11 +177,9 @@ conv = sp3d.nn.Conv3d(10, 10)
 bn = sp3d.nn.BatchNorm(10)
 ```
 
-# Add your model to the PretrainedRegistry.
+# Adding your model to the PretrainedRegistry.
 
 The `PretrainedRegistry` enables anyone to add their own pre-trained models and `re-create` them with only 2 lines of code for `finetunning` or `production` purposes.
-
-## How does it work ? Here are the steps
 
 - `[You]` Launch your model training with [Wandb](https://www.wandb.com) activated (`wandb.log=True`)
 - `[TorchPoints3d]` Once the training finished, `TorchPoints3d` will upload your trained model within [our custom checkpoint](https://app.wandb.ai/nicolas/scannet/runs/1sd84bf1) to your wandb.
@@ -260,7 +253,7 @@ pre_collate_transform = Compose([
 
 # Developer guidelines
 
-## Setup repo
+## Setting repo
 
 We use [Poetry](https://poetry.eustace.io/) for managing our packages.
 In order to get started, clone this repositories and run the following command from the root of the repo
@@ -349,7 +342,7 @@ The result of the forward run will be placed in the specified `output_folder` an
 
 ![resexplore](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/inference_demo.gif)
 
-### Containerize your model with Docker
+### Containerizing your model with Docker
 
 Finally, for people interested in deploying their models to production environments, we provide a [Dockerfile](https://github.com/nicolas-chaulet/torch-points3d/blob/master/docker/Dockerfile) as well as a [build script](https://github.com/nicolas-chaulet/torch-points3d/blob/master/docker/build.sh). Say you have trained a network for semantic segmentation that gave the weight `<outputfolder/weights.pt>`, the following command will build a docker image for you:
 
@@ -444,7 +437,7 @@ Raises `OSError: [WinError 6] The handle is invalid` / `wandb: ERROR W&B process
 Wandb is currently broken on Windows (see [this issue](https://github.com/wandb/client/issues/862)), a workaround is to use the command line argument `wandb.log=false`
 
 
-# Explore your experiments
+# Exploring your experiments
 
 We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
 

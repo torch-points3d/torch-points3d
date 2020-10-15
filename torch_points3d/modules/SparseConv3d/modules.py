@@ -99,9 +99,11 @@ class ResNetDown(torch.nn.Module):
                          |-- 1x1 - BN --|
     """
 
-    CONVOLUTION = nn.Conv3d
+    CONVOLUTION = "Conv3d"
 
-    def __init__(self, down_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, block="ResBlock", **kwargs):
+    def __init__(
+        self, down_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, block="ResBlock", **kwargs,
+    ):
         block = getattr(_res_blocks, block)
         super().__init__()
         if stride > 1:
@@ -109,10 +111,11 @@ class ResNetDown(torch.nn.Module):
         else:
             conv1_output = down_conv_nn[1]
 
+        conv = getattr(nn, self.CONVOLUTION)
         self.conv_in = (
             Seq()
             .append(
-                self.CONVOLUTION(
+                conv(
                     in_channels=down_conv_nn[0],
                     out_channels=conv1_output,
                     kernel_size=kernel_size,
@@ -127,7 +130,7 @@ class ResNetDown(torch.nn.Module):
         if N > 0:
             self.blocks = Seq()
             for _ in range(N):
-                self.blocks.append(block(conv1_output, down_conv_nn[1], self.CONVOLUTION))
+                self.blocks.append(block(conv1_output, down_conv_nn[1], conv))
                 conv1_output = down_conv_nn[1]
         else:
             self.blocks = None
@@ -144,11 +147,11 @@ class ResNetUp(ResNetDown):
     Same as Down conv but for the Decoder
     """
 
-    CONVOLUTION = nn.Conv3dTranspose
+    CONVOLUTION = "Conv3dTranspose"
 
     def __init__(self, up_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, **kwargs):
         super().__init__(
-            down_conv_nn=up_conv_nn, kernel_size=kernel_size, dilation=dilation, stride=stride, N=N, **kwargs
+            down_conv_nn=up_conv_nn, kernel_size=kernel_size, dilation=dilation, stride=stride, N=N, **kwargs,
         )
 
     def forward(self, x, skip):
