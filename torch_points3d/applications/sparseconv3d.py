@@ -6,8 +6,9 @@ import torch
 from torch_geometric.data import Batch
 
 from torch_points3d.applications.modelfactory import ModelFactory
-from torch_points3d.modules.MinkowskiEngine.api_modules import *
+import torch_points3d.modules.SparseConv3d as sp3d
 from torch_points3d.core.base_conv.message_passing import *
+from torch_points3d.modules.SparseConv3d.modules import *
 from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
 from torch_points3d.core.common_modules.base_modules import MLP
@@ -22,11 +23,21 @@ PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/sparseconv3d")
 log = logging.getLogger(__name__)
 
 
-def Minkowski(
-    architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
+def SparseConv3d(
+    architecture: str = None,
+    input_nc: int = None,
+    num_layers: int = None,
+    config: DictConfig = None,
+    backend: str = "minkowski",
+    *args,
+    **kwargs
 ):
-    """ Create a Minkowski backbone model based on architecture proposed in
+    """ Create a Sparse Conv backbone model based on architecture proposed in
     https://arxiv.org/abs/1904.08755
+
+    Two backends are available at the moment:
+        - https://github.com/mit-han-lab/torchsparse
+        - https://github.com/NVIDIA/MinkowskiEngine
 
     Parameters
     ----------
@@ -40,21 +51,19 @@ def Minkowski(
         Depth of the network
     config : DictConfig, optional
         Custom config, overrides the num_layers and architecture parameters
-    in_feat:
-        Size of the first layer
     block:
-        Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
+        Type of resnet block, ResBlock by default but can be any of the blocks in modules/SparseConv3d/modules.py
+    backend:
+        torchsparse or minkowski
     """
-    log.warning(
-        "Minkowski API is deprecated in favor of SparseConv3d, it should be a simple drop in replacement (no change to the API)."
-    )
-    factory = MinkowskiFactory(
+    sp3d.nn.set_backend(backend)
+    factory = SparseConv3dFactory(
         architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )
     return factory.build()
 
 
-class MinkowskiFactory(ModelFactory):
+class SparseConv3dFactory(ModelFactory):
     def _build_unet(self):
         if self._config:
             model_config = self._config
@@ -63,7 +72,7 @@ class MinkowskiFactory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
-        return MinkowskiUnet(model_config, None, None, modules_lib, **self.kwargs)
+        return SparseConv3dUnet(model_config, None, None, modules_lib, **self.kwargs)
 
     def _build_encoder(self):
         if self._config:
@@ -73,14 +82,14 @@ class MinkowskiFactory(ModelFactory):
             model_config = OmegaConf.load(path_to_model)
         ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]
-        return MinkowskiEncoder(model_config, None, None, modules_lib, **self.kwargs)
+        return SparseConv3dEncoder(model_config, None, None, modules_lib, **self.kwargs)
 
 
-class BaseMinkowski(UnwrappedUnetBasedModel):
+class BaseSparseConv3d(UnwrappedUnetBasedModel):
     CONV_TYPE = "sparse"
 
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
-        super(BaseMinkowski, self).__init__(model_config, model_type, dataset, modules)
+        super().__init__(model_config, model_type, dataset, modules)
         self.weight_initialization()
         default_output_nc = kwargs.get("default_output_nc", None)
         if not default_output_nc:
@@ -91,7 +100,7 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
         if "output_nc" in kwargs:
             self._has_mlp_head = True
             self._output_nc = kwargs["output_nc"]
-            self.mlp = MLP([default_output_nc, self.output_nc], activation=torch.nn.LeakyReLU(0.2), bias=False)
+            self.mlp = MLP([default_output_nc, self.output_nc], activation=torch.nn.ReLU(), bias=False)
 
     @property
     def has_mlp_head(self):
@@ -103,12 +112,12 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
 
     def weight_initialization(self):
         for m in self.modules():
-            if isinstance(m, ME.MinkowskiConvolution):
-                ME.utils.kaiming_normal_(m.kernel, mode="fan_out", nonlinearity="relu")
+            if isinstance(m, sp3d.nn.Conv3d) or isinstance(m, sp3d.nn.Conv3dTranspose):
+                torch.nn.init.kaiming_normal_(m.kernel, mode="fan_out", nonlinearity="relu")
 
-            if isinstance(m, ME.MinkowskiBatchNorm):
-                nn.init.constant_(m.bn.weight, 1)
-                nn.init.constant_(m.bn.bias, 0)
+            if isinstance(m, sp3d.nn.BatchNorm):
+                torch.nn.init.constant_(m.bn.weight, 1)
+                torch.nn.init.constant_(m.bn.bias, 0)
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -118,15 +127,14 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
         data:
             a dictionary that contains the data itself and its metadata information.
         """
-        coords = torch.cat([data.batch.unsqueeze(-1).int(), data.coords.int()], -1)
-        self.input = ME.SparseTensor(data.x, coords=coords).to(self.device)
+        self.input = sp3d.nn.SparseTensor(data.x, data.coords, data.batch, self.device)
         if data.pos is not None:
             self.xyz = data.pos.to(self.device)
         else:
             self.xyz = data.coords.to(self.device)
 
 
-class MinkowskiEncoder(BaseMinkowski):
+class SparseConv3dEncoder(BaseSparseConv3d):
     def forward(self, data, *args, **kwargs):
         """
         Parameters:
@@ -156,7 +164,7 @@ class MinkowskiEncoder(BaseMinkowski):
         return out
 
 
-class MinkowskiUnet(BaseMinkowski):
+class SparseConv3dUnet(BaseSparseConv3d):
     def forward(self, data, *args, **kwargs):
         """Run forward pass.
         Input --- D1 -- D2 -- D3 -- U1 -- U2 -- output
@@ -190,7 +198,7 @@ class MinkowskiUnet(BaseMinkowski):
         for i in range(len(self.up_modules)):
             data = self.up_modules[i](data, stack_down.pop())
 
-        out = Batch(x=data.F, pos=self.xyz, batch=data.C[:, 0])
+        out = Batch(x=data.F, pos=self.xyz)
         if self.has_mlp_head:
             out.x = self.mlp(out.x)
         return out

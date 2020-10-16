@@ -3,10 +3,10 @@ FROM ubuntu:bionic
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
-COPY install_system.sh install_system.sh 
-RUN bash install_system.sh 
+COPY install_system.sh install_system.sh
+RUN bash install_system.sh
 
-COPY install_python.sh install_python.sh 
+COPY install_python.sh install_python.sh
 RUN bash install_python.sh cpu
 
 ARG MODEL=""

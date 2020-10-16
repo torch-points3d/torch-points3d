@@ -1,8 +1,7 @@
-class: minkowski.Minkowski_Model
 conv_type: "SPARSE"
 define_constants:
   in_feat: 32
-  block: ResBlock # Can be any of the blocks in modules/MinkowskiEngine/api_modules.py
+  block: ResBlock # Can be any of the blocks in modules/SparseConv3d/modules.py
 down_conv:
   module_name: ResNetDown
   block: block
