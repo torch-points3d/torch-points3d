@@ -1,4 +1,0 @@
-models:
-    MinkUNet:
-        class: minkowski.APIModel
-        conv_type: "SPARSE"
