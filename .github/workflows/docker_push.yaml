@@ -13,6 +13,9 @@ jobs:
       matrix:
         image-version: [gpu, cpu]
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
       - name: Repo metadata
         id: repo
         uses: actions/github-script@v3
@@ -62,4 +65,4 @@ jobs:
         with:
           push: False
           tags: ${{ steps.prep.outputs.tags }}
-          dockerfile: docker/Dockerfile.${{ matrix.image-version }}
+          file: docker/Dockerfile.${{ matrix.image-version }}
