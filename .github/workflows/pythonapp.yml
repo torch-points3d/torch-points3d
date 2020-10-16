@@ -37,11 +37,7 @@ jobs:
           pip install virtualenv
           python -m venv ${pythonEnv}
           source ${pythonEnv}/bin/activate
-          python -m pip install -U pip
-          pip install setuptools>=41.0.0
-          pip install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-          pip install MinkowskiEngine
-          pip install git+https://github.com/mit-han-lab/torchsparse.git
+          bash docker/install_python.sh cpu
           pip install .
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
@@ -49,7 +45,6 @@ jobs:
       - name: Static checks with flake8 and mypy
         run: |
           source ${pythonEnv}/bin/activate
-          pip install flake8==3.8.1 mypy==0.770
           make staticchecks
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
