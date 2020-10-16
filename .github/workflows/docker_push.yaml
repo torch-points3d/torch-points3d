@@ -1,9 +1,10 @@
 name: DockerPublish
 
-# on:
-#   push:
-#     branches:
-#       - master
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
   docker_publish-gpu:
