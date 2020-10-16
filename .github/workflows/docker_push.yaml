@@ -7,7 +7,7 @@ on:
       - master
 
 jobs:
-  docker_publish-gpu:
+  docker_publish:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -46,6 +46,8 @@ jobs:
           TAGS="$TAGS,${DOCKER_IMAGE}:latest-${{ matrix.image-version }}"
 
           echo ::set-output name=tags::${TAGS}
+
+          echo "$TAGS"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
