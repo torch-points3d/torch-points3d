@@ -16,7 +16,7 @@ if [ $1 == "gpu" ]; then
 else
     echo "Install CPU"
     pip3 install torch==1.6.0+cpu torchvision==0.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-    pip3 install MinkowskiEnginee==v0.4.3
+    pip3 install MinkowskiEngine==v0.4.3
     pip3 install git+https://github.com/mit-han-lab/torchsparse.git
 fi
 

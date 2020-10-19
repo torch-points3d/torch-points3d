@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Possibility to load pretrained models by adding the path in the confs for finetuning.
 - Lottery transform to use randomly selected transforms for data augmentation
 - Batch size campling function to ensure that batches don't get too large
+- [TorchSparse](https://github.com/mit-han-lab/torchsparse) backend for sparse convolutions
+- Possibility to build sparse convolution networks with Minkowski Engine or TorchSparse
 
 ### Bug fix
 
@@ -24,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - More general API for Minkowski with support for Bottleneck blocks and Squeeze and excite.
+- Docker images tags on dockerhub are now `latest-gpu` and `latest-cpu` for the latest CPU adn GPU images.
 
 ## 1.1.1
 
