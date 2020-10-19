@@ -17,7 +17,7 @@ from .utils import extract_output_nc
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/minkowski")
+PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/sparseconv3d")
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +45,9 @@ def Minkowski(
     block:
         Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
     """
-
+    log.warning(
+        "Minkowski API is deprecated in favor of SparseConv3d, it should be a simple drop in replacement (no change to the API)."
+    )
     factory = MinkowskiFactory(
         architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )

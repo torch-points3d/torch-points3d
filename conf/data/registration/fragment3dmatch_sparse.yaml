@@ -15,7 +15,7 @@ data:
   self_supervised: False
   min_size_block: 0.5
   max_size_block: 1
-  num_pos_pairs: 30000
+  num_pos_pairs: 400
   min_points: 400
   num_points: 5000
   tau_1: 0.1
@@ -27,6 +27,7 @@ data:
   trans_thresh: 0.3
   ransac_thresh: 0.02
   noise_bound_teaser: 0.1
+  use_fps: True
   pre_transform:
     - transform: GridSampling3D
       params:

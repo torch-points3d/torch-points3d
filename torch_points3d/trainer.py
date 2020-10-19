@@ -87,15 +87,19 @@ class Trainer:
             )
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
-            if not self._checkpoint.validate(self._dataset.used_properties):
-                log.warning(
-                    "The model will not be able to be used from pretrained weights without the corresponding dataset."
-                )
             self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
             self._model.instantiate_optimizers(self._cfg)
+            self._model.set_pretrained_weights()
+            if not self._checkpoint.validate(self._dataset.used_properties):
+                log.warning(
+                    "The model will not be able to be used from pretrained weights without the corresponding dataset. Current properties are {}".format(
+                        self._dataset.used_properties
+                    )
+                )
         self._checkpoint.dataset_properties = self._dataset.used_properties
 
         log.info(self._model)
+
         self._model.log_optimizers()
         log.info("Model size = %i", sum(param.numel() for param in self._model.parameters() if param.requires_grad))
 

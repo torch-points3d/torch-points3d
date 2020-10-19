@@ -4,8 +4,8 @@ data:
   dataroot: data
   first_subsampling: 0.02
   max_dist_overlap: 0.05
-  min_size_block: 1.5
-  max_size_block: 2
+  min_size_block: 5
+  max_size_block: 7
   num_pos_pairs: 30000
   min_points: 300
   num_points: 5000
@@ -21,10 +21,10 @@ data:
   ss_transform:
     - transform: CubeCrop
       params:
-        c: 1
+        c: 5
     - transform: CubeCrop
       params:
-        c: 1.5
+        c: 5.5
 
   train_transform:
     - transform: SaveOriginalPosId
@@ -48,6 +48,18 @@ data:
         add_x: True
         add_y: True
         add_z: True
+    - transform: LotteryTransform
+      params:
+        transform_options:
+          - transform: GridSampling3D
+            params:
+              size: 0.02
+          - transform: GridSampling3D
+            params:
+              size: 0.03
+          - transform: GridSampling3D
+            params:
+              size: 0.04
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}

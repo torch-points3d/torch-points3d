@@ -45,9 +45,10 @@ class TestPairPlanetary(BasePCRBTest):
                  min_size_block=2,
                  max_size_block=3,
                  min_points=500,
-                 ss_transform=None):
+                 ss_transform=None,
+                 use_fps=False):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/7cqiTMIIqwvMOtA/download"
-        
+
         BasePCRBTest.__init__(self,
                               root=root,
                               transform=transform,
@@ -60,7 +61,8 @@ class TestPairPlanetary(BasePCRBTest):
                               min_size_block=min_size_block,
                               max_size_block=max_size_block,
                               min_points=min_points,
-                              ss_transform=ss_transform)
+                              ss_transform=ss_transform,
+                              use_fps=use_fps)
 
     def download(self):
         folder = osp.join(self.raw_dir, "test")
@@ -79,9 +81,9 @@ class TestPairPlanetary(BasePCRBTest):
             with ZipFile(zip_file, 'r') as zip_obj:
                 log.info("Extracting dataset %s" % name)
                 zip_obj.extractall(folder)
-            with os.scandir(osp.join(folder, name)) as directory: 
+            with os.scandir(osp.join(folder, name)) as directory:
                 log.info("Configuring dataset %s" % name)
-                for entry in directory: 
+                for entry in directory:
                     if entry.is_dir():
                         base_path = entry.path+"/"+entry.name
                         file_name = base_path+".xyz"
@@ -93,7 +95,7 @@ class TestPairPlanetary(BasePCRBTest):
                         open3d.io.write_point_cloud(pcd_file_name, pcd, write_ascii=True, compressed=False, print_progress=False)
                         shutil.rmtree(entry.path)
             os.remove(zip_file)
-        
+
         gdown.download("https://drive.google.com/uc?id=1marTTFGjlDTb-MLj7pm5zV1u-0IS-xFc", folder+"/p2at_met/box_map.pcd", quiet=True)
         self.download_pairs(folder)
 
@@ -115,19 +117,23 @@ class PlanetaryDataset(BaseSiameseDataset):
         test_transform = self.test_transform
 
         # training is similar to test but only unsupervised training is allowed XD
-        self.train_dataset = TestPairPlanetary(root=self._data_path,
-                                         pre_transform=pre_transform,
-                                         transform=train_transform,
-                                         max_dist_overlap=dataset_opt.max_dist_overlap,
-                                         self_supervised=True,
-                                         min_size_block=dataset_opt.min_size_block,
-                                         max_size_block=dataset_opt.max_size_block,
-                                         num_pos_pairs=dataset_opt.num_pos_pairs,
-                                         min_points=dataset_opt.min_points,
-                                         ss_transform=ss_transform)
-        self.test_dataset = TestPairPlanetary(root=self._data_path,
-                                        pre_transform=pre_transform,
-                                        transform=test_transform,
-                                        max_dist_overlap=dataset_opt.max_dist_overlap,
-                                        num_pos_pairs=dataset_opt.num_pos_pairs,
-                                        self_supervised=False)
+        self.train_dataset = TestPairPlanetary(
+            root=self._data_path,
+            pre_transform=pre_transform,
+            transform=train_transform,
+            max_dist_overlap=dataset_opt.max_dist_overlap,
+            self_supervised=True,
+            min_size_block=dataset_opt.min_size_block,
+            max_size_block=dataset_opt.max_size_block,
+            num_pos_pairs=dataset_opt.num_pos_pairs,
+            min_points=dataset_opt.min_points,
+            ss_transform=ss_transform,
+            use_fps=dataset_opt.use_fps
+        )
+        self.test_dataset = TestPairPlanetary(
+            root=self._data_path,
+            pre_transform=pre_transform,
+            transform=test_transform,
+            max_dist_overlap=dataset_opt.max_dist_overlap,
+            num_pos_pairs=dataset_opt.num_pos_pairs,
+            self_supervised=False)

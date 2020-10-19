@@ -134,6 +134,7 @@ class GridSampling3D:
         if self._quantize_coords:
             data.coords = coords[unique_pos_indices].int()
 
+        data.grid_size = self._grid_size
         return data
 
     def __call__(self, data):
@@ -223,7 +224,7 @@ class ElasticDistortion:
         ]
         interp = scipy.interpolate.RegularGridInterpolator(ax, noise, bounds_error=0, fill_value=0)
         coords = coords + interp(coords) * magnitude
-        return torch.tensor(coords)
+        return torch.tensor(coords).float()
 
     def __call__(self, data):
         # coords = data.pos / self._spatial_resolution

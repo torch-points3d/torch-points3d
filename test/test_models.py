@@ -105,7 +105,7 @@ class TestModels(unittest.TestCase):
 
     def test_runall(self):
         def is_known_to_fail(model_name):
-            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
+            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet", "ResUNet32"]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B"]
             for failing in forward_failing:
@@ -114,7 +114,7 @@ class TestModels(unittest.TestCase):
             return False
 
         for type_file in self.model_type_files:
-            associated_task = type_file.split("/")[-2]
+            associated_task = os.path.normpath(type_file).split(os.path.sep)[-2]
             models_config = OmegaConf.load(type_file)
             models_config = OmegaConf.merge(models_config, self.data_config)
             models_config.update("data.task", associated_task)

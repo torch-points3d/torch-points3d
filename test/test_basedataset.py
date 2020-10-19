@@ -157,9 +157,6 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(sample.shape, (10, 1))
         self.assertEqual(dataset.num_batches, {"train": 2, "val": 2, "test_0": 2, "test_1": 4})
 
-        repr = "Dataset: MultiTestDataset \n\x1b[0;95mpre_transform \x1b[0m= None\n\x1b[0;95mtest_transform \x1b[0m= None\n\x1b[0;95mtrain_transform \x1b[0m= None\n\x1b[0;95mval_transform \x1b[0m= None\n\x1b[0;95minference_transform \x1b[0m= None\nSize of \x1b[0;95mtrain_dataset \x1b[0m= 10\nSize of \x1b[0;95mtest_dataset \x1b[0m= 10, 20\nSize of \x1b[0;95mval_dataset \x1b[0m= 10\n\x1b[0;95mBatch size =\x1b[0m 5"
-        self.assertEqual(dataset.__repr__(), repr)
-
     def test_normal(self):
         dataset_opt = MockDatasetConfig()
         setattr(dataset_opt, "dataroot", os.path.join(DIR, "temp_dataset"))

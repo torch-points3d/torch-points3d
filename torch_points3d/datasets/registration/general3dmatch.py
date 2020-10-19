@@ -250,6 +250,7 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
             max_size_block=2,
             ss_transform=None,
             min_points=500,
+            use_fps=False
     ):
 
         self.is_patch = False
@@ -281,6 +282,7 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
         self.max_size_block = max_size_block
         self.ss_transform = ss_transform
         self.min_points = min_points
+        self.use_fps = use_fps
 
     def get(self, idx):
         return self.get_fragment(idx)
@@ -292,11 +294,6 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
 class General3DMatchDataset(BaseSiameseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
-        self.num_points = dataset_opt.num_points
-        self.tau_1 = dataset_opt.tau_1
-        self.tau_2 = dataset_opt.tau_2
-        self.trans_thresh = dataset_opt.trans_thresh
-        self.rot_thresh = dataset_opt.rot_thresh
 
         pre_transform = self.pre_transform
         ss_transform = getattr(self, "ss_transform", None)
@@ -322,7 +319,7 @@ class General3DMatchDataset(BaseSiameseDataset):
                 transform=train_transform,
                 num_random_pt=dataset_opt.num_random_pt,
                 is_offline=dataset_opt.is_offline,
-                pre_filter=pre_filter,
+                pre_filter=pre_filter
             )
 
             self.val_dataset = Patch3DMatch(
@@ -361,7 +358,9 @@ class General3DMatchDataset(BaseSiameseDataset):
                 min_size_block=dataset_opt.min_size_block,
                 max_size_block=dataset_opt.max_size_block,
                 ss_transform=ss_transform,
-                min_points=dataset_opt.min_points)
+                min_points=dataset_opt.min_points,
+                use_fps=dataset_opt.use_fps
+            )
 
             self.val_dataset = Fragment3DMatch(
                 root=self._data_path,
@@ -385,24 +384,3 @@ class General3DMatchDataset(BaseSiameseDataset):
                 num_pos_pairs=50,
                 max_dist_overlap=dataset_opt.max_dist_overlap
             )
-
-    def get_tracker(self, wandb_log: bool, tensorboard_log: bool):
-        """
-        Factory method for the tracker
-
-        Arguments:
-            wandb_log - Log using weight and biases
-            tensorboard_log - Log using tensorboard
-        Returns:
-            [BaseTracker] -- tracker
-        """
-        if self.is_patch:
-            return PatchRegistrationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log)
-        else:
-            return FragmentRegistrationTracker(num_points=self.num_points,
-                                               tau_1=self.tau_1,
-                                               tau_2=self.tau_2,
-                                               rot_thresh=self.rot_thresh,
-                                               trans_thresh=self.trans_thresh,
-                                               wandb_log=wandb_log,
-                                               use_tensorboard=tensorboard_log)

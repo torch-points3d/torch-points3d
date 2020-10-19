@@ -1,8 +1,6 @@
 import logging
 import torch.nn.functional as F
-from torch_geometric.data import Data
 import torch
-import os
 
 from torch_points3d.modules.MinkowskiEngine import *
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
@@ -37,48 +35,3 @@ class Minkowski_Baseline_Model(BaseModel):
 
     def backward(self):
         self.loss_seg.backward()
-
-    def _dump_visuals(self, epoch):
-        if False:
-            if not hasattr(self, "visual_count"):
-                self.visual_count = 0
-            data_visual = Data(pos=self.input.pos, y=self.input.y, coords=self.input.coords, batch=self.input.batch)
-            data_visual.semantic_pred = torch.max(self.output, -1)[1]
-
-            if not os.path.exists("viz"):
-                os.mkdir("viz")
-            torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
-            self.visual_count += 1
-
-
-class APIModel(BaseModel):
-    def __init__(self, option, model_type, dataset, modules):
-        # call the initialization method of UnetBasedModel
-        super().__init__(option)
-        self.model = Minkowski("unet", dataset.feature_dimension, 4, output_nc=dataset.num_classes)
-        self.loss_names = ["loss_seg"]
-
-    def set_input(self, data, device):
-        self.input = data
-        self.labels = data.y.to(self.device)
-
-    def forward(self, epoch=-1, **kwargs):
-        self.output = self.model(self.input).x
-        self.loss_seg = F.cross_entropy(self.output, self.labels, ignore_index=IGNORE_LABEL)
-        with torch.no_grad():
-            self._dump_visuals(epoch)
-
-    def backward(self):
-        self.loss_seg.backward()
-
-    def _dump_visuals(self, epoch):
-        if False:
-            if not hasattr(self, "visual_count"):
-                self.visual_count = 0
-            data_visual = Data(pos=self.input.pos, y=self.input.y, coords=self.input.coords, batch=self.input.batch)
-            data_visual.semantic_pred = torch.max(self.output, -1)[1]
-
-            if not os.path.exists("viz"):
-                os.mkdir("viz")
-            torch.save(data_visual.to("cpu"), "viz/data_e%i_%i.pt" % (epoch, self.visual_count))
-            self.visual_count += 1
