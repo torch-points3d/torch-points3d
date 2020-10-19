@@ -478,7 +478,7 @@ If you find our work useful, do not hesitate to cite it:
   author={Chaton, Thomas and Chaulet Nicolas and Horache, Sofiane and Landrieu, Loic},
   booktitle={2020 International Conference on 3D Vision (3DV)},
   year={2020},
-  organization={IEEE}
+  organization={IEEE},
   url = {\url{https://github.com/nicolas-chaulet/torch-points3d}}
 }
 ```
