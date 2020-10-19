@@ -31,7 +31,7 @@ class ClampBatchSize:
             datas_out.append(d)
 
         if removed_sample:
-            num_full_points = sum(len(d.pos) for d in datas_out)
+            num_full_points = sum(len(d.pos) for d in datas)
             num_full_batch_size = len(datas_out)
             log.warning(
                 f"\t\tCannot fit {num_full_points} points into {self._num_points} points "
