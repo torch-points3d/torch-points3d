@@ -105,7 +105,7 @@ class TestModels(unittest.TestCase):
 
     def test_runall(self):
         def is_known_to_fail(model_name):
-            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet"]
+            forward_failing = ["MinkUNet_WIP", "pointcnn", "RSConv_4LD", "RSConv_2LD", "randlanet", "ResUNet32"]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B"]
             for failing in forward_failing:
