@@ -12,7 +12,7 @@ data:
   apply_rotation: True
   mode: "last"
 
-  pre_batch_collate_transform:
+  train_pre_batch_collate_transform:
     - transform: ClampBatchSize
       params:
         num_points: 400000
