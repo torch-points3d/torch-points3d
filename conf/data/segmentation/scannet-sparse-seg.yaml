@@ -8,12 +8,13 @@ data:
   apply_rotation: True
   mode: "last"
 
+  pre_batch_collate_transform:
+    - transform: ClampBatchSize
+      params:
+        num_points: 600000
+
   train_transform:
     - transform: ElasticDistortion
-    - transform: FixedPoints
-      lparams: [100000]
-      params:
-        replace: False
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]

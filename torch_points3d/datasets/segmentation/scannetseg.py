@@ -119,7 +119,7 @@ class Scannet(InMemoryDataset):
             path = self.processed_paths[2]
         else:
             raise ValueError((f"Split {split} found, but expected either " "train, val, or test"))
-
+        self.read_from_metadata()
         self.data, self.slices = torch.load(path)
 
         if split != "test":
@@ -150,7 +150,7 @@ class Scannet(InMemoryDataset):
             setattr(self, "MAPPING_IDX_TO_SCAN_{}_NAMES".format(split.upper()), idx_mapping)
 
     @staticmethod
-    def read_one_scan(scannet_dir, scan_name):
+    def read_one_scan(id_scan, scannet_dir, scan_name):
         log.info(scan_name)
         mesh_file = Path(osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply"))
         label_file = Path(osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.labels.ply"))
@@ -168,8 +168,9 @@ class Scannet(InMemoryDataset):
         data.rgb = data.rgb.float() / 255.0
         if label is not None:
             data.y = torch.tensor(label[:, -1]).long()
+        data.id_scan = torch.tensor([id_scan]).int()
         log.info("{} - {}".format(scan_name, data))
-        return data
+        return cT.SaveOriginalPosId()(data)
 
     def process(self):
         self.read_from_metadata()
@@ -177,9 +178,9 @@ class Scannet(InMemoryDataset):
             if os.path.exists(self.processed_paths[idx_split]):
                 continue
             scannet_dir = osp.join(self.raw_dir, "scans" if split in ["train", "val"] else "scans_test")
-            args = [(scannet_dir, scan_name) for scan_name in self.scan_names[idx_split]]
+            args = [(id_scan, scannet_dir, scan_name) for id_scan, scan_name in enumerate(self.scan_names[idx_split])]
             if self.use_multiprocessing:
-                with multiprocessing.Pool(processes=self.process_workers) as pool:
+                with multiprocessing.get_context("spawn").Pool(processes=self.process_workers) as pool:
                     datas = pool.starmap(Scannet.read_one_scan, args)
             else:
                 datas = []
@@ -209,6 +210,29 @@ class Scannet(InMemoryDataset):
         new_labels[broken_labels] = IGNORE_LABEL
 
         return new_labels
+
+    def get_raw_data(self, id_scan, remap_labels=True) -> Data:
+        """ Grabs the raw data associated with a scan index
+
+        Parameters
+        ----------
+        id_scan : int or torch.Tensor
+            id of the scan
+        remap_labels : bool, optional
+            If True then labels are mapped to the range [IGNORE_LABELS:number of labels]. 
+            If using this method to compare ground truth against prediction then set remap_labels to True
+        """
+        stage = self.name
+        if torch.is_tensor(id_scan):
+            id_scan = int(id_scan.item())
+        assert stage in self.SPLITS
+        mapping_idx_to_scan_names = getattr(self, "MAPPING_IDX_TO_SCAN_{}_NAMES".format(stage.upper()))
+        scan_name = mapping_idx_to_scan_names[id_scan]
+        scannet_dir = osp.join(self.raw_dir, "scans" if stage in ["train", "val"] else "scans_test")
+        data = self.read_one_scan(id_scan, scannet_dir, scan_name)
+        if self.has_labels and remap_labels:
+            data.y = self._remap_labels(data.y)
+        return data
 
     @property
     def path_to_submission(self):
