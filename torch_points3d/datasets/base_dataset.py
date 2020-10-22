@@ -80,7 +80,10 @@ class BaseDataset:
         self._test_dataset = None
         self._val_dataset = None
 
-        self.pre_batch_collate_transform = None
+        self.train_pre_batch_collate_transform = None
+        self.val_pre_batch_collate_transform = None
+        self.test_pre_batch_collate_transform = None
+
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
 
@@ -118,7 +121,6 @@ class BaseDataset:
         obj.train_transform = None
         obj.val_transform = None
         obj.inference_transform = None
-        obj.pre_batch_collate_transform = None
 
         for key_name in dataset_opt.keys():
             if "transform" in key_name:
@@ -201,18 +203,15 @@ class BaseDataset:
         conv_type = model.conv_type
         self._batch_size = batch_size
 
-        batch_collate_function = self.__class__._get_collate_function(
-            conv_type, precompute_multi_scale, self.pre_batch_collate_transform
-        )
-        dataloader = partial(
-            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
-        )
-
         if self.train_sampler:
             log.info(self.train_sampler)
+
         if self.train_dataset:
-            self._train_loader = dataloader(
+            self._train_loader = self._dataloader(
                 self.train_dataset,
+                self.train_pre_batch_collate_transform,
+                conv_type,
+                precompute_multi_scale,
                 batch_size=batch_size,
                 shuffle=shuffle and not self.train_sampler,
                 num_workers=num_workers,
@@ -221,15 +220,25 @@ class BaseDataset:
 
         if self.test_dataset:
             self._test_loaders = [
-                dataloader(
-                    dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
+                self._dataloader(
+                    dataset,
+                    self.test_pre_batch_collate_transform,
+                    conv_type,
+                    precompute_multi_scale,
+                    batch_size=batch_size,
+                    shuffle=False,
+                    num_workers=num_workers,
+                    sampler=self.test_sampler,
                 )
                 for dataset in self.test_dataset
             ]
 
         if self.val_dataset:
-            self._val_loader = dataloader(
+            self._val_loader = self._dataloader(
                 self.val_dataset,
+                self.val_pre_batch_collate_transform,
+                conv_type,
+                precompute_multi_scale,
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=num_workers,
@@ -238,6 +247,15 @@ class BaseDataset:
 
         if precompute_multi_scale:
             self.set_strategies(model)
+
+    def _dataloader(self, dataset, pre_batch_collate_transform, conv_type, precompute_multi_scale, **kwargs):
+        batch_collate_function = self.__class__._get_collate_function(
+            conv_type, precompute_multi_scale, pre_batch_collate_transform
+        )
+        dataloader = partial(
+            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
+        )
+        return dataloader(dataset, **kwargs)
 
     @property
     def has_train_loader(self):
