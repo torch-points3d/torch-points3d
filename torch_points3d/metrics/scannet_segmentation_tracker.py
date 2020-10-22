@@ -92,7 +92,9 @@ class ScannetSegmentationTracker(SegmentationTracker):
         output : torch.Tensor
             probablities out of the model, shape: [N,nb_classes]
         """
-        id_scans = data.id_scan.squeeze()
+        id_scans = data.id_scan
+        if id_scans.dim() > 1:
+            id_scans = id_scans.squeeze()
         if self._conv_type == "DENSE":
             batch_size = len(id_scans)
             output = output.view(batch_size, -1, output.shape[-1])
