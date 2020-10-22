@@ -30,7 +30,7 @@ def set_extra_labels(data, instance_classes, num_max_objects):
             min_pos = pos.min(0)[0]
             center = 0.5 * (min_pos + max_pox)
             point_votes[ind, :] = center - pos
-            centers.append(torch.tensor(center))
+            centers.append(center.clone().detach())
             instance_labels[ind] = instance_idx
             instance_idx += 1
 
