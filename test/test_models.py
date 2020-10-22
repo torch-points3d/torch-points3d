@@ -112,7 +112,7 @@ class TestModels(unittest.TestCase):
                 "RSConv_2LD",
                 "randlanet",
                 "ResUNet32",
-                "ResUNet34",
+                "Res16UNet34",
             ]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B"]
