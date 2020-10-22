@@ -18,11 +18,6 @@ data:
         num_points: 400000
 
   train_transform:
-    - transform: RandomDropout
-    - transform: FixedPoints
-      lparams: [100000]
-      params:
-        replace: False
     - transform: ElasticDistortion
     - transform: Random3AxisRotation
       params:
@@ -30,9 +25,9 @@ data:
         rot_x: 8
         rot_y: 8
         rot_z: 180
-    # - transform: RandomScaleAnisotropic
-    #   params:
-    #     scales: [0.9, 1.1]
+    - transform: RandomScaleAnisotropic
+      params:
+        scales: [0.9, 1.1]
     - transform: RandomSymmetry
       params:
         axis: [True, False, False]
@@ -41,12 +36,6 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
-    # - transform: ShiftVoxels
-    - transform: ChromaticAutoContrast
-    - transform: ChromaticTranslation
-    - transform: ChromaticJitter
-      params:
-        std: 0.05
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
