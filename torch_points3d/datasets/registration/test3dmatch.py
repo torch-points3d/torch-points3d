@@ -80,6 +80,8 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
                  num_pos_pairs=200,
                  max_dist_overlap=0.01,
                  use_fps=False):
+        setattr(self.__class__, "process", self.process)
+        setattr(self.__class__, "download", self.download)
         Base3DMatchTest.__init__(self, root=root,
                                  transform=transform,
                                  pre_transform=pre_transform,
