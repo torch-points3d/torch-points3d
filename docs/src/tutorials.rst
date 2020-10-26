@@ -406,11 +406,11 @@ Train and Test on tasks already implemented
 
 In this section, We will see How we can train and test model on existing datasets.
 
-Registration Dataset
+Registration Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In registration task, the goal is to find the right transformation that align correctly pattern.
-Here, we will show how we can use deep learning to solve this task. Especially, we will see how we can use FCGF(). FCGF first use a Unet architecture to compute feature per point and then we can match these features. Then to find the correct transformation, we can use algorithms such as RANSAC or Fast Global Registration.
+Here, we will show how we can use deep learning to solve this task. Especially, we will see how we can use `Fully Convolutional Geometric Feature <https://openaccess.thecvf.com/content_ICCV_2019/papers/Choy_Fully_Convolutional_Geometric_Features_ICCV_2019_paper.pdf>`_. FCGF use a Unet architecture to compute feature per point and then we can match these features. Then to find the correct transformation, we can use algorithms such as RANSAC or Fast Global Registration. For this task, we use siamese networks, it means that the dataset provides pairs of point clouds and the networks is applied to both pairs.
 
 To train on 3DMatch, we can type the command:
 `train.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training=sparse_fragment_reg`
@@ -423,5 +423,12 @@ So here, it will train a network with the sparse convolution from Minkowski engi
 We can try an other convolution (for example KPConv):
 `train.py task=registration model_type=kpconv model_name=KPFCNN dataset=fragment3dmatch_partial training=sparse_fragment_reg`
 
+In the case of KPConv, because it's not the same convolution, the pre-processing is different.
 3DMatch is a dataset containing RGBD frames and the poses from 5 different datasets.But our method need to be trained on 3D point cloud. So we need to fuse RGBD frame to create fragments.
-Our code will download automatically the RGBD frames with the poses, then
+Our code will download automatically the RGBD frames with the poses. To build the fragment, we mainly rely on the code from `this repository <https://github.com/andyzeng/tsdf-fusion-python>`_:
+In the yaml code, we specify the params to build the fragments for the training and the evaluation and also we provide the parameters for the evaluation.
+
+
+If you want to test your model you can use the provided scripts.
+``
+Finally, don't forget to check the notebooks for 3DMatch and KITTI, if you want to use the network off the shelf.
