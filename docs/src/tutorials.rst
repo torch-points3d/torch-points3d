@@ -430,5 +430,5 @@ In the yaml code, we specify the params to build the fragments for the training 
 
 
 If you want to test your model you can use the provided scripts.
-``
-Finally, don't forget to check the notebooks for 3DMatch and KITTI, if you want to use the network off the shelf.
+`python scripts/test_registration_scripts/evaluate.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training.checkpoint_dir="your weights " data.sym=True`
+Finally, don't forget to check the notebooks for 3DMatch and KITTI, if you want to use the networks off the shelf (using the `PretrainedRegistry`).
