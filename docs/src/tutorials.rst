@@ -410,7 +410,18 @@ Registration Dataset
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In registration task, the goal is to find the right transformation that align correctly pattern.
-Here, we will show how we can use deep learning to solve this task. Especially, we will see how we can use FCGF(). FCGF first use a Unet architecture to compute feature per point and then we can match these features
+Here, we will show how we can use deep learning to solve this task. Especially, we will see how we can use FCGF(). FCGF first use a Unet architecture to compute feature per point and then we can match these features. Then to find the correct transformation, we can use algorithms such as RANSAC or Fast Global Registration.
 
-To train on 3DMatch, we can simply type the command:
+To train on 3DMatch, we can type the command:
 `train.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training=sparse_fragment_reg`
+
+the config file for models are in the `conf/models/registration/`. It automatically instantiates models written in `torch_points3d/models/registration`.
+The config file for the datasets are here `conf/data/registration`. preprocessing and data augmentation are defined here.
+So here, it will train a network with the sparse convolution from Minkowski engine, with the architecture specified in the following path on 3DMatch.
+
+
+We can try an other convolution (for example KPConv):
+`train.py task=registration model_type=kpconv model_name=KPFCNN dataset=fragment3dmatch_partial training=sparse_fragment_reg`
+
+3DMatch is a dataset containing RGBD frames and the poses from 5 different datasets.But our method need to be trained on 3D point cloud. So we need to fuse RGBD frame to create fragments.
+Our code will download automatically the RGBD frames with the poses, then
