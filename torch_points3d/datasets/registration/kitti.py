@@ -35,6 +35,8 @@ class FragmentKitti(BaseKitti, GeneralFragment):
                  num_pos_pairs=1024,
                  ss_transform=None,
                  min_points=300):
+        setattr(self.__class__, "process", self.process)
+        setattr(self.__class__, "download", self.download)
         BaseKitti.__init__(self,
                            root,
                            mode,

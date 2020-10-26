@@ -225,6 +225,7 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
                 final dataset. (default: :obj:`None`)
             num_random_pt: number of point we select when we test
         """
+
     def __init__(
             self,
             root,
@@ -253,6 +254,8 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
             use_fps=False
     ):
 
+        setattr(self.__class__, "process", self.process)
+        setattr(self.__class__, "download", self.download)
         self.is_patch = False
         Base3DMatch.__init__(
             self,

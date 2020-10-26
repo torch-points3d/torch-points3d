@@ -43,6 +43,8 @@ class SiameseModelNet(SampledModelNet, GeneralFragment):
                  min_points=500,
                  use_fps=False
     ):
+        setattr(self.__class__, "process", self.process)
+        setattr(self.__class__, "download", self.download)
         SampledModelNet.__init__(self,
                                  root,
                                  name_modelnet,
