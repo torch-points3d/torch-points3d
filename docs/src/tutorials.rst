@@ -413,15 +413,21 @@ In registration task, the goal is to find the right transformation that align co
 Here, we will show how we can use deep learning to solve this task. Especially, we will see how we can use `Fully Convolutional Geometric Feature <https://openaccess.thecvf.com/content_ICCV_2019/papers/Choy_Fully_Convolutional_Geometric_Features_ICCV_2019_paper.pdf>`_. FCGF use a Unet architecture to compute feature per point and then we can match these features. Then to find the correct transformation, we can use algorithms such as RANSAC or Fast Global Registration. For this task, we use siamese networks, it means that the dataset provides pairs of point clouds and the networks is applied to both pairs.
 
 To train on 3DMatch, we can type the command:
-`train.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training=sparse_fragment_reg`
 
-the config file for models are in the `conf/models/registration/`. It automatically instantiates models written in `torch_points3d/models/registration`.
-The config file for the datasets are here `conf/data/registration`. preprocessing and data augmentation are defined here.
+.. code-block::
+
+   poetry run python train.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training=sparse_fragment_reg
+
+the config file for models are in the ``conf/models/registration/``. It automatically instantiates models written in ``torch_points3d/models/registration``.
+The config file for the datasets are here ``conf/data/registration``. preprocessing and data augmentation are defined here.
 So here, it will train a network with the sparse convolution from Minkowski engine, with the architecture specified in the following path on 3DMatch.
 
 
 We can try an other convolution (for example KPConv):
-`train.py task=registration model_type=kpconv model_name=KPFCNN dataset=fragment3dmatch_partial training=sparse_fragment_reg`
+
+.. code-block::
+
+   poetry run train.py task=registration model_type=kpconv model_name=KPFCNN dataset=fragment3dmatch_partial training=sparse_fragment_reg``
 
 In the case of KPConv, because it's not the same convolution, the pre-processing is different.
 3DMatch is a dataset containing RGBD frames and the poses from 5 different datasets.But our method need to be trained on 3D point cloud. So we need to fuse RGBD frame to create fragments.
@@ -430,5 +436,10 @@ In the yaml code, we specify the params to build the fragments for the training 
 
 
 If you want to test your model you can use the provided scripts.
-`python scripts/test_registration_scripts/evaluate.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training.checkpoint_dir="your weights " data.sym=True`
-Finally, don't forget to check the notebooks for 3DMatch and KITTI, if you want to use the networks off the shelf (using the `PretrainedRegistry`).
+
+.. code-block::
+
+   python scripts/test_registration_scripts/evaluate.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training.checkpoint_dir="your weights " data.sym=True
+
+Where you have to replace "Your weights" by the directory containing the weights.
+Finally, if you want to use the networks off the shelf on your own project (using the ``PretrainedRegistry``). you can check the notebooks ``notebooks/demo_registration_3dm.ipynb`` and ``demo_registration_kitti.ipynb`` for 3DMatch and KITTI.
