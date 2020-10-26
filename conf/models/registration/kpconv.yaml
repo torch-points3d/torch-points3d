@@ -1,5 +1,4 @@
 models:
-
   KPFCNN:
     class: kpconv.FragmentKPConv
     conv_type: "PARTIAL_DENSE"
