@@ -3,7 +3,6 @@ data:
   dataset_name: "scannet-sparse"
   task: segmentation
   dataroot: data
-  base_grid_size: 0.01
   grid_size: 0.05
   version: "v2"
   use_instance_labels: False
@@ -13,7 +12,7 @@ data:
   apply_rotation: True
   mode: "last"
 
-  pre_batch_collate_transform:
+  train_pre_batch_collate_transform:
     - transform: ClampBatchSize
       params:
         num_points: 400000
@@ -34,7 +33,6 @@ data:
         size: ${data.grid_size}
         quantize_coords: True
         mode: ${data.mode}
-    - transform: ShiftVoxels
     - transform: AddFeatsByKeys
       params:
         list_add_to_x: [True]
