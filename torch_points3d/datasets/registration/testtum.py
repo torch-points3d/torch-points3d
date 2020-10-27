@@ -40,8 +40,6 @@ class TestPairTUM(BasePCRBTest):
                  ss_transform=None,
                  use_fps=False):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/yjd20Ih9ExqLlHM/download"
-        setattr(self.__class__, "process", self.process)
-        setattr(self.__class__, "download", self.download)
         BasePCRBTest.__init__(self,
                               root=root,
                               transform=transform,
@@ -76,6 +74,9 @@ class TestPairTUM(BasePCRBTest):
             os.remove(filename)
 
         self.download_pairs(folder)
+
+    def process(self):
+        super().process()
 
 
 class TUMDataset(BaseSiameseDataset):
