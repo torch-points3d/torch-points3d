@@ -74,8 +74,6 @@ class TestPairETH(BasePCRBTest):
                  min_points=500,
                  ss_transform=None,
                  use_fps=False):
-        setattr(self.__class__, "process", self.process)
-        setattr(self.__class__, "download", self.download)
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/aIRBieRybts3kEs/download"
         BasePCRBTest.__init__(self,
                               root=root,
@@ -117,6 +115,10 @@ class TestPairETH(BasePCRBTest):
                     os.remove(file_to_remove)
             os.remove(osp.join(folder, name+".zip"))
         self.download_pairs(folder)
+
+    def process(self):
+        super().process()
+
 
 
 class ETHDataset(BaseSiameseDataset):

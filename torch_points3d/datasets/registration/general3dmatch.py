@@ -253,9 +253,6 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
             min_points=500,
             use_fps=False
     ):
-
-        setattr(self.__class__, "process", self.process)
-        setattr(self.__class__, "download", self.download)
         self.is_patch = False
         Base3DMatch.__init__(
             self,
@@ -292,6 +289,12 @@ class Fragment3DMatch(Base3DMatch, GeneralFragment):
 
     def __len__(self):
         return len(self.list_fragment)
+
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
 
 
 class General3DMatchDataset(BaseSiameseDataset):

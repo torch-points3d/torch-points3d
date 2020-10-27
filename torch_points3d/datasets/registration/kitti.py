@@ -35,8 +35,6 @@ class FragmentKitti(BaseKitti, GeneralFragment):
                  num_pos_pairs=1024,
                  ss_transform=None,
                  min_points=300):
-        setattr(self.__class__, "process", self.process)
-        setattr(self.__class__, "download", self.download)
         BaseKitti.__init__(self,
                            root,
                            mode,
@@ -62,6 +60,12 @@ class FragmentKitti(BaseKitti, GeneralFragment):
 
     def __len__(self):
         return len(self.list_fragment)
+
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
 
 
 class KittiDataset(BaseSiameseDataset):
