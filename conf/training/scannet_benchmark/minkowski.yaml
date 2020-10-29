@@ -9,7 +9,7 @@ training:
     optim:
         base_lr: 0.1
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
-        grad_clip: 100
+        grad_clip: -1
         optimizer:
             class: SGD
             params:
@@ -21,9 +21,9 @@ training:
         bn_scheduler:
             bn_policy: "step_decay"
             params:
-                bn_momentum: 0.1
-                bn_decay: 0.9
-                decay_step: 20
+                bn_momentum: 0.02
+                bn_decay: 1
+                decay_step: 2000
                 bn_clip: 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
@@ -32,11 +32,12 @@ training:
 # Those arguments within experiment defines which model, dataset and task to be created for benchmarking
 # parameters for Weights and Biases
 wandb:
-    entity: "nicolas"
+    entity: ""
     project: scannet-benchmark
     log: True
     notes: "Minkowski baseline"
-    name: "Res16UNet34C"
+    name: "Res16UNet34"
+    id: 
     public: True # It will be display the model within wandb log, else not.
     config:
         model_name: ${model_name}
