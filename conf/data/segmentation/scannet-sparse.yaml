@@ -22,9 +22,12 @@ data:
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}
-        rot_x: 2
-        rot_y: 2
+        rot_x: 8
+        rot_y: 8
         rot_z: 180
+    - transform: RandomSymmetry
+      params:
+        axis: [True, True, False]
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9, 1.1]
