@@ -240,8 +240,7 @@ def read_label_mapping(filename, label_from="raw_category", label_to="nyu40id"):
 
 
 def read_mesh_vertices(filename):
-    """ read XYZ for each vertex.
-    """
+    """read XYZ for each vertex."""
     assert os.path.isfile(filename)
     with open(filename, "rb") as f:
         plydata = PlyData.read(f)
@@ -254,7 +253,7 @@ def read_mesh_vertices(filename):
 
 
 def read_mesh_vertices_rgb(filename):
-    """ read XYZ RGB for each vertex.
+    """read XYZ RGB for each vertex.
     Note: RGB values are in 0-255
     """
     assert os.path.isfile(filename)
@@ -306,7 +305,7 @@ def read_segmentation(filename):
 
 
 def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file=None):
-    """ points are XYZ RGB (RGB in 0-255),
+    """points are XYZ RGB (RGB in 0-255),
     semantic label as nyu40 ids,
     instance label as 1-#instance,
     box as (cx,cy,cz,dx,dy,dz,semantic_label)
@@ -392,7 +391,7 @@ def export(mesh_file, agg_file, seg_file, meta_file, label_map_file, output_file
 
 
 class Scannet(InMemoryDataset):
-    """ Scannet dataset, you will have to agree to terms and conditions by hitting enter
+    """Scannet dataset, you will have to agree to terms and conditions by hitting enter
     so that it downloads the dataset.
 
     http://www.scan-net.org/
@@ -406,12 +405,12 @@ class Scannet(InMemoryDataset):
     transform (callable, optional):
         A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a transformed
         version. The data object will be transformed before every access.
-    pre_transform (callable, optional): 
-        A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a 
+    pre_transform (callable, optional):
+        A function/transform that takes in an :obj:`torch_geometric.data.Data` object and returns a
         transformed version. The data object will be transformed before being saved to disk.
-    pre_filter (callable, optional): 
+    pre_filter (callable, optional):
         A function that takes in an :obj:`torch_geometric.data.Data` object and returns a boolean
-        value, indicating whether the data object should be included in the final dataset. 
+        value, indicating whether the data object should be included in the final dataset.
     version : str, optional
         version of scannet, by default "v2"
     use_instance_labels : bool, optional
@@ -496,14 +495,14 @@ class Scannet(InMemoryDataset):
         self.read_from_metadata()
 
     def get_raw_data(self, id_scan, remap_labels=True) -> Data:
-        """ Grabs the raw data associated with a scan index
+        """Grabs the raw data associated with a scan index
 
         Parameters
         ----------
         id_scan : int or torch.Tensor
             id of the scan
         remap_labels : bool, optional
-            If True then labels are mapped to the range [IGNORE_LABELS:number of labels]. 
+            If True then labels are mapped to the range [IGNORE_LABELS:number of labels].
             If using this method to compare ground truth against prediction then set remap_labels to True
         """
         stage = self.name
@@ -528,7 +527,12 @@ class Scannet(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return ["{}.pt".format(s,) for s in Scannet.SPLITS]
+        return [
+            "{}.pt".format(
+                s,
+            )
+            for s in Scannet.SPLITS
+        ]
 
     @property
     def processed_raw_paths(self):
@@ -623,7 +627,13 @@ class Scannet(InMemoryDataset):
 
     @staticmethod
     def read_one_scan(
-        scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
+        scannet_dir,
+        scan_name,
+        label_map_file,
+        donotcare_class_ids,
+        max_num_point,
+        obj_class_ids,
+        normalize_rgb,
     ):
         mesh_file = osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply")
         agg_file = osp.join(scannet_dir, scan_name, scan_name + ".aggregation.json")
@@ -737,7 +747,7 @@ class Scannet(InMemoryDataset):
                     for id, scan_name in enumerate(scan_names)
                 ]
                 if self.use_multiprocessing:
-                    with multiprocessing.Pool(processes=self.process_workers) as pool:
+                    with multiprocessing.get_context("spawn").Pool(processes=self.process_workers) as pool:
                         datas = pool.starmap(Scannet.process_func, args)
                 else:
                     datas = []
@@ -758,8 +768,7 @@ class Scannet(InMemoryDataset):
                 torch.save(self.collate(datas), self.processed_paths[i])
 
     def _remap_labels(self, semantic_label):
-        """ Remaps labels to [0 ; num_labels -1]. Can be overriden.
-        """
+        """Remaps labels to [0 ; num_labels -1]. Can be overriden."""
         new_labels = semantic_label.clone()
         mapping_dict = {indice: idx for idx, indice in enumerate(self.valid_class_idx)}
         for idx in range(NUM_CLASSES):
@@ -781,7 +790,7 @@ class Scannet(InMemoryDataset):
 
 
 class ScannetDataset(BaseDataset):
-    """ Wrapper around Scannet that creates train and test datasets.
+    """Wrapper around Scannet that creates train and test datasets.
 
     Parameters
     ----------

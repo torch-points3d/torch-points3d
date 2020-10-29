@@ -36,7 +36,6 @@ class TestPairKaist(BasePCRBTest):
                  ss_transform=None,
                  use_fps=False):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/4cTpY4CKPAXFGk4/download"
-
         BasePCRBTest.__init__(self,
                               root=root,
                               transform=transform,
@@ -69,6 +68,9 @@ class TestPairKaist(BasePCRBTest):
             os.remove(filename)
 
         self.download_pairs(folder)
+
+    def process(self):
+        super().process()
 
 
 class KaistDataset(BaseSiameseDataset):

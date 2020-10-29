@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support for the IRALab benchmark (https://arxiv.org/abs/2003.12841), with data from the ETH, Canadian Planetary, Kaist and TUM datasets.
-- Added Kitti for semantic segmentation and registration (first outdoor dataset for semantic seg)
+- Support for the IRALab benchmark (https://arxiv.org/abs/2003.12841), with data from the ETH, Canadian Planetary, Kaist and TUM datasets. (thanks @simone-fontana)
+- Added Kitti for semantic segmentation and registration (first outdoor dataset for semantic seg) 
 - Possibility to load pretrained models by adding the path in the confs for finetuning.
 - Lottery transform to use randomly selected transforms for data augmentation
 - Batch size campling function to ensure that batches don't get too large
@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Dataset configurations are saved in the checkpoints so that models can be created without requiring the actual dataset
 - Trainer was giving a warning for models that could not be re created when they actually could
-- BatchNorm1d fix
+- BatchNorm1d fix (thanks @Wundersam)
+- Fix process hanging when processing scannet with multiprocessing (thanks @zetyquickly)
+- wandb does not log the weights when set in private mode (thanks @jamesjiro)
 
 ### Changed
 

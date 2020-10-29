@@ -61,6 +61,12 @@ class FragmentKitti(BaseKitti, GeneralFragment):
     def __len__(self):
         return len(self.list_fragment)
 
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
+
 
 class KittiDataset(BaseSiameseDataset):
 
