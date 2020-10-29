@@ -3,7 +3,7 @@ data:
   dataset_name: "scannet-sparse"
   task: segmentation
   dataroot: data
-  grid_size: 0.05
+  grid_size: 0.02
   version: "v2"
   use_instance_labels: False
   use_instance_bboxes: False
@@ -12,7 +12,7 @@ data:
   apply_rotation: True
   mode: "last"
 
-  pre_batch_collate_transform:
+  train_pre_batch_collate_transform:
     - transform: ClampBatchSize
       params:
         num_points: 400000
@@ -30,7 +30,7 @@ data:
         scales: [0.9, 1.1]
     - transform: RandomSymmetry
       params:
-        axis: [True, False, False]
+        axis: [True, True, False]
     - transform: GridSampling3D
       params:
         size: ${data.grid_size}

@@ -439,7 +439,8 @@ class RandomSymmetry(object):
         for i, ax in enumerate(self.axis):
             if ax:
                 if torch.rand(1) < 0.5:
-                    data.pos[:, i] *= -1
+                    c_max = torch.max(data.pos[:,i])
+                    data.pos[:, i] = c_max - data.pos[:, i]
         return data
 
     def __repr__(self):
