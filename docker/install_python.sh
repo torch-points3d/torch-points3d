@@ -1,3 +1,5 @@
+set -eu
+
 if [[ "$#" -ne 1 ]]
 then
     echo "Usage: ./install_python.sh gpu"
@@ -5,7 +7,6 @@ then
 fi
 
 python3 -m pip install -U pip
-pip3 install pylint autopep8 flake8 pre-commit black mypy  # Dev tools
 pip3 install setuptools>=41.0.0
 if [ $1 == "gpu" ]; then
     echo "Install GPU"
