@@ -64,15 +64,15 @@ def group_data(data, cluster=None, unique_pos_indices=None, mode="last", skip_ke
             continue
 
         if torch.is_tensor(item) and item.size(0) == num_nodes:
-            # if key in _INTEGER_LABEL_KEYS:
-            #     data[key] = item[unique_pos_indices]
-            #     item_min = item.min()
-            #     item = F.one_hot(item - item_min)
-            #     item = scatter_add(item, cluster, dim=0)
-            #     flatten_labels_voxels = torch.nonzero(item, as_tuple=True)[0]
-            #     mutli_label_voxels = torch.unique(flatten_labels_voxels, return_counts=True)[1] > 1
-            #     data[key][mutli_label_voxels] = -1
-            if mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
+            if key in _INTEGER_LABEL_KEYS:
+                data[key] = item[unique_pos_indices]
+                item_min = item.min()
+                item = F.one_hot(item - item_min)
+                item = scatter_add(item, cluster, dim=0)
+                flatten_labels_voxels = torch.nonzero(item, as_tuple=True)[0]
+                mutli_label_voxels = torch.unique(flatten_labels_voxels, return_counts=True)[1] > 1
+                data[key][mutli_label_voxels] = -1
+            elif mode == "last" or key == "batch" or key == SaveOriginalPosId.KEY:
                 data[key] = item[unique_pos_indices]
             elif mode == "mean":
                 is_item_bool = item.dtype == torch.bool
@@ -366,26 +366,32 @@ class SparseVoxelizer:
         homo_coords = np.hstack((coords, np.ones((coords.shape[0], 1), dtype=coords.dtype)))
         coords_aug = np.floor(homo_coords @ rigid_transformation.T)[:, :3]
 
-        coords_aug, feats, labels = ME.utils.sparse_quantize(
-            coords_aug, feats, labels=labels.astype(np.int32), ignore_label=self.ignore_label
+        mapping, labels = ME.utils.sparse_quantize(
+            coords_aug, feats, labels=labels.astype(np.int32), ignore_label=self.ignore_label, return_index=True
         )
+        coords_aug = coords_aug[mapping]
+        feats = feats[mapping]
 
         # Normal rotation
         if feats.shape[1] > 6:
             feats[:, 3:6] = feats[:, 3:6] @ (M_r[:3, :3].T)
 
-        return_args = [coords_aug, feats, labels]
+        return_args = [coords_aug, feats, labels, mapping]
         if return_transformation:
             return_args.append(rigid_transformation.flatten())
         return tuple(return_args)
 
     def __call__(self, data):
+        num_nodes = data.pos.shape[0]
         coords = data.pos.numpy()
         feats = data.x.numpy()
         labels = data.y.numpy()
-        coords, x, y = self.voxelize(coords, feats, labels)
+        coords, x, y, mapping = self.voxelize(coords, feats, labels)
         data.coords = torch.tensor(coords)
         data.x = torch.tensor(x)
         data.y = torch.tensor(y).long()
+        for key, item in data:
+            if item.shape[0] == num_nodes:
+                data[key] = item[mapping]
         return data
 
