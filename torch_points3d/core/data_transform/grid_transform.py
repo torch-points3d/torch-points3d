@@ -125,7 +125,7 @@ class GridSampling3D:
         if self._quantize_coords:
             data.coords = coords[unique_pos_indices].int()
 
-        data.grid_size = self._grid_size
+        data.grid_size = torch.tensor([self._grid_size])
         return data
 
     def __call__(self, data):
