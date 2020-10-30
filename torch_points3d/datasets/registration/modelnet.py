@@ -101,6 +101,12 @@ class SiameseModelNet(SampledModelNet, GeneralFragment):
         data = self.get_model(idx)
         return data.y.item(), "{}_source".format(idx), "{}_target".format(idx)
 
+    def process(self):
+        super().process()
+
+    def download(self):
+        super().download()
+
 
 class SiameseModelNetDataset(BaseSiameseDataset):
 

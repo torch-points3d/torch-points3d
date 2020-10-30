@@ -132,10 +132,9 @@ class BaseSparseConv3d(UnwrappedUnetBasedModel):
         """
         self.input = sp3d.nn.SparseTensor(data.x, data.coords, data.batch, self.device)
         if data.pos is not None:
-            self.xyz = data.pos.to(self.device)
+            self.xyz = data.pos
         else:
-            self.xyz = data.coords.to(self.device)
-
+            self.xyz = data.coords
 
 class SparseConv3dEncoder(BaseSparseConv3d):
     def forward(self, data, *args, **kwargs):
@@ -201,7 +200,7 @@ class SparseConv3dUnet(BaseSparseConv3d):
         for i in range(len(self.up_modules)):
             data = self.up_modules[i](data, stack_down.pop())
 
-        out = Batch(x=data.F, pos=self.xyz)
+        out = Batch(x=data.F, pos=self.xyz).to(self.device)
         if self.has_mlp_head:
             out.x = self.mlp(out.x)
         return out

@@ -116,6 +116,10 @@ class TestPairETH(BasePCRBTest):
             os.remove(osp.join(folder, name+".zip"))
         self.download_pairs(folder)
 
+    def process(self):
+        super().process()
+
+
 
 class ETHDataset(BaseSiameseDataset):
     """

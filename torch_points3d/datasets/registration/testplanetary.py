@@ -48,7 +48,6 @@ class TestPairPlanetary(BasePCRBTest):
                  ss_transform=None,
                  use_fps=False):
         self.link_pairs = "https://cloud.mines-paristech.fr/index.php/s/7cqiTMIIqwvMOtA/download"
-
         BasePCRBTest.__init__(self,
                               root=root,
                               transform=transform,
@@ -98,6 +97,10 @@ class TestPairPlanetary(BasePCRBTest):
 
         gdown.download("https://drive.google.com/uc?id=1marTTFGjlDTb-MLj7pm5zV1u-0IS-xFc", folder+"/p2at_met/box_map.pcd", quiet=True)
         self.download_pairs(folder)
+
+    def process(self):
+        super().process()
+
 
 
 class PlanetaryDataset(BaseSiameseDataset):

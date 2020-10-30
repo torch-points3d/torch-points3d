@@ -3,6 +3,7 @@
 #   Script that builds a docker image containing the code base
 #   and a specific set of pretrained weights
 #
+set -eu
 
 if [[ "$#" -ne 1 ]]
 then
