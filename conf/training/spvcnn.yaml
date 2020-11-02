@@ -33,10 +33,11 @@ training:
 # parameters for Weights and Biases
 wandb:
     entity: ""
-    project: scannet
+    project: scannet-benchmark
     log: True
-    notes: "Minkowski baseline"
-    name: "Res16UNet34C"
+    notes:
+    name: ${model_name}
+    id:
     public: True # It will be display the model within wandb log, else not.
     config:
         grid_size: ${data.grid_size}

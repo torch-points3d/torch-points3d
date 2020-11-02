@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 import torchsparse
@@ -17,9 +16,8 @@ from torch_points3d.modules.SPVCNN.utils import *
 class SPVCNN(nn.Module):
     def __init__(self, option, model_type, dataset, modules):
         super(SPVCNN, self).__init__()
-        
+
         cr = option.cr
-        self.pres = option.pres
         self.vres = option.vres
         self.num_classes = dataset.num_classes
         self.num_features = dataset.feature_dimension
@@ -29,9 +27,12 @@ class SPVCNN(nn.Module):
 
         self.stem = nn.Sequential(
             spnn.Conv3d(self.num_features, cs[0], kernel_size=3, stride=1),
-            spnn.BatchNorm(cs[0]), spnn.ReLU(True),
+            spnn.BatchNorm(cs[0]),
+            spnn.ReLU(True),
             spnn.Conv3d(cs[0], cs[0], kernel_size=3, stride=1),
-            spnn.BatchNorm(cs[0]), spnn.ReLU(True))
+            spnn.BatchNorm(cs[0]),
+            spnn.ReLU(True),
+        )
 
         self.stage1 = nn.Sequential(
             BasicConvolutionBlock(cs[0], cs[0], ks=2, stride=2, dilation=1),
@@ -57,62 +58,55 @@ class SPVCNN(nn.Module):
             ResidualBlock(cs[4], cs[4], ks=3, stride=1, dilation=1),
         )
 
-        self.up1 = nn.ModuleList([
-            BasicDeconvolutionBlock(cs[4], cs[5], ks=2, stride=2),
-            nn.Sequential(
-                ResidualBlock(cs[5] + cs[3], cs[5], ks=3, stride=1,
-                              dilation=1),
-                ResidualBlock(cs[5], cs[5], ks=3, stride=1, dilation=1),
-            )
-        ])
+        self.up1 = nn.ModuleList(
+            [
+                BasicDeconvolutionBlock(cs[4], cs[5], ks=2, stride=2),
+                nn.Sequential(
+                    ResidualBlock(cs[5] + cs[3], cs[5], ks=3, stride=1, dilation=1),
+                    ResidualBlock(cs[5], cs[5], ks=3, stride=1, dilation=1),
+                ),
+            ]
+        )
 
-        self.up2 = nn.ModuleList([
-            BasicDeconvolutionBlock(cs[5], cs[6], ks=2, stride=2),
-            nn.Sequential(
-                ResidualBlock(cs[6] + cs[2], cs[6], ks=3, stride=1,
-                              dilation=1),
-                ResidualBlock(cs[6], cs[6], ks=3, stride=1, dilation=1),
-            )
-        ])
+        self.up2 = nn.ModuleList(
+            [
+                BasicDeconvolutionBlock(cs[5], cs[6], ks=2, stride=2),
+                nn.Sequential(
+                    ResidualBlock(cs[6] + cs[2], cs[6], ks=3, stride=1, dilation=1),
+                    ResidualBlock(cs[6], cs[6], ks=3, stride=1, dilation=1),
+                ),
+            ]
+        )
 
-        self.up3 = nn.ModuleList([
-            BasicDeconvolutionBlock(cs[6], cs[7], ks=2, stride=2),
-            nn.Sequential(
-                ResidualBlock(cs[7] + cs[1], cs[7], ks=3, stride=1,
-                              dilation=1),
-                ResidualBlock(cs[7], cs[7], ks=3, stride=1, dilation=1),
-            )
-        ])
+        self.up3 = nn.ModuleList(
+            [
+                BasicDeconvolutionBlock(cs[6], cs[7], ks=2, stride=2),
+                nn.Sequential(
+                    ResidualBlock(cs[7] + cs[1], cs[7], ks=3, stride=1, dilation=1),
+                    ResidualBlock(cs[7], cs[7], ks=3, stride=1, dilation=1),
+                ),
+            ]
+        )
 
-        self.up4 = nn.ModuleList([
-            BasicDeconvolutionBlock(cs[7], cs[8], ks=2, stride=2),
-            nn.Sequential(
-                ResidualBlock(cs[8] + cs[0], cs[8], ks=3, stride=1,
-                              dilation=1),
-                ResidualBlock(cs[8], cs[8], ks=3, stride=1, dilation=1),
-            )
-        ])
+        self.up4 = nn.ModuleList(
+            [
+                BasicDeconvolutionBlock(cs[7], cs[8], ks=2, stride=2),
+                nn.Sequential(
+                    ResidualBlock(cs[8] + cs[0], cs[8], ks=3, stride=1, dilation=1),
+                    ResidualBlock(cs[8], cs[8], ks=3, stride=1, dilation=1),
+                ),
+            ]
+        )
 
-        self.classifier = nn.Sequential(nn.Linear(cs[8],
-                                                  self.num_classes))
+        self.classifier = nn.Sequential(nn.Linear(cs[8], self.num_classes))
 
-        self.point_transforms = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(cs[0], cs[4]),
-                nn.BatchNorm1d(cs[4]),
-                nn.ReLU(True),
-            ),
-            nn.Sequential(
-                nn.Linear(cs[4], cs[6]),
-                nn.BatchNorm1d(cs[6]),
-                nn.ReLU(True),
-            ),
-            nn.Sequential(
-                nn.Linear(cs[6], cs[8]),
-                nn.BatchNorm1d(cs[8]),
-                nn.ReLU(True),
-            )
-        ])
+        self.point_transforms = nn.ModuleList(
+            [
+                nn.Sequential(nn.Linear(cs[0], cs[4]), nn.BatchNorm1d(cs[4]), nn.ReLU(True),),
+                nn.Sequential(nn.Linear(cs[4], cs[6]), nn.BatchNorm1d(cs[6]), nn.ReLU(True),),
+                nn.Sequential(nn.Linear(cs[6], cs[8]), nn.BatchNorm1d(cs[8]), nn.ReLU(True),),
+            ]
+        )
 
         self.weight_initialization()
         self.dropout = nn.Dropout(0.3, True)
@@ -129,7 +123,7 @@ class SPVCNN(nn.Module):
         # x: SparseTensor z: PointTensor
         z = PointTensor(x.F, x.C.float())
 
-        x0 = initial_voxelize(z, self.pres, self.vres)
+        x0 = initial_voxelize(z, 1.0, self.vres)
 
         x0 = self.stem(x0)
         z0 = voxel_to_point(x0, z, nearest=False)

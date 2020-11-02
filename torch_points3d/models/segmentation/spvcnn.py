@@ -21,7 +21,10 @@ class SPVCNN(BaseModel):
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
-        self.input = SparseTensor(data.x, data.coords).to(self.device)
+        if data.batch.dim() == 1:
+            data.batch = data.batch.unsqueeze(-1)
+        coords = torch.cat([data.pos, data.batch], -1)
+        self.input = SparseTensor(data.x, coords).to(self.device)
         self.labels = data.y.to(self.device)
 
     def forward(self, *args, **kwargs):
