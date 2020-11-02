@@ -2,5 +2,5 @@ models:
     SPVCNN:
         class: spvcnn.SPVCNN
         conv_type: "SPARSE"
-        cr: 0.5
+        cr: 1
         vres: ${data.grid_size}

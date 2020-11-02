@@ -1,6 +1,6 @@
 # Ref: https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/config.py
 training:
-    epochs: 100
+    epochs: 300
     num_workers: 4
     batch_size: 12
     shuffle: True
@@ -23,7 +23,7 @@ training:
             params:
                 bn_momentum: 0.1
                 bn_decay: 0.2
-                decay_step: 200
+                decay_step: 20
                 bn_clip: 2e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True
