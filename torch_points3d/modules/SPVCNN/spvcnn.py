@@ -8,7 +8,6 @@ from torchsparse.point_tensor import PointTensor
 from torchsparse.utils.kernel_region import *
 from torchsparse.utils.helpers import *
 
-from torch_points3d.modules.SPVCNN.modules import *
 from torch_points3d.modules.SPVCNN.blocks import *
 from torch_points3d.modules.SPVCNN.utils import *
 
