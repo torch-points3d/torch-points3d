@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch size campling function to ensure that batches don't get too large
 - [TorchSparse](https://github.com/mit-han-lab/torchsparse) backend for sparse convolutions
 - Possibility to build sparse convolution networks with Minkowski Engine or TorchSparse
-- [PVCNN](https://arxiv.org/abs/1907.03739) model for semantic segmentation
+- [PVCNN](https://arxiv.org/abs/1907.03739) model for semantic segmentation (thanks @CCInc)
 
 ### Bug fix
 
