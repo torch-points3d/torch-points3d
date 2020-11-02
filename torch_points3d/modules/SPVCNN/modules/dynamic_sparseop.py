@@ -1,7 +1,4 @@
-import copy
 import math
-import random
-import time
 import numpy as np
 
 import torch
@@ -12,10 +9,7 @@ import torchsparse.nn as spnn
 import torchsparse.nn.functional as spf
 from torchsparse.utils import *
 
-__all__ = [
-    'make_divisible', 'SparseDynamicConv3d',
-    'SparseDynamicBatchNorm'
-]
+__all__ = ["make_divisible", "SparseDynamicConv3d", "SparseDynamicBatchNorm"]
 
 
 def make_divisible(x):
@@ -24,23 +18,17 @@ def make_divisible(x):
 
 # TBD: kernel_size = 1 special case.
 class SparseDynamicConv3d(nn.Module):
-    def __init__(self,
-                 inc,
-                 outc,
-                 kernel_size=3,
-                 stride=1,
-                 dilation=1,
-                 transpose=False):
+    def __init__(self, inc, outc, kernel_size=3, stride=1, dilation=1, transpose=False):
         super().__init__()
         self.inc = inc
         self.outc = outc
         self.ks = kernel_size
-        self.k = self.ks**3
+        self.k = self.ks ** 3
         self.s = stride
         self.d = dilation
-        self.kernel = nn.Parameter(torch.zeros(
-            self.k, inc, outc)) if self.k > 1 else nn.Parameter(
-                torch.zeros(inc, outc))
+        self.kernel = (
+            nn.Parameter(torch.zeros(self.k, inc, outc)) if self.k > 1 else nn.Parameter(torch.zeros(inc, outc))
+        )
         self.t = transpose
         self.init_weight()
         self.runtime_outc = None
@@ -52,22 +40,19 @@ class SparseDynamicConv3d(nn.Module):
 
     def __repr__(self):
         if not self.t:
-            return 'SparseDynamicConv3d(imax=%s, omax=%s, s=%s, d=%s)' % (
-                self.inc, self.outc, self.s, self.d)
+            return "SparseDynamicConv3d(imax=%s, omax=%s, s=%s, d=%s)" % (self.inc, self.outc, self.s, self.d)
         else:
-            return 'SparseDynamicConv3dTranspose(imax=%s, omax=%s, s=%s, d=%s)' % (
-                self.inc, self.outc, self.s, self.d)
+            return "SparseDynamicConv3dTranspose(imax=%s, omax=%s, s=%s, d=%s)" % (self.inc, self.outc, self.s, self.d)
 
     def init_weight(self):
-        std = 1. / math.sqrt(self.outc if self.t else self.inc * self.k)
+        std = 1.0 / math.sqrt(self.outc if self.t else self.inc * self.k)
         self.kernel.data.uniform_(-std, std)
 
     def set_in_channel(self, in_channel=None, constraint=None):
         if in_channel is not None:
             self.runtime_inc = in_channel
         elif constraint is not None:
-            self.runtime_inc_constraint = torch.from_numpy(
-                np.array(constraint)).long()
+            self.runtime_inc_constraint = torch.from_numpy(np.array(constraint)).long()
         else:
             raise NotImplementedError
 
@@ -78,23 +63,23 @@ class SparseDynamicConv3d(nn.Module):
         # inputs: SparseTensor
         # outputs: SparseTensor
 
-        features = inputs.F
-        coords = inputs.C
-        cur_stride = inputs.s
         cur_kernel = self.kernel
         if self.runtime_inc_constraint is not None:
-            cur_kernel = cur_kernel[:, self.
-                                    runtime_inc_constraint, :] if self.ks > 1 else cur_kernel[
-                                        self.runtime_inc_constraint]
+            cur_kernel = (
+                cur_kernel[:, self.runtime_inc_constraint, :]
+                if self.ks > 1
+                else cur_kernel[self.runtime_inc_constraint]
+            )
         elif self.runtime_inc is not None:
-            cur_kernel = cur_kernel[:, torch.arange(
-                self.runtime_inc), :] if self.ks > 1 else cur_kernel[
-                    torch.arange(self.runtime_inc)]
+            cur_kernel = (
+                cur_kernel[:, torch.arange(self.runtime_inc), :]
+                if self.ks > 1
+                else cur_kernel[torch.arange(self.runtime_inc)]
+            )
         else:
-            assert 0, print('Number of channels not specified!')
+            assert 0, print("Number of channels not specified!")
         cur_kernel = cur_kernel[..., torch.arange(self.runtime_outc)]
 
-    
         return spf.conv3d(inputs, cur_kernel, self.s, self.d, self.t)
 
 
@@ -112,7 +97,7 @@ class SparseDynamicBatchNorm(nn.Module):
         self.runtime_channel = None
 
     def __repr__(self):
-        return 'SparseDynamicBatchNorm(cmax=%d)' % self.c
+        return "SparseDynamicBatchNorm(cmax=%d)" % self.c
 
     def set_channel(self, channel):
         self.runtime_channel = channel
@@ -128,8 +113,7 @@ class SparseDynamicBatchNorm(nn.Module):
                 if bn.num_batches_tracked is not None:
                     bn.num_batches_tracked += 1
                     if bn.momentum is None:  # use cumulative moving average
-                        exponential_average_factor = 1.0 / float(
-                            bn.num_batches_tracked)
+                        exponential_average_factor = 1.0 / float(bn.num_batches_tracked)
                     else:  # use exponential moving average
                         exponential_average_factor = bn.momentum
             return F.batch_norm(
