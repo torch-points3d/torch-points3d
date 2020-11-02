@@ -8,13 +8,13 @@ from torchsparse.point_tensor import PointTensor
 from torchsparse.utils.kernel_region import *
 from torchsparse.utils.helpers import *
 
-from torch_points3d.modules.SPVCNN.blocks import *
-from torch_points3d.modules.SPVCNN.utils import *
+from torch_points3d.modules.PVCNN.blocks import *
+from torch_points3d.modules.PVCNN.utils import *
 
 
-class SPVCNN(nn.Module):
+class PVCNN(nn.Module):
     def __init__(self, option, model_type, dataset, modules):
-        super(SPVCNN, self).__init__()
+        super(PVCNN, self).__init__()
 
         cr = option.cr
         self.vres = option.vres

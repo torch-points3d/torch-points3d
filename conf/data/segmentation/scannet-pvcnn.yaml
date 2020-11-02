@@ -10,7 +10,11 @@ data:
   donotcare_class_ids: []
   process_workers: 8
   apply_rotation: True
-  mode: "last"
+
+  train_pre_batch_collate_transform:
+    - transform: ClampBatchSize
+      params:
+        num_points: 700000
 
   train_transform:
     - transform: ElasticDistortion

@@ -2,7 +2,7 @@ import logging
 import torch.nn.functional as F
 import torch
 
-from torch_points3d.modules.SPVCNN import spvcnn
+from torch_points3d.modules.PVCNN import pvcnn
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 
@@ -11,12 +11,12 @@ from torchsparse import SparseTensor
 log = logging.getLogger(__name__)
 
 
-class SPVCNN(BaseModel):
+class PVCNN(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
-        super(SPVCNN, self).__init__(option)
+        super(PVCNN, self).__init__(option)
         self._weight_classes = dataset.weight_classes
 
-        self.model = spvcnn.SPVCNN(option, model_type, dataset, modules)
+        self.model = pvcnn.PVCNN(option, model_type, dataset, modules)
 
         self.loss_names = ["loss_seg"]
 
