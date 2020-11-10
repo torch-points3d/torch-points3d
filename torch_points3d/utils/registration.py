@@ -3,7 +3,8 @@ registration toolbox (algorithm for some registration algorithm)
 Implemented: fast_global_registration
 teaser
 """
-
+import open3d
+import numpy as np
 import torch
 from torch_points3d.utils.geometry import get_trans
 from torch_geometric.nn import knn
@@ -135,3 +136,28 @@ def teaser_pp_registration(
     T_res[:3, :3] = torch.from_numpy(solution.rotation).to(xyz.device)
     T_res[:3, 3] = torch.from_numpy(solution.translation).to(xyz.device)
     return T_res
+
+
+def ransac_registration(xyz, xyz_target, distance_threshold=0.05, num_iterations=80000):
+    """
+    use Open3D version of RANSAC
+    """
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.utility.Vector3dVector(xyz.detach().cpu().numpy())
+
+    pcd_t = open3d.geometry.PointCloud()
+    pcd_t.points = open3d.utility.Vector3dVector(xyz_target.detach().cpu().numpy())
+    rang = np.arange(len(xyz))
+    corres = np.stack((rang, rang), axis=1)
+    corres = open3d.utility.Vector2iVector(corres)
+    result = open3d.registration.registration_ransac_based_on_correspondence(
+        pcd,
+        pcd_t,
+        corres,
+        distance_threshold,
+        open3d.registration.TransformationEstimationPointToPoint(False),
+        4,
+        open3d.registration.RANSACConvergenceCriteria(4000000, num_iterations),
+    )
+
+    return torch.from_numpy(result.transformation).float()
