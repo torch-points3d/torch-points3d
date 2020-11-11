@@ -2,9 +2,15 @@ import numpy as np
 import torch
 import unittest
 import numpy.testing as npt
+import os
+import sys
+
+ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+sys.path.insert(0, ROOT)
 
 from torch_points3d.utils.registration import estimate_transfo
 from torch_points3d.utils.registration import fast_global_registration
+from torch_points3d.utils.registration import ransac_registration
 from torch_points3d.metrics.registration_metrics import compute_hit_ratio
 from torch_points3d.metrics.registration_metrics import compute_transfo_error
 from torch_points3d.metrics.registration_metrics import compute_scaled_registration_error
@@ -49,6 +55,19 @@ class TestRegistrationMetrics(unittest.TestCase):
         b = a.mm(R_gt.T) + t_gt
         b[[1, 5, 20, 32, 74, 17, 27, 77, 88, 89]] *= 42
         T_pred = fast_global_registration(a, b, mu_init=1, num_iter=20)
+        # T_pred = estimate_transfo(a, b)
+        npt.assert_allclose(T_pred.numpy(), T_gt.numpy(), rtol=1e-3)
+
+    def test_ransac(self):
+        a = torch.randn(100, 3)
+        R_gt = euler_angles_to_rotation_matrix(torch.rand(3) * np.pi)
+        t_gt = torch.rand(3)
+        T_gt = torch.eye(4)
+        T_gt[:3, :3] = R_gt
+        T_gt[:3, 3] = t_gt
+        b = a.mm(R_gt.T) + t_gt
+        b[[1, 5, 20, 32, 74, 17, 27, 77, 88, 89]] *= 42
+        T_pred = ransac_registration(a, b, distance_threshold=0.01)
         # T_pred = estimate_transfo(a, b)
         npt.assert_allclose(T_pred.numpy(), T_gt.numpy(), rtol=1e-3)
 
