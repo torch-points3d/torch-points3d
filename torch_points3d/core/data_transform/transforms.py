@@ -25,6 +25,7 @@ from .grid_transform import group_data, GridSampling3D, shuffle_data
 from .features import Random3AxisRotation
 
 
+KDTREE_KEY = "kd_tree"
 
 
 class RemoveAttributes(object):
@@ -102,7 +103,7 @@ class GridSphereSampling(object):
         If True, a centre transform is apply on each sphere.
     """
 
-    KDTREE_KEY = "kd_tree"
+    KDTREE_KEY = KDTREE_KEY
 
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
@@ -153,6 +154,7 @@ class GridSphereSampling(object):
     def __repr__(self):
         return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
 
+
 class GridCylinderSampling(object):
     """Fits the point cloud to a grid and for each point in this grid,
     create a cylinder with a radius r
@@ -169,7 +171,7 @@ class GridCylinderSampling(object):
         If True, a centre transform is apply on each cylinder.
     """
 
-    KDTREE_KEY = "kd_tree"
+    KDTREE_KEY = KDTREE_KEY
 
     def __init__(self, radius, grid_size=None, delattr_kd_tree=True, center=True):
         self._radius = eval(radius) if isinstance(radius, str) else float(radius)
@@ -300,7 +302,7 @@ class SphereSampling:
         move resulting point cloud to origin
     """
 
-    KDTREE_KEY = "kd_tree"
+    KDTREE_KEY = KDTREE_KEY
 
     def __init__(self, radius, sphere_centre, align_origin=True):
         self._radius = radius
@@ -338,6 +340,7 @@ class SphereSampling:
             self.__class__.__name__, self._radius, self._centre, self._align_origin
         )
 
+
 class CylinderSampling:
     """ Samples points within a cylinder
 
@@ -351,7 +354,7 @@ class CylinderSampling:
         move resulting point cloud to origin
     """
 
-    KDTREE_KEY = "kd_tree"
+    KDTREE_KEY = KDTREE_KEY
 
     def __init__(self, radius, cylinder_centre, align_origin=True):
         self._radius = radius
@@ -374,7 +377,9 @@ class CylinderSampling:
         try:
             ind = torch.LongTensor(tree.query_radius(self._centre, r=self._radius)[0])
         except:
-            import pdb; pdb.set_trace()
+            import pdb
+
+            pdb.set_trace()
         new_data = Data()
         for key in set(data.keys):
             if key == self.KDTREE_KEY:
@@ -394,10 +399,39 @@ class CylinderSampling:
             self.__class__.__name__, self._radius, self._centre, self._align_origin
         )
 
+
+class Select:
+    """ Selects given points from a data object
+
+    Parameters
+    ----------
+    indices : torch.Tensor
+        indeices of the points to keep. Can also be a boolean mask
+    """
+
+    def __init__(self, indices=None):
+        self._indices = indices
+
+    def __call__(self, data):
+        num_points = data.pos.shape[0]
+        new_data = Data()
+        for key in data.keys:
+            if key == KDTREE_KEY:
+                continue
+            item = data[key]
+            if torch.is_tensor(item) and num_points == item.shape[0]:
+                item = item[self._indices].clone()
+            elif torch.is_tensor(item):
+                item = item.clone()
+            setattr(new_data, key, item)
+        return new_data
+
+
 class CylinderNormalizeScale(object):
     """ Normalize points within a cylinder
 
     """
+
     def __init__(self, normalize_z=True):
         self._normalize_z = normalize_z
 
@@ -418,9 +452,8 @@ class CylinderNormalizeScale(object):
         return data
 
     def __repr__(self):
-        return "{}(normalize_z={})".format(
-            self.__class__.__name__, self._normalize_z
-        )
+        return "{}(normalize_z={})".format(self.__class__.__name__, self._normalize_z)
+
 
 class RandomSymmetry(object):
     """ Apply a random symmetry transformation on the data
@@ -439,7 +472,7 @@ class RandomSymmetry(object):
         for i, ax in enumerate(self.axis):
             if ax:
                 if torch.rand(1) < 0.5:
-                    c_max = torch.max(data.pos[:,i])
+                    c_max = torch.max(data.pos[:, i])
                     data.pos[:, i] = c_max - data.pos[:, i]
         return data
 
@@ -516,7 +549,7 @@ class RandomScaleAnisotropic:
     def __call__(self, data):
         scale = self.scales[0] + torch.rand((3,)) * (self.scales[1] - self.scales[0])
         data.pos = data.pos * scale
-        if(data.norm is not None):
+        if data.norm is not None:
             data.norm = data.norm / scale
             data.norm = torch.nn.functional.normalize(data.norm, dim=1)
         return data
@@ -713,9 +746,10 @@ class RandomDropout:
 def apply_mask(data, mask, skip_keys=[]):
     size_pos = len(data.pos)
     for k in data.keys:
-        if(size_pos == len(data[k]) and k not in skip_keys):
+        if size_pos == len(data[k]) and k not in skip_keys:
             data[k] = data[k][mask]
     return data
+
 
 @numba.jit(nopython=True, cache=True)
 def rw_mask(pos, ind, dist, mask_vertices, random_ratio=0.04, num_iter=5000):
@@ -726,7 +760,7 @@ def rw_mask(pos, ind, dist, mask_vertices, random_ratio=0.04, num_iter=5000):
             rand_ind = np.random.randint(0, len(pos))
         else:
             neighbors = ind[rand_ind][dist[rand_ind] > 0]
-            if(len(neighbors) == 0):
+            if len(neighbors) == 0:
                 rand_ind = np.random.randint(0, len(pos))
             else:
                 n_i = np.random.randint(0, len(neighbors))
@@ -752,8 +786,14 @@ class RandomWalkDropout(object):
         skip_keys where we don't apply the mask
     """
 
-    def __init__(self, dropout_ratio: float = 0.05, num_iter: int = 5000,
-                 radius: float = 0.5, max_num: int =- 1, skip_keys: List = []):
+    def __init__(
+        self,
+        dropout_ratio: float = 0.05,
+        num_iter: int = 5000,
+        radius: float = 0.5,
+        max_num: int = -1,
+        skip_keys: List = [],
+    ):
         self.dropout_ratio = dropout_ratio
         self.num_iter = num_iter
         self.radius = radius
@@ -763,23 +803,25 @@ class RandomWalkDropout(object):
     def __call__(self, data):
 
         pos = data.pos.detach().cpu().numpy()
-        ind, dist = ball_query(data.pos, data.pos,
-                               radius=self.radius,
-                               max_num=self.max_num, mode=0)
+        ind, dist = ball_query(data.pos, data.pos, radius=self.radius, max_num=self.max_num, mode=0)
         mask = np.ones(len(pos), dtype=bool)
-        mask = rw_mask(pos,
-                       ind.detach().cpu().numpy(),
-                       dist.detach().cpu().numpy(),
-                       mask,
-                       num_iter=self.num_iter,
-                       random_ratio=self.dropout_ratio)
+        mask = rw_mask(
+            pos,
+            ind.detach().cpu().numpy(),
+            dist.detach().cpu().numpy(),
+            mask,
+            num_iter=self.num_iter,
+            random_ratio=self.dropout_ratio,
+        )
 
         data = apply_mask(data, mask, self.skip_keys)
 
         return data
 
     def __repr__(self):
-        return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={}, skip_keys={})".format(self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num, self.skip_keys)
+        return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={}, skip_keys={})".format(
+            self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num, self.skip_keys
+        )
 
 
 class SphereDropout(object):
@@ -795,19 +837,17 @@ class SphereDropout(object):
     radius: float, optional
         radius of the spheres
     """
-    def __init__(self, num_sphere: int = 10,
-                 radius: float = 5):
+
+    def __init__(self, num_sphere: int = 10, radius: float = 5):
         self.num_sphere = num_sphere
         self.radius = radius
 
     def __call__(self, data):
 
         pos = data.pos
-        list_ind = torch.randint(0, len(pos), (self.num_sphere, ))
+        list_ind = torch.randint(0, len(pos), (self.num_sphere,))
 
-        ind, dist = ball_query(data.pos, data.pos[list_ind],
-                               radius=self.radius,
-                               max_num=-1, mode=1)
+        ind, dist = ball_query(data.pos, data.pos[list_ind], radius=self.radius, max_num=-1, mode=1)
         ind = ind[dist[:, 0] > 0]
         mask = torch.ones(len(pos), dtype=torch.bool)
         mask[ind[:, 0]] = False
@@ -816,8 +856,7 @@ class SphereDropout(object):
         return data
 
     def __repr__(self):
-        return "{}(num_sphere={}, radius={})".format(
-            self.__class__.__name__, self.num_sphere, self.radius)
+        return "{}(num_sphere={}, radius={})".format(self.__class__.__name__, self.num_sphere, self.radius)
 
 
 class SphereCrop(object):
@@ -836,21 +875,17 @@ class SphereCrop(object):
         self.radius = radius
 
     def __call__(self, data):
-        i = torch.randint(0, len(data.pos), (1, ))
-        ind, dist = ball_query(data.pos,
-                               data.pos[i].view(1, 3),
-                               radius=self.radius,
-                               max_num=-1, mode=1)
+        i = torch.randint(0, len(data.pos), (1,))
+        ind, dist = ball_query(data.pos, data.pos[i].view(1, 3), radius=self.radius, max_num=-1, mode=1)
         ind = ind[dist[:, 0] > 0]
         size_pos = len(data.pos)
         for k in data.keys:
-            if(size_pos == len(data[k])):
+            if size_pos == len(data[k]):
                 data[k] = data[k][ind[:, 0]]
         return data
 
     def __repr__(self):
-        return "{}(radius={})".format(
-            self.__class__.__name__, self.radius)
+        return "{}(radius={})".format(self.__class__.__name__, self.radius)
 
 
 class CubeCrop(object):
@@ -870,34 +905,26 @@ class CubeCrop(object):
         rotation of the cube around x axis
     """
 
-    def __init__(self, c: float = 1,
-                 rot_x: float = 180,
-                 rot_y: float = 180,
-                 rot_z: float = 180):
+    def __init__(self, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180):
         self.c = c
-        self.random_rotation = Random3AxisRotation(
-            rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
+        self.random_rotation = Random3AxisRotation(rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
 
     def __call__(self, data):
         data_temp = data.clone()
-        i = torch.randint(0, len(data.pos), (1, ))
+        i = torch.randint(0, len(data.pos), (1,))
         center = data_temp.pos[i]
         min_square = center - self.c
         max_square = center + self.c
         data_temp.pos = data_temp.pos - center
         data_temp = self.random_rotation(data_temp)
         data_temp.pos = data_temp.pos + center
-        mask = torch.prod((data_temp.pos - min_square)>0, dim=1) * torch.prod(
-            (max_square - data_temp.pos) > 0, dim=1)
+        mask = torch.prod((data_temp.pos - min_square) > 0, dim=1) * torch.prod((max_square - data_temp.pos) > 0, dim=1)
         mask = mask.to(torch.bool)
         data = apply_mask(data, mask)
         return data
 
     def __repr__(self):
-        return "{}(c={}, rotation={})".format(
-            self.__class__.__name__,
-            self.c,
-            self.random_rotation)
+        return "{}(c={}, rotation={})".format(self.__class__.__name__, self.c, self.random_rotation)
 
 
 class DensityFilter(object):
@@ -914,24 +941,21 @@ class DensityFilter(object):
         list of attributes of data to skip when we apply the mask
     """
 
-    def __init__(self, radius_nn: float = 0.04,
-                 min_num: int = 6, skip_keys: List = []):
+    def __init__(self, radius_nn: float = 0.04, min_num: int = 6, skip_keys: List = []):
         self.radius_nn = radius_nn
         self.min_num = min_num
         self.skip_keys = skip_keys
 
     def __call__(self, data):
 
-        ind, dist = ball_query(data.pos, data.pos,
-                               radius=self.radius_nn,
-                               max_num=-1, mode=0)
+        ind, dist = ball_query(data.pos, data.pos, radius=self.radius_nn, max_num=-1, mode=0)
 
-        mask = ((dist > 0).sum(1) > self.min_num)
+        mask = (dist > 0).sum(1) > self.min_num
         data = apply_mask(data, mask, self.skip_keys)
         return data
 
     def __repr__(self):
-        return "{}(radius_nn={}, min_num={}, skip_keys={})".format(self.__class__.__name__,
-                                                                   self.radius_nn,
-                                                                   self.min_num,
-                                                                   self.skip_keys)
+        return "{}(radius_nn={}, min_num={}, skip_keys={})".format(
+            self.__class__.__name__, self.radius_nn, self.min_num, self.skip_keys
+        )
+

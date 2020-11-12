@@ -527,12 +527,7 @@ class Scannet(InMemoryDataset):
 
     @property
     def processed_file_names(self):
-        return [
-            "{}.pt".format(
-                s,
-            )
-            for s in Scannet.SPLITS
-        ]
+        return ["{}.pt".format(s,) for s in Scannet.SPLITS]
 
     @property
     def processed_raw_paths(self):
@@ -627,13 +622,7 @@ class Scannet(InMemoryDataset):
 
     @staticmethod
     def read_one_scan(
-        scannet_dir,
-        scan_name,
-        label_map_file,
-        donotcare_class_ids,
-        max_num_point,
-        obj_class_ids,
-        normalize_rgb,
+        scannet_dir, scan_name, label_map_file, donotcare_class_ids, max_num_point, obj_class_ids, normalize_rgb,
     ):
         mesh_file = osp.join(scannet_dir, scan_name, scan_name + "_vh_clean_2.ply")
         agg_file = osp.join(scannet_dir, scan_name, scan_name + ".aggregation.json")

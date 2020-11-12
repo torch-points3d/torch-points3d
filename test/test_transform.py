@@ -37,6 +37,7 @@ from torch_points3d.core.data_transform import (
     DensityFilter,
     LotteryTransform,
     ClampBatchSize,
+    Select,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -383,6 +384,22 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(len(tr(datas)), 3)
         tr = ClampBatchSize(21)
         self.assertEqual(len(tr(datas)), 2)
+
+    def test_select(self):
+        data = Data(pos=torch.tensor([0, 1, 2]), x=torch.tensor([2, 3, 4]), z=torch.tensor([1]))
+        tr = Select(torch.tensor([1, 2]))
+
+        data2 = tr(data)
+        torch.testing.assert_allclose(data2.pos, torch.tensor([1, 2]))
+        torch.testing.assert_allclose(data2.x, torch.tensor([3, 4]))
+        torch.testing.assert_allclose(data2.z, torch.tensor([1]))
+
+        tr = Select(torch.tensor([False, True, True]))
+
+        data2 = tr(data)
+        torch.testing.assert_allclose(data2.pos, torch.tensor([1, 2]))
+        torch.testing.assert_allclose(data2.x, torch.tensor([3, 4]))
+        torch.testing.assert_allclose(data2.z, torch.tensor([1]))
 
 
 if __name__ == "__main__":
