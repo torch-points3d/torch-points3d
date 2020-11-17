@@ -24,7 +24,14 @@ class SimpleDataset(InMemoryDataset):
 
 class ScannetOneShotDetection(ScannetObjectDetection):
     def __init__(
-        self, root, split="train", transform=None, pre_transform=None, pre_filter=None, process_workers=4,
+        self,
+        root,
+        split="train",
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        process_workers=4,
+        oneshot_class=3,
     ):
         super().__init__(
             root,
@@ -42,6 +49,7 @@ class ScannetOneShotDetection(ScannetObjectDetection):
         elif split == "test":
             path = self.processed_paths[5]
         instances = torch.load(path)
+        self.oneshot_class = oneshot_class
         self.instances = {}
         for label, instance_raw in instances.items():
             self.instances[label] = SimpleDataset(instance_raw[0], instance_raw[1])
@@ -107,5 +115,5 @@ class ScannetOneShotDetection(ScannetObjectDetection):
 
 
 if __name__ == "__main__":
-    dataset = ScannetOneShotDetection("/home/ChauletN/torch-points3d/data/scannet-oneshot", process_workers=0)
+    dataset = ScannetOneShotDetection("/home/ChauletN/torch-points3d/data/scannet-oneshot", process_workers=10)
     instance = dataset.get_random_instance(3)
