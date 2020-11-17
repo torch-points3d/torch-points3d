@@ -63,7 +63,6 @@ class PointGroup(BaseModel):
     def set_input(self, data, device):
         self.raw_pos = data.pos.to(device)
         self.input = data
-        self.labels = data.y.to(device)
         all_labels = {l: data[l].to(device) for l in self.__REQUIRED_LABELS__}
         self.labels = PanopticLabels(**all_labels)
 
