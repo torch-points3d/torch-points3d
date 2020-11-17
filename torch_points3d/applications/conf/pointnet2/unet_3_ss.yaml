@@ -1,5 +1,4 @@
 conv_type: "DENSE"
-use_category: ${data.use_category}
 down_conv:
     module_name: PointNetMSGDown
     npoint: [512, 128]
