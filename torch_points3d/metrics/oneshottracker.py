@@ -1,60 +1,67 @@
-from typing import List, Dict
-from collections import OrderedDict
+from typing import Any, Dict
 
 from torch_points3d.models.model_interface import TrackerInterface
 from torch_points3d.metrics.base_tracker import BaseTracker
 from torch_points3d.datasets.object_detection.box_data import BoxData
-from .box_detection.ap import eval_detection
+from torch_points3d.utils.box_utils import box3d_iou
 
 
 class OneShotObjectTracker(BaseTracker):
     def __init__(self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False):
         super().__init__(stage, wandb_log, use_tensorboard)
-        self._oneshot_class = dataset.oneshot_class
+        self.reset(stage)
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
-        self._pred_boxes: Dict[str, List[BoxData]] = {}
-        self._gt_boxes: Dict[str, List[BoxData]] = {}
+        self._tp = 0
+        self._fp = 0
+        self._ngt = 0
 
-    def track(self, model: TrackerInterface, data=None, **kwargs):
+    def track(self, model: TrackerInterface, data=None, threshold=0.25, **kwargs):
         super().track(model)
 
         outputs = model.get_output()
         pred_boxes = outputs.get_boxes()
 
         if data:
+            self._reshape_batch(data)
             scan_ids = data.id_scan
             assert len(scan_ids) == len(pred_boxes)
-            for idx, scan_id in enumerate(scan_ids):
+            for idx in range(len(scan_ids)):
                 # Predictions
-                self._pred_boxes[scan_id.item()] = pred_boxes[idx]
+                sample_pred_boxes = pred_boxes[idx]
 
                 # Ground truth
                 sample_mask = idx
                 gt_boxes = data.instance_box_corners[sample_mask]
                 gt_boxes = gt_boxes[data.box_label_mask[sample_mask]]
                 sample_labels = data.sem_cls_label[sample_mask]
-                gt_box_data = []
-                for i in range(len(gt_boxes)):
-                    if sample_labels[i].item() == self._oneshot_class:
-                        gt_box_data.append(BoxData(sample_labels[i].item(), gt_boxes[i]))
-                self._gt_boxes[scan_id.item()] = gt_box_data
+                for pred_box in sample_pred_boxes:
+                    for i in range(len(gt_boxes)):
+                        if sample_labels[i].item() == pred_box.classname:
+                            self._ngt += 1
+                            iou = box3d_iou(pred_box.corners3d, gt_boxes[i])
+                            if iou > threshold:
+                                self._tp += 1
+                            else:
+                                self._fp += 1
 
-    def finalise(self, track_boxes=False, overlap_thresholds=[0.25], **kwargs):
-        if not track_boxes or len(self._gt_boxes) == 0:
-            return
+    def _reshape_batch(self, data):
+        """ Ensures that the label tensors are unwrapped in case data comes from a sparse batch """
+        batch_size = len(data.id_scan)
+        if data.instance_box_corners.dim() == 3:
+            data.instance_box_corners = data.instance_box_corners.reshape(batch_size, -1, 8, 3)
+            data.box_label_mask = data.box_label_mask.reshape(batch_size, -1)
+            data.sem_cls_label = data.sem_cls_label.reshape(batch_size, -1)
+        assert data.instance_box_corners.dim() == 4
+        assert data.box_label_mask.dim() == 2
+        assert data.sem_cls_label.dim() == 2
 
-        # Compute box detection metrics
-        self._ap = {}
-        self._rec = {}
-        for thresh in overlap_thresholds:
-            rec, _, ap = eval_detection(self._pred_boxes, self._gt_boxes, ovthresh=thresh)
-            self._ap[str(thresh)] = OrderedDict(sorted(ap.items()))
-            self._rec[str(thresh)] = OrderedDict({})
-            for key, val in sorted(rec.items()):
-                try:
-                    value = val[-1]
-                except TypeError:
-                    value = val
-                self._rec[str(thresh)][key] = value
+    def get_metrics(self, verbose=False) -> Dict[str, Any]:
+        """ Returns a dictionnary of all metrics and losses being tracked
+        """
+        metrics = super().get_metrics(verbose)
+        metrics["{}_prec".format(self._stage)] = self._tp / (self._fp + self._tp)
+        metrics["{}_rec".format(self._stage)] = self._tp / (self._ngt)
+
+        return metrics

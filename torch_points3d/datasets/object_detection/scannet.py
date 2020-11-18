@@ -66,7 +66,7 @@ class ScannetObjectDetection(Scannet):
         self._set_extra_labels(data)
         return data
 
-    def _set_extra_labels(self, data):
+    def _set_extra_labels(self, data, keep_original_labels=False):
         """ Adds extra labels for the instance and object segmentation tasks
         instance_box_corners: (MAX_NUM_OBJ, 8, 3) corners of the bounding boxes in this room
         center_label: (MAX_NUM_OBJ,3) for GT box center XYZ
@@ -149,8 +149,9 @@ class ScannetObjectDetection(Scannet):
         if len(instance_box_corners):
             data.instance_box_corners[: len(instance_box_corners), :, :] = torch.stack(instance_box_corners)
 
-        delattr(data, "instance_bboxes")
-        delattr(data, "instance_labels")
+        if not keep_original_labels:
+            delattr(data, "instance_bboxes")
+            delattr(data, "instance_labels")
 
         # Remap labels
         data.y = super()._remap_labels(data.y)

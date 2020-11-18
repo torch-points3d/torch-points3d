@@ -41,6 +41,7 @@ class ScannetOneShotDetection(ScannetObjectDetection):
             pre_filter=pre_filter,
             process_workers=process_workers,
             use_instance_bboxes=True,
+            use_instance_labels=True,
         )
         if split == "train":
             path = self.processed_paths[3]
@@ -56,6 +57,13 @@ class ScannetOneShotDetection(ScannetObjectDetection):
 
     def download(self):
         super().download()
+
+    def _set_extra_labels(self, data):
+        # Keep semantic labels in the original 0-40 range while box labels will be in the 0-17 range
+        # Instances are also organised in the 0-40 labels
+        semantic = data.y.clone()
+        super()._set_extra_labels(data, keep_original_labels=True)
+        data.y = semantic
 
     @property
     def processed_file_names(self):
