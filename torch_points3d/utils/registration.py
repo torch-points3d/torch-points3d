@@ -111,6 +111,7 @@ def teaser_pp_registration(
     rotation_gnc_factor=1.4,
     rotation_max_iterations=100,
     rotation_cost_threshold=1e-12,
+    estimate_scaling=False,
 ):
     assert xyz.shape == xyz_target.shape
     import teaserpp_python
@@ -119,7 +120,7 @@ def teaser_pp_registration(
     solver_params = teaserpp_python.RobustRegistrationSolver.Params()
     solver_params.cbar2 = cbar2
     solver_params.noise_bound = noise_bound
-    solver_params.estimate_scaling = False
+    solver_params.estimate_scaling = estimate_scaling
     solver_params.rotation_estimation_algorithm = (
         teaserpp_python.RobustRegistrationSolver.ROTATION_ESTIMATION_ALGORITHM.GNC_TLS
     )
@@ -130,12 +131,15 @@ def teaser_pp_registration(
     solver = teaserpp_python.RobustRegistrationSolver(solver_params)
 
     solver.solve(xyz.T.detach().cpu().numpy(), xyz_target.T.detach().cpu().numpy())
+    rotation_inliers = solver.getRotationInliers()
+    translation_inliers = solver.getTranslationInliers()
+    inliers = np.intersect1d(rotation_inliers, translation_inliers)
 
     solution = solver.getSolution()
-    T_res = torch.eye(4, device=xyz.device)
+    T_res = solution.scale * torch.eye(4, device=xyz.device)
     T_res[:3, :3] = torch.from_numpy(solution.rotation).clone().to(xyz.device)
     T_res[:3, 3] = torch.from_numpy(solution.translation).clone().to(xyz.device)
-    return T_res
+    return T_res, inliers
 
 
 def ransac_registration(xyz, xyz_target, distance_threshold=0.05, num_iterations=80000):

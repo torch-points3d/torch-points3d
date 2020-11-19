@@ -36,15 +36,26 @@ class OneShotObjectTracker(BaseTracker):
                 gt_boxes = data.instance_box_corners[sample_mask]
                 gt_boxes = gt_boxes[data.box_label_mask[sample_mask]]
                 sample_labels = data.sem_cls_label[sample_mask]
+
+                # No box found
+                for i in range(len(gt_boxes)):
+                    if sample_labels[i].item() == model.class_label:
+                        self._ngt += 1
+
+                # Found some boxes
                 for pred_box in sample_pred_boxes:
+                    found = False
                     for i in range(len(gt_boxes)):
                         if sample_labels[i].item() == pred_box.classname:
-                            self._ngt += 1
                             iou = box3d_iou(pred_box.corners3d, gt_boxes[i])
                             if iou > threshold:
-                                self._tp += 1
-                            else:
-                                self._fp += 1
+                                if found:  # found a box that was already found
+                                    self._fp += 1
+                                else:
+                                    self._tp += 1  # found an actual valid box
+                                    found = True
+                    if not found:  # found the wrong box
+                        self._fp += 1
 
     def _reshape_batch(self, data):
         """ Ensures that the label tensors are unwrapped in case data comes from a sparse batch """
@@ -61,7 +72,7 @@ class OneShotObjectTracker(BaseTracker):
         """ Returns a dictionnary of all metrics and losses being tracked
         """
         metrics = super().get_metrics(verbose)
-        metrics["{}_prec".format(self._stage)] = self._tp / (self._fp + self._tp)
-        metrics["{}_rec".format(self._stage)] = self._tp / (self._ngt)
+        metrics["{}_prec".format(self._stage)] = self._tp / max(1, (self._fp + self._tp))
+        metrics["{}_rec".format(self._stage)] = self._tp / max(1, (self._ngt))
 
         return metrics
