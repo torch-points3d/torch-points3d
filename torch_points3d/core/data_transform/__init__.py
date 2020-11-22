@@ -172,4 +172,4 @@ class RandomParamTransform(object):
 
     def __repr__(self):
         return "RandomParamTransform({}, params={})".format(self.transform_name,
-                                                            self.transform_param)
+                                                            self.transform_params)
