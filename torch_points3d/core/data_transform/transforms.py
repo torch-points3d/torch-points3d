@@ -782,7 +782,7 @@ class RandomWalkDropout(object):
         return "{}(dropout_ratio={}, num_iter={}, radius={}, max_num={}, skip_keys={})".format(self.__class__.__name__, self.dropout_ratio, self.num_iter, self.radius, self.max_num, self.skip_keys)
 
 
-class SphereDropout(object):
+class RandomSphereDropout(object):
     """
     drop out of points on random spheres of fixed radius.
     This function takes n random balls of fixed radius r and drop
