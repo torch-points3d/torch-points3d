@@ -131,8 +131,8 @@ class RandomParamTransform(object):
     r"""
     create a transform with random parameters
 
-    Example (on the yaml)::
-
+    Example (on the yaml)
+    '''
     transform: RandomParamTransform
         params:
             transform_name: GridSampling3D
@@ -143,7 +143,7 @@ class RandomParamTransform(object):
                     type: "float"
                 mode:
                     value: "last"
-
+    '''
 
     We can also draw random numbers for two parameters, integer or float::
 
