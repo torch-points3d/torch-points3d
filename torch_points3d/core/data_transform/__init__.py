@@ -128,37 +128,41 @@ class LotteryTransform(object):
 
 
 class RandomParamTransform(object):
-    r"""
+    """
     create a transform with random parameters
 
     Example (on the yaml)
-    '''
-    transform: RandomParamTransform
-        params:
-            transform_name: GridSampling3D
-            transform_params:
-                size:
-                    min: 0.1
-                    max: 0.3
-                    type: "float"
-                mode:
-                    value: "last"
-    '''
 
-    We can also draw random numbers for two parameters, integer or float::
+    .. code-block:: yaml
 
-    transform: RandomParamTransform
-        params:
-            transform_name: RandomSphereDropout
-            transform_params:
-                radius:
-                    min: 1
-                    max: 2
-                    type: "float"
-                num_sphere:
-                    min: 1
-                    max: 5
-                    type: "int"
+        transform: RandomParamTransform
+            params:
+                transform_name: GridSampling3D
+                transform_params:
+                    size:
+                        min: 0.1
+                        max: 0.3
+                        type: "float"
+                    mode:
+                        value: "last"
+
+
+    We can also draw random numbers for two parameters, integer or float
+
+    .. code-block:: yaml
+
+        transform: RandomParamTransform
+            params:
+                transform_name: RandomSphereDropout
+                transform_params:
+                    radius:
+                        min: 1
+                        max: 2
+                        type: "float"
+                    num_sphere:
+                        min: 1
+                        max: 5
+                        type: "int"
 
 
     Parameters
