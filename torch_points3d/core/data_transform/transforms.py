@@ -375,7 +375,7 @@ class CylinderSampling:
 
         t_center = torch.FloatTensor(self._centre)
         ind = torch.LongTensor(tree.query_radius(self._centre, r=self._radius)[0])
-        
+
         new_data = Data()
         for key in set(data.keys):
             if key == self.KDTREE_KEY:
@@ -822,7 +822,7 @@ class RandomWalkDropout(object):
         )
 
 
-class SphereDropout(object):
+class RandomSphereDropout(object):
     """
     drop out of points on random spheres of fixed radius.
     This function takes n random balls of fixed radius r and drop
