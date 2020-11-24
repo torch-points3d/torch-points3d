@@ -256,8 +256,7 @@ class Res2BlockDown(ME.MinkowskiNetwork):
 
         out_s = self.conv(x)
         out_s = self.norm(out_s)
-        out_s = self.block(out_s)
-        out = MEF.relu(out_s)
+        out = self.block(out_s)
         return out
 
 
@@ -310,8 +309,7 @@ class Res2BlockUp(ME.MinkowskiNetwork):
         out_s = self.conv(x)
         if self.final is None:
             out_s = self.norm(out_s)
-            out_s = self.block(out_s)
-            out = MEF.relu(out_s)
+            out = self.block(out_s)
             return out
         else:
             out_s = MEF.relu(out_s)

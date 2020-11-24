@@ -4,12 +4,11 @@ import torch
 
 from .base_tracker import BaseTracker
 from .registration_metrics import compute_accuracy
-from .registration_metrics import estimate_transfo
-from .registration_metrics import fast_global_registration
 from .registration_metrics import compute_hit_ratio
 from .registration_metrics import compute_transfo_error
-from .registration_metrics import get_matches
+from .registration_metrics import compute_scaled_registration_error
 from torch_points3d.models import model_interface
+from torch_points3d.utils.registration import estimate_transfo, fast_global_registration, get_matches
 
 
 class PatchRegistrationTracker(BaseTracker):
@@ -54,10 +53,11 @@ class PatchRegistrationTracker(BaseTracker):
 class FragmentRegistrationTracker(BaseTracker):
     def __init__(
         self,
-        dataset,
         num_points=5000,
         tau_1=0.1,
         tau_2=0.05,
+        rot_thresh=5,
+        trans_thresh=2,
         stage="train",
         wandb_log=False,
         use_tensorboard: bool = False,
@@ -68,10 +68,13 @@ class FragmentRegistrationTracker(BaseTracker):
 it measures loss, feature match recall, hit ratio, rotation error, translation error.
         """
         super(FragmentRegistrationTracker, self).__init__(stage, wandb_log, use_tensorboard)
+
         self.reset(stage)
         self.num_points = num_points
         self.tau_1 = tau_1
         self.tau_2 = tau_2
+        self.rot_thresh = rot_thresh
+        self.trans_thresh = trans_thresh
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
@@ -79,6 +82,9 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
         self._trans_error = tnt.meter.AverageValueMeter()
         self._hit_ratio = tnt.meter.AverageValueMeter()
         self._feat_match_ratio = tnt.meter.AverageValueMeter()
+        self._rre = tnt.meter.AverageValueMeter()
+        self._rte = tnt.meter.AverageValueMeter()
+        self._sr_err = tnt.meter.AverageValueMeter()  # scaled registration error
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         super().track(model)
@@ -133,10 +139,15 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
                 )
 
                 trans_error, rot_error = compute_transfo_error(T_pred, T_gt)
+
+                sr_err = compute_scaled_registration_error(xyz, T_gt, T_pred)
                 self._hit_ratio.add(hit_ratio.item())
                 self._feat_match_ratio.add(float(hit_ratio.item() > self.tau_2))
                 self._trans_error.add(trans_error.item())
                 self._rot_error.add(rot_error.item())
+                self._rre.add(rot_error.item() < self.rot_thresh)
+                self._rte.add(trans_error.item() < self.trans_thresh)
+                self._sr_err.add(sr_err.item())
 
     def get_metrics(self, verbose=False):
         metrics = super().get_metrics(verbose)
@@ -145,6 +156,9 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
             metrics["{}_feat_match_ratio".format(self._stage)] = float(self._feat_match_ratio.value()[0])
             metrics["{}_trans_error".format(self._stage)] = float(self._trans_error.value()[0])
             metrics["{}_rot_error".format(self._stage)] = float(self._rot_error.value()[0])
+            metrics["{}_rre".format(self._stage)] = float(self._rre.value()[0])
+            metrics["{}_rte".format(self._stage)] = float(self._rte.value()[0])
+            metrics["{}_sr_err".format(self._stage)] = float(self._sr_err.value()[0])
         return metrics
 
     @property
@@ -155,5 +169,8 @@ it measures loss, feature match recall, hit ratio, rotation error, translation e
             "feat_match_ratio": max,
             "trans_error": min,
             "rot_error": min,
+            "rre": max,
+            "rte": max,
+            "sr_err": min,
         }
         return self._metric_func

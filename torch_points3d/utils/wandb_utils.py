@@ -3,8 +3,37 @@ import os
 import subprocess
 
 
+class WandbUrls:
+    def __init__(self, url):
+
+        hash = url.split("/")[-2]
+        project = url.split("/")[-3]
+        entity = url.split("/")[-4]
+
+        self.weight_url = url
+        self.log_url = "https://app.wandb.ai/{}/{}/runs/{}/logs".format(entity, project, hash)
+        self.chart_url = "https://app.wandb.ai/{}/{}/runs/{}".format(entity, project, hash)
+        self.overview_url = "https://app.wandb.ai/{}/{}/runs/{}/overview".format(entity, project, hash)
+        self.hydra_config_url = "https://app.wandb.ai/{}/{}/runs/{}/files/hydra-config.yaml".format(
+            entity, project, hash
+        )
+        self.overrides_url = "https://app.wandb.ai/{}/{}/runs/{}/files/overrides.yaml".format(entity, project, hash)
+
+    def __repr__(self):
+        msg = "=================================================== WANDB URLS ===================================================================\n"
+        for k, v in self.__dict__.items():
+            msg += "{}: {}\n".format(k.upper(), v)
+        msg += "=================================================================================================================================\n"
+        return msg
+
+
 class Wandb:
     IS_ACTIVE = False
+
+    @staticmethod
+    def set_urls_to_model(model, url):
+        wandb_urls = WandbUrls(url)
+        model.wandb = wandb_urls
 
     @staticmethod
     def _set_to_wandb_args(wandb_args, cfg, name):
@@ -35,10 +64,12 @@ class Wandb:
             wandb_args = {}
             wandb_args["project"] = cfg.wandb.project
             wandb_args["tags"] = tags
+            wandb_args["resume"] = "allow"
             Wandb._set_to_wandb_args(wandb_args, cfg, "name")
             Wandb._set_to_wandb_args(wandb_args, cfg, "entity")
             Wandb._set_to_wandb_args(wandb_args, cfg, "notes")
             Wandb._set_to_wandb_args(wandb_args, cfg, "config")
+            Wandb._set_to_wandb_args(wandb_args, cfg, "id")
 
             try:
                 commit_sha = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()

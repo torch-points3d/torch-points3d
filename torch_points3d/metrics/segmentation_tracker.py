@@ -30,6 +30,13 @@ class SegmentationTracker(BaseTracker):
         self._ignore_label = ignore_label
         self._dataset = dataset
         self.reset(stage)
+        self._metric_func = {
+            "miou": max,
+            "macc": max,
+            "acc": max,
+            "loss": min,
+            "map": max,
+        }  # Those map subsentences to their optimization functions
 
     def reset(self, stage="train"):
         super().reset(stage=stage)
@@ -37,6 +44,7 @@ class SegmentationTracker(BaseTracker):
         self._acc = 0
         self._macc = 0
         self._miou = 0
+        self._miou_per_class = {}
 
     @staticmethod
     def detach_tensor(tensor):
@@ -77,6 +85,10 @@ class SegmentationTracker(BaseTracker):
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
+        self._miou_per_class = {
+            i: "{:.2f}".format(100 * v)
+            for i, v in enumerate(self._confusion_matrix.get_intersection_union_per_class()[0])
+        }
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
         """ Returns a dictionnary of all metrics and losses being tracked
@@ -86,15 +98,11 @@ class SegmentationTracker(BaseTracker):
         metrics["{}_acc".format(self._stage)] = self._acc
         metrics["{}_macc".format(self._stage)] = self._macc
         metrics["{}_miou".format(self._stage)] = self._miou
+
+        if verbose:
+            metrics["{}_miou_per_class".format(self._stage)] = self._miou_per_class
         return metrics
 
     @property
     def metric_func(self):
-        self._metric_func = {
-            "miou": max,
-            "macc": max,
-            "acc": max,
-            "loss": min,
-            "map": max,
-        }  # Those map subsentences to their optimization functions
         return self._metric_func

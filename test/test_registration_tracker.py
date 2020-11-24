@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
-from torch_points3d.metrics.registration_metrics import rodrigues
+from torch_points3d.utils.geometry import rodrigues
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 
 
@@ -93,7 +93,7 @@ class MockModel:
 
 class TestSegmentationTracker(unittest.TestCase):
     def test_track_batch(self):
-        tracker = FragmentRegistrationTracker(MockDataset(), stage="test", tau_2=0.83, num_points=100)
+        tracker = FragmentRegistrationTracker(stage="test", tau_2=0.83, num_points=100)
         model = MockModel()
         list_hit_ratio = [1.0, 0.9, 0.8, (0.9 + 0.84 + 0.8 + 0.7) / 4]
         list_feat_match_ratio = [1.0, 1.0, 0.0, 0.5]
@@ -107,7 +107,7 @@ class TestSegmentationTracker(unittest.TestCase):
             model.iter += 1
 
     def test_track_all(self):
-        tracker = FragmentRegistrationTracker(MockDataset(), stage="test", tau_2=0.83, num_points=100)
+        tracker = FragmentRegistrationTracker(stage="test", tau_2=0.83, num_points=100)
         model = MockModel()
         tracker.reset("test")
         model.iter = 0

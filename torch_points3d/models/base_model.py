@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from abc import abstractmethod
 from typing import Optional, Dict, Any, List
+import os
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -56,9 +57,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._num_epochs = None
         self._num_batches = 0
         self._num_samples = -1
-        self._latest_metrics = None
-        self._latest_stage = None
-        self._latest_epoch = None
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
@@ -89,6 +87,30 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._optimizer = optimizer
 
     @property
+    def num_epochs(self):
+        return self._num_epochs
+
+    @num_epochs.setter
+    def num_epochs(self, num_epochs):
+        self._num_epochs = num_epochs
+
+    @property
+    def num_batches(self):
+        return self._num_batches
+
+    @num_batches.setter
+    def num_batches(self, num_batches):
+        self._num_batches = num_batches
+
+    @property
+    def num_samples(self):
+        return self._num_samples
+
+    @num_samples.setter
+    def num_samples(self, num_samples):
+        self._num_samples = num_samples
+
+    @property
     def learning_rate(self):
         for param_group in self.optimizer.param_groups:
             return param_group["lr"]
@@ -111,6 +133,24 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             input (dict): includes the data itself and its metadata information.
         """
         raise NotImplementedError
+
+    def load_state_dict_with_same_shape(self, weights, strict=False):
+        model_state = self.state_dict()
+        filtered_weights = {k: v for k, v in weights.items() if k in model_state and v.size() == model_state[k].size()}
+        log.info("Loading weights:" + ", ".join(filtered_weights.keys()))
+        self.load_state_dict(filtered_weights, strict=strict)
+
+    def set_pretrained_weights(self):
+        path_pretrained = getattr(self.opt, "path_pretrained", None)
+        weight_name = getattr(self.opt, "weight_name", "latest")
+
+        if path_pretrained is not None:
+            if not os.path.exists(path_pretrained):
+                log.warning("The path does not exist, it will not load any model")
+            else:
+                log.info("load pretrained weights from {}".format(path_pretrained))
+                m = torch.load(path_pretrained)["models"][weight_name]
+                self.load_state_dict_with_same_shape(m, strict=False)
 
     def get_labels(self):
         """ returns a trensor of size ``[N_points]`` where each value is the label of a point
@@ -390,12 +430,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
                         state[k] = v.to(*args, **kwargs)
         return self
 
-    def cpu(self):
-        return self.to(torch.device("cpu"))
-
-    def cuda(self):
-        return self.to(torch.device("cuda"))
-
     def verify_data(self, data, forward_only=False):
         """ Goes through the __REQUIRED_DATA__ and __REQUIRED_LABELS__ attribute of the model
         and verifies that the passed data object contains all required members.
@@ -412,6 +446,13 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             raise KeyError(
                 "Missing attributes in your data object: {}. The model will fail to forward.".format(missing_keys)
             )
+
+    def print_transforms(self):
+        message = ""
+        for attr in self.__dict__:
+            if "transform" in attr:
+                message += "{}{} {}= {}\n".format(COLORS.IPurple, attr, COLORS.END_NO_TOKEN, getattr(self, attr))
+        print(message)
 
 
 class BaseInternalLossModule(torch.nn.Module):

@@ -51,10 +51,10 @@ class TestGridSampling3D(unittest.TestCase):
         data_random = Data(pos=torch.randn(1000, 3) * 0.1, x=torch.ones((1000, 1)))
         data_fragment = torch.load(os.path.join(DIR_PATH, "test_data/fragment_000003.pt"))
 
-        sparse = cT.ToSparseInput(0.02)
+        sparse = cT.GridSampling3D(0.02, quantize_coords=True)
         gr = cT.GridSampling3D(0.02)
 
-        self.loop(data_random, gr, sparse, "random")
+        self.loop(data_random, gr, gr, "random")
         self.loop(data_fragment, gr, sparse, "fragment")
 
     def test_quantize(self):

@@ -126,12 +126,12 @@ class MultiHeadClassifier(BaseModule):
 
 
 class FastBatchNorm1d(BaseModule):
-    def __init__(self, num_features, momentum=0.1):
+    def __init__(self, num_features, momentum=0.1, **kwargs):
         super().__init__()
-        self.batch_norm = nn.BatchNorm1d(num_features, momentum=momentum)
+        self.batch_norm = nn.BatchNorm1d(num_features, momentum=momentum, **kwargs)
 
     def _forward_dense(self, x):
-        return self.batch_norm(x)
+        return self.batch_norm(x.permute(0, 2, 1)).permute(0, 2, 1)
 
     def _forward_sparse(self, x):
         """ Batch norm 1D is not optimised for 2D tensors. The first dimension is supposed to be
@@ -142,7 +142,7 @@ class FastBatchNorm1d(BaseModule):
         x = x.transpose(0, 2)
         x = self.batch_norm(x)
         x = x.transpose(0, 2)
-        return x.squeeze()
+        return x.squeeze(dim=2)
 
     def forward(self, x):
         if x.dim() == 2:

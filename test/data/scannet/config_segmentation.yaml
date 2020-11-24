@@ -592,7 +592,7 @@ tracker_options:
 training:
   batch_size: 2
   checkpoint_dir: ''
-  cuda: 0
+  cuda: -1
   enable_cudnn: true
   epochs: 100
   num_workers: 6

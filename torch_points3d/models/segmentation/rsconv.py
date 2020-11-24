@@ -4,6 +4,7 @@ import queue
 import torch
 import torch.nn.functional as F
 
+from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.models.base_architectures import UnwrappedUnetBasedModel
 from torch_points3d.modules.RSConv import *
 from torch_points3d.core.common_modules.dense_modules import Conv1D
@@ -107,9 +108,10 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
         # Compute loss
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-
         if self.labels is not None:
-            self.loss_seg = F.cross_entropy(self.output, self.labels, weight=self._weight_classes)
+            self.loss_seg = F.cross_entropy(
+                self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL
+            )
 
         self.data_visual = self.input
         self.data_visual.y = torch.reshape(self.labels, data.pos.shape[0:2])

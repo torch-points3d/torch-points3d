@@ -1,0 +1,19 @@
+FROM ubuntu:bionic
+
+# Avoid warnings by switching to noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+
+COPY docker/install_system.sh install_system.sh
+RUN bash install_system.sh
+
+COPY docker/install_python.sh install_python.sh
+RUN bash install_python.sh cpu && rm -rf /root/.cache
+
+ENV WORKDIR=/tp3d
+WORKDIR $WORKDIR
+
+COPY pyproject.toml pyproject.toml
+COPY torch_points3d/__init__.py torch_points3d/__init__.py
+COPY README.md README.md
+
+RUN pip3 install . && rm -rf /root/.cache

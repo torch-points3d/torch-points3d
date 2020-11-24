@@ -12,6 +12,7 @@ from tqdm.auto import tqdm
 from torch_points3d.core.data_transform import GridSampling3D, SaveOriginalPosId
 from torch_geometric.transforms import Compose
 import torch_points3d.datasets.registration.fusion as fusion
+from torch_cluster import fps
 
 
 def to_list(x):
@@ -142,22 +143,24 @@ def filter_pair(pair, dist):
     return pair
 
 
-def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=False, num_pos=1, rot_gt=torch.eye(3)):
+def compute_overlap_and_matches(data1, data2, max_distance_overlap, reciprocity=False, num_pos=1, trans_gt=torch.eye(4)):
 
     # we can use ball query on cpu because the points are sorted
     # print(len(data1.pos), len(data2.pos), max_distance_overlap)
-    pair, dist = ball_query(data2.pos.to(torch.float),
-                            data1.pos.to(torch.float) @ rot_gt.T,
-                            radius=max_distance_overlap,
-                            max_num=num_pos, mode=1, sorted=True)
+    pair, dist = ball_query(
+        data2.pos.to(torch.float),
+        data1.pos.to(torch.float) @ trans_gt[:3, :3].T + trans_gt[:3, 3],
+        radius=max_distance_overlap,
+        max_num=num_pos, mode=1, sorted=True)
     pair = filter_pair(pair, dist)
     pair2 = []
     overlap = [pair.shape[0] / len(data1.pos)]
     if reciprocity:
-        pair2, dist2 = ball_query(data1.pos.to(torch.float) @ rot_gt.T,
-                                  data2.pos.to(torch.float),
-                                  radius=max_distance_overlap,
-                                  max_num=num_pos, mode=1, sorted=True)
+        pair2, dist2 = ball_query(
+            data1.pos.to(torch.float) @ trans_gt[:3, :3].T + trans_gt[:3, 3],
+            data2.pos.to(torch.float),
+            radius=max_distance_overlap,
+            max_num=num_pos, mode=1, sorted=True)
         pair2 = filter_pair(pair2, dist2)
         overlap.append(pair2.shape[0] / len(data2.pos))
     # overlap = pair.shape[0] / \
@@ -314,3 +317,22 @@ def tracked_matches(data_s, data_t, pair):
                        np.arange(0, len(data_t.pos))))
     res = torch.tensor([[table_s[p[0]], table_t[p[1]]] for p in filtered_pair]).to(torch.long)
     return res
+
+
+
+def fps_sampling(pair_ind, pos, num_pos_pairs, ind=0):
+    """
+    perform fps sampling to choose the positive pairs
+    Parameters:
+        pair_ind: torch tensor which represents index of pair size N x 2
+        pos: torch tensor which represents the point cloud of size M x 3
+        num_pos_pairs: int which number of pairs we want()
+        ind: must be 0 or 1
+    """
+    small_pos_source = pos[pair_ind[:, ind]]
+    batch = torch.zeros(small_pos_source.shape[0]).long()
+    ratio = float(num_pos_pairs) / len(pair_ind)
+    if(ratio <= 0 or ratio >= 1):
+        raise ValueError("ratio cannot have this value: {}".format(ratio))
+    index = fps(small_pos_source, batch, ratio=ratio, random_start=False)
+    return index

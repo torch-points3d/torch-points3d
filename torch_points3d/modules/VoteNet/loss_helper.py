@@ -95,7 +95,7 @@ def compute_objectness_loss(inputs, outputs: VoteNetResults, loss_params):
     return objectness_loss
 
 
-def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
+def compute_box_and_sem_cls_loss(inputs, outputs, loss_params, weight_classes=None):
     """ Compute 3D bounding box and semantic classification loss.
 
     Args:
@@ -170,9 +170,11 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
         size_label_one_hot.scatter_(
             2, size_class_label.unsqueeze(-1).long(), 1
         )  # src==1 so it's *one-hot* (B,K,num_size_cluster)
-        size_label_one_hot_tiled = size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3)  # (B,K,num_size_cluster,3)
+        size_label_one_hot_tiled = (
+            size_label_one_hot.unsqueeze(-1).repeat(1, 1, 1, 3).contiguous()
+        )  # (B,K,num_size_cluster,3)
         predicted_size_residual_normalized = torch.sum(
-            outputs["size_residuals_normalized"] * size_label_one_hot_tiled, 2
+            outputs["size_residuals_normalized"].contiguous() * size_label_one_hot_tiled, 2
         )  # (B,K,3)
 
         mean_size_arr_expanded = (
@@ -192,7 +194,7 @@ def compute_box_and_sem_cls_loss(inputs, outputs, loss_params):
 
     # 3.4 Semantic cls loss
     sem_cls_label = torch.gather(inputs["sem_cls_label"], 1, object_assignment)  # select (B,K) from (B,K2)
-    criterion_sem_cls = nn.CrossEntropyLoss(reduction="none")
+    criterion_sem_cls = nn.CrossEntropyLoss(weight=weight_classes, reduction="none")
     sem_cls_loss = criterion_sem_cls(outputs["sem_cls_scores"].transpose(2, 1), sem_cls_label.long())  # (B,K)
     sem_cls_loss = torch.sum(sem_cls_loss * objectness_label) / (torch.sum(objectness_label) + 1e-6)
 
@@ -218,6 +220,7 @@ def to_dense_labels(data):
     data["size_class_label"] = data["size_class_label"].view((batch_size, -1))
     data["size_residual_label"] = data["size_residual_label"].view((batch_size, -1, 3))
     data["sem_cls_label"] = data["sem_cls_label"].view((batch_size, -1))
+    data["instance_box_corners"] = data["instance_box_corners"].view((batch_size, -1, 8, 3))
     data["box_label_mask"] = data["box_label_mask"].view((batch_size, -1))
     if data["center_label"].dim() == 3:
         data["gt_center"] = data["center_label"][:, :, 0:3]
@@ -226,7 +229,7 @@ def to_dense_labels(data):
     return data
 
 
-def get_loss(inputs, outputs: VoteNetResults, loss_params):
+def get_loss(inputs, outputs: VoteNetResults, loss_params, weight_classes=None):
     losses = {}
 
     inputs = to_dense_labels(inputs)
@@ -247,7 +250,7 @@ def get_loss(inputs, outputs: VoteNetResults, loss_params):
         size_cls_loss,
         size_reg_loss,
         sem_cls_loss,
-    ) = compute_box_and_sem_cls_loss(inputs, outputs, loss_params)
+    ) = compute_box_and_sem_cls_loss(inputs, outputs, loss_params, weight_classes=weight_classes)
     losses["center_loss"] = center_loss
     losses["heading_cls_loss"] = heading_cls_loss
     losses["heading_reg_loss"] = heading_reg_loss

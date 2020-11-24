@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 import logging
+import functools
 from functools import partial
 import numpy as np
 import torch
@@ -36,8 +37,24 @@ def explode_transform(transforms):
         elif isinstance(transforms, list):
             out = copy.deepcopy(transforms)
         else:
-            raise Exception("transforms should be provided either within a list or a Compose")
+            raise Exception("Transforms should be provided either within a list or a Compose")
     return out
+
+
+def save_used_properties(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Save used_properties for mocking dataset when calling pretrained registry
+        result = func(self, *args, **kwargs)
+        if isinstance(result, torch.Tensor):
+            self.used_properties[func.__name__] = result.numpy().tolist()
+        elif isinstance(result, np.ndarray):
+            self.used_properties[func.__name__] = result.tolist()
+        else:
+            self.used_properties[func.__name__] = result
+        return result
+
+    return wrapper
 
 
 class BaseDataset:
@@ -63,12 +80,17 @@ class BaseDataset:
         self._test_dataset = None
         self._val_dataset = None
 
+        self.train_pre_batch_collate_transform = None
+        self.val_pre_batch_collate_transform = None
+        self.test_pre_batch_collate_transform = None
+
         BaseDataset.set_transform(self, dataset_opt)
         self.set_filter(dataset_opt)
 
+        self.used_properties = {}
+
     @staticmethod
     def remove_transform(transform_in, list_transform_class):
-
         """ Remove a transform if within list_transform_class
 
         Arguments:
@@ -129,20 +151,27 @@ class BaseDataset:
                 setattr(self, new_name, filt)
 
     @staticmethod
-    def _get_collate_function(conv_type, is_multiscale):
+    def _collate_fn(batch, collate_fn=None, pre_collate_transform=None):
+        if pre_collate_transform:
+            batch = pre_collate_transform(batch)
+        return collate_fn(batch)
+
+    @staticmethod
+    def _get_collate_function(conv_type, is_multiscale, pre_collate_transform=None):
+        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
         if is_multiscale:
             if conv_type.lower() == ConvolutionFormat.PARTIAL_DENSE.value.lower():
-                return lambda datalist: MultiScaleBatch.from_data_list(datalist)
+                fn = MultiScaleBatch.from_data_list
             else:
                 raise NotImplementedError(
                     "MultiscaleTransform is activated and supported only for partial_dense format"
                 )
-
-        is_dense = ConvolutionFormatFactory.check_is_dense_format(conv_type)
-        if is_dense:
-            return lambda datalist: SimpleBatch.from_data_list(datalist)
         else:
-            return lambda datalist: torch_geometric.data.batch.Batch.from_data_list(datalist)
+            if is_dense:
+                fn = SimpleBatch.from_data_list
+            else:
+                fn = torch_geometric.data.batch.Batch.from_data_list
+        return partial(BaseDataset._collate_fn, collate_fn=fn, pre_collate_transform=pre_collate_transform)
 
     @staticmethod
     def get_num_samples(batch, conv_type):
@@ -174,16 +203,15 @@ class BaseDataset:
         conv_type = model.conv_type
         self._batch_size = batch_size
 
-        batch_collate_function = self.__class__._get_collate_function(conv_type, precompute_multi_scale)
-        dataloader = partial(
-            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=lambda _: np.random.seed()
-        )
-
         if self.train_sampler:
             log.info(self.train_sampler)
+
         if self.train_dataset:
-            self._train_loader = dataloader(
+            self._train_loader = self._dataloader(
                 self.train_dataset,
+                self.train_pre_batch_collate_transform,
+                conv_type,
+                precompute_multi_scale,
                 batch_size=batch_size,
                 shuffle=shuffle and not self.train_sampler,
                 num_workers=num_workers,
@@ -192,15 +220,25 @@ class BaseDataset:
 
         if self.test_dataset:
             self._test_loaders = [
-                dataloader(
-                    dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, sampler=self.test_sampler,
+                self._dataloader(
+                    dataset,
+                    self.test_pre_batch_collate_transform,
+                    conv_type,
+                    precompute_multi_scale,
+                    batch_size=batch_size,
+                    shuffle=False,
+                    num_workers=num_workers,
+                    sampler=self.test_sampler,
                 )
                 for dataset in self.test_dataset
             ]
 
         if self.val_dataset:
-            self._val_loader = dataloader(
+            self._val_loader = self._dataloader(
                 self.val_dataset,
+                self.val_pre_batch_collate_transform,
+                conv_type,
+                precompute_multi_scale,
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=num_workers,
@@ -209,6 +247,15 @@ class BaseDataset:
 
         if precompute_multi_scale:
             self.set_strategies(model)
+
+    def _dataloader(self, dataset, pre_batch_collate_transform, conv_type, precompute_multi_scale, **kwargs):
+        batch_collate_function = self.__class__._get_collate_function(
+            conv_type, precompute_multi_scale, pre_batch_collate_transform
+        )
+        dataloader = partial(
+            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed
+        )
+        return dataloader(dataset, **kwargs)
 
     @property
     def has_train_loader(self):
@@ -277,7 +324,10 @@ class BaseDataset:
 
     @property
     def test_dataloaders(self):
-        return self._test_loaders
+        if self.has_test_loaders:
+            return self._test_loaders
+        else:
+            return []
 
     @property
     def _loaders(self):
@@ -338,13 +388,15 @@ class BaseDataset:
             return sample.y is not None
         return False
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def is_hierarchical(self):
         """ Used by the metric trackers to log hierarchical metrics
         """
         return False
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def class_to_segments(self):
         """ Use this property to return the hierarchical map between classes and segment ids, example:
         {
@@ -354,7 +406,8 @@ class BaseDataset:
         """
         return None
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def num_classes(self):
         return self.train_dataset.num_classes
 
@@ -362,7 +415,8 @@ class BaseDataset:
     def weight_classes(self):
         return getattr(self.train_dataset, "weight_classes", None)
 
-    @property
+    @property  # type: ignore
+    @save_used_properties
     def feature_dimension(self):
         if self.train_dataset:
             return self.train_dataset.num_features
@@ -425,8 +479,7 @@ class BaseDataset:
         for _, attr in self.__dict__.items():
             if isinstance(attr, torch.utils.data.DataLoader):
                 self._set_composed_multiscale_transform(attr, transform)
-
-        for loader in self._test_loaders:
+        for loader in self.test_dataloaders:
             self._set_composed_multiscale_transform(loader, transform)
 
     def set_strategies(self, model):
@@ -465,6 +518,31 @@ class BaseDataset:
             )
         )
         return selection_stage
+
+    def add_weights(self, dataset_name="train", class_weight_method="sqrt"):
+        """ Add class weights to a given dataset that are then accessible using the `class_weights` attribute
+        """
+        L = self.num_classes
+        weights = torch.ones(L)
+        dataset = self.get_dataset(dataset_name)
+        idx_classes, counts = torch.unique(dataset.data.y, return_counts=True)
+
+        dataset.idx_classes = torch.arange(L).long()
+        weights[idx_classes] = counts.float()
+        weights = weights.float()
+        weights = weights.mean() / weights
+        if class_weight_method == "sqrt":
+            weights = torch.sqrt(weights)
+        elif str(class_weight_method).startswith("log"):
+            weights = torch.log(1.1 + weights / weights.sum())
+        else:
+            raise ValueError("Method %s not supported" % class_weight_method)
+
+        weights /= torch.sum(weights)
+        log.info("CLASS WEIGHT : {}".format([np.round(weight.item(), 4) for weight in weights]))
+        setattr(dataset, "weight_classes", weights)
+
+        return dataset
 
     def __repr__(self):
         message = "Dataset: %s \n" % self.__class__.__name__

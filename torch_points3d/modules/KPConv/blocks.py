@@ -42,11 +42,13 @@ class SimpleBlock(BaseModule):
         if deformable:
             density_parameter = self.DEFORMABLE_DENSITY
             self.kp_conv = KPConvDeformableLayer(
-                num_inputs, num_outputs, point_influence=prev_grid_size * sigma, add_one=add_one
+                num_inputs, num_outputs, point_influence=prev_grid_size * sigma, add_one=add_one, **kwargs
             )
         else:
             density_parameter = self.RIGID_DENSITY
-            self.kp_conv = KPConvLayer(num_inputs, num_outputs, point_influence=prev_grid_size * sigma, add_one=add_one)
+            self.kp_conv = KPConvLayer(
+                num_inputs, num_outputs, point_influence=prev_grid_size * sigma, add_one=add_one, **kwargs
+            )
         search_radius = density_parameter * sigma * prev_grid_size
         self.neighbour_finder = RadiusNeighbourFinder(search_radius, max_num_neighbors, conv_type=self.CONV_TYPE)
 
@@ -158,6 +160,7 @@ class ResnetBBlock(BaseModule):
             bn=bn,
             deformable=deformable,
             add_one=add_one,
+            **kwargs,
         )
 
         if self.has_bottleneck:

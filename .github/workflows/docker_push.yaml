@@ -1,0 +1,69 @@
+name: DockerPublish
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  docker_publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image-version: [gpu, cpu]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Repo metadata
+        id: repo
+        uses: actions/github-script@v3
+        with:
+          script: |
+            const repo = await github.repos.get(context.repo)
+            return repo.data
+
+      - name: Prepare
+        id: prep
+        run: |
+          DOCKER_IMAGE=principialabs/torch-points3d
+          VERSION=noop
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            VERSION=nightly
+          elif [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          elif [[ $GITHUB_REF == refs/heads/* ]]; then
+            VERSION=$(echo ${GITHUB_REF#refs/heads/} | sed -r 's#/+#-#g')
+            if [ "${{ github.event.repository.default_branch }}" = "$VERSION" ]; then
+              VERSION=edge
+            fi
+          elif [[ $GITHUB_REF == refs/pull/* ]]; then
+            VERSION=pr-${{ github.event.number }}
+          fi
+          TAGS="${DOCKER_IMAGE}:${VERSION}-${{ matrix.image-version }}"
+          TAGS="$TAGS,${DOCKER_IMAGE}:sha-${GITHUB_SHA::8}-${{ matrix.image-version }}"
+          TAGS="$TAGS,${DOCKER_IMAGE}:latest-${{ matrix.image-version }}"
+
+          echo ::set-output name=tags::${TAGS}
+
+          echo "$TAGS"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          push: True
+          tags: ${{ steps.prep.outputs.tags }}
+          file: docker/Dockerfile.${{ matrix.image-version }}

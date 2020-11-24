@@ -1,4 +1,5 @@
 import os
+import copy
 import torch
 import hydra
 import time
@@ -43,21 +44,22 @@ class Trainer:
         self._initialize_trainer()
 
     def _initialize_trainer(self):
+        # Enable CUDNN BACKEND
+        torch.backends.cudnn.enabled = self.enable_cudnn
+        if not self.has_training:
+            resume = False
+            self._cfg.training = self._cfg
+        else:
+            resume = bool(self._cfg.training.checkpoint_dir)
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
-            device = "cuda" + str(self._cfg.training.cuda)
+            device = "cuda"
             torch.cuda.set_device(self._cfg.training.cuda)
         else:
             device = "cpu"
         self._device = torch.device(device)
         log.info("DEVICE : {}".format(self._device))
-
-        # Enable CUDNN BACKEND
-        torch.backends.cudnn.enabled = self.enable_cudnn
-
-        if not self.has_training:
-            self._cfg.training = self._cfg
 
         # Profiling
         if self.profiling:
@@ -74,7 +76,7 @@ class Trainer:
             self._cfg.model_name,
             self._cfg.training.weight_name,
             run_config=self._cfg,
-            resume=bool(self._cfg.training.checkpoint_dir),
+            resume=resume,
         )
 
         # Create model and datasets
@@ -85,9 +87,19 @@ class Trainer:
             )
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
-            self._model: BaseModel = instantiate_model(self._cfg, self._dataset)
+            self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
             self._model.instantiate_optimizers(self._cfg)
+            self._model.set_pretrained_weights()
+            if not self._checkpoint.validate(self._dataset.used_properties):
+                log.warning(
+                    "The model will not be able to be used from pretrained weights without the corresponding dataset. Current properties are {}".format(
+                        self._dataset.used_properties
+                    )
+                )
+        self._checkpoint.dataset_properties = self._dataset.used_properties
+
         log.info(self._model)
+
         self._model.log_optimizers()
         log.info("Model size = %i", sum(param.numel() for param in self._model.parameters() if param.requires_grad))
 
@@ -130,6 +142,9 @@ class Trainer:
             if self.profiling:
                 return 0
 
+            if epoch % self.eval_frequency != 0:
+                continue
+
             if self._dataset.has_val_loader:
                 self._test_epoch(epoch, "val")
 
@@ -141,22 +156,24 @@ class Trainer:
             if self._dataset.has_test_loaders:
                 self._test_epoch(epoch, "test")
 
-    def eval(self):
+    def eval(self, stage_name=""):
         self._is_training = False
 
         epoch = self._checkpoint.start_epoch
         if self._dataset.has_val_loader:
-            self._test_epoch(epoch, "val")
+            if not stage_name or stage_name == "val":
+                self._test_epoch(epoch, "val")
 
         if self._dataset.has_test_loaders:
-            self._test_epoch(epoch, "test")
+            if not stage_name or stage_name == "test":
+                self._test_epoch(epoch, "test")
 
     def _finalize_epoch(self, epoch):
         self._tracker.finalise(**self.tracker_options)
         if self._is_training:
             metrics = self._tracker.publish(epoch)
             self._checkpoint.save_best_models_under_current_metrics(self._model, metrics, self._tracker.metric_func)
-            if self.wandb_log:
+            if self.wandb_log and self._cfg.wandb.public:
                 Wandb.add_file(self._checkpoint.checkpoint_path)
             if self._tracker._stage == "train":
                 log.info("Learning rate = %f" % self._model.learning_rate)
@@ -176,7 +193,8 @@ class Trainer:
                 self._model.set_input(data, self._device)
                 self._model.optimize_parameters(epoch, self._dataset.batch_size)
                 if i % 10 == 0:
-                    self._tracker.track(self._model, data=data, **self.tracker_options)
+                    with torch.no_grad():
+                        self._tracker.track(self._model, data=data, **self.tracker_options)
 
                 tq_train_loader.set_postfix(
                     **self._tracker.get_metrics(),
@@ -227,9 +245,11 @@ class Trainer:
                         with torch.no_grad():
                             self._model.set_input(data, self._device)
                             self._model.forward(epoch=epoch)
-
-                        self._tracker.track(self._model, data=data, **self.tracker_options)
+                            self._tracker.track(self._model, data=data, **self.tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
+
+                        if self.has_visualization and self._visualizer.is_active:
+                            self._visualizer.save_visuals(self._model.get_current_visuals())
 
                         if self.early_break:
                             break
@@ -294,3 +314,7 @@ class Trainer:
     @property
     def tracker_options(self):
         return self._cfg.get("tracker_options", {})
+
+    @property
+    def eval_frequency(self):
+        return self._cfg.get("eval_frequency", 1)

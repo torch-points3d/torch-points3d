@@ -5,7 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
+
+### Added
+
+- Support for the IRALab benchmark (https://arxiv.org/abs/2003.12841), with data from the ETH, Canadian Planetary, Kaist and TUM datasets. (thanks @simone-fontana)
+- Added Kitti for semantic segmentation and registration (first outdoor dataset for semantic seg)
+- Possibility to load pretrained models by adding the path in the confs for finetuning.
+- Lottery transform to use randomly selected transforms for data augmentation
+- Batch size campling function to ensure that batches don't get too large
+- [TorchSparse](https://github.com/mit-han-lab/torchsparse) backend for sparse convolutions
+- Possibility to build sparse convolution networks with Minkowski Engine or TorchSparse
+- [PVCNN](https://arxiv.org/abs/1907.03739) model for semantic segmentation (thanks @CCInc)
+
+### Bug fix
+
+- Dataset configurations are saved in the checkpoints so that models can be created without requiring the actual dataset
+- Trainer was giving a warning for models that could not be re created when they actually could
+- BatchNorm1d fix (thanks @Wundersam)
+- Fix process hanging when processing scannet with multiprocessing (thanks @zetyquickly)
+- wandb does not log the weights when set in private mode (thanks @jamesjiro)
+
+### Changed
+
+- More general API for Minkowski with support for Bottleneck blocks and Squeeze and excite.
+- Docker images tags on dockerhub are now `latest-gpu` and `latest-cpu` for the latest CPU adn GPU images.
+
+## 1.1.1
+
+### Added
+
+- Teaser support for registration
+- Examples for using pretrained registration models
+- Pointnet2 forward examples for classification, segmentation
+- S3DIS automatic download and panoptic support and cylinder sampling
+
+### Changed
+
+- Moved to PyTorch 1.6 as officialy supported PyTorch version
+
+### Bug fix
+
+- Add `context = ssl._create_unverified_context()`, `data = urllib.request.urlopen(url, context=context)` within `download_ulr`, so ModelNet and ShapeNet can download.
+
+## 1.1.0
 
 ### Added
 
@@ -21,12 +64,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Segmentation: KPConv on scannetV2
   - Object Detection: VoteNet on scannetV2
 - Add VoteNet Paper / Backbones within API
+- Windows support
+- Weights are uploaded to wandb at the end of the run
+- Added PointGroup https://arxiv.org/pdf/2007.01294.pdf
+- Added PretrainedRegistry allowing model weight to be downloaded directly from wandb and DatasetMocking
+- Added script for s3dis cross-validation [scripts/cv_s3dis.py]. 6 different pretrained models will be downloaded, evaluated on full resolution and confusion matrice will be summed to get all metrics.
+- mAP tracker for Panoptic segmentation
 
 ### Changed
 
 - evaluation output folder is now a subfolder of the checkpoint it uses
 - saves model checkpoints to wandb
 - GridSampling3D now creates a new attribute `coords` that stores the non quantized position when the transform is called in `quantize` mode
+- cuda parameter can be given in command line to select the GPU to use
+- Updated to pytorch geometric 1.6.0
+
+### Bugfix
+
+- LR secheduler resume is broken for update on batch number #328
+- ElasticDistortion transform is now fully functional
 
 ### Removed
 

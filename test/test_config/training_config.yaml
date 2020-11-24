@@ -3,7 +3,7 @@ training:
     num_workers: 6
     batch_size: 16
     shuffle: True
-    cuda: 1
+    cuda: 0
     precompute_multi_scale: False
     optim:
         base_lr: 0.001

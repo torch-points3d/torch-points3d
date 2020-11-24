@@ -27,14 +27,14 @@ Let's go through those steps together and in order to go further we highly recom
 Create a dataset that the framework recognises
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The framework provides a base class for datasets that needs to be sub classed when you add your own. 
+The framework provides a base class for datasets that needs to be sub classed when you add your own.
 We also follow the convention that the ``.py`` file that describes a dataset for segmentation will leave in the ``torch_points3d/datasets/segmentation`` folder.
-For another task such as classification it would go in ``torch_points3d/datasets/classification``. 
+For another task such as classification it would go in ``torch_points3d/datasets/classification``.
 
 Start by creating a new file ``torch_points3d/datasets/segmentation/s3dis.py`` with the class ``S3DISDataset``, it should inherit from ``BaseDataset``.
 
 .. code-block:: python
-    
+
     from torch_geometric.datasets import S3DIS
 
     from torch_points3d.datasets.base_dataset import BaseDataset
@@ -85,7 +85,7 @@ This instantiates the parent class based on a given configuration ``dataset_opt`
 * Extracts from the configuration the transforms that should be applied to you data before giving it to the model
 
 
-Next comes the instantiation of the actual datasets that will be used for training and testing. 
+Next comes the instantiation of the actual datasets that will be used for training and testing.
 
 .. code-block:: python
 
@@ -104,8 +104,8 @@ Next comes the instantiation of the actual datasets that will be used for traini
             transform=self.test_transform,
         )
 
-You can see that we use the ``pre_transform``, ``test_transform`` and ``train_transform`` from the base class, they have been set based on the configuration 
-that you have provided. The base class will then use those datasets to create the dataloaders that will be used in the training script. 
+You can see that we use the ``pre_transform``, ``test_transform`` and ``train_transform`` from the base class, they have been set based on the configuration
+that you have provided. The base class will then use those datasets to create the dataloaders that will be used in the training script.
 
 The final step is to associate a metric tracker to your dataset, in this case we will use a SegmentationTracker that tracks IoU metrics as well as accuracy, mean accuracy and loss.
 
@@ -132,14 +132,14 @@ Let's move to the next step, the definition of the configuration file that will 
 
 * Location of the data
 * Transforms that will be applied to the data
-* Python class that will be used for creating the actual python object used during training. 
+* Python class that will be used for creating the actual python object used during training.
 
 Let's create a ``conf/data/segmentation/s3disfused.yaml`` file with our own setting to setup the dataset
 
 .. literalinclude:: ../../conf/data/segmentation/s3disfused.yaml
    :language: yaml
 
-.. note:: 
+.. note::
  * ``task`` needs to be specified. Currently, the arguments provided by the command line are lost and therefore we need the extra information.
  * ``class`` needs to be specified. In that case, since we solve a classification task, the code will look for a class named ``S3DISDataset`` within the ``torch_points3d/datasets/segmentation/s3dis.py`` file.
 
@@ -148,7 +148,7 @@ For more details about the tracker please refer to the `source code <https://git
 Create a new model
 --------------------
 
-Let's add `PointNet++ <https://github.com/charlesq34/pointnet2>`_ model implemented within the "DENSE" format type to the project. 
+Let's add `PointNet++ <https://github.com/charlesq34/pointnet2>`_ model implemented within the "DENSE" format type to the project.
 Model definitions are separated between the definition of the core "convolution" operation equivalent to a Conv2D on images (see :ref:`module_ref`) and the overall model that combines all those convolutions (see :ref:`model_ref`).
 
 
@@ -187,7 +187,7 @@ Let's dig in.
 
 
 * The ``PointNetMSGDown`` inherit from ``BaseDenseConvolutionDown``:
-  
+
   * ``BaseDenseConvolutionDown`` takes care of all the sampling and search logic for you.
   * Therefore, a ``sampler`` and a ``neighbour finder`` have to be provided.
   * Here, we provide ``DenseFPSSampler`` (furthest point sampling) and ``DenseRadiusNeighbourFinder`` (neighbour search within a given radius)
@@ -199,7 +199,7 @@ Let's dig in.
 Assemble all the basic blocks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Let's create a new file ``/torch_points3d/models/segmentation/pointnet2.py`` with its associated class 
+Let's create a new file ``/torch_points3d/models/segmentation/pointnet2.py`` with its associated class
 ``PointNet2_D``
 
 .. code-block:: python
@@ -289,14 +289,14 @@ Let's dig in the definition.
 
 **Required arguments**
 
-* 
+*
   ``pointnet2_charlesmsg`` is model_name and should be provided from the command line in order to load this file configuration.
 
-* 
+*
   ``architecture: pointnet2.PointNet2_D``. It indicates where to find the Model Logic.
   The framework backend will look for the file ``/torch_points3d/models/segmentation/pointnet2.py`` and the ``PointNet2_D`` class.
 
-* 
+*
   ``conv_type: "DENSE"``
 
 
@@ -306,8 +306,8 @@ Let's dig in the definition.
 When I say optional, I mean those parameters could be defined differently for your own model.
 We don't want to force any particular configuration format however, the simpler is always better !
 
-The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class 
-`torch_points3d/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/models/base_architectures/unet.py>`_ 
+The format above is used across models that leverage our  `Unet architecture <https://arxiv.org/abs/1505.04597>`_ builder base class
+`torch_points3d/models/base_architectures/unet.py <https://github.com/nicolas-chaulet/torch-points3d/blob/master/torch_points3d/models/base_architectures/unet.py>`_
 with ``UnetBasedModel`` and ``UnwrappedUnetBasedModel``.
 The following arguments are required by those classes:
 
@@ -370,7 +370,7 @@ Here is an extract from the model architecture config:
        activation:
            name:  "LeakyReLU"
            negative_slope: 0.2
-       ratios: [0.2, 0.25] 
+       ratios: [0.2, 0.25]
        radius: [0.1, 0.2]
        local_nn: [[10, 8, FEAT], [10, 32, 64, 64]]
        down_conv_nn: [[FEAT, 16, 32, 64], [64, 64, 128]]
@@ -378,7 +378,7 @@ Here is an extract from the model architecture config:
 
 * First convolution receives ``ratio=0.2``\ , ``radius=0.1``\ , ``local_nn_=[10, 8, 3]``\ , ``down_conv_nn=[3, 16, 32, 64]``
 * Second convolution receives ``ratio=0.25``\ , ``radius=0.2``\ , ``local_nn_=[10, 32, 64, 64]``\ , ``down_conv_nn=[64, 64, 128]``
-* Both of them will also receive a dictionary ``activation = {name: "LeakyReLU", negative_slope: 0.2}`` 
+* Both of them will also receive a dictionary ``activation = {name: "LeakyReLU", negative_slope: 0.2}``
 
 
 
@@ -396,3 +396,50 @@ Your terminal should contain:
 .. image:: ../imgs/logging.png
    :target: ../imgs/logging.png
    :alt: logging
+
+
+
+
+
+Train and Test on tasks already implemented
+-----------------------
+
+In this section, We will see How we can train and test model on existing datasets.
+
+Registration Task
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In registration task, the goal is to find the right transformation that align correctly pattern.
+Here, we will show how we can use deep learning to solve this task. Especially, we will see how we can use `Fully Convolutional Geometric Feature <https://openaccess.thecvf.com/content_ICCV_2019/papers/Choy_Fully_Convolutional_Geometric_Features_ICCV_2019_paper.pdf>`_. FCGF use a Unet architecture to compute feature per point and then we can match these features. Then to find the correct transformation, we can use algorithms such as RANSAC or Fast Global Registration. For this task, we use siamese networks, it means that the dataset provides pairs of point clouds and the networks is applied to both pairs.
+
+To train on 3DMatch, we can type the command:
+
+.. code-block::
+
+   poetry run python train.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training=sparse_fragment_reg
+
+the config file for models are in the ``conf/models/registration/``. It automatically instantiates models written in ``torch_points3d/models/registration``.
+The config file for the datasets are here ``conf/data/registration``. preprocessing and data augmentation are defined here.
+So here, it will train a network with the sparse convolution from Minkowski engine, with the architecture specified in the following path on 3DMatch.
+
+
+We can try an other convolution (for example KPConv):
+
+.. code-block::
+
+   poetry run train.py task=registration model_type=kpconv model_name=KPFCNN dataset=fragment3dmatch_partial training=sparse_fragment_reg``
+
+In the case of KPConv, because it's not the same convolution, the pre-processing is different.
+3DMatch is a dataset containing RGBD frames and the poses from 5 different datasets.But our method need to be trained on 3D point cloud. So we need to fuse RGBD frame to create fragments.
+Our code will download automatically the RGBD frames with the poses. To build the fragment, we mainly rely on the code from `this repository <https://github.com/andyzeng/tsdf-fusion-python>`_:
+In the yaml code, we specify the params to build the fragments for the training and the evaluation and also we provide the parameters for the evaluation.
+
+
+If you want to test your model you can use the provided scripts.
+
+.. code-block::
+
+   python scripts/test_registration_scripts/evaluate.py task=registration model_type=minkowski model_name=MinkUNet_Fragment dataset=fragment3dmatch_sparse training.checkpoint_dir="your weights " data.sym=True
+
+Where you have to replace "Your weights" by the directory containing the weights.
+Finally, if you want to use the networks off the shelf on your own project (using the ``PretrainedRegistry``). you can check the notebooks ``notebooks/demo_registration_3dm.ipynb`` and ``demo_registration_kitti.ipynb`` for 3DMatch and KITTI.

@@ -92,7 +92,9 @@ class ScannetSegmentationTracker(SegmentationTracker):
         output : torch.Tensor
             probablities out of the model, shape: [N,nb_classes]
         """
-        id_scans = data.id_scan.squeeze()
+        id_scans = data.id_scan
+        if id_scans.dim() > 1:
+            id_scans = id_scans.squeeze()
         if self._conv_type == "DENSE":
             batch_size = len(id_scans)
             output = output.view(batch_size, -1, output.shape[-1])
@@ -112,7 +114,7 @@ class ScannetSegmentationTracker(SegmentationTracker):
                 batch_mask = data.batch == idx_batch
             idx = data[SaveOriginalPosId.KEY][batch_mask]
 
-            self._votes[id_scan][idx] += output[batch_mask]
+            self._votes[id_scan][idx] += output[batch_mask].cpu()
             self._vote_counts[id_scan][idx] += 1
 
     def _predict_full_res(self):

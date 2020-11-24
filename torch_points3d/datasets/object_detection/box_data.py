@@ -25,7 +25,7 @@ class BoxData:
 
     @property
     def is_gt(self):
-        return self.score is not None
+        return self.score is None
 
     def __repr__(self):
         return "{}: (score={})".format(self.__class__.__name__, self.score)

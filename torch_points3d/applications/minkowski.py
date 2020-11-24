@@ -1,11 +1,12 @@
 import os
+import sys
 from omegaconf import DictConfig, OmegaConf
 import logging
 import torch
 from torch_geometric.data import Batch
 
 from torch_points3d.applications.modelfactory import ModelFactory
-from torch_points3d.modules.MinkowskiEngine import *
+from torch_points3d.modules.MinkowskiEngine.api_modules import *
 from torch_points3d.core.base_conv.message_passing import *
 from torch_points3d.core.base_conv.partial_dense import *
 from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedModel
@@ -16,7 +17,7 @@ from .utils import extract_output_nc
 
 CUR_FILE = os.path.realpath(__file__)
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/minkowski")
+PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/sparseconv3d")
 
 log = logging.getLogger(__name__)
 
@@ -39,8 +40,14 @@ def Minkowski(
         Depth of the network
     config : DictConfig, optional
         Custom config, overrides the num_layers and architecture parameters
+    in_feat:
+        Size of the first layer
+    block:
+        Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
     """
-
+    log.warning(
+        "Minkowski API is deprecated in favor of SparseConv3d, it should be a simple drop in replacement (no change to the API)."
+    )
     factory = MinkowskiFactory(
         architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )
@@ -74,11 +81,10 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
 
     def __init__(self, model_config, model_type, dataset, modules, *args, **kwargs):
         super(BaseMinkowski, self).__init__(model_config, model_type, dataset, modules)
-        try:
+        self.weight_initialization()
+        default_output_nc = kwargs.get("default_output_nc", None)
+        if not default_output_nc:
             default_output_nc = extract_output_nc(model_config)
-        except:
-            default_output_nc = -1
-            log.warning("Could not resolve number of output channels")
 
         self._output_nc = default_output_nc
         self._has_mlp_head = False
@@ -94,6 +100,15 @@ class BaseMinkowski(UnwrappedUnetBasedModel):
     @property
     def output_nc(self):
         return self._output_nc
+
+    def weight_initialization(self):
+        for m in self.modules():
+            if isinstance(m, ME.MinkowskiConvolution):
+                ME.utils.kaiming_normal_(m.kernel, mode="fan_out", nonlinearity="relu")
+
+            if isinstance(m, ME.MinkowskiBatchNorm):
+                nn.init.constant_(m.bn.weight, 1)
+                nn.init.constant_(m.bn.bias, 0)
 
     def _set_input(self, data):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.

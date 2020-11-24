@@ -180,7 +180,7 @@ class VoteNetResults(Data):
             for j in range(self.num_proposal):
                 heading_angle = dataset.class2angle(pred_heading_class[i, j], pred_heading_residual[i, j])
                 box_size = dataset.class2size(pred_size_class[i, j], pred_size_residual[i, j])
-                corners_3d = box_corners_from_param(box_size, heading_angle, self.center[i, j, :])
+                corners_3d = box_corners_from_param(box_size, heading_angle, self.center[i, j, :].cpu())
                 pred_corners_3d[i, j] = corners_3d
 
         # Objectness and class

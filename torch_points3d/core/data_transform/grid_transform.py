@@ -1,6 +1,7 @@
 from typing import *
 import numpy as np
 import numpy
+import random
 import scipy
 import re
 import torch
@@ -113,7 +114,7 @@ class GridSampling3D:
         if self._mode == "last":
             data = shuffle_data(data)
 
-        coords = ((data.pos) / self._grid_size).int()
+        coords = torch.round((data.pos) / self._grid_size)
         if "batch" not in data:
             cluster = grid_cluster(coords, torch.tensor([1, 1, 1]))
         else:
@@ -122,8 +123,9 @@ class GridSampling3D:
 
         data = group_data(data, cluster, unique_pos_indices, mode=self._mode)
         if self._quantize_coords:
-            data.coords = coords[unique_pos_indices]
+            data.coords = coords[unique_pos_indices].int()
 
+        data.grid_size = torch.tensor([self._grid_size])
         return data
 
     def __call__(self, data):
@@ -165,34 +167,39 @@ class SaveOriginalPosId:
 
 
 class ElasticDistortion:
-    """Apply elastic distortion on sparse coordinate space.
+    """Apply elastic distortion on sparse coordinate space. First projects the position onto a 
+    voxel grid and then apply the distortion to the voxel grid.
+
     Parameters
     ----------
-    granularity: float
-        Size of the noise grid (in same scale[m/cm] as the voxel grid)
-    magnitude: bool
-        Noise multiplier
+    granularity: List[float]
+        Granularity of the noise in meters
+    magnitude:List[float]
+        Noise multiplier in meters
     Returns
     -------
     data: Data
         Returns the same data object with distorted grid
     """
 
-    def __init__(self, apply_distorsion: bool = True, granularity: List = [0.2, 0.4]):
+    def __init__(
+        self, apply_distorsion: bool = True, granularity: List = [0.2, 0.8], magnitude=[0.4, 1.6],
+    ):
+        assert len(magnitude) == len(granularity)
         self._apply_distorsion = apply_distorsion
-        self._granularity = list(granularity)
+        self._granularity = granularity
+        self._magnitude = magnitude
 
     @staticmethod
-    def elastic_distortion(coords, granularity):
+    def elastic_distortion(coords, granularity, magnitude):
+        coords = coords.numpy()
         blurx = np.ones((3, 1, 1, 1)).astype("float32") / 3
         blury = np.ones((1, 3, 1, 1)).astype("float32") / 3
         blurz = np.ones((1, 1, 3, 1)).astype("float32") / 3
-        coords_min = coords.min(0)[0]
+        coords_min = coords.min(0)
 
         # Create Gaussian noise tensor of the size given by granularity.
-        dim = coords.shape[-1]
-        denom = torch.Tensor([np.random.uniform(granularity[0], granularity[1]) for _ in range(dim)])
-        noise_dim = ((coords - coords_min).max(0)[0] // denom).int() + 3
+        noise_dim = ((coords - coords_min).max(0) // granularity).astype(int) + 3
         noise = np.random.randn(*noise_dim, 3).astype(np.float32)
 
         # Smoothing.
@@ -202,23 +209,23 @@ class ElasticDistortion:
             noise = scipy.ndimage.filters.convolve(noise, blurz, mode="constant", cval=0)
 
         # Trilinear interpolate noise filters for each spatial dimensions.
-        granularity_shift = granularity[1]
         ax = [
             np.linspace(d_min, d_max, d)
-            for d_min, d_max, d in zip(
-                coords_min - granularity_shift, coords_min + granularity_shift * (noise_dim - 2), noise_dim
-            )
+            for d_min, d_max, d in zip(coords_min - granularity, coords_min + granularity * (noise_dim - 2), noise_dim)
         ]
         interp = scipy.interpolate.RegularGridInterpolator(ax, noise, bounds_error=0, fill_value=0)
-        return (coords + torch.Tensor(interp(coords))).int()
+        coords = coords + interp(coords) * magnitude
+        return torch.tensor(coords).float()
 
     def __call__(self, data):
+        # coords = data.pos / self._spatial_resolution
         if self._apply_distorsion:
-            if np.random.uniform(0, 1) < 0.5:
-                data.pos = ElasticDistortion.elastic_distortion(data.pos, torch.Tensor(self._granularity))
+            if random.random() < 0.95:
+                for i in range(len(self._granularity)):
+                    data.pos = ElasticDistortion.elastic_distortion(data.pos, self._granularity[i], self._magnitude[i],)
         return data
 
     def __repr__(self):
-        return "{}(apply_distorsion={}, granularity={})".format(
-            self.__class__.__name__, self._apply_distorsion, self._granularity
+        return "{}(apply_distorsion={}, granularity={}, magnitude={})".format(
+            self.__class__.__name__, self._apply_distorsion, self._granularity, self._magnitude,
         )
