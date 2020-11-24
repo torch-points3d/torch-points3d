@@ -533,8 +533,8 @@ class RandomScaleAnisotropic:
 
     for three-dimensional positions.
 
-    Parameter
-    ---------
+    Parameters
+    -----------
     scales:
         scaling factor interval, e.g. ``(a, b)``, then scale \
         is randomly sampled from the range \
