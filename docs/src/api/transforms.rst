@@ -56,6 +56,8 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.RandomParamTransform
 
+.. autoclass:: torch_points3d.core.data_transform.Select
+
 .. autofunction:: torch_points3d.core.data_transform.NormalizeRGB
 
 .. autofunction:: torch_points3d.core.data_transform.ElasticDistortion
