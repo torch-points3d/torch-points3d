@@ -184,9 +184,9 @@ class RandomParamTransform(object):
             if "max" in rang and "min" in rang:
                 assert rang["max"] - rang["min"] > 0
                 v = np.random.random() * (rang["max"] - rang["min"]) + rang["min"]
-                if(rang["type"] == "float"):
+                if rang["type"] == "float":
                     v = float(v)
-                elif(rang["type"] == "int"):
+                elif rang["type"] == "int":
                     v = int(v)
                 else:
                     raise NotImplementedError
@@ -196,8 +196,7 @@ class RandomParamTransform(object):
                 dico[p] = v
             else:
                 raise NotImplementedError
-        trans_opt = DictConfig(dict(params=dico,
-                                    transform=self.transform_name))
+        trans_opt = DictConfig(dict(params=dico, transform=self.transform_name))
 
         random_transform = instantiate_transform(trans_opt, attr="transform")
         return random_transform
@@ -207,5 +206,5 @@ class RandomParamTransform(object):
         return self.random_transform(data)
 
     def __repr__(self):
-        return "RandomParamTransform({}, params={})".format(self.transform_name,
-                                                            self.transform_params)
+        return "RandomParamTransform({}, params={})".format(self.transform_name, self.transform_params)
+
