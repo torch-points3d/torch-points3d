@@ -11,6 +11,9 @@ from .features import *
 from .filters import *
 from .precollate import *
 from .prebatchcollate import *
+from omegaconf.dictconfig import DictConfig
+from omegaconf.listconfig import ListConfig
+from omegaconf import OmegaConf
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
@@ -122,3 +125,86 @@ class LotteryTransform(object):
             rep = rep + "{}, ".format(trans.__repr__())
         rep = rep + "])"
         return rep
+
+
+class RandomParamTransform(object):
+    """
+    create a transform with random parameters
+
+    Example (on the yaml)
+
+    .. code-block:: yaml
+
+        transform: RandomParamTransform
+            params:
+                transform_name: GridSampling3D
+                transform_params:
+                    size:
+                        min: 0.1
+                        max: 0.3
+                        type: "float"
+                    mode:
+                        value: "last"
+
+
+    We can also draw random numbers for two parameters, integer or float
+
+    .. code-block:: yaml
+
+        transform: RandomParamTransform
+            params:
+                transform_name: RandomSphereDropout
+                transform_params:
+                    radius:
+                        min: 1
+                        max: 2
+                        type: "float"
+                    num_sphere:
+                        min: 1
+                        max: 5
+                        type: "int"
+
+
+    Parameters
+    ----------
+    transform_name: string:
+        the name of the transform
+    transform_options: Omegaconf Dict
+        contains the name of a variables as a key and min max type as value to specify the range of the parameters and the type of the parameters or it contains the value "value" to specify a variables (see Example above)
+    """
+
+    def __init__(self, transform_name, transform_params):
+        self.transform_name = transform_name
+        self.transform_params = transform_params
+        self.random_transform = self._instanciate_transform_with_random_params()
+
+    def _instanciate_transform_with_random_params(self):
+        dico = dict()
+        for p, rang in self.transform_params.items():
+            if "max" in rang and "min" in rang:
+                assert rang["max"] - rang["min"] > 0
+                v = np.random.random() * (rang["max"] - rang["min"]) + rang["min"]
+                if rang["type"] == "float":
+                    v = float(v)
+                elif rang["type"] == "int":
+                    v = int(v)
+                else:
+                    raise NotImplementedError
+                dico[p] = v
+            elif "value" in rang:
+                v = rang["value"]
+                dico[p] = v
+            else:
+                raise NotImplementedError
+        trans_opt = DictConfig(dict(params=dico, transform=self.transform_name))
+
+        random_transform = instantiate_transform(trans_opt, attr="transform")
+        return random_transform
+
+    def __call__(self, data):
+        self.random_transform = self._instanciate_transform_with_random_params()
+        return self.random_transform(data)
+
+    def __repr__(self):
+        return "RandomParamTransform({}, params={})".format(self.transform_name, self.transform_params)
+
