@@ -1,19 +1,22 @@
-absl-py==0.10.0
+absl-py==0.11.0
 appnope==0.1.0; python_version >= "3.3" and sys_platform == "darwin" or platform_system == "Darwin"
 argon2-cffi==20.1.0
 ase==3.20.1
 async-generator==1.10
-attrs==20.2.0
+attrs==20.3.0
 backcall==0.2.0; python_version >= "3.3"
 bleach==3.2.1
+cached-property==1.5.2; python_version < "3.8"
 cachetools==4.1.1
-certifi==2020.6.20
-cffi==1.14.3
+certifi==2020.11.8
+cffi==1.14.4
 chardet==3.0.4
 click==7.1.2
 colorama==0.4.4; python_version >= "3.3" and sys_platform == "win32" or sys_platform == "win32"
 configparser==5.0.1
 cycler==0.10.0
+dataclasses==0.6
+dataclasses==0.8
 decorator==4.4.2
 defusedxml==0.6.0
 docker-pycreds==0.4.0
@@ -22,117 +25,121 @@ filelock==3.0.12
 future==0.18.2
 gdown==3.12.2
 gitdb==4.0.5
-gitpython==3.1.9
-google-auth==1.22.1
-google-auth-oauthlib==0.4.1
+gitpython==3.1.11
+google-auth==1.23.0
+google-auth-oauthlib==0.4.2
 googledrivedownloader==0.4
 gql==0.2.0
 graphql-core==1.1
-grpcio==1.32.0
-h5py==2.10.0
+grpcio==1.33.2
+h5py==3.1.0
 hydra-core==0.11.3
 idna==2.10
 imageio==2.9.0
-importlib-metadata==2.0.0; python_version < "3.8"
+importlib-metadata==3.1.0; python_version < "3.8"
 ipykernel==5.3.4
 ipython==7.16.1
+ipython==7.19.0
 ipython-genutils==0.2.0
 ipywidgets==7.5.1
 isodate==0.6.0
 jedi==0.17.2; python_version >= "3.3"
 jinja2==2.11.2
 joblib==0.17.0
-jsonpatch==1.26
+jsonpatch==1.27
 jsonpointer==2.0
 jsonschema==3.2.0
 jupyter-client==6.1.7
-jupyter-core==4.6.3
+jupyter-core==4.7.0
 jupyterlab-pygments==0.1.2
-kiwisolver==1.2.0
+kiwisolver==1.3.1
 llvmlite==0.32.1
-markdown==3.3.1
+markdown==3.3.3
 markupsafe==1.1.1
-matplotlib==3.3.2
+matplotlib==3.3.3
 mistune==0.8.4
-nbclient==0.5.0
+nbclient==0.5.1
 nbconvert==6.0.7
-nbformat==5.0.7
-nest-asyncio==1.4.1
+nbformat==5.0.8
+nest-asyncio==1.4.3
 networkx==2.5
-notebook==6.1.4
+notebook==6.1.5
 numba==0.49.1
-numpy==1.19.2
+numpy==1.19.4
 nvidia-ml-py3==7.352.0
 oauthlib==3.1.0
 omegaconf==1.4.1
 open3d==0.10.0.0
 packaging==20.4
-pandas==1.1.3
-pandocfilters==1.4.2
+pandas==1.1.4
+pandocfilters==1.4.3
 parso==0.7.1; python_version >= "3.3"
 pathtools==0.1.2
 pexpect==4.8.0; python_version >= "3.3" and sys_platform != "win32"
 pickleshare==0.7.5; python_version >= "3.3"
-pillow==7.2.0
+pillow==8.0.1
 plyfile==0.7.2
-prometheus-client==0.8.0
+prometheus-client==0.9.0
 promise==2.3
 prompt-toolkit==3.0.8; python_version >= "3.3"
-protobuf==3.13.0
-psutil==5.7.2
+protobuf==3.14.0
+psutil==5.7.3
 ptyprocess==0.6.0; python_version >= "3.3" and sys_platform != "win32" or os_name != "nt"
+py==1.9.0; implementation_name == "=pypy"
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.20
-pygments==2.7.1
+pygments==2.7.2
 pyparsing==2.4.7
 pyrsistent==0.17.3
 python-dateutil==2.8.1
-pytorch-metric-learning==0.9.94.dev1
-pytz==2020.1
+pytorch-metric-learning==0.9.95.dev0
+pytz==2020.4
 pywavelets==1.1.1
-pywin32==228; sys_platform == "win32"
+pywin32==300; sys_platform == "win32"
 pywinpty==0.5.7; os_name == "nt"
 pyyaml==5.3.1
-pyzmq==19.0.2
+pyzmq==20.0.0
 rdflib==5.0.0
-requests==2.24.0
+requests==2.25.0
 requests-oauthlib==1.3.0
 rsa==4.6; python_version >= "3.5"
 scikit-image==0.16.2
 scikit-learn==0.23.2
-scipy==1.5.2
+scipy==1.5.4
 send2trash==1.5.0
-sentry-sdk==0.19.0
+sentry-sdk==0.19.4
 shortuuid==1.0.1
 six==1.15.0
 smmap==3.0.4
 subprocess32==3.5.4
-tensorboard==2.3.0
+tensorboard==2.4.0
 tensorboard-plugin-wit==1.7.0
 terminado==0.9.1
 testpath==0.4.4
 threadpoolctl==2.1.0
-torch==1.6.0
+torch==1.7.0
 torch-cluster==1.5.5
 torch-geometric==1.6.1
 torch-points-kernels==0.6.8
 torch-scatter==2.0.5
-torch-sparse==0.6.7
+torch-sparse==0.6.8
 torchfile==0.1.0
 torchnet==0.0.4
-torchvision==0.7.0
-tornado==6.0.4
-tqdm==4.50.2
+torchvision==0.8.1
+tornado==6.1
+tqdm==4.53.0
 traitlets==4.3.3
-urllib3==1.25.10
+traitlets==5.0.5
+typing-extensions==3.7.4.3
+urllib3==1.26.2
 visdom==0.1.8.9
 wandb==0.8.36
-watchdog==0.10.3
+watchdog==0.10.4
 wcwidth==0.2.5; python_version >= "3.3"
 webencodings==0.5.1
 websocket-client==0.57.0
 werkzeug==1.0.1
 wheel==0.35.1; python_version >= "3"
 widgetsnbextension==3.5.1
-zipp==3.3.0; python_version < "3.8"
+zipp==3.4.0; python_version < "3.8"
