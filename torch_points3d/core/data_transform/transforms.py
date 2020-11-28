@@ -545,7 +545,9 @@ class RandomScaleAnisotropic:
     def __call__(self, data):
         scale = self.scales[0] + torch.rand((3,)) * (self.scales[1] - self.scales[0])
         data.pos = data.pos * scale
-        if data.norm is not None:
+        if getattr(data, "norm", None) is not None:
+            # change `if data.norm is not None` to above. The reason is :
+            # in PyTorch>1.7.0, if data.norm does not exist, data.norm will throw out an error.
             data.norm = data.norm / scale
             data.norm = torch.nn.functional.normalize(data.norm, dim=1)
         return data
