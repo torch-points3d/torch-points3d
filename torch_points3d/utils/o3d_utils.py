@@ -26,7 +26,7 @@ def generate_new_color(existing_colors, pastel_factor=0.5):
 
 def torch2o3d(data, color=[1, 0, 0]):
     xyz = data.pos
-    norm = data.norm
+    norm = getattr(data, "norm", None)
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(xyz.detach().cpu().numpy())
     if norm is not None:
