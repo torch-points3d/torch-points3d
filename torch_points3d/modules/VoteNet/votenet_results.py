@@ -65,6 +65,7 @@ class VoteNetResults(Data):
         assert features.shape[1] == 2 + 3 + num_heading_bin * 2 + num_size_cluster * 4 + num_classes
 
         data = cls(sampled_votes=sampled_votes, seed_inds=seed_inds, seed_votes=seed_votes, seed_pos=seed_pos)
+        data.has_class = num_classes != 0
 
         x_transposed = features.transpose(2, 1)  # (batch_size, num_proposal, features)
         batch_size = x_transposed.shape[0]
@@ -97,12 +98,19 @@ class VoteNetResults(Data):
         data.size_residuals_normalized = size_residuals_normalized
         if len(mean_size_arr) > 0:
             data.size_residuals = size_residuals_normalized * mean_size_arr.unsqueeze(0).unsqueeze(0)
-        sem_cls_scores = x_transposed[:, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :]  # Bxnum_proposalx10
-        data.sem_cls_scores = sem_cls_scores
+
+        if num_classes:
+            data.sem_cls_scores = x_transposed[
+                :, :, 5 + num_heading_bin * 2 + num_size_cluster * 4 :
+            ]  # Bxnum_proposalx10
+        else:
+            data.sem_cls_scores = None
 
         return data
 
-    def assign_objects(self, gt_center: torch.Tensor, near_threshold: float, far_threshold: float):
+    def assign_objects(
+        self, gt_center: torch.Tensor, gt_object_mask: torch.Tensor, near_threshold: float, far_threshold: float
+    ):
         """ Assigns an object to each prediction based on the closest ground truth
         objectness_label: 1 if pred object center is within NEAR_THRESHOLD of any GT object
         objectness_mask: 0 if pred object center is in gray zone (DONOTCARE), 1 otherwise
@@ -125,11 +133,14 @@ class VoteNetResults(Data):
         # TODO Why computing the closest GT using the vote instead of the corrected center
 
         euclidean_dist1 = torch.sqrt(dist1 + 1e-6)
+        gt_mask = torch.gather(gt_object_mask, 1, ind1)
         self.objectness_label = torch.zeros((B, K), dtype=torch.long).to(self.sampled_votes.device)
         self.objectness_mask = torch.zeros((B, K)).to(self.sampled_votes.device)
         self.objectness_label[euclidean_dist1 < near_threshold] = 1
+        self.objectness_label *= gt_mask
         self.objectness_mask[euclidean_dist1 < near_threshold] = 1
         self.objectness_mask[euclidean_dist1 > far_threshold] = 1
+        self.objectness_mask *= gt_mask
 
         self.object_assignment = ind1
 
@@ -186,6 +197,7 @@ class VoteNetResults(Data):
         # Objectness and class
         pred_obj = torch.nn.functional.softmax(self.objectness_scores, -1)[:, :, 1]  # B,num_proposal
         pred_sem_cls = torch.argmax(self.sem_cls_scores, -1)  # B,num_proposal
+        sem_cls_proba = torch.softmax(self.sem_cls_scores, -1)
 
         # Apply nms if required
         if apply_nms:
@@ -194,7 +206,6 @@ class VoteNetResults(Data):
             mask = np.ones((self.batch_size, self.num_proposal), dtype=np.bool)
 
         detected_boxes = []
-        sem_cls_proba = torch.softmax(self.sem_cls_scores, -1)
         for i in range(self.batch_size):
             corners = pred_corners_3d[i, mask[i]]
             objectness = pred_obj[i, mask[i]]
@@ -205,8 +216,8 @@ class VoteNetResults(Data):
             batch_detection = []
             for j in range(len(corners)):
                 if objectness[j] > objectness_threshold:
-                    if duplicate_boxes:
-                        for classname in range(self.sem_cls_scores.shape[-1]):
+                    if duplicate_boxes and self.has_class:
+                        for classname in range(sem_cls_proba.shape[-1]):
                             batch_detection.append(
                                 BoxData(classname, corners[j], score=objectness[j] * sem_cls_scores[j, classname])
                             )
