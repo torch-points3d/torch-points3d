@@ -103,7 +103,9 @@ class VoteNetModel(BaseModel):
         self.output = outputs
         if hasattr(self.input, "center_label"):
             gt_center = self.input.center_label[:, :, 0:3]
-            self.output.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
+            self.output.assign_objects(
+                gt_center, self.input.box_label_mask, self.loss_params.near_threshold, self.loss_params.far_threshold
+            )
         with torch.no_grad():
             self._dump_visuals()
 

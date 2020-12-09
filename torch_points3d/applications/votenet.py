@@ -200,9 +200,11 @@ class VoteNet(BaseModel):
     def _extract_gt_center(self, data, outputs):
         if self.is_dense_format:
             gt_center = data.center_label[:, :, 0:3]
+            obj_mask = self.input.box_label_mask
         else:
-            gt_center = data.center_label[:, 0:3].view((self._num_batches, -1, 3))
-        outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
+            gt_center = data.center_label[:, 0:3].view((self._n_batches, -1, 3))
+            obj_mask = self.input.box_label_mask.view((self._n_batches, -1))
+        outputs.assign_objects(gt_center, obj_mask, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
     def _get_attr(self, opt, arg_name):
         arg = self._kwargs.get(arg_name, None)

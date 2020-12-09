@@ -212,6 +212,11 @@ class ScannetDataset(BaseDataset):
         As ScanNet only has axis-alined boxes so angles are always 0. """
         return 0
 
+    @property  # type: ignore
+    @save_used_properties
+    def num_classes(self):
+        return 18
+
     def class2size(self, pred_cls, residual):
         """ Inverse function to size2class """
         if torch.is_tensor(residual):
