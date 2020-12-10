@@ -16,7 +16,7 @@ class MultiScaleData(Data):
         upsample: Optional[List[Data]] = None,
         **kwargs,
     ):
-        super().__init__(x=x, pos=pos, multiscale=multiscale, upsample=upsample, **kwargs)
+        super().__init__(x=x, y=y, pos=pos, multiscale=multiscale, upsample=upsample, **kwargs)
 
     def apply(self, func, *keys):
         r"""Applies the function :obj:`func` to all tensor and Data attributes
