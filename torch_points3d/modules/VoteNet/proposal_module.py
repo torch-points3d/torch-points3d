@@ -13,14 +13,7 @@ from .votenet_results import VoteNetResults
 
 class ProposalModule(nn.Module):
     def __init__(
-        self,
-        num_class,
-        vote_aggregation_config,
-        num_heading_bin,
-        mean_size_arr,
-        num_proposal,
-        sampling,
-        seed_feat_dim=256,
+        self, num_class, vote_aggregation_config, num_heading_bin, mean_size_arr, num_proposal, sampling,
     ):
         super().__init__()
 
@@ -30,7 +23,6 @@ class ProposalModule(nn.Module):
         self.mean_size_arr = nn.Parameter(torch.Tensor(mean_size_arr), requires_grad=False)
         self.num_proposal = num_proposal
         self.sampling = sampling
-        self.seed_feat_dim = seed_feat_dim
 
         # Object proposal/detection
         # Objectness scores (2), center residual (3),
