@@ -4,7 +4,6 @@ import os
 
 from torch_points3d.datasets.object_detection.box_data import BoxData
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
-from torch_points3d.applications.votenet import VoteNet
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications import models
 import torch_points3d.modules.VoteNet as votenet_module
