@@ -202,8 +202,7 @@ class VoteNet(BaseModel):
             gt_center = data.center_label[:, :, 0:3]
             obj_mask = self.input.box_label_mask
         else:
-            gt_center = data.center_label[:, 0:3].view((self._n_batches, -1, 3))
-            obj_mask = self.input.box_label_mask.view((self._n_batches, -1))
+            raise NotImplementedError("Please use VoteNet2 instead for non dense data.")
         outputs.assign_objects(gt_center, obj_mask, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
     def _get_attr(self, opt, arg_name):

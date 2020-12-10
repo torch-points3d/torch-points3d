@@ -393,7 +393,7 @@ class TestAPIVoteNet(unittest.TestCase):
             "seed_inds": [2, 1024],
             "seed_pos": [2, 1024, 3],
             "seed_votes": [2, 1024, 3],
-            "sem_cls_scores": [2, 256, 20],
+            "sem_cls_scores": [2, 256, 18],
             "size_residuals_normalized": [2, 256, 0, 3],
             "size_scores": [2, 256, 0],
         }
