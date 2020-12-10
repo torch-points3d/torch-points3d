@@ -10,5 +10,3 @@ Models
 .. autofunction:: torch_points3d.applications.pointnet2.PointNet2
 
 .. autofunction:: torch_points3d.applications.rsconv.RSConv
-
-.. autofunction:: torch_points3d.applications.votenet.VoteNet
