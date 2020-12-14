@@ -23,6 +23,7 @@ class APIModel(BaseModel):
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
+        self.batch_idx = data.batch.squeeze()
         self.input = data
         if data.y is not None:
             self.labels = data.y.to(self.device)

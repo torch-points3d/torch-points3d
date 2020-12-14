@@ -24,6 +24,7 @@ class PVCNN(BaseModel):
         if data.batch.dim() == 1:
             data.batch = data.batch.unsqueeze(-1)
         coords = torch.cat([data.pos, data.batch], -1)
+        self.batch_idx = data.batch.squeeze()
         self.input = SparseTensor(data.x, coords).to(self.device)
         self.labels = data.y.to(self.device)
 
