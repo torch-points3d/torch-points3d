@@ -15,18 +15,18 @@ data:
         clip: 0.05
     - transform: GridSampling3D
       params:
-        grid_size: ${data.grid_size}
+        size: ${data.grid_size}
         mode: "mean"
         quantize_coords: True
   test_transforms:
     - transform: GridSampling3D
       params:
-        grid_size: ${data.grid_size}
+        size: ${data.grid_size}
         quantize_coords: True
         mode: "mean"
   val_transforms:
     - transform: GridSampling3D
       params:
-        grid_size: ${data.grid_size}
+        size: ${data.grid_size}
         quantize_coords: True
         mode: "mean"
