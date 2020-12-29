@@ -18,7 +18,7 @@ training:
         bn_scheduler:
             bn_policy: "step_decay"
             params:
-                bn_momentum: 0.98
+                bn_momentum: 0.02
                 bn_decay: 0.9
                 decay_step : 1000
                 bn_clip : 1e-2
