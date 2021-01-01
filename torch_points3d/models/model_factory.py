@@ -3,7 +3,10 @@ import torch
 from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch.utils.data import DataLoader
+from torch_points3d.utils.colors import log_metrics
 from pytorch_lightning import LightningModule
+
+
 
 
 def instantiate_model(config, dataset) -> BaseModel:
@@ -109,8 +112,8 @@ class LitLightningModule(LightningModule):
         for key, value in vars(self.tracker).items():
             setattr(self, key, self.all_gather(value))
         metrics = self.tracker.publish(self.trainer.current_epoch)
-        for key, value in metrics.items():
-            print(f"{key}: {value}")
+        log_metrics(metrics, self.stage)
+
 
     def configure_optimizers(self):
         return [self.model._optimizer] #, [self.model._schedulers["lr_scheduler"]]

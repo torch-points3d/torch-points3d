@@ -1,7 +1,15 @@
 import logging
+import fcntl
+import termios
+import struct
 
 log = logging.getLogger(__name__)
 
+def terminal_size():
+    h, w, _, _ = struct.unpack('HHHH',
+        fcntl.ioctl(0, termios.TIOCGWINSZ,
+        struct.pack('HHHH', 0, 0, 0, 0)))
+    return w, h
 
 class COLORS:
     """[This class is used to color the bash shell by using {} {} {} with 'COLORS.{}, text, COLORS.END_TOKEN']
@@ -84,6 +92,32 @@ class COLORS:
     On_ICyan = "\033[0;106m"  # Cyan
     On_IWhite = "\033[0;107m"  # White
 
+STAGE_COLORS = {
+    "train": COLORS.TRAIN_COLOR,
+    "val": COLORS.VAL_COLOR,
+    "test": COLORS.TEST_COLOR
+}
+
 
 def colored_print(color, msg):
     log.info(color + msg + COLORS.END_NO_TOKEN)
+
+def log_metrics(metrics, stage, depth = 0):
+    is_depth_zero = depth == 0
+    if is_depth_zero:
+        w, _ = terminal_size()
+        print("\n")
+        print("=" * w)
+    
+    for key, value in metrics.items():
+        logging_shift = " " * depth * 4
+        if isinstance(value, dict):
+            colored_print(STAGE_COLORS[stage], f"{logging_shift}{key.upper()}:" + "{")
+            log_metrics(value, stage, depth = depth + 1)
+            colored_print(STAGE_COLORS[stage], f"{logging_shift}" + "}")
+        else:
+            logging_shift = " " * depth * 4
+            colored_print(STAGE_COLORS[stage], f"{logging_shift}{key.upper()}: {value}")
+    
+    if is_depth_zero:
+        print("=" * w + "\n")

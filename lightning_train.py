@@ -10,7 +10,6 @@ from torch_points3d.models.model_factory import instantiate_model, convert_to_li
 # Import BaseModel / BaseDataset for type checking
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.base_dataset import BaseDataset
-
 from pytorch_lightning import Trainer
 
 
@@ -48,6 +47,7 @@ def main(cfg):
         limit_val_batches=2,
         limit_test_batches=2,
         logger=False)
+    
     trainer.fit(model, data_module)
 
     # https://github.com/facebookresearch/hydra/issues/440
