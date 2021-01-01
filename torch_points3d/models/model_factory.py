@@ -1,8 +1,9 @@
 import importlib
-import hydra
-
+import torch
 from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from torch.utils.data import DataLoader
+from pytorch_lightning import LightningModule
 
 
 def instantiate_model(config, dataset) -> BaseModel:
@@ -41,3 +42,79 @@ def instantiate_model(config, dataset) -> BaseModel:
         )
     model = model_cls(model_config, "dummy", dataset, modellib)
     return model
+
+
+class LitLightningModule(LightningModule):
+
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+        self.tracker = None
+        self.tracker_options = {}
+
+    def forward(self, batch, batch_idx):
+        self.model.set_input(batch, self.device)
+        self.model.forward()
+
+    @property
+    def loss(self):
+        losses = []
+        for loss_name in self.model.loss_names:
+            losses.append(getattr(self.model, loss_name, None))
+        if len(losses) > 1:
+            raise NotImplementedError
+        return losses[0]
+
+    def step(self, batch, batch_idx, optimizer_idx = None, stage = "train"):
+        self.forward(batch, batch_idx)
+        self.log_metrics(batch, stage)
+        if stage == "train":
+            return self.loss
+
+    def training_step(self, batch, batch_idx, optimizer_idx = None):
+        return self.step(batch, batch_idx, optimizer_idx, "train")
+
+    def validation_step(self, batch, batch_idx, optimizer_idx = None):
+        return self.step(batch, batch_idx, optimizer_idx, "val")
+
+    def test_step(self, batch, batch_idx, optimizer_idx = None):
+        return self.step(batch, batch_idx, optimizer_idx, "test")
+
+    def log_metrics(self, data, stage):
+        if self.tracker is not None:
+            self.tracker.track(self.model, data=data, **self.tracker_options)
+            metrics = self.tracker.get_metrics()
+            try:
+                for loss_name in self.model.loss_names:
+                    del metrics[f"{stage}_{loss_name}"]
+            except:
+                pass
+            self.log_dict(metrics, prog_bar=True, on_step = True, on_epoch=False)
+
+    def reset_tracker(self):
+        self.stage = self.trainer.logger_connector._current_stage.value
+        self.tracker = self.trackers[self.stage]
+        self.tracker.reset(stage=self.stage)        
+
+    def on_train_epoch_start(self) -> None:
+        self.reset_tracker()
+
+    def on_val_epoch_start(self) -> None:
+        self.reset_tracker()
+
+    def on_test_epoch_start(self) -> None:
+        self.reset_tracker()
+
+    def on_epoch_end(self) -> None:
+        for key, value in vars(self.tracker).items():
+            setattr(self, key, self.all_gather(value))
+        metrics = self.tracker.publish(self.trainer.current_epoch)
+        for key, value in metrics.items():
+            print(f"{key}: {value}")
+
+    def configure_optimizers(self):
+        return [self.model._optimizer] #, [self.model._schedulers["lr_scheduler"]]
+
+
+def convert_to_lightning_module(model: BaseModel) -> LitLightningModule:
+    return LitLightningModule(model)

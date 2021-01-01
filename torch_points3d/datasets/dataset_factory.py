@@ -2,7 +2,10 @@ import importlib
 import copy
 import hydra
 import logging
-
+from contextlib import contextmanager
+from torch_points3d.metrics.colored_tqdm import Coloredtqdm as Ctq
+from pytorch_lightning import LightningDataModule
+from torch.utils.data import DataLoader
 from torch_points3d.datasets.base_dataset import BaseDataset
 
 log = logging.getLogger(__name__)
@@ -45,3 +48,43 @@ def instantiate_dataset(dataset_config) -> BaseDataset:
     dataset_cls = get_dataset_class(dataset_config)
     dataset = dataset_cls(dataset_config)
     return dataset
+
+class LiftDataModule(LightningDataModule):
+
+    def __init__(self, dataset):
+        super().__init__()
+        self.dataset = dataset
+        self.trackers = {}
+
+        for key, value in vars(dataset).items():
+            setattr(self, key, value)
+
+        for stage in ["train", "val", "test"]:
+            self.add_loader(stage)
+
+    def has_loader(self, stage):
+        loader = "loader"
+        if stage == "test": loader = "loaders"
+        return getattr(self, "_{stage}_{loader}", None) is None
+
+    def add_loader(self, stage):
+        if not self.has_loader(stage):
+            setattr(self, f"{stage}_dataloader", None)
+        else:
+            self.trackers[stage] = self.dataset.get_tracker(False, False)
+
+    def  train_dataloader(self, *args, **kwargs) -> DataLoader:
+        return self._train_loader
+
+    def  val_dataloader(self, *args, **kwargs) -> DataLoader:
+        return self._val_loader
+
+    def  test_dataloader(self, *args, **kwargs) -> DataLoader:
+        return self._test_loaders
+
+    def __repr__(self):
+        return "LightningDataModule \n" + self.dataset.__repr__()
+        
+
+def convert_to_lightning_data_module(dataset):
+    return LiftDataModule(dataset)
