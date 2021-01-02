@@ -150,8 +150,10 @@ class LitLightningModule(LightningModule):
         is_dist_initialized = torch.distributed.is_available() and torch.distributed.is_initialized()
 
         if is_dist_initialized:
+            
             def convert_numpy(data, dtype=np.float):
                 return data.cpu().numpy()
+            
             for key, value in vars(tracker).items():
                 if isinstance(value, (tuple, dict, list, torch.Tensor)):
                     new_value = flatten(self.all_gather(value))
