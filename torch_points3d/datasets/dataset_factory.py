@@ -72,6 +72,7 @@ class LiftDataModule(LightningDataModule):
             setattr(self, f"{stage}_dataloader", None)
         else:
             self.trackers[stage] = self.dataset.get_tracker(False, False)
+            self.trackers[stage].reset(stage)
 
     def  train_dataloader(self, *args, **kwargs) -> DataLoader:
         return self._train_loader

@@ -49,6 +49,7 @@ def main(cfg):
         logger=False)
     
     trainer.fit(model, data_module)
+    trainer.test()
 
     # https://github.com/facebookresearch/hydra/issues/440
     hydra._internal.hydra.GlobalHydra.get_state().clear()

@@ -5,8 +5,7 @@ from torch_points3d.utils.model_building_utils.model_definition_resolver import 
 from torch.utils.data import DataLoader
 from torch_points3d.utils.colors import log_metrics
 from pytorch_lightning import LightningModule
-
-
+from pytorch_lightning.utilities import rank_zero_only
 
 
 def instantiate_model(config, dataset) -> BaseModel:
@@ -52,7 +51,6 @@ class LitLightningModule(LightningModule):
     def __init__(self, model):
         super().__init__()
         self.model = model
-        self.tracker = None
         self.tracker_options = {}
 
     def forward(self, batch, batch_idx):
@@ -71,8 +69,7 @@ class LitLightningModule(LightningModule):
     def step(self, batch, batch_idx, optimizer_idx = None, stage = "train"):
         self.forward(batch, batch_idx)
         self.log_metrics(batch, stage)
-        if stage == "train":
-            return self.loss
+        return self.loss
 
     def training_step(self, batch, batch_idx, optimizer_idx = None):
         return self.step(batch, batch_idx, optimizer_idx, "train")
@@ -83,41 +80,57 @@ class LitLightningModule(LightningModule):
     def test_step(self, batch, batch_idx, optimizer_idx = None):
         return self.step(batch, batch_idx, optimizer_idx, "test")
 
-    def log_metrics(self, data, stage):
-        if self.tracker is not None:
-            self.tracker.track(self.model, data=data, **self.tracker_options)
-            metrics = self.tracker.get_metrics()
-            try:
-                for loss_name in self.model.loss_names:
-                    del metrics[f"{stage}_{loss_name}"]
-            except:
-                pass
-            self.log_dict(metrics, prog_bar=True, on_step = True, on_epoch=False)
-
-    def reset_tracker(self):
-        self.stage = self.trainer.logger_connector._current_stage.value
-        self.tracker = self.trackers[self.stage]
-        self.tracker.reset(stage=self.stage)        
+    def reset_tracker(self, stage):
+        self.trackers[stage].reset(stage=stage)        
 
     def on_train_epoch_start(self) -> None:
-        self.reset_tracker()
+        self.reset_tracker("train")
 
     def on_val_epoch_start(self) -> None:
-        self.reset_tracker()
+        self.reset_tracker("val")
 
     def on_test_epoch_start(self) -> None:
-        self.reset_tracker()
-
-    def on_epoch_end(self) -> None:
-        for key, value in vars(self.tracker).items():
-            setattr(self, key, self.all_gather(value))
-        metrics = self.tracker.publish(self.trainer.current_epoch)
-        log_metrics(metrics, self.stage)
-
+        self.reset_tracker("test")
 
     def configure_optimizers(self):
         return [self.model._optimizer] #, [self.model._schedulers["lr_scheduler"]]
 
+    def log_metrics(self, data, stage):
+        if not self.trainer.running_sanity_check:
+            self.trackers[stage].track(self.model, data=data, **self.tracker_options)
+            metrics = self.trackers[stage].get_metrics()
+            self.sanetize_metrics(metrics)
+            self.log_dict(metrics, prog_bar=True, on_step = True, on_epoch=False)
+
+    def on_train_epoch_end(self, *_) -> None:
+        self.on_stage_epoch_end("train")
+
+    def on_validation_epoch_end(self, *_) -> None:
+        if not self.trainer.running_sanity_check:
+            self.on_stage_epoch_end("val")
+
+    def on_test_epoch_end(self, *_) -> None:
+        self.on_stage_epoch_end("test")
+
+    def on_stage_epoch_end(self, stage):
+        tracker = self.trackers[stage]
+        for key, value in vars(tracker).items():
+            setattr(self, key, self.all_gather(value))
+        metrics = tracker.publish(self.trainer.current_epoch)
+        self.log_metrics_epoch_end(metrics, stage)
+
+    @rank_zero_only
+    def log_metrics_epoch_end(self, metrics, stage):
+        log_metrics(metrics, stage)
+
+    def sanetize_metrics(self, metrics):
+        try:
+            for loss_name in self.model.loss_names:
+                for key in metrics.keys():
+                    if loss_name in key:
+                        del metrics[key]
+        except:
+            pass
 
 def convert_to_lightning_module(model: BaseModel) -> LitLightningModule:
     return LitLightningModule(model)
