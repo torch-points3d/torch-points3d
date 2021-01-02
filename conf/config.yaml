@@ -10,16 +10,18 @@ defaults: # for loading the default config
   - lr_scheduler: exponential
   - training: default
 
+  - trainer: debug.yaml
+
   - debugging: default.yaml
   - models: ${defaults.0.task}/${defaults.1.model_type}
   - data: ${defaults.0.task}/${defaults.2.dataset}
-  - sota # Contains current SOTA results on different datasets (extracted from papers !).
   - hydra/job_logging: custom
   - hydra/output: custom  # add the support for user-defined experiment folder (where to save the experiment files)
 
 job_name: benchmark # prefix name for saving the experiment file.
 model_name: ??? # Name of the specific model to load
 update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]
+monitor: null
 selection_stage: ""
 pretty_print: False
 eval_frequency: 1

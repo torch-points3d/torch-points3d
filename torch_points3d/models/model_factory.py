@@ -1,11 +1,33 @@
-import importlib
+import os
+from typing import Any
 import torch
+import numpy as np
+import importlib
 from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch.utils.data import DataLoader
-from torch_points3d.utils.colors import log_metrics
+from torch_points3d.utils.colors import log_metrics, colored_rank_print
+from pytorch_lightning.utilities.apply_func import apply_to_collection
 from pytorch_lightning import LightningModule
 from pytorch_lightning.utilities import rank_zero_only
+
+
+def breakpoint_zero():
+    if os.getenv("LOCAL_RANK") == "0":
+        import pdb; pdb.set_trace()
+
+
+def flatten(data: Any):
+    
+    if isinstance(data, dict):
+        for key, value in data.items():
+            data[key] = flatten(value)
+    
+    elif isinstance(data, list):
+        if all([torch.is_tensor(value) for value in data]) and len(data) > 0:
+            return torch.cat(data, dim=0)
+    
+    return data
 
 
 def instantiate_model(config, dataset) -> BaseModel:
@@ -85,12 +107,16 @@ class LitLightningModule(LightningModule):
 
     def on_train_epoch_start(self) -> None:
         self.reset_tracker("train")
+        self.on_stage_epoch_start("train")
+        self.on_stage_epoch_start("val")
 
     def on_val_epoch_start(self) -> None:
         self.reset_tracker("val")
+        self.on_stage_epoch_start("val")
 
     def on_test_epoch_start(self) -> None:
         self.reset_tracker("test")
+        self.on_stage_epoch_start("test")
 
     def configure_optimizers(self):
         return [self.model._optimizer] #, [self.model._schedulers["lr_scheduler"]]
@@ -101,6 +127,11 @@ class LitLightningModule(LightningModule):
             metrics = self.trackers[stage].get_metrics()
             self.sanetize_metrics(metrics)
             self.log_dict(metrics, prog_bar=True, on_step = True, on_epoch=False)
+
+    def on_stage_epoch_start(self, stage):
+        tracker = self.trackers[stage]
+        metrics = tracker.get_metrics()
+        self.log_dict(metrics, prog_bar=True, on_step = True, on_epoch=False)
 
     def on_train_epoch_end(self, *_) -> None:
         self.on_stage_epoch_end("train")
@@ -113,11 +144,25 @@ class LitLightningModule(LightningModule):
         self.on_stage_epoch_end("test")
 
     def on_stage_epoch_end(self, stage):
+        rank = os.getenv("LOCAL_RANK", None)
         tracker = self.trackers[stage]
-        for key, value in vars(tracker).items():
-            setattr(self, key, self.all_gather(value))
-        metrics = tracker.publish(self.trainer.current_epoch)
+
+        is_dist_initialized = torch.distributed.is_available() and torch.distributed.is_initialized()
+
+        if is_dist_initialized:
+            def convert_numpy(data, dtype=np.float):
+                return data.cpu().numpy()
+            for key, value in vars(tracker).items():
+                if isinstance(value, (tuple, dict, list, torch.Tensor)):
+                    new_value = flatten(self.all_gather(value))
+                    new_value = apply_to_collection(new_value, torch.Tensor, convert_numpy)
+                    # colored_rank_print(f"\n {rank} {key} \n {value} \n {new_value} \n")
+                    setattr(tracker, key, new_value)
+        tracker.finalise()
+        metrics = tracker.get_metrics()
+        self.log_dict(metrics, prog_bar=True, on_step = False, on_epoch=True)
         self.log_metrics_epoch_end(metrics, stage)
+        self.reset_tracker(stage)
 
     @rank_zero_only
     def log_metrics_epoch_end(self, metrics, stage):

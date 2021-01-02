@@ -2,6 +2,7 @@ import logging
 import fcntl
 import termios
 import struct
+import os
 
 log = logging.getLogger(__name__)
 
@@ -10,6 +11,11 @@ def terminal_size():
         fcntl.ioctl(0, termios.TIOCGWINSZ,
         struct.pack('HHHH', 0, 0, 0, 0)))
     return w, h
+
+
+def breakpoint_zero():
+    if os.getenv("LOCAL_RANK") == "0":
+        import pdb; pdb.set_trace()
 
 class COLORS:
     """[This class is used to color the bash shell by using {} {} {} with 'COLORS.{}, text, COLORS.END_TOKEN']
@@ -100,6 +106,14 @@ STAGE_COLORS = {
 
 
 def colored_print(color, msg):
+    log.info(color + msg + COLORS.END_NO_TOKEN)
+
+POSSIBLE_COLORS = {k:v for k,v in vars(COLORS).items() if ("\x1b" in str(v) and "\033[0m" != v)}
+
+RANK_COLORS = {str(idx): color for idx, (color_name, color) in enumerate(POSSIBLE_COLORS.items())}
+
+def colored_rank_print(msg):
+    color = RANK_COLORS[os.getenv("LOCAL_RANK", "0")]
     log.info(color + msg + COLORS.END_NO_TOKEN)
 
 def log_metrics(metrics, stage, depth = 0):

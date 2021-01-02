@@ -2,15 +2,17 @@ import os
 import copy
 import hydra
 from omegaconf import OmegaConf
+import torch
 
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset, convert_to_lightning_data_module
 from torch_points3d.models.model_factory import instantiate_model, convert_to_lightning_module
-
+from hydra.utils import instantiate
 # Import BaseModel / BaseDataset for type checking
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.base_dataset import BaseDataset
-from pytorch_lightning import Trainer
+from pytorch_lightning import Trainer, _logger as log, seed_everything
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 
 @hydra.main(config_path="conf/config.yaml")
@@ -18,6 +20,8 @@ def main(cfg):
     OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
     if cfg.pretty_print:
         print(cfg.pretty())
+
+    seed_everything(42)
 
     dataset: BaseDataset = instantiate_dataset(cfg.data)
     model: BaseModel = instantiate_model(copy.deepcopy(cfg), dataset)
@@ -41,15 +45,33 @@ def main(cfg):
     model.tracker_options = cfg.get("tracker_options", {})
     model.trackers = data_module.trackers
 
-    trainer = Trainer(
-        max_epochs=2, 
-        limit_train_batches=2,
-        limit_val_batches=2,
-        limit_test_batches=2,
-        logger=False)
+    monitor = getattr(cfg, "monitor", None)
+    callbacks = []
+    if monitor is not None:
+        log.info(os.getcwd())
+        callbacks = [
+            ModelCheckpoint(
+                monitor=monitor, 
+                save_top_k=-1,
+                filename='{epoch}-{'+f'{monitor}'+':.2f}',
+                mode="max", 
+            ),
+            EarlyStopping(monitor=monitor)
+        ]
+
+    trainer = Trainer(**cfg.trainer, callbacks=callbacks)
     
     trainer.fit(model, data_module)
-    trainer.test()
+    
+    if monitor is None:
+        trainer.test(model)
+    else:
+        # Bug to resolve on Pytorch Side
+        is_dist_initialized = torch.distributed.is_available() and torch.distributed.is_initialized()
+        if is_dist_initialized:
+            best_model_path = trainer.checkpoint_callback.best_model_path
+            trainer.checkpoint_callback.best_model_path = trainer.accelerator_backend.broadcast(best_model_path)
+        trainer.test()
 
     # https://github.com/facebookresearch/hydra/issues/440
     hydra._internal.hydra.GlobalHydra.get_state().clear()

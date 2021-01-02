@@ -93,6 +93,7 @@ class ShapenetPartTracker(BaseTracker):
             self._full_res_scans[cat][id_scan].add_vote(data, logits, batch_mask)
 
     def finalise(self, **kwargs):
+        self._miou_per_class, self._Cmiou, self._Imiou = ShapenetPartTracker._get_metrics_per_class(self._shape_ious)
         # Check if at least one element has been created for full res interpolation
         contains_elements = np.sum([bool(d) for d in list(self._full_res_scans.values())]) > 0
         if not contains_elements:
@@ -151,6 +152,6 @@ class ShapenetPartTracker(BaseTracker):
             for iou in shape_ious[cat]:
                 instance_ious.append(iou)
             if len(shape_ious[cat]):
-                cat_ious[cat] = np.mean(shape_ious[cat])
+                cat_ious[cat] = np.mean(np.array(shape_ious[cat]))
         mean_class_ious = np.mean(list(cat_ious.values()))
         return cat_ious, mean_class_ious, np.mean(instance_ious)
