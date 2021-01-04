@@ -19,6 +19,10 @@ class PointNet(BaseModel):
         self._opt = OmegaConf.to_container(opt)
         self._is_dense = ConvolutionFormatFactory.check_is_dense_format(self.conv_type)
 
+        self._build_model()
+
+        self.loss_names = ["loss_seg", "loss_internal"]
+        
         self.visual_names = ["data_visual"]
 
     def set_input(self, data, device):
@@ -28,24 +32,32 @@ class PointNet(BaseModel):
             self.input_features = torch.cat([data.pos, data.x], axis=-1)
         else:
             self.input_features = data.pos
-        self._build_model()
-        self.labels = data.y
+        if data.y is not None:
+            self.labels = data.y
+        else:
+            self.labels = None
+        if not hasattr(data, "batch"):
+            self.batch_idx = torch.zeros(self.labels.shape[0]).long()
+        else:
+            self.batch_idx = data.batch
         self.pointnet_seg.set_scatter_pooling(not self._is_dense)
 
     def _build_model(self):
         if not hasattr(self, "pointnet_seg"):
-            self.pointnet_seg = PointNetSeg(input_nc=self.input_features.shape[-1], 
-                                **flatten_dict(self._opt))
+            self.pointnet_seg = PointNetSeg(**flatten_dict(self._opt))
 
     def forward(self, *args, **kwargs):
         x = self.pointnet_seg(self.input_features, self.input.batch)
-        self.output = F.log_softmax(x, dim=-1)
+        self.output = x
+        
         internal_loss = self.get_internal_loss()
+        
         if self.labels is not None:
-            self.loss = (
-                F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
-                + (internal_loss if internal_loss.item() != 0 else 0) * 0.001
+            self.loss_seg = F.cross_entropy(
+                self.output, self.labels, ignore_index=IGNORE_LABEL
             )
+            self.loss_internal = (internal_loss if internal_loss.item() != 0 else 0) * 0.001
+            self.loss = self.loss_seg + self.loss_internal
 
         self.data_visual = self.input
         self.data_visual.pred = torch.max(self.output, -1)[1]
