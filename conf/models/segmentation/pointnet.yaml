@@ -1,11 +1,12 @@
 models:
     PointNet:
         class: pointnet.PointNet
-        conv_type: "MESSAGE_PASSING"
+        conv_type: "PARTIAL_DENSE"
+        input_nc: FEAT + 3
         input_stn:
-            local_nn: [3, 64, 128, 1024]
+            local_nn: [64, 128, 1024]
             global_nn: [1024, 512, 256]
-        local_nn_1: [3, 64, 64]
+        local_nn_1: [64, 64]
         feat_stn:
             k: 64
             local_nn: [64, 64, 128, 1024]
