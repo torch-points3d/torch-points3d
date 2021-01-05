@@ -136,7 +136,6 @@ class BaseSparseConv3d(UnwrappedUnetBasedModel):
         else:
             self.xyz = data.coords
 
-
 class SparseConv3dEncoder(BaseSparseConv3d):
     def forward(self, data, *args, **kwargs):
         """

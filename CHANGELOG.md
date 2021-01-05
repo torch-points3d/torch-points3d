@@ -5,17 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.2.0
 
 ### Added
 
 - Support for the IRALab benchmark (https://arxiv.org/abs/2003.12841), with data from the ETH, Canadian Planetary, Kaist and TUM datasets. (thanks @simone-fontana)
-- Added Kitti for semantic segmentation and registration (first outdoor dataset for semantic seg) 
+- Added Kitti for semantic segmentation and registration (first outdoor dataset for semantic seg)
 - Possibility to load pretrained models by adding the path in the confs for finetuning.
 - Lottery transform to use randomly selected transforms for data augmentation
 - Batch size campling function to ensure that batches don't get too large
 - [TorchSparse](https://github.com/mit-han-lab/torchsparse) backend for sparse convolutions
 - Possibility to build sparse convolution networks with Minkowski Engine or TorchSparse
+- [PVCNN](https://arxiv.org/abs/1907.03739) model for semantic segmentation (thanks @CCInc)
 
 ### Bug fix
 
@@ -24,11 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BatchNorm1d fix (thanks @Wundersam)
 - Fix process hanging when processing scannet with multiprocessing (thanks @zetyquickly)
 - wandb does not log the weights when set in private mode (thanks @jamesjiro)
+- Fixed VoteNet loss definitions and data augmentation parameters (got up to 59.2% mAP25)
 
 ### Changed
 
 - More general API for Minkowski with support for Bottleneck blocks and Squeeze and excite.
 - Docker images tags on dockerhub are now `latest-gpu` and `latest-cpu` for the latest CPU adn GPU images.
+
+### Removed
+
+- Removed VoteNet from the API because it was not up to date. You can still use the models defined [there](https://github.com/nicolas-chaulet/torch-points3d/tree/master/torch_points3d/models/object_detection)
 
 ## 1.1.1
 

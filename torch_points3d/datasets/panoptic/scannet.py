@@ -14,16 +14,13 @@ log = logging.getLogger(__name__)
 
 
 class ScannetPanoptic(Scannet):
-    NYU40IDS = np.array([3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-                         14, 16, 24, 28, 33, 34, 36, 39])
+    NYU40IDS = np.array([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39])
     NUM_MAX_OBJECTS = 64
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.STUFFCLASSES = torch.tensor(
-            [i for i in self.VALID_CLASS_IDS if i not in self.NYU40IDS])
-        self.NYU40ID2CLASS = {nyu40id: i for i,
-                              nyu40id in enumerate(list(self.NYU40IDS))}
+        self.STUFFCLASSES = torch.tensor([i for i in self.VALID_CLASS_IDS if i not in self.NYU40IDS])
+        self.NYU40ID2CLASS = {nyu40id: i for i, nyu40id in enumerate(list(self.NYU40IDS))}
 
     def __getitem__(self, idx):
         """
@@ -39,7 +36,7 @@ class ScannetPanoptic(Scannet):
 
         # Extract instance and box labels
         self._set_extra_labels(data)
-        data.y = self._remap_labels(data.y)
+        data.y = super()._remap_labels(data.y)
         return data
 
     def _set_extra_labels(self, data):
@@ -68,8 +65,7 @@ class ScannetDataset(BaseDataset):
         super().__init__(dataset_opt)
 
         use_instance_labels: bool = dataset_opt.use_instance_labels
-        donotcare_class_ids: [
-        ] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
+        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
         max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
         is_test: bool = dataset_opt.is_test if dataset_opt.is_test is not None else False
 

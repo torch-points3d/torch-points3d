@@ -1,3 +1,5 @@
+set -eu
+
 apt-get update
 apt-get install -y --fix-missing --no-install-recommends\
     libffi-dev libssl-dev build-essential libopenblas-dev libsparsehash-dev\

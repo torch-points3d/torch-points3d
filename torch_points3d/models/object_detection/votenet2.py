@@ -4,7 +4,6 @@ import os
 
 from torch_points3d.datasets.object_detection.box_data import BoxData
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
-from torch_points3d.applications.votenet import VoteNet
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.applications import models
 import torch_points3d.modules.VoteNet as votenet_module
@@ -169,9 +168,11 @@ class VoteNet2(BaseModel):
     def _extract_gt_center(self, data, outputs):
         if self.is_dense_format:
             gt_center = data.center_label[:, :, 0:3]
+            obj_mask = self.input.box_label_mask
         else:
             gt_center = data.center_label[:, 0:3].view((self._n_batches, -1, 3))
-        outputs.assign_objects(gt_center, self.loss_params.near_threshold, self.loss_params.far_threshold)
+            obj_mask = self.input.box_label_mask.view((self._n_batches, -1))
+        outputs.assign_objects(gt_center, obj_mask, self.loss_params.near_threshold, self.loss_params.far_threshold)
 
     def _compute_losses(self):
         if self._weight_classes is not None:

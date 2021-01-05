@@ -54,6 +54,10 @@ Transforms
 
 .. autoclass:: torch_points3d.core.data_transform.LotteryTransform
 
+.. autoclass:: torch_points3d.core.data_transform.RandomParamTransform
+
+.. autoclass:: torch_points3d.core.data_transform.Select
+
 .. autofunction:: torch_points3d.core.data_transform.NormalizeRGB
 
 .. autofunction:: torch_points3d.core.data_transform.ElasticDistortion
@@ -66,7 +70,7 @@ Transforms
 
 .. autofunction:: torch_points3d.core.data_transform.RandomWalkDropout
 
-.. autofunction:: torch_points3d.core.data_transform.SphereDropout
+.. autofunction:: torch_points3d.core.data_transform.RandomSphereDropout
 
 .. autofunction:: torch_points3d.core.data_transform.SphereCrop
 

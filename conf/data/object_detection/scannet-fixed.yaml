@@ -9,13 +9,7 @@ data:
   donotcare_class_ids: []
   process_workers: 8
 
-  pre_transform:
-    - transform: GridSampling3D
-      lparams: [0.02]
-
   train_transform:
-    - transform: GridSampling3D
-      lparams: [0.05]
     - transform: FixedPoints
       lparams: [50000]
     - transform: RandomNoise
@@ -35,7 +29,5 @@ data:
         rot_z: 180
 
   val_transform:
-    - transform: GridSampling3D
-      lparams: [0.05]
     - transform: FixedPoints
       lparams: [50000]

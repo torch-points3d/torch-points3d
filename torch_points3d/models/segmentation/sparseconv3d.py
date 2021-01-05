@@ -23,14 +23,19 @@ class APIModel(BaseModel):
         self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
+        self.batch_idx = data.batch.squeeze()
         self.input = data
-        self.labels = data.y.to(self.device)
+        if data.y is not None:
+            self.labels = data.y.to(self.device)
+        else:
+            self.labels = None
 
     def forward(self, *args, **kwargs):
         features = self.backbone(self.input).x
         logits = self.head(features)
         self.output = F.log_softmax(logits, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
+        if self.labels is not None:
+            self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
 
     def backward(self):
         self.loss_seg.backward()

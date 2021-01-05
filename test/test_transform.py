@@ -33,10 +33,12 @@ from torch_points3d.core.data_transform import (
     NormalizeFeature,
     SphereCrop,
     CubeCrop,
-    SphereDropout,
+    RandomSphereDropout,
     DensityFilter,
     LotteryTransform,
     ClampBatchSize,
+    RandomParamTransform,
+    Select,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -316,7 +318,7 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(len(data.pos) < 100, True)
 
     def test_sphere_dropout(self):
-        tr = SphereDropout(radius=1, num_sphere=3)
+        tr = RandomSphereDropout(radius=1, num_sphere=3)
         pos = torch.randn(100, 3)
         x = torch.randn(100, 6)
         data = Data(pos=pos, x=x)
@@ -383,6 +385,79 @@ class Testhelpers(unittest.TestCase):
         self.assertEqual(len(tr(datas)), 3)
         tr = ClampBatchSize(21)
         self.assertEqual(len(tr(datas)), 2)
+
+    def test_select(self):
+        data = Data(pos=torch.tensor([0, 1, 2]), x=torch.tensor([2, 3, 4]), z=torch.tensor([1]))
+        tr = Select(torch.tensor([1, 2]))
+
+        data2 = tr(data)
+        torch.testing.assert_allclose(data2.pos, torch.tensor([1, 2]))
+        torch.testing.assert_allclose(data2.x, torch.tensor([3, 4]))
+        torch.testing.assert_allclose(data2.z, torch.tensor([1]))
+
+        tr = Select(torch.tensor([False, True, True]))
+
+        data2 = tr(data)
+        torch.testing.assert_allclose(data2.pos, torch.tensor([1, 2]))
+        torch.testing.assert_allclose(data2.x, torch.tensor([3, 4]))
+        torch.testing.assert_allclose(data2.z, torch.tensor([1]))
+
+    def test_random_param_transform_with_grid_sampling(self):
+        """
+        test the random param transform transform when params are indicated in the yaml
+        """
+        string = """
+
+        - transform: RandomParamTransform
+          params:
+            transform_name: GridSampling3D
+            transform_params:
+                size:
+                    min: 0.1
+                    max: 0.3
+                    type: "float"
+                mode:
+                    value: "last"
+
+        """
+        conf = OmegaConf.create(string)
+        pos = torch.randn(10000, 3)
+        x = torch.randn(10000, 6)
+        dummy = torch.randn(10000, 6)
+        data = Data(pos=pos, x=x, dummy=dummy)
+
+        tr = instantiate_transforms(conf).transforms[0]
+        tr(data)
+
+    def test_random_param_transform_with_sphere_dropout(self):
+        """
+        test the random param transform transform when params are indicated in the yaml
+        """
+        string = """
+
+        - transform: RandomParamTransform
+          params:
+            transform_name: RandomSphereDropout
+            transform_params:
+                radius:
+                    min: 1
+                    max: 2
+                    type: "float"
+                num_sphere:
+                    min: 1
+                    max: 5
+                    type: "int"
+
+        """
+        conf = OmegaConf.create(string)
+
+        pos = torch.randn(10000, 3)
+        x = torch.randn(10000, 6)
+        dummy = torch.randn(10000, 6)
+        data = Data(pos=pos, x=x, dummy=dummy)
+
+        tr = instantiate_transforms(conf).transforms[0]
+        tr(data)
 
 
 if __name__ == "__main__":

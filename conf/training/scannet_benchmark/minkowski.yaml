@@ -22,8 +22,8 @@ training:
             bn_policy: "step_decay"
             params:
                 bn_momentum: 0.02
-                bn_decay: 0.9
-                decay_step: 200000
+                bn_decay: 1
+                decay_step: 2000
                 bn_clip: 1e-2
     weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
     enable_cudnn: True

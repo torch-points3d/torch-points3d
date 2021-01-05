@@ -2,7 +2,7 @@
   <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
 </p>
 
-[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest) [![slack](https://img.shields.io/badge/slack-tp3d-brightgreen)](https://torchgeometricco.slack.com/join/shared_invite/zt-hn9vter8-EQn4L4wLfE7PZEYbLMlw~Q#/)
+[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest) [![slack](https://img.shields.io/badge/slack-tp3d-brightgreen)](https://join.slack.com/t/torchgeometricco/shared_invite/zt-jp16pdn7-ml5~1ZvtjVUsyUK~LhOztQ)
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) and [Facebook Hydra](https://hydra.cc/).
 
@@ -100,6 +100,7 @@ where each folder contains the dataset related to each task.
 - **[PointGroup](https://github.com/Jia-Research-Lab/PointGroup)** from Li Jiang _et al._: [PointGroup: Dual-Set Point Grouping for 3D Instance Segmentation](https://arxiv.org/abs/2004.01658)
 - **[PPNet (PosPool)](https://github.com/zeliu98/CloserLook3D)** from Ze Liu _et al._: [A Closer Look at Local Aggregation Operators in Point Cloud Analysis](https://arxiv.org/pdf/2007.01294.pdf) (ECCV 2020)
 - **[TorchSparse](https://github.com/mit-han-lab/torchsparse)** from Haotian Tang _et al_: [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
+- **[PVCNN](https://github.com/mit-han-lab/pvcnn)** model for semantic segmentation from Zhijian Liu _et al_:[Point-Voxel CNN for Efficient 3D Deep Learning](https://arxiv.org/abs/1907.03739)
 
 Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/latest/src/api/models.html) for accessing some of those models directly from the API and see our example notebooks for [KPconv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/PartSegmentationKPConv.ipynb) and [RSConv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/ObjectClassificationRSConv.ipynb) for more details.
 
