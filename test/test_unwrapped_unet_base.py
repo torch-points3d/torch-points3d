@@ -3,6 +3,7 @@ from omegaconf import OmegaConf
 import torch
 import os
 import sys
+import copy
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
@@ -64,11 +65,13 @@ class TestUnwrapperUnet(unittest.TestCase):
     def test_forward(self):
         models_conf = os.path.join(ROOT, "test/config_unwrapped_unet_base/test_models.yaml")
         models_conf = OmegaConf.load(models_conf).models
+        models_conf_clone = copy.deepcopy(models_conf)
         modellib = MockModelLib()
         model = MockModel(models_conf["TestUnwrapper"], "", None, modellib)
         data = []
         d = model(data)
         self.assertEqual(d, [0, 1, 2, 3, "inner", 4, 5, 6, 7])
+        self.assertEqual(models_conf_clone, models_conf)
 
     def test_forwardprecompute(self):
         models_conf = os.path.join(ROOT, "test/config_unwrapped_unet_base/test_models.yaml")
