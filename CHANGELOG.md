@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug fixes
+- Fix bug in data loader https://github.com/nicolas-chaulet/torch-points3d/issues/443 thanks @JloveU
+- Fix bug in base unet that created problems when loading pointnet++ model checkpoint
+
 ## 1.2.0
 
 ### Added
