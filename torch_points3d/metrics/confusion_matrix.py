@@ -2,9 +2,14 @@ import numpy as np
 import torch
 import os
 
+import pytorch_lightning.metrics as plm
+
+
+
+
 
 class ConfusionMatrix:
-    """Streaming interface to allow for any source of predictions. 
+    """Streaming interface to allow for any source of predictions.
     Initialize it, count predictions one by one, then print confusion matrix and intersection-union score"""
 
     def __init__(self, number_of_labels=2):
@@ -42,7 +47,7 @@ class ConfusionMatrix:
         return self.confusion_matrix
 
     def get_intersection_union_per_class(self):
-        """ Computes the intersection over union of each class in the 
+        """ Computes the intersection over union of each class in the
         confusion matrix
         Return:
             (iou, missing_class_mask) - iou for class as well as a mask highlighting existing classes
@@ -70,7 +75,7 @@ class ConfusionMatrix:
         return float(matrix_diagonal) / all_values
 
     def get_average_intersection_union(self, missing_as_one=False):
-        """ Get the mIoU metric by ignoring missing labels. 
+        """ Get the mIoU metric by ignoring missing labels.
         If missing_as_one is True then treats missing classes in the IoU as 1
         """
         values, existing_classes_mask = self.get_intersection_union_per_class()
@@ -129,3 +134,88 @@ def save_confusion_matrix(cm, path2save, ordered_names):
     plt.xlabel("Predicted")
     path_recall = template_path.format("recall")
     plt.savefig(path_recall, format="svg")
+
+
+
+
+
+def compute_overall_accuracy(confusion_matrix: torch.Tensor):
+    """
+    compute overall accuracy from confusion matrix
+    Parameters
+
+    Parameters
+    ----------
+    confusion_matrix: torch.Tensor
+      square matrix
+    """
+    all_values = confusion_matrix.sum()
+    matrix_diagonal = torch.trace(confusion_matrix)
+    if all_values == 0:
+        return matrix_diagonal
+    else:
+        return matrix_diagonal.float() / all_values
+
+
+def compute_intersection_union_per_class(confusion_matrix: torch.Tensor, return_existing_mask=False):
+    """
+    compute intersection over unionper class from confusion matrix
+    Parameters
+
+    Parameters
+    ----------
+    confusion_matrix: torch.Tensor
+      square matrix
+    """
+
+    TP_plus_FN = confusion_matrix.sum(0)
+    TP_plus_FP = confusion_matrix.sum(1)
+    TP = torch.diagonal(confusion_matrix)
+    union = TP_plus_FN + TP_plus_FP - TP
+    iou = 1e-8 + TP / (union + 1e-8)
+    existing_class_mask = union > 1e-3
+    if return_existing_mask:
+        return iou, existing_class_mask
+    else:
+        return iou
+
+def compute_average_intersection_union(
+        confusion_matrix: torch.Tensor, missing_as_one: bool=False):
+    """
+    compute intersection over union on average from confusion matrix
+    Parameters
+
+    Parameters
+    ----------
+    confusion_matrix: torch.Tensor
+      square matrix
+    missing_as_one: bool, default: False
+    """
+
+    values, existing_classes_mask = compute_intersection_union_per_class(confusion_matrix, return_existing_mask=True)
+    if torch.sum(existing_classes_mask) == 0:
+        return torch.sum(existing_classes_mask)
+    if missing_as_one:
+        values[~existing_classes_mask] = 1
+        existing_classes_mask[:] = True
+    return torch.sum(values[existing_classes_mask]) / torch.sum(existing_classes_mask)
+
+
+def compute_mean_class_accuracy(confusion_matrix: torch.Tensor):
+    """
+    compute intersection over union on average from confusion matrix
+    Parameters
+
+    Parameters
+    ----------
+    confusion_matrix: torch.Tensor
+      square matrix
+    """
+    total_gts = confusion_matrix.sum(1)
+    labels_presents = torch.where(total_gts > 0)[0]
+    if(len(labels_presents) == 0):
+        return total_gts[0]
+    ones = torch.ones_like(total_gts)
+    max_ones_total_gts = torch.cat([total_gts[None, :], ones[None, :]], 0).max(0)[0]
+    re = (torch.diagonal(confusion_matrix)[labels_presents].float() / max_ones_total_gts[labels_presents]).sum()
+    return re / float(len(labels_presents))

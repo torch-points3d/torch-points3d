@@ -3,8 +3,9 @@ import torch
 import torchnet as tnt
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
-from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
+from torch_points3d.metrics.base_tracker import BaseTracker, LightningBaseTracker, meter_value
 from torch_points3d.models import model_interface
+from pytorch_lightning.metrics import Accuracy
 
 
 class ClassificationTracker(BaseTracker):
@@ -61,3 +62,18 @@ class ClassificationTracker(BaseTracker):
             "acc": max,
         }  # Those map subsentences to their optimization functions
         return self._metric_func
+
+
+class LightningClassificationTracker(LightningBaseTracker):
+    def __init__(self, stage="train"):
+        super().__init__()
+        self.stage = stage
+        self.acc = Accuracy()
+
+    def forward(self, model: model_interface.TrackerInterface, **kwargs):
+        outputs = model.get_output()
+        targets = model.get_labels()
+        return {"{}_acc".format(self.stage): self.acc(outputs, targets)}
+
+    def finalize(self):
+        return {"{}_acc".format(self.stage): self.acc.compute()}

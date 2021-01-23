@@ -123,6 +123,10 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     def conv_type(self):
         return self._conv_type
 
+    @property
+    def loss(self):
+        return self._loss
+
     @conv_type.setter
     def conv_type(self, conv_type):
         self._conv_type = conv_type
@@ -176,6 +180,19 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     def forward(self, *args, **kwargs) -> Any:
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
         raise NotImplementedError("You must implement your own forward")
+
+    def _compute_loss(self):
+        raise NotImplementedError("You must implement your own _compute_loss")
+
+    def compute_loss(self):
+        self._loss = torch.tensor([0.0], requires_grad=True)
+        self._compute_loss()
+
+    def backward(self):
+        """Calculate losses, gradients, and update network weights; called in every training iteration"""
+        self.compute_loss()
+        assert torch.is_tensor(self._loss)
+        self._loss.backward()
 
     def _manage_optimizer_zero_grad(self):
         if not self._accumulated_gradient_step:
@@ -233,7 +250,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
         errors_ret = OrderedDict()
-        for name in self.loss_names:
+        for name in self.loss_names + ["loss"]:
             if isinstance(name, str):
                 if hasattr(self, name):
                     try:

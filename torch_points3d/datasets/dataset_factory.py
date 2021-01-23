@@ -85,7 +85,7 @@ class LiftDataModule(LightningDataModule):
 
     def __repr__(self):
         return "LightningDataModule \n" + self.dataset.__repr__()
-        
+
 
 def convert_to_lightning_data_module(dataset):
     return LiftDataModule(dataset)
