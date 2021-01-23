@@ -2,7 +2,16 @@ from typing import Dict, Any
 import torch
 import numpy as np
 
+from pytorch_lightning.metrics import Accuracy, ConfusionMatrix
+from torch_points3d.metrics.base_tracker import LightningBaseTracker
+
+
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
+from torch_points3d.metrics.confusion_matrix import compute_average_intersection_union
+from torch_points3d.metrics.confusion_matrix import compute_mean_class_accuracy
+from torch_points3d.metrics.confusion_matrix import compute_overall_accuracy
+from torch_points3d.metrics.confusion_matrix import compute_intersection_union_per_class
+
 from torch_points3d.metrics.base_tracker import BaseTracker, meter_value
 from torch_points3d.metrics.meters import APMeter
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
@@ -106,3 +115,48 @@ class SegmentationTracker(BaseTracker):
     @property
     def metric_func(self):
         return self._metric_func
+
+
+class LightningSegmentationTracker(LightningBaseTracker):
+    def __init__(self, num_classes: int, ignore_label: int = IGNORE_LABEL, stage: str = "train"):
+        super().__init__(stage)
+        self._num_classes = num_classes
+        self._ignore_label = ignore_label
+        self.confusion_matrix_metric = ConfusionMatrix(num_classes=num_classes)
+
+    def compute_metrics_from_cm(self, matrix: torch.Tensor):
+        acc = compute_overall_accuracy(matrix)
+        macc = compute_mean_class_accuracy(matrix)
+        miou = compute_average_intersection_union(matrix)
+        iou_per_class = compute_intersection_union_per_class(matrix)
+        iou_per_class_dict = {i: 100 * v for i, v in enumerate(iou_per_class)}
+        return {
+            "{}_acc".format(self.stage): 100 * acc,
+            "{}_macc".format(self.stage): 100 * macc,
+            "{}_miou".format(self.stage): 100 * miou,
+            "{}_iou_per_class".format(self.stage): iou_per_class_dict,
+        }
+
+    def forward(self, model: model_interface.TrackerInterface, **kwargs):
+        outputs = model.get_output()
+        targets = model.get_labels()
+        mask = targets != self._ignore_label
+        outputs = outputs[mask]
+        targets = targets[mask]
+        matrix = self.confusion_matrix_metric(outputs, targets)
+
+        segmentation_metrics = self.compute_metrics_from_cm(matrix)
+        loss_metrics = self.get_loss_metrics(model)
+        metrics = {**loss_metrics, **segmentation_metrics}
+        return metrics
+
+    def finalize(self):
+        matrix = self.confusion_matrix_metric.compute()
+        segmentation_metrics = self.compute_metrics_from_cm(matrix)
+        loss_metrics = self.get_final_loss_metrics()
+        metrics = {**loss_metrics, **segmentation_metrics}
+        return metrics
+
+    def reset(self, stage):
+        super().reset(stage)
+        self.confusion_matrix_metric = ConfusionMatrix(num_classes=self._num_classes)
