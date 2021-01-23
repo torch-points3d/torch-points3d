@@ -17,7 +17,7 @@ class BaseMinkowski(FragmentBaseModel):
         FragmentBaseModel.__init__(self, option)
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
-        self.loss_names = ["loss_reg", "loss"]
+        self.loss_names = ["loss", "loss_reg"]
         self.metric_loss_module, self.miner_module = FragmentBaseModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )
@@ -104,7 +104,7 @@ class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
         UnwrappedUnetBasedModel.__init__(self, option, model_type, dataset, modules)
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
-        self.loss_names = ["loss_reg", "loss"]
+        self.loss_names = ["loss_reg"]
         self.metric_loss_module, self.miner_module = FragmentBaseModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )

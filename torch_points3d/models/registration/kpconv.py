@@ -39,7 +39,7 @@ class PatchKPConv(BackboneBasedModel):
 
         BackboneBasedModel.__init__(self, option, model_type, dataset, modules)
         self.set_last_mlp(option.mlp_cls)
-        self.loss_names = ["loss_reg", "loss", "internal"]
+        self.loss_names = ["loss_reg", "internal"]
 
     def set_last_mlp(self, last_mlp_opt):
 
@@ -95,34 +95,26 @@ class PatchKPConv(BackboneBasedModel):
         else:
             output_target = self.apply_nn(self.input_target, self.pre_computed_target, self.batch_idx_target)
             self.output = torch.cat([self.output, output_target], 0)
-            self.compute_loss()
             return self.output
 
-    def compute_loss(self):
-        self.loss = 0
+    def _compute_loss(self):
+        self._loss = 0
 
         # Get regularization on weights
         if self.lambda_reg:
             self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
-            self.loss += self.loss_reg
+            self._loss += self.loss_reg
 
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
-            self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+            self._loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
 
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, self.labels)
         self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
 
-        self.loss += self.loss_reg
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        if hasattr(self, "loss"):
-            self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
+        self._loss += self.loss_reg
 
 
 class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
@@ -156,7 +148,7 @@ class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
         self.FC_layer.add_module("Last", Lin(in_feat, self.out_channels, bias=False))
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
-        self.loss_names = ["loss_reg", "loss"]
+        self.loss_names = ["loss_reg"]
 
         self.lambda_reg = self.get_from_opt(option, ["loss_weights", "lambda_reg"])
         if self.lambda_reg:
@@ -226,24 +218,22 @@ class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
             return self.output
 
         self.output_target = self.apply_nn(self.input_target, self.pre_computed_target, self.upsample_target)
-        self.compute_loss()
-
         return self.output
 
-    def compute_loss(self):
-        self.loss = 0
+    def _compute_loss(self):
+        self._loss = 0
 
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
             self.loss_internal = self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
-            self.loss += self.loss_internal
+            self._loss += self.loss_internal
 
         if self.mode == "match":
             self.loss_reg = self.compute_loss_match()
         elif self.mode == "label":
             self.loss_reg = self.compute_loss_label()
 
-        self.loss += self.loss_reg
+        self._loss += self.loss_reg
 
     def get_batch(self):
         if self.match is not None:

@@ -12,7 +12,7 @@ class SparseConv3D(FragmentBaseModel):
         FragmentBaseModel.__init__(self, option)
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
-        self.loss_names = ["loss_reg", "loss"]
+        self.loss_names = []
         self.metric_loss_module, self.miner_module = FragmentBaseModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )

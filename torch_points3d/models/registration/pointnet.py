@@ -28,7 +28,7 @@ class SiamesePointNet2_D(BackboneBasedModel):
         for i in range(1, len(last_mlp_opt.nn)):
             self.FC_layer.append(Conv1D(last_mlp_opt.nn[i - 1], last_mlp_opt.nn[i], bn=True, bias=False))
 
-        self.loss_names = ["loss_patch_desc"]
+        self.loss_names = []
 
     def set_input(self, data, device):
         assert len(data.pos.shape) == 3
@@ -45,10 +45,5 @@ class SiamesePointNet2_D(BackboneBasedModel):
         last_feature = data.x
         self.output = self.FC_layer(last_feature).transpose(1, 2).contiguous().view((-1, self._dim_output))
 
-        self.loss_reg = self.loss_module(self.output) + self.get_internal_loss()
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss_reg.backward()  # calculate gradients of network G w.r.t. loss_G
+    def _compute_loss(self):
+        self._loss = self.loss_module(self.output) + self.get_internal_loss()

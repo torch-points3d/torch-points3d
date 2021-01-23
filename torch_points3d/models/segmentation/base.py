@@ -52,13 +52,10 @@ class Segmentation_MP(UnetBasedModel):
         x = self.lin3(x)
         self.output = F.log_softmax(x, dim=-1)
 
-        if self.labels is not None:
-            self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL) + self.get_internal_loss()
-
         return self.output
 
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss_seg.backward()  # calculate gradients of network G w.r.t. loss_G
+    def _compute_loss(self):
+        if self.labels is not None:
+            self._loss = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL) + self.get_internal_loss()
+        else:
+            raise ValueError("need labels to compute the loss")

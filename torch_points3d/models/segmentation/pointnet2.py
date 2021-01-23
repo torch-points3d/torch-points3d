@@ -58,8 +58,6 @@ class PointNet2_D(UnetBasedModel):
             self.FC_layer.append(torch.nn.Dropout(p=last_mlp_opt.dropout))
 
         self.FC_layer.append(Conv1D(last_mlp_opt.nn[-1], self._num_classes, activation=None, bias=True, bn=False))
-        self.loss_names = ["loss_seg"]
-
         self.visual_names = ["data_visual"]
 
     def set_input(self, data, device):
@@ -103,22 +101,19 @@ class PointNet2_D(UnetBasedModel):
 
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
-        
-        if self.labels is not None:
-            self.loss_seg = F.cross_entropy(
-                self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL
-            )
 
         self.data_visual = self.input
         self.data_visual.y = torch.reshape(self.labels, data.pos.shape[0:2])
         self.data_visual.pred = torch.max(self.output, -1)[1].reshape(data.pos.shape[0:2])
         return self.output
 
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss_seg.backward()
+    def _compute_loss(self):
+        if self.labels is not None:
+            self._loss = F.cross_entropy(
+                self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL
+            )
+        else:
+            raise ValueError("need labels to compute the loss")
 
 
 class PointNet2_MP(Segmentation_MP):

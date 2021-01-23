@@ -63,15 +63,10 @@ class PatchSiamese(BackboneBasedModel):
         x = F.relu(self.lin1(data.x))
         x = F.dropout(x, p=self.dropout, training=self.training)
         self.output = self.lin2(x)
-
-        self.loss_reg = self.loss_module(self.output) + self.get_internal_loss()
         return self.output
 
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss_reg.backward()  # calculate gradients of network G w.r.t. loss_G
+    def _compute_loss(self):
+        self._loss = self.loss_module(self.output)
 
 
 class FragmentBaseModel(BaseModel):
@@ -106,11 +101,11 @@ class FragmentBaseModel(BaseModel):
         loss_reg = self.metric_loss_module(output, labels, hard_pairs)
         return loss_reg
 
-    def compute_loss(self):
+    def _compute_loss(self):
         if self.mode == "match":
-            self.loss = self.compute_loss_match()
+            self._loss = self.compute_loss_match()
         elif self.mode == "label":
-            self.loss = self.compute_loss_label()
+            self._loss = self.compute_loss_label()
         else:
             raise NotImplementedError("The mode for the loss is incorrect")
 
@@ -123,13 +118,8 @@ class FragmentBaseModel(BaseModel):
             return self.output
 
         self.output_target = self.apply_nn(self.input_target)
-        self.compute_loss()
 
         return self.output
-
-    def backward(self):
-        if hasattr(self, "loss"):
-            self.loss.backward()
 
     def get_output(self):
         if self.match is not None:

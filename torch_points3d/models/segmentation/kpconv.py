@@ -132,34 +132,25 @@ class KPConvPaper(UnwrappedUnetBasedModel):
         else:
             self.output = self.FC_layer(last_feature)
 
-        if self.labels is not None:
-            self.compute_loss()
-
         self.data_visual = self.input
         self.data_visual.pred = torch.max(self.output, -1)[1]
         return self.output
 
-    def compute_loss(self):
+    def _compute_loss(self):
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.output.device)
 
-        self.loss = 0
+        self._loss = 0
 
         # Get regularization on weights
         if self.lambda_reg:
             self.loss_reg = self.get_regularization_loss(regularizer_type="l2", lambda_reg=self.lambda_reg)
-            self.loss += self.loss_reg
+            self._loss += self.loss_reg
 
         # Collect internal losses and set them with self and them to self for later tracking
         if self.lambda_internal_losses:
-            self.loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
+            self._loss += self.collect_internal_losses(lambda_weight=self.lambda_internal_losses)
 
         # Final cross entrop loss
         self.loss_seg = F.nll_loss(self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL)
-        self.loss += self.loss_seg
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
+        self._loss += self.loss_seg

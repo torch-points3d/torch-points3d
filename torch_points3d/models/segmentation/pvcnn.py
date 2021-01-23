@@ -18,8 +18,6 @@ class PVCNN(BaseModel):
 
         self.model = pvcnn.PVCNN(option, model_type, dataset, modules)
 
-        self.loss_names = ["loss_seg"]
-
     def set_input(self, data, device):
         if data.batch.dim() == 1:
             data.batch = data.batch.unsqueeze(-1)
@@ -34,5 +32,12 @@ class PVCNN(BaseModel):
             self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL
         )
 
-    def backward(self):
-        self.loss_seg.backward()
+    def _compute_loss(self):
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+        if self.labels is not None:
+            self._loss = F.cross_entropy(
+                self.output, self.labels, weight=self._weight_classes, ignore_index=IGNORE_LABEL
+            )
+        else:
+            raise ValueError("need labels to compute the loss")

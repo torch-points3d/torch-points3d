@@ -30,7 +30,7 @@ class PatchPointNet2_D(BackboneBasedModel):
 
         # Last MLP
         self.set_last_mlp(option.mlp_cls)
-        self.loss_names = ["loss_reg", "loss", "internal"]
+        self.loss_names = ["loss", "loss_reg", "internal"]
 
     def set_last_mlp(self, last_mlp_opt):
 
@@ -71,7 +71,7 @@ class PatchPointNet2_D(BackboneBasedModel):
         forward pass of the network
         """
         data = self.input
-        labels = data.y
+        self.labels = data.y
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
 
@@ -80,22 +80,17 @@ class PatchPointNet2_D(BackboneBasedModel):
         # size after global pooling B x D
         self.output = self.FC_layer(last_feature)
         self.output = F.normalize(self.output, p=2, dim=1)
-        if labels is None:
+        if self.labels is None:
             return self.output
+        return self.output
+
+    def _compute_loss(self):
         hard_pairs = None
         if self.miner_module is not None:
             hard_pairs = self.miner_module(self.output, labels)
-        self.loss_reg = self.metric_loss_module(self.output, labels, hard_pairs)
+        self.loss_reg = self.metric_loss_module(self.output, self.labels, hard_pairs)
         self.internal = self.get_internal_loss()
         self.loss = self.loss_reg + self.internal
-        return self.output
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
-        # calculate loss given the input and intermediate results
-        if hasattr(self, "loss"):
-            self.loss.backward()  # calculate gradients of network G w.r.t. loss_G
 
 
 class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
@@ -122,7 +117,7 @@ class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
         self.mode = option.loss_mode
         self.normalize_feature = option.normalize_feature
         self.out_channels = option.out_channels
-        self.loss_names = ["loss_reg", "loss"]
+        self.loss_names = []
         self.metric_loss_module, self.miner_module = UnetBasedModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)
         )

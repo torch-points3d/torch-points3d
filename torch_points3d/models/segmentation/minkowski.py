@@ -18,7 +18,6 @@ class Minkowski_Baseline_Model(BaseModel):
         self.model = initialize_minkowski_unet(
             option.model_name, dataset.feature_dimension, dataset.num_classes, **option.get("extra_options", {})
         )
-        self.loss_names = ["loss_seg"]
 
     def set_input(self, data, device):
 
@@ -29,7 +28,6 @@ class Minkowski_Baseline_Model(BaseModel):
 
     def forward(self, *args, **kwargs):
         self.output = F.log_softmax(self.model(self.input).feats, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
 
-    def backward(self):
-        self.loss_seg.backward()
+    def _compute_loss(self):
+        self._loss = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
