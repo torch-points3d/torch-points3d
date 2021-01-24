@@ -1,7 +1,7 @@
 import os
 import torchnet as tnt
 import torch
-from typing import Dict, Any
+from typing import Dict, Any, Callable, Optional
 import wandb
 from torch.utils.tensorboard import SummaryWriter
 import pytorch_lightning as pl
@@ -126,13 +126,24 @@ class BaseTracker:
         return string
 
 
-class Averager(pl.metrics.Metric):
-    def __init__(self, dist_sync_on_step=False):
-        super().__init__(dist_sync_on_step=dist_sync_on_step)
+class Averager(pl.metrics.metric.Metric):
+    def __init__(
+        self,
+        dist_sync_on_step: bool = False,
+        compute_on_step: bool = True,
+        process_group: Optional[Any] = None,
+        dist_sync_fn: Callable = None,
+    ):
+        super().__init__(
+            compute_on_step=compute_on_step,
+            dist_sync_on_step=dist_sync_on_step,
+            process_group=process_group,
+            dist_sync_fn=dist_sync_fn,
+        )
         self.add_state("value", torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("count", torch.tensor(0.0), dist_reduce_fx="sum")
 
-    def forward(self, value):
+    def update(self, value):
         self.value += value
         self.count += 1
 
@@ -145,25 +156,44 @@ class LightningBaseTracker(pl.LightningModule):
         super().__init__()
         self.stage = stage
         # metric1 = Metric1()
+        self._finalised = False
         self.loss_metrics = dict()
 
-    def forward(self, model: model_interface.TrackerInterface, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         # res = self.metric1(a, b)
         raise NotImplementedError("one pass that track metrics we want")
 
-    def finalize(self):
+    def forward(self, model: model_interface.TrackerInterface, **kwargs):
+        if self._finalised:
+            raise RuntimeError("Cannot track new values with a finalised tracker, you need to reset it first")
+        metrics = self.track(model, **kwargs)
+        loss_metrics = self.get_loss_metrics(model)
+        total_metrics = {**loss_metrics, **metrics}
+        return total_metrics
+
+    def _finalise(self):
         # metric1.compute()
         raise NotImplementedError("aggregate metrics")
 
+    def finalise(self):
+        metrics = self._finalise()
+        self._finalised = True
+        loss_metrics = self.get_final_loss_metrics()
+        final_metrics = {**loss_metrics, **metrics}
+        return final_metrics
+
     def get_loss_metrics(self, model: model_interface.TrackerInterface):
         losses = model.get_current_losses()
+        out_loss = dict()
         for key, loss in losses.items():
             if loss is None:
                 continue
             loss_key = "%s_%s" % (self.stage, key)
             if loss_key not in self.loss_metrics:
                 self.loss_metrics[loss_key] = Averager()
-            self.loss_metrics[loss_key].forward(loss)
+            val = self.loss_metrics[loss_key].forward(loss)
+            out_loss[loss_key] = val
+        return out_loss
 
     def get_final_loss_metrics(self):
         metrics = dict()
@@ -176,5 +206,6 @@ class LightningBaseTracker(pl.LightningModule):
         """
         reset the loss metrics
         """
+        self._finalised = False
         self.stage = stage
         self.loss_metrics = dict()

@@ -3,7 +3,12 @@ Test tracker
 """
 
 import unittest
+import os
 import torch
+import sys
+
+ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+sys.path.insert(0, ROOT)
 
 from torch_points3d.metrics.classification_tracker import LightningClassificationTracker
 
@@ -11,6 +16,9 @@ from torch_points3d.metrics.classification_tracker import LightningClassificatio
 class MockModel:
     def __init__(self):
         self.ind = 0
+
+    def get_current_losses(self):
+        return {"loss": 0}
 
     def get_output(self):
 
@@ -25,14 +33,14 @@ class MockModel:
 
     def get_labels(self):
         if self.ind == 0:
-            return torch.tensor([0])
+            return torch.tensor([1, 0])
         elif self.ind == 1:
-            return torch.tensor([0])
+            return torch.tensor([1, 0])
         elif self.ind == 2:
-            return torch.tensor([0])
+            return torch.tensor([1, 0])
         elif self.ind == 3:
 
-            return torch.tensor([0])
+            return torch.tensor([1, 0])
 
 
 class TestClassificationTracker(unittest.TestCase):
@@ -49,7 +57,7 @@ class TestClassificationTracker(unittest.TestCase):
         for i in range(4):
             model.ind = i
             tracker(model)
-        final_metric = tracker.finalize()
+        final_metric = tracker.finalise()
         self.assertAlmostEqual(final_metric["train_acc"].item(), 0.75, 5)
 
 

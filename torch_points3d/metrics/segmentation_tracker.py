@@ -2,7 +2,9 @@ from typing import Dict, Any
 import torch
 import numpy as np
 
-from pytorch_lightning.metrics import Accuracy, ConfusionMatrix
+import pytorch_lightning.metrics as ptlm
+
+# from pytorch_lightning.metrics import Accuracy, ConfusionMatrix
 from torch_points3d.metrics.base_tracker import LightningBaseTracker
 
 
@@ -122,7 +124,7 @@ class LightningSegmentationTracker(LightningBaseTracker):
         super().__init__(stage)
         self._num_classes = num_classes
         self._ignore_label = ignore_label
-        self.confusion_matrix_metric = ConfusionMatrix(num_classes=num_classes)
+        self.confusion_matrix_metric = ptlm.ConfusionMatrix(num_classes=num_classes)
 
     def compute_metrics_from_cm(self, matrix: torch.Tensor):
         acc = compute_overall_accuracy(matrix)
@@ -137,7 +139,7 @@ class LightningSegmentationTracker(LightningBaseTracker):
             "{}_iou_per_class".format(self.stage): iou_per_class_dict,
         }
 
-    def forward(self, model: model_interface.TrackerInterface, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         outputs = model.get_output()
         targets = model.get_labels()
         mask = targets != self._ignore_label
@@ -146,17 +148,13 @@ class LightningSegmentationTracker(LightningBaseTracker):
         matrix = self.confusion_matrix_metric(outputs, targets)
 
         segmentation_metrics = self.compute_metrics_from_cm(matrix)
-        loss_metrics = self.get_loss_metrics(model)
-        metrics = {**loss_metrics, **segmentation_metrics}
-        return metrics
+        return segmentation_metrics
 
-    def finalize(self):
+    def _finalise(self):
         matrix = self.confusion_matrix_metric.compute()
         segmentation_metrics = self.compute_metrics_from_cm(matrix)
-        loss_metrics = self.get_final_loss_metrics()
-        metrics = {**loss_metrics, **segmentation_metrics}
-        return metrics
+        return segmentation_metrics
 
     def reset(self, stage):
         super().reset(stage)
-        self.confusion_matrix_metric = ConfusionMatrix(num_classes=self._num_classes)
+        self.confusion_matrix_metric = ptlm.ConfusionMatrix(num_classes=self._num_classes)

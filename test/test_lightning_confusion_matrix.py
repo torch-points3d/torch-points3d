@@ -20,8 +20,9 @@ class TestConfusionMatrix(unittest.TestCase):
 
     def test_compute_intersection_union_per_class(self):
         matrix = torch.tensor([[4, 1], [2, 10]])
-        iou, _ = compute_intersection_union_per_class(matrix)
+        iou = compute_intersection_union_per_class(matrix)
         miou = compute_average_intersection_union(matrix)
+        print(iou)
         self.assertAlmostEqual(iou[0].item(), 4 / (4.0 + 1.0 + 2.0))
         self.assertAlmostEqual(iou[1].item(), 10 / (10.0 + 1.0 + 2.0))
         self.assertAlmostEqual(iou.mean().item(), miou.item())

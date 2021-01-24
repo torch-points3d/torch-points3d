@@ -65,15 +65,19 @@ class ClassificationTracker(BaseTracker):
 
 
 class LightningClassificationTracker(LightningBaseTracker):
-    def __init__(self, stage="train"):
+    def __init__(self, num_classes: int = 2, stage="train"):
         super().__init__()
         self.stage = stage
         self.acc = Accuracy()
 
-    def forward(self, model: model_interface.TrackerInterface, **kwargs):
+    def track(self, model: model_interface.TrackerInterface, **kwargs):
         outputs = model.get_output()
         targets = model.get_labels()
         return {"{}_acc".format(self.stage): self.acc(outputs, targets)}
 
-    def finalize(self):
+    def _finalise(self):
         return {"{}_acc".format(self.stage): self.acc.compute()}
+
+    def reset(self, stage: str):
+        super().reset(stage)
+        self.acc = Accuracy()

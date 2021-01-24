@@ -176,7 +176,7 @@ class PointGroup(BaseModel):
         self.semantic_loss = torch.nn.functional.nll_loss(
             self.output.semantic_logits, self.labels.y, ignore_index=IGNORE_LABEL
         )
-        self.loss = self.opt.loss_weights.semantic * self.semantic_loss
+        self._loss = self.opt.loss_weights.semantic * self.semantic_loss
 
         # Offset loss
         self.input.instance_mask = self.input.instance_mask.to(self.device)
@@ -188,7 +188,7 @@ class PointGroup(BaseModel):
         )
         for loss_name, loss in offset_losses.items():
             setattr(self, loss_name, loss)
-            self.loss += self.opt.loss_weights[loss_name] * loss
+            self._loss += self.opt.loss_weights[loss_name] * loss
 
         # Score loss
         if self.output.cluster_scores is not None and self._scorer_type:
@@ -200,12 +200,7 @@ class PointGroup(BaseModel):
                 min_iou_threshold=self.opt.min_iou_threshold,
                 max_iou_threshold=self.opt.max_iou_threshold,
             )
-            self.loss += self.score_loss * self.opt.loss_weights["score_loss"]
-
-    def backward(self):
-        """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        self._compute_loss()
-        self.loss.backward()
+            self._loss += self.score_loss * self.opt.loss_weights["score_loss"]
 
     def _dump_visuals(self, epoch):
         if random.random() < self.opt.vizual_ratio:
