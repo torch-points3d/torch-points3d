@@ -181,7 +181,7 @@ class MinkUNetBase(ResNetBase):
         self.inplanes = self.PLANES[7] + self.INIT_DIM
         self.block8 = self._make_layer(self.BLOCK, self.PLANES[7], self.LAYERS[7])
 
-        self.final = ME.MinkowskiConvolution(self.PLANES[7], out_channels, kernel_size=1, has_bias=True, dimension=D)
+        self.final = ME.MinkowskiConvolution(self.PLANES[7], out_channels, kernel_size=1, bias=True, dimension=D)
         self.relu = ME.MinkowskiReLU(inplace=True)
 
     def forward(self, x):

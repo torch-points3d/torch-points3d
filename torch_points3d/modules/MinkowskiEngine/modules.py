@@ -116,7 +116,7 @@ class BaseResBlock(nn.Module):
         kernel_size=3,
         stride=1,
         dilation=1,
-        has_bias=False,
+        bias=False,
         kernel_generator=None,
         norm_layer=ME.MinkowskiBatchNorm,
         activation=ME.MinkowskiReLU,
@@ -149,7 +149,7 @@ class BaseResBlock(nn.Module):
                     kernel_size=kernel_size,
                     stride=stride,
                     dilation=dilation,
-                    has_bias=has_bias,
+                    bias=has_bias,
                     kernel_generator=kernel_generator,
                     dimension=dimension,
                 )

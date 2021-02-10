@@ -18,7 +18,7 @@ class Conv3d(ME.MinkowskiConvolution):
             kernel_size=kernel_size,
             stride=stride,
             dilation=dilation,
-            has_bias=bias,
+            bias=bias,
             dimension=3,
         )
 
@@ -39,7 +39,7 @@ class Conv3dTranspose(ME.MinkowskiConvolutionTranspose):
             kernel_size=kernel_size,
             stride=stride,
             dilation=dilation,
-            has_bias=bias,
+            bias=bias,
             dimension=3,
         )
 
@@ -62,4 +62,4 @@ def SparseTensor(feats, coordinates, batch, device=torch.device("cpu")):
     if batch.dim() == 1:
         batch = batch.unsqueeze(-1)
     coords = torch.cat([batch.int(), coordinates.int()], -1)
-    return ME.SparseTensor(feats, coords=coords).to(device)
+    return ME.SparseTensor(features=feats, coordinates=coords, device=device)
