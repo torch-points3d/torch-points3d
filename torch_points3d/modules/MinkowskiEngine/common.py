@@ -59,15 +59,6 @@ conv_to_region_type = {
     ConvType.SPATIAL_HYPERCUBE_TEMPORAL_HYPERCROSS: ME.RegionType.CUSTOM,
 }
 
-int_to_region_type = {m.value: m for m in [ME.RegionType.HYPER_CUBE, ME.RegionType.HYPER_CROSS, ME.RegionType.CUSTOM]}
-
-
-def convert_region_type(region_type):
-    """
-  Convert the integer region_type to the corresponding RegionType enum object.
-  """
-    return int_to_region_type[region_type]
-
 
 def convert_conv_type(conv_type, kernel_size, D):
     assert isinstance(conv_type, ConvType), "conv_type must be of ConvType"
