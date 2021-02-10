@@ -33,7 +33,7 @@ class ResBlock(ME.MinkowskiNetwork):
                     kernel_size=3,
                     stride=1,
                     dilation=1,
-                    has_bias=False,
+                    bias=False,
                     dimension=dimension,
                 )
             )
@@ -46,7 +46,7 @@ class ResBlock(ME.MinkowskiNetwork):
                     kernel_size=3,
                     stride=1,
                     dilation=1,
-                    has_bias=False,
+                    bias=False,
                     dimension=dimension,
                 )
             )
@@ -64,7 +64,7 @@ class ResBlock(ME.MinkowskiNetwork):
                         kernel_size=1,
                         stride=1,
                         dilation=1,
-                        has_bias=False,
+                        bias=False,
                         dimension=dimension,
                     )
                 )
@@ -97,7 +97,7 @@ class BottleneckBlock(ME.MinkowskiNetwork):
                     kernel_size=1,
                     stride=1,
                     dilation=1,
-                    has_bias=False,
+                    bias=False,
                     dimension=dimension,
                 )
             )
@@ -110,7 +110,7 @@ class BottleneckBlock(ME.MinkowskiNetwork):
                     kernel_size=3,
                     stride=1,
                     dilation=1,
-                    has_bias=False,
+                    bias=False,
                     dimension=dimension,
                 )
             )
@@ -123,7 +123,7 @@ class BottleneckBlock(ME.MinkowskiNetwork):
                     kernel_size=1,
                     stride=1,
                     dilation=1,
-                    has_bias=False,
+                    bias=False,
                     dimension=dimension,
                 )
             )
@@ -141,7 +141,7 @@ class BottleneckBlock(ME.MinkowskiNetwork):
                         kernel_size=1,
                         stride=1,
                         dilation=1,
-                        has_bias=False,
+                        bias=False,
                         dimension=dimension,
                     )
                 )
@@ -262,7 +262,7 @@ class ResNetDown(ME.MinkowskiNetwork):
                     kernel_size=kernel_size,
                     stride=stride,
                     dilation=dilation,
-                    has_bias=False,
+                    bias=False,
                     dimension=dimension,
                 )
             )

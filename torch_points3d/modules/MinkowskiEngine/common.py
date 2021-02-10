@@ -121,7 +121,7 @@ def conv(in_planes, out_planes, kernel_size, stride=1, dilation=1, bias=False, c
         kernel_size=kernel_size,
         stride=stride,
         dilation=dilation,
-        has_bias=bias,
+        bias=bias,
         kernel_generator=kernel_generator,
         dimension=D,
     )
@@ -142,7 +142,7 @@ def conv_tr(
         kernel_size=kernel_size,
         stride=upsample_stride,
         dilation=dilation,
-        has_bias=bias,
+        bias=bias,
         kernel_generator=kernel_generator,
         dimension=D,
     )
