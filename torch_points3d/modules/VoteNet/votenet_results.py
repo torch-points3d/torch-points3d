@@ -203,7 +203,7 @@ class VoteNetResults(Data):
         if apply_nms:
             mask = self._nms_mask(pred_corners_3d, pred_obj, pred_sem_cls)
         else:
-            mask = np.ones((self.batch_size, self.num_proposal), dtype=np.bool)
+            mask = np.ones((self.batch_size, self.num_proposal), dtype=np.bool)  # type: ignore
 
         detected_boxes = []
         for i in range(self.batch_size):

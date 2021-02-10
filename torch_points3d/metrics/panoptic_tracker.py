@@ -16,7 +16,7 @@ from .box_detection.ap import voc_ap
 class _Instance(NamedTuple):
     classname: str
     score: float
-    indices: np.array
+    indices: np.array  # type: ignore
     scan_id: int
 
     def iou(self, other: "_Instance") -> float:
