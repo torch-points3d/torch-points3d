@@ -135,7 +135,7 @@ class BaseResBlock(nn.Module):
         kernel_sizes = self.create_arguments_list(kernel_sizes, kernel_size)
         strides = self.create_arguments_list(strides, stride)
         dilations = self.create_arguments_list(dilations, dilation)
-        has_biases = self.create_arguments_list(has_biases, has_bias)
+        has_biases = self.create_arguments_list(has_biases, bias)
         kernel_generators = self.create_arguments_list(kernel_generators, kernel_generator)
 
         for conv_dim, kernel_size, stride, dilation, has_bias, kernel_generator in zip(
