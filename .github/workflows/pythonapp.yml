@@ -42,26 +42,26 @@ jobs:
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
 
-      - name: Static checks with flake8 and mypy
-        run: |
-          source ${pythonEnv}/bin/activate
-          pip install flake8 mypy==0.770  # Dev tools
-          make staticchecks
-        env:
-          pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
+      # - name: Static checks with flake8 and mypy
+      #   run: |
+      #     source ${pythonEnv}/bin/activate
+      #     pip install flake8 mypy==0.770  # Dev tools
+      #     make staticchecks
+      #   env:
+      #     pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
 
-      - name: Test with unittest
-        run: |
-          source ${pythonEnv}/bin/activate
-          pip install coverage
-          coverage run -m unittest -v
-          coverage xml
-        env:
-          pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
+      # - name: Test with unittest
+      #   run: |
+      #     source ${pythonEnv}/bin/activate
+      #     pip install coverage
+      #     coverage run -m unittest -v
+      #     coverage xml
+      #   env:
+      #     pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unittests
-          name: codecov-umbrella
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v1
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     flags: unittests
+      #     name: codecov-umbrella
