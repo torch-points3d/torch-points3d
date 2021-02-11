@@ -59,6 +59,15 @@ conv_to_region_type = {
     ConvType.SPATIAL_HYPERCUBE_TEMPORAL_HYPERCROSS: ME.RegionType.CUSTOM,
 }
 
+int_to_region_type = {0: ME.RegionType.HYPER_CUBE, 1: ME.RegionType.HYPER_CROSS, 2: ME.RegionType.CUSTOM}
+
+
+def convert_region_type(region_type):
+    """
+  Convert the integer region_type to the corresponding RegionType enum object.
+  """
+    return int_to_region_type[region_type]
+
 
 def convert_conv_type(conv_type, kernel_size, D):
     assert isinstance(conv_type, ConvType), "conv_type must be of ConvType"
@@ -93,9 +102,12 @@ def convert_conv_type(conv_type, kernel_size, D):
         assert D == 4
     elif conv_type == ConvType.SPATIAL_HYPERCUBE_TEMPORAL_HYPERCROSS:
         # Define the CUBIC conv kernel for spatial dims and CROSS conv for temp dim
-        axis_types = [ME.RegionType.HYPER_CUBE,] * 3
-        if D == 4:
-            axis_types.append(ME.RegionType.HYPER_CROSS)
+        if D < 4:
+            region_type = ME.RegionType.HYPER_CUBE
+        else:
+            axis_types = [ME.RegionType.HYPER_CUBE,] * 3
+            if D == 4:
+                axis_types.append(ME.RegionType.HYPER_CROSS)
     return region_type, axis_types, kernel_size
 
 
