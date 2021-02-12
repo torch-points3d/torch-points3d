@@ -12,36 +12,37 @@ See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of 
 
 # Table of Contents
 
-   * [Overview](#overview)
-      * [Requirements](#requirements)
-      * [Project structure](#project-structure)
-      * [Methods currently implemented](#methods-currently-implemented)
-   * [Available Tasks](#available-tasks)
-   * [Available datasets](#available-datasets)
-      * [Segmentation](#segmentation)
-      * [Object detection and panoptic](#object-detection-and-panoptic)
-      * [Registration](#registration)
-      * [Classification](#classification)
-   * [3D Sparse convolution support](#3d-sparse-convolution-support)
-   * [Adding your model to the PretrainedRegistry.](#adding-your-model-to-the-pretrainedregistry)
-   * [Developer guidelines](#developer-guidelines)
-      * [Setting repo](#setting-repo)
-      * [Getting started: Train pointnet   on part segmentation task for dataset shapenet](#getting-started-train-pointnet-on-part-segmentation-task-for-dataset-shapenet)
-      * [Inference](#inference)
-         * [Inference script](#inference-script)
-         * [Containerizing your model with Docker](#containerizing-your-model-with-docker)
-      * [Profiling](#profiling)
-      * [Troubleshooting](#troubleshooting)
-   * [Exploring your experiments](#exploring-your-experiments)
-   * [Contributing](#contributing)
-   * [Citing](#citing)
+- [Overview](#overview)
+  - [Requirements](#requirements)
+  - [Project structure](#project-structure)
+  - [Methods currently implemented](#methods-currently-implemented)
+- [Available Tasks](#available-tasks)
+- [Available datasets](#available-datasets)
+  - [Segmentation](#segmentation)
+  - [Object detection and panoptic](#object-detection-and-panoptic)
+  - [Registration](#registration)
+  - [Classification](#classification)
+- [3D Sparse convolution support](#3d-sparse-convolution-support)
+- [Adding your model to the PretrainedRegistry.](#adding-your-model-to-the-pretrainedregistry)
+- [Developer guidelines](#developer-guidelines)
+  - [Setting repo](#setting-repo)
+  - [Getting started: Train pointnet on part segmentation task for dataset shapenet](#getting-started-train-pointnet-on-part-segmentation-task-for-dataset-shapenet)
+  - [Inference](#inference)
+    - [Inference script](#inference-script)
+    - [Containerizing your model with Docker](#containerizing-your-model-with-docker)
+  - [Profiling](#profiling)
+  - [Troubleshooting](#troubleshooting)
+- [Exploring your experiments](#exploring-your-experiments)
+- [Contributing](#contributing)
+- [Citing](#citing)
 
 # Overview
+
 ## Requirements
 
 - CUDA 10 or higher (if you want GPU version)
 - Python 3.7 or higher + headers (python-dev)
-- PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
+- PyTorch 1.7 or higher
 - A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#3d-sparse-convolution-support) for installation instructions
 
 Install with
@@ -106,13 +107,13 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 # Available Tasks
 
-|               <h3> Tasks </h3>                |                            <h3> Examples </h3>                            |
-| :-------------------------------------------: | :-----------------------------------------------------------------------: |
-| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/classification.png"  height="220"> <br />  |
-|            <h3> Segmentation </h3>            |  <img src="docs/imgs/semantic.png"  height="220"> <br />   |
-|          <h3> Object Detection </h3>          |   <img src="docs/imgs/objects.png" height="220" >    |
-|       <h3> Panoptic Segmentation </h3>        | <img src="docs/imgs/panoptic.png"  height="220"> |
-|            <h3> Registration </h3>            |     <img src="docs/imgs/registration.png" height="220">      |
+|               <h3> Tasks </h3>                |                      <h3> Examples </h3>                      |
+| :-------------------------------------------: | :-----------------------------------------------------------: |
+| <h3> Classification / Part Segmentation </h3> | <img src="docs/imgs/classification.png"  height="220"> <br /> |
+|            <h3> Segmentation </h3>            |    <img src="docs/imgs/semantic.png"  height="220"> <br />    |
+|          <h3> Object Detection </h3>          |        <img src="docs/imgs/objects.png" height="220" >        |
+|       <h3> Panoptic Segmentation </h3>        |       <img src="docs/imgs/panoptic.png"  height="220">        |
+|            <h3> Registration </h3>            |      <img src="docs/imgs/registration.png" height="220">      |
 
 # Available datasets
 
@@ -146,10 +147,11 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 - **[3DMatch](http://3dmatch.cs.princeton.edu)** from Andy Zeng _et al._: [3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions](https://arxiv.org/abs/1603.08182)
 
 - **[The IRALab Benchmark](https://github.com/iralabdisco/point_clouds_registration_benchmark)** from Simone Fontana _et al._:[A Benchmark for Point Clouds Registration Algorithms](https://arxiv.org/abs/2003.12841), which is composed of data from:
-    - [the ETH datasets](https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration);
-    - [the Canadian Planetary Emulation Terrain 3D Mapping datasets](http://asrl.utias.utoronto.ca/datasets/3dmap/index.html);
-    - [the TUM Vision Groud RGBD datasets](https://vision.in.tum.de/data/datasets/rgbd-dataset);
-    - [the KAIST Urban datasets](https://irap.kaist.ac.kr/dataset/).
+
+  - [the ETH datasets](https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration);
+  - [the Canadian Planetary Emulation Terrain 3D Mapping datasets](http://asrl.utias.utoronto.ca/datasets/3dmap/index.html);
+  - [the TUM Vision Groud RGBD datasets](https://vision.in.tum.de/data/datasets/rgbd-dataset);
+  - [the KAIST Urban datasets](https://irap.kaist.ac.kr/dataset/).
 
 - **[Kitti odometry](http://www.cvlibs.net/datasets/kitti/eval_odometry.php)** with corrected poses (thanks to @humanpose1) from A. Geiger _et al_: [Are we ready for Autonomous Driving? The KITTI Vision Benchmark Suite](http://www.cvlibs.net/publications/Geiger2012CVPR.pdf)
 
@@ -157,9 +159,9 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 - **[ModelNet](https://modelnet.cs.princeton.edu)** from Zhirong Wu _et al._: [3D ShapeNets: A Deep Representation for Volumetric Shapes](https://people.csail.mit.edu/khosla/papers/cvpr2015_wu.pdf)
 
-
 # 3D Sparse convolution support
-We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `torchsparse` demonstrates faster training and inference on GPU but comes with limited functionalities. For example, `MinkowskiEngine` can be used    **Please be aware that `torchsparse` is still in beta and does not support CPU processing only for example.**
+
+We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `torchsparse` demonstrates faster training and inference on GPU but comes with limited functionalities. For example, `MinkowskiEngine` can be used **Please be aware that `torchsparse` is still in beta and does not support CPU processing only for example.**
 
 Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
 
@@ -170,6 +172,7 @@ model = SparseConv3d("unet", input_nc=3, output_nc=5, num_layers=4, backbone="to
 ```
 
 You can also assemble your own networks by using the modules provided in `torch_points3d/modules/SparseConv3d/nn`. For example if you wish to use `torchsparse` backend you can do the following:
+
 ```python
 import torch_points3d.modules.SparseConv3d as sp3d
 
@@ -251,7 +254,6 @@ pre_collate_transform = Compose([
 ])
 ```
 
-
 # Developer guidelines
 
 ## Setting repo
@@ -301,7 +303,7 @@ The [config](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/ma
 
 pointnet2_onehot:
   architecture: pointnet2.PointNet2_D
-  conv_type: 'DENSE'
+  conv_type: "DENSE"
   use_category: True
   down_conv:
     module_name: PointNetMSGDown
@@ -329,6 +331,7 @@ pointnet2_onehot:
     nn: [128, 128]
     dropout: 0.5
 ```
+
 ## Inference
 
 ### Inference script
@@ -437,7 +440,6 @@ See [this useful chart](http://arnon.dk/matching-sm-architectures-arch-and-genco
 Raises `OSError: [WinError 6] The handle is invalid` / `wandb: ERROR W&B process failed to launch`
 Wandb is currently broken on Windows (see [this issue](https://github.com/wandb/client/issues/862)), a workaround is to use the command line argument `wandb.log=false`
 
-
 # Exploring your experiments
 
 We provide a [notebook](https://github.com/nicolas-chaulet/torch-points3d/blob/master/notebooks/dashboard.ipynb) based [pyvista](https://docs.pyvista.org/) and [panel](https://panel.holoviz.org/) that allows you to explore your past experiments visually. When using jupyter lab you will have to install an extension:
@@ -449,7 +451,6 @@ jupyter labextension install @pyviz/jupyterlab_pyviz
 Run through the notebook and you should see a dashboard starting that looks like the following:
 
 ![dashboard](https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/imgs/Dashboard_demo.gif)
-
 
 # Contributing
 
