@@ -41,7 +41,7 @@ but first make sure that the following dependencies are met
 
 - CUDA 10 or higher (if you want GPU version)
 - Python 3.6 or higher + headers (python-dev)
-- PyTorch 1.5 or higher (1.4 and 1.3.1 should also be working but are not actively supported moving forward)
+- PyTorch 1.7 or higher
 - MinkowskiEngine (optional) see `here <https://github.com/nicolas-chaulet/torch-points3d#minkowski-engine>`_ for installation instructions
 
 
