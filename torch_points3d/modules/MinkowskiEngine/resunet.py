@@ -186,8 +186,8 @@ class ResUNet2(ME.MinkowskiNetwork):
         if self.normalize_feature:
             return ME.SparseTensor(
                 out.F / torch.norm(out.F, p=2, dim=1, keepdim=True),
-                coordinate_map_key=out.coords_key,
-                coordinate_manager=out.coords_man,
+                coordinate_map_key=out.coordinate_map_key,
+                coordinate_manager=out.coordinate_manager,
             )
         else:
             return out
