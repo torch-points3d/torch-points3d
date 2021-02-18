@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from torch.nn import Linear as Lin
 
 from torch.nn import Sequential as Seq
-from torch.nn import Identity
 from torch_geometric.data import Data
 from torch_geometric.nn import global_mean_pool
 
