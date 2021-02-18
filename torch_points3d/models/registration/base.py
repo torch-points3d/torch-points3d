@@ -53,7 +53,7 @@ class PatchSiamese(BackboneBasedModel):
     def set_loss(self):
         raise NotImplementedError("Choose a loss for the metric learning")
 
-    def forward(self, *args, **kwargs) -> Any:
+    def forward(self, *args, **kwargs):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
 
         data = self.input
