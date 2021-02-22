@@ -12,11 +12,11 @@ if [ $1 == "gpu" ]; then
     echo "Install GPU"
     pip3 install torch==1.7.0 torchvision==0.8.1
     pip3 install MinkowskiEngine --install-option="--force_cuda" --install-option="--cuda_home=/usr/local/cuda"
-    pip3 install git+https://github.com/mit-han-lab/torchsparse.git -v
+    pip3 install git+https://github.com/mit-han-lab/torchsparse.git@f79df704e2fb3ea912c31d57e910ea0edba03da4 -v
     pip3 install pycuda
 else
     echo "Install CPU"
     pip3 install torch==1.7.0+cpu torchvision==0.8.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
     pip3 install MinkowskiEngine
-    pip3 install git+https://github.com/mit-han-lab/torchsparse.git
+    pip3 install git+https://github.com/mit-han-lab/torchsparse.git@f79df704e2fb3ea912c31d57e910ea0edba03da4
 fi
