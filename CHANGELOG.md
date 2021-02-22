@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Minkowski 0.5 support
+
 ### Bug fixes
 - Fix bug in data loader https://github.com/nicolas-chaulet/torch-points3d/issues/443 thanks @JloveU
 - Fix bug in base unet that created problems when loading pointnet++ model checkpoint
