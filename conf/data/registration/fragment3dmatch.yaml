@@ -1,78 +1,78 @@
-data:
-  task: registration
-  class: general3dmatch.General3DMatchDataset
-  dataroot: data
-  name: 3DMatch
-  is_patch: False
-  num_frame_per_fragment: 101
-  max_dist_overlap: 0.04
-  min_overlap_ratio: 0.2
-  tsdf_voxel_size: 0.006
-  limit_size: 850
-  depth_thresh: 4.5
-  first_subsampling: 0.025
-  is_online_matching: False
-  num_pos_pairs: 30000
-  pre_transforms:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-  train_transform:
-    - transform: SaveOriginalPosId
-    - transform: RandomNoise
-      params:
-        sigma: 0.005
-        clip: 0.05
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 0
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 1
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 2
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9,1.2]
+# @package data
+task: registration
+class: general3dmatch.General3DMatchDataset
+dataroot: data
+name: 3DMatch
+is_patch: False
+num_frame_per_fragment: 101
+max_dist_overlap: 0.04
+min_overlap_ratio: 0.2
+tsdf_voxel_size: 0.006
+limit_size: 850
+depth_thresh: 4.5
+first_subsampling: 0.025
+is_online_matching: False
+num_pos_pairs: 30000
+pre_transforms:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+train_transform:
+  - transform: SaveOriginalPosId
+  - transform: RandomNoise
+    params:
+      sigma: 0.005
+      clip: 0.05
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 0
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 1
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 2
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9,1.2]
 
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: "mean"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
-    - transform: Jitter
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: False
+      mode: "mean"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+  - transform: Jitter
 
-  test_transform:
-    - transform: SaveOriginalPosId
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 0
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 1
-    - transform: RandomRotate
-      params:
-        degrees: 180
-        axis: 2
+test_transform:
+  - transform: SaveOriginalPosId
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 0
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 1
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 2
 
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: "mean"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: False
+      mode: "mean"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'

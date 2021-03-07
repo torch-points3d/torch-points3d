@@ -1,3 +1,3 @@
-debugging:
-  find_neighbour_dist: True
-  num_batches: 20
+# @package _group_
+find_neighbour_dist: True
+num_batches: 20
