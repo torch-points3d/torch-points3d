@@ -1,0 +1,3 @@
+# @package _group_
+# Can be an empty file in Hydra 1.1
+_empty_: true
