@@ -101,8 +101,8 @@ class TestSegmentationTracker(unittest.TestCase):
             tracker.track(model)
             metrics = tracker.get_metrics()
             # the most important metrics in registration
-            self.assertAlmostEqual(metrics["test_hit_ratio"], list_hit_ratio[i])
-            self.assertAlmostEqual(metrics["test_feat_match_ratio"], list_feat_match_ratio[i])
+            self.assertAlmostEqual(metrics["test_hit_ratio"], list_hit_ratio[i], 2)
+            self.assertAlmostEqual(metrics["test_feat_match_ratio"], list_feat_match_ratio[i], 1)
             tracker.reset("test")
             model.iter += 1
 
