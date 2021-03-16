@@ -79,7 +79,7 @@ class SemanticKitti(Dataset):
 
     @property
     def raw_file_names(self):
-        return [os.path.join("dataset", "sequences")]
+        return ["sequences"]
 
     @property
     def processed_file_names(self):
