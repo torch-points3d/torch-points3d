@@ -1,4 +1,5 @@
 import logging
+import copy
 import queue
 
 import torch
@@ -32,7 +33,7 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
             self._num_categories = 0
 
         # Last MLP
-        last_mlp_opt = option.mlp_cls
+        last_mlp_opt = copy.deepcopy(option.mlp_cls)
 
         self.FC_layer = Seq()
         last_mlp_opt.nn[0] += self._num_categories
