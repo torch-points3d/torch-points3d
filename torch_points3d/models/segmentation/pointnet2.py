@@ -3,6 +3,7 @@ import torch
 import torch.nn.functional as F
 from torch_geometric.data import Data
 import logging
+import copy
 
 from torch_points3d.modules.pointnet2 import *
 from torch_points3d.core.base_conv.dense import DenseFPModule
@@ -48,7 +49,7 @@ class PointNet2_D(UnetBasedModel):
             self._num_categories = 0
 
         # Last MLP
-        last_mlp_opt = option.mlp_cls
+        last_mlp_opt = copy.deepcopy(option.mlp_cls)
 
         self.FC_layer = Seq()
         last_mlp_opt.nn[0] += self._num_categories
