@@ -54,7 +54,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._bn_scheduler = None
         self._spatial_ops_dict: Dict = {}
-        self._num_epochs = None
+        self._num_epochs = 0
         self._num_batches = 0
         self._num_samples = -1
         self._schedulers = {}
@@ -191,26 +191,27 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             self._accumulated_gradient_count += 1
             return False
 
-    def _collect_scheduler_step(self, update_scheduler_on):
+    def _do_scheduler_update(self, update_scheduler_on, scheduler, epoch, batch_size):
         if hasattr(self, update_scheduler_on):
             update_scheduler_on = getattr(self, update_scheduler_on)
             if update_scheduler_on is None:
                 raise Exception("The function instantiate_optimizers doesn't look like called")
 
+            num_steps = 0
             if update_scheduler_on == SchedulerUpdateOn.ON_EPOCH.value:
-                return self._num_epochs
+                num_steps = epoch - self._num_epochs
             elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_BATCH.value:
-                return self._num_batches
+                num_steps = 1
             elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_SAMPLE.value:
-                return self._num_samples
+                num_steps = batch_size
+
+            for _ in range(num_steps):
+                scheduler.step()
         else:
             raise Exception("The attributes {} should be defined within self".format(update_scheduler_on))
 
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
-        self._num_epochs = epoch
-        self._num_batches += 1
-        self._num_samples += batch_size
 
         self.forward(epoch=epoch)  # first call forward to calculate intermediate results
         make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
@@ -223,12 +224,14 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             self._optimizer.step()  # update parameters
 
         if self._lr_scheduler:
-            lr_scheduler_step = self._collect_scheduler_step("_update_lr_scheduler_on")
-            self._lr_scheduler.step(lr_scheduler_step)
+            self._do_scheduler_update("_update_lr_scheduler_on", self._lr_scheduler, epoch, batch_size)
 
         if self._bn_scheduler:
-            bn_scheduler_step = self._collect_scheduler_step("_update_bn_scheduler_on")
-            self._bn_scheduler.step(bn_scheduler_step)
+            self._do_scheduler_update("_update_bn_scheduler_on", self._bn_scheduler, epoch, batch_size)
+
+        self._num_epochs = epoch
+        self._num_batches += 1
+        self._num_samples += batch_size
 
     def get_current_losses(self):
         """Return traning losses / errors. train.py will print out these errors on console"""
