@@ -149,28 +149,25 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
                 log.warning("The path does not exist, it will not load any model")
             else:
                 log.info("load pretrained weights from {}".format(path_pretrained))
-                m = torch.load(path_pretrained)["models"][weight_name]
+                m = torch.load(path_pretrained, map_location="cpu")["models"][weight_name]
                 self.load_state_dict_with_same_shape(m, strict=False)
 
     def get_labels(self):
-        """ returns a trensor of size ``[N_points]`` where each value is the label of a point
-        """
+        """returns a trensor of size ``[N_points]`` where each value is the label of a point"""
         return getattr(self, "labels", None)
 
     def get_batch(self):
-        """ returns a trensor of size ``[N_points]`` where each value is the batch index of a point
-        """
+        """returns a trensor of size ``[N_points]`` where each value is the batch index of a point"""
         return getattr(self, "batch_idx", None)
 
     def get_output(self):
-        """ returns a trensor of size ``[N_points,...]`` where each value is the output
+        """returns a trensor of size ``[N_points,...]`` where each value is the output
         of the network for a point (output of the last layer in general)
         """
         return self.output
 
     def get_input(self):
-        """ returns the last input that was given to the model or raises error
-        """
+        """returns the last input that was given to the model or raises error"""
         return getattr(self, "input")
 
     def forward(self, *args, **kwargs) -> Any:
@@ -298,10 +295,10 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     def get_named_internal_losses(self):
         """
-            Modules which have internal losses return a dict of the form
-            {<loss_name>: <loss>}
-            This method merges the dicts of all child modules with internal loss
-            and returns this merged dict
+        Modules which have internal losses return a dict of the form
+        {<loss_name>: <loss>}
+        This method merges the dicts of all child modules with internal loss
+        and returns this merged dict
         """
         losses_global = defaultdict(list)
 
@@ -324,8 +321,8 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     def collect_internal_losses(self, lambda_weight=1, aggr_func=torch.sum):
         """
-            Collect internal loss of all child modules with
-            internal losses and set the losses
+        Collect internal loss of all child modules with
+        internal losses and set the losses
         """
         loss_out = 0
         losses = self.get_named_internal_losses()
@@ -339,8 +336,8 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     def get_internal_loss(self):
         """
-            Returns the average internal loss of all child modules with
-            internal losses
+        Returns the average internal loss of all child modules with
+        internal losses
         """
         loss = 0
         c = 0
@@ -434,7 +431,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         return self
 
     def verify_data(self, data, forward_only=False):
-        """ Goes through the __REQUIRED_DATA__ and __REQUIRED_LABELS__ attribute of the model
+        """Goes through the __REQUIRED_DATA__ and __REQUIRED_LABELS__ attribute of the model
         and verifies that the passed data object contains all required members.
         If something is missing it raises a KeyError exception.
         """
@@ -459,8 +456,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
 
 class BaseInternalLossModule(torch.nn.Module):
-    """ABC for modules which have internal loss(es)
-    """
+    """ABC for modules which have internal loss(es)"""
 
     @abstractmethod
     def get_internal_losses(self) -> Dict[str, Any]:
