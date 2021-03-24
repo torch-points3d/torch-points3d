@@ -11,7 +11,7 @@ ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
 from torch_points3d.models.base_model import BaseModel
-from mock_models import DifferentiableMockModel
+from test.mock_models import DifferentiableMockModel
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class TestLrScheduler(unittest.TestCase):
         for epoch in range(num_epochs):
             for step in range(steps):
                 model.optimize_parameters(epoch, batch_size)
-        self.assertEqual(get_lr(model._optimizer), base_lr * gamma ** (num_epochs - 1))
+        self.assertAlmostEqual(get_lr(model._optimizer), base_lr * gamma ** (num_epochs - 1))
 
     def test_update_scheduler_on_sample(self):
         base_lr = 0.1
@@ -67,7 +67,7 @@ class TestLrScheduler(unittest.TestCase):
             for step in range(steps):
                 model.optimize_parameters(epoch, batch_size)
 
-        self.assertEqual(get_lr(model._optimizer), base_lr * gamma ** (num_epochs - 1))
+        self.assertAlmostEqual(get_lr(model._optimizer), base_lr * gamma ** (num_epochs))
 
     def test_update_scheduler_on_batch(self):
         base_lr = 0.1
@@ -91,7 +91,7 @@ class TestLrScheduler(unittest.TestCase):
             for step in range(steps):
                 count_batch += 1
                 model.optimize_parameters(epoch, batch_size)
-        self.assertEqual(get_lr(model._optimizer), base_lr * gamma ** (count_batch))
+        self.assertAlmostEqual(get_lr(model._optimizer), base_lr * gamma ** (count_batch))
 
 
 if __name__ == "__main__":
