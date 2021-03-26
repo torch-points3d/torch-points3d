@@ -2,7 +2,7 @@ models:
   path_pretrained: ""
 
   MS_SVCONV_B2cm_X2_1head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -57,7 +57,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B2cm_X2_2head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -112,7 +112,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B2cm_X2_3head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -168,7 +168,7 @@ models:
 
 
   MS_SVCONV_B2cm_X2_3head_unshared:
-    class: ms_spconv3d.MS_SparseConv3d
+    class: ms_svconv3d.MS_SparseConv3d
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -223,7 +223,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B2cm_X2_4head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -279,7 +279,7 @@ models:
 
 
   MS_SVCONV_B4cm_X2_1head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -335,7 +335,7 @@ models:
 
 
   MS_SVCONV_B4cm_X2_2head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -391,7 +391,7 @@ models:
 
 
   MS_SVCONV_B4cm_X2_3head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -446,7 +446,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B4cm_X2_4head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -501,7 +501,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B4cm_X2_3head_unshared:
-    class: ms_spconv3d.MS_SparseConv3d
+    class: ms_svconv3d.MS_SparseConv3d
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -557,7 +557,7 @@ models:
 
 
   MS_SVCONV_B6cm_X2_1head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -612,7 +612,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B6cm_X2_2head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -667,7 +667,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B6cm_X2_3head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -723,7 +723,7 @@ models:
 
 
   MS_SVCONV_B6cm_X2_3head_unshared:
-    class: ms_spconv3d.MS_SparseConv3d
+    class: ms_svconv3d.MS_SparseConv3d
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -778,7 +778,7 @@ models:
         neg_thresh: 1.4
 
   MS_SVCONV_B6cm_X2_4head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
+    class: ms_svconv3d.MS_SparseConv3d_Shared
     path_pretrained: ${models.path_pretrained}
     weight_name: "latest"
     conv_type: "SPARSE"
@@ -791,117 +791,6 @@ models:
       input_nc: 1
       num_scales: num_scales
       grid_size: [0.06, 0.12, 0.24, 0.48]
-      post_mlp_nn: [64, 32]
-      backbone:
-        down_conv:
-          module_name: ResNetDown
-          dimension: 3
-          down_conv_nn:
-            [
-              [FEAT, 32],
-              [32, 64],
-              [64, 128],
-              [128, 256]
-            ]
-          kernel_size: [5, 3, 3, 3]
-          stride: [1, 2, 2, 2]
-          dilation: [1, 1, 1, 1]
-        up_conv:
-          module_name: ResNetUp
-          dimension: 3
-          bn_momentum: 0.05
-          up_conv_nn:
-            [
-              [256, 64],
-              [64 + 128, 64],
-              [64 + 64, 64],
-              [64 + 32, 64]
-            ]
-          kernel_size: [3, 3, 3, 3]
-          stride: [2, 2, 2, 1]
-          dilation: [1, 1, 1, 1]
-    normalize_feature: True
-    mlp_cls:
-      nn: [num_scales*out_feat, out_feat, out_feat]
-      bn_momentum: 0.05
-    metric_loss:
-      class: "ContrastiveHardestNegativeLoss"
-      params:
-        num_pos: 1024
-        num_hn_samples: 256
-        pos_thresh: 0.1
-        neg_thresh: 1.4
-
-  MS_SVCONV_B20cm_X2_3head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
-    path_pretrained: ${models.path_pretrained}
-    weight_name: "latest"
-    conv_type: "SPARSE"
-    loss_mode: "match"
-    define_constants:
-      num_scales: 3
-      out_feat: 32
-    backend: "torchsparse"
-    option_unet:
-      input_nc: 1
-      num_scales: num_scales
-      grid_size: [0.2, 0.4, 0.8]
-      post_mlp_nn: [64, 32]
-      backbone:
-        down_conv:
-          module_name: ResNetDown
-          dimension: 3
-          down_conv_nn:
-            [
-              [FEAT, 32],
-              [32, 64],
-              [64, 128],
-              [128, 256]
-            ]
-          kernel_size: [5, 3, 3, 3]
-          stride: [1, 2, 2, 2]
-          dilation: [1, 1, 1, 1]
-        up_conv:
-          module_name: ResNetUp
-          dimension: 3
-          bn_momentum: 0.05
-          up_conv_nn:
-            [
-              [256, 64],
-              [64 + 128, 64],
-              [64 + 64, 64],
-              [64 + 32, 64]
-            ]
-          kernel_size: [3, 3, 3, 3]
-          stride: [2, 2, 2, 1]
-          dilation: [1, 1, 1, 1]
-    normalize_feature: True
-    mlp_cls:
-      nn: [num_scales*out_feat, out_feat, out_feat]
-      bn_momentum: 0.05
-    metric_loss:
-      class: "ContrastiveHardestNegativeLoss"
-      params:
-        num_pos: 1024
-        num_hn_samples: 256
-        pos_thresh: 0.1
-        neg_thresh: 1.4
-
-
-  cm_X2_3head:
-    class: ms_spconv3d.MS_SparseConv3d_Shared
-    path_pretrained: ${models.path_pretrained}
-    weight_name: "latest"
-    conv_type: "SPARSE"
-    loss_mode: "match"
-    define_constants:
-      num_scales: 3
-      out_feat: 32
-    backend: "torchsparse"
-    option_unet:
-      input_nc: 1
-      num_scales: num_scales
-      grid_size: [0.25, 0.5, 1.0]
       post_mlp_nn: [64, 32]
       backbone:
         down_conv:

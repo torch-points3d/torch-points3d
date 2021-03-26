@@ -54,26 +54,6 @@ data:
                 name_ind:
                   value: "ind_sensors"
 
-          - transform: IrregularSampling
-            params:
-              d_half: 3.5
-              p: 1
-              grid_size_center: 0.01
-
-    - transform: ComposeTransform
-      params:
-        transform_options:
-          - transform: RandomParamTransform
-            params:
-              transform_name: FixedSphereDropout
-              transform_params:
-                radius:
-                  min: 0.4
-                  max: 1.5
-                  type: "float"
-                name_ind:
-                  value: "ind_sensors"
-
           - transform: CubeCrop
             params:
               c: 5.5
