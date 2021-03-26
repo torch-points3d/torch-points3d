@@ -64,3 +64,13 @@ def compute_scaled_registration_error(xyz, T_gt, T_est, tol=1e-12):
 
     err = torch.mean(dist1 / (dist2 + tol))
     return err
+
+
+def compute_registration_recall(xyz_gt, xyz_target_gt, T_est, thresh=0.2):
+    """
+    compute the registration recall (as defined here https://node1.chrischoy.org/data/publications/fcgf/fcgf.pdf)
+    """
+
+    dist = torch.norm(xyz_gt @ T_est[:3, :3].T + T_est[:3, 3] - xyz_target_gt, dim=1)
+
+    return dist.mean().item() < thresh
