@@ -1,6 +1,6 @@
 models:
   MS_SVCONV_B4cm_X2_3head:
-    class: sparseconv3d.MS_SparseConvModel
+    class: ms_svconv3d.MS_SparseConvModel
     conv_type: "SPARSE"
     define_constants:
       num_scales: 3

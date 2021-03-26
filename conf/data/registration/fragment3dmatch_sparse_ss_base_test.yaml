@@ -4,7 +4,6 @@ data:
   dataroot: data
   name: 3DMatch
   is_patch: False
-  num_frame_per_fragment: 101
   max_dist_overlap: 0.05
   min_overlap_ratio: 0.3
   tsdf_voxel_size: 0.006
