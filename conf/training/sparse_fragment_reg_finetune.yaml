@@ -8,7 +8,7 @@ training:
     cuda: 0
     precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
     optim:
-        base_lr: 1e-1
+        base_lr: 1e-3
         # accumulated_gradient: 1
         # accumulated_gradient: -1 # Accumulate gradient accumulated_gradient * batch_size
         grad_clip: -1
@@ -22,7 +22,7 @@ training:
         lr_scheduler:
           class: ExponentialLR
           params:
-            gamma: 0.99
+            gamma: 0.999
         # bn_scheduler:
         #    bn_policy: "step_decay"
         #    params:

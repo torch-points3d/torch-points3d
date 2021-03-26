@@ -59,6 +59,7 @@ class SiameseModelNet(SampledModelNet, GeneralFragment):
         self.ss_transform = ss_transform
         self.min_points = min_points
         self.train = train
+        self.use_fps = use_fps
         if(self.train):
             self.name = "train"
         else:

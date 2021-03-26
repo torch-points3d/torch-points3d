@@ -53,7 +53,8 @@ class TestPairTUM(BasePCRBTest):
                               max_size_block=max_size_block,
                               min_points=min_points,
                               ss_transform=ss_transform,
-                              use_fps=use_fps)
+                              use_fps=use_fps,
+                              is_name_path_int=False)
 
     def download(self):
         folder = os.path.join(self.raw_dir, "test")

@@ -716,7 +716,7 @@ class ShiftVoxels:
 
 class RandomDropout:
     """ Randomly drop points from the input data
-    
+
     Parameters
     ----------
     dropout_ratio : float, optional
@@ -836,17 +836,21 @@ class RandomSphereDropout(object):
         radius of the spheres
     """
 
-    def __init__(self, num_sphere: int = 10, radius: float = 5):
+    def __init__(self, num_sphere: int = 10, radius: float = 5, grid_size_center: float=0.01):
         self.num_sphere = num_sphere
         self.radius = radius
+        self.grid_sampling = GridSampling3D(grid_size_center, mode="last")
 
     def __call__(self, data):
 
+        data_c = self.grid_sampling(data.clone())
+        list_ind = torch.randint(0, len(data_c.pos), (self.num_sphere,))
+        center = data_c.pos[list_ind]
         pos = data.pos
-        list_ind = torch.randint(0, len(pos), (self.num_sphere,))
+        # list_ind = torch.randint(0, len(pos), (self.num_sphere,))
 
-        ind, dist = ball_query(data.pos, data.pos[list_ind], radius=self.radius, max_num=-1, mode=1)
-        ind = ind[dist[:, 0] > 0]
+        ind, dist = ball_query(data.pos, center, radius=self.radius, max_num=-1, mode=1)
+        ind = ind[dist[:, 0] >= 0]
         mask = torch.ones(len(pos), dtype=torch.bool)
         mask[ind[:, 0]] = False
         data = apply_mask(data, mask)
@@ -855,6 +859,50 @@ class RandomSphereDropout(object):
 
     def __repr__(self):
         return "{}(num_sphere={}, radius={})".format(self.__class__.__name__, self.num_sphere, self.radius)
+
+
+class FixedSphereDropout(object):
+    """
+    drop out of points on spheres of fixed centers fixed radius.
+    This function takes n random balls of fixed radius r and drop
+    out points inside these balls.
+
+    Parameters
+    ----------
+    center: list of list of float, optional
+        centers of the spheres
+    radius: float, optional
+        radius of the spheres
+    """
+    def __init__(self,
+                 centers: List[List[float]] = [[0, 0, 0]],
+                 name_ind=None,
+                 radius: float = 1):
+        self.centers = torch.tensor(centers)
+        self.radius = radius
+        self.name_ind = name_ind
+
+    def __call__(self, data):
+
+        if self.name_ind is None:
+            ind, dist = ball_query(data.pos, self.centers,
+                                   radius=self.radius,
+                                   max_num=-1, mode=1)
+        else:
+            center = data.pos[data[self.name_ind].long()]
+            ind, dist = ball_query(data.pos, center,
+                                   radius=self.radius,
+                                   max_num=-1, mode=1)
+        ind = ind[dist[:, 0] > 0]
+        mask = torch.ones(len(data.pos), dtype=torch.bool)
+        mask[ind[:, 0]] = False
+        data = apply_mask(data, mask)
+
+        return data
+
+    def __repr__(self):
+        return "{}(centers={}, radius={})".format(
+            self.__class__.__name__, self.centers, self.radius)
 
 
 class SphereCrop(object):
@@ -903,14 +951,17 @@ class CubeCrop(object):
         rotation of the cube around x axis
     """
 
-    def __init__(self, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180):
+
+    def __init__(self, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180, grid_size_center: float=0.01):
         self.c = c
         self.random_rotation = Random3AxisRotation(rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
+        self.grid_sampling = GridSampling3D(grid_size_center, mode="last")
 
     def __call__(self, data):
+        data_c = self.grid_sampling(data.clone())
         data_temp = data.clone()
-        i = torch.randint(0, len(data.pos), (1,))
-        center = data_temp.pos[i]
+        i = torch.randint(0, len(data_c.pos), (1,))
+        center = data_c.pos[i]
         min_square = center - self.c
         max_square = center + self.c
         data_temp.pos = data_temp.pos - center
@@ -923,6 +974,50 @@ class CubeCrop(object):
 
     def __repr__(self):
         return "{}(c={}, rotation={})".format(self.__class__.__name__, self.c, self.random_rotation)
+
+
+class EllipsoidCrop(object):
+    """
+
+    """
+    def __init__(self, a: float = 1, b: float = 1, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180):
+        """
+        Crop with respect to an ellipsoid.
+        the function of an ellipse is defined as:
+
+        Parameters
+        ----------
+        a: float, optional
+          half size of the cube
+        b: float_otional
+          rotation of the cube around x axis
+        c: float_otional
+          rotation of the cube around x axis
+
+
+        """
+        self._a2 = a ** 2
+        self._b2 = b ** 2
+        self._c2 = c ** 2
+        self.random_rotation = Random3AxisRotation(rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
+
+    def _compute_mask(self, pos: torch.Tensor):
+        mask = (pos[:, 0] ** 2 / self._a2 + pos[:, 1] ** 2 / self._b2 + pos[:, 2] ** 2 / self._c2) < 1
+        return mask
+
+    def __call__(self, data):
+        data_temp = data.clone()
+        i = torch.randint(0, len(data.pos), (1,))
+        data_temp = self.random_rotation(data_temp)
+        center = data_temp.pos[i]
+        data_temp.pos = data_temp.pos - center
+        mask = self._compute_mask(data_temp.pos)
+        data = apply_mask(data, mask)
+        return data
+
+    def __repr__(self):
+        return "{}(a={}, b={}, c={}, rotation={})".format(self.__class__.__name__, np.sqrt(self._a2), np.sqrt(self._b2), np.sqrt(self._c2), self.random_rotation)
+
 
 
 class DensityFilter(object):
@@ -958,3 +1053,67 @@ class DensityFilter(object):
             self.__class__.__name__, self.radius_nn, self.min_num, self.skip_keys
         )
 
+
+
+class IrregularSampling(object):
+    """
+    a sort of soft crop. the more we are far from the center, the more it is unlikely to choose the point
+    """
+    def __init__(self,
+                 d_half=2.5,
+                 p=2,
+                 grid_size_center=0.1,
+                 skip_keys=[]):
+
+        self.d_half = d_half
+        self.p = p
+        self.skip_keys = skip_keys
+        self.grid_sampling = GridSampling3D(grid_size_center, mode="last")
+
+    def __call__(self, data):
+
+        data_temp = self.grid_sampling(data.clone())
+        i = torch.randint(0, len(data_temp.pos), (1, ))
+        center = data_temp.pos[i]
+
+        d_p = (torch.abs(data.pos - center)**self.p).sum(1)
+
+        sigma_2 = (self.d_half**self.p) / (2 * np.log(2))
+        thresh = torch.exp(-d_p / (2 * sigma_2))
+
+        mask = torch.rand(len(data.pos)) < thresh
+        data = apply_mask(data, mask, self.skip_keys)
+        return data
+
+    def __repr__(self):
+        return "{}(d_half={}, p={}, skip_keys={})".format(
+            self.__class__.__name__, self.d_half, self.p, self.skip_keys)
+
+
+class PeriodicSampling(object):
+    """
+    sample point at a periodic distance
+    """
+
+    def __init__(self, period=0.1, prop=0.1, box_multiplier=1, skip_keys=[]):
+
+        self.pulse = 2 * np.pi / period
+        self.thresh = np.cos(self.pulse * prop * period * 0.5)
+        self.box_multiplier = box_multiplier
+        self.skip_keys = skip_keys
+
+    def __call__(self, data):
+
+        data_temp = data.clone()
+        max_p = data_temp.pos.max(0)[0]
+        min_p = data_temp.pos.min(0)[0]
+
+        center = self.box_multiplier * torch.rand(3) * (max_p - min_p) + min_p
+        d_p = torch.norm(data.pos - center, dim=1)
+        mask = torch.cos(self.pulse * d_p) > self.thresh
+        data = apply_mask(data, mask, self.skip_keys)
+        return data
+
+    def __repr__(self):
+        return "{}(pulse={}, thresh={}, box_mullti={}, skip_keys={})".format(
+            self.__class__.__name__, self.pulse, self.thresh, self.box_multiplier, self.skip_keys)

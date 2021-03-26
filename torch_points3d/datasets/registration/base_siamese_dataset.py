@@ -2,6 +2,7 @@ import numpy as np
 import os.path as osp
 import random
 import torch
+import logging
 from torch_geometric.data import Data
 from torch_points_kernels.points_cpu import ball_query
 from functools import partial
@@ -21,6 +22,7 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.metrics.registration_tracker import PatchRegistrationTracker
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 
+log = logging.getLogger(__name__)
 
 class BaseSiameseDataset(BaseDataset):
     def __init__(self, dataset_opt):
@@ -140,10 +142,10 @@ class GeneralFragment(object):
     def get_fragment(self, idx):
 
         data_source, data_target, new_pair = self.get_raw_pair(idx)
+
         if self.transform is not None:
             data_source = self.transform(data_source)
             data_target = self.transform(data_target)
-
         if hasattr(data_source, "multiscale"):
             batch = MultiScalePair.make_pair(data_source, data_target)
         else:
@@ -168,7 +170,7 @@ class GeneralFragment(object):
         batch.pair_ind = batch.pair_ind[rand_ind]
         batch.size_pair_ind = torch.tensor([num_pos_pairs])
         if len(batch.pair_ind) == 0:
-            print("Warning")
+            log.warning("Warning")
         return batch.contiguous()
 
     def get_name(self, idx):

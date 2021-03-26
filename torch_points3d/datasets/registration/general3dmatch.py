@@ -388,5 +388,6 @@ class General3DMatchDataset(BaseSiameseDataset):
                 pre_transform=pre_transform,
                 transform=test_transform,
                 num_pos_pairs=50,
-                max_dist_overlap=dataset_opt.max_dist_overlap
+                max_dist_overlap=dataset_opt.max_dist_overlap,
+                self_supervised=False
             )
