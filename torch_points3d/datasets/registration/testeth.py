@@ -163,39 +163,6 @@ class ETHDataset(BaseSiameseDataset):
                                         num_pos_pairs=dataset_opt.num_pos_pairs,
                                         self_supervised=False)
 
-class ETHSplitDataset(BaseSiameseDataset):
-    """
-    this class is a dataset for testing registration algorithm on ETH dataset (only a split)
-    https://projects.asl.ethz.ch/datasets/doku.php?id=laserregistration:laserregistration
-    as defined in https://github.com/iralabdisco/point_clouds_registration_benchmark.
-    """
-    def __init__(self, dataset_opt):
-        super().__init__(dataset_opt)
-        pre_transform = self.pre_transform
-        train_transform = self.train_transform
-        ss_transform = getattr(self, "ss_transform", None)
-        test_transform = self.test_transform
-
-        # training is similar to test but only unsupervised training is allowed XD
-        self.train_dataset = TestPairETH(root=self._data_path,
-                                         pre_transform=pre_transform,
-                                         transform=train_transform,
-                                         max_dist_overlap=dataset_opt.max_dist_overlap,
-                                         self_supervised=True,
-                                         min_size_block=dataset_opt.min_size_block,
-                                         max_size_block=dataset_opt.max_size_block,
-                                         num_pos_pairs=dataset_opt.num_pos_pairs,
-                                         min_points=dataset_opt.min_points,
-                                         ss_transform=ss_transform,
-                                         use_fps=dataset_opt.use_fps)
-        self.test_dataset = TestPairETH(root=self._data_path,
-                                        pre_transform=pre_transform,
-                                        transform=test_transform,
-                                        max_dist_overlap=dataset_opt.max_dist_overlap,
-                                        num_pos_pairs=dataset_opt.num_pos_pairs,
-                                        self_supervised=False)
-
-
 
 class TestPairETH2(Base3DMatchTest, GeneralFragment):
     """
@@ -215,6 +182,8 @@ class TestPairETH2(Base3DMatchTest, GeneralFragment):
                  max_size_block=2,
                  min_points=500,
                  use_fps=False):
+        self.name = "eth2"
+        self.url = "https://cloud.mines-paristech.fr/index.php/s/SuoVN4detclRoE6/download"
         Base3DMatchTest.__init__(self, root=root,
                                  transform=transform,
                                  pre_transform=pre_transform,
@@ -245,7 +214,20 @@ class TestPairETH2(Base3DMatchTest, GeneralFragment):
         """
         TODO: download the datasets
         """
-        pass
+        folder = osp.join(self.raw_dir, "test")
+        print(folder)
+        if files_exist([folder]):  # pragma: no cover
+            log.warning("already downloaded {}".format("test"))
+            return
+        else:
+            makedirs(folder)
+        log.info("Download elements in the file {}...".format(folder))
+        req = requests.get(self.url)
+        with open(osp.join(folder, self.name+".zip"), "wb") as archive:
+            archive.write(req.content)
+        with ZipFile(osp.join(folder, self.name+".zip"), "r") as zip_obj:
+            log.info("extracting dataset {}".format(self.name))
+            zip_obj.extractall(folder)
 
 
 class ETH2Dataset(BaseSiameseDataset):
