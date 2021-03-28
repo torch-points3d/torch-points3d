@@ -28,8 +28,11 @@ class Minkowski_Baseline_Model(BaseModel):
         self.labels = data.y.to(device)
 
     def forward(self, *args, **kwargs):
-        self.output = F.log_softmax(self.model(self.input).features, dim=-1)
-        self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
+        self.output = F.log_softmax(self.model(self.input).features, dim=-1)        
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.output.device)
+        if self.labels is not None:
+            self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL, weight=self._weight_classes)
 
     def backward(self):
         self.loss_seg.backward()
