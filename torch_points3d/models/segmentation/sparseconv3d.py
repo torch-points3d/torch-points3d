@@ -16,6 +16,7 @@ class APIModel(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         super().__init__(option)
+        self._weight_classes = dataset.weight_classes
         self.backbone = SparseConv3d(
             "unet", dataset.feature_dimension, config=option.backbone, backend=option.get("backend", "minkowski")
         )
