@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 class Minkowski_Baseline_Model(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         super(Minkowski_Baseline_Model, self).__init__(option)
+        self._weight_classes = dataset.weight_classes
         self.model = initialize_minkowski_unet(
             option.model_name, dataset.feature_dimension, dataset.num_classes, **option.get("extra_options", {})
         )
