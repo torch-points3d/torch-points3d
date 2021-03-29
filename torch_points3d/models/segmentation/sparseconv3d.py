@@ -9,7 +9,6 @@ from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.applications.sparseconv3d import SparseConv3d
 
 from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
-from torch_points3d.models.registration.ms_spconv3d import UnetMSparseConv3d
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class APIModel(BaseModel):
     def forward(self, *args, **kwargs):
         features = self.backbone(self.input).x
         logits = self.head(features)
-        self.output = F.log_softmax(logits, dim=-1)     
+        self.output = F.log_softmax(logits, dim=-1)
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.device)
         if self.labels is not None:
