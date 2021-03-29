@@ -115,6 +115,10 @@ class TestModels(unittest.TestCase):
                 "Res16UNet34",
                 "PVCNN",
             ]
+            for cm in [2, 4, 6]:
+                for h in [1, 2, 3, 4]:
+                    for s in ["", "_unshared"]:
+                        forward_failing += ["MS_SVCONV_B{}cm_X2_{}head{}".format(cm, h, s)]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B"]
             for failing in forward_failing:
