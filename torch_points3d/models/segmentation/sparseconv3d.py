@@ -18,6 +18,7 @@ class APIModel(BaseModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         super().__init__(option)
+        self._weight_classes = dataset.weight_classes
         self.backbone = SparseConv3d(
             "unet", dataset.feature_dimension, config=option.backbone, backend=option.get("backend", "minkowski")
         )
@@ -35,9 +36,11 @@ class APIModel(BaseModel):
     def forward(self, *args, **kwargs):
         features = self.backbone(self.input).x
         logits = self.head(features)
-        self.output = F.log_softmax(logits, dim=-1)
+        self.output = F.log_softmax(logits, dim=-1)     
+        if self._weight_classes is not None:
+            self._weight_classes = self._weight_classes.to(self.device)
         if self.labels is not None:
-            self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL)
+            self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL, weight=self._weight_classes)
 
     def backward(self):
         self.loss_seg.backward()
