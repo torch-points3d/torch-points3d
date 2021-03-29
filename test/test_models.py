@@ -106,7 +106,7 @@ class TestModels(unittest.TestCase):
     def test_runall(self):
         def is_known_to_fail(model_name):
             forward_failing = [
-                "MinkUNet_WIP",
+                "path_pretrained" "MinkUNet_WIP",
                 "pointcnn",
                 "RSConv_4LD",
                 "RSConv_2LD",
