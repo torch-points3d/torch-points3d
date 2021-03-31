@@ -125,7 +125,7 @@ class TestModels(unittest.TestCase):
                     return True
             return False
 
-        def is_torch_sparse_backend(model_name, model_conf):
+        def is_torch_sparse_backend(model_name):
             torchsparse_backend = [
                 "ResUNet32",
                 "Res16UNet34",
