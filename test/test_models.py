@@ -112,18 +112,30 @@ class TestModels(unittest.TestCase):
                 "RSConv_4LD",
                 "RSConv_2LD",
                 "randlanet",
+                "PVCNN",
+            ]
+            if not HAS_MINKOWSKI:
+                forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B", "ResUNet32", "Res16UNet34"]
+                for cm in [2, 4, 6]:
+                    for h in [1, 2, 3, 4]:
+                        for s in ["", "_unshared"]:
+                            forward_failing += ["MS_SVCONV_B{}cm_X2_{}head{}".format(cm, h, s)]
+            for failing in forward_failing:
+                if failing.lower() in model_name.lower():
+                    return True
+            return False
+
+        def is_torch_sparse_backend(model_name, model_conf):
+            torchsparse_backend = [
                 "ResUNet32",
                 "Res16UNet34",
-                "PVCNN",
             ]
             for cm in [2, 4, 6]:
                 for h in [1, 2, 3, 4]:
                     for s in ["", "_unshared"]:
-                        forward_failing += ["MS_SVCONV_B{}cm_X2_{}head{}".format(cm, h, s)]
-            if not HAS_MINKOWSKI:
-                forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B"]
-            for failing in forward_failing:
-                if failing.lower() in model_name.lower():
+                        torchsparse_backend += ["MS_SVCONV_B{}cm_X2_{}head{}".format(cm, h, s)]
+            for backend in torchsparse_backend:
+                if backend.lower() in model_name.lower():
                     return True
             return False
 
@@ -137,6 +149,9 @@ class TestModels(unittest.TestCase):
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
                         models_config.update("model_name", model_name)
+                        # modify the backend in minkowski to have the forward
+                        if is_torch_sparse_backend(model_name):
+                            models_config.models[model_name].backend = "minkowski"
                         dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
                         try:
                             model = instantiate_model(models_config, dataset)
