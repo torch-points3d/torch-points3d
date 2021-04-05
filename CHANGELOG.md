@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## Added
+- MS-SVConv: https://arxiv.org/abs/2103.14533 (thanks @humanpose1)
+- added new data generations techniques for the self-supervised learning (PeriodicSampling, IrregularSampling EllipsoidCrop) (thanks @humanpose1)
+- More ETH benchmark dataset (thanks @humanpose1)
+
 ### Changed
 - Minkowski 0.5 support
 
