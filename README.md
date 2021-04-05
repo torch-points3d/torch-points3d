@@ -10,32 +10,6 @@ The framework allows lean and yet complex model to be built with minimum effort 
 It also provide a high level API to democratize deep learning on pointclouds.
 See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of the framework capacities and benchmarks of state-of-the-art networks.
 
-# Table of Contents
-
-- [Overview](#overview)
-  - [Requirements](#requirements)
-  - [Project structure](#project-structure)
-  - [Methods currently implemented](#methods-currently-implemented)
-- [Available Tasks](#available-tasks)
-- [Available datasets](#available-datasets)
-  - [Segmentation](#segmentation)
-  - [Object detection and panoptic](#object-detection-and-panoptic)
-  - [Registration](#registration)
-  - [Classification](#classification)
-- [3D Sparse convolution support](#3d-sparse-convolution-support)
-- [Adding your model to the PretrainedRegistry.](#adding-your-model-to-the-pretrainedregistry)
-- [Developer guidelines](#developer-guidelines)
-  - [Setting repo](#setting-repo)
-  - [Getting started: Train pointnet on part segmentation task for dataset shapenet](#getting-started-train-pointnet-on-part-segmentation-task-for-dataset-shapenet)
-  - [Inference](#inference)
-    - [Inference script](#inference-script)
-    - [Containerizing your model with Docker](#containerizing-your-model-with-docker)
-  - [Profiling](#profiling)
-  - [Troubleshooting](#troubleshooting)
-- [Exploring your experiments](#exploring-your-experiments)
-- [Contributing](#contributing)
-- [Citing](#citing)
-
 # Overview
 
 ## Requirements
@@ -102,6 +76,7 @@ where each folder contains the dataset related to each task.
 - **[PPNet (PosPool)](https://github.com/zeliu98/CloserLook3D)** from Ze Liu _et al._: [A Closer Look at Local Aggregation Operators in Point Cloud Analysis](https://arxiv.org/pdf/2007.01294.pdf) (ECCV 2020)
 - **[TorchSparse](https://github.com/mit-han-lab/torchsparse)** from Haotian Tang _et al_: [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
 - **[PVCNN](https://github.com/mit-han-lab/pvcnn)** model for semantic segmentation from Zhijian Liu _et al_:[Point-Voxel CNN for Efficient 3D Deep Learning](https://arxiv.org/abs/1907.03739)
+- **MS-SVConv** from Sofiane Horache _et al_: [3D Point Cloud Registration with Multi-Scale Architecture and Self-supervised Fine-tuning](https://arxiv.org/abs/2103.14533)
 
 Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/latest/src/api/models.html) for accessing some of those models directly from the API and see our example notebooks for [KPconv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/PartSegmentationKPConv.ipynb) and [RSConv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/ObjectClassificationRSConv.ipynb) for more details.
 
