@@ -135,5 +135,40 @@ class PretainedRegistry(object):
             return model
 
     @staticmethod
+    def from_file(path, weight_name="latest", mock_property=None):
+        """
+        Load a pretrained model trained with torch-points3d from file.
+        return a pretrained model
+        Parameters
+        ----------
+        path: str
+            path of a pretrained model
+        weight_name: str, optional
+            name of the weight
+        mock_property: dict, optional
+            mock dataset
+
+        """
+        weight_name = weight_name if weight_name is not None else "latest"
+        path_dir, name = os.path.split(path)
+        name = name.split(".")[0]  # ModelCheckpoint will add the extension
+
+        checkpoint: ModelCheckpoint = ModelCheckpoint(
+            path_dir, name, weight_name if weight_name is not None else "latest", resume=False,
+        )
+        dataset = checkpoint.data_config
+
+        if mock_property is not None:
+            for k, v in mock_property.items():
+                dataset[k] = v
+
+        else:
+            dataset = instantiate_dataset(checkpoint.data_config)
+
+        model: BaseModel = checkpoint.create_model(dataset, weight_name=weight_name)
+        BaseDataset.set_transform(model, checkpoint.data_config)
+        return model
+
+    @staticmethod
     def available_models():
         return PretainedRegistry.MODELS.keys()
