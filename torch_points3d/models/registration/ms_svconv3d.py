@@ -104,7 +104,7 @@ class BaseMS_SparseConv3d(FragmentBaseModel):
     def set_input(self, data, device):
         self.input, self.input_target = data.to_data()
         self.input = self.input.to(device)
-        if hasattr(data, "pos_target"):
+        if getattr(data, "pos_target", None) is not None:
             self.input_target = self.input_target.to(device)
             self.match = data.pair_ind.to(torch.long).to(device)
             self.size_match = data.size_pair_ind.to(torch.long).to(device)
