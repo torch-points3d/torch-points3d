@@ -9,9 +9,7 @@ data:
   mode: "last"
 
   train_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
+    - transform: ElasticDistortion
     - transform: Random3AxisRotation
       params:
         apply_rotation: ${data.apply_rotation}
@@ -21,10 +19,17 @@ data:
     - transform: RandomScaleAnisotropic
       params:
         scales: [0.9, 1.1]
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: ${data.mode}
 
   val_transform:
     - transform: GridSampling3D
       params:
         size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: ${data.mode}
 
   test_transform: ${data.val_transform}
