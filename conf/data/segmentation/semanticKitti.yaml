@@ -3,7 +3,7 @@ data:
   dataset_name: "kitti"
   task: segmentation
   dataroot: data
-  grid_size: 0.1
+  first_subsampling: 0.1
   process_workers: 8
   apply_rotation: True
   mode: "last"
@@ -21,14 +21,14 @@ data:
         scales: [0.9, 1.1]
     - transform: GridSampling3D
       params:
-        size: ${data.grid_size}
+        size: ${data.first_subsampling}
         quantize_coords: True
         mode: ${data.mode}
 
   val_transform:
     - transform: GridSampling3D
       params:
-        size: ${data.grid_size}
+        size: ${data.first_subsampling}
         quantize_coords: True
         mode: ${data.mode}
 
