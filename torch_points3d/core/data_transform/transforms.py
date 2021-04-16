@@ -804,10 +804,10 @@ class RandomWalkDropout(object):
         ind, dist = ball_query(data.pos, data.pos, radius=self.radius, max_num=self.max_num, mode=0)
         mask = np.ones(len(pos), dtype=bool)
         mask = rw_mask(
-            pos,
-            ind.detach().cpu().numpy(),
-            dist.detach().cpu().numpy(),
-            mask,
+            pos=pos,
+            ind=ind.detach().cpu().numpy(),
+            dist=dist.detach().cpu().numpy(),
+            mask_vertices=mask,
             num_iter=self.num_iter,
             random_ratio=self.dropout_ratio,
         )
