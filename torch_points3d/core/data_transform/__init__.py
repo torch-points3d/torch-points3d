@@ -3,7 +3,6 @@ import sys
 import numpy as np
 import torch_geometric.transforms as T
 from .transforms import *
-from .kitti_transforms import *
 from .grid_transform import *
 from .sparse_transforms import *
 from .inference_transforms import *
@@ -130,7 +129,24 @@ class LotteryTransform(object):
 
 class ComposeTransform(object):
     """
-    simple transform which compose the transforms
+    Transform to compose other transforms with YAML (Compose of torch_geometric does not work).
+    Example :
+    .. code-block:: yaml
+
+    - transform: ComposeTransform
+      params:
+        transform_options:
+          - transform: GridSampling3D
+            params:
+              size: 0.1
+          - transform: RandomNoise
+            params:
+              sigma: 0.05
+
+
+    Parameters:
+    transform_options: Omegaconf Dict
+        contains a list of transform
     """
     def __init__(self, transform_options):
         self.transform = instantiate_transforms(transform_options)
