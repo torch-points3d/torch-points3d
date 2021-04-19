@@ -143,7 +143,7 @@ Once you have setup one of those two sparse convolution framework you can start 
 ```python
 from torch_points3d.applications.sparseconv3d import SparseConv3d
 
-model = SparseConv3d("unet", input_nc=3, output_nc=5, num_layers=4, backbone="torchsparse") # minkowski by default
+model = SparseConv3d("unet", input_nc=3, output_nc=5, num_layers=4, backend="torchsparse") # minkowski by default
 ```
 
 You can also assemble your own networks by using the modules provided in `torch_points3d/modules/SparseConv3d/nn`. For example if you wish to use `torchsparse` backend you can do the following:
