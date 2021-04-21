@@ -76,7 +76,7 @@ where each folder contains the dataset related to each task.
 - **[PPNet (PosPool)](https://github.com/zeliu98/CloserLook3D)** from Ze Liu _et al._: [A Closer Look at Local Aggregation Operators in Point Cloud Analysis](https://arxiv.org/pdf/2007.01294.pdf) (ECCV 2020)
 - **[TorchSparse](https://github.com/mit-han-lab/torchsparse)** from Haotian Tang _et al_: [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
 - **[PVCNN](https://github.com/mit-han-lab/pvcnn)** model for semantic segmentation from Zhijian Liu _et al_:[Point-Voxel CNN for Efficient 3D Deep Learning](https://arxiv.org/abs/1907.03739)
-- **MS-SVConv** from Sofiane Horache _et al_: [3D Point Cloud Registration with Multi-Scale Architecture and Self-supervised Fine-tuning](https://arxiv.org/abs/2103.14533)
+- **[MS-SVConv](https://github.com/humanpose1/MS-SVConv)** from Sofiane Horache _et al_: [3D Point Cloud Registration with Multi-Scale Architecture and Self-supervised Fine-tuning](https://arxiv.org/abs/2103.14533)
 
 Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/latest/src/api/models.html) for accessing some of those models directly from the API and see our example notebooks for [KPconv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/PartSegmentationKPConv.ipynb) and [RSConv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/ObjectClassificationRSConv.ipynb) for more details.
 
