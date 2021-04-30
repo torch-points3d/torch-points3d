@@ -155,9 +155,9 @@ def ransac_registration(xyz, xyz_target, distance_threshold=0.05, num_iterations
         pcd_t,
         corres,
         distance_threshold,
-        open3d.pipelines.registration.TransformationEstimationPointToPoint(False),
-        4,
-        open3d.pipelines.registration.RANSACConvergenceCriteria(4000000, num_iterations),
+        estimation_method=open3d.pipelines.registration.TransformationEstimationPointToPoint(False),
+        ransac_n=4,
+        criteria=open3d.pipelines.registration.RANSACConvergenceCriteria(4000000, num_iterations),
     )
 
     return torch.from_numpy(result.transformation).float()
