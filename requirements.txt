@@ -68,7 +68,7 @@ numpy==1.19.5; python_version >= "3.6"
 nvidia-ml-py3==7.352.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 oauthlib==3.1.0; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
 omegaconf==1.4.1
-open3d==0.10.0.0
+open3d==0.12.0
 packaging==20.9; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3.6"
 pandas==1.1.5; python_full_version >= "3.6.1" and python_version >= "3.6"
 pandocfilters==1.4.3; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.6"
