@@ -28,7 +28,7 @@ class FPFH(object):
         pcd = open3d.geometry.PointCloud()
         pcd.points = open3d.utility.Vector3dVector(data.pos.numpy())
         pcd.estimate_normals(self.kdtree_normal)
-        fpfh_feature = open3d.registration.compute_fpfh_feature(pcd, self.kdtree)
+        fpfh_feature = open3d.pipelines.registration.compute_fpfh_feature(pcd, self.kdtree)
         return np.asarray(fpfh_feature.data).T[data.keypoints.numpy()]
 
 
