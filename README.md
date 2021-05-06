@@ -136,7 +136,7 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 # 3D Sparse convolution support
 
-We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `torchsparse` demonstrates faster training and inference on GPU but comes with limited functionalities. For example, `MinkowskiEngine` can be used **Please be aware that `torchsparse` is still in beta and does not support CPU processing only for example.**
+We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `MinkowskiEngine` [see here (thank you Chris Choy)](https://gist.github.com/chrischoy/d8e971daf8308aa1dcba1524bf1fd91a) demonstrates faster training. **Please be aware that `torchsparse` is still in beta and does not support CPU only.**
 
 Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
 
