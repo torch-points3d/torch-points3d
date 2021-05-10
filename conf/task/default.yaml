@@ -1,0 +1,10 @@
+# @package task
+defaults:
+  - /data@_group_: default
+  - /models@_group_: default
+
+# By default.yaml we turn off recursive instantiation, allowing the user to instantiate themselves at the appropriate times.
+_recursive_: false
+
+#_target_: lightning_transformers.core.model.TaskTransformer
+lr_scheduler: ${lr_scheduler}
