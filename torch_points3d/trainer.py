@@ -1,10 +1,12 @@
+from typing import Optional
 import os
 import copy
 import torch
 import hydra
 import time
 import logging
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, DictConfig
+
 from tqdm.auto import tqdm
 import wandb
 
@@ -318,3 +320,97 @@ class Trainer:
     @property
     def eval_frequency(self):
         return self._cfg.get("eval_frequency", 1)
+
+class Instantiator:
+
+    def model(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def optimizer(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def scheduler(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def data_module(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def tracker(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def logger(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def trainer(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+    def instantiate(self, *args, **kwargs):
+        raise NotImplementedError("Child class must implement method")
+
+
+class HydraInstantiator(Instantiator):
+
+    def model(
+        self,
+        cfg: DictConfig,
+        model_data_kwargs: Optional[DictConfig] = None,
+        tokenizer: Optional[DictConfig] = None,
+        pipeline_kwargs: Optional[DictConfig] = None
+    ) -> BaseModel:
+        if model_data_kwargs is None:
+            model_data_kwargs = {}
+        model_data_kwargs = dict(model_data_kwargs)  # avoid ConfigKeyError: Key 'tokenizer' is not in struct`
+
+        # use `model_data_kwargs` to pass `tokenizer` and `pipeline_kwargs`
+        # as not all models might contain these parameters.
+        if tokenizer:
+            model_data_kwargs["tokenizer"] = self.instantiate(tokenizer)
+        if pipeline_kwargs:
+            model_data_kwargs["pipeline_kwargs"] = pipeline_kwargs
+
+        return self.instantiate(cfg, instantiator=self, **model_data_kwargs)
+
+    def optimizer(self, model: torch.nn.Module, cfg: DictConfig) -> torch.optim.Optimizer:
+        no_decay = ["bias", "LayerNorm.weight"]
+        grouped_parameters = [
+            {
+                "params": [
+                    p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and p.requires_grad
+                ],
+                "weight_decay": cfg.weight_decay,
+            },
+            {
+                "params": [
+                    p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and p.requires_grad
+                ],
+                "weight_decay": 0.0,
+            },
+        ]
+        return self.instantiate(cfg, grouped_parameters)
+
+    def scheduler(self, cfg: DictConfig, optimizer: torch.optim.Optimizer) -> torch.optim.lr_scheduler._LRScheduler:
+        return self.instantiate(cfg, optimizer=optimizer)
+
+    def data_module(
+        self,
+        cfg: DictConfig,
+        tokenizer: Optional[DictConfig] = None,
+    ) -> BaseDataset:
+        if tokenizer:
+            return self.instantiate(cfg, tokenizer=self.instantiate(tokenizer))
+        return self.instantiate(cfg)
+
+    def logger(self, cfg: DictConfig) -> None:
+        if cfg.get("log"):
+            if isinstance(cfg.trainer.logger, bool):
+                return cfg.trainer.logger
+            return self.instantiate(cfg.trainer.logger)
+
+    def tracker(self, cfg: DictConfig, **kwargs):
+        pass
+
+    def trainer(self, cfg: DictConfig, **kwargs) -> Trainer:
+        return self.instantiate(cfg, **kwargs)
+
+    def instantiate(self, *args, **kwargs):
+        return hydra.utils.instantiate(*args, **kwargs)

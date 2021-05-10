@@ -30,12 +30,12 @@ def instantiate_loss_or_miner(option, mode="loss"):
     """
     class_ = getattr(option, "class", None)
     try:
-        params = option.params
+        params = option.get('params')
     except KeyError:
         params = None
 
     try:
-        lparams = option.lparams
+        lparams = option.get('lparams')
     except KeyError:
         lparams = None
 

@@ -1,4 +1,5 @@
 import unittest
+import omegaconf
 from omegaconf import OmegaConf, DictConfig
 import os
 import sys
@@ -18,9 +19,15 @@ from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 def load_config(task, model_type) -> DictConfig:
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
-    config = OmegaConf.load(models_conf)
-    config.update("model_name", "pointnet2")
-    config.update("data.task", "segmentation")
+    if omegaconf.__version__ == '1.4.1':
+        config = OmegaConf.load(models_conf)
+        config.update("model_name", "pointnet2")
+        config.update("data.task", "segmentation")
+    else:
+        config = OmegaConf.create({"models": OmegaConf.load(models_conf)})
+        OmegaConf.update(config, "model_name", "pointnet2", merge=True)
+        OmegaConf.update(config, "data.task", "segmentation", merge=True)
+
     return config
 
 

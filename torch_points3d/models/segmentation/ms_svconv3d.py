@@ -25,9 +25,9 @@ class MS_SparseConvModel(APIModel):
         self.unet = UnetMSparseConv3d(
             option_unet.backbone,
             input_nc=option_unet.input_nc,
-            pointnet_nn=option_unet.pointnet_nn,
-            post_mlp_nn=option_unet.post_mlp_nn,
-            pre_mlp_nn=option_unet.pre_mlp_nn,
+            pointnet_nn=option_unet.get('pointnet_nn'),
+            post_mlp_nn=option_unet.get('post_mlp_nn'),
+            pre_mlp_nn=option_unet.get('pre_mlp_nn'),
             add_pos=option_unet.add_pos,
             add_pre_x=option_unet.add_pre_x,
             aggr=option_unet.aggr,
