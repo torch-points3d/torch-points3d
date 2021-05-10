@@ -1,63 +1,63 @@
-data:
-  task: registration
-  class: general3dmatch.General3DMatchDataset
-  dataroot: data
-  name: 3DMatch
-  is_patch: False
-  num_frame_per_fragment: 101
-  max_dist_overlap: 0.04
-  min_overlap_ratio: 0.2
-  tsdf_voxel_size: 0.006
-  limit_size: 850
-  depth_thresh: 4.5
-  first_subsampling: 0.025
-  is_online_matching: False
-  num_pos_pairs: 30000
-  tau_1: 0.1
-  tau_2: 0.05
-  use_ransac: False
-  use_teaser: False
-  sym: True
-  rot_thresh: 2
-  trans_thresh: 0.1
-  ransac_thresh: 0.02
-  pre_transforms:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-  train_transform:
-    - transform: SaveOriginalPosId
-    - transform: FixedPoints
-      lparams: [16384]
-    - transform: Center
-    - transform: RandomNoise
-      params:
-        sigma: 0.005
-        clip: 0.05
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: True
-        rot_x: 180
-        rot_y: 180
-        rot_z: 180
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9,1.2]
+# @package data
+task: registration
+class: general3dmatch.General3DMatchDataset
+dataroot: data
+name: 3DMatch
+is_patch: False
+num_frame_per_fragment: 101
+max_dist_overlap: 0.04
+min_overlap_ratio: 0.2
+tsdf_voxel_size: 0.006
+limit_size: 850
+depth_thresh: 4.5
+first_subsampling: 0.025
+is_online_matching: False
+num_pos_pairs: 30000
+tau_1: 0.1
+tau_2: 0.05
+use_ransac: False
+use_teaser: False
+sym: True
+rot_thresh: 2
+trans_thresh: 0.1
+ransac_thresh: 0.02
+pre_transforms:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+train_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [16384]
+  - transform: Center
+  - transform: RandomNoise
+    params:
+      sigma: 0.005
+      clip: 0.05
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 180
+      rot_y: 180
+      rot_z: 180
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9,1.2]
 
-  val_transform:
-    - transform: SaveOriginalPosId
-    - transform: FixedPoints
-      lparams: [16384]
-    - transform: Center
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: True
-        rot_x: 180
-        rot_y: 180
-        rot_z: 180
+val_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [16384]
+  - transform: Center
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 180
+      rot_y: 180
+      rot_z: 180
 
-  test_transform:
-    - transform: SaveOriginalPosId
-    - transform: FixedPoints
-      lparams: [16384]
-    - transform: Center
+test_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [16384]
+  - transform: Center

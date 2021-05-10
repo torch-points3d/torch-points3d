@@ -1,20 +1,23 @@
-data:
-  class: shapenet.ShapeNetDataset
-  task: segmentation
-  dataroot: data
-  normal: True # Use normal vectors as features
-  first_subsampling: 0.02 # Grid size of the input data
-  use_category: True # Use object category information
-  pre_transforms: # Offline transforms, done only once
-    - transform: NormalizeScale
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-  train_transforms: # Data augmentation pipeline
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9, 1.1]
+# @package data
+defaults:
+  - segmentation/default
+
+class: shapenet.ShapeNetDataset
+task: segmentation
+dataroot: data
+normal: True # Use normal vectors as features
+first_subsampling: 0.02 # Grid size of the input data
+use_category: True # Use object category information
+pre_transforms: # Offline transforms, done only once
+  - transform: NormalizeScale
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+train_transforms: # Data augmentation pipeline
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]

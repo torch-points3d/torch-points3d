@@ -1,78 +1,78 @@
-data:
-  task: registration
-  class: testplanetary.PlanetaryDataset
-  dataroot: data
-  first_subsampling: 0.02
-  max_dist_overlap: 0.05
-  min_size_block: 1.5
-  max_size_block: 2
-  num_pos_pairs: 30000
-  min_points: 300
-  num_points: 5000
-  tau_1: 0.1
-  tau_2: 0.05
-  rot_thresh: 4
-  trans_thresh: 0.15
-  sym: True
-  pre_transforms:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-  ss_transform:
-    - transform: CubeCrop
-      params:
-        c: 1
-    - transform: CubeCrop
-      params:
-        c: 1.5
+# @package data
+task: registration
+class: testplanetary.PlanetaryDataset
+dataroot: data
+first_subsampling: 0.02
+max_dist_overlap: 0.05
+min_size_block: 1.5
+max_size_block: 2
+num_pos_pairs: 30000
+min_points: 300
+num_points: 5000
+tau_1: 0.1
+tau_2: 0.05
+rot_thresh: 4
+trans_thresh: 0.15
+sym: True
+pre_transforms:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+ss_transform:
+  - transform: CubeCrop
+    params:
+      c: 1
+  - transform: CubeCrop
+    params:
+      c: 1.5
 
-  train_transform:
-    - transform: SaveOriginalPosId
-    - transform: FixedPoints
-      lparams: [20000]
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: True
-        rot_x: 360
-        rot_y: 360
-        rot_z: 360
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9,1.2]
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
-    - transform: ShiftVoxels
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
-  test_transform:
-    - transform: SaveOriginalPosId
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
+train_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [20000]
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 360
+      rot_y: 360
+      rot_z: 360
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9,1.2]
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: ShiftVoxels
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+test_transform:
+  - transform: SaveOriginalPosId
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'

@@ -1,62 +1,62 @@
-data:
-  class: scannet.ScannetDataset
-  dataset_name: "scannet-sparse"
-  task: segmentation
-  dataroot: data
-  version: v2
-  use_instance_labels: False
-  use_instance_bboxes: False
-  donotcare_class_ids: []
-  process_workers: 4
-  use_category: False
+# @package data
+class: scannet.ScannetDataset
+dataset_name: "scannet-sparse"
+task: segmentation
+dataroot: data
+version: v2
+use_instance_labels: False
+use_instance_bboxes: False
+donotcare_class_ids: []
+process_workers: 4
+use_category: False
 
-  apply_rotation: True
-  mode: mean
-  first_subsampling: 0.05
+apply_rotation: True
+mode: mean
+first_subsampling: 0.05
 
-  pre_transform:
-    - transform: GridSampling3D
-      lparams: [0.02]
+pre_transform:
+  - transform: GridSampling3D
+    lparams: [0.02]
 
-  train_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: ${data.mode}
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: ${data.apply_rotation}
-        rot_x: 2
-        rot_y: 2
-        rot_z: 180
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9, 1.1]
-    - transform: FixedPoints
-      lparams: [100000]
-      params:
-        replace: False
-    - transform: AddFeatsByKeys
-      params:
-        list_add_to_x: [True]
-        feat_names: ["rgb"]
-        delete_feats: [True]
+train_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: False
+      mode: ${data.mode}
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: ${data.apply_rotation}
+      rot_x: 2
+      rot_y: 2
+      rot_z: 180
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]
+  - transform: FixedPoints
+    lparams: [100000]
+    params:
+      replace: False
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x: [True]
+      feat_names: ["rgb"]
+      delete_feats: [True]
 
-  val_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: False
-        mode: ${data.mode}
-    - transform: AddFeatsByKeys
-      params:
-        list_add_to_x: [True]
-        feat_names: ["rgb"]
-        delete_feats: [True]
+val_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: False
+      mode: ${data.mode}
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x: [True]
+      feat_names: ["rgb"]
+      delete_feats: [True]
 
-  test_transform: ${data.val_transform}
+test_transform: ${data.val_transform}

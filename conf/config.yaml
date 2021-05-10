@@ -1,21 +1,16 @@
-defaults: # for loading the default config
-  - task: ??? # Task performed (segmentation, classification etc...)
-    optional: True
-  - model_type: ??? # Type of model to use, e.g. pointnet2, rsconv etc...
-    optional: True
-  - dataset: ???
-    optional: True
+defaults: # for loading the default.yaml config
+  - task: ???
 
   - visualization: default
   - lr_scheduler: exponential
   - training: default
-
-  - debugging: default.yaml
-  - models: ${defaults.0.task}/${defaults.1.model_type}
-  - data: ${defaults.0.task}/${defaults.2.dataset}
+#
+  - debugging: default
+  - models: ???
+  - data: ???
   - sota # Contains current SOTA results on different datasets (extracted from papers !).
-  - hydra/job_logging: custom
-  - hydra/output: custom  # add the support for user-defined experiment folder (where to save the experiment files)
+#  - hydra/job_logging: custom
+#  - hydra/output: custom  # add the support for user-defined experiment folder (where to save the experiment files)
 
 job_name: benchmark # prefix name for saving the experiment file.
 model_name: ??? # Name of the specific model to load

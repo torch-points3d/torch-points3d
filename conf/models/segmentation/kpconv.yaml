@@ -1,267 +1,267 @@
-models:
-  # KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
-  # KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
-  KPConvPaper:
-    class: kpconv.KPConvPaper
-    conv_type: "PARTIAL_DENSE"
-    use_category: ${data.use_category}
-    define_constants:
-      in_grid_size: ${data.first_subsampling}
-      in_feat: 64
-      bn_momentum: 0.02
-    down_conv:
-      n_kernel_points: 15
-      down_conv_nn:
-        [
-          [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
-          [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
-          [[4*in_feat, 4*in_feat], [4*in_feat, 8*in_feat]],
-          [[8*in_feat, 8*in_feat], [8*in_feat, 16*in_feat]],
-          [[16*in_feat, 16*in_feat], [16*in_feat, 32*in_feat]],
-        ]
-      grid_size:
-        [
-          [in_grid_size, in_grid_size],
-          [2*in_grid_size, 2*in_grid_size],
-          [4*in_grid_size, 4*in_grid_size],
-          [8*in_grid_size, 8*in_grid_size],
-          [16*in_grid_size, 16*in_grid_size],
-        ]
-      prev_grid_size:
-        [
-          [in_grid_size, in_grid_size],
-          [in_grid_size, 2*in_grid_size],
-          [2*in_grid_size, 4*in_grid_size],
-          [4*in_grid_size, 8*in_grid_size],
-          [8*in_grid_size, 16*in_grid_size],
-        ]
-      block_names:
-        [
-          ["SimpleBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-        ]
-      has_bottleneck:
-        [[False, True], [True, True], [True, True], [True, True], [True, True]]
-      deformable:
-        [
-          [False, False],
-          [False, False],
-          [False, False],
-          [False, False],
-          [False, False],
-        ]
-      max_num_neighbors: [[25, 25], [25, 30], [30, 38], [38, 38], [38, 38]]
-      module_name: KPDualBlock
-    up_conv:
-      module_name: FPModule_PD
-      up_conv_nn:
-        [
-          [32*in_feat + 16*in_feat, 8*in_feat],
-          [8*in_feat + 8*in_feat, 4*in_feat],
-          [4*in_feat + 4*in_feat, 2*in_feat],
-          [2*in_feat + 2*in_feat, in_feat],
-        ]
-      skip: True
-      up_k: [1, 1, 1, 1]
-      bn_momentum:
-        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
-    mlp_cls:
-      nn: [in_feat, in_feat]
-      dropout: 0
-      bn_momentum: bn_momentum
-    loss_weights:
-      lambda_reg: 0
-
-  KPDeformableConvPaper:
-    class: kpconv.KPConvPaper
-    conv_type: "PARTIAL_DENSE"
-    use_category: ${data.use_category}
-    define_constants:
-      in_grid_size: ${data.first_subsampling}
-      in_feat: 64
-      bn_momentum: 0.02
-    down_conv:
-      down_conv_nn:
-        [
-          [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
-          [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
-          [[4*in_feat, 4*in_feat], [4*in_feat, 8*in_feat]],
-          [[8*in_feat, 8*in_feat], [8*in_feat, 16*in_feat]],
-          [[16*in_feat, 16*in_feat], [16*in_feat, 32*in_feat]],
-        ]
-      grid_size:
-        [
-          [in_grid_size, in_grid_size],
-          [2*in_grid_size, 2*in_grid_size],
-          [4*in_grid_size, 4*in_grid_size],
-          [8*in_grid_size, 8*in_grid_size],
-          [16*in_grid_size, 16*in_grid_size],
-        ]
-      prev_grid_size:
-        [
-          [in_grid_size, in_grid_size],
-          [in_grid_size, 2*in_grid_size],
-          [2*in_grid_size, 4*in_grid_size],
-          [4*in_grid_size, 8*in_grid_size],
-          [8*in_grid_size, 16*in_grid_size],
-        ]
-      block_names:
-        [
-          ["SimpleBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-        ]
-      has_bottleneck:
-        [[False, True], [True, True], [True, True], [True, True], [True, True]]
-      deformable:
-        [
-          [False, False],
-          [False, False],
-          [False, True],
-          [True, True],
-          [True, True],
-        ]
-      max_num_neighbors: [[20, 20], [20, 35], [35, 45], [45, 40], [40, 40]]
-      module_name: KPDualBlock
-    up_conv:
-      module_name: FPModule_PD
-      up_conv_nn:
-        [
-          [32*in_feat + 16*in_feat, 8*in_feat],
-          [8*in_feat + 8*in_feat, 4*in_feat],
-          [4*in_feat + 4*in_feat, 2*in_feat],
-          [2*in_feat + 2*in_feat, in_feat],
-        ]
-      skip: True
-      up_k: [3, 3, 3, 3]
-      bn_momentum:
-        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
-    mlp_cls:
-      nn: [in_feat, in_feat]
-      dropout: 0.5
-      bn_momentum: bn_momentum
-    loss_weights:
-      lambda_reg: 0
-
-  KPConvPaper_innermost:
-    class: kpconv.KPConvPaper
-    conv_type: "PARTIAL_DENSE"
+# @package models
+# KPConv: Flexible and Deformable Convolution for Point Clouds (https://arxiv.org/abs/1904.08889)
+# KPConv support format_type="[PARTIAL_DENSE | MESSAGE_PASSING]"
+KPConvPaper:
+  class: kpconv.KPConvPaper
+  conv_type: "PARTIAL_DENSE"
+  use_category: ${data.use_category}
+  define_constants:
     in_grid_size: ${data.first_subsampling}
-    define_constants:
-      in_grid_size: ${data.first_subsampling}
-      in_feat: 64
-      bn_momentum: 0.02
-    down_conv:
-      down_conv_nn:
-        [
-          [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
-          [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
-          [[4*in_feat, 4*in_feat], [4*in_feat, 8*in_feat]],
-          [[8*in_feat, 8*in_feat], [8*in_feat, 16*in_feat]],
-          [[16*in_feat, 16*in_feat], [16*in_feat, 32*in_feat]],
-        ]
-      grid_size:
-        [
-          [in_grid_size, in_grid_size],
-          [2*in_grid_size, 2*in_grid_size],
-          [4*in_grid_size, 4*in_grid_size],
-          [8*in_grid_size, 8*in_grid_size],
-          [16*in_grid_size, 16*in_grid_size],
-        ]
-      prev_grid_size:
-        [
-          [in_grid_size, in_grid_size],
-          [in_grid_size, 2*in_grid_size],
-          [2*in_grid_size, 4*in_grid_size],
-          [4*in_grid_size, 8*in_grid_size],
-          [8*in_grid_size, 16*in_grid_size],
-        ]
-      block_names:
-        [
-          ["SimpleBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-          ["ResnetBBlock", "ResnetBBlock"],
-        ]
-      has_bottleneck:
-        [[False, True], [True, True], [True, True], [True, True], [True, True]]
-      deformable:
-        [
-          [False, False],
-          [False, False],
-          [False, False],
-          [False, False],
-          [False, False],
-        ]
-      max_num_neighbors: [[20, 20], [35, 35], [50, 50], [50, 50], [50, 50]]
-      module_name: KPDualBlock
-    innermost:
-      module_name: GlobalBaseModule
-      activation:
-        name: LeakyReLU
-        negative_slope: 0.2
-      aggr: "mean"
-      nn: [32*in_feat + 3, 8*in_feat, 32*in_feat]
-    up_conv:
-      module_name: FPModule_PD
-      up_conv_nn:
-        [
-          [32*in_feat + 32*in_feat, 32*in_feat],
-          [32*in_feat + 16*in_feat, 8*in_feat],
-          [8*in_feat + 8*in_feat, 4*in_feat],
-          [4*in_feat + 4*in_feat, 2*in_feat],
-          [2*in_feat + 2*in_feat, in_feat],
-        ]
-      skip: True
-      up_k: [3, 3, 3, 3, 5]
-      bn_momentum:
-        [bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum]
-    mlp_cls:
-      nn: [in_feat, in_feat]
-      dropout: 0.5
-      bn_momentum: bn_momentum
-    loss_weights:
-      lambda_reg: 1e-6
+    in_feat: 64
+    bn_momentum: 0.02
+  down_conv:
+    n_kernel_points: 15
+    down_conv_nn:
+      [
+        [ [ FEAT + 1, in_feat ], [ in_feat, 2*in_feat ] ],
+        [ [ 2*in_feat, 2*in_feat ], [ 2*in_feat, 4*in_feat ] ],
+        [ [ 4*in_feat, 4*in_feat ], [ 4*in_feat, 8*in_feat ] ],
+        [ [ 8*in_feat, 8*in_feat ], [ 8*in_feat, 16*in_feat ] ],
+        [ [ 16*in_feat, 16*in_feat ], [ 16*in_feat, 32*in_feat ] ],
+      ]
+    grid_size:
+      [
+        [ in_grid_size, in_grid_size ],
+        [ 2*in_grid_size, 2*in_grid_size ],
+        [ 4*in_grid_size, 4*in_grid_size ],
+        [ 8*in_grid_size, 8*in_grid_size ],
+        [ 16*in_grid_size, 16*in_grid_size ],
+      ]
+    prev_grid_size:
+      [
+        [ in_grid_size, in_grid_size ],
+        [ in_grid_size, 2*in_grid_size ],
+        [ 2*in_grid_size, 4*in_grid_size ],
+        [ 4*in_grid_size, 8*in_grid_size ],
+        [ 8*in_grid_size, 16*in_grid_size ],
+      ]
+    block_names:
+      [
+        [ "SimpleBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+      ]
+    has_bottleneck:
+      [ [ False, True ], [ True, True ], [ True, True ], [ True, True ], [ True, True ] ]
+    deformable:
+      [
+        [ False, False ],
+        [ False, False ],
+        [ False, False ],
+        [ False, False ],
+        [ False, False ],
+      ]
+    max_num_neighbors: [ [ 25, 25 ], [ 25, 30 ], [ 30, 38 ], [ 38, 38 ], [ 38, 38 ] ]
+    module_name: KPDualBlock
+  up_conv:
+    module_name: FPModule_PD
+    up_conv_nn:
+      [
+        [ 32*in_feat + 16*in_feat, 8*in_feat ],
+        [ 8*in_feat + 8*in_feat, 4*in_feat ],
+        [ 4*in_feat + 4*in_feat, 2*in_feat ],
+        [ 2*in_feat + 2*in_feat, in_feat ],
+      ]
+    skip: True
+    up_k: [ 1, 1, 1, 1 ]
+    bn_momentum:
+      [ bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum ]
+  mlp_cls:
+    nn: [ in_feat, in_feat ]
+    dropout: 0
+    bn_momentum: bn_momentum
+  loss_weights:
+    lambda_reg: 0
 
-  KPConvPaper2LDMini:
-    class: kpconv.KPConvPaper
-    conv_type: "PARTIAL_DENSE"
-    use_category: ${data.use_category}
-    define_constants:
-      in_grid_size: ${data.first_subsampling}
-      in_feat: 64
-      bn_momentum: 0.02
-    down_conv:
-      down_conv_nn:
-        [
-          [[FEAT + 1, in_feat], [in_feat, 2*in_feat]],
-          [[2*in_feat, 2*in_feat], [2*in_feat, 4*in_feat]],
-        ]
-      grid_size:
-        [[in_grid_size, in_grid_size], [2*in_grid_size, 2*in_grid_size]]
-      prev_grid_size:
-        [[in_grid_size, in_grid_size], [in_grid_size, 2*in_grid_size]]
-      block_names:
-        [["SimpleBlock", "ResnetBBlock"], ["ResnetBBlock", "ResnetBBlock"]]
-      has_bottleneck: [[False, True], [True, True]]
-      deformable: [[False, False], [False, False]]
-      max_num_neighbors: [[15, 15], [15, 15]]
-      module_name: KPDualBlock
-    up_conv:
-      module_name: FPModule_PD
-      up_conv_nn: [[4*in_feat + 2*in_feat, in_feat]]
-      skip: True
-      up_k: [1, 1]
-      bn_momentum: [bn_momentum, bn_momentum]
-    mlp_cls:
-      nn: [in_feat, in_feat]
-      dropout: 0
-      bn_momentum: bn_momentum
-    loss_weights:
-      lambda_reg: 0
+KPDeformableConvPaper:
+  class: kpconv.KPConvPaper
+  conv_type: "PARTIAL_DENSE"
+  use_category: ${data.use_category}
+  define_constants:
+    in_grid_size: ${data.first_subsampling}
+    in_feat: 64
+    bn_momentum: 0.02
+  down_conv:
+    down_conv_nn:
+      [
+        [ [ FEAT + 1, in_feat ], [ in_feat, 2*in_feat ] ],
+        [ [ 2*in_feat, 2*in_feat ], [ 2*in_feat, 4*in_feat ] ],
+        [ [ 4*in_feat, 4*in_feat ], [ 4*in_feat, 8*in_feat ] ],
+        [ [ 8*in_feat, 8*in_feat ], [ 8*in_feat, 16*in_feat ] ],
+        [ [ 16*in_feat, 16*in_feat ], [ 16*in_feat, 32*in_feat ] ],
+      ]
+    grid_size:
+      [
+        [ in_grid_size, in_grid_size ],
+        [ 2*in_grid_size, 2*in_grid_size ],
+        [ 4*in_grid_size, 4*in_grid_size ],
+        [ 8*in_grid_size, 8*in_grid_size ],
+        [ 16*in_grid_size, 16*in_grid_size ],
+      ]
+    prev_grid_size:
+      [
+        [ in_grid_size, in_grid_size ],
+        [ in_grid_size, 2*in_grid_size ],
+        [ 2*in_grid_size, 4*in_grid_size ],
+        [ 4*in_grid_size, 8*in_grid_size ],
+        [ 8*in_grid_size, 16*in_grid_size ],
+      ]
+    block_names:
+      [
+        [ "SimpleBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+      ]
+    has_bottleneck:
+      [ [ False, True ], [ True, True ], [ True, True ], [ True, True ], [ True, True ] ]
+    deformable:
+      [
+        [ False, False ],
+        [ False, False ],
+        [ False, True ],
+        [ True, True ],
+        [ True, True ],
+      ]
+    max_num_neighbors: [ [ 20, 20 ], [ 20, 35 ], [ 35, 45 ], [ 45, 40 ], [ 40, 40 ] ]
+    module_name: KPDualBlock
+  up_conv:
+    module_name: FPModule_PD
+    up_conv_nn:
+      [
+        [ 32*in_feat + 16*in_feat, 8*in_feat ],
+        [ 8*in_feat + 8*in_feat, 4*in_feat ],
+        [ 4*in_feat + 4*in_feat, 2*in_feat ],
+        [ 2*in_feat + 2*in_feat, in_feat ],
+      ]
+    skip: True
+    up_k: [ 3, 3, 3, 3 ]
+    bn_momentum:
+      [ bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum ]
+  mlp_cls:
+    nn: [ in_feat, in_feat ]
+    dropout: 0.5
+    bn_momentum: bn_momentum
+  loss_weights:
+    lambda_reg: 0
+
+KPConvPaper_innermost:
+  class: kpconv.KPConvPaper
+  conv_type: "PARTIAL_DENSE"
+  in_grid_size: ${data.first_subsampling}
+  define_constants:
+    in_grid_size: ${data.first_subsampling}
+    in_feat: 64
+    bn_momentum: 0.02
+  down_conv:
+    down_conv_nn:
+      [
+        [ [ FEAT + 1, in_feat ], [ in_feat, 2*in_feat ] ],
+        [ [ 2*in_feat, 2*in_feat ], [ 2*in_feat, 4*in_feat ] ],
+        [ [ 4*in_feat, 4*in_feat ], [ 4*in_feat, 8*in_feat ] ],
+        [ [ 8*in_feat, 8*in_feat ], [ 8*in_feat, 16*in_feat ] ],
+        [ [ 16*in_feat, 16*in_feat ], [ 16*in_feat, 32*in_feat ] ],
+      ]
+    grid_size:
+      [
+        [ in_grid_size, in_grid_size ],
+        [ 2*in_grid_size, 2*in_grid_size ],
+        [ 4*in_grid_size, 4*in_grid_size ],
+        [ 8*in_grid_size, 8*in_grid_size ],
+        [ 16*in_grid_size, 16*in_grid_size ],
+      ]
+    prev_grid_size:
+      [
+        [ in_grid_size, in_grid_size ],
+        [ in_grid_size, 2*in_grid_size ],
+        [ 2*in_grid_size, 4*in_grid_size ],
+        [ 4*in_grid_size, 8*in_grid_size ],
+        [ 8*in_grid_size, 16*in_grid_size ],
+      ]
+    block_names:
+      [
+        [ "SimpleBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+        [ "ResnetBBlock", "ResnetBBlock" ],
+      ]
+    has_bottleneck:
+      [ [ False, True ], [ True, True ], [ True, True ], [ True, True ], [ True, True ] ]
+    deformable:
+      [
+        [ False, False ],
+        [ False, False ],
+        [ False, False ],
+        [ False, False ],
+        [ False, False ],
+      ]
+    max_num_neighbors: [ [ 20, 20 ], [ 35, 35 ], [ 50, 50 ], [ 50, 50 ], [ 50, 50 ] ]
+    module_name: KPDualBlock
+  innermost:
+    module_name: GlobalBaseModule
+    activation:
+      name: LeakyReLU
+      negative_slope: 0.2
+    aggr: "mean"
+    nn: [ 32*in_feat + 3, 8*in_feat, 32*in_feat ]
+  up_conv:
+    module_name: FPModule_PD
+    up_conv_nn:
+      [
+        [ 32*in_feat + 32*in_feat, 32*in_feat ],
+        [ 32*in_feat + 16*in_feat, 8*in_feat ],
+        [ 8*in_feat + 8*in_feat, 4*in_feat ],
+        [ 4*in_feat + 4*in_feat, 2*in_feat ],
+        [ 2*in_feat + 2*in_feat, in_feat ],
+      ]
+    skip: True
+    up_k: [ 3, 3, 3, 3, 5 ]
+    bn_momentum:
+      [ bn_momentum, bn_momentum, bn_momentum, bn_momentum, bn_momentum ]
+  mlp_cls:
+    nn: [ in_feat, in_feat ]
+    dropout: 0.5
+    bn_momentum: bn_momentum
+  loss_weights:
+    lambda_reg: 1e-6
+
+KPConvPaper2LDMini:
+  class: kpconv.KPConvPaper
+  conv_type: "PARTIAL_DENSE"
+  use_category: ${data.use_category}
+  define_constants:
+    in_grid_size: ${data.first_subsampling}
+    in_feat: 64
+    bn_momentum: 0.02
+  down_conv:
+    down_conv_nn:
+      [
+        [ [ FEAT + 1, in_feat ], [ in_feat, 2*in_feat ] ],
+        [ [ 2*in_feat, 2*in_feat ], [ 2*in_feat, 4*in_feat ] ],
+      ]
+    grid_size:
+      [ [ in_grid_size, in_grid_size ], [ 2*in_grid_size, 2*in_grid_size ] ]
+    prev_grid_size:
+      [ [ in_grid_size, in_grid_size ], [ in_grid_size, 2*in_grid_size ] ]
+    block_names:
+      [ [ "SimpleBlock", "ResnetBBlock" ], [ "ResnetBBlock", "ResnetBBlock" ] ]
+    has_bottleneck: [ [ False, True ], [ True, True ] ]
+    deformable: [ [ False, False ], [ False, False ] ]
+    max_num_neighbors: [ [ 15, 15 ], [ 15, 15 ] ]
+    module_name: KPDualBlock
+  up_conv:
+    module_name: FPModule_PD
+    up_conv_nn: [ [ 4*in_feat + 2*in_feat, in_feat ] ]
+    skip: True
+    up_k: [ 1, 1 ]
+    bn_momentum: [ bn_momentum, bn_momentum ]
+  mlp_cls:
+    nn: [ in_feat, in_feat ]
+    dropout: 0
+    bn_momentum: bn_momentum
+  loss_weights:
+    lambda_reg: 0
