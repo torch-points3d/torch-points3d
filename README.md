@@ -263,7 +263,7 @@ pip install pycuda
 ## Getting started: Train pointnet++ on part segmentation task for dataset shapenet
 
 ```bash
-poetry run python train.py task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet-fixed
+poetry run python train.py task=segmentation models=segmentation/pointnet2 model_name=pointnet2_charlesssg data=segmentation/shapenet-fixed
 ```
 
 And you should see something like that
