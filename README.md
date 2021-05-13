@@ -2,7 +2,7 @@
   <img width="40%" src="https://raw.githubusercontent.com/nicolas-chaulet/torch-points3d/master/docs/logo.png" />
 </p>
 
-[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest) [![slack](https://img.shields.io/badge/slack-tp3d-brightgreen)](https://join.slack.com/t/torchgeometricco/shared_invite/zt-ng0v31df-K7LicXoF3NxHKsJX3ams~w)
+[![PyPI version](https://badge.fury.io/py/torch-points3d.svg)](https://badge.fury.io/py/torch-points3d) [![codecov](https://codecov.io/gh/nicolas-chaulet/torch-points3d/branch/master/graph/badge.svg)](https://codecov.io/gh/nicolas-chaulet/torch-points3d) [![Actions Status](https://github.com/nicolas-chaulet/torch-points3d/workflows/unittest/badge.svg)](https://github.com/nicolas-chaulet/torch-points3d/actions) [![Documentation Status](https://readthedocs.org/projects/torch-points3d/badge/?version=latest)](https://torch-points3d.readthedocs.io/en/latest/?badge=latest) [![slack](https://img.shields.io/badge/slack-tp3d-brightgreen)](https://join.slack.com/t/torchgeometricco/shared_invite/zt-p6br3yuo-BxRoe36OHHLF6jYU8xHtBA)
 
 This is a framework for running common deep learning models for point cloud analysis tasks against classic benchmark. It heavily relies on [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/resources.html) and [Facebook Hydra](https://hydra.cc/).
 
@@ -76,7 +76,7 @@ where each folder contains the dataset related to each task.
 - **[PPNet (PosPool)](https://github.com/zeliu98/CloserLook3D)** from Ze Liu _et al._: [A Closer Look at Local Aggregation Operators in Point Cloud Analysis](https://arxiv.org/pdf/2007.01294.pdf) (ECCV 2020)
 - **[TorchSparse](https://github.com/mit-han-lab/torchsparse)** from Haotian Tang _et al_: [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
 - **[PVCNN](https://github.com/mit-han-lab/pvcnn)** model for semantic segmentation from Zhijian Liu _et al_:[Point-Voxel CNN for Efficient 3D Deep Learning](https://arxiv.org/abs/1907.03739)
-- **MS-SVConv** from Sofiane Horache _et al_: [3D Point Cloud Registration with Multi-Scale Architecture and Self-supervised Fine-tuning](https://arxiv.org/abs/2103.14533)
+- **[MS-SVConv](https://github.com/humanpose1/MS-SVConv)** from Sofiane Horache _et al_: [3D Point Cloud Registration with Multi-Scale Architecture and Self-supervised Fine-tuning](https://arxiv.org/abs/2103.14533)
 
 Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/latest/src/api/models.html) for accessing some of those models directly from the API and see our example notebooks for [KPconv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/PartSegmentationKPConv.ipynb) and [RSConv](https://colab.research.google.com/github/nicolas-chaulet/torch-points3d/blob/master/notebooks/ObjectClassificationRSConv.ipynb) for more details.
 
@@ -136,14 +136,14 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 # 3D Sparse convolution support
 
-We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `torchsparse` demonstrates faster training and inference on GPU but comes with limited functionalities. For example, `MinkowskiEngine` can be used **Please be aware that `torchsparse` is still in beta and does not support CPU processing only for example.**
+We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `MinkowskiEngine` [see here (thank you Chris Choy)](https://gist.github.com/chrischoy/d8e971daf8308aa1dcba1524bf1fd91a) demonstrates faster training. **Please be aware that `torchsparse` is still in beta and does not support CPU only.**
 
 Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
 
 ```python
 from torch_points3d.applications.sparseconv3d import SparseConv3d
 
-model = SparseConv3d("unet", input_nc=3, output_nc=5, num_layers=4, backbone="torchsparse") # minkowski by default
+model = SparseConv3d("unet", input_nc=3, output_nc=5, num_layers=4, backend="torchsparse") # minkowski by default
 ```
 
 You can also assemble your own networks by using the modules provided in `torch_points3d/modules/SparseConv3d/nn`. For example if you wish to use `torchsparse` backend you can do the following:
