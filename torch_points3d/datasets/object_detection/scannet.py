@@ -172,7 +172,7 @@ class ScannetDataset(BaseDataset):
         # update to OmegaConf 2.0
         use_instance_labels: bool = dataset_opt.get('use_instance_labels')
         use_instance_bboxes: bool = dataset_opt.get('use_instance_bboxes')
-        donotcare_class_ids: [] = list(dataset_opt.donotcare_class_ids) if hasattr(dataset_opt,'donotcare_class_ids') else []
+        donotcare_class_ids: [] = list(dataset_opt.get('donotcare_class_ids', []))
         max_num_point: int = dataset_opt.get('max_num_point', None)
         is_test: bool = dataset_opt.get('is_test', False)
 
