@@ -1,11 +1,11 @@
-from typing import Dict, Any, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union
 import os
 import torch
 import logging
 import copy
 import glob
 import shutil
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import DictConfig
 
 from torch_points3d.models import model_interface
 from torch_points3d.utils.colors import COLORS, colored_print
@@ -27,7 +27,7 @@ class Checkpoint:
         """
         self._check_path = checkpoint_file
         self._filled = False
-        self.run_config: Optional[Dict[str, Any]] = None
+        self.run_config: Optional[DictConfig] = None
         self.models: Dict[str, Any] = {}
         self.stats: Dict[str, List[Any]] = {"train": [], "test": [], "val": []}
         self.optimizer: Optional[Tuple[str, Any]] = None
@@ -69,7 +69,7 @@ class Checkpoint:
                 if available_checkpoints:
                     message += "\nDid you mean {}?".format(os.path.basename(available_checkpoints[0]))
                 raise ValueError(message)
-            ckp.run_config = cast(Dict[str, Any], OmegaConf.to_container(run_config))
+            ckp.run_config = run_config
             return ckp
         else:
             chkp_name = os.path.basename(checkpoint_file)
