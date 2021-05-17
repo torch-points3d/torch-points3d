@@ -1,0 +1,46 @@
+# @package models
+MS_SVCONV_B4cm_X2_3head:
+  class: ms_svconv3d.MS_SparseConvModel
+  conv_type: "SPARSE"
+  define_constants:
+    num_scales: 3
+    output_feat: 32
+  backend: "torchsparse"
+  normalize_feature: True
+  mlp_cls:
+    nn: [num_scales*output_feat, output_feat, output_feat]
+    bn_momentum: 0.05
+  output_nc: output_feat
+  option_unet:
+    input_nc: 1
+    num_scales: num_scales
+    grid_size: [0.04, 0.08, 0.16]
+    post_mlp_nn: [64, output_feat]
+    backbone:
+      down_conv:
+        module_name: ResNetDown
+        dimension: 3
+        down_conv_nn:
+          [
+            [FEAT, 32],
+            [32, 64],
+            [64, 128],
+            [128, 256]
+          ]
+        kernel_size: [5, 3, 3, 3]
+        stride: [1, 2, 2, 2]
+        dilation: [1, 1, 1, 1]
+      up_conv:
+        module_name: ResNetUp
+        dimension: 3
+        bn_momentum: 0.05
+        up_conv_nn:
+          [
+            [256, 64],
+            [64 + 128, 64],
+            [64 + 64, 64],
+            [64 + 32, 64]
+          ]
+        kernel_size: [3, 3, 3, 3]
+        stride: [2, 2, 2, 1]
+        dilation: [1, 1, 1, 1]

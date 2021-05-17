@@ -1,0 +1,116 @@
+# @package data
+task: registration
+class: test3dmatch.TestPair3DMatchDataset
+dataroot: data
+name: 3DMatch
+is_patch: False
+max_dist_overlap: 0.05
+min_overlap_ratio: 0.3
+tsdf_voxel_size: 0.006
+limit_size: 850
+depth_thresh: 4.5
+first_subsampling: 0.02
+is_online_matching: False
+min_size_block: 4
+max_size_block: 5
+num_pos_pairs: 30000
+min_points: 1000
+num_points: 5000
+tau_1: 0.1
+tau_2: 0.05
+use_ransac: False
+use_teaser: True
+use_fps: False
+sym: True
+rot_thresh: 4
+trans_thresh: 0.15
+ransac_thresh: 0.02
+noise_bound_teaser: 0.1
+pre_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+ss_transform:
+  - transform: CubeCrop
+    params:
+      c: 1
+  - transform: CubeCrop
+    params:
+      c: 1.5
+train_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [20000]
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 180
+      rot_y: 180
+      rot_z: 180
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9,1.2]
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: ShiftVoxels
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+
+val_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [20000]
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 180
+      rot_y: 180
+      rot_z: 180
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+
+test_transform:
+  - transform: SaveOriginalPosId
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'

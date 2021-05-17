@@ -1,0 +1,57 @@
+# @package data
+class: scannet.ScannetDataset
+dataset_name: "scannet-sparse"
+task: segmentation
+dataroot: data
+grid_size: 0.05
+version: "v2"
+use_instance_labels: False
+use_instance_bboxes: False
+donotcare_class_ids: []
+process_workers: 8
+apply_rotation: True
+mode: "last"
+
+train_pre_batch_collate_transform:
+  - transform: ClampBatchSize
+    params:
+      num_points: 350000
+
+train_transform:
+  - transform: ElasticDistortion
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: ${data.apply_rotation}
+      rot_x: 180
+      rot_y: 180
+      rot_z: 180
+  - transform: RandomSymmetry
+    params:
+      axis: [True, True, False]
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]
+  - transform: GridSampling3D
+    params:
+      size: ${data.grid_size}
+      quantize_coords: True
+      mode: ${data.mode}
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+
+val_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.grid_size}
+      quantize_coords: True
+      mode: ${data.mode}
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+
+test_transform: ${data.val_transform}

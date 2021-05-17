@@ -1,0 +1,149 @@
+# @package data
+task: registration
+class: testeth.ETHDataset
+name: ETH
+dataroot: data
+first_subsampling: 0.04
+max_dist_overlap: 0.05
+min_size_block: 5
+max_size_block: 7
+num_pos_pairs: 30000
+min_points: 5000
+num_points: 5000
+tau_1: 0.1
+tau_2: 0.05
+rot_thresh: 4
+trans_thresh: 0.15
+sym: True
+use_teaser: True
+noise_bound_teaser: 0.1
+pre_transforms:
+  - transform: GridSampling3D
+    params:
+      size: 0.02
+ss_transform:
+  - transform: ComposeTransform
+    params:
+      transform_options:
+        - transform: RandomParamTransform
+          params:
+            transform_name: FixedSphereDropout
+            transform_params:
+              radius:
+                min: 0.4
+                max: 1.5
+                type: "float"
+              name_ind:
+                value: "ind_sensors"
+
+        - transform: CubeCrop
+          params:
+            c: 5
+            grid_size_center: 0.02
+  - transform: ComposeTransform
+    params:
+      transform_options:
+        - transform: RandomParamTransform
+          params:
+            transform_name: FixedSphereDropout
+            transform_params:
+              radius:
+                min: 0.4
+                max: 1.5
+                type: "float"
+              name_ind:
+                value: "ind_sensors"
+
+        - transform: CubeCrop
+          params:
+            c: 5.5
+            grid_size_center: 0.02
+train_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [20000]
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05
+  - transform: LotteryTransform
+    params:
+      transform_options:
+        - transform: RandomParamTransform
+          params:
+            transform_name: PeriodicSampling
+            transform_params:
+              period:
+                min: 0.04
+                max: 0.16
+                type: "float"
+              prop:
+                min: 0.15
+                max: 0.3
+                type: "float"
+              box_multiplier:
+                value: 1
+        - transform: RandomParamTransform
+          params:
+            transform_name: PeriodicSampling
+            transform_params:
+              period:
+                min: 0.04
+                max: 0.16
+                type: "float"
+              prop:
+                min: 0.15
+                max: 0.3
+                type: "float"
+              box_multiplier:
+                value: 10
+        - transform: PeriodicSampling
+          params:
+            period: 0.1
+            prop: 1
+        - transform: PeriodicSampling
+          params:
+            period: 0.1
+            prop: 1
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 360
+      rot_y: 360
+      rot_z: 360
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9,1.2]
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: ShiftVoxels
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+test_transform:
+  - transform: SaveOriginalPosId
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
