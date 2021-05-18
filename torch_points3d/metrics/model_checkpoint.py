@@ -41,7 +41,7 @@ class Checkpoint:
         self.models = models_to_save
         self.optimizer = (optimizer.__class__.__name__, optimizer.state_dict())
         self.schedulers = {
-            scheduler_name: [OmegaConf.to_container(scheduler.scheduler_opt), scheduler.state_dict()]
+            scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
             for scheduler_name, scheduler in schedulers.items()
         }
         to_save = kwargs
@@ -202,11 +202,11 @@ class ModelCheckpoint(object):
 
     @property
     def run_config(self):
-        return self._checkpoint.run_config
+        return OmegaConf.create(self._checkpoint).run_config
 
     @property
     def data_config(self):
-        return self._checkpoint.run_config.data
+        return OmegaConf.create(self._checkpoint.run_config).data
 
     @property
     def selection_stage(self):

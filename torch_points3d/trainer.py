@@ -46,11 +46,11 @@ class Trainer:
     def _initialize_trainer(self):
         # Enable CUDNN BACKEND
         torch.backends.cudnn.enabled = self.enable_cudnn
+        self._cfg.training = self._cfg
         if not self.has_training:
             resume = False
-            self._cfg.training = self._cfg
         else:
-            resume = bool(self._cfg.training.checkpoint_dir)
+            resume = bool(self._cfg.checkpoint_dir)
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
@@ -71,6 +71,7 @@ class Trainer:
             Wandb.launch(self._cfg, self._cfg.wandb.public and self.wandb_log)
 
         # Checkpoint
+
         self._checkpoint: ModelCheckpoint = ModelCheckpoint(
             self._cfg.training.checkpoint_dir,
             self._cfg.model_name,
@@ -291,7 +292,7 @@ class Trainer:
 
     @property
     def has_training(self):
-        return getattr(self._cfg, "training", False)
+        return getattr(self._cfg, "checkpoint_dir", "")
 
     @property
     def precompute_multi_scale(self):
