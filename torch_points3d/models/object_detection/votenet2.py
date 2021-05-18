@@ -40,7 +40,7 @@ class VoteNet2(BaseModel):
         backbone_cls = getattr(models, backbone_option.model_type)
         backbone_extr_options = backbone_option.get("extra_options", {})
         self.backbone_model = backbone_cls(
-            architecture="unet", input_nc=input_nc, num_layers=4, config=backbone_option.config, **backbone_extr_options
+            architecture="unet", input_nc=input_nc, num_layers=4, config=backbone_option.get('config'), **backbone_extr_options
         )
         self._kpconv_backbone = backbone_cls.__name__ == "KPConv"
         self.is_dense_format = self.conv_type == "DENSE"

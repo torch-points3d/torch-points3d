@@ -1,81 +1,81 @@
-models:
-    pointcnn_small:
-        class: pointcnn.PointCNNSeg
-        conv_type: "MESSAGE_PASSING"
-        define_constants:
-            L1_OUT: 32
-            L2_OUT: 32
-            INNER_OUT: 64
-        down_conv:
-            module_name: PointCNNConvDown
-            inN: [2048, 768]
-            outN: [768, 384]
-            K: [8, 12]
-            D: [1, 2]
-            C1: [0, L1_OUT]
-            C2: [L1_OUT, L2_OUT]
-            hidden_channel: [64, None]
-        innermost:
-            module_name: PointCNNConvDown
-            inN: 384
-            outN: 128
-            K: 16
-            D: 2
-            C1: L2_OUT
-            C2: INNER_OUT
-        up_conv:
-            module_name: PointCNNConvUp
-            K: [16, 12, 8]
-            D: [6, 6, 6]
-            C1: [INNER_OUT, 32 + L2_OUT, 32 + L1_OUT]
-            C2: [32, 32, 32]
-        mlp_cls:
-            nn: [32, 32, 32, 32, 32]
-            dropout: 0.5
+# @package models
+pointcnn_small:
+  class: pointcnn.PointCNNSeg
+  conv_type: "MESSAGE_PASSING"
+  define_constants:
+    L1_OUT: 32
+    L2_OUT: 32
+    INNER_OUT: 64
+  down_conv:
+    module_name: PointCNNConvDown
+    inN: [ 2048, 768 ]
+    outN: [ 768, 384 ]
+    K: [ 8, 12 ]
+    D: [ 1, 2 ]
+    C1: [ 0, L1_OUT ]
+    C2: [ L1_OUT, L2_OUT ]
+    hidden_channel: [ 64, None ]
+  innermost:
+    module_name: PointCNNConvDown
+    inN: 384
+    outN: 128
+    K: 16
+    D: 2
+    C1: L2_OUT
+    C2: INNER_OUT
+  up_conv:
+    module_name: PointCNNConvUp
+    K: [ 16, 12, 8 ]
+    D: [ 6, 6, 6 ]
+    C1: [ INNER_OUT, 32 + L2_OUT, 32 + L1_OUT ]
+    C2: [ 32, 32, 32 ]
+  mlp_cls:
+    nn: [ 32, 32, 32, 32, 32 ]
+    dropout: 0.5
 
-    pointcnn_shapenet:
-        class: pointcnn.PointCNNSeg
-        conv_type: "MESSAGE_PASSING"
-        down_conv:
-            - module_name: PointCNNConvDown
-              inN: 2048
-              outN: 768
-              K: 8
-              D: 1
-              C1: 0
-              C2: 256
-              hidden_channel: 64
-            - module_name: PointCNNConvDown
-              inN: 768
-              outN: 384
-              K: 12
-              D: 2
-              C1: 256
-              C2: 256
-        innermost:
-            module_name: PointCNNConvDown
-            inN: 384
-            outN: 128
-            K: 16
-            D: 2
-            C1: 256
-            C2: 512
-        up_conv:
-            - module_name: PointCNNConvUp
-              K: 16
-              D: 6
-              C1: 512
-              C2: 256
-            - module_name: PointCNNConvUp
-              K: 12
-              D: 6
-              C1: 256
-              C2: 256
-            - module_name: PointCNNConvUp
-              K: 8
-              D: 6
-              C1: 256
-              C2: 64
-        mlp_cls:
-            nn: [64, 64, 64, 64, 64]
-            dropout: 0.5
+pointcnn_shapenet:
+  class: pointcnn.PointCNNSeg
+  conv_type: "MESSAGE_PASSING"
+  down_conv:
+    - module_name: PointCNNConvDown
+      inN: 2048
+      outN: 768
+      K: 8
+      D: 1
+      C1: 0
+      C2: 256
+      hidden_channel: 64
+    - module_name: PointCNNConvDown
+      inN: 768
+      outN: 384
+      K: 12
+      D: 2
+      C1: 256
+      C2: 256
+  innermost:
+    module_name: PointCNNConvDown
+    inN: 384
+    outN: 128
+    K: 16
+    D: 2
+    C1: 256
+    C2: 512
+  up_conv:
+    - module_name: PointCNNConvUp
+      K: 16
+      D: 6
+      C1: 512
+      C2: 256
+    - module_name: PointCNNConvUp
+      K: 12
+      D: 6
+      C1: 256
+      C2: 256
+    - module_name: PointCNNConvUp
+      K: 8
+      D: 6
+      C1: 256
+      C2: 64
+  mlp_cls:
+    nn: [ 64, 64, 64, 64, 64 ]
+    dropout: 0.5

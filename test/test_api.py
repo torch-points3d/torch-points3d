@@ -18,22 +18,6 @@ torch.manual_seed(seed)
 device = "cpu"
 
 
-class TestPretainedRegistry(unittest.TestCase):
-    def test_from_pretrained(self):
-
-        _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-1", download=True)
-        _ = PretainedRegistry.from_pretrained("pointnet2_largemsg-s3dis-2", download=True)
-        _ = PretainedRegistry.from_pretrained("minkowski-registration-3dmatch", download=True)
-        _ = PretainedRegistry.from_pretrained("minkowski-registration-kitti", download=True)
-
-    def test_registration_from_pretrained(self):
-        model = PretainedRegistry.from_pretrained("minkowski-registration-3dmatch", download=True)
-        input_nc = 1
-        dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
-        model.set_input(dataset[0], device="cpu")
-        model.forward(dataset[0])
-
-
 class TestAPIUnet(unittest.TestCase):
     def test_kpconv(self):
         from torch_points3d.applications.kpconv import KPConv

@@ -1,0 +1,7 @@
+# @package task
+defaults:
+  - /task/default
+  - override /data@_group_: panoptic/default
+  - override /models@_group_: panoptic/default
+
+name: panoptic

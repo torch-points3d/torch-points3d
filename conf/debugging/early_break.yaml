@@ -1,2 +1,2 @@
-debugging:
-  early_break: True
+# @package _group_
+early_break: True

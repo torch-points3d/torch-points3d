@@ -1,26 +1,26 @@
-sota:
-    s3dis5:
-        miou: 67.1
-        mrec: 72.8
+# @package sota
+s3dis5:
+    miou: 67.1
+    mrec: 72.8
 
-    s3dis:
-        acc: 88.2
-        macc: 81.5
-        miou: 70.6
+s3dis:
+    acc: 88.2
+    macc: 81.5
+    miou: 70.6
 
-    scannet:
-        miou: 72.5
+scannet:
+    miou: 72.5
 
-    semantic3d:
-        miou: 76.0
-        acc: 94.4
+semantic3d:
+    miou: 76.0
+    acc: 94.4
 
-    semantickitti:
-        miou: 50.3
+semantickitti:
+    miou: 50.3
 
-    modelnet40:
-        acc: 92.9
+modelnet40:
+    acc: 92.9
 
-    shapenet:
-        mciou: 85.1
-        miou: 86.4
+shapenet:
+    mciou: 85.1
+    miou: 86.4

@@ -120,8 +120,8 @@ class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
         # Last MLP
         self.mode = option.loss_mode
-        self.normalize_feature = option.normalize_feature
-        self.out_channels = option.out_channels
+        self.normalize_feature = option.get('normalize_feature', False)
+        self.out_channels = option.get('out_channels')
         self.loss_names = ["loss_reg", "loss"]
         self.metric_loss_module, self.miner_module = UnetBasedModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)

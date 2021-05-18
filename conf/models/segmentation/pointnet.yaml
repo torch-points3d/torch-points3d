@@ -1,25 +1,28 @@
-models:
-    PointNet:
-        class: pointnet.PointNet
-        conv_type: "PARTIAL_DENSE"
-        input_nc: FEAT + 3
-        input_stn:
-            local_nn: [64, 128, 1024]
-            global_nn: [1024, 512, 256]
-        local_nn_1: [64, 64]
-        feat_stn:
-            k: 64
-            local_nn: [64, 64, 128, 1024]
-            global_nn: [1024, 512, 256]
-        local_nn_2: [64, 64, 128, 1024]
-        seg_nn: [1024 + 64, 512, 256, 128, N_CLS]
+# @package models
+defaults:
+  - segmentation/default
 
-    PointNet_Features:
-        class: pointnet.SegPointNetModel
-        conv_type: "PARTIAL_DENSE"
-        pointnet:
-            local_nn: [3, 32, 64, 4]
-            global_nn: [4, 2]
-            aggr: "mean"
-            return_local_out: True
-        seg_nn: [4 + 2, 50, N_CLS]
+PointNet:
+  class: pointnet.PointNet
+  conv_type: "PARTIAL_DENSE"
+  input_nc: FEAT + 3
+  input_stn:
+    local_nn: [ 64, 128, 1024 ]
+    global_nn: [ 1024, 512, 256 ]
+  local_nn_1: [ 64, 64 ]
+  feat_stn:
+    k: 64
+    local_nn: [ 64, 64, 128, 1024 ]
+    global_nn: [ 1024, 512, 256 ]
+  local_nn_2: [ 64, 64, 128, 1024 ]
+  seg_nn: [ 1024 + 64, 512, 256, 128, N_CLS ]
+
+PointNet_Features:
+  class: pointnet.SegPointNetModel
+  conv_type: "PARTIAL_DENSE"
+  pointnet:
+    local_nn: [ 3, 32, 64, 4 ]
+    global_nn: [ 4, 2 ]
+    aggr: "mean"
+    return_local_out: True
+  seg_nn: [ 4 + 2, 50, N_CLS ]

@@ -46,7 +46,7 @@ def Minkowski(
         Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
     """
     log.warning(
-        "Minkowski API is deprecated in favor of SparseConv3d, it should be a simple drop in replacement (no change to the API)."
+        "Minkowski API is deprecated in favor of the SparseConv3d API. It should be a simple drop in replacement (no change to the API)."
     )
     factory = MinkowskiFactory(
         architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs

@@ -1,5 +1,5 @@
-lr_scheduler:
-  class: CyclicLR
-  params:
-    base_lr: ${training.optim.base_lr}
-    max_lr: 0.1
+# @package _group_
+class: CyclicLR
+params:
+  base_lr: ${training.optim.base_lr}
+  max_lr: 0.1

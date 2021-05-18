@@ -1,177 +1,177 @@
-models:
-    MinkUNet_Fragment:
-        class: minkowski.MinkowskiFragment
-        conv_type: "SPARSE"
-        loss_mode: "match"
-        down_conv:
-            module_name: Res2BlockDown
-            dimension: 3
-            bn_momentum: 0.05
-            down_conv_nn:
-                [
-                    [FEAT, 32],
-                    [32, 64],
-                    [64, 128],
-                    [128, 256]
-                ]
-            kernel_size: [5, 3, 3, 3]
-            stride: [1, 2, 2, 2]
-            dilation: [1, 1, 1, 1]
-        up_conv:
-            module_name: Res2BlockUp
-            dimension: 3
-            bn_momentum: 0.05
-            up_conv_nn:
-                [
-                    [256, 64],
-                    [64 + 128, 64],
-                    [64 + 64, 64],
-                    [64 + 32, 64, 32]
-                ]
-            kernel_size: [3, 3, 3, 1]
-            stride: [2, 2, 2, 1]
-            dilation: [1, 1, 1, 1]
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
-    MinkUNet_Fragment_pretrained:
-        class: minkowski.MinkowskiFragment
-        path_pretrained: "INSERT PATH"
-        weight_name: "latest"
-        conv_type: "SPARSE"
-        loss_mode: "match"
-        down_conv:
-            module_name: Res2BlockDown
-            dimension: 3
-            bn_momentum: 0.05
-            down_conv_nn:
-                [
-                    [FEAT, 32],
-                    [32, 64],
-                    [64, 128],
-                    [128, 256]
-                ]
-            kernel_size: [5, 3, 3, 3]
-            stride: [1, 2, 2, 2]
-            dilation: [1, 1, 1, 1]
-        up_conv:
-            module_name: Res2BlockUp
-            dimension: 3
-            bn_momentum: 0.05
-            up_conv_nn:
-                [
-                    [256, 64],
-                    [64 + 128, 64],
-                    [64 + 64, 64],
-                    [64 + 32, 64, 32]
-                ]
-            kernel_size: [3, 3, 3, 1]
-            stride: [2, 2, 2, 1]
-            dilation: [1, 1, 1, 1]
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
+# @package models
+  MinkUNet_Fragment:
+      class: minkowski.MinkowskiFragment
+      conv_type: "SPARSE"
+      loss_mode: "match"
+      down_conv:
+          module_name: Res2BlockDown
+          dimension: 3
+          bn_momentum: 0.05
+          down_conv_nn:
+              [
+                  [FEAT, 32],
+                  [32, 64],
+                  [64, 128],
+                  [128, 256]
+              ]
+          kernel_size: [5, 3, 3, 3]
+          stride: [1, 2, 2, 2]
+          dilation: [1, 1, 1, 1]
+      up_conv:
+          module_name: Res2BlockUp
+          dimension: 3
+          bn_momentum: 0.05
+          up_conv_nn:
+              [
+                  [256, 64],
+                  [64 + 128, 64],
+                  [64 + 64, 64],
+                  [64 + 32, 64, 32]
+              ]
+          kernel_size: [3, 3, 3, 1]
+          stride: [2, 2, 2, 1]
+          dilation: [1, 1, 1, 1]
+      normalize_feature: True
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4
+  MinkUNet_Fragment_pretrained:
+      class: minkowski.MinkowskiFragment
+      path_pretrained: "INSERT PATH"
+      weight_name: "latest"
+      conv_type: "SPARSE"
+      loss_mode: "match"
+      down_conv:
+          module_name: Res2BlockDown
+          dimension: 3
+          bn_momentum: 0.05
+          down_conv_nn:
+              [
+                  [FEAT, 32],
+                  [32, 64],
+                  [64, 128],
+                  [128, 256]
+              ]
+          kernel_size: [5, 3, 3, 3]
+          stride: [1, 2, 2, 2]
+          dilation: [1, 1, 1, 1]
+      up_conv:
+          module_name: Res2BlockUp
+          dimension: 3
+          bn_momentum: 0.05
+          up_conv_nn:
+              [
+                  [256, 64],
+                  [64 + 128, 64],
+                  [64 + 64, 64],
+                  [64 + 32, 64, 32]
+              ]
+          kernel_size: [3, 3, 3, 1]
+          stride: [2, 2, 2, 1]
+          dilation: [1, 1, 1, 1]
+      normalize_feature: True
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4
 
 
-    Res16UNet32B:
-        class: minkowski.Minkowski_Baseline_Model_Fragment
-        conv_type: "SPARSE"
-        model_name: "Res16UNet32B"
-        loss_mode: "match"
-        conv1_kernel_size: 5
-        out_channels: 32
-        D: 3
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
+  Res16UNet32B:
+      class: minkowski.Minkowski_Baseline_Model_Fragment
+      conv_type: "SPARSE"
+      model_name: "Res16UNet32B"
+      loss_mode: "match"
+      conv1_kernel_size: 5
+      out_channels: 32
+      D: 3
+      normalize_feature: True
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4
 
-    Res16UNet32B_FC:
-        class: minkowski.Minkowski_Baseline_Model_Fragment
-        conv_type: "SPARSE"
-        model_name: "Res16UNet32B"
-        loss_mode: "match"
-        conv1_kernel_size: 5
-        out_channels: 32
-        D: 3
-        normalize_feature: True
-        mlp_cls:
-          nn: [32]
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
+  Res16UNet32B_FC:
+      class: minkowski.Minkowski_Baseline_Model_Fragment
+      conv_type: "SPARSE"
+      model_name: "Res16UNet32B"
+      loss_mode: "match"
+      conv1_kernel_size: 5
+      out_channels: 32
+      D: 3
+      normalize_feature: True
+      mlp_cls:
+        nn: [32]
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4
 
-    Res16UNet34A:
-        class: minkowski.Minkowski_Baseline_Model_Fragment
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14A"
-        loss_mode: "match"
-        conv1_kernel_size: 5
-        out_channels: 32
-        D: 3
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
-
-
-    Res16UNet34B:
-      # to big...
-        class: minkowski.Minkowski_Baseline_Model_Fragment
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14B"
-        loss_mode: "match"
-        conv1_kernel_size: 5
-        out_channels: 32
-        D: 3
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
+  Res16UNet34A:
+      class: minkowski.Minkowski_Baseline_Model_Fragment
+      conv_type: "SPARSE"
+      model_name: "Res16UNet14A"
+      loss_mode: "match"
+      conv1_kernel_size: 5
+      out_channels: 32
+      D: 3
+      normalize_feature: True
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4
 
 
+  Res16UNet34B:
+    # to big...
+      class: minkowski.Minkowski_Baseline_Model_Fragment
+      conv_type: "SPARSE"
+      model_name: "Res16UNet14B"
+      loss_mode: "match"
+      conv1_kernel_size: 5
+      out_channels: 32
+      D: 3
+      normalize_feature: True
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4
 
-    ResUNetBN2B:
-        class: minkowski.Minkowski_Baseline_Model_Fragment
-        conv_type: "SPARSE"
-        model_name: "ResUNetBN2B"
-        loss_mode: "match"
-        in_channels: 1
-        conv1_kernel_size: 5
-        out_channels: 32
-        D: 3
-        num_pos_pairs: 1024
-        normalize_feature: True
-        metric_loss:
-          class: "ContrastiveHardestNegativeLoss"
-          params:
-            num_pos: 1024
-            num_hn_samples: 256
-            pos_thresh: 0.1
-            neg_thresh: 1.4
+
+
+  ResUNetBN2B:
+      class: minkowski.Minkowski_Baseline_Model_Fragment
+      conv_type: "SPARSE"
+      model_name: "ResUNetBN2B"
+      loss_mode: "match"
+      in_channels: 1
+      conv1_kernel_size: 5
+      out_channels: 32
+      D: 3
+      num_pos_pairs: 1024
+      normalize_feature: True
+      metric_loss:
+        class: "ContrastiveHardestNegativeLoss"
+        params:
+          num_pos: 1024
+          num_hn_samples: 256
+          pos_thresh: 0.1
+          neg_thresh: 1.4

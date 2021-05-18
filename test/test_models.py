@@ -1,4 +1,5 @@
 import unittest
+import omegaconf
 from omegaconf import OmegaConf
 import os
 import sys
@@ -34,10 +35,17 @@ device = "cpu"
 
 def load_model_config(task, model_type, model_name):
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
-    config = OmegaConf.load(models_conf)
-    config.update("model_name", model_name)
-    config.update("data.task", task)
-    config.update("data.grid_size", 1)
+    if omegaconf.__version__ == '1.4.1':
+        config = OmegaConf.load(models_conf)
+        config.update("model_name", model_name)
+        config.update("data.task", task)
+        config.update("data.grid_size", 1)
+    else:
+        config = OmegaConf.create({"models": OmegaConf.load(models_conf)})
+        OmegaConf.update(config, "model_name", model_name, merge=True)
+        OmegaConf.update(config, "data.task", task, merge=True)
+        OmegaConf.update(config, "data.grid_size", 1, merge=True)
+
     return config
 
 
@@ -142,14 +150,31 @@ class TestModels(unittest.TestCase):
 
         for type_file in self.model_type_files:
             associated_task = os.path.normpath(type_file).split(os.path.sep)[-2]
-            models_config = OmegaConf.load(type_file)
+            # models_config = OmegaConf.load(type_file)
+            models_config = OmegaConf.create({"models": OmegaConf.load(type_file)})
             models_config = OmegaConf.merge(models_config, self.data_config)
-            models_config.update("data.task", associated_task)
-            models_config.update("data.grid_size", 0.05)
-            for model_name in models_config.models.keys():
+            # Update to OmegaConf 2.0
+            if omegaconf.__version__ == '1.4.1':
+                models_config.update("data.task", associated_task)
+                models_config.update("data.grid_size", 0.05)
+            else:
+                OmegaConf.update(models_config, "data.task", associated_task, merge=True)
+                OmegaConf.update(models_config, "data.grid_size", 0.05, merge=True)
+
+            models = models_config.get("models")
+            models_keys = models.keys() if models is not None else []
+
+            for model_name in models_keys:
+                if model_name == 'defaults':
+                    # workaround for recursive defaults
+                    continue
+
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
-                        models_config.update("model_name", model_name)
+                        if omegaconf.__version__ == '1.4.1':
+                            models_config.update("model_name", model_name)
+                        else:
+                            OmegaConf.update(models_config, "model_name", model_name, merge=True)
                         # modify the backend in minkowski to have the forward
                         if is_torch_sparse_backend(model_name):
                             models_config.models[model_name].backend = "minkowski"

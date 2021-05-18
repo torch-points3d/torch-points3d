@@ -1,6 +1,6 @@
-lr_scheduler:
-  class: StepLR
-  params:
-    step_size: 10
-    gamma: 0.9
-    last_epoch: -1
+# @package _group_
+class: StepLR
+params:
+  step_size: 10
+  gamma: 0.9
+  last_epoch: -1

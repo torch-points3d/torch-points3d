@@ -110,7 +110,8 @@ class ForwardShapenetDataset(BaseDataset):
         )
 
         self._data_path = dataset_opt.dataroot
-        include_normals = dataset_opt.include_normals if dataset_opt.include_normals else True
+        # include_normals = dataset_opt.include_normals if dataset_opt.include_normals else True
+        include_normals = dataset_opt.get('include_normals', True)  # Update to OmegaConf 2.0
 
         transforms = SaveOriginalPosId()
         for t in [self.pre_transform, self.test_transform]:

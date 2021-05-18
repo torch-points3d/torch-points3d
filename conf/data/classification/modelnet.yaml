@@ -1,16 +1,18 @@
-data:
-    task: classification
-    class: modelnet.ModelNetDataset
-    name: modelnet
-    dataroot: data
-    number: 10
-    pre_transforms:
-        - transform: NormalizeScale
-        - transform: GridSampling3D
-            lparams: [0.02]
-    train_transforms:
-        - transform: FixedPoints
-            lparams: [2048]
-    test_transforms:
-        - transform: FixedPoints
-            lparams: [2048]
+# @package data
+defaults:
+    - classification/default
+
+class: modelnet.ModelNetDataset
+name: modelnet
+dataroot: data
+number: 10
+pre_transforms:
+    - transform: NormalizeScale
+    - transform: GridSampling3D
+        lparams: [0.02]
+train_transforms:
+    - transform: FixedPoints
+        lparams: [2048]
+test_transforms:
+    - transform: FixedPoints
+        lparams: [2048]

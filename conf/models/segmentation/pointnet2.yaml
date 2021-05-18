@@ -1,189 +1,191 @@
-models:
-    # PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
-    pointnet2:
-        class: pointnet2.PointNet2_MP
-        conv_type: "MESSAGE_PASSING"
-        down_conv:
-            module_name: SAModule
-            ratios: [0.2, 0.25]
-            radius: [0.2, 0.4]
-            down_conv_nn: [[FEAT + 3, 64, 64, 128], [128 + 3, 128, 128, 256]]
-            radius_num_points: [64, 64]
-        up_conv:
-            module_name: FPModule
-            up_conv_nn:
-                [
-                    [1024 + 256, 256, 256],
-                    [256 + 128, 256, 128],
-                    [128 + FEAT, 128, 128, 128],
-                ]
-            up_k: [1, 3, 3]
-            skip: True
-        innermost:
-            module_name: GlobalBaseModule
-            aggr: max
-            nn: [256 + 3, 256, 512, 1024]
-        mlp_cls:
-            nn: [128, 128, 128, 128, 128]
-            dropout: 0.5
+# @package models
+defaults:
+  - segmentation/default
+# PointNet++: Deep Hierarchical Feature Learning on Point Sets in a Metric Space (https://arxiv.org/abs/1706.02413)
+pointnet2:
+    class: pointnet2.PointNet2_MP
+    conv_type: "MESSAGE_PASSING"
+    down_conv:
+        module_name: SAModule
+        ratios: [0.2, 0.25]
+        radius: [0.2, 0.4]
+        down_conv_nn: [[FEAT + 3, 64, 64, 128], [128 + 3, 128, 128, 256]]
+        radius_num_points: [64, 64]
+    up_conv:
+        module_name: FPModule
+        up_conv_nn:
+            [
+                [1024 + 256, 256, 256],
+                [256 + 128, 256, 128],
+                [128 + FEAT, 128, 128, 128],
+            ]
+        up_k: [1, 3, 3]
+        skip: True
+    innermost:
+        module_name: GlobalBaseModule
+        aggr: max
+        nn: [256 + 3, 256, 512, 1024]
+    mlp_cls:
+        nn: [128, 128, 128, 128, 128]
+        dropout: 0.5
 
-    pointnet2ms:
-        class: pointnet2.PointNet2_MP
-        conv_type: "MESSAGE_PASSING"
-        down_conv:
-            module_name: SAModule
-            ratios: [0.25, 0.25]
-            radius: [[0.1, 0.2, 0.4], [0.4, 0.8]]
-            radius_num_points: [[32, 64, 128], [64, 128]]
-            down_conv_nn: [[FEAT+3, 64, 96, 128], [128 * 3 + 3, 128, 196, 256]]
-        up_conv:
-            module_name: FPModule
-            up_conv_nn:
-                [
-                    [1024 + 256 * 2, 256, 256],
-                    [256 + 128 * 3, 128, 128],
-                    [128 + FEAT, 128, 128],
-                ]
-            up_k: [1, 3, 3]
-            skip: True
-        innermost:
-            module_name: GlobalBaseModule
-            aggr: max
-            nn: [256* 2 + 3, 256, 512, 1024]
-        mlp_cls:
-            nn: [128, 128, 128, 128, 128]
-            dropout: 0.5
+pointnet2ms:
+    class: pointnet2.PointNet2_MP
+    conv_type: "MESSAGE_PASSING"
+    down_conv:
+        module_name: SAModule
+        ratios: [0.25, 0.25]
+        radius: [[0.1, 0.2, 0.4], [0.4, 0.8]]
+        radius_num_points: [[32, 64, 128], [64, 128]]
+        down_conv_nn: [[FEAT+3, 64, 96, 128], [128 * 3 + 3, 128, 196, 256]]
+    up_conv:
+        module_name: FPModule
+        up_conv_nn:
+            [
+                [1024 + 256 * 2, 256, 256],
+                [256 + 128 * 3, 128, 128],
+                [128 + FEAT, 128, 128],
+            ]
+        up_k: [1, 3, 3]
+        skip: True
+    innermost:
+        module_name: GlobalBaseModule
+        aggr: max
+        nn: [256* 2 + 3, 256, 512, 1024]
+    mlp_cls:
+        nn: [128, 128, 128, 128, 128]
+        dropout: 0.5
 
-    pointnet2_largemsg:
-        class: pointnet2.PointNet2_D
-        conv_type: "DENSE"
-        use_category: ${data.use_category}
-        down_conv:
-            module_name: PointNetMSGDown
-            npoint: [1024, 256, 64, 16]
-            radii: [[0.05, 0.1], [0.1, 0.2], [0.2, 0.4], [0.4, 0.8]]
-            nsamples: [[16, 32], [16, 32], [16, 32], [16, 32]]
-            down_conv_nn:
+pointnet2_largemsg:
+    class: pointnet2.PointNet2_D
+    conv_type: "DENSE"
+    use_category: ${data.use_category}
+    down_conv:
+        module_name: PointNetMSGDown
+        npoint: [1024, 256, 64, 16]
+        radii: [[0.05, 0.1], [0.1, 0.2], [0.2, 0.4], [0.4, 0.8]]
+        nsamples: [[16, 32], [16, 32], [16, 32], [16, 32]]
+        down_conv_nn:
+            [
+                [[FEAT+3, 16, 16, 32], [FEAT+3, 32, 32, 64]],
+                [[32 + 64+3, 64, 64, 128], [32 + 64+3, 64, 96, 128]],
                 [
-                    [[FEAT+3, 16, 16, 32], [FEAT+3, 32, 32, 64]],
-                    [[32 + 64+3, 64, 64, 128], [32 + 64+3, 64, 96, 128]],
-                    [
-                        [128 + 128+3, 128, 196, 256],
-                        [128 + 128+3, 128, 196, 256],
-                    ],
-                    [
-                        [256 + 256+3, 256, 256, 512],
-                        [256 + 256+3, 256, 384, 512],
-                    ],
-                ]
-        up_conv:
-            module_name: DenseFPModule
-            up_conv_nn:
+                    [128 + 128+3, 128, 196, 256],
+                    [128 + 128+3, 128, 196, 256],
+                ],
                 [
-                    [512 + 512 + 256 + 256, 512, 512],
-                    [512 + 128 + 128, 512, 512],
-                    [512 + 64 + 32, 256, 256],
-                    [256 + FEAT, 128, 128],
-                ]
-            skip: True
-        mlp_cls:
-            nn: [128, 128]
-            dropout: 0.5
+                    [256 + 256+3, 256, 256, 512],
+                    [256 + 256+3, 256, 384, 512],
+                ],
+            ]
+    up_conv:
+        module_name: DenseFPModule
+        up_conv_nn:
+            [
+                [512 + 512 + 256 + 256, 512, 512],
+                [512 + 128 + 128, 512, 512],
+                [512 + 64 + 32, 256, 256],
+                [256 + FEAT, 128, 128],
+            ]
+        skip: True
+    mlp_cls:
+        nn: [128, 128]
+        dropout: 0.5
 
-    pointnet2_charlesmsg:
-        class: pointnet2.PointNet2_D
-        conv_type: "DENSE"
-        use_category: ${data.use_category}
-        down_conv:
-            module_name: PointNetMSGDown
-            npoint: [512, 128]
-            radii: [[0.1, 0.2, 0.4], [0.4, 0.8]]
-            nsamples: [[32, 64, 128], [64, 128]]
-            down_conv_nn:
+pointnet2_charlesmsg:
+    class: pointnet2.PointNet2_D
+    conv_type: "DENSE"
+    use_category: ${data.use_category}
+    down_conv:
+        module_name: PointNetMSGDown
+        npoint: [512, 128]
+        radii: [[0.1, 0.2, 0.4], [0.4, 0.8]]
+        nsamples: [[32, 64, 128], [64, 128]]
+        down_conv_nn:
+            [
                 [
-                    [
-                        [FEAT+3, 32, 32, 64],
-                        [FEAT+3, 64, 64, 128],
-                        [FEAT+3, 64, 96, 128],
-                    ],
-                    [
-                        [64 + 128 + 128+3, 128, 128, 256],
-                        [64 + 128 + 128+3, 128, 196, 256],
-                    ],
-                ]
-        innermost:
-            module_name: GlobalDenseBaseModule
-            nn: [256 * 2 + 3, 256, 512, 1024]
-        up_conv:
-            module_name: DenseFPModule
-            up_conv_nn:
+                    [FEAT+3, 32, 32, 64],
+                    [FEAT+3, 64, 64, 128],
+                    [FEAT+3, 64, 96, 128],
+                ],
                 [
-                    [1024 + 256*2, 256, 256],
-                    [256 + 128 * 2 + 64, 256, 128],
-                    [128 + FEAT, 128, 128],
-                ]
-            skip: True
-        mlp_cls:
-            nn: [128, 128]
-            dropout: 0.5
+                    [64 + 128 + 128+3, 128, 128, 256],
+                    [64 + 128 + 128+3, 128, 196, 256],
+                ],
+            ]
+    innermost:
+        module_name: GlobalDenseBaseModule
+        nn: [256 * 2 + 3, 256, 512, 1024]
+    up_conv:
+        module_name: DenseFPModule
+        up_conv_nn:
+            [
+                [1024 + 256*2, 256, 256],
+                [256 + 128 * 2 + 64, 256, 128],
+                [128 + FEAT, 128, 128],
+            ]
+        skip: True
+    mlp_cls:
+        nn: [128, 128]
+        dropout: 0.5
 
-    pointnet2_charlesssg:
-        class: pointnet2.PointNet2_D
-        conv_type: "DENSE"
-        use_category: ${data.use_category}
-        down_conv:
-            module_name: PointNetMSGDown
-            npoint: [512, 128]
-            radii: [[0.2], [0.4]]
-            nsamples: [[64], [64]]
-            down_conv_nn: [[[FEAT + 3, 64, 64, 128]], [[128+3, 128, 128, 256]]]
-        innermost:
-            module_name: GlobalDenseBaseModule
-            nn: [256 + 3, 256, 512, 1024]
-        up_conv:
-            module_name: DenseFPModule
-            up_conv_nn:
-                [
-                    [1024 + 256, 256, 256],
-                    [256 + 128, 256, 128],
-                    [128 + FEAT, 128, 128, 128],
-                ]
-            skip: True
-        mlp_cls:
-            nn: [128, 128]
-            dropout: 0.5
+pointnet2_charlesssg:
+    class: pointnet2.PointNet2_D
+    conv_type: "DENSE"
+    use_category: ${data.use_category}
+    down_conv:
+        module_name: PointNetMSGDown
+        npoint: [512, 128]
+        radii: [[0.2], [0.4]]
+        nsamples: [[64], [64]]
+        down_conv_nn: [[[FEAT + 3, 64, 64, 128]], [[128+3, 128, 128, 256]]]
+    innermost:
+        module_name: GlobalDenseBaseModule
+        nn: [256 + 3, 256, 512, 1024]
+    up_conv:
+        module_name: DenseFPModule
+        up_conv_nn:
+            [
+                [1024 + 256, 256, 256],
+                [256 + 128, 256, 128],
+                [128 + FEAT, 128, 128, 128],
+            ]
+        skip: True
+    mlp_cls:
+        nn: [128, 128]
+        dropout: 0.5
 
-    pointnet2_indoor:
-        class: pointnet2.PointNet2_D
-        conv_type: "DENSE"
-        down_conv:
-            module_name: PointNetMSGDown
-            npoint: [2048, 1024, 512, 256]
-            radii: [[0.1, 0.2], [0.2, 0.4], [0.4, 0.8], [0.8, 1.6]]
-            nsamples: [[32, 64], [16, 32], [16, 32], [16, 32]]
-            down_conv_nn:
+pointnet2_indoor:
+    class: pointnet2.PointNet2_D
+    conv_type: "DENSE"
+    down_conv:
+        module_name: PointNetMSGDown
+        npoint: [2048, 1024, 512, 256]
+        radii: [[0.1, 0.2], [0.2, 0.4], [0.4, 0.8], [0.8, 1.6]]
+        nsamples: [[32, 64], [16, 32], [16, 32], [16, 32]]
+        down_conv_nn:
+            [
+                [[FEAT+3, 16, 16, 32], [FEAT+3, 32, 32, 64]],
+                [[32 + 64+3, 64, 64, 128], [32 + 64+3, 64, 96, 128]],
                 [
-                    [[FEAT+3, 16, 16, 32], [FEAT+3, 32, 32, 64]],
-                    [[32 + 64+3, 64, 64, 128], [32 + 64+3, 64, 96, 128]],
-                    [
-                        [128 + 128+3, 128, 196, 256],
-                        [128 + 128+3, 128, 196, 256],
-                    ],
-                    [
-                        [256 + 256+3, 256, 256, 512],
-                        [256 + 256+3, 256, 384, 512],
-                    ],
-                ]
-        up_conv:
-            module_name: DenseFPModule
-            up_conv_nn:
+                    [128 + 128+3, 128, 196, 256],
+                    [128 + 128+3, 128, 196, 256],
+                ],
                 [
-                    [512 + 512 + 256 + 256, 512, 512],
-                    [512 + 128 + 128, 512, 512],
-                    [512 + 64 + 32, 256, 256],
-                    [256 + FEAT, 128, 128],
-                ]
-            skip: True
-        mlp_cls:
-            nn: [128, 128]
-            dropout: 0.5
+                    [256 + 256+3, 256, 256, 512],
+                    [256 + 256+3, 256, 384, 512],
+                ],
+            ]
+    up_conv:
+        module_name: DenseFPModule
+        up_conv_nn:
+            [
+                [512 + 512 + 256 + 256, 512, 512],
+                [512 + 128 + 128, 512, 512],
+                [512 + 64 + 32, 256, 256],
+                [256 + FEAT, 128, 128],
+            ]
+        skip: True
+    mlp_cls:
+        nn: [128, 128]
+        dropout: 0.5

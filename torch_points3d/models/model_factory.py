@@ -17,9 +17,11 @@ def instantiate_model(config, dataset) -> BaseModel:
     tested_model_name = config.model_name
 
     # Find configs
-    model_config = getattr(config.models, tested_model_name, None)
+    models = config.get('models')
+    model_config = getattr(models, tested_model_name, None)
     if model_config is None:
-        raise Exception("The model_name {} isn t within {}".format(tested_model_name, list(config.models.keys())))
+        models_keys = models.keys() if models is not None else ""
+        raise Exception("The model_name {} isn t within {}".format(tested_model_name, list(models_keys)))
     resolve_model(model_config, dataset, task)
 
     model_class = getattr(model_config, "class")
