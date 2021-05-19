@@ -1,5 +1,6 @@
 import sys
 from torch.optim import lr_scheduler
+from omegaconf import OmegaConf
 from omegaconf.dictconfig import DictConfig
 import logging
 from torch.optim.lr_scheduler import LambdaLR
@@ -139,5 +140,5 @@ def instantiate_scheduler(optimizer, scheduler_opt):
     scheduler = scheduler_cls(optimizer, **scheduler_params)
     # used to re_create the scheduler
 
-    setattr(scheduler, "_scheduler_opt", scheduler_opt)
+    setattr(scheduler, "_scheduler_opt", OmegaConf.to_container(scheduler_opt))
     return LRScheduler(scheduler, scheduler_params, update_scheduler_on)
