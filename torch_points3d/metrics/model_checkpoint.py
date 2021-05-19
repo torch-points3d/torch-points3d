@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 import os
 import torch
 import logging
@@ -56,7 +56,7 @@ class Checkpoint:
         return self._check_path
 
     @staticmethod
-    def load(checkpoint_dir: str, checkpoint_name: str, run_config: Dict, strict=False, resume=True):
+    def load(checkpoint_dir: str, checkpoint_name: str, run_config: Any, strict=False, resume=True):
         """ Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
@@ -174,9 +174,8 @@ class ModelCheckpoint(object):
         strict=False,
     ):
         # Conversion of run_config to save a dictionary and not a pickle of omegaconf
-        self._checkpoint = Checkpoint.load(
-            load_dir, check_name, OmegaConf.to_container(copy.deepcopy(run_config)), strict=strict, resume=resume
-        )
+        rc = OmegaConf.to_container(copy.deepcopy(run_config))
+        self._checkpoint = Checkpoint.load(load_dir, check_name, run_config=rc, strict=strict, resume=resume)
         self._resume = resume
         self._selection_stage = selection_stage
 
@@ -229,7 +228,7 @@ class ModelCheckpoint(object):
         return self._checkpoint.dataset_properties
 
     @dataset_properties.setter
-    def dataset_properties(self, dataset_properties: Dict):
+    def dataset_properties(self, dataset_properties: Union[Dict[str, Any], Dict]):
         self._checkpoint.dataset_properties = dataset_properties
 
     def get_starting_epoch(self):
