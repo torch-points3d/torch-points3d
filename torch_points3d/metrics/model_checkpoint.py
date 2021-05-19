@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 import os
 import torch
 import logging
@@ -229,7 +229,7 @@ class ModelCheckpoint(object):
         return self._checkpoint.dataset_properties
 
     @dataset_properties.setter
-    def dataset_properties(self, dataset_properties: Union[Dict[str, Any], Dict]):
+    def dataset_properties(self, dataset_properties: Dict):
         self._checkpoint.dataset_properties = dataset_properties
 
     def get_starting_epoch(self):
