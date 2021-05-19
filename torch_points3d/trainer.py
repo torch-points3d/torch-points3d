@@ -46,14 +46,15 @@ class Trainer:
     def _initialize_trainer(self):
         # Enable CUDNN BACKEND
         torch.backends.cudnn.enabled = self.enable_cudnn
-        self._cfg.training = self._cfg
+
         if not self.has_training:
-            resume = False
-        else:
+            self._cfg.training = self._cfg
             resume = bool(self._cfg.checkpoint_dir)
+        else:
+            resume = bool(self._cfg.training.checkpoint_dir)
 
         # Get device
-        if self._cfg.cuda > -1 and torch.cuda.is_available():
+        if self._cfg.training.cuda > -1 and torch.cuda.is_available():
             device = "cuda"
             torch.cuda.set_device(self._cfg.training.cuda)
         else:
@@ -292,7 +293,7 @@ class Trainer:
 
     @property
     def has_training(self):
-        return getattr(self._cfg, "checkpoint_dir", "")
+        return getattr(self._cfg, "training", None)
 
     @property
     def precompute_multi_scale(self):
