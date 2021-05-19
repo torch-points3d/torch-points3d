@@ -53,7 +53,7 @@ class Trainer:
             resume = bool(self._cfg.checkpoint_dir)
 
         # Get device
-        if self._cfg.training.cuda > -1 and torch.cuda.is_available():
+        if self._cfg.cuda > -1 and torch.cuda.is_available():
             device = "cuda"
             torch.cuda.set_device(self._cfg.training.cuda)
         else:
