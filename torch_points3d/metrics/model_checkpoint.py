@@ -201,7 +201,7 @@ class ModelCheckpoint(object):
 
     @property
     def run_config(self):
-        return OmegaConf.create(self._checkpoint).run_config
+        return OmegaConf.create(self._checkpoint.run_config)
 
     @property
     def data_config(self):
