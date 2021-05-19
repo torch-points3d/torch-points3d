@@ -173,7 +173,7 @@ class ModelCheckpoint(object):
         resume=False,
         strict=False,
     ):
-        # Convertion of run_config to save a dictionary and not a pickle of omegaconf
+        # Conversion of run_config to save a dictionary and not a pickle of omegaconf
         self._checkpoint = Checkpoint.load(
             load_dir, check_name, OmegaConf.to_container(copy.deepcopy(run_config)), strict=strict, resume=resume
         )
