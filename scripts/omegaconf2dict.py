@@ -10,6 +10,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser("a simple script to convert omegaconf file to dict, you need omegaconf v 1.4.1 in order to convert files")
     parser.add_argument('-f', help='input of the .pt file', dest="file", type=str)
+    parser.add_argument('--old', help='input of the .pt file', dest="old", type=str)
     parser.add_argument('-o', help='output of the .pt file', dest="out", type=str)
     args = parser.parse_args()
     return args
@@ -40,7 +41,8 @@ if __name__ == "__main__":
 
     assert omegaconf.__version__ <= "1.4.1"
     dict_model = torch.load(args.file)
-
+    if (args.old):
+        torch.save(dict_model, args.old)
     convert(dict_model)
     torch.save(dict_model, args.out)
 
