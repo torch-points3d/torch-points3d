@@ -1,114 +1,114 @@
-data:
-  task: registration
-  class: kitti.KittiDataset
-  dataroot: data
-  name: kitti
-  self_supervised: false
-  max_time_distance: 10
-  min_dist: 20
-  max_dist_overlap: 0.45
-  min_size_block: 3
-  max_size_block: 20
-  first_subsampling: 0.3
-  is_online_matching: False
-  num_pos_pairs: 2048
-  num_points: 5000
-  tau_1: 0.5
-  tau_2: 0.05
-  use_ransac: False
-  use_teaser: True
-  sym: True
-  rot_thresh: 5
-  trans_thresh: 0.6
-  ransac_thresh: 0.3
-  noise_bound_teaser: 0.1
-  ss_transform:
-    - transform: Center
-  pre_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
+# @package data
+task: registration
+class: kitti.KittiDataset
+dataroot: data
+name: kitti
+self_supervised: false
+max_time_distance: 10
+min_dist: 20
+max_dist_overlap: 0.45
+min_size_block: 3
+max_size_block: 20
+first_subsampling: 0.3
+is_online_matching: False
+num_pos_pairs: 2048
+num_points: 5000
+tau_1: 0.5
+tau_2: 0.05
+use_ransac: False
+use_teaser: True
+sym: True
+rot_thresh: 5
+trans_thresh: 0.6
+ransac_thresh: 0.3
+noise_bound_teaser: 0.1
+ss_transform:
+  - transform: Center
+pre_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
 
-  train_transform:
-    - transform: SaveOriginalPosId
-    - transform: FixedPoints
-      lparams: [20000]
-    - transform: RandomNoise
-      params:
-        sigma: 0.05
-        clip: 0.5
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: True
-        rot_x: 2
-        rot_y: 360
-        rot_z: 2
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9,1.2]
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
-    - transform: Jitter
+train_transform:
+  - transform: SaveOriginalPosId
+  - transform: FixedPoints
+    lparams: [20000]
+  - transform: RandomNoise
+    params:
+      sigma: 0.05
+      clip: 0.5
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 2
+      rot_y: 360
+      rot_z: 2
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9,1.2]
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
+  - transform: Jitter
 
-  val_transform:
-    - transform: SaveOriginalPosId
-    - transform: Center
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: True
-        rot_x: 2
-        rot_y: 360
-        rot_z: 2
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
+val_transform:
+  - transform: SaveOriginalPosId
+  - transform: Center
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 2
+      rot_y: 360
+      rot_z: 2
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'
 
-  test_transform:
-    - transform: SaveOriginalPosId
-    - transform: Center
-    - transform: Random3AxisRotation
-      params:
-        apply_rotation: True
-        rot_x: 2
-        rot_y: 360
-        rot_z: 2
-    - transform: XYZFeature
-      params:
-        add_x: True
-        add_y: True
-        add_z: True
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
+test_transform:
+  - transform: SaveOriginalPosId
+  - transform: Center
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: True
+      rot_x: 2
+      rot_y: 360
+      rot_z: 2
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'

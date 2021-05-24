@@ -39,6 +39,7 @@ from torch_points3d.core.data_transform import (
     ClampBatchSize,
     RandomParamTransform,
     Select,
+    ComposeTransform,
 )
 from torch_points3d.core.spatial_ops import RadiusNeighbourFinder, KNNInterpolate
 from torch_points3d.utils.enums import ConvolutionFormat
@@ -457,6 +458,28 @@ class Testhelpers(unittest.TestCase):
         data = Data(pos=pos, x=x, dummy=dummy)
 
         tr = instantiate_transforms(conf).transforms[0]
+        tr(data)
+
+    def test_compose_transform(self):
+        string = """
+        - transform: ComposeTransform
+          params:
+            transform_options:
+              - transform: GridSampling3D
+                params:
+                  size: 0.1
+              - transform: RandomNoise
+                params:
+                  sigma: 0.05
+        """
+
+        conf = OmegaConf.create(string)
+
+        pos = torch.randn(10000, 3)
+        x = torch.randn(10000, 6)
+        dummy = torch.randn(10000, 6)
+        data = Data(pos=pos, x=x, dummy=dummy)
+        tr = instantiate_transforms(conf)
         tr(data)
 
 

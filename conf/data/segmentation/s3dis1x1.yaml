@@ -1,21 +1,21 @@
-data:
-    task: segmentation
-    class: s3dis.S3DIS1x1Dataset
-    dataroot: data
-    fold: 5
-    class_weight_method: "sqrt"
-    use_category: False
-    train_transforms:
-        - transform: FixedPoints
-          lparams: [4096]
-        - transform: RandomTranslate
-          params:
-              translate: 0.01
-        - transform: RandomRotate
-          params:
-              degrees: 180
-              axis: 2
+# @package data
+task: segmentation
+class: s3dis.S3DIS1x1Dataset
+dataroot: data
+fold: 5
+class_weight_method: "sqrt"
+use_category: False
+train_transforms:
+    - transform: FixedPoints
+      lparams: [4096]
+    - transform: RandomTranslate
+      params:
+          translate: 0.01
+    - transform: RandomRotate
+      params:
+          degrees: 180
+          axis: 2
 
-    test_transforms:
-        - transform: FixedPoints
-          lparams: [4096]
+test_transforms:
+    - transform: FixedPoints
+      lparams: [4096]

@@ -1,5 +1,5 @@
-lr_scheduler:
-  class: MultiStepLR
-  params:
-    milestones: [600, 1200, 1800, 3000]
-    gamma: 0.5
+# @package _group_
+class: MultiStepLR
+params:
+  milestones: [600, 1200, 1800, 3000]
+  gamma: 0.5

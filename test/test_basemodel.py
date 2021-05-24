@@ -1,5 +1,6 @@
 import unittest
 import torch
+import omegaconf
 from omegaconf import OmegaConf, DictConfig
 from torch.nn import (
     Sequential,
@@ -24,9 +25,16 @@ from torch_points3d.models.model_factory import instantiate_model
 
 def load_model_config(task, model_type, model_name):
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
-    config = OmegaConf.load(models_conf)
-    config.update("model_name", model_name)
-    config.update("data.task", task)
+
+    if omegaconf.__version__ == '1.4.1':
+        config =  OmegaConf.load(models_conf)
+        config.update("model_name", model_name)
+        config.update("data.task", task)
+    else:
+        config = OmegaConf.create({"models": OmegaConf.load(models_conf)})
+        OmegaConf.update(config, "model_name", model_name, merge=True)
+        OmegaConf.update(config, "data.task", task)
+
     return config
 
 

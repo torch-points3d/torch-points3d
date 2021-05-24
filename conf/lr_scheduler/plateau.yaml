@@ -1,4 +1,4 @@
-lr_scheduler:
-  class: ReduceLROnPlateau
-    params: 
-      mode: "min"
+# @package _group_
+class: ReduceLROnPlateau
+  params: 
+    mode: "min"

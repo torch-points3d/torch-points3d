@@ -69,6 +69,7 @@ class PointCloudFusion(object):
             return Data()
         data = Batch.from_data_list(data_list)
         delattr(data, "batch")
+        delattr(data, "ptr")
         return data
 
     def __call__(self, data_list: List[Data]):
@@ -804,10 +805,10 @@ class RandomWalkDropout(object):
         ind, dist = ball_query(data.pos, data.pos, radius=self.radius, max_num=self.max_num, mode=0)
         mask = np.ones(len(pos), dtype=bool)
         mask = rw_mask(
-            pos,
-            ind.detach().cpu().numpy(),
-            dist.detach().cpu().numpy(),
-            mask,
+            pos=pos,
+            ind=ind.detach().cpu().numpy(),
+            dist=dist.detach().cpu().numpy(),
+            mask_vertices=mask,
             num_iter=self.num_iter,
             random_ratio=self.dropout_ratio,
         )
@@ -836,7 +837,7 @@ class RandomSphereDropout(object):
         radius of the spheres
     """
 
-    def __init__(self, num_sphere: int = 10, radius: float = 5, grid_size_center: float=0.01):
+    def __init__(self, num_sphere: int = 10, radius: float = 5, grid_size_center: float = 0.01):
         self.num_sphere = num_sphere
         self.radius = radius
         self.grid_sampling = GridSampling3D(grid_size_center, mode="last")
@@ -874,10 +875,8 @@ class FixedSphereDropout(object):
     radius: float, optional
         radius of the spheres
     """
-    def __init__(self,
-                 centers: List[List[float]] = [[0, 0, 0]],
-                 name_ind=None,
-                 radius: float = 1):
+
+    def __init__(self, centers: List[List[float]] = [[0, 0, 0]], name_ind=None, radius: float = 1):
         self.centers = torch.tensor(centers)
         self.radius = radius
         self.name_ind = name_ind
@@ -885,14 +884,10 @@ class FixedSphereDropout(object):
     def __call__(self, data):
 
         if self.name_ind is None:
-            ind, dist = ball_query(data.pos, self.centers,
-                                   radius=self.radius,
-                                   max_num=-1, mode=1)
+            ind, dist = ball_query(data.pos, self.centers, radius=self.radius, max_num=-1, mode=1)
         else:
             center = data.pos[data[self.name_ind].long()]
-            ind, dist = ball_query(data.pos, center,
-                                   radius=self.radius,
-                                   max_num=-1, mode=1)
+            ind, dist = ball_query(data.pos, center, radius=self.radius, max_num=-1, mode=1)
         ind = ind[dist[:, 0] > 0]
         mask = torch.ones(len(data.pos), dtype=torch.bool)
         mask[ind[:, 0]] = False
@@ -901,8 +896,7 @@ class FixedSphereDropout(object):
         return data
 
     def __repr__(self):
-        return "{}(centers={}, radius={})".format(
-            self.__class__.__name__, self.centers, self.radius)
+        return "{}(centers={}, radius={})".format(self.__class__.__name__, self.centers, self.radius)
 
 
 class SphereCrop(object):
@@ -951,8 +945,9 @@ class CubeCrop(object):
         rotation of the cube around x axis
     """
 
-
-    def __init__(self, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180, grid_size_center: float=0.01):
+    def __init__(
+        self, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180, grid_size_center: float = 0.01
+    ):
         self.c = c
         self.random_rotation = Random3AxisRotation(rot_x=rot_x, rot_y=rot_y, rot_z=rot_z)
         self.grid_sampling = GridSampling3D(grid_size_center, mode="last")
@@ -980,7 +975,10 @@ class EllipsoidCrop(object):
     """
 
     """
-    def __init__(self, a: float = 1, b: float = 1, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180):
+
+    def __init__(
+        self, a: float = 1, b: float = 1, c: float = 1, rot_x: float = 180, rot_y: float = 180, rot_z: float = 180
+    ):
         """
         Crop with respect to an ellipsoid.
         the function of an ellipse is defined as:
@@ -1016,8 +1014,9 @@ class EllipsoidCrop(object):
         return data
 
     def __repr__(self):
-        return "{}(a={}, b={}, c={}, rotation={})".format(self.__class__.__name__, np.sqrt(self._a2), np.sqrt(self._b2), np.sqrt(self._c2), self.random_rotation)
-
+        return "{}(a={}, b={}, c={}, rotation={})".format(
+            self.__class__.__name__, np.sqrt(self._a2), np.sqrt(self._b2), np.sqrt(self._c2), self.random_rotation
+        )
 
 
 class DensityFilter(object):
@@ -1054,16 +1053,12 @@ class DensityFilter(object):
         )
 
 
-
 class IrregularSampling(object):
     """
     a sort of soft crop. the more we are far from the center, the more it is unlikely to choose the point
     """
-    def __init__(self,
-                 d_half=2.5,
-                 p=2,
-                 grid_size_center=0.1,
-                 skip_keys=[]):
+
+    def __init__(self, d_half=2.5, p=2, grid_size_center=0.1, skip_keys=[]):
 
         self.d_half = d_half
         self.p = p
@@ -1073,12 +1068,12 @@ class IrregularSampling(object):
     def __call__(self, data):
 
         data_temp = self.grid_sampling(data.clone())
-        i = torch.randint(0, len(data_temp.pos), (1, ))
+        i = torch.randint(0, len(data_temp.pos), (1,))
         center = data_temp.pos[i]
 
-        d_p = (torch.abs(data.pos - center)**self.p).sum(1)
+        d_p = (torch.abs(data.pos - center) ** self.p).sum(1)
 
-        sigma_2 = (self.d_half**self.p) / (2 * np.log(2))
+        sigma_2 = (self.d_half ** self.p) / (2 * np.log(2))
         thresh = torch.exp(-d_p / (2 * sigma_2))
 
         mask = torch.rand(len(data.pos)) < thresh
@@ -1086,8 +1081,7 @@ class IrregularSampling(object):
         return data
 
     def __repr__(self):
-        return "{}(d_half={}, p={}, skip_keys={})".format(
-            self.__class__.__name__, self.d_half, self.p, self.skip_keys)
+        return "{}(d_half={}, p={}, skip_keys={})".format(self.__class__.__name__, self.d_half, self.p, self.skip_keys)
 
 
 class PeriodicSampling(object):
@@ -1116,4 +1110,6 @@ class PeriodicSampling(object):
 
     def __repr__(self):
         return "{}(pulse={}, thresh={}, box_mullti={}, skip_keys={})".format(
-            self.__class__.__name__, self.pulse, self.thresh, self.box_multiplier, self.skip_keys)
+            self.__class__.__name__, self.pulse, self.thresh, self.box_multiplier, self.skip_keys
+        )
+

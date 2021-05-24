@@ -1,4 +1,4 @@
-lr_scheduler:
-  class: ExponentialLR
-  params:
-    gamma: 0.9885 # = 0.1**(1/200.) divide by 10 every 200 epochs
+# @package _group_
+class: ExponentialLR
+params:
+  gamma: 0.9885 # = 0.1**(1/200.) divide by 10 every 200 epochs

@@ -815,10 +815,10 @@ class ScannetDataset(BaseDataset):
 
         use_instance_labels: bool = dataset_opt.use_instance_labels
         use_instance_bboxes: bool = dataset_opt.use_instance_bboxes
-        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
-        max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point is not None else None
-        process_workers: int = dataset_opt.process_workers if dataset_opt.process_workers else 0
-        is_test: bool = dataset_opt.is_test if dataset_opt.is_test is not None else False
+        donotcare_class_ids: [] = list(dataset_opt.get('donotcare_class_ids', []))
+        max_num_point: int = dataset_opt.get('max_num_point', None)
+        process_workers: int = dataset_opt.process_workers if hasattr(dataset_opt,'process_workers') else 0
+        is_test: bool = dataset_opt.get('is_test', False)
 
         self.train_dataset = Scannet(
             self._data_path,

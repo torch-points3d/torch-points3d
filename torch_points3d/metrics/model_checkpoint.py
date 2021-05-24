@@ -1,11 +1,12 @@
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 import os
 import torch
 import logging
 import copy
 import glob
 import shutil
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf
+from omegaconf import DictConfig
 
 from torch_points3d.models import model_interface
 from torch_points3d.utils.colors import COLORS, colored_print
@@ -27,12 +28,12 @@ class Checkpoint:
         """
         self._check_path = checkpoint_file
         self._filled = False
-        self.run_config = None
+        self.run_config: Optional[Dict] = None
         self.models: Dict[str, Any] = {}
         self.stats: Dict[str, List[Any]] = {"train": [], "test": [], "val": []}
         self.optimizer: Optional[Tuple[str, Any]] = None
         self.schedulers: Dict[str, Any] = {}
-        self.dataset_properties: DictConfig = DictConfig({})
+        self.dataset_properties: Dict = {}
 
     def save_objects(self, models_to_save: Dict[str, Any], stage, current_stat, optimizer, schedulers, **kwargs):
         """ Saves checkpoint with updated mdoels for the given stage
@@ -46,6 +47,7 @@ class Checkpoint:
         to_save = kwargs
         for key, value in self.__dict__.items():
             if not key.startswith("_"):
+
                 to_save[key] = value
         torch.save(to_save, self.path)
 
@@ -54,7 +56,7 @@ class Checkpoint:
         return self._check_path
 
     @staticmethod
-    def load(checkpoint_dir: str, checkpoint_name: str, run_config: DictConfig, strict=False, resume=True):
+    def load(checkpoint_dir: str, checkpoint_name: str, run_config: Any, strict=False, resume=True):
         """ Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
@@ -96,7 +98,7 @@ class Checkpoint:
                 optimizer_cls = getattr(torch.optim, optimizer_config[0])
                 optimizer_params = {}
                 try:
-                    optimizer_params = self.run_config.training.optim.optimizer.params
+                    optimizer_params = OmegaConf.create(self.run_config).training.optim.optimizer.params
                 except:
                     pass
                 optimizer = optimizer_cls(model.parameters(), **optimizer_params)
@@ -114,12 +116,12 @@ class Checkpoint:
                 for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
-                        scheduler = instantiate_scheduler(optimizer, scheduler_opt)
+                        scheduler = instantiate_scheduler(optimizer, OmegaConf.create(scheduler_opt))
                         if load_state:
                             scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
                     elif scheduler_type == "bn_scheduler":
-                        scheduler = instantiate_bn_scheduler(model, scheduler_opt)
+                        scheduler = instantiate_bn_scheduler(model, OmegaConf.create(scheduler_opt))
                         if load_state:
                             scheduler.load_state_dict(scheduler_state)
                         schedulers_out["bn_scheduler"] = scheduler
@@ -171,16 +173,16 @@ class ModelCheckpoint(object):
         resume=False,
         strict=False,
     ):
-        self._checkpoint = Checkpoint.load(
-            load_dir, check_name, copy.deepcopy(run_config), strict=strict, resume=resume
-        )
+        # Conversion of run_config to save a dictionary and not a pickle of omegaconf
+        rc = OmegaConf.to_container(copy.deepcopy(run_config))
+        self._checkpoint = Checkpoint.load(load_dir, check_name, run_config=rc, strict=strict, resume=resume)
         self._resume = resume
         self._selection_stage = selection_stage
 
     def create_model(self, dataset, weight_name=Checkpoint._LATEST):
         if not self.is_empty:
             run_config = copy.deepcopy(self._checkpoint.run_config)
-            model = instantiate_model(run_config, dataset)
+            model = instantiate_model(OmegaConf.create(run_config), dataset)
             if hasattr(self._checkpoint, "model_props"):
                 for k, v in self._checkpoint.model_props.items():
                     setattr(model, k, v)
@@ -199,11 +201,11 @@ class ModelCheckpoint(object):
 
     @property
     def run_config(self):
-        return self._checkpoint.run_config
+        return OmegaConf.create(self._checkpoint.run_config)
 
     @property
     def data_config(self):
-        return self._checkpoint.run_config.data
+        return OmegaConf.create(self._checkpoint.run_config).data
 
     @property
     def selection_stage(self):
@@ -222,13 +224,11 @@ class ModelCheckpoint(object):
         return self._checkpoint.path
 
     @property
-    def dataset_properties(self) -> DictConfig:
+    def dataset_properties(self) -> Dict:
         return self._checkpoint.dataset_properties
 
     @dataset_properties.setter
-    def dataset_properties(self, dataset_properties: Union[Dict[str, Any], DictConfig]):
-        if isinstance(dataset_properties, dict):
-            dataset_properties = DictConfig(dataset_properties)
+    def dataset_properties(self, dataset_properties: Union[Dict[str, Any], Dict]):
         self._checkpoint.dataset_properties = dataset_properties
 
     def get_starting_epoch(self):
@@ -324,7 +324,7 @@ class ModelCheckpoint(object):
             for k, v in dataset_config.items():
                 self.data_config[k] = v
         try:
-            instantiate_model(self.run_config, self.data_config)
+            instantiate_model(OmegaConf.create(self.run_config), self.data_config)
         except:
             return False
 
