@@ -4,6 +4,7 @@ defaults:
 
 class: shapenet.ShapeNetDataset
 dataroot: data
+task: segmentation
 normal: True
 train_size: 14016 # Number of shapes in the whole training set
 use_category: True
