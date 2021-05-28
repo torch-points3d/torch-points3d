@@ -66,7 +66,7 @@ def run(cfg, model: BaseModel, dataset: BaseDataset, device, measurement_name: s
         pickle.dump(measurements, f)
 
 
-@hydra.main(config_path="conf/config.yaml")
+@hydra.main(config_path="conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
     if cfg.pretty_print:

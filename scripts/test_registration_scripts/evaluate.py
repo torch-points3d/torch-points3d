@@ -208,7 +208,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
     print(df.groupby("name_scene").mean())
 
 
-@hydra.main(config_path="../../conf/config.yaml")
+@hydra.main(config_path="../../conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 

@@ -183,7 +183,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
         match_visualizer(pcd_source, kp_s, pcd_target, kp_t, inliers[rand_ind].cpu().numpy(), radius=r, t=t)
 
 
-@hydra.main(config_path="../../conf/config.yaml", strict=False)
+@hydra.main(config_path="../../conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 

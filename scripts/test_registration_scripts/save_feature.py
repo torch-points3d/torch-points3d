@@ -94,7 +94,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
                     save(output_path, scene_name, pc_name, data.to("cpu"), features.to("cpu"))
 
 
-@hydra.main(config_path="../../conf/config.yaml")
+@hydra.main(config_path="../../conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 

@@ -52,7 +52,7 @@ def run(model: BaseModel, dataset, device, output_path):
     save(output_path, predicted)
 
 
-@hydra.main(config_path="conf/config.yaml")
+@hydra.main(config_path="conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 

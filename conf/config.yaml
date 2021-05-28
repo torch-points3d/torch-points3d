@@ -1,5 +1,4 @@
 defaults: # for loading the default.yaml config
-  - task: ???
 
   - visualization: default
   - lr_scheduler: exponential
