@@ -1,4 +1,3 @@
-# @package _group_
 class: MultiStepLR
 params:
   milestones: [600, 1200, 1800, 3000]

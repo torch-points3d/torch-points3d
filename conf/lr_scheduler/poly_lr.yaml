@@ -1,4 +1,3 @@
-# @package _group_
 class: PolyLR
 params:
   on_epoch:

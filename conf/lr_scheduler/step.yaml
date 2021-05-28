@@ -1,4 +1,3 @@
-# @package _group_
 class: StepLR
 params:
   step_size: 10
