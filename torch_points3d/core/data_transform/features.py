@@ -132,8 +132,8 @@ class AddFeatsByKeys(object):
 
     def __init__(
         self,
-        list_add_to_x: List[bool],
         feat_names: List[str],
+        list_add_to_x: List[bool] = None,
         input_nc_feats: List[Optional[int]] = None,
         stricts: List[bool] = None,
         delete_feats: List[bool] = None,
@@ -141,9 +141,15 @@ class AddFeatsByKeys(object):
 
         self._feat_names = feat_names
         self._list_add_to_x = list_add_to_x
+        if self._list_add_to_x:
+            assert len(self._list_add_to_x) == len(self._feat_names)
+        else:
+            self._list_add_to_x = [True] * len(self._feat_names)
         self._delete_feats = delete_feats
         if self._delete_feats:
             assert len(self._delete_feats) == len(self._feat_names)
+        else:
+            self._delete_feats = [True] * len(self._feat_names)
         from torch_geometric.transforms import Compose
 
         num_names = len(feat_names)
