@@ -1,0 +1,14 @@
+# @package data
+defaults:
+  - segmentation/shapenet/default
+
+use_category: True
+category: 'Cap'
+
+pre_transform: None
+common_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.grid_size}
+      mode: ${data.mode}
+      quantize_coords: True

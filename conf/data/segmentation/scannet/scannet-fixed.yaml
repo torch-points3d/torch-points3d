@@ -1,0 +1,19 @@
+# @package data
+defaults:
+  - segmentation/scannet/default
+
+num_points: 40000
+grid_size: 0.02
+
+pre_transform:
+  - transform: GridSampling3D
+    lparams: [${data.grid_size}]
+
+common_transform:
+  - transform: FixedPoints
+    lparams: [${data.num_points}]
+    params:
+      replace: False
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}

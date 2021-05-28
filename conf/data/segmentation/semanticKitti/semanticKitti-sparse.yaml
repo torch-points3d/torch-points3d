@@ -1,0 +1,17 @@
+# @package data
+defaults:
+  - segmentation/semanticKitti/default
+
+quantize: True
+
+aug_transform:
+  - transform: ElasticDistortion
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: ${data.apply_rotation}
+      rot_x: ${data.xy_random_rotation}
+      rot_y: ${data.xy_random_rotation}
+      rot_z: 180
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]

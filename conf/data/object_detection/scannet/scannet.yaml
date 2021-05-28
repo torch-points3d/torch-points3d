@@ -1,0 +1,24 @@
+# @package data
+defaults:
+  - segmentation/scannet/scannet
+  - object_detection/default
+
+use_instance_labels: True
+use_instance_bboxes: True
+features: [pos_x, pos_y, pos_z]
+num_points: 50000
+
+common_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: ${data.quantize}
+      mode: ${data.mode}
+  - transform: XYZFeature
+    params:
+      add_x: True
+      add_y: True
+      add_z: True
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}

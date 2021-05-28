@@ -1,0 +1,18 @@
+# @package data
+defaults:
+  - segmentation/scannet/scannet-sparse
+
+max_batch_points: 350000
+xy_random_rotation: 180
+features: [ones]
+
+common_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: ${data.quantize}
+      mode: ${data.mode}
+  - transform: AddOnes
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}

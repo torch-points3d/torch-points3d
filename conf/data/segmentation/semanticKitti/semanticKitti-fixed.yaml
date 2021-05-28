@@ -1,0 +1,16 @@
+# @package data
+defaults:
+  - segmentation/semanticKitti/default
+
+quantize: True
+num_points: 100000
+
+pre_transform:
+  - transform: GridSampling3D
+    lparams: [${data.grid_size}]
+
+common_transform:
+  - transform: FixedPoints
+    lparams: [${data.num_points}]
+    params:
+      replace: False

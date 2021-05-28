@@ -1,0 +1,18 @@
+# @package data
+defaults:
+  - segmentation/scannet/default
+
+num_points: 100000
+grid_size: 0.02
+
+pre_transform:
+  - transform: GridSampling3D
+    lparams: [${data.grid_size}]
+
+train_transform:
+  - "${data.aug_transform}"
+  - "${data.common_transform}"
+  - transform: FixedPoints
+    lparams: [${data.num_points}]
+    params:
+      replace: False

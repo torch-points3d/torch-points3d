@@ -4,15 +4,15 @@ defaults:
 
 class: modelnet.ModelNetDataset
 name: modelnet
-dataroot: data
 number: 10
-pre_transforms:
+grid_size: 0.02
+num_points: 2048
+
+pre_transform:
     - transform: NormalizeScale
     - transform: GridSampling3D
-        lparams: [0.02]
-train_transforms:
+        lparams: [${data.grid_size}]
+
+common_transform:
     - transform: FixedPoints
-        lparams: [2048]
-test_transforms:
-    - transform: FixedPoints
-        lparams: [2048]
+        lparams: [${data.num_points}]
