@@ -2,8 +2,9 @@
 defaults:
   - object_detection/scannet/scannet
 
-pre_transform: None
+pre_transform: []
 
 common_transform:
   - transform: FixedPoints
-    lparams: [${data.num_points}]
+    lparams: 
+      - ${data.num_points}

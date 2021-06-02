@@ -1,9 +1,12 @@
 defaults:
   - segmentation/s3dis/s3disfused
 
+num_points: 20000
+
 common_transform:
   - transform: FixedPoints
-    lparams: [20000]
+    lparams: 
+      - ${data.num_points}
   - transform: XYZFeature
     params:
       add_x: False

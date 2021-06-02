@@ -3,6 +3,7 @@ defaults:
 
 class: s3dis.S3DIS1x1Dataset
 fold: 5
+num_points: 4096
 
 aug_transform:
   - transform: RandomTranslate
@@ -15,4 +16,5 @@ aug_transform:
 
 common_transform:
   - transform: FixedPoints
-    lparams: [4096]
+    lparams: 
+        - ${data.num_points}

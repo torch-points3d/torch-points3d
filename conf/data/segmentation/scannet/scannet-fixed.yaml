@@ -7,12 +7,13 @@ grid_size: 0.02
 
 pre_transform:
   - transform: GridSampling3D
-    lparams: [${data.grid_size}]
+    lparams: 
+      - ${data.grid_size}
 
 common_transform:
   - transform: FixedPoints
-    lparams: [${data.num_points}]
     params:
+      num: ${data.num_points}
       replace: False
   - transform: AddFeatsByKeys
     params:
