@@ -14,6 +14,7 @@ from .prebatchcollate import *
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
 from omegaconf import OmegaConf
+from torch_points3d.utils.config import is_list
 
 _custom_transforms = sys.modules[__name__]
 _torch_geometric_transforms = sys.modules["torch_geometric.transforms"]
@@ -90,7 +91,10 @@ def instantiate_transforms(transform_options):
     """
     transforms = []
     for transform in transform_options:
-        transforms.append(instantiate_transform(transform))
+        if is_list(transform):
+            transforms.extend([instantiate_transform(real_transform) for real_transform in transform])
+        else:
+            transforms.append(instantiate_transform(transform))
     return T.Compose(transforms)
 
 
