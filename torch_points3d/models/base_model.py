@@ -131,7 +131,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._conv_type = conv_type
         
     def is_mixed_precision(self):
-        return self._supports_mixed and self._enable_mixed
+        return self._supports_mixed and self._enable_mixed and "cuda" in self.device.type
 
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -226,6 +226,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if self.is_mixed_precision():
             for loss_name, loss in orig_losses.items():
                 setattr(self, loss_name, loss)
+            self._grad_scale.unscale_(self._optimizer) # unscale gradients before clipping
 
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -239,7 +240,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._do_unscale_loss(orig_losses) # unscale losses to orig
 
         if self._grad_clip > 0:
-            self._grad_scale.unscale_(self._optimizer) # unscale gradients before clipping
             torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
 
         if make_optimizer_step:
