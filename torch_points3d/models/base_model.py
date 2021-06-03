@@ -233,15 +233,10 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         with torch.cuda.amp.autocast(enabled=self.is_mixed_precision()): # enable autocasting if supported
             self.forward(epoch=epoch)  # first call forward to calculate intermediate results
         
-        # print(self.is_mixed_precision())
-        # print(self.loss_seg)
         orig_losses = self._do_scale_loss() # scale losses if needed
-        # print(orig_losses)
-        # print(self.loss_seg)
         make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
         self._do_unscale_loss(orig_losses) # unscale losses to orig
-        # print(self.loss_seg)
 
         if self._grad_clip > 0:
             self._grad_scale.unscale_(self._optimizer) # unscale gradients before clipping
