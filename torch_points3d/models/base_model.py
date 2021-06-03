@@ -63,7 +63,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._grad_clip = -1
         self._grad_scale = None
         self._supports_mixed = False
-        self._enable_mixed = False
         self._update_lr_scheduler_on = "on_epoch"
         self._update_bn_scheduler_on = "on_epoch"
 
@@ -320,6 +319,12 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)
 
         # Gradient Scaling
+        self._enable_mixed = self.get_from_opt(config, ["training", "enable_mixed"], default_value=False)
+        if self._enable_mixed and not self.is_mixed_precision():
+            log.warning("Mixed precision is not supported on this model, using default precision...")
+        elif self.is_mixed_precision():
+            log.info("Model will use mixed precision")
+
         self._grad_scale = GradScaler(enabled=self.is_mixed_precision())
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):

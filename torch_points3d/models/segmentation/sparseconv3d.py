@@ -23,7 +23,6 @@ class APIModel(BaseModel):
             "unet", dataset.feature_dimension, config=option.backbone, backend=option.get("backend", "minkowski")
         )
         self._supports_mixed = sp3d.nn.backend == "torchsparse"
-        self._enable_mixed = option.enable_mixed
         self.head = nn.Sequential(nn.Linear(self.backbone.output_nc, dataset.num_classes))
         self.loss_names = ["loss_seg"]
 
@@ -37,7 +36,7 @@ class APIModel(BaseModel):
 
     def forward(self, *args, **kwargs):
         features = self.backbone(self.input).x
-        # print(features.dtype)
+        print(features.dtype)
         logits = self.head(features)
         self.output = F.log_softmax(logits, dim=-1)
         if self._weight_classes is not None:

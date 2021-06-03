@@ -3,7 +3,6 @@ ResUNet32:
   class: sparseconv3d.APIModel
   conv_type: "SPARSE"
   backend: "torchsparse"
-  enable_mixed: True
   backbone:
     define_constants:
       in_feat: 32
@@ -41,7 +40,6 @@ Res16UNet34:
   class: sparseconv3d.APIModel
   conv_type: "SPARSE"
   backend: "torchsparse"
-  enable_mixed: True
   backbone:
     define_constants:
       in_feat: 32
