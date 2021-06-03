@@ -132,7 +132,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._conv_type = conv_type
         
     def is_mixed_precision(self):
-        return self._supports_mixed && self._enable_mixed
+        return self._supports_mixed and self._enable_mixed
 
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
