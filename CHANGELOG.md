@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Migrated to Hydra 1.0 and OmegaConf 2.1 **BREAKING any checkpoint created prior to that, in particular the model zoo**
 
+### Added
+
+- Mixed precision training support for SparseConv3D models with torchsparse backend (Requires torchsparse >= 1.3.0)
+
 ## 1.3.0
 
 ### Added
