@@ -131,7 +131,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._conv_type = conv_type
         
     def is_mixed_precision(self):
-        return self._supports_mixed and self._enable_mixed and "cuda" in self.device.type
+        return self._supports_mixed and self._enable_mixed
 
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -268,7 +268,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
                         errors_ret[name] = None
         return errors_ret
 
-    def instantiate_optimizers(self, config):
+    def instantiate_optimizers(self, config, cuda_enabled=False):
         # Optimiser
         optimizer_opt = self.get_from_opt(
             config,
@@ -315,7 +315,10 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
         # Gradient Scaling
         self._enable_mixed = self.get_from_opt(config, ["training", "enable_mixed"], default_value=False)
-        if self._enable_mixed and not self.is_mixed_precision():
+        if self.is_mixed_precision() and not cuda_enabled:
+            log.warning("Mixed precision is not supported on this device, using default precision...")
+            self._enable_mixed = False
+        elif self._enable_mixed and not self._supports_mixed:
             log.warning("Mixed precision is not supported on this model, using default precision...")
         elif self.is_mixed_precision():
             log.info("Model will use mixed precision")

@@ -90,7 +90,7 @@ class Trainer:
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
             self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
-            self._model.instantiate_optimizers(self._cfg)
+            self._model.instantiate_optimizers(self._cfg, "cuda" in device)
             self._model.set_pretrained_weights()
             if not self._checkpoint.validate(self._dataset.used_properties):
                 log.warning(
