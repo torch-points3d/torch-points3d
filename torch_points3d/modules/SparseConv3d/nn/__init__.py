@@ -25,7 +25,8 @@ for val in __all__:
 def backend_valid(_backend):
     return _backend in {"torchsparse", "minkowski"}
 
-sp3d_backend = ""
+sp3d_backend = None
+
 def get_backend():
     return sp3d_backend
 
@@ -43,6 +44,7 @@ def set_backend(_backend):
     assert backend_valid(_backend)
     try:
         modules = importlib.import_module("." + _backend, __name__)  # noqa: F841
+        global sp3d_backend
         sp3d_backend = _backend
     except:
         log.exception("Could not import %s backend for sparse convolutions" % _backend)
