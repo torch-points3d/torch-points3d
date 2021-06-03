@@ -62,6 +62,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._grad_clip = -1
         self._grad_scale = None
         self._supports_mixed = False
+        self._enable_mixed = False
         self._update_lr_scheduler_on = "on_epoch"
         self._update_bn_scheduler_on = "on_epoch"
 

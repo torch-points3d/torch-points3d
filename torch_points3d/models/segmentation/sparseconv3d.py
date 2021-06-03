@@ -36,7 +36,6 @@ class APIModel(BaseModel):
 
     def forward(self, *args, **kwargs):
         features = self.backbone(self.input).x
-        print(features.dtype)
         logits = self.head(features)
         self.output = F.log_softmax(logits, dim=-1)
         if self._weight_classes is not None:
