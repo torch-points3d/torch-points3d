@@ -23,7 +23,7 @@ for val in __all__:
     exec(val + "=None")
 
 
-def set_backend(backend):
+def set_backend(_backend):
     """ Use this method to switch sparse backend dynamically. When importing this module with a wildcard such as
     from torch_points3d.modules.SparseConv3d.nn import *
     make sure that you import it again after calling this method.
@@ -34,11 +34,12 @@ def set_backend(backend):
     backend : str
         "torchsparse" or "minkowski"
     """
-    assert backend in {"torchsparse", "minkowski"}
+    assert _backend in {"torchsparse", "minkowski"}
     try:
-        modules = importlib.import_module("." + backend, __name__)  # noqa: F841
+        modules = importlib.import_module("." + _backend, __name__)  # noqa: F841
+        backend = _backend
     except:
-        log.exception("Could not import %s backend for sparse convolutions" % backend)
+        log.exception("Could not import %s backend for sparse convolutions" % _backend)
     for val in __all__:
         exec("globals()['%s'] = modules.%s" % (val, val))
 

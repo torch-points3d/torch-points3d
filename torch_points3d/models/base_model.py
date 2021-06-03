@@ -5,6 +5,7 @@ import os
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+from torch.cuda.amp import GradScaler, autocast
 import logging
 from collections import defaultdict
 from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
@@ -60,6 +61,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
+        self._grad_scale = None
+        self._supports_mixed = False
+        self._enable_mixed = False
         self._update_lr_scheduler_on = "on_epoch"
         self._update_bn_scheduler_on = "on_epoch"
 
@@ -126,6 +130,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     @conv_type.setter
     def conv_type(self, conv_type):
         self._conv_type = conv_type
+        
+    def is_mixed_precision(self):
+        return self._supports_mixed && self._enable_mixed
 
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -207,18 +214,42 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         else:
             raise Exception("The attributes {} should be defined within self".format(update_scheduler_on))
 
+    def _do_scale_loss(self):
+        orig_losses = {}
+        if self.is_mixed_precision():
+            for loss_name in self.loss_names:
+                loss = getattr(self, loss_name)
+                orig_losses[loss_name] = loss.detach()
+                setattr(self, loss_name, self._grad_scale.scale(loss))
+        return orig_losses
+
+    def _do_unscale_loss(self, orig_losses):
+        if self.is_mixed_precision():
+            for loss_name, loss in orig_losses.items():
+                setattr(self, loss_name, loss)
+
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
 
-        self.forward(epoch=epoch)  # first call forward to calculate intermediate results
+        with autocast(enabled=self.is_mixed_precision()): # enable autocasting if supported
+            self.forward(epoch=epoch)  # first call forward to calculate intermediate results
+        
+        # print(self.is_mixed_precision())
+        # print(self.loss_seg)
+        orig_losses = self._do_scale_loss() # scale losses if needed
+        # print(orig_losses)
+        # print(self.loss_seg)
         make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
+        self._do_unscale_loss(orig_losses) # unscale losses to orig
+        # print(self.loss_seg)
 
         if self._grad_clip > 0:
+            self._grad_scale.unscale_(self._optimizer) # unscale gradients before clipping
             torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
 
         if make_optimizer_step:
-            self._optimizer.step()  # update parameters
+            self._grad_scale.step(self._optimizer)  # update parameters
 
         if self._lr_scheduler:
             self._do_scheduler_update("_update_lr_scheduler_on", self._lr_scheduler, epoch, batch_size)
@@ -226,6 +257,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if self._bn_scheduler:
             self._do_scheduler_update("_update_bn_scheduler_on", self._bn_scheduler, epoch, batch_size)
 
+        self._grad_scale.update() # update scaling
         self._num_epochs = epoch
         self._num_batches += 1
         self._num_samples += batch_size
@@ -286,6 +318,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
         # Gradient clipping
         self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)
+
+        # Gradient Scaling
+        self._grad_scale = GradScaler(enabled=self.is_mixed_precision())
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
         loss = 0
