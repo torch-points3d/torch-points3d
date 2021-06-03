@@ -5,7 +5,6 @@ import os
 import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
-from torch.cuda.amp import GradScaler, autocast
 import logging
 from collections import defaultdict
 from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
@@ -230,7 +229,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
 
-        with autocast(enabled=self.is_mixed_precision()): # enable autocasting if supported
+        with torch.cuda.amp.autocast(enabled=self.is_mixed_precision()): # enable autocasting if supported
             self.forward(epoch=epoch)  # first call forward to calculate intermediate results
         
         # print(self.is_mixed_precision())
@@ -325,7 +324,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         elif self.is_mixed_precision():
             log.info("Model will use mixed precision")
 
-        self._grad_scale = GradScaler(enabled=self.is_mixed_precision())
+        self._grad_scale = torch.cuda.amp.GradScaler(enabled=self.is_mixed_precision())
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
         loss = 0
