@@ -1,5 +1,5 @@
+# @package _global_
 # Ref: https://github.com/chrischoy/SpatioTemporalSegmentation/blob/master/config.py
-# @package training
 epochs: 500
 num_workers: 4
 batch_size: 12
