@@ -60,6 +60,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self._schedulers = {}
         self._accumulated_gradient_step = None
         self._grad_clip = -1
+        self._grad_scale = None
+        self._supports_mixed = False
+        self._enable_mixed = False
         self._update_lr_scheduler_on = "on_epoch"
         self._update_bn_scheduler_on = "on_epoch"
 
@@ -126,6 +129,9 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     @conv_type.setter
     def conv_type(self, conv_type):
         self._conv_type = conv_type
+        
+    def is_mixed_precision(self):
+        return self._supports_mixed and self._enable_mixed
 
     def set_input(self, input, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
@@ -207,18 +213,37 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         else:
             raise Exception("The attributes {} should be defined within self".format(update_scheduler_on))
 
+    def _do_scale_loss(self):
+        orig_losses = {}
+        if self.is_mixed_precision():
+            for loss_name in self.loss_names:
+                loss = getattr(self, loss_name)
+                orig_losses[loss_name] = loss.detach()
+                setattr(self, loss_name, self._grad_scale.scale(loss))
+        return orig_losses
+
+    def _do_unscale_loss(self, orig_losses):
+        if self.is_mixed_precision():
+            for loss_name, loss in orig_losses.items():
+                setattr(self, loss_name, loss)
+            self._grad_scale.unscale_(self._optimizer) # unscale gradients before clipping
+
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
 
-        self.forward(epoch=epoch)  # first call forward to calculate intermediate results
+        with torch.cuda.amp.autocast(enabled=self.is_mixed_precision()): # enable autocasting if supported
+            self.forward(epoch=epoch)  # first call forward to calculate intermediate results
+        
+        orig_losses = self._do_scale_loss() # scale losses if needed
         make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
+        self._do_unscale_loss(orig_losses) # unscale losses to orig
 
         if self._grad_clip > 0:
             torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
 
         if make_optimizer_step:
-            self._optimizer.step()  # update parameters
+            self._grad_scale.step(self._optimizer)  # update parameters
 
         if self._lr_scheduler:
             self._do_scheduler_update("_update_lr_scheduler_on", self._lr_scheduler, epoch, batch_size)
@@ -226,6 +251,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if self._bn_scheduler:
             self._do_scheduler_update("_update_bn_scheduler_on", self._bn_scheduler, epoch, batch_size)
 
+        self._grad_scale.update() # update scaling
         self._num_epochs = epoch
         self._num_batches += 1
         self._num_samples += batch_size
@@ -242,7 +268,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
                         errors_ret[name] = None
         return errors_ret
 
-    def instantiate_optimizers(self, config):
+    def instantiate_optimizers(self, config, cuda_enabled=False):
         # Optimiser
         optimizer_opt = self.get_from_opt(
             config,
@@ -286,6 +312,18 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
         # Gradient clipping
         self._grad_clip = self.get_from_opt(config, ["training", "optim", "grad_clip"], default_value=-1)
+
+        # Gradient Scaling
+        self._enable_mixed = self.get_from_opt(config, ["training", "enable_mixed"], default_value=False)
+        if self.is_mixed_precision() and not cuda_enabled:
+            log.warning("Mixed precision is not supported on this device, using default precision...")
+            self._enable_mixed = False
+        elif self._enable_mixed and not self._supports_mixed:
+            log.warning("Mixed precision is not supported on this model, using default precision...")
+        elif self.is_mixed_precision():
+            log.info("Model will use mixed precision")
+
+        self._grad_scale = torch.cuda.amp.GradScaler(enabled=self.is_mixed_precision())
 
     def get_regularization_loss(self, regularizer_type="L2", **kwargs):
         loss = 0
