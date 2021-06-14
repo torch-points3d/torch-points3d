@@ -136,7 +136,7 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 # 3D Sparse convolution support
 
-We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `MinkowskiEngine` [see here (thank you Chris Choy)](https://gist.github.com/chrischoy/d8e971daf8308aa1dcba1524bf1fd91a) demonstrates faster training. **Please be aware that `torchsparse` is still in beta and does not support CPU only.**
+We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `MinkowskiEngine` [see here (thank you Chris Choy)](https://gist.github.com/chrischoy/d8e971daf8308aa1dcba1524bf1fd91a) demonstrates faster training. **Please be aware that `torchsparse` is still in beta and does not support CPU only training.**
 
 Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
 
@@ -155,6 +155,16 @@ sp3d.nn.set_backend("torchsparse")
 conv = sp3d.nn.Conv3d(10, 10)
 bn = sp3d.nn.BatchNorm(10)
 ```
+
+### Mixed Precision Training
+
+Mixed precision allows for lower memory on the GPU and slightly faster training times by performing the sparse convolution, pooling, and gradient ops in `float16`. Mixed precision training is currently supported for CUDA training on `SparseConv3d` networks with the [torchsparse](https://github.com/mit-han-lab/torchsparse) backend. To enable mixed precision, ensure you have the latest version of torchsparse with `pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git`. Then, set `training.enable_mixed=True` in your training configuration files. If all the conditions are met, when you start training you will see a log entry stating: 
+
+`[torch_points3d.models.base_model][INFO] - Model will use mixed precision`
+
+If, however, you try to use mixed precision training with an unsupported backend, you will see:
+
+`[torch_points3d.models.base_model][WARNING] - Mixed precision is not supported on this model, using default precision...`
 
 # Adding your model to the PretrainedRegistry.
 
