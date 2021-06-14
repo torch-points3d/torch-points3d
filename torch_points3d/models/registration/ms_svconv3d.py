@@ -214,7 +214,7 @@ class MS_SparseConv3d_Shared(BaseMS_SparseConv3d):
             )
 
         # Intermediate loss
-        if option.intermediate_loss is not None:
+        if getattr(option, "intermediate_loss", None) is not None:
             int_loss_option = option.intermediate_loss
             self.int_metric_loss, _ = FragmentBaseModel.get_metric_loss_and_miner(
                 getattr(int_loss_option, "metric_loss", None), getattr(int_loss_option, "miner", None)
