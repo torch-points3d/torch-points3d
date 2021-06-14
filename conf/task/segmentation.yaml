@@ -1,0 +1,7 @@
+# @package task
+defaults:
+  - /task/default
+  - override /data@_group_: segmentation/default
+  - override /models@_group_: segmentation/default
+
+name: segmentation

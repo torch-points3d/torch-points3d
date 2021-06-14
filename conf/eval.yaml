@@ -1,18 +1,23 @@
-num_workers: 1
+defaults: 
+  - visualization: eval
+
+num_workers: 0
 batch_size: 1
-cuda: 6
+cuda: 0
 weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
 enable_cudnn: True
-checkpoint_dir: "/home/ChauletN/torch-points3d/outputs/2020-09-22/17-06-39" # "{your_path}/outputs/2020-01-28/11-04-13" for example
-model_name: Res16UNet34C
+checkpoint_dir: "/local/torch-points3d/outputs/2021-06-01/11-53-23" # "{your_path}/outputs/2020-01-28/11-04-13" for example
+model_name: pointnet2_charlesssg
 precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
 enable_dropout: False
 voting_runs: 1
 
 tracker_options: # Extra options for the tracker
   full_res: False
-  make_submission: False
+  make_submission: True
 
 hydra:
   run:
     dir: ${checkpoint_dir}/eval/${now:%Y-%m-%d_%H-%M-%S}
+
+

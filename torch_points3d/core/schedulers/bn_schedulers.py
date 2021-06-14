@@ -1,4 +1,5 @@
 from typing import *
+from omegaconf import OmegaConf
 from torch import nn
 import logging
 
@@ -94,9 +95,9 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt):
                               opt.params contains the scheduler_params to construct the scheduler
     See https://pytorch.org/docs/stable/optim.html for more details.
     """
-    update_scheduler_on = bn_scheduler_opt.update_scheduler_on
-    bn_scheduler_params = bn_scheduler_opt.params
-    if bn_scheduler_opt.bn_policy == "step_decay":
+    update_scheduler_on = bn_scheduler_opt.get("update_scheduler_on")
+    bn_scheduler_params = bn_scheduler_opt.get("params")
+    if bn_scheduler_opt.get("bn_policy") == "step_decay":
         bn_lambda = lambda e: max(
             bn_scheduler_params.bn_momentum
             * bn_scheduler_params.bn_decay ** (int(e // bn_scheduler_params.decay_step)),
@@ -107,5 +108,5 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt):
         return NotImplementedError("bn_policy [%s] is not implemented", bn_scheduler_opt.bn_policy)
 
     bn_scheduler = BNMomentumScheduler(model, bn_lambda, update_scheduler_on)
-    bn_scheduler.scheduler_opt = bn_scheduler_opt
+    bn_scheduler.scheduler_opt = OmegaConf.to_container(bn_scheduler_opt)
     return bn_scheduler

@@ -22,13 +22,13 @@ We are going to go through the successive steps to do so:
     :depth: 1
 
 
-Let's go through those steps together and in order to go further we highly recommend that you take a look at Before starting, we strongly advice to read the `Creating Your Own Datasets <https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html>`_ from **Pytorch Geometric**.
+Let's go through those steps together and in order to go further, we strongly advice to read the `Creating Your Own Datasets <https://pytorch-geometric.readthedocs.io/en/latest/notes/create_dataset.html>`_ from **Pytorch Geometric**.
 
 Create a dataset that the framework recognises
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The framework provides a base class for datasets that needs to be sub classed when you add your own.
-We also follow the convention that the ``.py`` file that describes a dataset for segmentation will leave in the ``torch_points3d/datasets/segmentation`` folder.
+We also follow the convention that the ``.py`` file that describes a dataset for segmentation will live in the ``torch_points3d/datasets/segmentation`` folder.
 For another task such as classification it would go in ``torch_points3d/datasets/classification``.
 
 Start by creating a new file ``torch_points3d/datasets/segmentation/s3dis.py`` with the class ``S3DISDataset``, it should inherit from ``BaseDataset``.
@@ -82,7 +82,7 @@ Let's explain the code more in details there.
 This instantiates the parent class based on a given configuration ``dataset_opt`` (see :ref:`config_ref`) and this does few things for you:
 
 * Sets the path to the data, by convention it will be ``dataset_opt.dataroot/s3dis/`` in our case (name of the class without Dataset)
-* Extracts from the configuration the transforms that should be applied to you data before giving it to the model
+* Extracts from the configuration the transforms that should be applied to your data before giving it to the model
 
 
 Next comes the instantiation of the actual datasets that will be used for training and testing.

@@ -4,7 +4,7 @@ import torch
 import hydra
 import time
 import logging
-from omegaconf import OmegaConf
+
 from tqdm.auto import tqdm
 import wandb
 
@@ -46,9 +46,10 @@ class Trainer:
     def _initialize_trainer(self):
         # Enable CUDNN BACKEND
         torch.backends.cudnn.enabled = self.enable_cudnn
+
         if not self.has_training:
-            resume = False
             self._cfg.training = self._cfg
+            resume = bool(self._cfg.checkpoint_dir)
         else:
             resume = bool(self._cfg.training.checkpoint_dir)
 
@@ -71,6 +72,7 @@ class Trainer:
             Wandb.launch(self._cfg, self._cfg.wandb.public and self.wandb_log)
 
         # Checkpoint
+
         self._checkpoint: ModelCheckpoint = ModelCheckpoint(
             self._cfg.training.checkpoint_dir,
             self._cfg.model_name,
@@ -88,7 +90,7 @@ class Trainer:
         else:
             self._dataset: BaseDataset = instantiate_dataset(self._cfg.data)
             self._model: BaseModel = instantiate_model(copy.deepcopy(self._cfg), self._dataset)
-            self._model.instantiate_optimizers(self._cfg)
+            self._model.instantiate_optimizers(self._cfg, "cuda" in device)
             self._model.set_pretrained_weights()
             if not self._checkpoint.validate(self._dataset.used_properties):
                 log.warning(
@@ -244,7 +246,8 @@ class Trainer:
                     for data in tq_loader:
                         with torch.no_grad():
                             self._model.set_input(data, self._device)
-                            self._model.forward(epoch=epoch)
+                            with torch.cuda.amp.autocast(enabled=self._model.is_mixed_precision()):
+                                self._model.forward(epoch=epoch)
                             self._tracker.track(self._model, data=data, **self.tracker_options)
                         tq_loader.set_postfix(**self._tracker.get_metrics(), color=COLORS.TEST_COLOR)
 
@@ -291,7 +294,7 @@ class Trainer:
 
     @property
     def has_training(self):
-        return getattr(self._cfg, "training", False)
+        return getattr(self._cfg, "training", None)
 
     @property
     def precompute_multi_scale(self):

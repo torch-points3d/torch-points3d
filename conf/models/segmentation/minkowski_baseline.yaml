@@ -1,158 +1,158 @@
-models:
-    # Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngine/blob/master/examples/minkunet.py
-    MinkUNet14A:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet14A"
-        D: 3
+# @package models
+# Minkowski Engine: https://github.com/StanfordVL/MinkowskiEngine/blob/master/examples/minkunet.py
+MinkUNet14A:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet14A"
+  D: 3
 
-    MinkUNet14B:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet14B"
-        D: 3
+MinkUNet14B:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet14B"
+  D: 3
 
-    MinkUNet14C:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet14C"
-        D: 3
+MinkUNet14C:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet14C"
+  D: 3
 
-    MinkUNet14D:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet14D"
-        D: 3
+MinkUNet14D:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet14D"
+  D: 3
 
-    MinkUNet18A:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet18A"
-        D: 3
+MinkUNet18A:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet18A"
+  D: 3
 
-    MinkUNet18B:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet18B"
-        D: 3
+MinkUNet18B:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet18B"
+  D: 3
 
-    MinkUNet18D:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet18D"
-        D: 3
+MinkUNet18D:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet18D"
+  D: 3
 
-    MinkUNet34A:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet34A"
-        D: 3
+MinkUNet34A:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet34A"
+  D: 3
 
-    MinkUNet34B:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet34B"
-        D: 3
+MinkUNet34B:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet34B"
+  D: 3
 
-    MinkUNet34C:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "MinkUNet34C"
-        D: 3
+MinkUNet34C:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "MinkUNet34C"
+  D: 3
 
-    Res16UNet14:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14"
-        D: 3
+Res16UNet14:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14"
+  D: 3
 
-    Res16UNet18:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet18"
-        D: 3
+Res16UNet18:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet18"
+  D: 3
 
-    Res16UNet34:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet34"
-        D: 3
+Res16UNet34:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet34"
+  D: 3
 
-    Res16UNet14A:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14A"
-        D: 3
+Res16UNet14A:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14A"
+  D: 3
 
-    Res16UNet14A2:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14A2"
-        D: 3
+Res16UNet14A2:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14A2"
+  D: 3
 
-    Res16UNet14B:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14B"
-        D: 3
+Res16UNet14B:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14B"
+  D: 3
 
-    Res16UNet14B2:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14B2"
-        D: 3
+Res16UNet14B2:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14B2"
+  D: 3
 
-    Res16UNet14B3:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14B3"
-        D: 3
+Res16UNet14B3:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14B3"
+  D: 3
 
-    Res16UNet14C:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14C"
-        D: 3
+Res16UNet14C:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14C"
+  D: 3
 
-    Res16UNet14D:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet14D"
-        D: 3
+Res16UNet14D:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet14D"
+  D: 3
 
-    Res16UNet18A:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet18A"
-        D: 3
+Res16UNet18A:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet18A"
+  D: 3
 
-    Res16UNet18B:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet18B"
-        D: 3
+Res16UNet18B:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet18B"
+  D: 3
 
-    Res16UNet18D:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet18D"
-        D: 3
+Res16UNet18D:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet18D"
+  D: 3
 
-    Res16UNet34A:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet34A"
-        D: 3
+Res16UNet34A:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet34A"
+  D: 3
 
-    Res16UNet34B:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet34B"
-        D: 3
+Res16UNet34B:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet34B"
+  D: 3
 
-    Res16UNet34C:
-        class: minkowski.Minkowski_Baseline_Model
-        conv_type: "SPARSE"
-        model_name: "Res16UNet34C"
-        extra_options:
-            conv1_kernel_size: 5
+Res16UNet34C:
+  class: minkowski.Minkowski_Baseline_Model
+  conv_type: "SPARSE"
+  model_name: "Res16UNet34C"
+  extra_options:
+    conv1_kernel_size: 5

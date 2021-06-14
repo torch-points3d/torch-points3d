@@ -1,63 +1,65 @@
-data:
-  class: scannet.ScannetDataset
-  dataset_name: "scannet-sparse"
-  task: panoptic
-  dataroot: data
-  version: "v2"
-  use_instance_labels: True
-  donotcare_class_ids: []
-  process_workers: 8
+defaults:
+  - panoptic/default
 
-  grid_size: 0.05
-  mode: last
+class: scannet.ScannetDataset
+dataset_name: "scannet-sparse"
+task: panoptic
+dataroot: data
+version: "v2"
+use_instance_labels: True
+donotcare_class_ids: []
+process_workers: 8
 
-  pre_transform:
-    - transform: GridSampling3D
-      lparams: [0.02]
+grid_size: 0.05
+mode: last
 
-  train_transform:
-    - transform: RandomNoise
-      params:
-        sigma: 0.01
-        clip: 0.05
-    - transform: RandomScaleAnisotropic
-      params:
-        scales: [0.9, 1.1]
-    - transform: Random3AxisRotation
-      params:
-        rot_x: 2
-        rot_y: 2
-        rot_z: 180
-    - transform: GridSampling3D
-      params:
-        size: ${data.grid_size}
-        quantize_coords: True
-        mode: ${data.mode}
-    - transform: FixedPoints
-      lparams: [100000]
-      params:
-        replace: False
-    - transform: ShiftVoxels
-    - transform: AddFeatsByKeys
-      params:
-        list_add_to_x: [True]
-        feat_names: ["rgb"]
-        delete_feats: [True]
+pre_transform:
+  - transform: GridSampling3D
+    lparams: [0.02]
 
-  val_transform:
-    - transform: GridSampling3D
-      params:
-        size: ${data.grid_size}
-        quantize_coords: True
-        mode: ${data.mode}
-    - transform: FixedPoints
-      lparams: [100000]
-      params:
-        replace: False
-    - transform: AddFeatsByKeys
-      params:
-        list_add_to_x: [True]
-        feat_names: ["rgb"]
-        delete_feats: [True]
+train_transform:
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]
+  - transform: Random3AxisRotation
+    params:
+      rot_x: 2
+      rot_y: 2
+      rot_z: 180
+  - transform: GridSampling3D
+    params:
+      size: ${data.grid_size}
+      quantize_coords: True
+      mode: ${data.mode}
+  - transform: FixedPoints
+    lparams: [100000]
+    params:
+      replace: False
+  - transform: ShiftVoxels
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x: [True]
+      feat_names: ["rgb"]
+      delete_feats: [True]
 
-  test_transform: ${data.val_transform}
+val_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.grid_size}
+      quantize_coords: True
+      mode: ${data.mode}
+  - transform: FixedPoints
+    lparams: [100000]
+    params:
+      replace: False
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x: [True]
+      feat_names: ["rgb"]
+      delete_feats: [True]
+
+test_transform: ${data.val_transform}

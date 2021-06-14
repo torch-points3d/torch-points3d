@@ -64,10 +64,11 @@ class ScannetDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        use_instance_labels: bool = dataset_opt.use_instance_labels
-        donotcare_class_ids: [] = dataset_opt.donotcare_class_ids if dataset_opt.donotcare_class_ids else []
-        max_num_point: int = dataset_opt.max_num_point if dataset_opt.max_num_point != "None" else None
-        is_test: bool = dataset_opt.is_test if dataset_opt.is_test is not None else False
+        # Update to OmegaConf 2.0
+        use_instance_labels: bool = dataset_opt.get('use_instance_labels')
+        donotcare_class_ids: [] = list(dataset_opt.get('donotcare_class_ids', []))
+        max_num_point: int = dataset_opt.get('max_num_point', None)
+        is_test: bool = dataset_opt.get('is_test', False)
 
         self.train_dataset = ScannetPanoptic(
             self._data_path,

@@ -22,8 +22,15 @@ __all__ = ["cat", "Conv3d", "Conv3dTranspose", "ReLU", "SparseTensor", "BatchNor
 for val in __all__:
     exec(val + "=None")
 
+def backend_valid(_backend):
+    return _backend in {"torchsparse", "minkowski"}
 
-def set_backend(backend):
+sp3d_backend = None
+
+def get_backend():
+    return sp3d_backend
+
+def set_backend(_backend):
     """ Use this method to switch sparse backend dynamically. When importing this module with a wildcard such as
     from torch_points3d.modules.SparseConv3d.nn import *
     make sure that you import it again after calling this method.
@@ -34,18 +41,12 @@ def set_backend(backend):
     backend : str
         "torchsparse" or "minkowski"
     """
-    assert backend in {"torchsparse", "minkowski"}
+    assert backend_valid(_backend)
     try:
-        modules = importlib.import_module("." + backend, __name__)  # noqa: F841
+        modules = importlib.import_module("." + _backend, __name__)  # noqa: F841
+        global sp3d_backend
+        sp3d_backend = _backend
     except:
-        log.exception("Could not import %s backend for sparse convolutions" % backend)
+        log.exception("Could not import %s backend for sparse convolutions" % _backend)
     for val in __all__:
         exec("globals()['%s'] = modules.%s" % (val, val))
-
-
-if "SPARSE_BACKEND" in os.environ:
-    backend = os.environ["SPARSE_BACKEND"]
-else:
-    backend = "minkowski"
-
-set_backend(backend)

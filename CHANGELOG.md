@@ -5,17 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## Unrealeased
 
-## Added
+### Changed
+
+- Migrated to Hydra 1.0 and OmegaConf 2.1 **BREAKING any checkpoint created prior to that, in particular the model zoo**
+
+### Added
+
+- Mixed precision training support for SparseConv3D models with torchsparse backend (Requires torchsparse >= 1.3.0)
+
+## 1.3.0
+
+### Added
+
 - MS-SVConv: https://arxiv.org/abs/2103.14533 (thanks @humanpose1)
 - added new data generations techniques for the self-supervised learning (PeriodicSampling, IrregularSampling EllipsoidCrop) (thanks @humanpose1)
 - More ETH benchmark dataset (thanks @humanpose1)
 
 ### Changed
+
 - Minkowski 0.5 support
 
 ### Bug fixes
+
 - Fix bug in data loader https://github.com/nicolas-chaulet/torch-points3d/issues/443 thanks @JloveU
 - Fix bug in base unet that created problems when loading pointnet++ model checkpoint
 

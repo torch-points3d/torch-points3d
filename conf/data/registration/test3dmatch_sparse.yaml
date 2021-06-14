@@ -1,26 +1,26 @@
-data:
-  task: registration
-  class: test3dmatch.Test3DMatchDataset
-  dataroot: data
-  name: 3DMatch
-  is_patch: False
-  radius_patch: 0.3
-  first_subsampling: 0.025
-  num_random_pt: 5000
-  is_offline: True
-  pre_transforms:
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-  test_transforms:
-    - transform: SaveOriginalPosId
-    - transform: GridSampling3D
-      params:
-        size: ${data.first_subsampling}
-        quantize_coords: True
-        mode: "last"
-    - transform: AddOnes
-    - transform: AddFeatByKey
-      params:
-        add_to_x: True
-        feat_name: 'ones'
+# @package data
+task: registration
+class: test3dmatch.Test3DMatchDataset
+dataroot: data
+name: 3DMatch
+is_patch: False
+radius_patch: 0.3
+first_subsampling: 0.025
+num_random_pt: 5000
+is_offline: True
+pre_transforms:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+test_transforms:
+  - transform: SaveOriginalPosId
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: "last"
+  - transform: AddOnes
+  - transform: AddFeatByKey
+    params:
+      add_to_x: True
+      feat_name: 'ones'

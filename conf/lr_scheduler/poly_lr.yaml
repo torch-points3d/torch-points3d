@@ -1,9 +1,9 @@
-lr_scheduler:
-    class: PolyLR
-    params:
-      on_epoch:
-        max_iter: 150
-        power: 0.9
-      on_num_batch:
-        max_iter: 60000
-        power: 2
+# @package _group_
+class: PolyLR
+params:
+  on_epoch:
+    max_iter: 150
+    power: 0.9
+  on_num_batch:
+    max_iter: 60000
+    power: 2
