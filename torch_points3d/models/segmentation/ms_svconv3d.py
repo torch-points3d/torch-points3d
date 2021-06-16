@@ -47,7 +47,7 @@ class MS_SparseConvModel(APIModel):
                         ]
                     )
                 )
-            if last_mlp_opt.dropout:
+            if getattr(last_mlp_opt, "dropout", None) is not None:
                 self.FC_layer.append(nn.Dropout(p=last_mlp_opt.dropout))
         else:
             self.FC_layer = torch.nn.Identity()
