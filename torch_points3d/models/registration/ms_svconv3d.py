@@ -145,12 +145,12 @@ class MS_SparseConv3d(BaseMS_SparseConv3d):
                 option_unet.backbone,
                 input_nc=option_unet.input_nc,
                 grid_size=option_unet.grid_size[i],
-                pointnet_nn=option_unet.pointnet_nn,
-                post_mlp_nn=option_unet.post_mlp_nn,
-                pre_mlp_nn=option_unet.pre_mlp_nn,
-                add_pos=option_unet.add_pos,
-                add_pre_x=option_unet.add_pre_x,
-                aggr=option_unet.aggr,
+                pointnet_nn=getattr(option_unet, "pointnet_nn", None),
+                post_mlp_nn=getattr(option_unet, "post_mlp_nn", [64, 64, 32]),
+                pre_mlp_nn=getattr(option_unet, "pre_mlp_nn", None),
+                add_pos=getattr(option_unet, "add_pos", False),
+                add_pre_x=getattr(option_unet, "add_pre_x", False),
+                aggr=getattr(option_unet, "aggr", None),
                 backend=option.backend,
             )
             self.unet.add_module(name=str(i), module=module)
@@ -191,12 +191,12 @@ class MS_SparseConv3d_Shared(BaseMS_SparseConv3d):
         self.unet = UnetMSparseConv3d(
             option_unet.backbone,
             input_nc=option_unet.input_nc,
-            pointnet_nn=option_unet.pointnet_nn,
-            post_mlp_nn=option_unet.post_mlp_nn,
-            pre_mlp_nn=option_unet.pre_mlp_nn,
-            add_pos=option_unet.add_pos,
-            add_pre_x=option_unet.add_pre_x,
-            aggr=option_unet.aggr,
+            pointnet_nn=getattr(option_unet, "pointnet_nn", None),
+            post_mlp_nn=getattr(option_unet, "post_mlp_nn", [64, 64, 32]),
+            pre_mlp_nn=getattr(option_unet, "pre_mlp_nn", None),
+            add_pos=getattr(option_unet, "add_pos", False),
+            add_pre_x=getattr(option_unet, "add_pre_x", False),
+            aggr=getattr(option_unet, "aggr", None),
             backend=option.backend,
         )
         assert option.mlp_cls is not None
@@ -214,7 +214,7 @@ class MS_SparseConv3d_Shared(BaseMS_SparseConv3d):
             )
 
         # Intermediate loss
-        if option.intermediate_loss is not None:
+        if getattr(option, "intermediate_loss", None) is not None:
             int_loss_option = option.intermediate_loss
             self.int_metric_loss, _ = FragmentBaseModel.get_metric_loss_and_miner(
                 getattr(int_loss_option, "metric_loss", None), getattr(int_loss_option, "miner", None)
