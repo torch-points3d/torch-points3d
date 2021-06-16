@@ -34,7 +34,7 @@ device = "cpu"
 
 
 def load_model_config(task, model_type, model_name):
-    models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
+    models_conf = os.path.join(ROOT, "conf/model/{}/{}.yaml".format(task, model_type))
     if omegaconf.__version__ == '1.4.1':
         config = OmegaConf.load(models_conf)
         config.update("model_name", model_name)
@@ -109,7 +109,7 @@ def has_zero_grad(model_name):
 class TestModels(unittest.TestCase):
     def setUp(self):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
-        self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
+        self.model_type_files = glob(os.path.join(ROOT, "conf/model/*/*.yaml"))
 
     def test_runall(self):
         def is_known_to_fail(model_name):

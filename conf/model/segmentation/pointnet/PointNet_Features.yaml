@@ -1,0 +1,12 @@
+#@package model
+defaults:
+  - /model/segmentation/default
+
+class: pointnet.SegPointNetModel
+conv_type: "PARTIAL_DENSE"
+pointnet:
+  local_nn: [ 3, 32, 64, 4 ]
+  global_nn: [ 4, 2 ]
+  aggr: "mean"
+  return_local_out: True
+seg_nn: [ 4 + 2, 50, N_CLS ]

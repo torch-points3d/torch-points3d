@@ -1,0 +1,6 @@
+#@package model
+defaults:
+  - /model/segmentation/ppnet/PPNet
+
+define_constants:
+  position_embedding: 'xyz'

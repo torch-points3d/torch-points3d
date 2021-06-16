@@ -1,0 +1,6 @@
+#@package model
+defaults:
+  - /model/segmentation/rsconv/RSConv_MSN
+
+down_conv:
+  npoint: [ 2048, 1024, 512, 64 ]

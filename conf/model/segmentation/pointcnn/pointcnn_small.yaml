@@ -1,0 +1,34 @@
+#@package model
+defaults:
+  - /model/segmentation/pointcnn/default
+
+define_constants:
+  L1_OUT: 32
+  L2_OUT: 32
+  INNER_OUT: 64
+down_conv:
+  module_name: PointCNNConvDown
+  inN: [ 2048, 768 ]
+  outN: [ 768, 384 ]
+  K: [ 8, 12 ]
+  D: [ 1, 2 ]
+  C1: [ 0, L1_OUT ]
+  C2: [ L1_OUT, L2_OUT ]
+  hidden_channel: [ 64, None ]
+innermost:
+  module_name: PointCNNConvDown
+  inN: 384
+  outN: 128
+  K: 16
+  D: 2
+  C1: L2_OUT
+  C2: INNER_OUT
+up_conv:
+  module_name: PointCNNConvUp
+  K: [ 16, 12, 8 ]
+  D: [ 6, 6, 6 ]
+  C1: [ INNER_OUT, 32 + L2_OUT, 32 + L1_OUT ]
+  C2: [ 32, 32, 32 ]
+mlp_cls:
+  nn: [ 32, 32, 32, 32, 32 ]
+  dropout: 0.5

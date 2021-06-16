@@ -18,7 +18,7 @@ from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 
 def load_config(task, model_type) -> DictConfig:
-    models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
+    models_conf = os.path.join(ROOT, "conf/model/{}/{}.yaml".format(task, model_type))
     if omegaconf.__version__ == '1.4.1':
         config = OmegaConf.load(models_conf)
         config.update("model_name", "pointnet2")
