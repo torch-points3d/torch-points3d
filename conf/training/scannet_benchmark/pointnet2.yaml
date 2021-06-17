@@ -10,10 +10,9 @@ batch_size: 8
 optim:
   base_lr: 0.01
   grad_clip: 100
-  optimizer:
-    momentum: 0.9
-    weight_decay: 1e-3
-    dampening: 0.1
+  momentum: 0.9
+  weight_decay: 1e-3
+  dampening: 0.1
   bn_scheduler:
     bn_policy: "step_decay"
     params:

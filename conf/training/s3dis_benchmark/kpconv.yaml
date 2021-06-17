@@ -11,9 +11,8 @@ precompute_multi_scale: True
 optim:
   base_lr: 0.01
   grad_clip: 100
-  optimizer:
-    momentum: 0.98
-    weight_decay: 1e-3
+  momentum: 0.98
+  weight_decay: 1e-3
   bn_scheduler:
     bn_policy: "step_decay"
     params:

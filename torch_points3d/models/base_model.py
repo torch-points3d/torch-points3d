@@ -250,12 +250,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
             ["training", "optim", "optimizer"],
             msg_err="optimizer needs to be defined within the training config",
         )
-        optmizer_cls_name = optimizer_opt.get("class")
-        optimizer_cls = getattr(torch.optim, optmizer_cls_name)
-        optimizer_params = {}
-        if hasattr(optimizer_opt, "params"):
-            optimizer_params = optimizer_opt.params
-        self._optimizer = optimizer_cls(self.parameters(), **optimizer_params)
+        self._optimizer = hydra.utils.instantiate(optimizer_opt, self.parameters())
 
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])

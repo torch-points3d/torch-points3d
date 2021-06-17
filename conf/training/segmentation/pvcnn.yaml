@@ -7,10 +7,9 @@ batch_size: 4
 
 optim:
   base_lr: 2.4e-1
-  optimizer:
-    weight_decay: 1e-4
-    momentum: 0.9
-    dampening: 0.1
+  weight_decay: 1e-4
+  momentum: 0.9
+  dampening: 0.1
   bn_scheduler:
     bn_policy: "step_decay"
     params:

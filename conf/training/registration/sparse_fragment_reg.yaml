@@ -9,9 +9,8 @@ batch_size: 4
 
 optim:
   base_lr: 1e-1
-  optimizer:
-    momentum: 0.8
-    weight_decay: 1e-4
+  momentum: 0.8
+  weight_decay: 1e-4
   lr_scheduler:
     class: ExponentialLR
     params:

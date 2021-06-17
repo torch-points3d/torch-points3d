@@ -14,6 +14,9 @@ precompute_multi_scale: False # Compute multiscate features on cpu for faster tr
 optim:
   base_lr: 0.001
   grad_clip: -1
+  momentum: 0
+  dampening: 0
+  weight_decay: 0
   bn_scheduler:
     bn_policy: "step_decay"
     params:
