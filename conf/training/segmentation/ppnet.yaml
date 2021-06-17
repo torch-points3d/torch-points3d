@@ -1,10 +1,11 @@
-# Those arguments defines the training hyper-parameters
 # @package training
+defaults:
+  - /training/default
+
 epochs: 600
 num_workers: 8
 batch_size: 8
-cuda: 0
-precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
+precompute_multi_scale: True
 optim:
   base_lr: 0.01
   grad_clip: 100
@@ -12,9 +13,8 @@ optim:
     class: SGD
     params:
       momentum: 0.98
-      lr: ${training.optim.base_lr} # The path is cut from training
+      lr: ${training.optim.base_lr}
       weight_decay: 1e-3
-  lr_scheduler: ${lr_scheduler}
   bn_scheduler:
     bn_policy: "step_decay"
     params:
@@ -22,20 +22,9 @@ optim:
       bn_decay: 1.0
       decay_step: 1000
       bn_clip: 1e-2
-weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
-enable_cudnn: True
-checkpoint_dir: ""
 
-# Those arguments within experiment defines which model, dataset and task to be created for benchmarking
-# parameters for Weights and Biases
 wandb:
   project: s3dis
-  log: True
   notes: "PPNet baseline"
   name: "PPNet"
   public: True # It will be display the model within wandb log, else not.
-
-
-# parameters for TensorBoard Visualization
-tensorboard:
-  log: False

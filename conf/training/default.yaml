@@ -40,4 +40,4 @@ wandb:
 
   # parameters for TensorBoard Visualization
 tensorboard:
-  log: True
+  log: False
