@@ -663,9 +663,6 @@ class S3DISFusedDataset(BaseDataset):
             transform=self.test_transform,
         )
 
-        if dataset_opt.class_weight_method:
-            self.add_weights(class_weight_method=dataset_opt.class_weight_method)
-
     @property
     def test_data(self):
         return self.test_dataset[0].raw_test_data

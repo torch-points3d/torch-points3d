@@ -7,7 +7,6 @@ fold: 5
 first_subsampling: 0.04
 use_category: False
 mode: last
-class_weight_method: "sqrt"
 features: [rgb, pos_z]
 
 pre_collate_transform:
