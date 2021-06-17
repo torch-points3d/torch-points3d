@@ -1,3 +1,2 @@
-class: ReduceLROnPlateau
-  params: 
-    mode: "min"
+_target_: ReduceLROnPlateau
+mode: "min"

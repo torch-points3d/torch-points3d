@@ -1,4 +1,3 @@
-class: MultiStepLR
-params:
-  milestones: [600, 1200, 1800, 3000]
-  gamma: 0.5
+_target_: MultiStepLR
+milestones: [600, 1200, 1800, 3000]
+gamma: 0.5

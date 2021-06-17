@@ -1,4 +1,3 @@
-class: CyclicLR
-params:
-  base_lr: ${training.optim.base_lr}
-  max_lr: 0.1
+_target_: CyclicLR
+base_lr: ${training.optim.base_lr}
+max_lr: 0.1

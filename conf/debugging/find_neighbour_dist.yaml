@@ -1,2 +1,5 @@
+defaults:
+  - default
+
 find_neighbour_dist: True
 num_batches: 20

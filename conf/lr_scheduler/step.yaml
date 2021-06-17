@@ -1,5 +1,4 @@
-class: StepLR
-params:
-  step_size: 10
-  gamma: 0.9
-  last_epoch: -1
+_target_: StepLR
+step_size: 10
+gamma: 0.9
+last_epoch: -1

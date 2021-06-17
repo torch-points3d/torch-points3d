@@ -1,1 +1,4 @@
+defaults:
+  - default
+
 early_break: True
