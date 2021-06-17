@@ -11,7 +11,7 @@ optim:
   optimizer:
     class: Adam
     params:
-      lr: ${training.optim.base_lr} # The path is cut from training
+      lr: ${training.optim.base_lr}
       weight_decay: 0
   bn_scheduler:
     bn_policy: "step_decay"

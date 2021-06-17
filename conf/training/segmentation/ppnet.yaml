@@ -6,6 +6,7 @@ epochs: 600
 num_workers: 8
 batch_size: 8
 precompute_multi_scale: True
+
 optim:
   base_lr: 0.01
   grad_clip: 100

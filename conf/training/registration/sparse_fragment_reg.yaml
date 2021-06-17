@@ -11,7 +11,7 @@ optim:
   optimizer:
     class: SGD
     params:
-      lr: ${training.optim.base_lr} # The path is cut from training
+      lr: ${training.optim.base_lr}
       momentum: 0.8
       weight_decay: 1e-4
   lr_scheduler:

@@ -5,7 +5,8 @@ defaults:
 epochs: 550
 num_workers: 7
 batch_size: 8
-precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
+precompute_multi_scale: True
+
 optim:
   base_lr: 0.01
   grad_clip: 100
@@ -13,7 +14,7 @@ optim:
     class: SGD
     params:
       momentum: 0.98
-      lr: ${training.optim.base_lr} # The path is cut from training
+      lr: ${training.optim.base_lr}
       weight_decay: 1e-3
   bn_scheduler:
     bn_policy: "step_decay"

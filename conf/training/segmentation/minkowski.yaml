@@ -5,12 +5,13 @@ defaults:
 epochs: 500
 num_workers: 4
 batch_size: 12
+
 optim:
   base_lr: 0.1
   optimizer:
     class: SGD
     params:
-      lr: ${training.optim.base_lr} # The path is cut from training
+      lr: ${training.optim.base_lr}
       weight_decay: 1e-4
       momentum: 0.9
       dampening: 0.1
