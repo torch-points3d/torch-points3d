@@ -1,2 +1,2 @@
-_target_: ReduceLROnPlateau
+_target_: torch.optim.lr_scheduler.ReduceLROnPlateau
 mode: "min"

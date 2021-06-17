@@ -6,6 +6,7 @@ import torch
 from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 import logging
+import hydra
 from collections import defaultdict
 from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
 from torch_points3d.core.schedulers.bn_schedulers import instantiate_bn_scheduler
@@ -259,12 +260,8 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
-            update_lr_scheduler_on = config.get('update_lr_scheduler_on') # Update to OmegaConf 2.0
-            if update_lr_scheduler_on:
-                self._update_lr_scheduler_on = update_lr_scheduler_on
-            scheduler_opt.update_scheduler_on = self._update_lr_scheduler_on
-            lr_scheduler = instantiate_scheduler(self._optimizer, scheduler_opt)
-            self._add_scheduler("lr_scheduler", lr_scheduler)
+            self._lr_scheduler = hydra.utils.instantiate(scheduler_opt, self._optimizer)
+            self._update_lr_scheduler_on = config.get('update_lr_scheduler_on', self._update_lr_scheduler_on)
 
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])

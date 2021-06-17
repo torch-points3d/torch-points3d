@@ -10,6 +10,7 @@ defaults: # for loading the default.yaml config
 
 job_name: benchmark # prefix name for saving the experiment file.
 update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]
+update_bn_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]
 selection_stage: ""
 pretty_print: False
 eval_frequency: 1
