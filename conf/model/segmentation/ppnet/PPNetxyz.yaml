@@ -1,4 +1,4 @@
-#@package model
+# @package model
 defaults:
   - /model/segmentation/ppnet/PPNet
 
