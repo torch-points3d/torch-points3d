@@ -3,7 +3,6 @@ defaults: # for loading the default.yaml config
   - data: ???
 
   - visualization: default
-  - lr_scheduler: exponential
   - training: default
   - debugging: default
   - sota # Contains current SOTA results on different datasets (extracted from papers !).

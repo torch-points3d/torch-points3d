@@ -1,4 +1,6 @@
 # @package training
+defaults:
+  - optim/lr_scheduler: exponential
 
 # Those arguments defines the training hyper-parameters
 epochs: 100
@@ -15,7 +17,6 @@ optim:
     class: Adam
     params:
       lr: ${training.optim.base_lr} # The path is cut from training
-  lr_scheduler: ${lr_scheduler}
   bn_scheduler:
     bn_policy: "step_decay"
     params:
