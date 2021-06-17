@@ -13,6 +13,7 @@ update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample
 selection_stage: ""
 pretty_print: False
 eval_frequency: 1
+model_name: "${get_filename: ${hydra:runtime.choices.model}}"
 
 tracker_options: # Extra options for the tracker
   full_res: False
