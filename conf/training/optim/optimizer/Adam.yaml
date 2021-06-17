@@ -1,0 +1,2 @@
+_target_: torch.optim.Adam
+lr: ${training.optim.base_lr}

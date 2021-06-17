@@ -1,6 +1,7 @@
 # @package training
 defaults:
   - /training/default
+  - override optim/optimizer: SGD
 
 epochs: 200
 num_workers: 6
@@ -10,11 +11,8 @@ optim:
     base_lr: 1e-3
     weight_decay: 1e-4
     optimizer:
-        class: SGD
-        params:
-            lr: ${training.optim.base_lr}
-            momentum: 0.8
-            weight_decay: ${training.optim.weight_decay}
+      momentum: 0.8
+      weight_decay: ${training.optim.weight_decay}
     lr_scheduler:
       class: ExponentialLR
       params:

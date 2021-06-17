@@ -1,0 +1,3 @@
+_target_: torch.optim.SGD
+momentum: 0.9
+lr: ${training.optim.base_lr}

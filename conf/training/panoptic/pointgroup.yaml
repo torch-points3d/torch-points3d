@@ -1,6 +1,7 @@
 # @package training
 defaults:
   - /training/default
+  - override optim/optimizer: Adam
 
 epochs: 500
 num_workers: 4
@@ -8,11 +9,6 @@ batch_size: 8
 
 optim:
   base_lr: 0.001
-  optimizer:
-    class: Adam
-    params:
-      lr: ${training.optim.base_lr}
-      weight_decay: 0
   bn_scheduler:
     bn_policy: "step_decay"
     params:

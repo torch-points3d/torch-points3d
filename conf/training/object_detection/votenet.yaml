@@ -1,6 +1,7 @@
 # @package training
 defaults:
   - /training/default
+  - override optim/optimizer: Adam
 
 epochs: 200
 num_workers: 4

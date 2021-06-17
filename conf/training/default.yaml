@@ -1,6 +1,7 @@
 # @package training
 defaults:
   - optim/lr_scheduler: exponential
+  - optim/optimizer: Adam
 
 # Those arguments defines the training hyper-parameters
 epochs: 100
@@ -13,10 +14,6 @@ precompute_multi_scale: False # Compute multiscate features on cpu for faster tr
 optim:
   base_lr: 0.001
   grad_clip: -1
-  optimizer:
-    class: Adam
-    params:
-      lr: ${training.optim.base_lr} # The path is cut from training
   bn_scheduler:
     bn_policy: "step_decay"
     params:
