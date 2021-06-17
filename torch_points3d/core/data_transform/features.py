@@ -150,13 +150,14 @@ class AddFeatsByKeys(object):
             assert len(self._delete_feats) == len(self._feat_names)
         else:
             self._delete_feats = [True] * len(self._feat_names)
+
         from torch_geometric.transforms import Compose
 
         num_names = len(feat_names)
         if num_names == 0:
             raise Exception("Expected to have at least one feat_names")
 
-        assert len(list_add_to_x) == num_names
+        assert len(self._list_add_to_x) == num_names
 
         if input_nc_feats:
             assert len(input_nc_feats) == num_names
@@ -170,7 +171,7 @@ class AddFeatsByKeys(object):
 
         transforms = [
             AddFeatByKey(add_to_x, feat_name, input_nc_feat=input_nc_feat, strict=strict)
-            for add_to_x, feat_name, input_nc_feat, strict in zip(list_add_to_x, feat_names, input_nc_feats, stricts)
+            for add_to_x, feat_name, input_nc_feat, strict in zip(self._list_add_to_x, feat_names, input_nc_feats, stricts)
         ]
 
         self.transform = Compose(transforms)
