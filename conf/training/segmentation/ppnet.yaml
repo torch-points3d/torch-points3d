@@ -11,15 +11,14 @@ precompute_multi_scale: True
 optim:
   base_lr: 0.01
   grad_clip: 100
+  
   momentum: 0.98
   weight_decay: 1e-3
-  bn_scheduler:
-    bn_policy: "step_decay"
-    params:
-      bn_momentum: 0.99
-      bn_decay: 1.0
-      decay_step: 1000
-      bn_clip: 1e-2
+  
+  bn_momentum: 0.99
+  bn_decay: 1.0
+  bn_decay_step: 1000
+  bn_clip: 1e-2
 
 wandb:
   project: s3dis

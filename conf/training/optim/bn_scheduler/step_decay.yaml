@@ -1,0 +1,5 @@
+_target_: torch_points3d.core.schedulers.bn_schedulers.BNMomentumScheduler
+bn_momentum: ${training.optim.bn_momentum}
+bn_decay: ${training.optim.bn_decay}
+decay_step: ${training.optim.bn_decay_step}
+bn_clip: ${training.optim.bn_clip}

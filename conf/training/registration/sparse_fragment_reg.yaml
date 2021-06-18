@@ -2,6 +2,7 @@
 defaults:
   - /training/default
   - override optim/optimizer: SGD
+  - override optim/bn_scheduler: 
 
 epochs: 200
 num_workers: 6
@@ -9,13 +10,12 @@ batch_size: 4
 
 optim:
   base_lr: 1e-1
+
   momentum: 0.8
   weight_decay: 1e-4
+
   lr_scheduler:
-    class: ExponentialLR
-    params:
-      gamma: 0.99
-  bn_scheduler: {}
+    gamma: 0.99
 
 wandb:
   project: registration

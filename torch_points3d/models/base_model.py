@@ -8,8 +8,6 @@ from torch.optim.lr_scheduler import _LRScheduler
 import logging
 import hydra
 from collections import defaultdict
-from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
-from torch_points3d.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 from torch_points3d.utils.enums import SchedulerUpdateOn
 
 from torch_points3d.core.regularizer import *
@@ -261,12 +259,8 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
-            update_bn_scheduler_on = config.get('update_bn_scheduler_on') # update to OmegaConf 2.0
-            if update_bn_scheduler_on:
-                self._update_bn_scheduler_on = update_bn_scheduler_on
-            bn_scheduler_opt.update_scheduler_on = self._update_bn_scheduler_on
-            bn_scheduler = instantiate_bn_scheduler(self, bn_scheduler_opt)
-            self._add_scheduler("bn_scheduler", bn_scheduler)
+            self._update_bn_scheduler_on = config.get('update_bn_scheduler_on', self._update_bn_scheduler_on)
+            self._bn_scheduler = hydra.utils.instantiate(bn_scheduler_opt, self, self._update_bn_scheduler_on)
 
         # Accumulated gradients
         self._accumulated_gradient_step = self.get_from_opt(config, ["training", "optim", "accumulated_gradient"])

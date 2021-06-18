@@ -8,15 +8,14 @@ batch_size: 4
 optim:
   base_lr: 2.4e-1
   weight_decay: 1e-4
+  
   momentum: 0.9
   dampening: 0.1
-  bn_scheduler:
-    bn_policy: "step_decay"
-    params:
-      bn_momentum: 0.1
-      bn_decay: 0.2
-      decay_step: 20
-      bn_clip: 2e-2
+  
+  bn_momentum: 0.1
+  bn_decay: 0.2
+  bn_decay_step: 20
+  bn_clip: 2e-2
 
 wandb:
   project: scannet-benchmark

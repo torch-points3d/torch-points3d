@@ -12,15 +12,14 @@ optim:
   base_lr: 0.01
   grad_clip: 100
   momentum: 0.9
+
   weight_decay: 1e-4
   dampening: 0.1
-  bn_scheduler:
-    bn_policy: "step_decay"
-    params:
-      bn_momentum: 0.1
-      bn_decay: 0.9
-      decay_step: 20
-      bn_clip: 1e-2
+
+  bn_momentum: 0.1
+  bn_decay: 0.9
+  bn_decay_step: 20
+  bn_clip: 1e-2
 wandb: 
   project: scannet-benchmark
   notes: "KPConv benchmark training"

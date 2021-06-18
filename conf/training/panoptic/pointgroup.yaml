@@ -9,13 +9,11 @@ batch_size: 8
 
 optim:
   base_lr: 0.001
-  bn_scheduler:
-    bn_policy: "step_decay"
-    params:
-      bn_momentum: 0.1
-      bn_decay: 0.5
-      decay_step: 20
-      bn_clip: 1e-2
+  
+  bn_momentum: 0.1
+  bn_decay: 0.5
+  bn_decay_step: 20
+  bn_clip: 1e-2
 
 wandb:
   project: panoptic

@@ -10,8 +10,6 @@ from omegaconf import DictConfig
 
 from torch_points3d.models import model_interface
 from torch_points3d.utils.colors import COLORS, colored_print
-from torch_points3d.core.schedulers.lr_schedulers import instantiate_scheduler
-from torch_points3d.core.schedulers.bn_schedulers import instantiate_bn_scheduler
 from torch_points3d.models.model_factory import instantiate_model
 
 log = logging.getLogger(__name__)

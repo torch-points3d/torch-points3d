@@ -1,6 +1,7 @@
 # @package training
 defaults:
   - optim/lr_scheduler: exponential
+  - optim/bn_scheduler: step_decay
   - optim/optimizer: Adam
 
 # Those arguments defines the training hyper-parameters
@@ -12,18 +13,20 @@ cuda: 0 # -1 -> no cuda otherwise takes the specified index
 precompute_multi_scale: False # Compute multiscate features on cpu for faster training / inference
 
 optim:
+  #optimizer params
   base_lr: 0.001
   grad_clip: -1
+
+  # lr scheduler params
   momentum: 0
   dampening: 0
   weight_decay: 0
-  bn_scheduler:
-    bn_policy: "step_decay"
-    params:
-      bn_momentum: 0.1
-      bn_decay: 0.9
-      decay_step: 10
-      bn_clip: 1e-2
+
+  # bn scheduler params
+  bn_momentum: 0.1
+  bn_decay: 0.9
+  bn_decay_step: 10
+  bn_clip: 1e-2
 
 weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
 enable_cudnn: True
