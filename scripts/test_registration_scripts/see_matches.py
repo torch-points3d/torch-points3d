@@ -182,7 +182,7 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
         kp_t = torch2o3d(input_target, ind=rand_target[matches_pred[:, 1]][rand_ind])
         match_visualizer(pcd_source, kp_s, pcd_target, kp_t, inliers[rand_ind].cpu().numpy(), radius=r, t=t)
 
-
+OmegaConf.register_new_resolver("get_filename", lambda x: x.split('/')[-1])
 @hydra.main(config_path="../../conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)

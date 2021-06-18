@@ -65,7 +65,7 @@ def run(cfg, model: BaseModel, dataset: BaseDataset, device, measurement_name: s
     with open(os.path.join(DIR, "measurements/{}.pickle".format(measurement_name)), "wb") as f:
         pickle.dump(measurements, f)
 
-
+OmegaConf.register_new_resolver("get_filename", lambda x: x.split('/')[-1])
 @hydra.main(config_path="conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
