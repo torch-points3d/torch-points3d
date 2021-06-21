@@ -1,6 +1,6 @@
 num_workers: 1
 batch_size: 1
-cuda: 6
+cuda: 0
 weight_name: "latest" # Used during resume, select with model to load from [miou, macc, acc..., latest]
 enable_cudnn: True
 checkpoint_dir: "/home/ChauletN/torch-points3d/outputs/2020-09-22/17-06-39" # "{your_path}/outputs/2020-01-28/11-04-13" for example

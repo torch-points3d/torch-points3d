@@ -14,7 +14,6 @@ def instantiate_model(config, dataset) -> BaseModel:
 
     # Get task and model_name
     task = config.data.task
-    tested_model_name = config.model_name
 
     # Find configs
     model_config = config.get('model')
