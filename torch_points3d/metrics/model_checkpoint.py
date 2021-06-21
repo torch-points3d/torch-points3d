@@ -114,12 +114,12 @@ class Checkpoint:
                 for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
-                        scheduler = instantiate_scheduler(optimizer, OmegaConf.create(scheduler_opt))
+                        scheduler = hydra.utils.instantiate(scheduler_opt, self._optimizer)
                         if load_state:
                             scheduler.load_state_dict(scheduler_state)
                         schedulers_out["lr_scheduler"] = scheduler
                     elif scheduler_type == "bn_scheduler":
-                        scheduler = instantiate_bn_scheduler(model, OmegaConf.create(scheduler_opt))
+                        scheduler = hydra.utils.instantiate(scheduler_opt, model, model._update_bn_scheduler_on)
                         if load_state:
                             scheduler.load_state_dict(scheduler_state)
                         schedulers_out["bn_scheduler"] = scheduler

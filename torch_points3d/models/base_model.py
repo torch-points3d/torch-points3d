@@ -4,7 +4,6 @@ from typing import Optional, Dict, Any, List
 import os
 import torch
 from torch.optim.optimizer import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
 import logging
 import hydra
 from collections import defaultdict
@@ -50,7 +49,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self.output = None
         self._conv_type = opt.conv_type  if hasattr(opt, 'conv_type') else None # Update to OmegaConv 2.0
         self._optimizer: Optional[Optimizer] = None
-        self._lr_scheduler: Optimizer[_LRScheduler] = None
+        self._lr_scheduler: Optimizer[object] = None
         self._bn_scheduler = None
         self._spatial_ops_dict: Dict = {}
         self._num_epochs = 0
