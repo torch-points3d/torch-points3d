@@ -5,12 +5,14 @@ import logging
 import copy
 import glob
 import shutil
+import hydra
 from omegaconf import OmegaConf
 from omegaconf import DictConfig
 
 from torch_points3d.models import model_interface
 from torch_points3d.utils.colors import COLORS, colored_print
 from torch_points3d.models.model_factory import instantiate_model
+from torch_points3d.models.base_model import SchedulerTuple
 
 log = logging.getLogger(__name__)
 
@@ -39,14 +41,15 @@ class Checkpoint:
         self.models = models_to_save
         self.optimizer = (optimizer.__class__.__name__, optimizer.state_dict())
         self.schedulers = {
-            scheduler_name: [scheduler.scheduler_opt, scheduler.state_dict()]
-            for scheduler_name, scheduler in schedulers.items()
+            scheduler_name: (scheduler.state_dict(), scheduler_opt)
+            for scheduler_name, (scheduler, scheduler_opt) in schedulers.items()
         }
         to_save = kwargs
         for key, value in self.__dict__.items():
             if not key.startswith("_"):
-
                 to_save[key] = value
+
+        to_save["run_config"] = OmegaConf.to_container(self.run_config)
         torch.save(to_save, self.path)
 
     @property
@@ -83,11 +86,45 @@ class Checkpoint:
             for key, value in objects.items():
                 setattr(ckp, key, value)
             ckp._filled = True
+            ckp.run_config = OmegaConf.create(ckp.run_config)
         return ckp
 
     @property
     def is_empty(self):
         return not self._filled
+
+    def load_optim_sched(self, model, load_state=True):
+        if not self.is_empty:
+            # initialize optimizer
+            optimizer_config = self.optimizer
+            optimizer_cls = getattr(torch.optim, optimizer_config[0])
+            model.optimizer = hydra.utils.instantiate(self.run_config.training.optim.optimizer, model.parameters())
+
+            # initialize & load schedulersr
+            schedulers_out = {}
+            schedulers_config = self.schedulers
+            print(schedulers_config)
+            for scheduler_type, (scheduler_state, scheduler_opt) in schedulers_config.items():
+                if scheduler_type == "lr_scheduler":
+                    optimizer = model.optimizer
+                    print(scheduler_opt)
+                    scheduler = hydra.utils.instantiate(scheduler_opt, model.optimizer)
+                    print(scheduler)
+                    if load_state:
+                        scheduler.load_state_dict(scheduler_state)
+                    schedulers_out["lr_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
+                elif scheduler_type == "bn_scheduler":
+                    scheduler = hydra.utils.instantiate(scheduler_opt, model, model._update_bn_scheduler_on)
+                    if load_state:
+                        scheduler.load_state_dict(scheduler_state)
+                    schedulers_out["bn_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
+                else:
+                    raise NotImplementedError
+
+            # load optimizer
+            model.schedulers = schedulers_out
+            if load_state:
+                model.optimizer.load_state_dict(optimizer_config[1])
 
     def get_optimizer(self, model, load_state=True):
         if not self.is_empty:
@@ -110,25 +147,29 @@ class Checkpoint:
         if not self.is_empty:
             try:
                 schedulers_out = {}
-                schedulers_config = self.schedulers
-                for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
+                for scheduler_type, (scheduler_state, scheduler_opt) in self.schedulers.items():
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
-                        scheduler = hydra.utils.instantiate(scheduler_opt, self._optimizer)
+                        scheduler = hydra.utils.instantiate(scheduler_opt, optimizer)
+                        print(scheduler)
                         if load_state:
+                            print("loading scheduler state:")
+                            print(scheduler_state)
                             scheduler.load_state_dict(scheduler_state)
-                        schedulers_out["lr_scheduler"] = scheduler
+                            print(scheduler.state_dict())
+                            print(scheduler_opt)
+                        schedulers_out["lr_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
                     elif scheduler_type == "bn_scheduler":
                         scheduler = hydra.utils.instantiate(scheduler_opt, model, model._update_bn_scheduler_on)
                         if load_state:
                             scheduler.load_state_dict(scheduler_state)
-                        schedulers_out["bn_scheduler"] = scheduler
+                        schedulers_out["bn_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
                     else:
                         raise NotImplementedError
                 return schedulers_out
             except:
-                log.warn("The checkpoint doesn t contain schedulers")
-                return None
+               log.warn("The checkpoint doesn t contain schedulers")
+               return None
 
     def get_state_dict(self, weight_name):
         if not self.is_empty:
@@ -172,7 +213,7 @@ class ModelCheckpoint(object):
         strict=False,
     ):
         # Conversion of run_config to save a dictionary and not a pickle of omegaconf
-        rc = OmegaConf.to_container(copy.deepcopy(run_config))
+        rc = copy.deepcopy(run_config)
         self._checkpoint = Checkpoint.load(load_dir, check_name, run_config=rc, strict=strict, resume=resume)
         self._resume = resume
         self._selection_stage = selection_stage
@@ -180,7 +221,7 @@ class ModelCheckpoint(object):
     def create_model(self, dataset, weight_name=Checkpoint._LATEST):
         if not self.is_empty:
             run_config = copy.deepcopy(self._checkpoint.run_config)
-            model = instantiate_model(OmegaConf.create(run_config), dataset)
+            model = instantiate_model(run_config, dataset)
             if hasattr(self._checkpoint, "model_props"):
                 for k, v in self._checkpoint.model_props.items():
                     setattr(model, k, v)
@@ -199,11 +240,11 @@ class ModelCheckpoint(object):
 
     @property
     def run_config(self):
-        return OmegaConf.create(self._checkpoint.run_config)
+        return self._checkpoint.run_config
 
     @property
     def data_config(self):
-        return OmegaConf.create(self._checkpoint.run_config).data
+        return self._checkpoint.run_config.data
 
     @property
     def selection_stage(self):
@@ -236,8 +277,7 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict, strict=False)
-            model.optimizer = self._checkpoint.get_optimizer(model, load_state=self._resume)
-            model.schedulers = self._checkpoint.get_schedulers(model, load_state=self._resume)
+            self._checkpoint.load_optim_sched(model, load_state=self._resume)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
@@ -322,7 +362,7 @@ class ModelCheckpoint(object):
             for k, v in dataset_config.items():
                 self.data_config[k] = v
         try:
-            instantiate_model(OmegaConf.create(self.run_config), self.data_config)
+            instantiate_model(self.run_config, self.data_config)
         except:
             return False
 

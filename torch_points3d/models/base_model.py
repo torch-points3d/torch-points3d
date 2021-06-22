@@ -6,7 +6,7 @@ import torch
 from torch.optim.optimizer import Optimizer
 import logging
 import hydra
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from torch_points3d.utils.enums import SchedulerUpdateOn
 
 from torch_points3d.core.regularizer import *
@@ -17,6 +17,7 @@ from .model_interface import TrackerInterface, DatasetInterface, CheckpointInter
 
 log = logging.getLogger(__name__)
 
+SchedulerTuple = namedtuple("SchedulerTuple", ["scheduler", "scheduler_opts"])
 
 class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointInterface):
     """This class is an abstract base class (ABC) for models.
@@ -49,8 +50,6 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self.output = None
         self._conv_type = opt.conv_type  if hasattr(opt, 'conv_type') else None # Update to OmegaConv 2.0
         self._optimizer: Optional[Optimizer] = None
-        self._lr_scheduler: Optimizer[object] = None
-        self._bn_scheduler = None
         self._spatial_ops_dict: Dict = {}
         self._num_epochs = 0
         self._num_batches = 0
@@ -68,13 +67,12 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     @schedulers.setter
     def schedulers(self, schedulers):
         if schedulers:
+            if any([not isinstance(x, SchedulerTuple) for x in schedulers.values()]):
+                raise TypeError("Scheduler values need to be a tuple!")
             self._schedulers = schedulers
-            for scheduler_name, scheduler in schedulers.items():
-                setattr(self, "_{}".format(scheduler_name), scheduler)
 
-    def _add_scheduler(self, scheduler_name, scheduler):
-        setattr(self, "_{}".format(scheduler_name), scheduler)
-        self._schedulers[scheduler_name] = scheduler
+    def _add_scheduler(self, scheduler_name, scheduler, scheduler_opts):
+        self._schedulers[scheduler_name] = SchedulerTuple(scheduler, scheduler_opts)
 
     @property
     def optimizer(self):
@@ -218,11 +216,11 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if make_optimizer_step:
             self._optimizer.step()  # update parameters
 
-        if self._lr_scheduler:
-            self._do_scheduler_update("_update_lr_scheduler_on", self._lr_scheduler, epoch, batch_size)
+        if "lr_scheduler" in self._schedulers:
+            self._do_scheduler_update("_update_lr_scheduler_on", self._schedulers["lr_scheduler"].scheduler, epoch, batch_size)
 
-        if self._bn_scheduler:
-            self._do_scheduler_update("_update_bn_scheduler_on", self._bn_scheduler, epoch, batch_size)
+        if "bn_scheduler" in self._schedulers:
+            self._do_scheduler_update("_update_bn_scheduler_on", self._schedulers["bn_scheduler"].scheduler, epoch, batch_size)
 
         self._num_epochs = epoch
         self._num_batches += 1
@@ -252,14 +250,16 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
-            self._lr_scheduler = hydra.utils.instantiate(scheduler_opt, self._optimizer)
             self._update_lr_scheduler_on = config.get('update_lr_scheduler_on', self._update_lr_scheduler_on)
+            scheduler = hydra.utils.instantiate(scheduler_opt, self._optimizer)
+            self._add_scheduler("lr_scheduler", scheduler, scheduler_opt)
 
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
             self._update_bn_scheduler_on = config.get('update_bn_scheduler_on', self._update_bn_scheduler_on)
-            self._bn_scheduler = hydra.utils.instantiate(bn_scheduler_opt, self, self._update_bn_scheduler_on)
+            scheduler = hydra.utils.instantiate(bn_scheduler_opt, self, self._update_bn_scheduler_on)
+            self._add_scheduler("bn_scheduler", scheduler, bn_scheduler_opt)
 
         # Accumulated gradients
         self._accumulated_gradient_step = self.get_from_opt(config, ["training", "optim", "accumulated_gradient"])
@@ -402,8 +402,8 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
     def log_optimizers(self):
         colored_print(COLORS.Green, "Optimizer: {}".format(self._optimizer))
-        colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self._lr_scheduler))
-        colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self._bn_scheduler))
+        colored_print(COLORS.Green, "Learning Rate Scheduler: {}".format(self.schedulers['lr_scheduler']))
+        colored_print(COLORS.Green, "BatchNorm Scheduler: {}".format(self.schedulers['bn_scheduler']))
         colored_print(COLORS.Green, "Accumulated gradients: {}".format(self._accumulated_gradient_step))
 
     def to(self, *args, **kwargs):

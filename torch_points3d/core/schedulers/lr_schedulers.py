@@ -12,37 +12,6 @@ log = logging.getLogger(__name__)
 _custom_lr_scheduler = sys.modules[__name__]
 
 
-def collect_params(params, update_scheduler_on):
-    """
-    This function enable to handle if params contains on_epoch and on_iter or not.
-    """
-    on_epoch_params = params.get("on_epoch")
-    on_batch_params = params.get("on_num_batch")
-    on_sample_params = params.get("on_num_sample")
-
-    def check_params(params):
-        if params is not None:
-            return params
-        else:
-            raise Exception(
-                "The lr_scheduler doesn't have policy {}. Options: {}".format(update_scheduler_on, SchedulerUpdateOn)
-            )
-
-    if on_epoch_params or on_batch_params or on_sample_params:
-        if update_scheduler_on == SchedulerUpdateOn.ON_EPOCH.value:
-            return check_params(on_epoch_params)
-        elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_BATCH.value:
-            return check_params(on_batch_params)
-        elif update_scheduler_on == SchedulerUpdateOn.ON_NUM_SAMPLE.value:
-            return check_params(on_sample_params)
-        else:
-            raise Exception(
-                "The provided update_scheduler_on {} isn't within {}".format(update_scheduler_on, SchedulerUpdateOn)
-            )
-    else:
-        return params
-
-
 class LambdaStepLR(LambdaLR):
     def __init__(self, optimizer, lr_lambda, last_step=-1):
         super(LambdaStepLR, self).__init__(optimizer, lr_lambda, last_step)

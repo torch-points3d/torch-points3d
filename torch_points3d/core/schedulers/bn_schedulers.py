@@ -49,20 +49,11 @@ class BNMomentumScheduler(object):
         self._current_momemtum = None
         self.step(last_epoch + 1)
         self.last_epoch = last_epoch
-        self._scheduler_opt = None
         self._update_scheduler_on = update_scheduler_on
 
     @property
     def update_scheduler_on(self):
         return self._update_scheduler_on
-
-    @property
-    def scheduler_opt(self):
-        return self._scheduler_opt
-
-    @scheduler_opt.setter
-    def scheduler_opt(self, scheduler_opt):
-        self._scheduler_opt = scheduler_opt
 
     def step(self, epoch=None):
 
