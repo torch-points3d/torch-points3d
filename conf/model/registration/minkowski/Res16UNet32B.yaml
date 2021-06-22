@@ -1,0 +1,19 @@
+# @package model
+defaults:
+  - /model/registration/default
+
+class: minkowski.Minkowski_Baseline_Model_Fragment
+conv_type: "SPARSE"
+model_name: "Res16UNet32B"
+loss_mode: "match"
+conv1_kernel_size: 5
+out_channels: 32
+D: 3
+normalize_feature: True
+metric_loss:
+  class: "ContrastiveHardestNegativeLoss"
+  params:
+    num_pos: 1024
+    num_hn_samples: 256
+    pos_thresh: 0.1
+    neg_thresh: 1.4

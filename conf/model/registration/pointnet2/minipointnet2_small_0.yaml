@@ -1,0 +1,11 @@
+# @package model
+defaults:
+  - /model/registration/pointnet2/minipointnet2
+
+down_conv:
+  npoint: [256, 128]
+  down_conv_nn:
+    [[[FEAT+3, 32, 32, 64]], [[64+3, 64, 128, 128]]]
+
+mlp_cls:
+  nn: [128, 128, 32]

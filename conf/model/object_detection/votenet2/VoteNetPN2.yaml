@@ -1,0 +1,8 @@
+# @package model
+defaults:
+  - /model/object_detection/votenet2/VoteNetPaper
+
+conv_type: "DENSE"
+
+backbone:
+  model_type: "PointNet2"

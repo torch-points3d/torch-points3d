@@ -1,6 +1,6 @@
 # @package model
 defaults:
-  - /model/segmentation/randlanet/Randla_Res
+  - /model/segmentation/randlanet/Randlanet_Res
 
 down_conv:
   module_name: RandlaConv

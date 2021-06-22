@@ -15,13 +15,13 @@ innermost:
 
 up_conv:
   up_conv_nn:
-  [
-    [ 32*in_feat + 32*in_feat, 32*in_feat ],
-    [ 32*in_feat + 16*in_feat, 8*in_feat ],
-    [ 8*in_feat + 8*in_feat, 4*in_feat ],
-    [ 4*in_feat + 4*in_feat, 2*in_feat ],
-    [ 2*in_feat + 2*in_feat, in_feat ],
-  ]
+    [
+      [ 32*in_feat + 32*in_feat, 32*in_feat ],
+      [ 32*in_feat + 16*in_feat, 8*in_feat ],
+      [ 8*in_feat + 8*in_feat, 4*in_feat ],
+      [ 4*in_feat + 4*in_feat, 2*in_feat ],
+      [ 2*in_feat + 2*in_feat, in_feat ],
+    ]
   up_k: [ 3, 3, 3, 3, 5 ]
 
 mlp_cls:

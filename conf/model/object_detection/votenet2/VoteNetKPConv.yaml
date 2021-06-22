@@ -1,0 +1,10 @@
+# @package model
+defaults:
+  - /model/object_detection/votenet2/VoteNetPaper
+
+conv_type: "PARTIAL_DENSE"
+
+backbone:
+  model_type: "KPConv"
+  extra_options:
+    in_grid_size: ${data.grid_size}
