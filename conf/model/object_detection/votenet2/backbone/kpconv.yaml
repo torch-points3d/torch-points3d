@@ -1,0 +1,7 @@
+defaults:
+  - default
+
+conv_type: "PARTIAL_DENSE"
+model_type: "KPConv"
+extra_options:
+  in_grid_size: ${data.grid_size}
