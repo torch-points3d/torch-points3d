@@ -5,7 +5,7 @@ defaults:
 class: modelnet.ModelNetDataset
 name: modelnet
 number: 10
-grid_size: 0.02
+first_subsampling: 0.02
 num_points: 2048
 
 pre_transform:

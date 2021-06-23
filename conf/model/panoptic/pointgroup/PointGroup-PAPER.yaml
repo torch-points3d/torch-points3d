@@ -9,7 +9,7 @@ backbone:
     class: minkowski.Minkowski_Model
     conv_type: "SPARSE"
     define_constants:
-      in_feat: ${models.PointGroup-PAPER.feat_size}
+      in_feat: ${models.feat_size}
     down_conv:
       module_name: ResNetDown
       dimension: 3
@@ -45,7 +45,7 @@ backbone:
 
 scorer_unet:
   define_constants:
-    in_feat: ${models.PointGroup-PAPER.feat_size}
+    in_feat: ${models.feat_size}
   down_conv:
     N: 2
   up_conv:
@@ -53,6 +53,6 @@ scorer_unet:
 
 scorer_encoder:
   define_constants:
-    in_feat: ${models.PointGroup-PAPER.feat_size}
+    in_feat: ${models.feat_size}
   down_conv:
     N: 2

@@ -54,7 +54,7 @@ scorer_encoder:
     nn: [ 4*in_feat, in_feat ]
 
 prepare_epoch: 120
-cluster_radius_search: 1.5 * ${data.grid_size}
+cluster_radius_search: 1.5 * ${data.first_subsampling}
 
 min_iou_threshold: 0.25
 max_iou_threshold: 0.75

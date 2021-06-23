@@ -20,4 +20,4 @@ wandb:
   notes: "Minkowski baseline"
   name: "PointGroup"
   config:
-    grid_size: ${data.grid_size}
+    grid_size: ${data.first_subsampling}

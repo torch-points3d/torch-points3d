@@ -5,4 +5,4 @@ defaults:
 class: pvcnn.PVCNN
 conv_type: "SPARSE"
 cr: 1
-vres: ${data.grid_size}
+vres: ${data.first_subsampling}

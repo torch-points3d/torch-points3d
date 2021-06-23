@@ -3,12 +3,12 @@ defaults:
   - segmentation/scannet/default
 
 num_points: 40000
-grid_size: 0.02
+first_subsampling: 0.02
 
 pre_transform:
   - transform: GridSampling3D
     lparams: 
-      - ${data.grid_size}
+      - ${data.first_subsampling}
 
 common_transform:
   - transform: FixedPoints

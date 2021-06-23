@@ -9,6 +9,6 @@ pre_transform: None
 common_transform:
   - transform: GridSampling3D
     params:
-      size: ${data.grid_size}
+      size: ${data.first_subsampling}
       mode: ${data.mode}
       quantize_coords: True
