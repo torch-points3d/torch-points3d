@@ -3,7 +3,7 @@ path_pretrained: ""
 
 MS_SVCONV_B2cm_X2_1head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -58,7 +58,7 @@ MS_SVCONV_B2cm_X2_1head:
 
 MS_SVCONV_B2cm_X2_2head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -113,7 +113,7 @@ MS_SVCONV_B2cm_X2_2head:
 
 MS_SVCONV_B2cm_X2_3head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -169,7 +169,7 @@ MS_SVCONV_B2cm_X2_3head:
 
 MS_SVCONV_B2cm_X2_3head_unshared:
   class: ms_svconv3d.MS_SparseConv3d
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -224,7 +224,7 @@ MS_SVCONV_B2cm_X2_3head_unshared:
 
 MS_SVCONV_B2cm_X2_4head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -280,7 +280,7 @@ MS_SVCONV_B2cm_X2_4head:
 
 MS_SVCONV_B4cm_X2_1head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -336,7 +336,7 @@ MS_SVCONV_B4cm_X2_1head:
 
 MS_SVCONV_B4cm_X2_2head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -392,7 +392,7 @@ MS_SVCONV_B4cm_X2_2head:
 
 MS_SVCONV_B4cm_X2_3head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -447,7 +447,7 @@ MS_SVCONV_B4cm_X2_3head:
 
 MS_SVCONV_B4cm_X2_4head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -502,7 +502,7 @@ MS_SVCONV_B4cm_X2_4head:
 
 MS_SVCONV_B4cm_X2_3head_unshared:
   class: ms_svconv3d.MS_SparseConv3d
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -558,7 +558,7 @@ MS_SVCONV_B4cm_X2_3head_unshared:
 
 MS_SVCONV_B6cm_X2_1head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -613,7 +613,7 @@ MS_SVCONV_B6cm_X2_1head:
 
 MS_SVCONV_B6cm_X2_2head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -668,7 +668,7 @@ MS_SVCONV_B6cm_X2_2head:
 
 MS_SVCONV_B6cm_X2_3head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -724,7 +724,7 @@ MS_SVCONV_B6cm_X2_3head:
 
 MS_SVCONV_B6cm_X2_3head_unshared:
   class: ms_svconv3d.MS_SparseConv3d
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
@@ -779,7 +779,7 @@ MS_SVCONV_B6cm_X2_3head_unshared:
 
 MS_SVCONV_B6cm_X2_4head:
   class: ms_svconv3d.MS_SparseConv3d_Shared
-  path_pretrained: ${models.path_pretrained}
+  path_pretrained: ${model.path_pretrained}
   weight_name: "latest"
   conv_type: "SPARSE"
   loss_mode: "match"
