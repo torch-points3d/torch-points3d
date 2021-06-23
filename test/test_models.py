@@ -111,6 +111,7 @@ class TestModels(unittest.TestCase):
                 "ResUNet32",
                 "VoteNet2Paper",
                 "default",
+                "ms_svconv_base",
             ]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B", "ResUNet32", "Res16UNet34"]

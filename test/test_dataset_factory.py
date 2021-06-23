@@ -2,8 +2,6 @@ import os
 import sys
 import unittest
 import numpy as np
-import hydra 
-from omegaconf import OmegaConf
 
 import torch
 from torch_geometric.data import Data

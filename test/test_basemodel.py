@@ -1,6 +1,5 @@
 import unittest
 import torch
-import hydra
 import omegaconf
 from omegaconf import OmegaConf, DictConfig
 from torch.nn import (
