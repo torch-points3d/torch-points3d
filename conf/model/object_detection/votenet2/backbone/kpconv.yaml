@@ -1,7 +1,8 @@
+# @package model.backbone
 defaults:
   - default
 
 conv_type: "PARTIAL_DENSE"
 model_type: "KPConv"
 extra_options:
-  in_grid_size: ${data.grid_size}
+  in_grid_size: ${data.first_subsampling}

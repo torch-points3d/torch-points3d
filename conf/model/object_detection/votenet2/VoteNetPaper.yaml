@@ -1,7 +1,6 @@
-# @package model
 defaults:
   - /model/object_detection/default
-  - /model/object_detection/votenet2/backbone@backbone: rsconv-truncated
+  - /model/object_detection/votenet2/backbone@backbone: pn2-paper # override with model/object_detection/votenet2/backbone@model.backbone=rsconv
 
 class: votenet2.VoteNet2
 conv_type: ${model.backbone.conv_type}
