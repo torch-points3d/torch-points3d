@@ -11,6 +11,7 @@ model_name: pointnet2_charlesssg
 precompute_multi_scale: True # Compute multiscate features on cpu for faster training / inference
 enable_dropout: False
 voting_runs: 1
+pretty_print: True
 
 tracker_options: # Extra options for the tracker
   full_res: False
