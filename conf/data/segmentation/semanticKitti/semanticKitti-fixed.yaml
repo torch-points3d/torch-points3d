@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - segmentation/semanticKitti/default
+  - /data/segmentation/semanticKitti/default
 
 quantize: True
 num_points: 100000

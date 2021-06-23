@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - segmentation/scannet/default
+  - /data/segmentation/scannet/default
 
 num_points: 40000
 first_subsampling: 0.02

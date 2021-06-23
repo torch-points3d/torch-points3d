@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - segmentation/shapenet/shapenet
+  - /data/segmentation/shapenet/shapenet
 
 category: 'Cap'
 num_points: 2048

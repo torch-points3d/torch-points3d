@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - segmentation/scannet/scannet-sparse
+  - /data/segmentation/scannet/scannet-sparse
 
 max_batch_points: 350000
 xy_random_rotation: 180

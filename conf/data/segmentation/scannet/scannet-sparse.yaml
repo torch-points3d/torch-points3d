@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - segmentation/scannet/default
+  - /data/segmentation/scannet/default
 
 dataset_name: "scannet-sparse"
 mode: last

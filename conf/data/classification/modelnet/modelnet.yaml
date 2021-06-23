@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - classification/default
+  - /data/classification/default
 
 class: modelnet.ModelNetDataset
 name: modelnet

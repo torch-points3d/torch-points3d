@@ -1,5 +1,5 @@
 defaults:
-  - segmentation/s3dis/s3disfused
+  - /data/segmentation/s3dis/s3disfused
 
 features: [rgb, pos_z, ones]
 
