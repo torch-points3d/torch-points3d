@@ -141,8 +141,6 @@ class TestModels(unittest.TestCase):
         for task, model_type, model_name in self.model_type_files:
             models_config = load_hydra_config("model", task, model_type, model_name, overrides={"+data.task=" + task, "+data.first_subsampling=0.05", "+data.use_category=False"})
 
-            models = models_config.get("model")
-
             if model_name == 'defaults':
                 # workaround for recursive defaults
                 continue
