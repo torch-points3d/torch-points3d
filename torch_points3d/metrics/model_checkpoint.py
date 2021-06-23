@@ -28,7 +28,7 @@ class Checkpoint:
         """
         self._check_path = checkpoint_file
         self._filled = False
-        self.run_config: Optional[Dict] = None
+        self.run_config: Optional[DictConfig] = None
         self.models: Dict[str, Any] = {}
         self.stats: Dict[str, List[Any]] = {"train": [], "test": [], "val": []}
         self.optimizer: Optional[Tuple[str, Any]] = None
