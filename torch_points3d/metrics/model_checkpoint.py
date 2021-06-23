@@ -97,7 +97,6 @@ class Checkpoint:
         if not self.is_empty:
             # initialize optimizer
             optimizer_config = self.optimizer
-            optimizer_cls = getattr(torch.optim, optimizer_config[0])
             model.optimizer = hydra.utils.instantiate(self.run_config.training.optim.optimizer, model.parameters())
 
             # initialize & load schedulersr
@@ -105,7 +104,6 @@ class Checkpoint:
             schedulers_config = self.schedulers
             for scheduler_type, (scheduler_state, scheduler_opt) in schedulers_config.items():
                 if scheduler_type == "lr_scheduler":
-                    optimizer = model.optimizer
                     scheduler = hydra.utils.instantiate(scheduler_opt, model.optimizer)
                     if load_state:
                         scheduler.load_state_dict(scheduler_state)
@@ -122,47 +120,6 @@ class Checkpoint:
             model.schedulers = schedulers_out
             if load_state:
                 model.optimizer.load_state_dict(optimizer_config[1])
-
-    def get_optimizer(self, model, load_state=True):
-        if not self.is_empty:
-            try:
-                optimizer_config = self.optimizer
-                optimizer_cls = getattr(torch.optim, optimizer_config[0])
-                optimizer_params = {}
-                try:
-                    optimizer_params = OmegaConf.create(self.run_config).training.optim.optimizer.params
-                except:
-                    pass
-                optimizer = optimizer_cls(model.parameters(), **optimizer_params)
-                if load_state:
-                    optimizer.load_state_dict(optimizer_config[1])
-                return optimizer
-            except:
-                raise KeyError("The checkpoint doesn t contain an optimizer")
-
-    def get_schedulers(self, model, load_state=True):
-        if not self.is_empty:
-            try:
-                schedulers_out = {}
-                for scheduler_type, (scheduler_state, scheduler_opt) in self.schedulers.items():
-                    if scheduler_type == "lr_scheduler":
-                        optimizer = model.optimizer
-                        scheduler = hydra.utils.instantiate(scheduler_opt, optimizer)
-                        if load_state:
-                            print("loading scheduler state:")
-                            scheduler.load_state_dict(scheduler_state)
-                        schedulers_out["lr_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
-                    elif scheduler_type == "bn_scheduler":
-                        scheduler = hydra.utils.instantiate(scheduler_opt, model, model._update_bn_scheduler_on)
-                        if load_state:
-                            scheduler.load_state_dict(scheduler_state)
-                        schedulers_out["bn_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
-                    else:
-                        raise NotImplementedError
-                return schedulers_out
-            except:
-               log.warn("The checkpoint doesn t contain schedulers")
-               return None
 
     def get_state_dict(self, weight_name):
         if not self.is_empty:

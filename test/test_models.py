@@ -141,7 +141,6 @@ class TestModels(unittest.TestCase):
             models_config = load_hydra_config("model", task, model_type, model_name, overrides={"+data.task=" + task, "+data.first_subsampling=0.05", "+data.use_category=False"})
 
             models = models_config.get("model")
-            models_keys = models.keys() if models is not None else []
 
             if model_name == 'defaults':
                 # workaround for recursive defaults
@@ -177,7 +176,7 @@ class TestModels(unittest.TestCase):
                                 % (task, model_type, model_name, 100 * ratio)
                             )
                     except Exception as e:
-                        print("Model with zero gradient %s: %s" % (type_file, model_name))
+                        print("Model with zero gradient %s.%s: %s" % (task, model_type, model_name))
                         raise e
 
     def test_one_model(self):
