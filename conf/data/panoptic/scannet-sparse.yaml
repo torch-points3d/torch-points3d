@@ -1,6 +1,6 @@
 defaults:
-  - segmentation/scannet/scannet
-  - panoptic/default
+  - /data/segmentation/scannet/scannet
+  - /data/panoptic/default
 
 use_instance_labels: True
 mode: last

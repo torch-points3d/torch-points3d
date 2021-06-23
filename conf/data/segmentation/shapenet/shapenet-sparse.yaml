@@ -1,6 +1,6 @@
 # @package data
 defaults:
-  - segmentation/shapenet/default
+  - segmentation/shapenet/shapenet
 
 use_category: True
 category: 'Cap'
