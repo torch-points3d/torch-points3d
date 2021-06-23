@@ -1,5 +1,6 @@
 import unittest
 import torch
+import hydra
 import omegaconf
 from omegaconf import OmegaConf, DictConfig
 from torch.nn import (
@@ -21,21 +22,7 @@ sys.path.append(ROOT)
 from torch_points3d.models.base_model import BaseModel
 from test.mockdatasets import MockDatasetGeometric
 from torch_points3d.models.model_factory import instantiate_model
-
-
-def load_model_config(task, model_type, model_name):
-    models_conf = os.path.join(ROOT, "conf/model/{}/{}.yaml".format(task, model_type))
-
-    if omegaconf.__version__ == '1.4.1':
-        config =  OmegaConf.load(models_conf)
-        config.update("model_name", model_name)
-        config.update("data.task", task)
-    else:
-        config = OmegaConf.create({"models": OmegaConf.load(models_conf)})
-        OmegaConf.update(config, "model_name", model_name, merge=True)
-        OmegaConf.update(config, "data.task", task)
-
-    return config
+from test.utils import load_hydra_config
 
 
 def MLP(channels):
@@ -110,7 +97,7 @@ class TestBaseModel(unittest.TestCase):
                 torch.testing.assert_allclose(w1[k], p)
 
     def test_accumulated_gradient(self):
-        params = load_model_config("segmentation", "pointnet2", "pointnet2ms")
+        params = load_hydra_config("model", "segmentation", "pointnet2", "pointnet2_ms", overrides={"data.task":"segmentation"})
         config_training = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
         dataset = MockDatasetGeometric(5)
         model = instantiate_model(params, dataset)

@@ -1,6 +1,6 @@
 import os
 import sys
-from omegaconf import OmegaConf
+import hydra
 import torch
 import unittest
 import logging
@@ -20,15 +20,17 @@ def get_lr(optimizer):
     for param_group in optimizer.param_groups:
         return param_group["lr"]
 
+def load_config(overrides=[]):
+    with hydra.initialize(config_path="test_config"):
+        return hydra.compose(config_name="lr_scheduler.yaml", overrides=overrides)
+
 
 class TestLrScheduler(unittest.TestCase):
     def test_update_scheduler_on_epoch(self):
 
         base_lr = 0.1
         gamma = 0.9
-        conf = os.path.join(DIR, "test_config/lr_scheduler.yaml")
-        opt = OmegaConf.load(conf)
-        opt.update_lr_scheduler_on = "on_epoch"
+        opt = load_config(["update_lr_scheduler_on=on_epoch"])
         model = DifferentiableMockModel(opt)
         model.instantiate_optimizers(opt)
         model.schedulers.__repr__()
@@ -49,9 +51,7 @@ class TestLrScheduler(unittest.TestCase):
     def test_update_scheduler_on_sample(self):
         base_lr = 0.1
         gamma = 0.9
-        conf = os.path.join(DIR, "test_config/lr_scheduler.yaml")
-        opt = OmegaConf.load(conf)
-        opt.update_lr_scheduler_on = "on_num_sample"
+        opt = load_config(["update_lr_scheduler_on=on_num_sample", "training.optim.lr_scheduler.step_size=32"])
         model = DifferentiableMockModel(opt)
         model.instantiate_optimizers(opt)
 
@@ -72,9 +72,7 @@ class TestLrScheduler(unittest.TestCase):
     def test_update_scheduler_on_batch(self):
         base_lr = 0.1
         gamma = 0.9
-        conf = os.path.join(DIR, "test_config/lr_scheduler.yaml")
-        opt = OmegaConf.load(conf)
-        opt.update_lr_scheduler_on = "on_num_batch"
+        opt = load_config(["update_lr_scheduler_on=on_num_batch"])
         model = DifferentiableMockModel(opt)
         model.instantiate_optimizers(opt)
 

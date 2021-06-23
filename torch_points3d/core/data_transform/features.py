@@ -141,12 +141,12 @@ class AddFeatsByKeys(object):
 
         self._feat_names = feat_names
         self._list_add_to_x = list_add_to_x
-        if self._list_add_to_x:
+        if self._list_add_to_x is not None and len(self._list_add_to_x) > 0:
             assert len(self._list_add_to_x) == len(self._feat_names)
         else:
             self._list_add_to_x = [True] * len(self._feat_names)
         self._delete_feats = delete_feats
-        if self._delete_feats:
+        if self._delete_feats is not None and len(self._delete_feats) > 0:
             assert len(self._delete_feats) == len(self._feat_names)
         else:
             self._delete_feats = [True] * len(self._feat_names)

@@ -11,24 +11,11 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..")
 sys.path.insert(0, ROOT)
 
-from mockdatasets import MockDatasetGeometric
+from test.mockdatasets import MockDatasetGeometric
 from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
 from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
-
-
-def load_config(task, model_type) -> DictConfig:
-    models_conf = os.path.join(ROOT, "conf/model/{}/{}.yaml".format(task, model_type))
-    if omegaconf.__version__ == '1.4.1':
-        config = OmegaConf.load(models_conf)
-        config.update("model_name", "pointnet2")
-        config.update("data.task", "segmentation")
-    else:
-        config = OmegaConf.create({"models": OmegaConf.load(models_conf)})
-        OmegaConf.update(config, "model_name", "pointnet2", merge=True)
-        OmegaConf.update(config, "data.task", "segmentation", merge=True)
-
-    return config
+from test.utils import load_hydra_config
 
 
 def remove(path):
@@ -57,7 +44,7 @@ class TestModelCheckpoint(unittest.TestCase):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         training_config = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
         scheduler_config = OmegaConf.load(os.path.join(DIR, "test_config/scheduler_config.yaml"))
-        params = load_config("segmentation", "pointnet2")
+        params = load_hydra_config("model", "segmentation", "pointnet2", "pointnet2", {"model_name": "pointnet2", "data.task": "segmentation"})
         self.config = OmegaConf.merge(training_config, scheduler_config, params)
         self.model_name = "model"
 
