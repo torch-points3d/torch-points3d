@@ -103,13 +103,10 @@ class Checkpoint:
             # initialize & load schedulersr
             schedulers_out = {}
             schedulers_config = self.schedulers
-            print(schedulers_config)
             for scheduler_type, (scheduler_state, scheduler_opt) in schedulers_config.items():
                 if scheduler_type == "lr_scheduler":
                     optimizer = model.optimizer
-                    print(scheduler_opt)
                     scheduler = hydra.utils.instantiate(scheduler_opt, model.optimizer)
-                    print(scheduler)
                     if load_state:
                         scheduler.load_state_dict(scheduler_state)
                     schedulers_out["lr_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
@@ -151,13 +148,9 @@ class Checkpoint:
                     if scheduler_type == "lr_scheduler":
                         optimizer = model.optimizer
                         scheduler = hydra.utils.instantiate(scheduler_opt, optimizer)
-                        print(scheduler)
                         if load_state:
                             print("loading scheduler state:")
-                            print(scheduler_state)
                             scheduler.load_state_dict(scheduler_state)
-                            print(scheduler.state_dict())
-                            print(scheduler_opt)
                         schedulers_out["lr_scheduler"] = SchedulerTuple(scheduler, scheduler_opt)
                     elif scheduler_type == "bn_scheduler":
                         scheduler = hydra.utils.instantiate(scheduler_opt, model, model._update_bn_scheduler_on)

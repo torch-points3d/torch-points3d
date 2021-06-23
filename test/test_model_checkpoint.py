@@ -82,8 +82,8 @@ class TestModelCheckpoint(unittest.TestCase):
         self.assertEqual(model2.num_epochs, num_epochs)
         self.assertEqual(model2.num_samples, num_samples)
         self.assertEqual(model.optimizer.defaults, model2.optimizer.defaults)
-        self.assertEqual(model.schedulers["lr_scheduler"].state_dict(), model2.schedulers["lr_scheduler"].state_dict())
-        self.assertEqual(model.schedulers["bn_scheduler"].state_dict(), model2.schedulers["bn_scheduler"].state_dict())
+        self.assertEqual(model.schedulers["lr_scheduler"].scheduler.state_dict(), model2.schedulers["lr_scheduler"].scheduler.state_dict())
+        self.assertEqual(model.schedulers["bn_scheduler"].scheduler.state_dict(), model2.schedulers["bn_scheduler"].scheduler.state_dict())
 
         remove(os.path.join(ROOT, "{}.pt".format(self.model_name)))
         remove(os.path.join(DIR, "{}.pt".format(self.model_name)))
