@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.applications.sparseconv3d import SparseConv3d
+import torch_points3d.modules.SparseConv3d as sp3d
 
 from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
 
@@ -20,6 +21,7 @@ class APIModel(BaseModel):
         self.backbone = SparseConv3d(
             "unet", dataset.feature_dimension, config=option.backbone, backend=option.get("backend", "minkowski")
         )
+        self._supports_mixed = sp3d.nn.get_backend() == "torchsparse"
         self.head = nn.Sequential(nn.Linear(self.backbone.output_nc, dataset.num_classes))
         self.loss_names = ["loss_seg"]
 

@@ -56,7 +56,11 @@ def SparseConv3d(
      backend:
          torchsparse or minkowski
     """
-    sp3d.nn.set_backend(backend)
+    if "SPARSE_BACKEND" in os.environ and sp3d.nn.backend_valid(os.environ["SPARSE_BACKEND"]):
+        sp3d.nn.set_backend(os.environ["SPARSE_BACKEND"])
+    else:
+        sp3d.nn.set_backend(backend)
+    
     factory = SparseConv3dFactory(
         architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )
