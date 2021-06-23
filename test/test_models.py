@@ -97,7 +97,6 @@ class TestModels(unittest.TestCase):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         self.model_type_files = glob(os.path.join(ROOT, "conf/model/*/*/*.yaml"))
         self.model_type_files = [tuple(x.split(os.path.sep)[-3:]) for x in self.model_type_files]
-        print(self.model_type_files)
 
     def test_runall(self):
         def is_known_to_fail(model_name):
@@ -110,6 +109,8 @@ class TestModels(unittest.TestCase):
                 "randlanet",
                 "PVCNN",
                 "ResUNet32",
+                "VoteNet2Paper",
+                "default",
             ]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B", "ResUNet32", "Res16UNet34"]
@@ -137,7 +138,7 @@ class TestModels(unittest.TestCase):
             return False
 
         for task, model_type, model_name in self.model_type_files:
-            models_config = load_hydra_config("model", task, model_type, model_name, overrides={"data.task": task, "data.grid_size": 0.05})
+            models_config = load_hydra_config("model", task, model_type, model_name, overrides={"+data.task=" + task, "+data.first_subsampling=0.05", "+data.use_category=False"})
 
             models = models_config.get("model")
             models_keys = models.keys() if models is not None else []
@@ -173,7 +174,7 @@ class TestModels(unittest.TestCase):
                         if ratio < 1:
                             print(
                                 "Model %s.%s.%s has %i%% of parameters with 0 gradient"
-                                % (task, type_file.split("/")[-1][:-5], model_name, 100 * ratio)
+                                % (task, model_type, model_name, 100 * ratio)
                             )
                     except Exception as e:
                         print("Model with zero gradient %s: %s" % (type_file, model_name))
@@ -181,12 +182,11 @@ class TestModels(unittest.TestCase):
 
     def test_one_model(self):
         # Use this test to test any model when debugging
-        config = load_hydra_config("model", "object_detection", "votenet2", "VoteNetRSConvSmall", overrides={"model_name": "VoteNetRSConvSmall", 
-                                    "data.task": "object_detection", "data.grid_size": 1})
+        config = load_hydra_config("model", "segmentation", "pointnet2", "pointnet2_charlesssg", overrides=["+model_name=pointnet2_charlesssg", 
+                                    "+data.task=segmentation", "+data.first_subsampling=1", "+data.use_category=False"])
 
-        dataset = get_dataset("dense", "object_detection")
+        dataset = get_dataset("dense", "segmentation")
         model = instantiate_model(config, dataset)
-        print(model)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()

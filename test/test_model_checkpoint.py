@@ -44,7 +44,7 @@ class TestModelCheckpoint(unittest.TestCase):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
         training_config = OmegaConf.load(os.path.join(DIR, "test_config/training_config.yaml"))
         scheduler_config = OmegaConf.load(os.path.join(DIR, "test_config/scheduler_config.yaml"))
-        params = load_hydra_config("model", "segmentation", "pointnet2", "pointnet2", {"model_name": "pointnet2", "data.task": "segmentation"})
+        params = load_hydra_config("model", "segmentation", "pointnet2", "pointnet2", {"+model_name=pointnet2", "+data.task=segmentation"})
         self.config = OmegaConf.merge(training_config, scheduler_config, params)
         self.model_name = "model"
 

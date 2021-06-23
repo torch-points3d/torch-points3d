@@ -7,9 +7,7 @@ def load_hydra_config(dir, task, folder, conf_name, overrides={}):
         conf_name += ".yaml"
     
     with hydra.initialize(config_path="../conf"):
-        cfg = hydra.compose(config_name="{}/{}/{}/{}".format(dir, task, folder, conf_name))
-        for k,v in overrides.items():
-            OmegaConf.update(cfg, k, v, force_add=True)
+        cfg = hydra.compose(config_name="{}/{}/{}/{}".format(dir, task, folder, conf_name), overrides=overrides)
         OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
         return cfg
 
