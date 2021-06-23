@@ -1,6 +1,0 @@
-# @package model
-defaults:
-  - /model/segmentation/default
-
-class: minkowski.Minkowski_Baseline_Model
-conv_type: "SPARSE"
