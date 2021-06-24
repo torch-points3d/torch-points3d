@@ -9,7 +9,7 @@ data:
     process_workers: 8
     is_test: True
   
-    grid_size: 0.05
+    first_subsampling: 0.05
     mode: last
   
     pre_transform:

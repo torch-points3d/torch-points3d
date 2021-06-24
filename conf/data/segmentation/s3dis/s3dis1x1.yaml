@@ -4,6 +4,7 @@ defaults:
 class: s3dis.S3DIS1x1Dataset
 fold: 5
 num_points: 4096
+class_weight_method: "sqrt"
 
 aug_transform:
   - transform: RandomTranslate

@@ -11,18 +11,18 @@ from torch_points3d.datasets.panoptic.scannet import ScannetDataset
 from torch_points3d.models.panoptic.structures import PanopticLabels
 
 
-# class TestScannetPanoptic(unittest.TestCase):
-#     def test_dataset(self):
-#         with hydra.initialize(config_path="../conf"):
-#             data_config = hydra.compose(config_name="data/panoptic/scannet-sparse.yaml", overrides=["data.dataroot=test/data", "+is_test=True"])
+class TestScannetPanoptic(unittest.TestCase):
+    def test_dataset(self):
+        with hydra.initialize(config_path="test_config"):
+            data_config = hydra.compose(config_name="scannet-panoptic.yaml")
 
-#             dataset = ScannetDataset(data_config.data)
-#             self.assertEqual(len(dataset.train_dataset), 2)
-#             self.assertEqual(len(dataset.val_dataset), 2)
+            dataset = ScannetDataset(data_config.data)
+            self.assertEqual(len(dataset.train_dataset), 2)
+            self.assertEqual(len(dataset.val_dataset), 2)
 
-#             data = dataset.train_dataset[0]
-#             for key in PanopticLabels._fields:
-#                 self.assertIn(key, data)
+            data = dataset.train_dataset[0]
+            for key in PanopticLabels._fields:
+                self.assertIn(key, data)
 
 
 if __name__ == "__main__":
