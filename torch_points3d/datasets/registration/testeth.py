@@ -207,6 +207,9 @@ class TestPairETH2(Base3DMatchTest, GeneralFragment):
     def __len__(self):
         return len(self.list_fragment)
 
+    def len(self):
+        return len(self)
+
     def process(self):
         super().process()
 

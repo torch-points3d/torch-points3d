@@ -36,6 +36,9 @@ class MockDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.num_points
 
+    def len(self):
+        return len(self)
+
     @property
     def datalist(self):
         torch.manual_seed(0)
