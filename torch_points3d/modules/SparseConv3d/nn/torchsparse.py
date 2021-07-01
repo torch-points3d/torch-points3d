@@ -36,7 +36,7 @@ class Conv3dTranspose(TS.nn.Conv3d):
             stride=stride,
             dilation=dilation,
             bias=bias,
-            transpose=True,
+            transposed=True,
         )
 
 
@@ -57,8 +57,8 @@ class ReLU(TS.nn.ReLU):
         super().__init__(inplace=inplace)
 
 
-def cat(*args, dim=1):
-    return TS.cat(args, dim)
+def cat(*args):
+    return TS.cat(args)
 
 
 def SparseTensor(feats, coordinates, batch, device=torch.device("cpu")):
