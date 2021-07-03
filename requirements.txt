@@ -124,10 +124,10 @@ testpath==0.5.0
 threadpoolctl==2.1.0
 torch==1.7.0
 torch-cluster==1.5.9
-torch-geometric==1.7.0
+torch-geometric==1.7.1
 torch-points-kernels==0.7.0
 torch-scatter==2.0.6
-torch-sparse==0.6.9
+torch-sparse==0.6.10
 torchfile==0.1.0
 torchnet==0.0.4
 torchvision==0.8.1
