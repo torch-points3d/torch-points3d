@@ -91,46 +91,35 @@ class Checkpoint:
     def is_empty(self):
         return not self._filled
 
-    def get_optimizer(self, model, load_state=True):
+    def load_optim_sched(self, model, load_state=True):
         if not self.is_empty:
-            try:
-                optimizer_config = self.optimizer
-                optimizer_cls = getattr(torch.optim, optimizer_config[0])
-                optimizer_params = {}
-                try:
-                    optimizer_params = OmegaConf.create(self.run_config).training.optim.optimizer.params
-                except:
-                    pass
-                optimizer = optimizer_cls(model.parameters(), **optimizer_params)
-                if load_state:
-                    optimizer.load_state_dict(optimizer_config[1])
-                return optimizer
-            except:
-                raise KeyError("The checkpoint doesn t contain an optimizer")
+            # initialize optimizer
+            optimizer_config = self.optimizer
+            optimizer_cls = getattr(torch.optim, optimizer_config[0])
+            optimizer_params = OmegaConf.create(self.run_config).training.optim.optimizer.params
+            model.optimizer = optimizer_cls(model.parameters(), **optimizer_params)
 
-    def get_schedulers(self, model, load_state=True):
-        if not self.is_empty:
-            try:
-                schedulers_out = {}
-                schedulers_config = self.schedulers
-                for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
-                    if scheduler_type == "lr_scheduler":
-                        optimizer = model.optimizer
-                        scheduler = instantiate_scheduler(optimizer, OmegaConf.create(scheduler_opt))
-                        if load_state:
-                            scheduler.load_state_dict(scheduler_state)
-                        schedulers_out["lr_scheduler"] = scheduler
-                    elif scheduler_type == "bn_scheduler":
-                        scheduler = instantiate_bn_scheduler(model, OmegaConf.create(scheduler_opt))
-                        if load_state:
-                            scheduler.load_state_dict(scheduler_state)
-                        schedulers_out["bn_scheduler"] = scheduler
-                    else:
-                        raise NotImplementedError
-                return schedulers_out
-            except:
-                log.warn("The checkpoint doesn t contain schedulers")
-                return None
+            # initialize & load schedulersr
+            schedulers_out = {}
+            schedulers_config = self.schedulers
+            for scheduler_type, (scheduler_opt, scheduler_state) in schedulers_config.items():
+                if scheduler_type == "lr_scheduler":
+                    optimizer = model.optimizer
+                    scheduler = instantiate_scheduler(optimizer, OmegaConf.create(scheduler_opt))
+                    if load_state:
+                        scheduler.load_state_dict(scheduler_state)
+                    schedulers_out["lr_scheduler"] = scheduler
+
+                elif scheduler_type == "bn_scheduler":
+                    scheduler = instantiate_bn_scheduler(model, OmegaConf.create(scheduler_opt))
+                    if load_state:
+                        scheduler.load_state_dict(scheduler_state)
+                    schedulers_out["bn_scheduler"] = scheduler
+
+            # load optimizer
+            model.schedulers = schedulers_out
+            if load_state:
+                model.optimizer.load_state_dict(optimizer_config[1])
 
     def get_state_dict(self, weight_name):
         if not self.is_empty:
@@ -238,8 +227,7 @@ class ModelCheckpoint(object):
         if not self._checkpoint.is_empty:
             state_dict = self._checkpoint.get_state_dict(weight_name)
             model.load_state_dict(state_dict, strict=False)
-            model.optimizer = self._checkpoint.get_optimizer(model, load_state=self._resume)
-            model.schedulers = self._checkpoint.get_schedulers(model, load_state=self._resume)
+            self._checkpoint.load_optim_sched(model, load_state=self._resume)
 
     def find_func_from_metric_name(self, metric_name, default_metrics_func):
         for token_name, func in default_metrics_func.items():
