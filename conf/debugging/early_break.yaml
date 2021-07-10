@@ -1,2 +1,4 @@
-# @package _group_
+defaults:
+  - default
+
 early_break: True

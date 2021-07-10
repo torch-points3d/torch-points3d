@@ -1,5 +1,5 @@
 import unittest
-from omegaconf import OmegaConf
+import hydra
 import sys
 import os
 
@@ -13,14 +13,16 @@ from torch_points3d.models.panoptic.structures import PanopticLabels
 
 class TestScannetPanoptic(unittest.TestCase):
     def test_dataset(self):
-        data_config = OmegaConf.load(os.path.join(DIR_PATH, "test_config/scannet-panoptic.yaml"))
-        dataset = ScannetDataset(data_config.data)
-        self.assertEqual(len(dataset.train_dataset), 2)
-        self.assertEqual(len(dataset.val_dataset), 2)
+        with hydra.initialize(config_path="test_config"):
+            data_config = hydra.compose(config_name="scannet-panoptic.yaml")
 
-        data = dataset.train_dataset[0]
-        for key in PanopticLabels._fields:
-            self.assertIn(key, data)
+            dataset = ScannetDataset(data_config.data)
+            self.assertEqual(len(dataset.train_dataset), 2)
+            self.assertEqual(len(dataset.val_dataset), 2)
+
+            data = dataset.train_dataset[0]
+            for key in PanopticLabels._fields:
+                self.assertIn(key, data)
 
 
 if __name__ == "__main__":

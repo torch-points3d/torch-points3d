@@ -1,0 +1,2 @@
+_target_: torch.optim.lr_scheduler.ExponentialLR
+gamma: 0.9885 # = 0.1**(1/200.) divide by 10 every 200 epochs

@@ -1,0 +1,27 @@
+# @package training
+defaults:
+  - /training/default
+  - override optim/optimizer: SGD
+
+epochs: 600
+num_workers: 8
+batch_size: 8
+precompute_multi_scale: True
+
+optim:
+  base_lr: 0.01
+  grad_clip: 100
+  
+  momentum: 0.98
+  weight_decay: 1e-3
+  
+  bn_momentum: 0.99
+  bn_decay: 1.0
+  bn_decay_step: 1000
+  bn_clip: 1e-2
+
+wandb:
+  project: s3dis
+  notes: "PPNet baseline"
+  name: "PPNet"
+  public: True # It will be display the model within wandb log, else not.

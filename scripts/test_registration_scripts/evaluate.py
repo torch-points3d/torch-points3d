@@ -207,8 +207,8 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
     df.to_csv(osp.join(output_path, "final_res_{}.csv".format(time.strftime("%Y%m%d-%H%M%S"))))
     print(df.groupby("name_scene").mean())
 
-
-@hydra.main(config_path="../../conf/config.yaml")
+OmegaConf.register_new_resolver("get_filename", lambda x: x.split('/')[-1])
+@hydra.main(config_path="../../conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 

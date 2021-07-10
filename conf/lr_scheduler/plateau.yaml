@@ -1,4 +1,0 @@
-# @package _group_
-class: ReduceLROnPlateau
-  params: 
-    mode: "min"

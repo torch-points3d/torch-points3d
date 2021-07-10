@@ -1,2 +1,9 @@
 # @package data
-task: ${task.name}
+dataroot: data
+use_category: False
+
+val_transform: "${data.common_transform}"
+test_transform: "${data.val_transform}"
+train_transform: 
+  - "${data.aug_transform}"
+  - "${data.common_transform}"

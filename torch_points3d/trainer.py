@@ -44,14 +44,14 @@ class Trainer:
         self._initialize_trainer()
 
     def _initialize_trainer(self):
-        # Enable CUDNN BACKEND
-        torch.backends.cudnn.enabled = self.enable_cudnn
-
         if not self.has_training:
             self._cfg.training = self._cfg
             resume = bool(self._cfg.checkpoint_dir)
         else:
             resume = bool(self._cfg.training.checkpoint_dir)
+
+        # Enable CUDNN BACKEND
+        torch.backends.cudnn.enabled = self.enable_cudnn
 
         # Get device
         if self._cfg.training.cuda > -1 and torch.cuda.is_available():
@@ -109,7 +109,7 @@ class Trainer:
         self._dataset.create_dataloaders(
             self._model,
             self._cfg.training.batch_size,
-            self._cfg.training.shuffle,
+            self._cfg.training.get("shuffle", False),
             self._cfg.training.num_workers,
             self.precompute_multi_scale,
         )
@@ -266,15 +266,15 @@ class Trainer:
 
     @property
     def early_break(self):
-        return getattr(self._cfg.debugging, "early_break", False) and self._is_training
+        return self._cfg.get("debugging", {}).get("early_break", False) and self._is_training
 
     @property
     def profiling(self):
-        return getattr(self._cfg.debugging, "profiling", False)
+        return self._cfg.get("debugging", {}).get("profiling", False)
 
     @property
     def num_batches(self):
-        return getattr(self._cfg.debugging, "num_batches", 50)
+        return self._cfg.get("debugging", {}).get("num_batches", 50)
 
     @property
     def enable_cudnn(self):
@@ -287,10 +287,6 @@ class Trainer:
     @property
     def has_visualization(self):
         return getattr(self._cfg, "visualization", False)
-
-    @property
-    def has_tensorboard(self):
-        return getattr(self._cfg, "tensorboard", False)
 
     @property
     def has_training(self):
@@ -309,10 +305,7 @@ class Trainer:
 
     @property
     def tensorboard_log(self):
-        if self.has_tensorboard:
-            return getattr(self._cfg.tensorboard, "log", False)
-        else:
-            return False
+        return self._cfg.get("tensorboard", {}).get("log", False)
 
     @property
     def tracker_options(self):

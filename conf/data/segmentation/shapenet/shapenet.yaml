@@ -1,0 +1,22 @@
+# @package data
+defaults:
+  - /data/segmentation/default
+
+class: shapenet.ShapeNetDataset
+normal: True # Use normal vectors as features
+first_subsampling: 0.02 # Grid size of the input data
+use_category: True # Use object category information
+mode: mean
+
+pre_transform: # Offline transforms, done only once
+  - transform: NormalizeScale
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      mode: ${data.mode}
+
+aug_transform: # Data augmentation pipeline
+  - transform: RandomNoise
+    params:
+      sigma: 0.01
+      clip: 0.05

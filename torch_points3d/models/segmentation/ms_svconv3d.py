@@ -2,7 +2,6 @@ import logging
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-import torchsparse as TS
 
 
 from torch_points3d.models.base_model import BaseModel

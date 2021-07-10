@@ -1,0 +1,23 @@
+# @package training
+defaults:
+  - /training/default
+  - override optim/optimizer: Adam
+
+epochs: 500
+num_workers: 4
+batch_size: 8
+
+optim:
+  base_lr: 0.001
+  
+  bn_momentum: 0.1
+  bn_decay: 0.5
+  bn_decay_step: 20
+  bn_clip: 1e-2
+
+wandb:
+  project: panoptic
+  notes: "Minkowski baseline"
+  name: "PointGroup"
+  config:
+    grid_size: ${data.first_subsampling}

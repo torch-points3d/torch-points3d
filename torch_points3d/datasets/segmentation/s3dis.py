@@ -547,6 +547,7 @@ class S3DISSphere(S3DISOriginalFused):
         self._datas = torch.load(path)
         if not isinstance(self._datas, list):
             self._datas = [self._datas]
+        self.data, self.slices = self.collate(self._datas)
         if self._sample_per_epoch > 0:
             self._centres_for_sampling = []
             for i, data in enumerate(self._datas):
@@ -664,7 +665,7 @@ class S3DISFusedDataset(BaseDataset):
         )
 
         if dataset_opt.class_weight_method:
-            self.add_weights(class_weight_method=dataset_opt.class_weight_method)
+            self.add_weights(class_weight_method=dataset_opt.class_weight_method) 
 
     @property
     def test_data(self):

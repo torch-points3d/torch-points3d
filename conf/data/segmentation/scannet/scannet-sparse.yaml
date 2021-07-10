@@ -1,0 +1,29 @@
+# @package data
+defaults:
+  - /data/segmentation/scannet/default
+
+dataset_name: "scannet-sparse"
+mode: last
+quantize: True
+max_batch_points: 400000
+xy_random_rotation: 8
+
+train_pre_batch_collate_transform:
+  - transform: ClampBatchSize
+    params:
+      num_points: ${data.max_batch_points}
+
+aug_transform:
+  - transform: ElasticDistortion
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: ${data.apply_rotation}
+      rot_x: ${data.xy_random_rotation}
+      rot_y: ${data.xy_random_rotation}
+      rot_z: 180
+  - transform: RandomSymmetry
+    params:
+      axis: [True, True, False]
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]

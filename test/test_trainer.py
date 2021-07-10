@@ -52,6 +52,7 @@ class TestTrainer(unittest.TestCase):
         cfg.training.num_workers = 0
         cfg.data.is_test = True
         cfg.data.dataroot = os.path.join(DIR_PATH, "data/")
+        
         trainer = Trainer(cfg)
         trainer.train()
 
@@ -65,6 +66,7 @@ class TestTrainer(unittest.TestCase):
         cfg.training.num_workers = 0
         cfg.data.is_test = True
         cfg.data.dataroot = os.path.join(DIR_PATH, "data/")
+        
         trainer = Trainer(cfg)
         trainer.train()
         trainer._cfg.voting_runs = 2

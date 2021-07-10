@@ -1,0 +1,20 @@
+# @package model
+defaults:
+  - /model/segmentation/kpconv/KPConvPaper
+
+down_conv:
+  deformable:       
+    [
+      [ False, False ],
+      [ False, False ],
+      [ False, True ],
+      [ True, True ],
+      [ True, True ],
+    ]
+  max_num_neighbors: [ [ 20, 20 ], [ 20, 35 ], [ 35, 45 ], [ 45, 40 ], [ 40, 40 ] ]
+
+up_conv:
+  up_k: [ 3, 3, 3, 3 ]
+
+mlp_cls:
+  dropout: 0.5

@@ -1,0 +1,18 @@
+defaults:
+  - /data/segmentation/s3dis/s3disfused
+
+common_transform:
+  - transform: XYZFeature
+    params:
+      add_x: False
+      add_y: False
+      add_z: True
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}
+  - transform: Center
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: True
+      mode: ${data.mode}

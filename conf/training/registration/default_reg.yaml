@@ -1,0 +1,20 @@
+# @package training
+defaults:
+  - /training/default
+  - override optim/optimizer: Adam
+
+epochs: 6000
+num_workers: 6
+batch_size: 64
+
+optim:
+  base_lr: 0.001
+  grad_clip: -1
+
+  bn_momentum: 0.1
+  bn_decay: 0.9
+  bn_decay_step: 3000
+  bn_clip: 1e-2
+
+wandb:
+  project: default

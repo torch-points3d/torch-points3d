@@ -1,0 +1,7 @@
+# @package model
+defaults:
+  - /model/registration/minkowski/Res16UNet32B
+
+model_name: "ResUNetBN2B"
+in_channels: 1
+num_pos_pairs: 1024

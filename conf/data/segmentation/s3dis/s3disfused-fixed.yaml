@@ -1,0 +1,21 @@
+defaults:
+  - /data/segmentation/s3dis/s3disfused
+
+num_points: 20000
+
+common_transform:
+  - transform: FixedPoints
+    lparams: 
+      - ${data.num_points}
+  - transform: XYZFeature
+    params:
+      add_x: False
+      add_y: False
+      add_z: True
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}
+  - transform: Center
+  - transform: ScalePos
+    params:
+      scale: 0.5

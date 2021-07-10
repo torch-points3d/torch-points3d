@@ -10,21 +10,18 @@ training:
         accumulated_gradient: 2
         grad_clip: -1
         optimizer:
-            class: Adam
-            params:
-                lr: 0.001
+            _target_: torch.optim.Adam
+            lr: 0.001
         lr_scheduler:
-            class: MultiStepLR
-            params:
-                milestones: [10, 25, 50, 75, 100]
-                gamma: 0.1
+            _target_: torch.optim.lr_scheduler.MultiStepLR
+            milestones: [10, 25, 50, 75, 100]
+            gamma: 0.1
         bn_scheduler:
-            bn_policy: "step_decay"
-            params:
-                bn_momentum: 0.1
-                bn_decay: 0.9
-                decay_step : 1024
-                bn_clip : 1e-2
+            _target_: torch_points3d.core.schedulers.bn_schedulers.BNMomentumScheduler
+            bn_momentum: 0.1
+            bn_decay: 0.9
+            decay_step: 1024
+            bn_clip: 1e-2
     weight_name: "latest"
     enable_cudnn: True
     checkpoint_dir: ""

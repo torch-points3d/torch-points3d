@@ -73,7 +73,7 @@ def log_confusion_matrix(conf):
     log.info("====================================================")
 
 
-@hydra.main(config_path="../conf/eval.yaml")
+@hydra.main(config_path="../conf", config_name="eval")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)  # This allows getattr and hasattr methods to function correctly
     log.info(cfg.pretty())

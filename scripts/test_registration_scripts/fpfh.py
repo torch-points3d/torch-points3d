@@ -32,7 +32,7 @@ class FPFH(object):
         return np.asarray(fpfh_feature.data).T[data.keypoints.numpy()]
 
 
-@hydra.main(config_path="conf/fpfh.yaml")
+@hydra.main(config_path="conf", config_name="fpfh")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
     print(cfg)

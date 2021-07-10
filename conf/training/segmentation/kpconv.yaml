@@ -1,0 +1,27 @@
+# @package training
+defaults:
+  - /training/default
+  - override optim/optimizer: SGD
+
+epochs: 550
+num_workers: 7
+batch_size: 8
+precompute_multi_scale: True
+
+optim:
+  base_lr: 0.01
+  grad_clip: 100
+
+  momentum: 0.98
+  weight_decay: 1e-3
+  
+  bn_momentum: 0.98
+  bn_decay: 0.9
+  bn_decay_step: 1000
+  bn_clip: 1e-2
+  
+wandb:
+  project: s3dis
+  notes: "Fixed batch norm to 0.02"
+  name: "kpconv-bn02"
+

@@ -1,0 +1,5 @@
+# @package model
+defaults:
+  - /model/registration/minkowski/Res16UNet32B
+
+model_name: "Res16UNet14B"

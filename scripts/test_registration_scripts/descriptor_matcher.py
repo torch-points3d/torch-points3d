@@ -171,7 +171,7 @@ def evaluate(path_raw_fragment, path_results, list_tau1, list_tau2):
     df.to_csv(osp.join(path_results, "matches", "total_res.csv"))
 
 
-@hydra.main(config_path="conf/config.yaml")
+@hydra.main(config_path="conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
     print(cfg)

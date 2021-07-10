@@ -1,0 +1,24 @@
+# @package model
+defaults:
+  - /model/segmentation/kpconv/KPConvPaper
+
+down_conv:
+  down_conv_nn:
+    [
+      [ [ FEAT + 1, in_feat ], [ in_feat, 2*in_feat ] ],
+      [ [ 2*in_feat, 2*in_feat ], [ 2*in_feat, 4*in_feat ] ],
+    ]
+  grid_size:
+    [ [ in_grid_size, in_grid_size ], [ 2*in_grid_size, 2*in_grid_size ] ]
+  prev_grid_size:
+    [ [ in_grid_size, in_grid_size ], [ in_grid_size, 2*in_grid_size ] ]
+  block_names:
+    [ [ "SimpleBlock", "ResnetBBlock" ], [ "ResnetBBlock", "ResnetBBlock" ] ]
+  has_bottleneck: [ [ False, True ], [ True, True ] ]
+  deformable: [ [ False, False ], [ False, False ] ]
+  max_num_neighbors: [ [ 15, 15 ], [ 15, 15 ] ]
+
+up_conv:
+  up_conv_nn: [ [ 4*in_feat + 2*in_feat, in_feat ] ]
+  up_k: [ 1, 1 ]
+  bn_momentum: [ bn_momentum, bn_momentum ]

@@ -1,0 +1,20 @@
+# @package data
+defaults:
+  - /data/classification/default
+
+class: modelnet.ModelNetDataset
+name: modelnet
+number: 10
+first_subsampling: 0.02
+num_points: 2048
+
+pre_transform:
+  - transform: NormalizeScale
+  - transform: GridSampling3D
+    lparams:
+      - ${data.max_batch_points}
+
+common_transform:
+  - transform: FixedPoints
+    lparams:
+      - ${data.num_points}

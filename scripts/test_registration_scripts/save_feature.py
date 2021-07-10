@@ -93,8 +93,8 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
                     features = model.get_output()  # batch of 1
                     save(output_path, scene_name, pc_name, data.to("cpu"), features.to("cpu"))
 
-
-@hydra.main(config_path="../../conf/config.yaml")
+OmegaConf.register_new_resolver("get_filename", lambda x: x.split('/')[-1])
+@hydra.main(config_path="../../conf", config_name="config")
 def main(cfg):
     OmegaConf.set_struct(cfg, False)
 

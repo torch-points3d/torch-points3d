@@ -1,7 +1,5 @@
-bn_scheduler:
-    bn_policy: "step_decay"
-    params:
-        bn_momentum: 0.1
-        bn_decay: 0.9
-        decay_step : 10
-        bn_clip : 1e-2
+_target_: torch_points3d.core.schedulers.bn_schedulers.BNMomentumScheduler
+bn_momentum: 0.1
+bn_decay: 0.9
+decay_step: 10
+bn_clip: 1e-2

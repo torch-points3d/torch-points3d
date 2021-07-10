@@ -1,0 +1,3 @@
+_target_: torch.optim.Adam
+lr: ${training.optim.base_lr}
+weight_decay: ${training.optim.weight_decay}

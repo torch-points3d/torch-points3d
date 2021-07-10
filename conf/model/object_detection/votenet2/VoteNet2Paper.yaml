@@ -1,0 +1,39 @@
+defaults:
+  - /model/object_detection/default
+  - /model/object_detection/votenet2/backbone@backbone: pn2-paper # override with model/object_detection/votenet2/backbone@model.backbone=rsconv
+
+class: votenet2.VoteNet2
+conv_type: ${model.backbone.conv_type}
+dropout: ${model.backbone.dropout}
+define_constants:
+  in_feat: 64
+  num_layers_down: 4
+  num_layers_up: 2
+  num_proposal: 256
+  num_features: 256
+  num_classes: 18 # Should be $(data.num_classes)
+voting:
+  module_name: VotingModule
+  vote_factor: 1
+  feat_dim: num_features
+  num_points_to_sample: 1024
+proposal:
+  module_name: ProposalModule
+  vote_aggregation:
+    module_name: PointNetMSGDown
+    npoint: num_proposal
+    radii: [ 0.3 ]
+    nsample: [ 16 ]
+    down_conv_nn:
+      [ [ num_features + 3, in_feat * 2, in_feat * 2, in_feat * 2 ] ]
+    normalize_xyz: True
+  num_class: num_classes
+  num_heading_bin: 1
+  num_proposal: num_proposal
+  sampling: "seed_fps"
+loss_params:
+  far_threshold: 0.6
+  near_threshold: 0.3
+  gt_vote_factor: 3 # number of GT votes per point
+  objectness_cls_weights: [ 0.2, 0.8 ]
+

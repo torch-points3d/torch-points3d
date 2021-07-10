@@ -1,0 +1,3 @@
+_target_: torch_points3d.core.schedulers.lr_schedulers.PolyLR
+max_iter: 150
+power: 0.9

@@ -132,8 +132,8 @@ class AddFeatsByKeys(object):
 
     def __init__(
         self,
-        list_add_to_x: List[bool],
         feat_names: List[str],
+        list_add_to_x: List[bool] = None,
         input_nc_feats: List[Optional[int]] = None,
         stricts: List[bool] = None,
         delete_feats: List[bool] = None,
@@ -141,16 +141,23 @@ class AddFeatsByKeys(object):
 
         self._feat_names = feat_names
         self._list_add_to_x = list_add_to_x
+        if self._list_add_to_x is not None and len(self._list_add_to_x) > 0:
+            assert len(self._list_add_to_x) == len(self._feat_names)
+        else:
+            self._list_add_to_x = [True] * len(self._feat_names)
         self._delete_feats = delete_feats
-        if self._delete_feats:
+        if self._delete_feats is not None and len(self._delete_feats) > 0:
             assert len(self._delete_feats) == len(self._feat_names)
+        else:
+            self._delete_feats = [True] * len(self._feat_names)
+
         from torch_geometric.transforms import Compose
 
         num_names = len(feat_names)
         if num_names == 0:
             raise Exception("Expected to have at least one feat_names")
 
-        assert len(list_add_to_x) == num_names
+        assert len(self._list_add_to_x) == num_names
 
         if input_nc_feats:
             assert len(input_nc_feats) == num_names
@@ -164,7 +171,7 @@ class AddFeatsByKeys(object):
 
         transforms = [
             AddFeatByKey(add_to_x, feat_name, input_nc_feat=input_nc_feat, strict=strict)
-            for add_to_x, feat_name, input_nc_feat, strict in zip(list_add_to_x, feat_names, input_nc_feats, stricts)
+            for add_to_x, feat_name, input_nc_feat, strict in zip(self._list_add_to_x, feat_names, input_nc_feats, stricts)
         ]
 
         self.transform = Compose(transforms)

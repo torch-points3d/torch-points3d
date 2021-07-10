@@ -1,0 +1,30 @@
+# @package data
+defaults:
+  - /data/segmentation/default
+
+class: semantickitti.SemanticKittiDataset
+dataset_name: "kitti"
+first_subsampling: 0.1
+process_workers: 8
+apply_rotation: True
+mode: "last"
+xy_random_rotation: 2
+quantize: False
+
+aug_transform:
+  - transform: Random3AxisRotation
+    params:
+      apply_rotation: ${data.apply_rotation}
+      rot_x: ${data.xy_random_rotation}
+      rot_y: ${data.xy_random_rotation}
+      rot_z: 180
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.9, 1.1]
+
+common_transform:
+  - transform: GridSampling3D
+    params:
+      size: ${data.first_subsampling}
+      quantize_coords: ${data.quantize}
+      mode: ${data.mode}

@@ -162,7 +162,7 @@ class Testhelpers(unittest.TestCase):
             pos=torch.randn((N)),
         )
         mask = np.random.uniform(0, 1, (4)) > 0.1
-        transform = AddFeatsByKeys(mask, keys)
+        transform = AddFeatsByKeys(keys, mask)
         data_out = transform(data)
         self.assertEqual(data_out.x.shape[-1], np.sum(values[mask]))
 

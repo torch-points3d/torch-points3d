@@ -1,0 +1,6 @@
+# @package model
+defaults:
+  - /model/registration/minkowski/Res16UNet32B
+
+mlp_cls:
+  nn: [32]

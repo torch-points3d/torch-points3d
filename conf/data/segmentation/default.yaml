@@ -1,3 +1,5 @@
 # @package data
 defaults:
   - /data/default
+
+task: segmentation

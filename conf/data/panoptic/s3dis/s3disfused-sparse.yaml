@@ -1,0 +1,7 @@
+# @package data
+defaults:
+  - /data/segmentation/s3dis/s3disfused-sparse
+  - /data/panoptic/default
+
+keep_instance: True
+sampling_format: "cylinder" # 'sphere'

@@ -1,0 +1,5 @@
+_target_: torch.optim.SGD
+momentum: ${training.optim.momentum}
+lr: ${training.optim.base_lr}
+weight_decay: ${training.optim.weight_decay}
+dampening: ${training.optim.dampening}

@@ -1,0 +1,11 @@
+# @package data
+defaults:
+  - /data/segmentation/shapenet/shapenet
+
+category: 'Cap'
+num_points: 2048
+
+common_transform:
+  - transform: FixedPoints
+    lparams: 
+      - ${data.num_points}

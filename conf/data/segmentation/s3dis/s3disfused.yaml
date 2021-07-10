@@ -1,0 +1,48 @@
+# @package data
+defaults:
+  - /data/segmentation/default
+
+class: s3dis.S3DISFusedDataset
+fold: 5
+first_subsampling: 0.04
+use_category: False
+mode: last
+features: [rgb, pos_z]
+
+pre_collate_transform:
+    - transform: PointCloudFusion   # One point cloud per area
+    - transform: SaveOriginalPosId    # Required so that one can recover the original point in the fused point cloud
+    - transform: GridSampling3D       # Samples on a grid
+      params:
+          size: ${data.first_subsampling}
+          mode: ${data.mode}
+
+aug_transform:
+  - transform: RandomNoise
+    params:
+      sigma: 0.001
+  - transform: RandomRotate
+    params:
+      degrees: 180
+      axis: 2
+  - transform: RandomScaleAnisotropic
+    params:
+      scales: [0.8, 1.2]
+  - transform: RandomSymmetry
+    params:
+      axis: [True, False, False]
+  - transform: DropFeature
+    params:
+      drop_proba: 0.2
+      feature_name: rgb
+
+common_transform:
+  - transform: XYZFeature
+    params:
+      add_x: False
+      add_y: False
+      add_z: True
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}
+  - transform: Center

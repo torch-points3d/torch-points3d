@@ -1,0 +1,31 @@
+# @package model
+defaults:
+  - /model/segmentation/kpconv/KPConvPaper
+
+down_conv:
+  max_num_neighbors: [ [ 20, 20 ], [ 35, 35 ], [ 50, 50 ], [ 50, 50 ], [ 50, 50 ] ]
+
+innermost:
+  module_name: GlobalBaseModule
+  activation:
+    name: LeakyReLU
+    negative_slope: 0.2
+  aggr: "mean"
+  nn: [ 32*in_feat + 3, 8*in_feat, 32*in_feat ]
+
+up_conv:
+  up_conv_nn:
+    [
+      [ 32*in_feat + 32*in_feat, 32*in_feat ],
+      [ 32*in_feat + 16*in_feat, 8*in_feat ],
+      [ 8*in_feat + 8*in_feat, 4*in_feat ],
+      [ 4*in_feat + 4*in_feat, 2*in_feat ],
+      [ 2*in_feat + 2*in_feat, in_feat ],
+    ]
+  up_k: [ 3, 3, 3, 3, 5 ]
+
+mlp_cls:
+  dropout: 0.5
+  
+loss_weights:
+  lambda_reg: 1e-6

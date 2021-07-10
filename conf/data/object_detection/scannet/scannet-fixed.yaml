@@ -1,0 +1,10 @@
+# @package data
+defaults:
+  - /data/object_detection/scannet/scannet
+
+pre_transform: []
+
+common_transform:
+  - transform: FixedPoints
+    lparams: 
+      - ${data.num_points}

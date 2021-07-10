@@ -1,0 +1,6 @@
+# @package model
+defaults:
+  - /model/registration/minkowski/MinkUNet_Fragment
+
+path_pretrained: "INSERT PATH"
+weight_name: "latest"

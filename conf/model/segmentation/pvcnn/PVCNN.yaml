@@ -1,0 +1,8 @@
+# @package model
+defaults:
+  - /model/segmentation/default
+
+class: pvcnn.PVCNN
+conv_type: "SPARSE"
+cr: 1
+vres: ${data.first_subsampling}

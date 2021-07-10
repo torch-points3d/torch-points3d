@@ -93,101 +93,99 @@ debugging:
   num_batches: 50
   profiling: false
 lr_scheduler:
-  class: ExponentialLR
-  params:
-    gamma: 0.9885
+  _target_: torch.optim.lr_scheduler.ExponentialLR
+  gamma: 0.9885
 model_name: VoteNetPaper
-models:
-  VoteNetPaper:
-    backbone:
-      down_conv:
-        down_conv_nn:
-          - - - FEAT + 3
-              - in_feat
-              - in_feat
-              - in_feat * 2
-          - - - in_feat * 2 + 3
-              - in_feat * 2
-              - in_feat * 2
-              - in_feat * 4
-          - - - in_feat * 4 + 3
-              - in_feat * 2
-              - in_feat * 2
-              - in_feat * 4
-          - - - in_feat * 4 + 3
-              - in_feat * 2
-              - in_feat * 2
-              - in_feat * 4
-        module_name: PointNetMSGDown
-        npoint:
-          - 2048
-          - 1024
-          - 512
-          - 256
-        nsamples:
-          - - 64
-          - - 32
-          - - 16
-          - - 16
-        radii:
-          - - 0.2
-          - - 0.4
-          - - 0.8
-          - - 1.2
-        save_sampling_id:
-          - true
-          - false
-          - false
-          - false
-      model_type: PointNet2
-      up_conv:
-        module_name: DenseFPModule
-        skip: true
-        up_conv_nn:
-          - - in_feat * 4 + in_feat * 4
-            - in_feat * 4
-            - in_feat * 4
-          - - in_feat * 4 + in_feat * 4
-            - in_feat * 4
-            - num_features
-    class: votenet.VoteNetModel
-    conv_type: DENSE
-    define_constants:
-      in_feat: 64
-      num_classes: 18
-      num_features: 256
-      num_layers_down: 4
-      num_layers_up: 2
-      num_proposal: 256
-    loss_params:
-      far_threshold: 0.6
-      gt_vote_factor: 3
-      near_threshold: 0.3
-      objectness_cls_weights:
-        - 0.2
-        - 0.8
-    proposal:
-      module_name: ProposalModule
-      num_class: num_classes
-      num_heading_bin: 1
-      num_proposal: num_proposal
-      sampling: seed_fps
-      vote_aggregation:
-        down_conv_nn:
-          - - num_features + 3
+model:
+  backbone:
+    down_conv:
+      down_conv_nn:
+        - - - FEAT + 3
+            - in_feat
+            - in_feat
+            - in_feat * 2
+        - - - in_feat * 2 + 3
             - in_feat * 2
             - in_feat * 2
+            - in_feat * 4
+        - - - in_feat * 4 + 3
             - in_feat * 2
-        module_name: PointNetMSGDown
-        npoint: num_proposal
-        nsample:
-          - 16
-        radii:
-          - 0.3
-    voting:
-      feat_dim: num_features
-      module_name: VotingModule
-      vote_factor: 1
+            - in_feat * 2
+            - in_feat * 4
+        - - - in_feat * 4 + 3
+            - in_feat * 2
+            - in_feat * 2
+            - in_feat * 4
+      module_name: PointNetMSGDown
+      npoint:
+        - 2048
+        - 1024
+        - 512
+        - 256
+      nsamples:
+        - - 64
+        - - 32
+        - - 16
+        - - 16
+      radii:
+        - - 0.2
+        - - 0.4
+        - - 0.8
+        - - 1.2
+      save_sampling_id:
+        - true
+        - false
+        - false
+        - false
+    model_type: PointNet2
+    up_conv:
+      module_name: DenseFPModule
+      skip: true
+      up_conv_nn:
+        - - in_feat * 4 + in_feat * 4
+          - in_feat * 4
+          - in_feat * 4
+        - - in_feat * 4 + in_feat * 4
+          - in_feat * 4
+          - num_features
+  class: votenet.VoteNetModel
+  conv_type: DENSE
+  define_constants:
+    in_feat: 64
+    num_classes: 18
+    num_features: 256
+    num_layers_down: 4
+    num_layers_up: 2
+    num_proposal: 256
+  loss_params:
+    far_threshold: 0.6
+    gt_vote_factor: 3
+    near_threshold: 0.3
+    objectness_cls_weights:
+      - 0.2
+      - 0.8
+  proposal:
+    module_name: ProposalModule
+    num_class: num_classes
+    num_heading_bin: 1
+    num_proposal: num_proposal
+    sampling: seed_fps
+    vote_aggregation:
+      down_conv_nn:
+        - - num_features + 3
+          - in_feat * 2
+          - in_feat * 2
+          - in_feat * 2
+      module_name: PointNetMSGDown
+      npoint: num_proposal
+      nsample:
+        - 16
+      radii:
+        - 0.3
+  voting:
+    feat_dim: num_features
+    module_name: VotingModule
+    vote_factor: 1
 pretty_print: false
 selection_stage: ''
 sota:
@@ -226,18 +224,16 @@ training:
   optim:
     base_lr: 0.001
     bn_scheduler:
-      bn_policy: step_decay
-      params:
-        bn_clip: 0.01
-        bn_decay: 0.9
-        bn_momentum: 0.1
-        decay_step: 10
+      _target_: torch_points3d.core.schedulers.bn_schedulers.BNMomentumScheduler
+      bn_clip: 0.01
+      bn_decay: 0.9
+      bn_momentum: 0.1
+      decay_step: 10
     grad_clip: -1
     lr_scheduler: ${lr_scheduler}
     optimizer:
-      class: Adam
-      params:
-        lr: ${training.optim.base_lr}
+      _target_: torch.optim.Adam
+      lr: ${training.optim.base_lr}
   precompute_multi_scale: false
   shuffle: true
   weight_name: latest

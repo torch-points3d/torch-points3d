@@ -13,6 +13,7 @@ sys.path.insert(0, ROOT)
 from test.mockdatasets import MockDatasetGeometric, MockDataset
 from test.mockdatasets import PairMockDatasetGeometric, PairMockDataset
 from test.utils import test_hasgrad
+from test.utils import load_hydra_config
 
 from torch_points3d.models.model_factory import instantiate_model
 from torch_points3d.core.data_transform import XYZFeature, GridSampling3D
@@ -32,21 +33,6 @@ seed = 0
 torch.manual_seed(seed)
 device = "cpu"
 
-
-def load_model_config(task, model_type, model_name):
-    models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
-    if omegaconf.__version__ == '1.4.1':
-        config = OmegaConf.load(models_conf)
-        config.update("model_name", model_name)
-        config.update("data.task", task)
-        config.update("data.grid_size", 1)
-    else:
-        config = OmegaConf.create({"models": OmegaConf.load(models_conf)})
-        OmegaConf.update(config, "model_name", model_name, merge=True)
-        OmegaConf.update(config, "data.task", task, merge=True)
-        OmegaConf.update(config, "data.grid_size", 1, merge=True)
-
-    return config
 
 
 def get_dataset(conv_type, task):
@@ -109,7 +95,8 @@ def has_zero_grad(model_name):
 class TestModels(unittest.TestCase):
     def setUp(self):
         self.data_config = OmegaConf.load(os.path.join(DIR, "test_config/data_config.yaml"))
-        self.model_type_files = glob(os.path.join(ROOT, "conf/models/*/*.yaml"))
+        self.model_type_files = glob(os.path.join(ROOT, "conf/model/*/*/*.yaml"))
+        self.model_type_files = [tuple(x.split(os.path.sep)[-3:]) for x in self.model_type_files]
 
     def test_runall(self):
         def is_known_to_fail(model_name):
@@ -122,6 +109,9 @@ class TestModels(unittest.TestCase):
                 "randlanet",
                 "PVCNN",
                 "ResUNet32",
+                "VoteNet2Paper",
+                "default",
+                "ms_svconv_base",
             ]
             if not HAS_MINKOWSKI:
                 forward_failing += ["Res16", "MinkUNet", "ResUNetBN2B", "ResUNet32", "Res16UNet34"]
@@ -148,69 +138,53 @@ class TestModels(unittest.TestCase):
                     return True
             return False
 
-        for type_file in self.model_type_files:
-            associated_task = os.path.normpath(type_file).split(os.path.sep)[-2]
-            # models_config = OmegaConf.load(type_file)
-            models_config = OmegaConf.create({"models": OmegaConf.load(type_file)})
-            models_config = OmegaConf.merge(models_config, self.data_config)
-            # Update to OmegaConf 2.0
-            if omegaconf.__version__ == '1.4.1':
-                models_config.update("data.task", associated_task)
-                models_config.update("data.grid_size", 0.05)
-            else:
-                OmegaConf.update(models_config, "data.task", associated_task, merge=True)
-                OmegaConf.update(models_config, "data.grid_size", 0.05, merge=True)
+        for task, model_type, model_name in self.model_type_files:
+            models_config = load_hydra_config("model", task, model_type, model_name, overrides={"+data.task=" + task, "+data.first_subsampling=0.05", "+data.use_category=False"})
 
-            models = models_config.get("models")
-            models_keys = models.keys() if models is not None else []
+            if model_name == 'defaults':
+                # workaround for recursive defaults
+                continue
 
-            for model_name in models_keys:
-                if model_name == 'defaults':
-                    # workaround for recursive defaults
-                    continue
-
-                with self.subTest(model_name):
-                    if not is_known_to_fail(model_name):
-                        if omegaconf.__version__ == '1.4.1':
-                            models_config.update("model_name", model_name)
+            with self.subTest(model_name):
+                if not is_known_to_fail(model_name):
+                    OmegaConf.update(models_config, "model_name", model_name, merge=True)
+                    # modify the backend in minkowski to have the forward
+                    if is_torch_sparse_backend(model_name):
+                        models_config.model.backend = "minkowski"
+                    dataset = get_dataset(models_config.model.conv_type, task)
+                    try:
+                        model = instantiate_model(models_config, dataset)
+                    except Exception as e:
+                        print(e)
+                        raise Exception(models_config)
+                    model.set_input(dataset[0], device)
+                    try:
+                        model.forward()
+                        model.backward()
+                    except Exception as e:
+                        print("Forward or backward failing")
+                        raise e
+                    try:
+                        if has_zero_grad(model_name):
+                            ratio = 1
                         else:
-                            OmegaConf.update(models_config, "model_name", model_name, merge=True)
-                        # modify the backend in minkowski to have the forward
-                        if is_torch_sparse_backend(model_name):
-                            models_config.models[model_name].backend = "minkowski"
-                        dataset = get_dataset(models_config.models[model_name].conv_type, associated_task)
-                        try:
-                            model = instantiate_model(models_config, dataset)
-                        except Exception as e:
-                            print(e)
-                            raise Exception(models_config)
-                        model.set_input(dataset[0], device)
-                        try:
-                            model.forward()
-                            model.backward()
-                        except Exception as e:
-                            print("Forward or backward failing")
-                            raise e
-                        try:
-                            if has_zero_grad(model_name):
-                                ratio = 1
-                            else:
-                                ratio = test_hasgrad(model)
-                            if ratio < 1:
-                                print(
-                                    "Model %s.%s.%s has %i%% of parameters with 0 gradient"
-                                    % (associated_task, type_file.split("/")[-1][:-5], model_name, 100 * ratio)
-                                )
-                        except Exception as e:
-                            print("Model with zero gradient %s: %s" % (type_file, model_name))
-                            raise e
+                            ratio = test_hasgrad(model)
+                        if ratio < 1:
+                            print(
+                                "Model %s.%s.%s has %i%% of parameters with 0 gradient"
+                                % (task, model_type, model_name, 100 * ratio)
+                            )
+                    except Exception as e:
+                        print("Model with zero gradient %s.%s: %s" % (task, model_type, model_name))
+                        raise e
 
     def test_one_model(self):
         # Use this test to test any model when debugging
-        config = load_model_config("object_detection", "votenet2", "VoteNetRSConvSmall")
-        dataset = get_dataset("dense", "object_detection")
+        config = load_hydra_config("model", "segmentation", "pointnet2", "pointnet2_charlesssg", overrides=["+model_name=pointnet2_charlesssg", 
+                                    "+data.task=segmentation", "+data.first_subsampling=1", "+data.use_category=False"])
+
+        dataset = get_dataset("dense", "segmentation")
         model = instantiate_model(config, dataset)
-        print(model)
         model.set_input(dataset[0], device)
         model.forward()
         model.backward()

@@ -1,0 +1,16 @@
+defaults:
+  - /data/segmentation/s3dis/s3disfused
+
+features: [rgb, pos_z, ones]
+
+common_transform:
+  - transform: XYZFeature
+    params:
+      add_x: False
+      add_y: False
+      add_z: True
+  - transform: AddOnes
+  - transform: AddFeatsByKeys
+    params:
+      feat_names: ${data.features}
+  - transform: Center

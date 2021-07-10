@@ -1,0 +1,8 @@
+# @package model
+defaults:
+  - /model/segmentation/pointnet2/pointnet2_largemsg
+
+down_conv:
+  npoint: [2048, 1024, 512, 256]
+  radii: [[0.1, 0.2], [0.2, 0.4], [0.4, 0.8], [0.8, 1.6]]
+  nsamples: [[32, 64], [16, 32], [16, 32], [16, 32]]

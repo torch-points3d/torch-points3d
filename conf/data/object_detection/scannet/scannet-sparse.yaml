@@ -1,0 +1,6 @@
+# @package data
+defaults:
+  - /data/object_detection/scannet/scannet
+
+mode: last
+quantize: True

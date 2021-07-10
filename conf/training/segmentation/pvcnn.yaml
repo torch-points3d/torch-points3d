@@ -1,0 +1,25 @@
+# @package training
+defaults:
+  - /training/default
+  - override optim/optimizer: SGD
+
+batch_size: 4
+
+optim:
+  base_lr: 2.4e-1
+  weight_decay: 1e-4
+  
+  momentum: 0.9
+  dampening: 0.1
+  
+  bn_momentum: 0.1
+  bn_decay: 0.2
+  bn_decay_step: 20
+  bn_clip: 2e-2
+
+wandb:
+  project: scannet-benchmark
+  name: ${model_name}
+  config:
+    grid_size: ${data.first_subsampling}
+    model_name: ${model_name}
