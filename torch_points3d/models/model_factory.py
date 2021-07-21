@@ -3,6 +3,7 @@ import hydra
 
 from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
+from omegaconf.dictconfig import DictConfig
 
 
 def instantiate_model(config, dataset) -> BaseModel:
@@ -16,6 +17,7 @@ def instantiate_model(config, dataset) -> BaseModel:
     task = config.data.task
     tested_model_name = config.model_name
 
+    dataset = DictConfig(dataset)
     # Find configs
     models = config.get('models')
     model_config = getattr(models, tested_model_name, None)
@@ -43,3 +45,4 @@ def instantiate_model(config, dataset) -> BaseModel:
         )
     model = model_cls(model_config, "dummy", dataset, modellib)
     return model
+
