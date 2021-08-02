@@ -42,6 +42,9 @@ class MockDataset(torch.utils.data.Dataset):
     def __len__(self):
         return self.num_points
 
+    def len(self):
+        return len(self)
+
     def _generate_data(self):
         data = Data(
             pos=torch.randn((self.num_points, 3)),

@@ -315,6 +315,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
 
         # Gradient Scaling
         self._enable_mixed = self.get_from_opt(config, ["training", "enable_mixed"], default_value=False)
+        self._enable_mixed = bool(self._enable_mixed)
         if self.is_mixed_precision() and not cuda_enabled:
             log.warning("Mixed precision is not supported on this device, using default precision...")
             self._enable_mixed = False
