@@ -6,7 +6,7 @@ fold: 5
 first_subsampling: 0.05
 use_category: False
 
-ppre_transforms:
+pre_transforms:
   - transform: GridSampling3D
     params:
       size: ${data.first_subsampling}

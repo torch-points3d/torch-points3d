@@ -15,7 +15,7 @@ def process_file(file):
     pos = np.stack((points['x'], points['y'], points['z']), axis=1)
     normal = np.stack((points['nx'], points['ny'], points['nz']), axis=1)
     rgb = np.stack((points['red'], points['green'], points['blue']), axis=1)
-    y = points['label']
+    y = points['label'] - 1
     print("Get data", file)
     
     data = Data(pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float), normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float), rgb=torch.from_numpy(rgb.copy()), y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
@@ -121,7 +121,7 @@ class SUMPointCloudDataset(InMemoryDataset):
     def process(self):
         # Read data into huge `Data` list.
 
-        with Executor(max_workers=10) as executor:
+        with Executor(max_workers=40) as executor:
             executors = [executor.submit(process_file, file) for file in self.raw_paths]
         data_list = [executor.result() for executor in executors]
 
@@ -129,20 +129,23 @@ class SUMPointCloudDataset(InMemoryDataset):
             data_list = [data for data in data_list if self.pre_filter(data)]
 
         if self.pre_transform is not None:
-            data_list = [self.pre_transform(data) for data in data_list]
+            print("Pretransforming data")
+            with Executor(max_workers=40) as executor:
+                executors = [executor.submit(self.pre_transform, data) for data in data_list]
+            data_list = [executor.result() for executor in executors]
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
 
 class SUMDataset(BaseDataset):
     INV_OBJECT_LABEL = {
-        0: "unclassified",
-        1: "ground",
-        2: "vegetation",
-        3: "building",
-        4: "water",
-        5: "car",
-        6: "boat"
+        -1: "unclassified",
+        0: "ground",
+        1: "vegetation",
+        2: "building",
+        3: "water",
+        4: "car",
+        5: "boat"
     }
 
     def __init__(self, dataset_opt):
@@ -176,4 +179,4 @@ class SUMDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=0)
+        return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=-1)
