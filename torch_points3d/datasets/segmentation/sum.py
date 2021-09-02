@@ -7,25 +7,11 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from concurrent.futures import ProcessPoolExecutor as Executor
 
-def process_file(file):
-    print("Start", file)
-    plydata = PlyData.read(file)
-    print("Read data", file)
-    points = plydata['vertex']
-    pos = np.stack((points['x'], points['y'], points['z']), axis=1)
-    normal = np.stack((points['nx'], points['ny'], points['nz']), axis=1)
-    rgb = np.stack((points['red'], points['green'], points['blue']), axis=1)
-    y = points['label'] - 1
-    print("Get data", file)
-    
-    data = Data(pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float), normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float), rgb=torch.from_numpy(rgb.copy()), y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
-    print("End", file)
-    return data
-
 class SUMPointCloudDataset(InMemoryDataset):
-    def __init__(self, root, test=False, validate=False, transform=None, pre_transform=None):
+    def __init__(self, root, test=False, validate=False, transform=None, pre_transform=None, process_workers=1):
         self.test = test
         self.validate = validate
+        self.process_workers = process_workers
         super(SUMPointCloudDataset, self).__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
@@ -118,21 +104,43 @@ class SUMPointCloudDataset(InMemoryDataset):
         print("Can't find ", self.raw_paths[0], ", use Mesh-2-Point-Cloud to create point-cloud files")
         exit(1)
 
+    @staticmethod
+    def process_one(file):
+        print("Starting", file)
+        plydata = PlyData.read(file)
+        print("Reading data", file)
+        points = plydata['vertex']
+        pos = np.stack((points['x'], points['y'], points['z']), axis=1)
+        normal = np.stack((points['nx'], points['ny'], points['nz']), axis=1)
+        rgb = np.stack((points['red'], points['green'], points['blue']), axis=1)
+        y = points['label'] - 1
+        print("Get data", file)
+        
+        data = Data(pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float), normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float), rgb=torch.from_numpy(rgb.copy()), y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
+        print("Ending", file)
+        return data
+
     def process(self):
         # Read data into huge `Data` list.
 
-        with Executor(max_workers=40) as executor:
-            executors = [executor.submit(process_file, file) for file in self.raw_paths]
-        data_list = [executor.result() for executor in executors]
+        if self.process_workers > 1:
+            with Executor(max_workers=self.process_workers) as executor:
+                executors = [executor.submit(self.process_one, file) for file in self.raw_paths]
+            data_list = [executor.result() for executor in executors]
+        else:
+            data_list = [self.process_one(file) for file in self.raw_paths]
 
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]
 
         if self.pre_transform is not None:
             print("Pretransforming data")
-            with Executor(max_workers=40) as executor:
-                executors = [executor.submit(self.pre_transform, data) for data in data_list]
-            data_list = [executor.result() for executor in executors]
+            if self.process_workers > 1:
+                with Executor(max_workers=self.process_workers) as executor:
+                    executors = [executor.submit(self.pre_transform, data) for data in data_list]
+                data_list = [executor.result() for executor in executors]
+            else:
+                data_list = [self.pre_transform(data) for data in data_list]
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
@@ -151,22 +159,27 @@ class SUMDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
+        process_workers: int = dataset_opt.process_workers if hasattr(dataset_opt,'process_workers') else 0
+
         self.train_dataset = SUMPointCloudDataset(
             self._data_path,
             pre_transform=self.pre_transform,
             transform=self.train_transform,
+            process_workers=process_workers
         )
         self.test_dataset = SUMPointCloudDataset(
             self._data_path,
             test=True,
             pre_transform=self.pre_transform,
             transform=self.test_transform,
+            process_workers=process_workers
         )
         self.val_dataset = SUMPointCloudDataset(
             self._data_path,
             validate=True,
             pre_transform=self.pre_transform,
             transform=self.val_transform,
+            process_workers=process_workers
         )
 
 

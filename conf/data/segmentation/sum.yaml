@@ -5,6 +5,7 @@ dataroot: data
 fold: 5
 first_subsampling: 0.05
 use_category: False
+process_workers: 24
 
 pre_transforms:
   - transform: GridSampling3D
