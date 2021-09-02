@@ -122,7 +122,7 @@ tensorboard-plugin-wit==1.8.0
 terminado==0.10.0
 testpath==0.5.0
 threadpoolctl==2.1.0
-torch==1.7.0
+torch==1.8.1
 torch-cluster==1.5.9
 torch-geometric==1.7.1
 torch-points-kernels==0.7.0
