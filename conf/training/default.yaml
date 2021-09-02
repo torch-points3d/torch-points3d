@@ -41,3 +41,4 @@ wandb:
   # parameters for TensorBoard Visualization
 tensorboard:
   log: True
+  pytorch_profiler: True

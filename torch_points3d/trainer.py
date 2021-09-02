@@ -26,6 +26,10 @@ from torch_points3d.utils.colors import COLORS
 from torch_points3d.utils.wandb_utils import Wandb
 from torch_points3d.visualization import Visualizer
 
+# PyTorch Profiler import
+import torch.profiler
+from contextlib import nullcontext
+
 log = logging.getLogger(__name__)
 
 
@@ -136,27 +140,37 @@ class Trainer:
     def train(self):
         self._is_training = True
 
-        for epoch in range(self._checkpoint.start_epoch, self._cfg.training.epochs):
-            log.info("EPOCH %i / %i", epoch, self._cfg.training.epochs)
+        with (torch.profiler.profile(
+            activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
+            schedule=torch.profiler.schedule(skip_first=5, wait=0, warmup=1, active=3),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(self._tracker._tensorboard_dir),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True
+        ) if self.pytorch_profiler_log else nullcontext()) as prof:
 
-            self._train_epoch(epoch)
+            for epoch in range(self._checkpoint.start_epoch, self._cfg.training.epochs):
+                log.info("EPOCH %i / %i", epoch, self._cfg.training.epochs)
 
-            if self.profiling:
-                return 0
+                with (torch.profiler.record_function('train_epoch') if self.pytorch_profiler_log else nullcontext()):
+                    self._train_epoch(epoch, prof)
 
-            if epoch % self.eval_frequency != 0:
-                continue
+                if self.profiling:
+                    return 0
 
-            if self._dataset.has_val_loader:
-                self._test_epoch(epoch, "val")
+                if epoch % self.eval_frequency != 0:
+                    continue
 
-            if self._dataset.has_test_loaders:
-                self._test_epoch(epoch, "test")
+                if self._dataset.has_val_loader:
+                    self._test_epoch(epoch, "val")
 
-        # Single test evaluation in resume case
-        if self._checkpoint.start_epoch > self._cfg.training.epochs:
-            if self._dataset.has_test_loaders:
-                self._test_epoch(epoch, "test")
+                if self._dataset.has_test_loaders:
+                    self._test_epoch(epoch, "test")
+
+            # Single test evaluation in resume case
+            if self._checkpoint.start_epoch > self._cfg.training.epochs:
+                if self._dataset.has_test_loaders:
+                    self._test_epoch(epoch, "test")
 
     def eval(self, stage_name=""):
         self._is_training = False
@@ -180,7 +194,7 @@ class Trainer:
             if self._tracker._stage == "train":
                 log.info("Learning rate = %f" % self._model.learning_rate)
 
-    def _train_epoch(self, epoch: int):
+    def _train_epoch(self, epoch: int, prof: torch.profiler.profile):
 
         self._model.train()
         self._tracker.reset("train")
@@ -209,6 +223,9 @@ class Trainer:
                     self._visualizer.save_visuals(self._model.get_current_visuals())
 
                 iter_data_time = time.time()
+
+                if self.pytorch_profiler_log:
+                    prof.step()
 
                 if self.early_break:
                     break
@@ -311,6 +328,13 @@ class Trainer:
     def tensorboard_log(self):
         if self.has_tensorboard:
             return getattr(self._cfg.tensorboard, "log", False)
+        else:
+            return False
+
+    @property
+    def pytorch_profiler_log(self):
+        if self.tensorboard_log:
+            return getattr(self._cfg.training.tensorboard, "pytorch_profiler", False)
         else:
             return False
 
