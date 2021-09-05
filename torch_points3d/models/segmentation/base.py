@@ -32,6 +32,8 @@ class Segmentation_MP(UnetBasedModel):
 
         self.loss_names = ["loss_seg"]
 
+        self.visual_names = ["data_visual"]
+
     def set_input(self, data, device):
         """Unpack input data from the dataloader and perform necessary pre-processing steps.
         Parameters:
@@ -55,6 +57,9 @@ class Segmentation_MP(UnetBasedModel):
         if self.labels is not None:
             self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL) + self.get_internal_loss()
 
+        self.data_visual = self.input
+        self.data_visual.y = self.labels
+        self.data_visual.pred = torch.max(self.output, -1)[1]
         return self.output
 
     def backward(self):
