@@ -67,6 +67,9 @@ class Test3DMatch(Base3DMatchTest):
     def __len__(self):
         return len(self.table)
 
+    def len(self):
+        return len(self)
+
     def get_table(self):
         return self.table
 
@@ -108,6 +111,9 @@ class TestPair3DMatch(Base3DMatchTest, GeneralFragment):
 
     def __len__(self):
         return len(self.list_fragment)
+
+    def len(self):
+        return len(self)
 
     def process(self):
         super().process()

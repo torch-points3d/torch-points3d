@@ -46,6 +46,9 @@ class CustomMockDataset:
     def __len__(self):
         return self.num_samples
 
+    def len(self):
+        return len(self)
+
     @property
     def num_classes(self):
         return self.output_nc

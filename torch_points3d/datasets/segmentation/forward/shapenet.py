@@ -40,6 +40,9 @@ class _ForwardShapenet(torch.utils.data.Dataset):
     def __len__(self):
         return len(self._files)
 
+    def len(self):
+        return len(self)
+
     def _read_file(self, filename):
         raw = read_txt_array(filename)
         pos = raw[:, :3]

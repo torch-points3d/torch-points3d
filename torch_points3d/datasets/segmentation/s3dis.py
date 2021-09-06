@@ -515,6 +515,9 @@ class S3DISSphere(S3DISOriginalFused):
         else:
             return len(self._test_spheres)
 
+    def len(self):
+        return len(self)
+
     def get(self, idx):
         if self._sample_per_epoch > 0:
             return self._get_random()

@@ -77,6 +77,9 @@ class SimplePatch(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.list_patches)
 
+    def len(self):
+        return len(self)
+
     def __getitem__(self, idx):
         data = self.list_patches[idx]
         return data
@@ -453,3 +456,6 @@ class BasePCRBTest(Dataset, GeneralFragment):
 
     def __len__(self):
         return len(self.list_fragment)
+
+    def len(self):
+        return len(self)

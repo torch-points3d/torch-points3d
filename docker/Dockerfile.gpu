@@ -1,5 +1,17 @@
 FROM nvidia/cuda:10.2-devel-ubuntu18.04
 
+RUN : \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes \
+    && apt-get install -y --no-install-recommends python3.8-venv  python3.8-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && :
+
+RUN python3.8 -m venv /venv
+ENV PATH=/venv/bin:$PATH
+
 ENV FORCE_CUDA 1
 ENV TORCH_CUDA_ARCH_LIST "3.5 5.2 6.0 6.1 7.0+PTX"
 

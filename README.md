@@ -16,7 +16,7 @@ See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of 
 
 - CUDA 10 or higher (if you want GPU version)
 - Python 3.7 or higher + headers (python-dev)
-- PyTorch 1.7 or higher
+- PyTorch 1.7 or higher (PyTorch >= 1.9 is recommended)
 - A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#3d-sparse-convolution-support) for installation instructions
 
 Install with
@@ -136,7 +136,7 @@ Please refer to our [documentation](https://torch-points3d.readthedocs.io/en/lat
 
 # 3D Sparse convolution support
 
-We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `MinkowskiEngine` [see here (thank you Chris Choy)](https://gist.github.com/chrischoy/d8e971daf8308aa1dcba1524bf1fd91a) demonstrates faster training. **Please be aware that `torchsparse` is still in beta and does not support CPU only training.**
+We currently support [Minkowski Engine](https://github.com/StanfordVL/MinkowskiEngine) > v0.5 and [torchsparse](https://github.com/mit-han-lab/torchsparse) >= v1.4.0 as backends for sparse convolutions. Those packages need to be installed independently from Torch Points3d, please follow installation instructions and troubleshooting notes on the respective repositories. At the moment `MinkowskiEngine` [see here (thank you Chris Choy)](https://gist.github.com/chrischoy/d8e971daf8308aa1dcba1524bf1fd91a) demonstrates faster training. **Please be aware that `torchsparse` is still in beta and does not support CPU only training.**
 
 Once you have setup one of those two sparse convolution framework you can start using are high level to define a unet backbone or simply an encoder:
 
