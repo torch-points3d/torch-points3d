@@ -1,19 +1,46 @@
 import torch
-from torch._C import dtype
-from torch_geometric.data import InMemoryDataset, Data
+from torch_geometric.data import Dataset, Data, Batch, dataset
 from plyfile import PlyData
 import numpy as np
 from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
+from torch_points3d.core.data_transform import Select
 from concurrent.futures import ProcessPoolExecutor as Executor
+from random import randint
+from sklearn.neighbors import KDTree
 
-class SUMPointCloudDataset(InMemoryDataset):
-    def __init__(self, root, test=False, validate=False, transform=None, pre_transform=None, process_workers=1):
+class SUMPointCloudDataset(Dataset):
+    r"""SUM Dataset in point cloud format
+
+    Args:
+        root (string): Root directory where the dataset should be saved.
+        length (int, optional): Number of point cloud to be sample.
+            (default: :int:1000)
+        cloud_size (int, optional): Number of point in out sample cloud. (default: :int:4096)
+        test (bool): Load test dataset. (default: :bool:False)
+        validate (bool): Load validate dataset. (default: :bool:False)
+        transform (callable, optional): A function/transform that takes in an
+            :obj:`torch_geometric.data.Data` object and returns a transformed
+            version. The data object will be transformed before every access.
+            (default: :obj:`None`)
+        pre_transform (callable, optional): A function/transform that takes in
+            an :obj:`torch_geometric.data.Data` object and returns a
+            transformed version. The data object will be transformed before
+            being saved to disk. (default: :obj:`None`)
+        process_workers (int, optional): Number of process to use for pre_transform and
+            transform. (default: :obj:`None`)
+        leaf_size (int, optional): Number of point in KDTree leaf. (default: :int:50)
+    """
+
+    def __init__(self, root, length=1000, cloud_size=4096, test=False, validate=False, transform=None, pre_transform=None, process_workers=1, leaf_size=50):
         self.test = test
         self.validate = validate
         self.process_workers = process_workers
+        self.length = length
+        self.leaf_size = leaf_size
+        self.cloud_size = cloud_size
         super(SUMPointCloudDataset, self).__init__(root, transform, pre_transform)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.data = torch.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self):
@@ -105,7 +132,7 @@ class SUMPointCloudDataset(InMemoryDataset):
         exit(1)
 
     @staticmethod
-    def process_one(file):
+    def process_one(file, leaf_size):
         print("Starting", file)
         plydata = PlyData.read(file)
         print("Reading data", file)
@@ -122,11 +149,10 @@ class SUMPointCloudDataset(InMemoryDataset):
 
     def process(self):
         # Read data into huge `Data` list.
-
         if self.process_workers > 1:
             with Executor(max_workers=self.process_workers) as executor:
-                executors = [executor.submit(self.process_one, file) for file in self.raw_paths]
-            data_list = [executor.result() for executor in executors]
+                results = [executor.submit(self.process_one, file, self.leaf_size) for file in self.raw_paths]
+            data_list = [result.result() for result in results]
         else:
             data_list = [self.process_one(file) for file in self.raw_paths]
 
@@ -137,13 +163,37 @@ class SUMPointCloudDataset(InMemoryDataset):
             print("Pretransforming data")
             if self.process_workers > 1:
                 with Executor(max_workers=self.process_workers) as executor:
-                    executors = [executor.submit(self.pre_transform, data) for data in data_list]
-                data_list = [executor.result() for executor in executors]
+                    results = [executor.submit(self.pre_transform, data) for data in data_list]
+                data_list = [result.result() for result in results]
             else:
                 data_list = [self.pre_transform(data) for data in data_list]
+            if isinstance(data_list[0], list):
+                data_list=[data for datas in data_list for data in datas]
 
-        data, slices = self.collate(data_list)
-        torch.save((data, slices), self.processed_paths[0])
+        data = Batch.from_data_list(data_list)
+        torch.save(data, self.processed_paths[0])
+
+    def len(self):
+        return self.length
+
+    def get(self, idx):
+        cloud_idx = randint(0, len(self.data)-1)
+        data = self.data.get_example(cloud_idx)
+        if (data.num_nodes <= self.cloud_size):
+            return data
+        else:
+            node_idx = randint(0,data.num_nodes-1)
+            if not hasattr(data, "kd_tree"):
+                data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self.leaf_size)
+            index = data.kd_tree.query(data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten()
+            transform = Select(index)
+            data = transform(data)
+        return data
+
+    @property
+    def num_classes(self) -> int:
+        return 7
+
 
 class SUMDataset(BaseDataset):
     INV_OBJECT_LABEL = {
@@ -163,23 +213,32 @@ class SUMDataset(BaseDataset):
 
         self.train_dataset = SUMPointCloudDataset(
             self._data_path,
+            length = dataset_opt.length,
+            cloud_size = dataset_opt.cloud_size,
             pre_transform=self.pre_transform,
             transform=self.train_transform,
-            process_workers=process_workers
+            process_workers=process_workers,
+            leaf_size = dataset_opt.leaf_size
         )
         self.test_dataset = SUMPointCloudDataset(
             self._data_path,
+            length = dataset_opt.length,
+            cloud_size = dataset_opt.cloud_size,
             test=True,
             pre_transform=self.pre_transform,
             transform=self.test_transform,
-            process_workers=process_workers
+            process_workers=process_workers,
+            leaf_size = dataset_opt.leaf_size
         )
         self.val_dataset = SUMPointCloudDataset(
             self._data_path,
+            length = dataset_opt.length,
+            cloud_size = dataset_opt.cloud_size,
             validate=True,
             pre_transform=self.pre_transform,
             transform=self.val_transform,
-            process_workers=process_workers
+            process_workers=process_workers,
+            leaf_size = dataset_opt.leaf_size
         )
 
 

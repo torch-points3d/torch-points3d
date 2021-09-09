@@ -2,22 +2,30 @@
 task: segmentation
 class: sum.SUMDataset
 dataroot: data
-fold: 5
-first_subsampling: 0.05
+first_subsampling: 0.1
 use_category: False
-process_workers: 24
+process_workers: 50
+length: 1024
+cloud_size: 4096
+leaf_size: 50
 
 pre_transforms:
   - transform: GridSampling3D
     params:
-      size: ${data.first_subsampling}
+      size: 0.2
+  - transform: NormalizeRGB
+  - transform: AddOnes
+  - transform: AddFeatsByKeys
+    params:
+      list_add_to_x: [True, True, True]
+      feat_names: [normal, rgb, ones]
+      input_nc_feats: [3, 3, 1]
+      delete_feats: [True, True, True]
+  - transform: ComputeKDTree
+    params:
+      leaf_size: ${data.leaf_size}
 
 train_transforms:
-  - transform: RandomSphere
-    params:
-      radius: 20
-      strategy: freq_class_based
-      center: false
   - transform: RandomNoise
     params:
       sigma: 0.001
@@ -31,25 +39,3 @@ train_transforms:
   - transform: RandomSymmetry
     params:
       axis: [True, True, False]
-  - transform: NormalizeRGB
-  - transform: AddFeatsByKeys
-    params:
-      list_add_to_x: [True, True]
-      feat_names: [normal, rgb]
-      input_nc_feats: [3, 3]
-      delete_feats: [True, True]
-  
-test_transform:
-  - transform: RandomSphere
-    params:
-      radius: 20
-      strategy: freq_class_based
-      center: false
-  - transform: NormalizeRGB
-  - transform: AddFeatsByKeys
-    params:
-      list_add_to_x: [True, True]
-      feat_names: [normal, rgb]
-      input_nc_feats: [3, 3]
-      delete_feats: [True, True]
-val_transform: ${data.test_transform}
