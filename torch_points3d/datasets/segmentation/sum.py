@@ -6,7 +6,7 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from torch_points3d.core.data_transform import Select
 from concurrent.futures import ProcessPoolExecutor as Executor
-from random import randint
+from random import randint, choices
 from sklearn.neighbors import KDTree
 
 class SUMPointCloudDataset(Dataset):
@@ -144,6 +144,12 @@ class SUMPointCloudDataset(Dataset):
         print("Get data", file)
         
         data = Data(pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float), normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float), rgb=torch.from_numpy(rgb.copy()), y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
+        
+        label, count = np.unique(y, return_counts=True)
+        frequency = dict(zip(label, 1 - (count/count.sum())))
+        frequency[-1] = 0
+        data.cum_weights = torch.as_tensor(torch.from_numpy(np.cumsum(np.vectorize(frequency.__getitem__)(y))), dtype=torch.float)
+
         print("Ending", file)
         return data
 
@@ -180,9 +186,11 @@ class SUMPointCloudDataset(Dataset):
         cloud_idx = randint(0, len(self.data)-1)
         data = self.data.get_example(cloud_idx)
         if (data.num_nodes <= self.cloud_size):
+            data.cum_weights = None
             return data
         else:
-            node_idx = randint(0,data.num_nodes-1)
+            node_idx = choices(list(range(data.num_nodes)), cum_weights=data.cum_weights.tolist(), k=1)[0]
+            data.cum_weights = None
             if not hasattr(data, "kd_tree"):
                 data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self.leaf_size)
             index = data.kd_tree.query(data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten()

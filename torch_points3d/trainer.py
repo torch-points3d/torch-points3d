@@ -142,7 +142,7 @@ class Trainer:
 
         with (torch.profiler.profile(
             activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
-            schedule=torch.profiler.schedule(skip_first=5, wait=0, warmup=1, active=3),
+            schedule=torch.profiler.schedule(skip_first=10, wait=5, warmup=1, active=3),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(self._tracker._tensorboard_dir),
             record_shapes=True,
             profile_memory=True,
