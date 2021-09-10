@@ -44,7 +44,7 @@ class SegmentationTracker(BaseTracker):
         self._acc = 0
         self._macc = 0
         self._miou = 0
-        self._miou_per_class = {}
+        self._iou_per_class = {}
 
     @staticmethod
     def detach_tensor(tensor):
@@ -85,7 +85,7 @@ class SegmentationTracker(BaseTracker):
         self._acc = 100 * self._confusion_matrix.get_overall_accuracy()
         self._macc = 100 * self._confusion_matrix.get_mean_class_accuracy()
         self._miou = 100 * self._confusion_matrix.get_average_intersection_union()
-        self._miou_per_class = {
+        self._iou_per_class = {
             i: "{:.2f}".format(100 * v)
             for i, v in enumerate(self._confusion_matrix.get_intersection_union_per_class()[0])
         }
@@ -100,7 +100,7 @@ class SegmentationTracker(BaseTracker):
         metrics["{}_miou".format(self._stage)] = self._miou
 
         if verbose:
-            metrics["{}_miou_per_class".format(self._stage)] = self._miou_per_class
+            metrics["{}_iou_per_class".format(self._stage)] = self._iou_per_class
         return metrics
 
     @property
