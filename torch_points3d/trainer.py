@@ -141,14 +141,20 @@ class Trainer:
         self._is_training = True
 
         with (torch.profiler.profile(
-            activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
-            schedule=torch.profiler.schedule(skip_first=5, wait=0, warmup=1, active=3),
+            schedule=torch.profiler.schedule(
+                skip_first=self._cfg.training.tensorboard.pytorch_profiler.skip_first,
+                wait=self._cfg.training.tensorboard.pytorch_profiler.wait,
+                warmup=self._cfg.training.tensorboard.pytorch_profiler.warmup,
+                active=self._cfg.training.tensorboard.pytorch_profiler.active,
+                repeat=self._cfg.training.tensorboard.pytorch_profiler.repeat),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(self._tracker._tensorboard_dir),
             record_shapes=self._cfg.training.tensorboard.pytorch_profiler.record_shapes,
             profile_memory=self._cfg.training.tensorboard.pytorch_profiler.profile_memory,
             with_stack=self._cfg.training.tensorboard.pytorch_profiler.with_stack,
             with_flops=self._cfg.training.tensorboard.pytorch_profiler.with_flops
         ) if self.pytorch_profiler_log else nullcontext()) as prof:
+
+
 
             for epoch in range(self._checkpoint.start_epoch, self._cfg.training.epochs):
                 log.info("EPOCH %i / %i", epoch, self._cfg.training.epochs)
