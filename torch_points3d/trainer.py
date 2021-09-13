@@ -144,9 +144,10 @@ class Trainer:
             activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA],
             schedule=torch.profiler.schedule(skip_first=5, wait=0, warmup=1, active=3),
             on_trace_ready=torch.profiler.tensorboard_trace_handler(self._tracker._tensorboard_dir),
-            record_shapes=True,
-            profile_memory=True,
-            with_stack=True
+            record_shapes=self._cfg.training.tensorboard.pytorch_profiler.record_shapes,
+            profile_memory=self._cfg.training.tensorboard.pytorch_profiler.profile_memory,
+            with_stack=self._cfg.training.tensorboard.pytorch_profiler.with_stack,
+            with_flops=self._cfg.training.tensorboard.pytorch_profiler.with_flops
         ) if self.pytorch_profiler_log else nullcontext()) as prof:
 
             for epoch in range(self._checkpoint.start_epoch, self._cfg.training.epochs):
@@ -334,9 +335,9 @@ class Trainer:
     @property
     def pytorch_profiler_log(self):
         if self.tensorboard_log:
-            return getattr(self._cfg.training.tensorboard, "pytorch_profiler", False)
-        else:
-            return False
+            if getattr(self._cfg.training.tensorboard, "pytorch_profiler", False):
+                return getattr(self._cfg.training.tensorboard.pytorch_profiler, "log", False)
+        return False
 
     @property
     def tracker_options(self):
