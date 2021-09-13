@@ -41,4 +41,14 @@ wandb:
   # parameters for TensorBoard Visualization
 tensorboard:
   log: True
-  pytorch_profiler: True
+  pytorch_profiler:
+    log: True
+    skip_first: 10
+    wait: 5
+    warmup: 1
+    active: 5
+    repeat: 0
+    record_shapes: True
+    profile_memory: True
+    with_stack: True
+    with_flops: True
