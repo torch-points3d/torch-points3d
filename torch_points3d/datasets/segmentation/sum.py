@@ -185,7 +185,7 @@ class SUMPointCloudDataset(Dataset):
     def get(self, idx):
         cloud_idx = randint(0, len(self.data)-1)
         data = self.data.get_example(cloud_idx)
-        if (data.num_nodes <= self.cloud_size):
+        if (data.num_nodes <= self.cloud_size or self.cloud_size < 1):
             data.cum_weights = None
             return data
         else:
