@@ -29,15 +29,13 @@ class SUMPointCloudDataset(Dataset):
             being saved to disk. (default: :obj:`None`)
         process_workers (int, optional): Number of process to use for pre_transform and
             transform. (default: :obj:`None`)
-        leaf_size (int, optional): Number of point in KDTree leaf. (default: :int:50)
     """
 
-    def __init__(self, root, length=1000, cloud_size=4096, test=False, validate=False, transform=None, pre_transform=None, process_workers=1, leaf_size=50):
+    def __init__(self, root, length=1000, cloud_size=4096, test=False, validate=False, transform=None, pre_transform=None, process_workers=1):
         self.test = test
         self.validate = validate
         self.process_workers = process_workers
         self.length = length
-        self.leaf_size = leaf_size
         self.cloud_size = cloud_size
         super(SUMPointCloudDataset, self).__init__(root, transform, pre_transform)
         self.data = torch.load(self.processed_paths[0])
@@ -132,7 +130,7 @@ class SUMPointCloudDataset(Dataset):
         exit(1)
 
     @staticmethod
-    def process_one(file, leaf_size):
+    def process_one(file):
         print("Starting", file)
         plydata = PlyData.read(file)
         print("Reading data", file)
@@ -144,20 +142,22 @@ class SUMPointCloudDataset(Dataset):
         print("Get data", file)
         
         data = Data(pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float), normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float), rgb=torch.from_numpy(rgb.copy()), y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
-        
-        label, count = np.unique(y, return_counts=True)
-        frequency = dict(zip(label, 1 - (count/count.sum())))
-        frequency[-1] = 0
-        data.cum_weights = torch.as_tensor(torch.from_numpy(np.cumsum(np.vectorize(frequency.__getitem__)(y))), dtype=torch.float)
-
         print("Ending", file)
+        return data
+
+    @staticmethod
+    def compute_class_index(data):
+        classes, indexes = torch.unique(data.y, return_inverse=True)
+        data.class_index = []
+        for i in range(len(classes)):
+            data.class_index.append((indexes == i).nonzero().flatten())
         return data
 
     def process(self):
         # Read data into huge `Data` list.
         if self.process_workers > 1:
             with Executor(max_workers=self.process_workers) as executor:
-                results = [executor.submit(self.process_one, file, self.leaf_size) for file in self.raw_paths]
+                results = [executor.submit(self.process_one, file) for file in self.raw_paths]
             data_list = [result.result() for result in results]
         else:
             data_list = [self.process_one(file) for file in self.raw_paths]
@@ -176,6 +176,13 @@ class SUMPointCloudDataset(Dataset):
             if isinstance(data_list[0], list):
                 data_list=[data for datas in data_list for data in datas]
 
+        if self.process_workers > 1:
+            with Executor(max_workers=self.process_workers) as executor:
+                results = [executor.submit(self.compute_class_index, data) for data in data_list]
+            data_list = [result.result() for result in results]
+        else:
+            data_list = [self.compute_class_index(data) for data in data_list]
+
         data = Batch.from_data_list(data_list)
         torch.save(data, self.processed_paths[0])
 
@@ -189,10 +196,12 @@ class SUMPointCloudDataset(Dataset):
             data.cum_weights = None
             return data
         else:
-            node_idx = choices(list(range(data.num_nodes)), cum_weights=data.cum_weights.tolist(), k=1)[0]
-            data.cum_weights = None
+            class_idx = randint(0, len(data.class_index)-1)
+            raw_idx = randint(0, len(data.class_index[class_idx])-1)
+            node_idx = data.class_index[class_idx][raw_idx]
+            data.class_index = None
             if not hasattr(data, "kd_tree"):
-                data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=self.leaf_size)
+                data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=50)
             index = data.kd_tree.query(data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten()
             transform = Select(index)
             data = transform(data)
@@ -225,8 +234,7 @@ class SUMDataset(BaseDataset):
             cloud_size = dataset_opt.cloud_size,
             pre_transform=self.pre_transform,
             transform=self.train_transform,
-            process_workers=process_workers,
-            leaf_size = dataset_opt.leaf_size
+            process_workers=process_workers
         )
         self.test_dataset = SUMPointCloudDataset(
             self._data_path,
@@ -235,8 +243,7 @@ class SUMDataset(BaseDataset):
             test=True,
             pre_transform=self.pre_transform,
             transform=self.test_transform,
-            process_workers=process_workers,
-            leaf_size = dataset_opt.leaf_size
+            process_workers=process_workers
         )
         self.val_dataset = SUMPointCloudDataset(
             self._data_path,
@@ -245,8 +252,7 @@ class SUMDataset(BaseDataset):
             validate=True,
             pre_transform=self.pre_transform,
             transform=self.val_transform,
-            process_workers=process_workers,
-            leaf_size = dataset_opt.leaf_size
+            process_workers=process_workers
         )
 
 

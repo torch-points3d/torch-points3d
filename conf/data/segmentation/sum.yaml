@@ -7,7 +7,6 @@ use_category: False
 process_workers: 50
 length: 1024
 cloud_size: 4096
-leaf_size: 50
 
 pre_transforms:
   - transform: NormalizeRGB
@@ -23,7 +22,7 @@ pre_transforms:
       delete_feats: [False, False, True]
   - transform: ComputeKDTree
     params:
-      leaf_size: ${data.leaf_size}
+      leaf_size: 50
 
 train_transforms:
   - transform: RandomNoise
