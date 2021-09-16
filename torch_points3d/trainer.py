@@ -130,7 +130,7 @@ class Trainer:
         self._model = self._model.to(self._device)
         if self.has_visualization:
             self._visualizer = Visualizer(
-                self._cfg.visualization, self._dataset.num_batches, self._dataset.batch_size, os.getcwd()
+                self._cfg.visualization, self._dataset.num_batches, self._dataset.batch_size, os.getcwd(), self._tracker
             )
 
     def train(self):

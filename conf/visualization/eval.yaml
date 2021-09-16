@@ -1,10 +1,13 @@
 # @package _group_
 activate: True
-format: "pointcloud" # image will come later
+format: ["pointcloud", "tensorboard"] # image will come later
 num_samples_per_epoch: -1
 deterministic: True # False -> Randomly sample elements from epoch to epoch
 saved_keys:
   pos: [['x', 'float'], ['y', 'float'], ['z', 'float']]
   y: [['l', 'float']]
   pred: [['p', 'float']]
-
+ply_format: 'binary_big_endian'
+tensorboard_mesh:
+  label: 'y'
+  prediction: 'pred'
