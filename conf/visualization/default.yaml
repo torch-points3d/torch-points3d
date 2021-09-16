@@ -7,5 +7,3 @@ saved_keys:
   pos: [['x', 'float'], ['y', 'float'], ['z', 'float']]
   y: [['l', 'float']]
   pred: [['p', 'float']]
-  rgb: [['red', 'float'], ['green', 'float'], ['blue', 'float']]
-  normal: [['nx', 'float'], ['ny', 'float'], ['nz', 'float']]
