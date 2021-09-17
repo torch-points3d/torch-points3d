@@ -9,7 +9,7 @@ saved_keys:
   normal: [['nx', 'float'], ['ny', 'float'], ['nz', 'float']]
   y: [['l', 'float']]
   pred: [['p', 'float']]
-ply_format: 'binary_big_endian'
+ply_format: 'binary_little_endian'
 tensorboard_mesh:
   color: 'rgb'
   label: 'y'
