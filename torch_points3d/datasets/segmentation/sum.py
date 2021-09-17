@@ -6,8 +6,9 @@ from torch_points3d.datasets.base_dataset import BaseDataset
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
 from torch_points3d.core.data_transform import Select
 from concurrent.futures import ProcessPoolExecutor as Executor
-from random import randint, choices
+from random import randint
 from sklearn.neighbors import KDTree
+import pickle
 
 class SUMPointCloudDataset(Dataset):
     r"""SUM Dataset in point cloud format
@@ -31,14 +32,16 @@ class SUMPointCloudDataset(Dataset):
             transform. (default: :obj:`None`)
     """
 
-    def __init__(self, root, length=1000, cloud_size=4096, test=False, validate=False, transform=None, pre_transform=None, process_workers=1):
-        self.test = test
-        self.validate = validate
-        self.process_workers = process_workers
+    def __init__(self, root:str, length:int=1000, cloud_size:int=4096, test:bool=False, validate:bool=False, transform=None, pre_transform=None, leaf_size:int=50, process_workers:int=1):
         self.length = length
         self.cloud_size = cloud_size
+        self.test = test
+        self.validate = validate
+        self.leaf_size = leaf_size
+        self.process_workers = process_workers
         super(SUMPointCloudDataset, self).__init__(root, transform, pre_transform)
         self.data = torch.load(self.processed_paths[0])
+        self.kd_tree = pickle.load(open(self.processed_paths[1], "rb"))
 
     @property
     def raw_file_names(self):
@@ -119,42 +122,35 @@ class SUMPointCloudDataset(Dataset):
     @property
     def processed_file_names(self):
         if self.test == True:
-            return ["test_data.pt"]
+            return ["test_data.pt", "test_kdtree.pkl"]
         elif self.validate == True:
-            return ["validate_data.pt"]
+            return ["validate_data.pt", "validate_kdtree.pkl"]
         else:
-            return ["train_data.pt"]
+            return ["train_data.pt", "train_kdtree.pkl"]
 
     def download(self):
         print("Can't find ", self.raw_paths[0], ", use Mesh-2-Point-Cloud to create point-cloud files")
         exit(1)
 
     @staticmethod
-    def process_one(file):
-        print("Starting", file)
+    def process_one(file:str):
         plydata = PlyData.read(file)
-        print("Reading data", file)
         points = plydata['vertex']
         pos = np.stack((points['x'], points['y'], points['z']), axis=1)
         normal = np.stack((points['nx'], points['ny'], points['nz']), axis=1)
         rgb = np.stack((points['red'], points['green'], points['blue']), axis=1)
         y = points['label'] - 1
-        print("Get data", file)
         
-        data = Data(pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float), normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float), rgb=torch.from_numpy(rgb.copy()), y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
-        print("Ending", file)
-        return data
-
-    @staticmethod
-    def compute_class_index(data):
-        classes, indexes = torch.unique(data.y, return_inverse=True)
-        data.class_index = []
-        for i in range(len(classes)):
-            data.class_index.append((indexes == i).nonzero().flatten())
+        data = Data(
+            pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float),
+            normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float),
+            rgb=torch.from_numpy(rgb.copy()),
+            y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
         return data
 
     def process(self):
         # Read data into huge `Data` list.
+        print("Reading PLY files")
         if self.process_workers > 1:
             with Executor(max_workers=self.process_workers) as executor:
                 results = [executor.submit(self.process_one, file) for file in self.raw_paths]
@@ -176,35 +172,37 @@ class SUMPointCloudDataset(Dataset):
             if isinstance(data_list[0], list):
                 data_list=[data for datas in data_list for data in datas]
 
-        if self.process_workers > 1:
-            with Executor(max_workers=self.process_workers) as executor:
-                results = [executor.submit(self.compute_class_index, data) for data in data_list]
-            data_list = [result.result() for result in results]
-        else:
-            data_list = [self.compute_class_index(data) for data in data_list]
-
+        print("Merging data")
         data = Batch.from_data_list(data_list)
+        
+        classes, indexes = torch.unique(data.y, return_inverse=True)
+        data.class_index = []
+        for i in range(len(classes)):
+            if classes[i] >= 0:
+                data.class_index.append((indexes == i).nonzero().flatten())
+
         torch.save(data, self.processed_paths[0])
 
-    def len(self):
+        print("Computing KDTree")
+        kd_tree = KDTree(data.pos.numpy(), leaf_size=self.leaf_size)
+        pickle.dump( kd_tree, open(self.processed_paths[1], "wb"))
+
+    def len(self) -> int:
         return self.length
 
     def get(self, idx):
-        cloud_idx = randint(0, len(self.data)-1)
-        data = self.data.get_example(cloud_idx)
-        if (data.num_nodes <= self.cloud_size or self.cloud_size < 1):
-            data.cum_weights = None
-            return data
+        if (self.data.num_nodes <= self.cloud_size or self.cloud_size < 1):
+            data = self.data.clone()
         else:
-            class_idx = randint(0, len(data.class_index)-1)
-            raw_idx = randint(0, len(data.class_index[class_idx])-1)
-            node_idx = data.class_index[class_idx][raw_idx]
-            data.class_index = None
-            if not hasattr(data, "kd_tree"):
-                data.kd_tree = KDTree(np.asarray(data.pos), leaf_size=50)
-            index = data.kd_tree.query(data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten()
+            class_idx = randint(0, len(self.data.class_index)-1)
+            raw_idx = randint(0, len(self.data.class_index[class_idx])-1)
+            node_idx = self.data.class_index[class_idx][raw_idx]
+            index = self.kd_tree.query(self.data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten()
             transform = Select(index)
-            data = transform(data)
+            data = transform(self.data)
+        data.batch = None
+        data.ptr = None
+        data.class_index = None
         return data
 
     @property
@@ -234,6 +232,7 @@ class SUMDataset(BaseDataset):
             cloud_size = dataset_opt.cloud_size,
             pre_transform=self.pre_transform,
             transform=self.train_transform,
+            leaf_size=dataset_opt.leaf_size,
             process_workers=process_workers
         )
         self.test_dataset = SUMPointCloudDataset(
@@ -243,6 +242,7 @@ class SUMDataset(BaseDataset):
             test=True,
             pre_transform=self.pre_transform,
             transform=self.test_transform,
+            leaf_size=dataset_opt.leaf_size,
             process_workers=process_workers
         )
         self.val_dataset = SUMPointCloudDataset(
@@ -252,6 +252,7 @@ class SUMDataset(BaseDataset):
             validate=True,
             pre_transform=self.pre_transform,
             transform=self.val_transform,
+            leaf_size=dataset_opt.leaf_size,
             process_workers=process_workers
         )
 
