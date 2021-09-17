@@ -57,7 +57,6 @@ class Visualizer(object):
         if "pointcloud" in self._format:
             self._saved_keys = viz_conf.saved_keys
             self._ply_format = viz_conf.ply_format if viz_conf.ply_format is not None else "binary_big_endian"
-            print(self._ply_format)
 
             # Current experiment path
             self._viz_path = os.path.join(save_dir, "viz")
