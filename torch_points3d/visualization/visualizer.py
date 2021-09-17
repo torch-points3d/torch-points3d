@@ -222,6 +222,6 @@ class Visualizer(object):
                             else:
                                 continue
 
-                            self._writer.add_mesh(self._stage + "_" + visual_name + "_" + label, pos, colors=value, config_dict=config_dict, global_step=(self._current_epoch-1)*(10**ceil(log10(stage_num_batches+1)))+self._seen_batch)
+                            self._writer.add_mesh(self._stage + "/" + visual_name + "/" + label, pos, colors=value, config_dict=config_dict, global_step=(self._current_epoch-1)*(10**ceil(log10(stage_num_batches+1)))+self._seen_batch)
                         
             self._seen_batch += 1
