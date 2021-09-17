@@ -69,7 +69,7 @@ class Trainer:
 
         # Start Wandb if public
         if self.wandb_log:
-            Wandb.launch(self._cfg, self._cfg.wandb.public and self.wandb_log)
+            Wandb.launch(self._cfg, self._cfg.training.wandb.public and self.wandb_log)
 
         # Checkpoint
 
@@ -124,7 +124,7 @@ class Trainer:
         self._tracker: BaseTracker = self._dataset.get_tracker(self.wandb_log, self.tensorboard_log)
 
         if self.wandb_log:
-            Wandb.launch(self._cfg, not self._cfg.wandb.public and self.wandb_log)
+            Wandb.launch(self._cfg, not self._cfg.training.wandb.public and self.wandb_log)
 
         # Run training / evaluation
         self._model = self._model.to(self._device)
@@ -175,7 +175,7 @@ class Trainer:
         if self._is_training:
             metrics = self._tracker.publish(epoch)
             self._checkpoint.save_best_models_under_current_metrics(self._model, metrics, self._tracker.metric_func)
-            if self.wandb_log and self._cfg.wandb.public:
+            if self.wandb_log and self._cfg.training.wandb.public:
                 Wandb.add_file(self._checkpoint.checkpoint_path)
             if self._tracker._stage == "train":
                 log.info("Learning rate = %f" % self._model.learning_rate)
@@ -303,7 +303,7 @@ class Trainer:
     @property
     def wandb_log(self):
         if getattr(self._cfg.training, "wandb", False):
-            return getattr(self._cfg.wandb, "log", False)
+            return getattr(self._cfg.training.wandb, "log", False)
         else:
             return False
 
