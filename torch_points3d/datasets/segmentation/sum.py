@@ -209,7 +209,7 @@ class SUMPointCloudDataset(Dataset):
 
     @property
     def num_classes(self) -> int:
-        return 7
+        return 6
 
 
 class SUMDataset(BaseDataset):
