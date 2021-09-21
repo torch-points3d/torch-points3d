@@ -142,10 +142,10 @@ class SUMPointCloudDataset(Dataset):
         y = points['label'] - 1
         
         data = Data(
-            pos=torch.as_tensor(torch.from_numpy(pos.copy()), dtype=torch.float),
-            normal=torch.as_tensor(torch.from_numpy(normal.copy()), dtype=torch.float),
+            pos=torch.from_numpy(pos.astype(np.float32)),
+            normal=torch.from_numpy(normal.astype(np.float32)),
             rgb=torch.from_numpy(rgb.copy()),
-            y=torch.as_tensor(torch.from_numpy(y.copy()), dtype=torch.long))
+            y=torch.from_numpy(y.astype(np.long)))
         return data
 
     def process(self):
