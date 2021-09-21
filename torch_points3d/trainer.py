@@ -314,7 +314,7 @@ class Trainer:
 
     @property
     def has_tensorboard(self):
-        return getattr(self._cfg, "tensorboard", False)
+        return getattr(self._cfg.training, "tensorboard", False)
 
     @property
     def has_training(self):
@@ -326,7 +326,7 @@ class Trainer:
 
     @property
     def wandb_log(self):
-        if getattr(self._cfg, "wandb", False):
+        if getattr(self._cfg.training, "wandb", False):
             return getattr(self._cfg.wandb, "log", False)
         else:
             return False
@@ -334,7 +334,7 @@ class Trainer:
     @property
     def tensorboard_log(self):
         if self.has_tensorboard:
-            return getattr(self._cfg.tensorboard, "log", False)
+            return getattr(self._cfg.training.tensorboard, "log", False)
         else:
             return False
 
