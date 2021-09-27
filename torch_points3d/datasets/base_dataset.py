@@ -188,7 +188,7 @@ class BaseDataset:
         if is_dense:
             return batch[key][index]
         else:
-            return batch[key][batch.batch == index][0]
+            return batch[key][batch.batch == index]
 
     def create_dataloaders(
         self,
