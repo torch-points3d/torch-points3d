@@ -253,10 +253,12 @@ class BaseDataset:
             conv_type, precompute_multi_scale, pre_batch_collate_transform
         )
         num_workers = kwargs.get("num_workers", 0)
-        persistent_workers = (num_workers > 0)
+        persistent_workers = num_workers > 0
         dataloader = partial(
-            torch.utils.data.DataLoader, collate_fn=batch_collate_function, worker_init_fn=np.random.seed,
-            persistent_workers=persistent_workers
+            torch.utils.data.DataLoader,
+            collate_fn=batch_collate_function,
+            worker_init_fn=np.random.seed,
+            persistent_workers=persistent_workers,
         )
         return dataloader(dataset, **kwargs)
 
