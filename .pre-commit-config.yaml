@@ -1,4 +1,4 @@
-exclude: 'benchmark|conf|data|docs|outputs'
+exclude: "benchmark|conf|data|docs|outputs"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -14,7 +14,7 @@ repos:
     rev: stable
     hooks:
       - id: black
-        language_version: python3.7
+        language_version: python3.8
 
   - repo: https://github.com/humitos/mirrors-autoflake.git
     rev: v1.3
@@ -22,16 +22,16 @@ repos:
       - id: autoflake
         args:
           [
-            '--in-place',
-            '--remove-unused-variable',
-            '--ignore-init-module-imports',
-            '--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy,sklearn,scipy,torch_sparse,torch_points_kernels',
+            "--in-place",
+            "--remove-unused-variable",
+            "--ignore-init-module-imports",
+            "--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy,sklearn,scipy,torch_sparse,torch_points_kernels",
           ]
   - repo: https://github.com/kynan/nbstripout
     rev: master
     hooks:
       - id: nbstripout
-        files: '.ipynb'
+        files: ".ipynb"
 
   - repo: local
     hooks:
@@ -40,12 +40,12 @@ repos:
         entry: poetry export
         args:
           [
-            '-f',
-            'requirements.txt',
-            '-o',
-            'requirements.txt',
-            '--without-hashes',
+            "-f",
+            "requirements.txt",
+            "-o",
+            "requirements.txt",
+            "--without-hashes",
           ]
         pass_filenames: false
         language: system
-        files: 'poetry.lock'
+        files: "poetry.lock"
