@@ -194,15 +194,14 @@ class SUMPointCloudDataset(Dataset):
         if (self.data.num_nodes <= self.cloud_size or self.cloud_size < 1):
             data = self.data.clone()
         else:
-            class_idx = randint(0, len(self.data.class_index)-1)
-            raw_idx = randint(0, len(self.data.class_index[class_idx])-1)
+            class_idx = randint(0, len(self.data.class_index)-1) # choose a class
+            raw_idx = randint(0, len(self.data.class_index[class_idx])-1) # choose a point in the class
             node_idx = self.data.class_index[class_idx][raw_idx]
-            index = self.kd_tree.query(self.data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten()
-            transform = Select(index)
-            data = transform(self.data)
-        data.batch = None
-        data.ptr = None
-        data.class_index = None
+            index = self.kd_tree.query(self.data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten() # Comput k-neighbors
+            data = Select(index)(self.data) # Extract cloud point
+        data.batch = None # Remove informations from Batch
+        data.ptr = None # Remove informations from Batch
+        data.class_index = None # Remove class index
         return data
 
     @property
