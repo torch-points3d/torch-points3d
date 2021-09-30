@@ -227,7 +227,7 @@ class TestBatchCollate(unittest.TestCase):
 
         data = Data(pos=torch.randn((3, 3)), batch=torch.tensor([0, 1, 2]))
         torch.testing.assert_allclose(
-            MockBaseDataset.get_sample(data, "pos", 1, ConvolutionFormat.PARTIAL_DENSE.value), data.pos[1]
+            MockBaseDataset.get_sample(data, "pos", 1, ConvolutionFormat.PARTIAL_DENSE.value), data.pos[1].unsqueeze(0)
         )
 
 
