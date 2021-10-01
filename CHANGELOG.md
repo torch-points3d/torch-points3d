@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Migrated to Hydra 1.0 and OmegaConf 2.1 **BREAKING any checkpoint created prior to that, in particular the model zoo**
+- Upgrade to pytorch 1.8
 
 ### Added
 
