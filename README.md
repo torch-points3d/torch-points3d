@@ -16,7 +16,7 @@ See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of 
 
 - CUDA 10 or higher (if you want GPU version)
 - Python 3.7 or higher + headers (python-dev)
-- PyTorch 1.7 or higher (PyTorch >= 1.9 is recommended)
+- PyTorch 1.8 or higher (PyTorch >= 1.9 is recommended)
 - A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#3d-sparse-convolution-support) for installation instructions
 
 Install with
@@ -158,7 +158,7 @@ bn = sp3d.nn.BatchNorm(10)
 
 ### Mixed Precision Training
 
-Mixed precision allows for lower memory on the GPU and slightly faster training times by performing the sparse convolution, pooling, and gradient ops in `float16`. Mixed precision training is currently supported for CUDA training on `SparseConv3d` networks with the [torchsparse](https://github.com/mit-han-lab/torchsparse) backend. To enable mixed precision, ensure you have the latest version of torchsparse with `pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git`. Then, set `training.enable_mixed=True` in your training configuration files. If all the conditions are met, when you start training you will see a log entry stating: 
+Mixed precision allows for lower memory on the GPU and slightly faster training times by performing the sparse convolution, pooling, and gradient ops in `float16`. Mixed precision training is currently supported for CUDA training on `SparseConv3d` networks with the [torchsparse](https://github.com/mit-han-lab/torchsparse) backend. To enable mixed precision, ensure you have the latest version of torchsparse with `pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git`. Then, set `training.enable_mixed=True` in your training configuration files. If all the conditions are met, when you start training you will see a log entry stating:
 
 `[torch_points3d.models.base_model][INFO] - Model will use mixed precision`
 
@@ -374,11 +374,11 @@ python -m torch.utils.bottleneck /path/to/source/script.py [args]
 
 ### Cannot compile certain CUDA Kernels or seg faults while running the tests
 
-Ensure that at least PyTorch 1.4.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
+Ensure that at least PyTorch 1.8.0 is installed and verify that `cuda/bin` and `cuda/include` are in your `$PATH` and `$CPATH` respectively, e.g.:
 
 ```
 $ python -c "import torch; print(torch.__version__)"
->>> 1.4.0
+>>> 1.8.0
 
 $ echo $PATH
 >>> /usr/local/cuda/bin:...

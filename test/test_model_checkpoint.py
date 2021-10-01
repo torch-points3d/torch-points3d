@@ -19,7 +19,7 @@ from torch_points3d.metrics.model_checkpoint import ModelCheckpoint
 
 def load_config(task, model_type) -> DictConfig:
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
-    if omegaconf.__version__ == '1.4.1':
+    if omegaconf.__version__ == "1.4.1":
         config = OmegaConf.load(models_conf)
         config.update("model_name", "pointnet2")
         config.update("data.task", "segmentation")
@@ -39,8 +39,7 @@ def remove(path):
 
 
 class MockModel(torch.nn.Module):
-    """ Mock mdoel that does literaly nothing but holds a state
-    """
+    """Mock mdoel that does literaly nothing but holds a state"""
 
     def __init__(self):
         super().__init__()
@@ -61,7 +60,9 @@ class TestModelCheckpoint(unittest.TestCase):
         self.config = OmegaConf.merge(training_config, scheduler_config, params)
         self.model_name = "model"
 
-    def test_model_ckpt_using_pointnet2ms(self,):
+    def test_model_ckpt_using_pointnet2ms(
+        self,
+    ):
         # Create a checkpt
 
         self.run_path = os.path.join(DIR, "checkpt")
@@ -112,19 +113,20 @@ class TestModelCheckpoint(unittest.TestCase):
         metric_func = {"acc": max}
         mock_metrics = {"current_metrics": {"acc": 12}, "stage": "test", "epoch": 10}
         model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
-        model.state[0] = 2
-        mock_metrics = {"current_metrics": {"acc": 0}, "stage": "test", "epoch": 11}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
-        mock_metrics = {"current_metrics": {"acc": 10}, "stage": "train", "epoch": 11}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
-        mock_metrics = {"current_metrics": {"acc": 15}, "stage": "train", "epoch": 11}
-        model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
-        self.assertEqual(model_checkpoint.checkpoint_path, os.path.join(self.run_path, self.model_name + ".pt"))
+        with torch.no_grad():
+            model.state[0] = 2
+            mock_metrics = {"current_metrics": {"acc": 0}, "stage": "test", "epoch": 11}
+            model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
+            mock_metrics = {"current_metrics": {"acc": 10}, "stage": "train", "epoch": 11}
+            model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
+            mock_metrics = {"current_metrics": {"acc": 15}, "stage": "train", "epoch": 11}
+            model_checkpoint.save_best_models_under_current_metrics(model, mock_metrics, metric_func)
+            self.assertEqual(model_checkpoint.checkpoint_path, os.path.join(self.run_path, self.model_name + ".pt"))
 
-        ckp = torch.load(model_checkpoint.checkpoint_path)
+            ckp = torch.load(model_checkpoint.checkpoint_path)
 
-        self.assertEqual(ckp["models"]["best_acc"]["state"].item(), optimal_state)
-        self.assertEqual(ckp["models"]["latest"]["state"].item(), model.state.item())
+            self.assertEqual(ckp["models"]["best_acc"]["state"].item(), optimal_state)
+            self.assertEqual(ckp["models"]["latest"]["state"].item(), model.state.item())
 
     def test_dataset_properties(self):
         self.run_path = os.path.join(DIR, "checkpt")
