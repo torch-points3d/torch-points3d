@@ -1,3 +1,4 @@
+# @package training
 # Those arguments defines the training hyper-parameters
 epochs: 550
 num_workers: 7
