@@ -1,7 +1,8 @@
 from typing import Dict, Any
 import logging
 import torch
-from torch_geometric.nn.unpool import knn_interpolate
+from plyfile import PlyData, PlyElement
+import numpy as np
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
@@ -70,13 +71,23 @@ class SUMTracker(SegmentationTracker):
             per_class_iou = c.get_intersection_union_per_class()[0]
             self._vote_iou_per_class = {self._dataset.INV_OBJECT_LABEL[k]: "{:.2f}".format(100 * v) for k, v in enumerate(per_class_iou)}
 
-        if ply_output:
-            has_prediction = self._test_area.prediction_count > 0
-            self._dataset.to_ply(
-                self._test_area.pos[has_prediction].cpu(),
-                torch.argmax(self._test_area.votes[has_prediction], 1).cpu().numpy(),
-                ply_output,
-            )
+            if ply_output:
+                pos = self._data.pos[has_prediction].cpu().numpy()
+                rgb = (255*self._data.rgb[has_prediction].cpu().numpy()).astype(np.uint8)
+                ply_array = np.ones(
+                    pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1"), ("l", "i4"), ("p", "i4")]
+                )
+                ply_array["x"] = pos[:, 0]
+                ply_array["y"] = pos[:, 1]
+                ply_array["z"] = pos[:, 2]
+                ply_array["red"] = rgb[:, 0]
+                ply_array["green"] = rgb[:, 1]
+                ply_array["blue"] = rgb[:, 2]
+                ply_array["l"] = gt
+                ply_array["p"] = pred
+                el = PlyElement.describe(ply_array, "vertex")
+                PlyData([el]).write(ply_output)
+
 
     @property
     def full_confusion_matrix(self):
