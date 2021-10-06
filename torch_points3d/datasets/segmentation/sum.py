@@ -3,8 +3,8 @@ from torch_geometric.data import Dataset, Data, Batch, dataset
 from plyfile import PlyData
 import numpy as np
 from torch_points3d.datasets.base_dataset import BaseDataset
-from torch_points3d.metrics.segmentation_tracker import SegmentationTracker
-from torch_points3d.core.data_transform import Select
+from torch_points3d.metrics.sum_tracker import SUMTracker
+from torch_points3d.core.data_transform import Select, GridNeigborsSampling, PointCloudFusion
 from concurrent.futures import ProcessPoolExecutor as Executor
 from random import randint
 from sklearn.neighbors import KDTree
@@ -12,11 +12,12 @@ import pickle
 
 class SUMPointCloudDataset(Dataset):
     r"""SUM Dataset in point cloud format
+    If length is not None, length point clouds of size cloud_size will be randomly sample.
+    Otherwise, sample_spacing must be provided, and point clouds of size cloud_size will be sampled regularly,
+    with a center-to-center spacing of sample_spacing.
 
     Args:
         root (string): Root directory where the dataset should be saved.
-        length (int, optional): Number of point cloud to be sample.
-            (default: :int:1000)
         cloud_size (int, optional): Number of point in out sample cloud. (default: :int:4096)
         test (bool): Load test dataset. (default: :bool:False)
         validate (bool): Load validate dataset. (default: :bool:False)
@@ -30,10 +31,18 @@ class SUMPointCloudDataset(Dataset):
             being saved to disk. (default: :obj:`None`)
         process_workers (int, optional): Number of process to use for pre_transform and
             transform. (default: :obj:`None`)
+        length (int, optional): Number of point cloud to be sample.
+            (default: :obj:`None`)
+        sample_spacing (float, optional): Distance between two sample centers.
+            (default: :obj:`None`)
     """
 
-    def __init__(self, root:str, length:int=1000, cloud_size:int=4096, test:bool=False, validate:bool=False, transform=None, pre_transform=None, leaf_size:int=50, process_workers:int=1):
+    def __init__(self, root:str, cloud_size:int=4096, test:bool=False, validate:bool=False, transform=None, pre_transform=None, leaf_size:int=50, process_workers:int=1, length:int=None, sample_spacing:float=None):
+        if length is None and sample_spacing is None:
+            raise NotImplementedError("length or sample_spacing need to be specified")
+
         self.length = length
+        self.sample_spacing = sample_spacing
         self.cloud_size = cloud_size
         self.test = test
         self.validate = validate
@@ -42,6 +51,9 @@ class SUMPointCloudDataset(Dataset):
         super(SUMPointCloudDataset, self).__init__(root, transform, pre_transform)
         self.data = torch.load(self.processed_paths[0])
         self.kd_tree = pickle.load(open(self.processed_paths[1], "rb"))
+        if length is None:
+            self.samples = torch.load(self.processed_paths[2])
+
 
     @property
     def raw_file_names(self):
@@ -122,11 +134,18 @@ class SUMPointCloudDataset(Dataset):
     @property
     def processed_file_names(self):
         if self.test == True:
-            return ["test_data.pt", "test_kdtree.pkl"]
+            files = ["test_data.pt", "test_kdtree.pkl"]
+            if self.length is None:
+                files.append("test_samples.pt")
         elif self.validate == True:
-            return ["validate_data.pt", "validate_kdtree.pkl"]
+            files = ["validate_data.pt", "validate_kdtree.pkl"]
+            if self.length is None:
+                files.append("validate_samples.pt")
         else:
-            return ["train_data.pt", "train_kdtree.pkl"]
+            files = ["train_data.pt", "train_kdtree.pkl"]
+            if self.length is None:
+                files.append("train_samples.pt")
+        return files
 
     def download(self):
         print("Can't find ", self.raw_paths[0], ", use Mesh-2-Point-Cloud to create point-cloud files")
@@ -173,36 +192,48 @@ class SUMPointCloudDataset(Dataset):
                 data_list=[data for datas in data_list for data in datas]
 
         print("Merging data")
-        data = Batch.from_data_list(data_list)
-        
-        classes, indexes = torch.unique(data.y, return_inverse=True)
-        data.class_index = []
-        for i in range(len(classes)):
-            if classes[i] >= 0:
-                data.class_index.append((indexes == i).nonzero().flatten())
-
-        torch.save(data, self.processed_paths[0])
+        data = PointCloudFusion()(data_list)
 
         print("Computing KDTree")
         kd_tree = KDTree(data.pos.numpy(), leaf_size=self.leaf_size)
         pickle.dump( kd_tree, open(self.processed_paths[1], "wb"))
 
+        if self.length is not None:
+            print("Indexing class for random sampling")
+            classes, indexes = torch.unique(data.y, return_inverse=True)
+            data.class_index = []
+            for i in range(len(classes)):
+                if classes[i] >= 0:
+                    data.class_index.append((indexes == i).nonzero().flatten())
+        else:
+            print("Computing samples")
+            data.kd_tree = kd_tree
+            samples = GridNeigborsSampling(self.cloud_size, self.sample_spacing, delattr_kd_tree=True, center=False)(data)
+            torch.save(samples, self.processed_paths[2])
+
+        torch.save(data, self.processed_paths[0])
+
+
     def len(self) -> int:
-        return self.length
+        if self.length is not None:
+            return self.length
+        else:
+            return len(self.samples)
 
     def get(self, idx):
-        if (self.data.num_nodes <= self.cloud_size or self.cloud_size < 1):
-            data = self.data.clone()
+        if self.length is not None:
+            if (self.data.num_nodes <= self.cloud_size or self.cloud_size < 1):
+                data = self.data.clone()
+            else:
+                class_idx = randint(0, len(self.data.class_index)-1) # choose a class
+                raw_idx = randint(0, len(self.data.class_index[class_idx])-1) # choose a point in the class
+                node_idx = self.data.class_index[class_idx][raw_idx]
+                index = self.kd_tree.query(self.data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten() # Comput k-neighbors
+                data = Select(index)(self.data) # Extract cloud point
+            delattr(data, "class_index") # Remove class index
+            return data
         else:
-            class_idx = randint(0, len(self.data.class_index)-1) # choose a class
-            raw_idx = randint(0, len(self.data.class_index[class_idx])-1) # choose a point in the class
-            node_idx = self.data.class_index[class_idx][raw_idx]
-            index = self.kd_tree.query(self.data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten() # Comput k-neighbors
-            data = Select(index)(self.data) # Extract cloud point
-        data.batch = None # Remove informations from Batch
-        data.ptr = None # Remove informations from Batch
-        data.class_index = None # Remove class index
-        return data
+            return self.samples[idx]
 
     @property
     def num_classes(self) -> int:
@@ -223,36 +254,36 @@ class SUMDataset(BaseDataset):
     def __init__(self, dataset_opt):
         super().__init__(dataset_opt)
 
-        process_workers: int = dataset_opt.process_workers if hasattr(dataset_opt,'process_workers') else 0
+        process_workers: int = dataset_opt.process_workers if hasattr(dataset_opt,'process_workers') else 1
 
         self.train_dataset = SUMPointCloudDataset(
             self._data_path,
-            length = dataset_opt.length,
             cloud_size = dataset_opt.cloud_size,
             pre_transform=self.pre_transform,
             transform=self.train_transform,
             leaf_size=dataset_opt.leaf_size,
-            process_workers=process_workers
+            process_workers=process_workers,
+            length = dataset_opt.length
         )
         self.test_dataset = SUMPointCloudDataset(
             self._data_path,
-            length = dataset_opt.length,
             cloud_size = dataset_opt.cloud_size,
             test=True,
             pre_transform=self.pre_transform,
             transform=self.test_transform,
             leaf_size=dataset_opt.leaf_size,
-            process_workers=process_workers
+            process_workers=process_workers,
+            sample_spacing=dataset_opt.sample_spacing
         )
         self.val_dataset = SUMPointCloudDataset(
             self._data_path,
-            length = dataset_opt.length,
             cloud_size = dataset_opt.cloud_size,
             validate=True,
             pre_transform=self.pre_transform,
             transform=self.val_transform,
             leaf_size=dataset_opt.leaf_size,
-            process_workers=process_workers
+            process_workers=process_workers,
+            length = dataset_opt.length
         )
 
 
@@ -265,4 +296,4 @@ class SUMDataset(BaseDataset):
         Returns:
             [BaseTracker] -- tracker
         """
-        return SegmentationTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=-1)
+        return SUMTracker(self, wandb_log=wandb_log, use_tensorboard=tensorboard_log, ignore_label=-1)

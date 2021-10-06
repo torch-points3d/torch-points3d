@@ -2,10 +2,11 @@
 task: segmentation
 class: sum.SUMDataset
 dataroot: data
-first_subsampling: 0.1
+first_subsampling: 0.5
 use_category: False
 process_workers: 50
 length: 1024
+sample_spacing: 7.2
 cloud_size: 4096
 leaf_size: 50
 
