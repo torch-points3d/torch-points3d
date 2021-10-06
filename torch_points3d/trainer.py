@@ -169,13 +169,9 @@ class Trainer:
                 if self._dataset.has_val_loader:
                     self._test_epoch(epoch, "val")
 
-                if self._dataset.has_test_loaders:
-                    self._test_epoch(epoch, "test")
-
-            # Single test evaluation in resume case
-            if self._checkpoint.start_epoch > self._cfg.training.epochs:
-                if self._dataset.has_test_loaders:
-                    self._test_epoch(epoch, "test")
+            # Single test evaluation at the end
+            if self._dataset.has_test_loaders:
+                self._test_epoch(self._cfg.training.epochs-1, "test")
 
     def eval(self, stage_name=""):
         self._is_training = False
