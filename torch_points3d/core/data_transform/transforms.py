@@ -21,7 +21,7 @@ from torch_points3d.datasets.registration.pair import Pair
 from torch_points3d.utils.transform_utils import SamplingStrategy
 from torch_points3d.utils.config import is_list
 from torch_points3d.utils import is_iterable
-from .grid_transform import group_data, GridSampling3D, shuffle_data
+from .grid_transform import group_data, GridSampling3D, SaveOriginalPosId, shuffle_data
 from .features import Random3AxisRotation
 
 
@@ -222,6 +222,75 @@ class GridCylinderSampling(object):
 
     def __repr__(self):
         return "{}(radius={}, center={})".format(self.__class__.__name__, self._radius, self._center)
+
+
+class GridNeigborsSampling(object):
+    """Fits the point cloud to a grid and for each point in this grid,
+    create a point cloud with it's k neighbors
+
+    Parameters
+    ----------
+    k: int
+        Number of points in cloud point to be sampled.
+    grid_size: float
+        Grid_size to be used with GridSampling3D to select spheres center.
+    delattr_kd_tree: bool, optional (default: True)
+        If True, KDTREE_KEY should be deleted as an attribute if it exists
+    center: bool, optional (default: True)
+        If True, a centre transform is apply on each sphere.
+    """
+
+    KDTREE_KEY = KDTREE_KEY
+
+    def __init__(self, k, grid_size, delattr_kd_tree=True, center=True):
+        self._k = eval(k) if isinstance(k, str) else int(k)
+        grid_size = eval(grid_size) if isinstance(grid_size, str) else float(grid_size)
+        self._grid_sampling = GridSampling3D(size=grid_size)
+        self._delattr_kd_tree = delattr_kd_tree
+        self._center = center
+
+    def _process(self, data: Data) -> List[Data]:
+        if not hasattr(data, self.KDTREE_KEY):
+            tree = KDTree(data.pos.numpy(), leaf_size=50)
+        else:
+            tree = getattr(data, self.KDTREE_KEY)
+
+        # The kdtree has bee attached to data for optimization reason.
+        # However, it won't be used for down the transform pipeline and should be removed before any collate func call.
+        if hasattr(data, self.KDTREE_KEY) and self._delattr_kd_tree:
+            delattr(data, self.KDTREE_KEY)
+
+        # apply grid sampling
+        grid_data = self._grid_sampling(data.clone())
+
+        data = SaveOriginalPosId()(data)
+
+        datas = []
+        for grid_center in np.asarray(grid_data.pos):
+            pts = np.asarray(grid_center)[np.newaxis]
+
+            # Find closest point within the original data
+            _, ind = tree.query(pts, k=self._k)
+            sampler = Select(ind)
+            new_data = sampler(data)
+
+            if self._center:
+                data.pos -= pts
+            
+            datas.append(new_data)
+
+        return datas
+
+    def __call__(self, data):
+        if isinstance(data, list):
+            data = [self._process(d) for d in tq(data)]
+            data = list(itertools.chain(*data))  # 2d list needs to be flatten
+        else:
+            data = self._process(data)
+        return data
+
+    def __repr__(self):
+        return "{}(k={}, center={})".format(self.__class__.__name__, self._k, self._center)
 
 
 class ComputeKDTree(object):
