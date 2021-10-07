@@ -1,5 +1,5 @@
-# Those arguments defines the training hyper-parameters
 # @package training
+# Those arguments defines the training hyper-parameters
 epochs: 6000
 num_workers: 6
 batch_size: 64
