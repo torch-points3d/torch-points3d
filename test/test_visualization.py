@@ -37,7 +37,7 @@ class TestVisualizer(unittest.TestCase):
 
         mock_num_batches = {"train": 9, "test": 3, "val": 0}
         config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_indices.yaml"))
-        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path)
+        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path, None)
 
         for epoch in range(epochs):
             run(9, visualizer, epoch, "train", data)
@@ -60,7 +60,7 @@ class TestVisualizer(unittest.TestCase):
 
         mock_num_batches = {"train": 9, "test": 3, "val": 0}
         config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_indices.yaml"))
-        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path)
+        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path, None)
 
         for epoch in range(epochs):
             run(9, visualizer, epoch, "train", data)
@@ -92,7 +92,7 @@ class TestVisualizer(unittest.TestCase):
         mock_num_batches = {"train": num_samples}
 
         config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_save_all.yaml"))
-        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path)
+        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path, None)
 
         for epoch in range(epochs):
             run(num_samples // batch_size, visualizer, epoch, "train", data)
@@ -121,7 +121,7 @@ class TestVisualizer(unittest.TestCase):
         mock_num_batches = {"train": num_batches}
 
         config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_non_deterministic.yaml"))
-        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path)
+        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path, None)
 
         for epoch in range(epochs):
             run(num_batches, visualizer, epoch, "train", data)
@@ -148,7 +148,7 @@ class TestVisualizer(unittest.TestCase):
 
         mock_num_batches = {"train": 9, "test": 3, "val": 0}
         config = OmegaConf.load(os.path.join(DIR, "test_config/viz/viz_config_deterministic.yaml"))
-        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path)
+        visualizer = Visualizer(config.visualization, mock_num_batches, batch_size, self.run_path, None)
 
         for epoch in range(epochs):
             run(9, visualizer, epoch, "train", data)
