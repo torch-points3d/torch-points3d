@@ -361,7 +361,7 @@ class Trainer:
 
     def profiler_record_function(self, name: str):
         if self.pytorch_profiler_log:
-            return torch.profiler.record_function(name)
+            return torch.autograd.profiler.record_function(name)
         else:
             return nullcontext()
 
