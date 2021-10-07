@@ -1,5 +1,6 @@
 import unittest
 import torch
+import numpy as np
 import os
 import sys
 from torch_geometric.data import Data
@@ -8,6 +9,14 @@ ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.append(ROOT)
 from torch_points3d.utils.geometry import rodrigues
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
+
+# Seed
+seed = 0
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+np.random.seed(seed)
+random.seed(seed)
 
 
 def rand_T():
@@ -91,7 +100,7 @@ class MockModel:
         return self.batch_idx[self.iter], self.batch_idx_target[self.iter]
 
 
-class TestSegmentationTracker(unittest.TestCase):
+class TestRegistrationTracker(unittest.TestCase):
     def test_track_batch(self):
         tracker = FragmentRegistrationTracker(stage="test", tau_2=0.83, num_points=100)
         model = MockModel()
