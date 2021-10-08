@@ -11,14 +11,6 @@ sys.path.append(ROOT)
 from torch_points3d.utils.geometry import rodrigues
 from torch_points3d.metrics.registration_tracker import FragmentRegistrationTracker
 
-# Seed
-seed = 0
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-np.random.seed(seed)
-random.seed(seed)
-
 
 def rand_T():
 
@@ -40,6 +32,13 @@ class MockDataset:
 
 class MockModel:
     def __init__(self):
+        # Seed
+        seed = 0
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
         self.iter = 0
         self.losses = [
             {"loss_1": 1, "loss_2": 2},
