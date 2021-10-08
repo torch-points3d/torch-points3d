@@ -121,7 +121,6 @@ class TestRegistrationTracker(unittest.TestCase):
         tracker.reset("test")
         model.iter = 0
         for i in range(4):
-            print("test_registration_tracker:", model.get_output()[0])
             tracker.track(model)
             model.iter += 1
         metrics = tracker.get_metrics()
