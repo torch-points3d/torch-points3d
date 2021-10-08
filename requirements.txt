@@ -114,7 +114,6 @@ sentry-sdk==1.4.1; python_version >= "2.7" and python_full_version < "3.0.0" or 
 shortuuid==1.0.1; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
 six==1.16.0; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.7"
 sklearn==0.0
-<<<<<<< HEAD
 smmap==4.0.0
 subprocess32==3.5.4
 tensorboard==2.5.0
@@ -126,18 +125,6 @@ threadpoolctl==2.1.0
 torch==1.8.1
 torch-cluster==1.5.9
 torch-geometric==1.7.1
-=======
-smmap==4.0.0; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.7"
-subprocess32==3.5.4; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version < "4"
-tensorboard-data-server==0.6.1; python_version >= "3.6"
-tensorboard-plugin-wit==1.8.0; python_version >= "3.6"
-tensorboard==2.6.0; python_version >= "3.6"
-terminado==0.12.1; python_version >= "3.6"
-testpath==0.5.0; python_version >= "3.7"
-threadpoolctl==2.2.0; python_version >= "3.7"
-torch-cluster==1.5.9; python_version >= "3.6"
-torch-geometric==1.7.2; python_version >= "3.6"
->>>>>>> master
 torch-points-kernels==0.7.0
 torch-scatter==2.0.8; python_version >= "3.6"
 torch-sparse==0.6.12; python_version >= "3.6"
