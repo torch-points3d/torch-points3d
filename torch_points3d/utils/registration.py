@@ -95,7 +95,7 @@ def fast_global_registration(xyz, xyz_target, mu_init=1, num_iter=20):
         if i > 0 and i % 5 == 0:
             mu /= 2.0
         A, b = get_matrix_system(source, xyz_target, weight)
-        x, _ = torch.solve(A.T @ b, A.T.mm(A))
+        x = torch.linalg.solve(A.T.mm(A), A.T @ b)
         T = get_trans(x.view(-1))
         source = source.mm(T[:3, :3].T) + T[:3, 3]
         T_res = T @ T_res
