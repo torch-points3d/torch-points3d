@@ -28,6 +28,7 @@ from torch_points3d.visualization import Visualizer
 
 # PyTorch Profiler import
 import torch.profiler
+import torch.autograd.profiler
 from contextlib import nullcontext
 
 log = logging.getLogger(__name__)
@@ -191,7 +192,7 @@ class Trainer:
         self._visualizer.reset(epoch, "train")
         train_loader = self._dataset.train_dataloader
 
-        with self.profiler_profile() as prof:
+        with self.profiler_profile(epoch) as prof:
             iter_data_time = time.time()
             with Ctq(train_loader) as tq_train_loader:
                 for i, data in enumerate(tq_train_loader):
@@ -253,7 +254,7 @@ class Trainer:
                 log.warning("No forward will be run on dataset %s." % stage_name)
                 continue
             
-            with self.profiler_profile() as prof:
+            with self.profiler_profile(epoch) as prof:
                 for i in range(voting_runs):
                     with Ctq(loader) as tq_loader:
                         for data in tq_loader:
@@ -341,9 +342,11 @@ class Trainer:
         return False
 
     #pyTorch Profiler
-    def profiler_profile(self):
-        if self.pytorch_profiler_log:
+    def profiler_profile(self, epoch):
+        active = self._cfg.training.tensorboard.pytorch_profiler.nb_epoch == 0 or epoch <= self._cfg.training.tensorboard.pytorch_profiler.nb_epoch
+        if self.pytorch_profiler_log and active:
             return torch.profiler.profile(
+                activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA] if self._cfg.training.cuda > -1 else [torch.profiler.ProfilerActivity.CPU],
                 schedule=torch.profiler.schedule(
                     skip_first=self._cfg.training.tensorboard.pytorch_profiler.skip_first,
                     wait=self._cfg.training.tensorboard.pytorch_profiler.wait,
@@ -357,7 +360,7 @@ class Trainer:
                 with_flops=self._cfg.training.tensorboard.pytorch_profiler.with_flops
             )
         else:
-            return nullcontext()
+            return nullcontext(type('', (), {"step": lambda self: None})())
 
     def profiler_record_function(self, name: str):
         if self.pytorch_profiler_log:
