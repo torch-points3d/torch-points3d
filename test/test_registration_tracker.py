@@ -1,6 +1,8 @@
 import unittest
 import torch
+import numpy as np
 import os
+import random
 import sys
 from torch_geometric.data import Data
 
@@ -30,6 +32,13 @@ class MockDataset:
 
 class MockModel:
     def __init__(self):
+        # Seed
+        seed = 0
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
         self.iter = 0
         self.losses = [
             {"loss_1": 1, "loss_2": 2},
@@ -91,7 +100,7 @@ class MockModel:
         return self.batch_idx[self.iter], self.batch_idx_target[self.iter]
 
 
-class TestSegmentationTracker(unittest.TestCase):
+class TestRegistrationTracker(unittest.TestCase):
     def test_track_batch(self):
         tracker = FragmentRegistrationTracker(stage="test", tau_2=0.83, num_points=100)
         model = MockModel()

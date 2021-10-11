@@ -37,7 +37,7 @@ class Wandb:
 
     @staticmethod
     def _set_to_wandb_args(wandb_args, cfg, name):
-        var = getattr(cfg.wandb, name, None)
+        var = getattr(cfg.training.wandb, name, None)
         if var:
             wandb_args[name] = var
 
@@ -62,7 +62,7 @@ class Wandb:
             ]
 
             wandb_args = {}
-            wandb_args["project"] = cfg.wandb.project
+            wandb_args["project"] = cfg.training.wandb.project
             wandb_args["tags"] = tags
             wandb_args["resume"] = "allow"
             Wandb._set_to_wandb_args(wandb_args, cfg, "name")
