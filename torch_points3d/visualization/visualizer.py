@@ -1,6 +1,8 @@
 import os
 import torch
 import numpy as np
+from matplotlib.cm import get_cmap
+from math import log10, ceil
 from plyfile import PlyData, PlyElement
 import logging
 
@@ -15,11 +17,11 @@ class Visualizer(object):
         batch_size (int) -- Current batch size usef
         save_dir (str) -- The path used by hydra to store the experiment
 
-    This class is responsible to save visual into .ply format
+    This class is responsible to save visual into .ply format and tensorboard mesh
     The configuration looks like that:
         visualization:
             activate: False # Wheter to activate the visualizer
-            format: "pointcloud" # image will come later
+            format: ["pointcloud", "tensorboard"] # image will come later
             num_samples_per_epoch: 2 # If negative, it will save all elements
             deterministic: True # False -> Randomly sample elements from epoch to epoch
             saved_keys: # Mapping from Data Object to structured numpy
@@ -28,9 +30,14 @@ class Visualizer(object):
                 pred: [['p', 'float']]
             indices: # List of indices to be saved (support "train", "test", "val")
                 train: [0, 3]
+            ply_format: binary_big_endian # PLY format (support "binary_big_endian", "binary_little_endian", "ascii")
+            tensorboard_mesh: # Mapping from mesh name and propety use to color
+                label: 'y'
+                prediction: 'pred'
+
     """
 
-    def __init__(self, viz_conf, num_batches, batch_size, save_dir):
+    def __init__(self, viz_conf, num_batches, batch_size, save_dir, tracker):
         # From configuration and dataset
         for stage_name, stage_num_sample in num_batches.items():
             setattr(self, "{}_num_batches".format(stage_name), stage_num_sample)
@@ -40,17 +47,28 @@ class Visualizer(object):
         self._num_samples_per_epoch = int(viz_conf.num_samples_per_epoch)
         self._deterministic = viz_conf.deterministic
 
-        self._saved_keys = viz_conf.saved_keys
+        self._saved_keys = {}
+        self._tensorboard_mesh = {}
 
         # Internal state
         self._stage = None
         self._current_epoch = None
 
-        # Current experiment path
-        self._save_dir = save_dir
-        self._viz_path = os.path.join(self._save_dir, "viz")
-        if not os.path.exists(self._viz_path):
-            os.makedirs(self._viz_path)
+        if "pointcloud" in self._format:
+            self._saved_keys = viz_conf.saved_keys
+            self._ply_format = viz_conf.ply_format if viz_conf.ply_format is not None else "binary_big_endian"
+
+            # Current experiment path
+            self._viz_path = os.path.join(save_dir, "viz")
+            if not os.path.exists(self._viz_path):
+                os.makedirs(self._viz_path)
+
+        if "tensorboard" in self._format:
+            if tracker._use_tensorboard:
+                self._tensorboard_mesh = viz_conf.tensorboard_mesh
+
+                # SummaryWriter for tensorboard loging
+                self._writer = tracker._writer
 
         self._indices = {}
         self._contains_indices = False
@@ -109,7 +127,7 @@ class Visualizer(object):
         batch_mask = item.batch == pos_idx
         out_data = {}
         for k in item.keys:
-            if torch.is_tensor(item[k]) and k in self._saved_keys.keys():
+            if torch.is_tensor(item[k]) and (k in self._saved_keys.keys() or k in self._tensorboard_mesh.values()):
                 if item[k].shape[0] == num_samples:
                     out_data[k] = item[k][batch_mask]
         return out_data
@@ -121,7 +139,7 @@ class Visualizer(object):
         num_samples = item.y.shape[0]
         out_data = {}
         for k in item.keys:
-            if torch.is_tensor(item[k]) and k in self._saved_keys.keys():
+            if torch.is_tensor(item[k]) and (k in self._saved_keys.keys() or k in self._tensorboard_mesh.values()):
                 if item[k].shape[0] == num_samples:
                     out_data[k] = item[k][pos_idx]
         return out_data
@@ -149,6 +167,7 @@ class Visualizer(object):
             Make sure the saved_keys  within the config maps to the Data attributes.
         """
         if self._stage in self._indices:
+            stage_num_batches = getattr(self, "{}_num_batches".format(self._stage))
             batch_indices = self._indices[self._stage] // self._batch_size
             pos_indices = self._indices[self._stage] % self._batch_size
             for idx in np.argwhere(self._seen_batch == batch_indices).flatten():
@@ -158,14 +177,50 @@ class Visualizer(object):
                         out_item = self._extract_from_PYG(item, pos_idx)
                     else:
                         out_item = self._extract_from_dense(item, pos_idx)
-                    out_item = self._dict_to_structured_npy(out_item)
 
-                    dir_path = os.path.join(self._viz_path, str(self._current_epoch), self._stage)
-                    if not os.path.exists(dir_path):
-                        os.makedirs(dir_path)
+                    if hasattr(self, "_viz_path"):
+                        dir_path = os.path.join(self._viz_path, str(self._current_epoch), self._stage)
+                        if not os.path.exists(dir_path):
+                            os.makedirs(dir_path)
 
-                    filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
-                    path_out = os.path.join(dir_path, filename)
-                    el = PlyElement.describe(out_item, visual_name)
-                    PlyData([el], byte_order=">").write(path_out)
+                        filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
+                        path_out = os.path.join(dir_path, filename)
+
+                        npy_array = self._dict_to_structured_npy(out_item)
+                        el = PlyElement.describe(npy_array, visual_name)
+                        if self._ply_format == "ascii":
+                            PlyData([el], text=True).write(path_out)
+                        elif self._ply_format == "binary_little_endian":
+                            PlyData([el], byte_order="<").write(path_out)
+                        elif self._ply_format == "binary_big_endian":
+                            PlyData([el], byte_order=">").write(path_out)
+                        else:
+                            PlyData([el]).write(path_out)
+
+                    if hasattr(self, "_writer"):
+                        pos = out_item['pos'].detach().cpu().unsqueeze(0)
+                        colors = get_cmap('tab10')
+                        config_dict = {
+                            "material": {
+                                "size": 0.3
+                            }
+                        }
+
+                        for label, k in self._tensorboard_mesh.items():
+                            value = out_item[k].detach().cpu()
+
+                            if len(value.shape) == 2 and value.shape[1] == 3:
+                                if value.min() >= 0 and value.max() <= 1:
+                                    value = (255*value).type(torch.uint8).unsqueeze(0)
+                                else:
+                                    value = value.type(torch.uint8).unsqueeze(0)
+                            elif len(value.shape) == 1 and value.shape[0] == 1:
+                                value = np.tile((255*colors(value.numpy() % 10))[:,0:3].astype(np.uint8), (pos.shape[0],1)).reshape((1,-1,3))
+                            elif len(value.shape) == 1 or value.shape[1] == 1:
+                                value = (255*colors(value.numpy() % 10))[:,0:3].astype(np.uint8).reshape((1,-1,3))
+                            else:
+                                continue
+
+                            self._writer.add_mesh(self._stage + "/" + visual_name + "/" + label, pos, colors=value, config_dict=config_dict, global_step=(self._current_epoch-1)*(10**ceil(log10(stage_num_batches+1)))+self._seen_batch)
+                        
             self._seen_batch += 1
