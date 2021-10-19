@@ -343,21 +343,20 @@ class Trainer:
 
     #pyTorch Profiler
     def profiler_profile(self, epoch):
-        active = self._cfg.training.tensorboard.pytorch_profiler.nb_epoch == 0 or epoch <= self._cfg.training.tensorboard.pytorch_profiler.nb_epoch
-        if self.pytorch_profiler_log and active:
+        if (self.pytorch_profiler_log and (getattr(self._cfg.training.tensorboard.pytorch_profiler, "nb_epoch", 3) == 0 or epoch <= getattr(self._cfg.training.tensorboard.pytorch_profiler, "nb_epoch", 3))):
             return torch.profiler.profile(
                 activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA] if self._cfg.training.cuda > -1 else [torch.profiler.ProfilerActivity.CPU],
                 schedule=torch.profiler.schedule(
-                    skip_first=self._cfg.training.tensorboard.pytorch_profiler.skip_first,
-                    wait=self._cfg.training.tensorboard.pytorch_profiler.wait,
-                    warmup=self._cfg.training.tensorboard.pytorch_profiler.warmup,
-                    active=self._cfg.training.tensorboard.pytorch_profiler.active,
-                    repeat=self._cfg.training.tensorboard.pytorch_profiler.repeat),
+                    skip_first=getattr(self._cfg.training.tensorboard.pytorch_profiler, "skip_first", 10),
+                    wait=getattr(self._cfg.training.tensorboard.pytorch_profiler, "wait", 5),
+                    warmup=getattr(self._cfg.training.tensorboard.pytorch_profiler, "warmup", 3),
+                    active=getattr(self._cfg.training.tensorboard.pytorch_profiler, "active", 5),
+                    repeat=getattr(self._cfg.training.tensorboard.pytorch_profiler, "repeat", 0)),
                 on_trace_ready=torch.profiler.tensorboard_trace_handler(self._tracker._tensorboard_dir),
-                record_shapes=self._cfg.training.tensorboard.pytorch_profiler.record_shapes,
-                profile_memory=self._cfg.training.tensorboard.pytorch_profiler.profile_memory,
-                with_stack=self._cfg.training.tensorboard.pytorch_profiler.with_stack,
-                with_flops=self._cfg.training.tensorboard.pytorch_profiler.with_flops
+                record_shapes=getattr(self._cfg.training.tensorboard.pytorch_profiler, "record_shapes", True),
+                profile_memory=getattr(self._cfg.training.tensorboard.pytorch_profiler, "profile_memory", True),
+                with_stack=getattr(self._cfg.training.tensorboard.pytorch_profiler, "with_stack", True),
+                with_flops=getattr(self._cfg.training.tensorboard.pytorch_profiler, "with_flops", True)
             )
         else:
             return nullcontext(type('', (), {"step": lambda self: None})())
