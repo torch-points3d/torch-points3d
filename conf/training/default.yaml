@@ -38,6 +38,18 @@ wandb:
   config:
     model_name: ${model_name}
 
-  # parameters for TensorBoard Visualization
+# parameters for TensorBoard Visualization
 tensorboard:
   log: True
+  pytorch_profiler:
+    log: True # activate PyTorch Profiler in TensorBoard
+    nb_epoch: 3 # number of epochs to profile (0 -> all).
+    skip_first: 10 # number of first iterations to skip.
+    wait: 5 # number of iterations where the profiler is disable.
+    warmup: 3 # number of iterations where the profiler starts tracing but the results are discarded. This is for reducing the profiling overhead. The overhead at the beginning of profiling is high and easy to bring skew to the profiling result.
+    active: 5 # number of iterations where the profiler is active and records events.
+    repeat: 0 # number of cycle wait/warmup/active to realise before stoping profiling (0 -> all).
+    record_shapes: True # save information about operator’s input shapes.
+    profile_memory: True # track tensor memory allocation/deallocation.
+    with_stack: True # record source information (file and line number) for the ops.
+    with_flops: True # use formula to estimate the FLOPS of specific operators (matrix multiplication and 2D convolution).

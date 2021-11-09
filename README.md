@@ -16,7 +16,7 @@ See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of 
 
 - CUDA 10 or higher (if you want GPU version)
 - Python 3.7 or higher + headers (python-dev)
-- PyTorch 1.8 or higher (PyTorch >= 1.9 is recommended)
+- PyTorch 1.8.1 or higher (PyTorch >= 1.9 is recommended)
 - A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#3d-sparse-convolution-support) for installation instructions
 
 Install with
