@@ -141,38 +141,23 @@ class Trainer:
     def train(self):
         self._is_training = True
 
-        with (torch.profiler.profile(
-            schedule=torch.profiler.schedule(
-                skip_first=self._cfg.training.tensorboard.pytorch_profiler.skip_first,
-                wait=self._cfg.training.tensorboard.pytorch_profiler.wait,
-                warmup=self._cfg.training.tensorboard.pytorch_profiler.warmup,
-                active=self._cfg.training.tensorboard.pytorch_profiler.active,
-                repeat=self._cfg.training.tensorboard.pytorch_profiler.repeat),
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(self._tracker._tensorboard_dir),
-            record_shapes=self._cfg.training.tensorboard.pytorch_profiler.record_shapes,
-            profile_memory=self._cfg.training.tensorboard.pytorch_profiler.profile_memory,
-            with_stack=self._cfg.training.tensorboard.pytorch_profiler.with_stack,
-            with_flops=self._cfg.training.tensorboard.pytorch_profiler.with_flops
-        ) if self.pytorch_profiler_log else nullcontext()) as prof:
+        for epoch in range(self._checkpoint.start_epoch, self._cfg.training.epochs):
+            log.info("EPOCH %i / %i", epoch, self._cfg.training.epochs)
 
-            for epoch in range(self._checkpoint.start_epoch, self._cfg.training.epochs):
-                log.info("EPOCH %i / %i", epoch, self._cfg.training.epochs)
+            self._train_epoch(epoch)
 
-                with (torch.profiler.record_function('train_epoch') if self.pytorch_profiler_log else nullcontext()):
-                    self._train_epoch(epoch, prof)
+            if self.profiling:
+                return 0
 
-                if self.profiling:
-                    return 0
+            if epoch % self.eval_frequency != 0:
+                continue
 
-                if epoch % self.eval_frequency != 0:
-                    continue
+            if self._dataset.has_val_loader:
+                self._test_epoch(epoch, "val")
 
-                if self._dataset.has_val_loader:
-                    self._test_epoch(epoch, "val")
-
-            # Single test evaluation at the end
-            if self._dataset.has_test_loaders:
-                self._test_epoch(self._cfg.training.epochs-1, "test")
+        # Single test evaluation at the end
+        if self._dataset.has_test_loaders:
+            self._test_epoch(self._cfg.training.epochs-1, "test")
 
     def eval(self, stage_name=""):
         self._is_training = False
@@ -196,7 +181,7 @@ class Trainer:
             if self._tracker._stage == "train":
                 log.info("Learning rate = %f" % self._model.learning_rate)
 
-    def _train_epoch(self, epoch: int, prof: torch.profiler.profile):
+    def _train_epoch(self, epoch: int):
 
         self._model.train()
         self._tracker.reset("train")
