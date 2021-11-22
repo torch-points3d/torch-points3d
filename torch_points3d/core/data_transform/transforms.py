@@ -700,7 +700,7 @@ class MultiScaleTransform(object):
                 query = new_data
 
             s_pos, q_pos = support.pos, query.pos
-            if hasattr(query, "batch"):
+            if hasattr(query, "batch") and query.batch is not None:
                 s_batch, q_batch = support.batch, query.batch
             else:
                 s_batch, q_batch = (
