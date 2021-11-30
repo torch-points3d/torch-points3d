@@ -12,16 +12,17 @@ leaf_size: 50
 
 pre_transforms:
   - transform: NormalizeRGB
-  - transform: GridSampling3D
+  - transform: XYZFeature
     params:
-      size: 0.2
-  - transform: AddOnes
+      add_x: False
+      add_y: False
+      add_z: True
   - transform: AddFeatsByKeys
     params:
-      list_add_to_x: [True, True, True]
-      feat_names: [normal, rgb, ones]
-      input_nc_feats: [3, 3, 1]
-      delete_feats: [False, False, True]
+      list_add_to_x: [True, False, True, True]
+      feat_names: [rgb, normal, fnormal, pos_z]
+      input_nc_feats: [3, 3, 3, 1]
+      delete_feats: [False, False, False, True]
 
 train_transforms:
   - transform: RandomNoise

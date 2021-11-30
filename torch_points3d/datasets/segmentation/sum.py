@@ -159,12 +159,16 @@ class SUMPointCloudDataset(Dataset):
         normal = np.stack((points['nx'], points['ny'], points['nz']), axis=1)
         rgb = np.stack((points['red'], points['green'], points['blue']), axis=1)
         y = points['label'] - 1
+        fid = points['face_id']
+        fnormal = np.stack((points['fnx'], points['fny'], points['fnz']), axis=1)
         
         data = Data(
             pos=torch.from_numpy(pos.astype(np.float32)),
             normal=torch.from_numpy(normal.astype(np.float32)),
             rgb=torch.from_numpy(rgb.copy()),
-            y=torch.from_numpy(y.astype(np.long)))
+            y=torch.from_numpy(y.astype(np.long)),
+            fid=torch.from_numpy(fid.astype(np.long)),
+            fnormal=torch.from_numpy(fnormal.astype(np.float32)))
         return data
 
     def process(self):
