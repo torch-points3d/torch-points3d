@@ -26,8 +26,14 @@ class Visualizer(object):
         batch_size (int) -- Current batch size usef
         save_dir (str) -- The path used by hydra to store the experiment
 
-    This class is responsible to save visuals into different formats.
-    The configuration looks like that:
+    This class is responsible to save visuals into different formats. Currently supported formats are:
+        ply -- Either an ascii or binary ply file, with the labels and gt stored as columns
+        tensorboard -- Visualize point cloud in tensorboard
+        las -- Export to an ASPRS las or laz file. gt and predictions are stored in seperate files.
+        wandb -- Upload point cloud to wandb. WARNING: This can become very slow, both in training and on the web.
+            Make sure you properly limit the num_samples_per_epoch and wandb_max_points.
+
+    The configuration looks like this:
         visualization:
             activate: False # Whether to activate the visualizer
             format: ["ply", "tensorboard"] # 'pointcloud' is deprecated, use 'ply' instead
@@ -44,6 +50,13 @@ class Visualizer(object):
             tensorboard_mesh: # Mapping from mesh name and propety use to color
                 label: 'y'
                 prediction: 'pred'
+            wandb_max_points: 10000 # Limits the size of the cloud that gets uploaded by random sampling.
+                                    # "-1" saves the entire cloud
+            wandb_cmap: # Applies a color map to the point cloud. Allows custom coloring of different classes.
+                - [0, 0, 0] # class 0
+                - [255, 255, 255] # class 1
+                - [128, 128, 128] # class 2
+            compress_las: True # If true, the point cloud will be output as an "laz" file
     """
 
     def __init__(self, viz_conf, num_batches, batch_size, save_dir, tracker):
@@ -201,7 +214,7 @@ class Visualizer(object):
 
                     if "tensorboard" in self._format and self._tracker._use_tensorboard:
                         self.save_tensorboard(out_item, visual_name, stage_num_batches)
-                    
+
                     out_item = self._dict_to_structured_npy(out_item)
                     gt_name = "{}_{}_{}_gt".format(self._current_epoch, self._seen_batch, pos_idx)
                     pred_name = "{}_{}_{}".format(self._current_epoch, self._seen_batch, pos_idx)
