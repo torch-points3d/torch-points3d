@@ -1,0 +1,28 @@
+# @package data
+task: segmentation
+class: s3dis.S3DIS1x1Dataset
+dataroot: data
+fold: 5
+class_weight_method: "sqrt"
+use_category: False
+first_subsampling: 0.02
+train_transforms:
+    - transform: RandomTranslate
+      params:
+          translate: 0.01
+    - transform: RandomRotate
+      params:
+          degrees: 180
+          axis: 2
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
+
+test_transforms:    
+    - transform: GridSampling3D
+      params:
+        size: ${data.first_subsampling}
+        quantize_coords: True
+        mode: "last"
