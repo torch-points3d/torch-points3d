@@ -3,7 +3,6 @@ import torchnet as tnt
 import torch
 from typing import Dict, Any
 import wandb
-import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 import logging
 
