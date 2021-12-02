@@ -8,6 +8,8 @@ from itertools import product
 from matplotlib.cm import get_cmap
 from math import log10, ceil
 
+from torch_points3d.utils.config import is_list
+
 log = logging.getLogger(__name__)
 
 try:
@@ -50,7 +52,7 @@ class Visualizer(object):
             setattr(self, "{}_num_batches".format(stage_name), stage_num_sample)
         self._batch_size = batch_size
         self._activate = viz_conf.activate
-        self._format = viz_conf.format
+        self._format = [viz_conf.format] if not is_list(viz_conf.format) else viz_conf.format
         self._num_samples_per_epoch = int(viz_conf.num_samples_per_epoch)
         self._deterministic = viz_conf.deterministic
         self._seed = viz_conf.deterministic_seed if viz_conf.deterministic_seed is not None else 0
@@ -58,29 +60,38 @@ class Visualizer(object):
 
         self._saved_keys = viz_conf.saved_keys
         self._tensorboard_mesh = {}
+        self._viz_path = os.path.join(save_dir, "viz")
 
         # Internal state
         self._stage = None
         self._current_epoch = None
-        self._seen_step = 0
 
         # format-specific initialization
-        if self._format == "pointcloud":
+        if "pointcloud" in self._format:
             log.warning('Visualization format "pointcloud" is deprecated, use "ply" instead.')
-        is_ply = self._format == "pointcloud" or self._format == "ply"
+        is_ply = "pointcloud" in self._format or "ply" in self._format
 
         if is_ply:
             self._ply_format = viz_conf.ply_format if viz_conf.ply_format is not None else "binary_big_endian"
 
-        if self._format == "tensorboard" and tracker._use_tensorboard:
-            self._tensorboard_mesh = viz_conf.tensorboard_mesh
+        if "tensorboard" in self._format:
+            if not tracker._use_tensorboard:
+                log.warn("Tensorboard visualization specified, but tensorboard isn't active.")
+            else:
+                self._tensorboard_mesh = viz_conf.tensorboard_mesh
 
-            # SummaryWriter for tensorboard loging
-            self._writer = tracker._writer
+                # SummaryWriter for tensorboard loging
+                self._writer = tracker._writer
 
-        if self._format == "wandb":
-            self._wandb_cmap = viz_conf.wandb_cmap
-            self._max_points = viz_conf.wandb_max_points if viz_conf.wandb_max_points is not None else -1
+        if "wandb" in self._format:
+            if not self._tracker._wandb:
+                log.warn("Wandb visualization specified, but Wandb isn't active.")
+            else:
+                self._wandb_cmap = viz_conf.wandb_cmap
+                self._max_points = viz_conf.wandb_max_points if viz_conf.wandb_max_points is not None else -1
+
+        if "las" in self._format:
+            self._las_compress = viz_conf.compress_las if viz_conf.compress_las is not None else False
 
         self._indices = {}
         self._contains_indices = False
@@ -188,37 +199,39 @@ class Visualizer(object):
                     else:
                         out_item = self._extract_from_dense(item, pos_idx)
 
-                    if self._format == "tensorboard":
+                    if "tensorboard" in self._format and self._tracker._use_tensorboard:
                         self.save_tensorboard(out_item, visual_name, stage_num_batches)
-                    else:
-                        out_item = self._dict_to_structured_npy(out_item)
-                        gt_name = "{}_{}_{}_gt".format(self._current_epoch, self._seen_batch, pos_idx)
-                        pred_name = "{}_{}_{}".format(self._current_epoch, self._seen_batch, pos_idx)
+                    
+                    out_item = self._dict_to_structured_npy(out_item)
+                    gt_name = "{}_{}_{}_gt".format(self._current_epoch, self._seen_batch, pos_idx)
+                    pred_name = "{}_{}_{}".format(self._current_epoch, self._seen_batch, pos_idx)
 
-                        if self._format == "wandb" and self._tracker._wandb:
-                            self.save_wandb(out_item, gt_name, pred_name)
+                    if "wandb" in self._format and self._tracker._wandb:
+                        self.save_wandb(out_item, gt_name, pred_name)
 
-                        elif self._format == "pointcloud" or self._format == "ply" or self._format == "las":
-                            dir_path = os.path.join(self._viz_path, str(self._current_epoch), self._stage)
-                            if not os.path.exists(dir_path):
-                                os.makedirs(dir_path)
+                    is_ply = "pointcloud" in self._format or "ply" in self._format
+                    if is_ply or "las" in self._format:
+                        dir_path = os.path.join(self._viz_path, str(self._current_epoch), self._stage)
+                        if not os.path.exists(dir_path):
+                            os.makedirs(dir_path)
 
-                            if self._format == "pointcloud" or self._format == "ply":
-                                filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
-                                path_out = os.path.join(dir_path, filename)
-                                self.save_ply(out_item, visual_name, path_out)
+                        if is_ply:
+                            filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
+                            path_out = os.path.join(dir_path, "ply")
+                            self.save_ply(out_item, visual_name, path_out, filename)
 
-                            elif self._format == "las":
-                                preds_path = os.path.join(dir_path, "preds")
-                                gt_path = os.path.join(dir_path, "gt")
-                                self.save_las(preds_path, out_item, out_item["p"], pred_name)
-                                self.save_las(gt_path, out_item, out_item["l"], gt_name)
-
-                    self._seen_step += 1
+                        if "las" in self._format:
+                            las_path = os.path.join(dir_path, "las")
+                            self.save_las(las_path, out_item, out_item["p"], pred_name)
+                            self.save_las(las_path, out_item, out_item["l"], gt_name)
 
             self._seen_batch += 1
 
-    def save_ply(self, npy_array, visual_name, path_out):
+    def save_ply(self, npy_array, visual_name, path_out, filename):
+        if not os.path.exists(path_out):
+            os.makedirs(path_out)
+        path_out = os.path.join(path_out, filename)
+
         el = PlyElement.describe(npy_array, visual_name)
         if self._ply_format == "ascii":
             PlyData([el], text=True).write(path_out)
@@ -331,16 +344,17 @@ class Visualizer(object):
             }
         )
 
-        scene_name = "{}/gt".format(self._stage)
-        wandb.log({scene_name: gt_scene, "epoch": self._current_epoch}, step=self._seen_step)
-        scene_name = "{}/pred".format(self._stage)
-        wandb.log({scene_name: pred_scene, "epoch": self._current_epoch}, step=self._seen_step)
+        gt_scene_name = "{}/gt".format(self._stage)
+        pred_scene_name = "{}/pred".format(self._stage)
+        wandb.log({pred_scene_name: pred_scene, gt_scene_name: gt_scene, "epoch": self._current_epoch})
 
     def save_las(self, out_path, out_item, label, fname):
         if not os.path.exists(out_path):
             os.makedirs(out_path)
 
-        path_out = os.path.join(out_path, fname + ".las")
+        format = ".laz" if self._las_compress else ".las"
+
+        path_out = os.path.join(out_path, fname + format)
         new_hdr = laspy.LasHeader(version="1.2", point_format=3)
         new_hdr.scales = [0.01, 0.01, 0.01]
         pred_las = laspy.LasData(new_hdr)
