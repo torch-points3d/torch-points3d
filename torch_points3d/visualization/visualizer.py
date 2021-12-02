@@ -1,12 +1,19 @@
 import os
 import torch
 import numpy as np
-from matplotlib.cm import get_cmap
-from math import log10, ceil
 from plyfile import PlyData, PlyElement
 import logging
+import wandb
+from itertools import product
+from matplotlib.cm import get_cmap
+from math import log10, ceil
 
 log = logging.getLogger(__name__)
+
+try:
+    import laspy
+except (ImportError, NameError, AttributeError):
+    log.warn("Laspy not available for visualization.")
 
 
 class Visualizer(object):
@@ -17,11 +24,11 @@ class Visualizer(object):
         batch_size (int) -- Current batch size usef
         save_dir (str) -- The path used by hydra to store the experiment
 
-    This class is responsible to save visual into .ply format and tensorboard mesh
+    This class is responsible to save visuals into different formats.
     The configuration looks like that:
         visualization:
-            activate: False # Wheter to activate the visualizer
-            format: ["pointcloud", "tensorboard"] # image will come later
+            activate: False # Whether to activate the visualizer
+            format: ["ply", "tensorboard"] # 'pointcloud' is deprecated, use 'ply' instead
             num_samples_per_epoch: 2 # If negative, it will save all elements
             deterministic: True # False -> Randomly sample elements from epoch to epoch
             saved_keys: # Mapping from Data Object to structured numpy
@@ -30,11 +37,11 @@ class Visualizer(object):
                 pred: [['p', 'float']]
             indices: # List of indices to be saved (support "train", "test", "val")
                 train: [0, 3]
+            # Format specific options:
             ply_format: binary_big_endian # PLY format (support "binary_big_endian", "binary_little_endian", "ascii")
             tensorboard_mesh: # Mapping from mesh name and propety use to color
                 label: 'y'
                 prediction: 'pred'
-
     """
 
     def __init__(self, viz_conf, num_batches, batch_size, save_dir, tracker):
@@ -46,29 +53,34 @@ class Visualizer(object):
         self._format = viz_conf.format
         self._num_samples_per_epoch = int(viz_conf.num_samples_per_epoch)
         self._deterministic = viz_conf.deterministic
+        self._seed = viz_conf.deterministic_seed if viz_conf.deterministic_seed is not None else 0
+        self._tracker = tracker
 
-        self._saved_keys = {}
+        self._saved_keys = viz_conf.saved_keys
         self._tensorboard_mesh = {}
 
         # Internal state
         self._stage = None
         self._current_epoch = None
+        self._seen_step = 0
 
-        if "pointcloud" in self._format:
-            self._saved_keys = viz_conf.saved_keys
+        # format-specific initialization
+        if self._format == "pointcloud":
+            log.warning('Visualization format "pointcloud" is deprecated, use "ply" instead.')
+        is_ply = self._format == "pointcloud" or self._format == "ply"
+
+        if is_ply:
             self._ply_format = viz_conf.ply_format if viz_conf.ply_format is not None else "binary_big_endian"
 
-            # Current experiment path
-            self._viz_path = os.path.join(save_dir, "viz")
-            if not os.path.exists(self._viz_path):
-                os.makedirs(self._viz_path)
+        if self._format == "tensorboard" and tracker._use_tensorboard:
+            self._tensorboard_mesh = viz_conf.tensorboard_mesh
 
-        if "tensorboard" in self._format:
-            if tracker._use_tensorboard:
-                self._tensorboard_mesh = viz_conf.tensorboard_mesh
+            # SummaryWriter for tensorboard loging
+            self._writer = tracker._writer
 
-                # SummaryWriter for tensorboard loging
-                self._writer = tracker._writer
+        if self._format == "wandb":
+            self._wandb_cmap = viz_conf.wandb_cmap
+            self._max_points = viz_conf.wandb_max_points if viz_conf.wandb_max_points is not None else -1
 
         self._indices = {}
         self._contains_indices = False
@@ -98,15 +110,9 @@ class Visualizer(object):
                 else:
                     self._indices[stage] = None
             else:
-                if self._deterministic:
-                    if stage not in self._indices:
-                        if self._num_samples_per_epoch > total_items:
-                            log.warn("Number of samples to save is higher than the number of available elements")
-                        self._indices[stage] = np.random.permutation(total_items)[: self._num_samples_per_epoch]
-                else:
-                    if self._num_samples_per_epoch > total_items:
-                        log.warn("Number of samples to save is higher than the number of available elements")
-                    self._indices[stage] = np.random.permutation(total_items)[: self._num_samples_per_epoch]
+                if self._num_samples_per_epoch > total_items:
+                    log.warn("Number of samples to save is higher than the number of available elements")
+                self._indices[stage] = self._rng.permutation(total_items)[: self._num_samples_per_epoch]
 
     @property
     def is_active(self):
@@ -114,11 +120,15 @@ class Visualizer(object):
 
     def reset(self, epoch, stage):
         """This function is responsible to restore the visualizer
-            to start a new epoch on a new stage
+        to start a new epoch on a new stage
         """
         self._current_epoch = epoch
         self._seen_batch = 0
         self._stage = stage
+        if self._deterministic:
+            self._rng = np.random.default_rng(self._seed)
+        else:
+            self._rng = np.random.default_rng()
         if self._activate:
             self.get_indices(stage)
 
@@ -162,9 +172,9 @@ class Visualizer(object):
 
     def save_visuals(self, visuals):
         """This function is responsible to save the data into .ply objects
-            Parameters:
-                visuals (Dict[Data(pos=torch.Tensor, ...)]) -- Contains a dictionnary of tensors
-            Make sure the saved_keys  within the config maps to the Data attributes.
+        Parameters:
+            visuals (Dict[Data(pos=torch.Tensor, ...)]) -- Contains a dictionnary of tensors
+        Make sure the saved_keys  within the config maps to the Data attributes.
         """
         if self._stage in self._indices:
             stage_num_batches = getattr(self, "{}_num_batches".format(self._stage))
@@ -178,49 +188,165 @@ class Visualizer(object):
                     else:
                         out_item = self._extract_from_dense(item, pos_idx)
 
-                    if hasattr(self, "_viz_path"):
-                        dir_path = os.path.join(self._viz_path, str(self._current_epoch), self._stage)
-                        if not os.path.exists(dir_path):
-                            os.makedirs(dir_path)
+                    if self._format == "tensorboard":
+                        self.save_tensorboard(out_item, visual_name, stage_num_batches)
+                    else:
+                        out_item = self._dict_to_structured_npy(out_item)
+                        gt_name = "{}_{}_{}_gt".format(self._current_epoch, self._seen_batch, pos_idx)
+                        pred_name = "{}_{}_{}".format(self._current_epoch, self._seen_batch, pos_idx)
 
-                        filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
-                        path_out = os.path.join(dir_path, filename)
+                        if self._format == "wandb" and self._tracker._wandb:
+                            self.save_wandb(out_item, gt_name, pred_name)
 
-                        npy_array = self._dict_to_structured_npy(out_item)
-                        el = PlyElement.describe(npy_array, visual_name)
-                        if self._ply_format == "ascii":
-                            PlyData([el], text=True).write(path_out)
-                        elif self._ply_format == "binary_little_endian":
-                            PlyData([el], byte_order="<").write(path_out)
-                        elif self._ply_format == "binary_big_endian":
-                            PlyData([el], byte_order=">").write(path_out)
-                        else:
-                            PlyData([el]).write(path_out)
+                        elif self._format == "pointcloud" or self._format == "ply" or self._format == "las":
+                            dir_path = os.path.join(self._viz_path, str(self._current_epoch), self._stage)
+                            if not os.path.exists(dir_path):
+                                os.makedirs(dir_path)
 
-                    if hasattr(self, "_writer"):
-                        pos = out_item['pos'].detach().cpu().unsqueeze(0)
-                        colors = get_cmap('tab10')
-                        config_dict = {
-                            "material": {
-                                "size": 0.3
-                            }
-                        }
+                            if self._format == "pointcloud" or self._format == "ply":
+                                filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
+                                path_out = os.path.join(dir_path, filename)
+                                self.save_ply(out_item, visual_name, path_out)
 
-                        for label, k in self._tensorboard_mesh.items():
-                            value = out_item[k].detach().cpu()
+                            elif self._format == "las":
+                                preds_path = os.path.join(dir_path, "preds")
+                                gt_path = os.path.join(dir_path, "gt")
+                                self.save_las(preds_path, out_item, out_item["p"], pred_name)
+                                self.save_las(gt_path, out_item, out_item["l"], gt_name)
 
-                            if len(value.shape) == 2 and value.shape[1] == 3:
-                                if value.min() >= 0 and value.max() <= 1:
-                                    value = (255*value).type(torch.uint8).unsqueeze(0)
-                                else:
-                                    value = value.type(torch.uint8).unsqueeze(0)
-                            elif len(value.shape) == 1 and value.shape[0] == 1:
-                                value = np.tile((255*colors(value.numpy() % 10))[:,0:3].astype(np.uint8), (pos.shape[0],1)).reshape((1,-1,3))
-                            elif len(value.shape) == 1 or value.shape[1] == 1:
-                                value = (255*colors(value.numpy() % 10))[:,0:3].astype(np.uint8).reshape((1,-1,3))
-                            else:
-                                continue
+                    self._seen_step += 1
 
-                            self._writer.add_mesh(self._stage + "/" + visual_name + "/" + label, pos, colors=value, config_dict=config_dict, global_step=(self._current_epoch-1)*(10**ceil(log10(stage_num_batches+1)))+self._seen_batch)
-                        
             self._seen_batch += 1
+
+    def save_ply(self, npy_array, visual_name, path_out):
+        el = PlyElement.describe(npy_array, visual_name)
+        if self._ply_format == "ascii":
+            PlyData([el], text=True).write(path_out)
+        elif self._ply_format == "binary_little_endian":
+            PlyData([el], byte_order="<").write(path_out)
+        elif self._ply_format == "binary_big_endian":
+            PlyData([el], byte_order=">").write(path_out)
+        else:
+            PlyData([el]).write(path_out)
+
+    def save_tensorboard(self, out_item, visual_name, stage_num_batches):
+        pos = out_item["pos"].detach().cpu().unsqueeze(0)
+        colors = get_cmap("tab10")
+        config_dict = {"material": {"size": 0.3}}
+
+        for label, k in self._tensorboard_mesh.items():
+            value = out_item[k].detach().cpu()
+
+            if len(value.shape) == 2 and value.shape[1] == 3:
+                if value.min() >= 0 and value.max() <= 1:
+                    value = (255 * value).type(torch.uint8).unsqueeze(0)
+                else:
+                    value = value.type(torch.uint8).unsqueeze(0)
+            elif len(value.shape) == 1 and value.shape[0] == 1:
+                value = np.tile((255 * colors(value.numpy() % 10))[:, 0:3].astype(np.uint8), (pos.shape[0], 1)).reshape(
+                    (1, -1, 3)
+                )
+            elif len(value.shape) == 1 or value.shape[1] == 1:
+                value = (255 * colors(value.numpy() % 10))[:, 0:3].astype(np.uint8).reshape((1, -1, 3))
+            else:
+                continue
+
+            self._writer.add_mesh(
+                self._stage + "/" + visual_name + "/" + label,
+                pos,
+                colors=value,
+                config_dict=config_dict,
+                global_step=(self._current_epoch - 1) * (10 ** ceil(log10(stage_num_batches + 1))) + self._seen_batch,
+            )
+
+    def gen_bb_corners(self, points):
+        points_min = np.min(points, axis=0)
+        points_max = np.max(points, axis=0)
+        points_min_max = np.stack([points_min, points_max], axis=0)
+
+        bb_points = []
+        for x, y, z in [i for i in product(range(2), repeat=3)]:  # 2^3 binary combination table
+            bb_points.append([points_min_max[x, 0], points_min_max[y, 1], points_min_max[z, 2]])
+        return bb_points
+
+    def apply_cmap(self, val):
+        out = np.zeros((val.shape[0], 3), dtype=int)
+        for label, color in enumerate(self._wandb_cmap):
+            out[val == label] = color
+        return out
+
+    PRED_COLOR = [255, 0, 0]  # red
+    GT_COLOR = [124, 255, 0]  # green
+    # https://docs.wandb.ai/guides/track/log/media#3d-visualizations
+    def save_wandb(self, out_item, gt_name, pred_name):
+        if self._max_points > 0:
+            out_item = out_item[self._rng.permutation(len(out_item))[: self._max_points]]
+        if self._wandb_cmap is None:
+            assert (out_item["p"].max() + 1) <= 14, "Wandb classes must be in 1-14"
+            assert (out_item["l"].max() + 1) <= 14, "Wandb classes must be in 1-14"
+
+            pred_points = np.stack([out_item["x"], out_item["y"], out_item["z"], out_item["p"] + 1], axis=1)
+            gt_points = np.stack([out_item["x"], out_item["y"], out_item["z"], out_item["l"] + 1], axis=1)
+        else:
+            pred_colors = self.apply_cmap(out_item["p"])
+            gt_colors = self.apply_cmap(out_item["l"])
+            pred_points = np.stack(
+                [out_item["x"], out_item["y"], out_item["z"], pred_colors[:, 0], pred_colors[:, 1], pred_colors[:, 2]],
+                axis=1,
+            )
+            gt_points = np.stack(
+                [out_item["x"], out_item["y"], out_item["z"], gt_colors[:, 0], gt_colors[:, 1], gt_colors[:, 2]], axis=1
+            )
+
+        corners = self.gen_bb_corners(pred_points)
+
+        pred_scene = wandb.Object3D(
+            {
+                "type": "lidar/beta",
+                "points": pred_points,
+                "boxes": np.array(  # draw 3d boxes
+                    [
+                        {
+                            "corners": corners,
+                            "label": pred_name,
+                            "color": self.PRED_COLOR,
+                        }
+                    ]
+                ),
+            }
+        )
+        gt_scene = wandb.Object3D(
+            {
+                "type": "lidar/beta",
+                "points": gt_points,
+                "boxes": np.array(  # draw 3d boxes
+                    [
+                        {
+                            "corners": corners,
+                            "label": gt_name,
+                            "color": self.GT_COLOR,
+                        }
+                    ]
+                ),
+            }
+        )
+
+        scene_name = "{}/gt".format(self._stage)
+        wandb.log({scene_name: gt_scene, "epoch": self._current_epoch}, step=self._seen_step)
+        scene_name = "{}/pred".format(self._stage)
+        wandb.log({scene_name: pred_scene, "epoch": self._current_epoch}, step=self._seen_step)
+
+    def save_las(self, out_path, out_item, label, fname):
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+
+        path_out = os.path.join(out_path, fname + ".las")
+        new_hdr = laspy.LasHeader(version="1.2", point_format=3)
+        new_hdr.scales = [0.01, 0.01, 0.01]
+        pred_las = laspy.LasData(new_hdr)
+        pred_las.x = out_item["x"]
+        pred_las.y = out_item["y"]
+        pred_las.z = out_item["z"]
+
+        pred_las.classification = label.astype(np.ubyte) + 1
+        pred_las.write(path_out)
