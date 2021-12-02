@@ -2,6 +2,7 @@ import logging
 import torch.nn.functional as F
 import torch.nn as nn
 import torchsparse as TS
+import torch
 
 
 from torch_points3d.models.base_model import BaseModel
@@ -25,6 +26,7 @@ class APIModel(BaseModel):
         self._supports_mixed = sp3d.nn.get_backend() == "torchsparse"
         self.head = nn.Sequential(nn.Linear(self.backbone.output_nc, dataset.num_classes))
         self.loss_names = ["loss_seg"]
+        self.visual_names = ["data_visual"]
 
     def set_input(self, data, device):
         self.batch_idx = data.batch.squeeze()
@@ -42,6 +44,10 @@ class APIModel(BaseModel):
             self._weight_classes = self._weight_classes.to(self.device)
         if self.labels is not None:
             self.loss_seg = F.nll_loss(self.output, self.labels, ignore_index=IGNORE_LABEL, weight=self._weight_classes)
+
+        self.data_visual = self.input
+        self.data_visual.y = self.labels
+        self.data_visual.pred = torch.max(self.output, -1)[1]
 
     def backward(self):
         self.loss_seg.backward()
