@@ -205,10 +205,12 @@ class SUMPointCloudDataset(Dataset):
         if self.length is not None:
             print("Indexing class for random sampling")
             classes, indexes = torch.unique(data.y, return_inverse=True)
-            data.class_index = []
+            class_index = []
             for i in range(len(classes)):
                 if classes[i] >= 0:
-                    data.class_index.append((indexes == i).nonzero().flatten())
+                    class_index.append((indexes == i).nonzero().flatten())
+            data.class_index = torch.cat(class_index)
+            data.class_size = torch.tensor([0]+[torch.numel(t) for t in class_index]).cumsum(0)
         else:
             print("Computing samples")
             data.kd_tree = kd_tree
@@ -229,11 +231,12 @@ class SUMPointCloudDataset(Dataset):
             if (self.data.num_nodes <= self.cloud_size or self.cloud_size < 1):
                 data = self.data.clone()
             else:
-                class_idx = randint(0, len(self.data.class_index)-1) # choose a class
-                raw_idx = randint(0, len(self.data.class_index[class_idx])-1) # choose a point in the class
-                node_idx = self.data.class_index[class_idx][raw_idx]
+                class_idx = randint(0, len(self.data.class_size)-2) # choose a class
+                raw_idx = randint(self.data.class_size[class_idx], self.data.class_size[class_idx+1]-1) # choose a point in the class
+                node_idx = self.data.class_index[raw_idx]
                 index = self.kd_tree.query(self.data.pos[node_idx].reshape(1,3), k=self.cloud_size, return_distance=False).flatten() # Comput k-neighbors
                 data = Select(index)(self.data) # Extract cloud point
+            delattr(data, "class_size") # Remove class size
             delattr(data, "class_index") # Remove class index
             return data
         else:
