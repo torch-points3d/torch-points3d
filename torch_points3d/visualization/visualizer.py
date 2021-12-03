@@ -229,7 +229,7 @@ class Visualizer(object):
                             os.makedirs(dir_path)
 
                         if is_ply:
-                            filename = "{}_{}.ply".format(self._seen_batch, pos_idx)
+                            filename = "{}_{}_{}.ply".format(self._current_epoch, self._seen_batch, pos_idx)
                             path_out = os.path.join(dir_path, "ply")
                             self.save_ply(out_item, visual_name, path_out, filename)
 
