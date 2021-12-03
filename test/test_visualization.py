@@ -67,8 +67,7 @@ class TestVisualizer(unittest.TestCase):
             run(3, visualizer, epoch, "test", data)
             run(0, visualizer, epoch, "val", data)
 
-        targets = {'train': set(["1_1", "0_0"]),
-                   'test': set(["0_0"])}
+        targets = {"train": set(["1_1", "0_0"]), "test": set(["0_0"])}
         for split in ["train", "test"]:
             for epoch in range(epochs):
                 for format in ["ply", "las"]:
@@ -76,11 +75,11 @@ class TestVisualizer(unittest.TestCase):
                     files = [os.path.splitext(filename)[0] for filename in files]
 
                     target = targets[split]
-                    target = ["%d_%s" % (epoch, f) for f in target] # append current epoch to start of target
+                    target = ["%d_%s" % (epoch, f) for f in target]  # append current epoch to start of target
                     if format == "las":
-                        target_gt = ["%s_gt" % (x) for x in target] # add gt files for las
+                        target_gt = ["%s_gt" % (x) for x in target]  # add gt files for las
                         target += target_gt
-                    
+
                     self.assertEqual(set(target), set(files))
         shutil.rmtree(self.run_path)
 

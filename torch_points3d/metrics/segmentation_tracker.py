@@ -113,8 +113,8 @@ class SegmentationTracker(BaseTracker):
         # flatten cm indices
         cm_indices = np.array(list(np.ndindex(self.confusion_matrix.shape)))
         # flatten cm values, make 2d
-        cm_num_preds = self.confusion_matrix.flatten().reshape(-1,1)
-        # merge into a (c^2, c^2, 3) array for number of classes "c" 
+        cm_num_preds = self.confusion_matrix.flatten().reshape(-1, 1)
+        # merge into a (c^2, c^2, 3) array for number of classes "c"
         stacked = np.concatenate((cm_indices, cm_num_preds), axis=1)
 
         fields = {
@@ -129,6 +129,6 @@ class SegmentationTracker(BaseTracker):
             fields,
             {"title": "Confusion Matrix"},
         )
-        
+
         table_name = "%s/conf_mat" % self._stage
-        wandb.log({table_name : cm})
+        wandb.log({table_name: cm})
