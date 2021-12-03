@@ -39,6 +39,7 @@ class Visualizer(object):
             format: ["ply", "tensorboard"] # 'pointcloud' is deprecated, use 'ply' instead
             num_samples_per_epoch: 2 # If negative, it will save all elements
             deterministic: True # False -> Randomly sample elements from epoch to epoch
+            deterministic_seed: 0 # Random seed used to generate consistant keys if deterministic is True
             saved_keys: # Mapping from Data Object to structured numpy
                 pos: [['x', 'float'], ['y', 'float'], ['z', 'float']]
                 y: [['l', 'float']]
