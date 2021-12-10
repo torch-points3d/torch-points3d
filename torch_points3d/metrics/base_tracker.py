@@ -6,7 +6,6 @@ import wandb
 from torch.utils.tensorboard import SummaryWriter
 import logging
 
-from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
 from torch_points3d.models import model_interface
 
 log = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ class BaseTracker:
         self._append_losses(losses)
 
     def finalise(self, *args, **kwargs):
-        """ Lifcycle method that is called at the end of an epoch. Use this to compute
+        """Lifcycle method that is called at the end of an epoch. Use this to compute
         end of epoch metrics.
         """
         self._finalised = True
@@ -89,22 +88,27 @@ class BaseTracker:
             new_metrics[metric_name.replace(stage + "_", "")] = metric_value
         return new_metrics
 
-    def publish(self, step):
-        """ Publishes the current metrics to wandb and tensorboard
+    def publish_to_wandb(self, metrics, epoch):
+        wandb_metrics = metrics.copy()
+        wandb_metrics["epoch"] = epoch
+        wandb.log(wandb_metrics)
+
+    def publish(self, epoch):
+        """Publishes the current metrics to wandb and tensorboard
         Arguments:
             step: current epoch
         """
         metrics = self.get_metrics()
 
         if self._wandb:
-            wandb.log(metrics, step=step)
+            self.publish_to_wandb(metrics, epoch)
 
         if self._use_tensorboard:
-            self.publish_to_tensorboard(metrics, step)
+            self.publish_to_tensorboard(metrics, epoch)
 
         return {
             "stage": self._stage,
-            "epoch": step,
+            "epoch": epoch,
             "current_metrics": self._remove_stage_from_metric_keys(self._stage, metrics),
         }
 

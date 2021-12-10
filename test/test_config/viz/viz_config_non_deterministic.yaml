@@ -1,6 +1,6 @@
 visualization:
   activate: True
-  format: "pointcloud" # image will come later
+  format: ["ply", "las"]
   num_samples_per_epoch: 2
   deterministic: False # False -> Randomly sample elements from epoch to epoch
   saved_keys: 

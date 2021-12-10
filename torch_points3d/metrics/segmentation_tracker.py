@@ -1,5 +1,6 @@
 from typing import Dict, Any
 import torch
+import wandb
 import numpy as np
 
 from torch_points3d.metrics.confusion_matrix import ConfusionMatrix
@@ -13,7 +14,7 @@ class SegmentationTracker(BaseTracker):
     def __init__(
         self, dataset, stage="train", wandb_log=False, use_tensorboard: bool = False, ignore_label: int = IGNORE_LABEL
     ):
-        """ This is a generic tracker for segmentation tasks.
+        """This is a generic tracker for segmentation tasks.
         It uses a confusion matrix in the back-end to track results.
         Use the tracker to track an epoch.
         You can use the reset function before you start a new epoch
@@ -57,8 +58,7 @@ class SegmentationTracker(BaseTracker):
         return self._confusion_matrix.confusion_matrix
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
-        """ Add current model predictions (usually the result of a batch) to the tracking
-        """
+        """Add current model predictions (usually the result of a batch) to the tracking"""
         if not self._dataset.has_labels(self._stage):
             return
 
@@ -91,8 +91,7 @@ class SegmentationTracker(BaseTracker):
         }
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
-        """ Returns a dictionnary of all metrics and losses being tracked
-        """
+        """Returns a dictionnary of all metrics and losses being tracked"""
         metrics = super().get_metrics(verbose)
 
         metrics["{}_acc".format(self._stage)] = self._acc
@@ -106,3 +105,30 @@ class SegmentationTracker(BaseTracker):
     @property
     def metric_func(self):
         return self._metric_func
+
+    def publish_to_wandb(self, metrics, epoch):
+        super().publish_to_wandb(metrics, epoch)
+
+        # write confusion matrix out to wandb
+        # flatten cm indices
+        cm_indices = np.array(list(np.ndindex(self.confusion_matrix.shape)))
+        # flatten cm values, make 2d
+        cm_num_preds = self.confusion_matrix.flatten().reshape(-1, 1)
+        # merge into a (c^2, c^2, 3) array for number of classes "c"
+        stacked = np.concatenate((cm_indices, cm_num_preds), axis=1)
+
+        fields = {
+            "Actual": "Actual",
+            "Predicted": "Predicted",
+            "nPredictions": "nPredictions",
+        }
+
+        cm = wandb.plot_table(
+            "wandb/confusion_matrix/v1",
+            wandb.Table(columns=["Actual", "Predicted", "nPredictions"], data=stacked),
+            fields,
+            {"title": "Confusion Matrix"},
+        )
+
+        table_name = "%s/conf_mat" % self._stage
+        wandb.log({table_name: cm})
