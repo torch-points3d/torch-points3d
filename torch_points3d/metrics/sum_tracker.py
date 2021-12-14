@@ -72,8 +72,8 @@ class SUMTracker(SegmentationTracker):
             self._vote_iou_per_class = {self._dataset.INV_OBJECT_LABEL[k]: "{:.2f}".format(100 * v) for k, v in enumerate(per_class_iou)}
 
             if ply_output:
-                pos = self._data.pos[has_prediction].cpu().numpy()
-                rgb = (255*self._data.rgb[has_prediction].cpu().numpy()).astype(np.uint8)
+                pos = self._data.pos[has_prediction].detach().cpu().numpy()
+                rgb = (255*self._data.rgb[has_prediction].detach().cpu().numpy()).astype(np.uint8)
                 ply_array = np.ones(
                     pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1"), ("l", "i4"), ("p", "i4")]
                 )
