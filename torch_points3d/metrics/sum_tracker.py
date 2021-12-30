@@ -26,7 +26,21 @@ class SUMTracker(SegmentationTracker):
     def track(self, model: model_interface.TrackerInterface, **kwargs):
         """ Add current model predictions (usually the result of a batch) to the tracking
         """
-        super().track(model)
+
+        if not self._dataset.has_labels(self._stage):
+            return
+
+        BaseTracker.track(self, model)
+        
+        fids = model.get_input().fid
+        outputs = model.get_output()
+        targets = model.get_labels()
+
+        unique_fids, fids_map = fids.unique(dim=0, return_inverse=True)
+        res = torch.zeros((unique_fids.shape[0], *(outputs[0].shape)), dtype=outputs.dtype, device=outputs.device).scatter_add_(0, fids_map.unsqueeze(1), outputs)
+        outputs = torch.index_select(res, 0, fids_map)
+
+        self._compute_metrics(outputs, targets)
 
         # Train mode, nothing special to do
         if not self._stage.startswith("test"):
@@ -35,7 +49,7 @@ class SUMTracker(SegmentationTracker):
         if self._votes is None:
             self._data = next((x for x in self._dataset.test_dataset if x.name == self._stage), None).data
             self._votes = torch.zeros((self._data.y.shape[0], self._num_classes), dtype=torch.float)
-            self._votes.to(model.device)
+            self._votes = self._votes.to(model.device)
             self._prediction_count = torch.zeros(self._data.y.shape[0], dtype=torch.int)
             self._prediction_count.to(model.device)
 
