@@ -37,7 +37,7 @@ class SUMTracker(SegmentationTracker):
         targets = model.get_labels()
 
         unique_fids, fids_map = fids.unique(dim=0, return_inverse=True)
-        res = torch.zeros((unique_fids.shape[0], *(outputs[0].shape)), dtype=outputs.dtype, device=outputs.device).scatter_add_(0, fids_map.unsqueeze(1), outputs)
+        res = torch.zeros((unique_fids.shape[0], outputs.shape[1]), dtype=outputs.dtype, device=outputs.device).scatter_add_(0, fids_map.unsqueeze(1).expand_as(outputs), outputs)
         outputs = torch.index_select(res, 0, fids_map)
 
         self._compute_metrics(outputs, targets)
