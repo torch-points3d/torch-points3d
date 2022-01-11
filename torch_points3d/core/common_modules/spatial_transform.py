@@ -28,8 +28,8 @@ class BaseLinearTransformSTNkD(torch.nn.Module):
 
     def forward(self, feat_x, trans_x, batch):
         """
-            Learns and applies a linear transformation to trans_x based on feat_x.
-            feat_x and trans_x may be the same or different.
+        Learns and applies a linear transformation to trans_x based on feat_x.
+        feat_x and trans_x may be the same or different.
         """
         global_feature = self.nn(feat_x, batch)
         trans = self.fc_layer(global_feature)
@@ -43,14 +43,14 @@ class BaseLinearTransformSTNkD(torch.nn.Module):
         # batch_x = trans_x.view(self.batch_size, -1, trans_x.shape[1])
         if trans_x.squeeze().dim() == 2:
             batch_x = trans_x.view(trans_x.shape[0], 1, trans_x.shape[1])
-            x_transformed = torch.bmm(batch_x[:, :, :trans.shape[-1]], trans[batch])
+            x_transformed = torch.bmm(batch_x[:, :, : trans.shape[-1]], trans[batch])
             if batch_x.shape[-1] > trans.shape[-1]:
-                x_transformed = torch.cat([x_transformed, batch_x[:, :, trans.shape[-1]:]], dim=-1)
+                x_transformed = torch.cat([x_transformed, batch_x[:, :, trans.shape[-1] :]], dim=-1)
             return x_transformed.view(len(trans_x), trans_x.shape[1])
         else:
-            x_transformed = torch.bmm(trans_x[:, :, :trans.shape[-1]], trans)
+            x_transformed = torch.bmm(trans_x[:, :, : trans.shape[-1]], trans)
             if trans_x.shape[-1] > trans.shape[-1]:
-                x_transformed = torch.cat([x_transformed, trans_x[:, :, trans.shape[-1]:]], dim=-1)
+                x_transformed = torch.cat([x_transformed, trans_x[:, :, trans.shape[-1] :]], dim=-1)
             return x_transformed
 
     def get_orthogonal_regularization_loss(self):

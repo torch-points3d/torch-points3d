@@ -3,8 +3,7 @@ from omegaconf.listconfig import ListConfig
 
 
 def resolve_model(model_config, dataset, tested_task):
-    """ Parses the model config and evaluates any expression that may contain constants
-    """
+    """Parses the model config and evaluates any expression that may contain constants"""
     # placeholders to subsitute
     constants = {
         "FEAT": max(dataset.feature_dimension, 0),
@@ -20,7 +19,7 @@ def resolve_model(model_config, dataset, tested_task):
 
 
 def resolve(obj, constants):
-    """ Resolves expressions and constants in obj.
+    """Resolves expressions and constants in obj.
     returns False if obj is a ListConfig or DictConfig, True is obj is a primative type.
     """
     if type(obj) == DictConfig:

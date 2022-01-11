@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 def KPConv(
     architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
 ):
-    """ Create a KPConv backbone model based on the architecture proposed in
+    """Create a KPConv backbone model based on the architecture proposed in
     https://arxiv.org/abs/1904.08889
 
     Parameters

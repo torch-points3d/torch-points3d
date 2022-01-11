@@ -60,7 +60,7 @@ def SparseConv3d(
         sp3d.nn.set_backend(os.environ["SPARSE_BACKEND"])
     else:
         sp3d.nn.set_backend(backend)
-    
+
     factory = SparseConv3dFactory(
         architecture=architecture, num_layers=num_layers, input_nc=input_nc, config=config, **kwargs
     )
@@ -139,6 +139,7 @@ class BaseSparseConv3d(UnwrappedUnetBasedModel):
             self.xyz = data.pos
         else:
             self.xyz = data.coords
+
 
 class SparseConv3dEncoder(BaseSparseConv3d):
     def forward(self, data, *args, **kwargs):

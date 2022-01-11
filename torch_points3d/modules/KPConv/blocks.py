@@ -84,7 +84,12 @@ class SimpleBlock(BaseModule):
             idx_neighboors = self.neighbour_finder(data.pos, q_pos, batch_x=data.batch, batch_y=q_batch)
             query_data.idx_neighboors = idx_neighboors
 
-        x = self.kp_conv(q_pos, data.pos, idx_neighboors, data.x,)
+        x = self.kp_conv(
+            q_pos,
+            data.pos,
+            idx_neighboors,
+            data.x,
+        )
         if self.bn:
             x = self.bn(x)
         x = self.activation(x)
@@ -98,7 +103,7 @@ class SimpleBlock(BaseModule):
 
 
 class ResnetBBlock(BaseModule):
-    """ Resnet block with optional bottleneck activated by default
+    """Resnet block with optional bottleneck activated by default
     Arguments:
         down_conv_nn (len of 2 or 3) :
                         sizes of input, intermediate, output.
@@ -191,7 +196,7 @@ class ResnetBBlock(BaseModule):
 
     def forward(self, data, precomputed=None, **kwargs):
         """
-            data: x, pos, batch_idx and idx_neighbour when the neighboors of each point in pos have already been computed
+        data: x, pos, batch_idx and idx_neighbour when the neighboors of each point in pos have already been computed
         """
         # Main branch
         output = data.clone()
@@ -226,7 +231,7 @@ class ResnetBBlock(BaseModule):
 
 
 class KPDualBlock(BaseModule):
-    """ Dual KPConv block (usually strided + non strided)
+    """Dual KPConv block (usually strided + non strided)
 
     Arguments: Accepted kwargs
         block_names: Name of the blocks to be used as part of this dual block

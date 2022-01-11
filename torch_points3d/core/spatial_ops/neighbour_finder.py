@@ -58,7 +58,12 @@ class DilatedKNNNeighbourFinder(BaseNeighbourFinder):
         row, col = self.initialFinder.find_neighbours(x, y, batch_x, batch_y)
 
         # for each point in y, randomly select k of its neighbours
-        index = torch.randint(self.k * self.dilation, (len(y), self.k), device=row.device, dtype=torch.long,)
+        index = torch.randint(
+            self.k * self.dilation,
+            (len(y), self.k),
+            device=row.device,
+            dtype=torch.long,
+        )
 
         arange = torch.arange(len(y), dtype=torch.long, device=row.device)
         arange = arange * (self.k * self.dilation)
@@ -87,20 +92,22 @@ class BaseMSNeighbourFinder(ABC):
 
 
 class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
-    """ Radius search with support for multiscale for sparse graphs
+    """Radius search with support for multiscale for sparse graphs
 
-        Arguments:
-            radius {Union[float, List[float]]}
+    Arguments:
+        radius {Union[float, List[float]]}
 
-        Keyword Arguments:
-            max_num_neighbors {Union[int, List[int]]}  (default: {64})
+    Keyword Arguments:
+        max_num_neighbors {Union[int, List[int]]}  (default: {64})
 
-        Raises:
-            ValueError: [description]
+    Raises:
+        ValueError: [description]
     """
 
     def __init__(
-        self, radius: Union[float, List[float]], max_num_neighbors: Union[int, List[int]] = 64,
+        self,
+        radius: Union[float, List[float]],
+        max_num_neighbors: Union[int, List[int]] = 64,
     ):
         if DEBUGGING_VARS["FIND_NEIGHBOUR_DIST"]:
             if not isinstance(radius, list):
@@ -148,14 +155,12 @@ class MultiscaleRadiusNeighbourFinder(BaseMSNeighbourFinder):
         return len(self._radius)
 
     def __call__(self, x, y, batch_x=None, batch_y=None, scale_idx=0):
-        """ Sparse interface of the neighboorhood finder
-        """
+        """Sparse interface of the neighboorhood finder"""
         return self.find_neighbours(x, y, batch_x, batch_y, scale_idx)
 
 
 class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
-    """ Multiscale radius search for dense graphs
-    """
+    """Multiscale radius search for dense graphs"""
 
     def find_neighbours(self, x, y, scale_idx=0):
         if scale_idx >= self.num_scales:
@@ -173,6 +178,5 @@ class DenseRadiusNeighbourFinder(MultiscaleRadiusNeighbourFinder):
         return neighbours
 
     def __call__(self, x, y, scale_idx=0, **kwargs):
-        """ Dense interface of the neighboorhood finder
-        """
+        """Dense interface of the neighboorhood finder"""
         return self.find_neighbours(x, y, scale_idx)

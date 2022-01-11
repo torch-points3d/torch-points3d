@@ -4,7 +4,7 @@ from torch_points_kernels import instance_iou
 
 
 def offset_loss(pred_offsets, gt_offsets, total_instance_points):
-    """ Computes the L1 norm between prediction and ground truth and
+    """Computes the L1 norm between prediction and ground truth and
     also computes cosine similarity between both vectors.
     see https://arxiv.org/pdf/2004.01658.pdf equations 2 and 3
     """
@@ -30,7 +30,7 @@ def instance_iou_loss(
     min_iou_threshold=0.25,
     max_iou_threshold=0.75,
 ):
-    """ Loss that promotes higher scores for clusters with higher instance iou,
+    """Loss that promotes higher scores for clusters with higher instance iou,
     see https://arxiv.org/pdf/2004.01658.pdf equation (7)
     """
     assert len(predicted_clusters) == cluster_scores.shape[0]

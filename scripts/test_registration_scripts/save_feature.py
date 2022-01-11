@@ -58,7 +58,11 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
         for i in range(num_fragment):
             dataset.set_patches(i)
             dataset.create_dataloaders(
-                model, cfg.training.batch_size, False, cfg.training.num_workers, False,
+                model,
+                cfg.training.batch_size,
+                False,
+                cfg.training.num_workers,
+                False,
             )
             loader = dataset.test_dataloaders[0]
             features = []
@@ -78,7 +82,11 @@ def run(model: BaseModel, dataset: BaseDataset, device, output_path, cfg):
             save(output_path, scene_name, pc_name, dataset.base_dataset[i].to("cpu"), features)
     else:
         dataset.create_dataloaders(
-            model, 1, False, cfg.training.num_workers, False,
+            model,
+            1,
+            False,
+            cfg.training.num_workers,
+            False,
         )
         loader = dataset.test_dataloaders[0]
         with Ctq(loader) as tq_test_loader:

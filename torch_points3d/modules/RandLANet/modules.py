@@ -8,9 +8,9 @@ from torch_points3d.core.base_conv.message_passing import *
 
 class RandlaKernel(MessagePassing):
     """
-        Implements both the Local Spatial Encoding and Attentive Pooling blocks from
-        RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
-        https://arxiv.org/pdf/1911.11236
+    Implements both the Local Spatial Encoding and Attentive Pooling blocks from
+    RandLA-Net: Efficient Semantic Segmentation of Large-Scale Point Clouds
+    https://arxiv.org/pdf/1911.11236
 
     """
 

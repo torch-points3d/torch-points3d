@@ -14,7 +14,12 @@ class Conv3d(TS.nn.Conv3d):
         bias: bool = False,
     ) -> None:
         super().__init__(
-            in_channels, out_channels, kernel_size=kernel_size, stride=stride, dilation=dilation, bias=bias,
+            in_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            dilation=dilation,
+            bias=bias,
         )
 
 

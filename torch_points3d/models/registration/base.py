@@ -1,7 +1,6 @@
 import logging
 import torch
 import torch.nn.functional as F
-from typing import Any
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.models.base_architectures import BackboneBasedModel
 from torch_points3d.models.base_model import BaseModel

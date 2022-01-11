@@ -25,25 +25,25 @@ log = logging.getLogger(__name__)
 def Minkowski(
     architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
 ):
-    """ Create a Minkowski backbone model based on architecture proposed in
-    https://arxiv.org/abs/1904.08755
+    """Create a Minkowski backbone model based on architecture proposed in
+     https://arxiv.org/abs/1904.08755
 
-    Parameters
-    ----------
-    architecture : str, optional
-        Architecture of the model, choose from unet, encoder and decoder
-    input_nc : int, optional
-        Number of channels for the input
-   output_nc : int, optional
-        If specified, then we add a fully connected head at the end of the network to provide the requested dimension
-    num_layers : int, optional
-        Depth of the network
-    config : DictConfig, optional
-        Custom config, overrides the num_layers and architecture parameters
-    in_feat:
-        Size of the first layer
-    block:
-        Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
+     Parameters
+     ----------
+     architecture : str, optional
+         Architecture of the model, choose from unet, encoder and decoder
+     input_nc : int, optional
+         Number of channels for the input
+    output_nc : int, optional
+         If specified, then we add a fully connected head at the end of the network to provide the requested dimension
+     num_layers : int, optional
+         Depth of the network
+     config : DictConfig, optional
+         Custom config, overrides the num_layers and architecture parameters
+     in_feat:
+         Size of the first layer
+     block:
+         Type of resnet block, ResBlock by default but can be any of the blocks in modules/MinkowskiEngine/api_modules.py
     """
     log.warning(
         "Minkowski API is deprecated in favor of the SparseConv3d API. It should be a simple drop in replacement (no change to the API)."
@@ -69,7 +69,10 @@ class MinkowskiFactory(ModelFactory):
         if self._config:
             model_config = self._config
         else:
-            path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers),)
+            path_to_model = os.path.join(
+                PATH_TO_CONFIG,
+                "encoder_{}.yaml".format(self.num_layers),
+            )
             model_config = OmegaConf.load(path_to_model)
         ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
         modules_lib = sys.modules[__name__]

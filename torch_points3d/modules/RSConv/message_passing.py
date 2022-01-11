@@ -35,7 +35,15 @@ class Convolution(MessagePassing):
         vij = pos_i - pos_j
         dij = torch.norm(vij, dim=1).unsqueeze(1)
 
-        hij = torch.cat([dij, vij, pos_i, pos_j,], dim=1)
+        hij = torch.cat(
+            [
+                dij,
+                vij,
+                pos_i,
+                pos_j,
+            ],
+            dim=1,
+        )
 
         M_hij = self.local_nn(hij)
 

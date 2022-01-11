@@ -10,7 +10,7 @@ from .metric_losses import *
 
 
 def filter_valid(output, target, ignore_label=IGNORE_LABEL, other=None):
-    """ Removes predictions for nodes without ground truth """
+    """Removes predictions for nodes without ground truth"""
     idx = target != ignore_label
     if other is not None:
         return output[idx, :], target[idx], other[idx, ...]
@@ -67,7 +67,11 @@ class LossFactory(torch.nn.modules.loss._Loss):
 
 class FocalLoss(torch.nn.modules.loss._Loss):
     def __init__(
-        self, gamma: float = 2, alphas: Any = None, size_average: bool = True, normalized: bool = True,
+        self,
+        gamma: float = 2,
+        alphas: Any = None,
+        size_average: bool = True,
+        normalized: bool = True,
     ):
         super(FocalLoss, self).__init__()
         self._gamma = gamma

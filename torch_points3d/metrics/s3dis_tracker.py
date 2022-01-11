@@ -23,8 +23,7 @@ class S3DISTracker(SegmentationTracker):
         self._iou_per_class = {}
 
     def track(self, model: model_interface.TrackerInterface, full_res=False, data=None, **kwargs):
-        """ Add current model predictions (usually the result of a batch) to the tracking
-        """
+        """Add current model predictions (usually the result of a batch) to the tracking"""
         super().track(model)
 
         # Train mode or low res, nothing special to do
@@ -95,7 +94,10 @@ class S3DISTracker(SegmentationTracker):
 
         # Full res interpolation
         full_pred = knn_interpolate(
-            self._test_area.votes[has_prediction], self._test_area.pos[has_prediction], self._test_area.pos, k=1,
+            self._test_area.votes[has_prediction],
+            self._test_area.pos[has_prediction],
+            self._test_area.pos,
+            k=1,
         )
 
         # Full res pred
@@ -108,8 +110,7 @@ class S3DISTracker(SegmentationTracker):
         return self._full_confusion
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
-        """ Returns a dictionnary of all metrics and losses being tracked
-        """
+        """Returns a dictionnary of all metrics and losses being tracked"""
         metrics = super().get_metrics(verbose)
 
         if verbose:

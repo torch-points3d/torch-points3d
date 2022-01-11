@@ -101,18 +101,18 @@ class PatchPointNet2_D(BackboneBasedModel):
 class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
 
     r"""
-        PointNet2 with multi-scale grouping
-        descriptors network for registration that uses feature propogation layers
+    PointNet2 with multi-scale grouping
+    descriptors network for registration that uses feature propogation layers
 
-        Parameters
-        ----------
-        num_classes: int
-            Number of semantics classes to predict over -- size of softmax classifier that run for each point
-        input_channels: int = 6
-            Number of input channels in the feature descriptor for each point.  If the point cloud is Nx9, this
-            value should be 6 as in an Nx9 point cloud, 3 of the channels are xyz, and 6 are feature descriptors
-        use_xyz: bool = True
-            Whether or not to use the xyz position of a point as a feature
+    Parameters
+    ----------
+    num_classes: int
+        Number of semantics classes to predict over -- size of softmax classifier that run for each point
+    input_channels: int = 6
+        Number of input channels in the feature descriptor for each point.  If the point cloud is Nx9, this
+        value should be 6 as in an Nx9 point cloud, 3 of the channels are xyz, and 6 are feature descriptors
+    use_xyz: bool = True
+        Whether or not to use the xyz position of a point as a feature
     """
 
     def __init__(self, option, model_type, dataset, modules):
@@ -120,8 +120,8 @@ class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
         # Last MLP
         self.mode = option.loss_mode
-        self.normalize_feature = option.get('normalize_feature', False)
-        self.out_channels = option.get('out_channels')
+        self.normalize_feature = option.get("normalize_feature", False)
+        self.out_channels = option.get("out_channels")
         self.loss_names = ["loss_reg", "loss"]
         self.metric_loss_module, self.miner_module = UnetBasedModel.get_metric_loss_and_miner(
             getattr(option, "metric_loss", None), getattr(option, "miner", None)

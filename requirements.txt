@@ -53,6 +53,7 @@ jupyter-core==4.8.1; python_full_version >= "3.6.1" and python_version >= "3.7"
 jupyterlab-pygments==0.1.2; python_version >= "3.7"
 jupyterlab-widgets==1.0.2; python_version >= "3.6"
 kiwisolver==1.3.2; python_version >= "3.7"
+laspy==2.0.3
 llvmlite==0.33.0; python_version >= "3.6"
 markdown==3.3.4; python_version >= "3.6"
 markupsafe==2.0.1; python_version >= "3.6"

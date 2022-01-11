@@ -8,7 +8,7 @@ from torch_points3d.datasets.object_detection.box_data import BoxData
 
 
 def voc_ap(recall, precision):
-    """ ap = voc_ap(recall, precision)
+    """ap = voc_ap(recall, precision)
     Compute PASCAL VOC AP given precision and recall.
     recall and precision contain one element per detected instance,
     ordered by certainty (most certain element first)
@@ -33,7 +33,7 @@ def voc_ap(recall, precision):
 
 
 def eval_det_cls(pred, gt, ovthresh=0.25):
-    """ Generic functions to compute precision/recall for object detection
+    """Generic functions to compute precision/recall for object detection
     for a single class. For each detected box (starting with the most confident),
     find the box with the highest overlap in the ground truth  and mark that one as "detected".
     The same box being detected multiple times counts as false positive.
@@ -125,17 +125,17 @@ def eval_det_cls_wrapper(arguments):
 
 
 def eval_detection(pred_all, gt_all, ovthresh=0.25, processes=4):
-    """ Generic functions to compute precision/recall for object detection
-        for multiple classes.
-        Input:
-            pred_all: map of {img_id: [BoxData]}
-            gt_all: map of {img_id: [BoxData]}
-            ovthresh: scalar, iou threshold
-            processes: number of threads to use
-        Output:
-            rec: {classname: rec}
-            prec: {classname: prec_all}
-            ap: {classname: scalar}
+    """Generic functions to compute precision/recall for object detection
+    for multiple classes.
+    Input:
+        pred_all: map of {img_id: [BoxData]}
+        gt_all: map of {img_id: [BoxData]}
+        ovthresh: scalar, iou threshold
+        processes: number of threads to use
+    Output:
+        rec: {classname: rec}
+        prec: {classname: prec_all}
+        ap: {classname: scalar}
     """
     pred = {}  # map {classname: pred}
     gt = {}  # map {classname: gt}

@@ -35,7 +35,7 @@ device = "cpu"
 
 def load_model_config(task, model_type, model_name):
     models_conf = os.path.join(ROOT, "conf/models/{}/{}.yaml".format(task, model_type))
-    if omegaconf.__version__ == '1.4.1':
+    if omegaconf.__version__ == "1.4.1":
         config = OmegaConf.load(models_conf)
         config.update("model_name", model_name)
         config.update("data.task", task)
@@ -154,7 +154,7 @@ class TestModels(unittest.TestCase):
             models_config = OmegaConf.create({"models": OmegaConf.load(type_file)})
             models_config = OmegaConf.merge(models_config, self.data_config)
             # Update to OmegaConf 2.0
-            if omegaconf.__version__ == '1.4.1':
+            if omegaconf.__version__ == "1.4.1":
                 models_config.update("data.task", associated_task)
                 models_config.update("data.grid_size", 0.05)
             else:
@@ -165,13 +165,13 @@ class TestModels(unittest.TestCase):
             models_keys = models.keys() if models is not None else []
 
             for model_name in models_keys:
-                if model_name == 'defaults':
+                if model_name == "defaults":
                     # workaround for recursive defaults
                     continue
 
                 with self.subTest(model_name):
                     if not is_known_to_fail(model_name):
-                        if omegaconf.__version__ == '1.4.1':
+                        if omegaconf.__version__ == "1.4.1":
                             models_config.update("model_name", model_name)
                         else:
                             OmegaConf.update(models_config, "model_name", model_name, merge=True)

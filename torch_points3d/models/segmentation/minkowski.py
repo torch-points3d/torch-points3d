@@ -29,7 +29,7 @@ class Minkowski_Baseline_Model(BaseModel):
         self.labels = data.y.to(device)
 
     def forward(self, *args, **kwargs):
-        self.output = F.log_softmax(self.model(self.input).features, dim=-1)        
+        self.output = F.log_softmax(self.model(self.input).features, dim=-1)
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.device)
         if self.labels is not None:

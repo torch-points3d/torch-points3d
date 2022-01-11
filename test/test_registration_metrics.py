@@ -98,7 +98,15 @@ class TestRegistrationMetrics(unittest.TestCase):
 
     def test_compute_scaled_registration_error(self):
 
-        xyz = torch.tensor([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [0.0, 2.0, 0.0], [2.0, 0.0, 0.0],])
+        xyz = torch.tensor(
+            [
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 2.0, 0.0],
+                [2.0, 0.0, 0.0],
+            ]
+        )
         R_est = euler_angles_to_rotation_matrix(torch.tensor([0, 0, np.pi / 6]))
         T_gt = torch.eye(4)
         T_est = torch.eye(4)

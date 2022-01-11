@@ -80,7 +80,7 @@ class ModelFactory:
 
     @staticmethod
     def resolve_model(model_config, num_features, kwargs):
-        """ Parses the model config and evaluates any expression that may contain constants
+        """Parses the model config and evaluates any expression that may contain constants
         Overrides any argument in the `define_constants` with keywords wrgument to the constructor
         """
         # placeholders to subsitute

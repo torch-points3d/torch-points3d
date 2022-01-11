@@ -27,8 +27,7 @@ class PatchRegistrationTracker(BaseTracker):
         super().reset(stage=stage)
 
     def track(self, model: model_interface.TrackerInterface, **kwargs):
-        """ Add model predictions (accuracy)
-        """
+        """Add model predictions (accuracy)"""
         super().track(model)
 
         outputs = self._convert(model.get_output())
@@ -37,8 +36,7 @@ class PatchRegistrationTracker(BaseTracker):
         self._acc = compute_accuracy(outputs[:N], outputs[N:])
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
-        """ Returns a dictionnary of all metrics and losses being tracked
-        """
+        """Returns a dictionnary of all metrics and losses being tracked"""
         metrics = super().get_metrics(verbose)
 
         metrics["{}_acc".format(self._stage)] = self._acc
@@ -64,8 +62,8 @@ class FragmentRegistrationTracker(BaseTracker):
     ):
 
         """
-        tracker for registration tasks (we learn feature for each fragments like segmentation network)
-it measures loss, feature match recall, hit ratio, rotation error, translation error.
+                tracker for registration tasks (we learn feature for each fragments like segmentation network)
+        it measures loss, feature match recall, hit ratio, rotation error, translation error.
         """
         super(FragmentRegistrationTracker, self).__init__(stage, wandb_log, use_tensorboard)
 

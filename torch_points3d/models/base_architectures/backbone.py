@@ -128,7 +128,7 @@ class BackboneBasedModel(BaseModel):
         return args
 
     def _fetch_arguments(self, conv_opt, index, flow="DOWN"):
-        """ Fetches arguments for building a convolution down
+        """Fetches arguments for building a convolution down
 
         Arguments:
             conv_opt
@@ -141,8 +141,7 @@ class BackboneBasedModel(BaseModel):
         return args
 
     def _flatten_compact_options(self, opt):
-        """Converts from a dict of lists, to a list of dicts
-        """
+        """Converts from a dict of lists, to a list of dicts"""
         flattenedOpts = []
 
         for index in range(int(1e6)):

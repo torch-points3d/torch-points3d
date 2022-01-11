@@ -29,7 +29,7 @@ class PVCNN(BaseModel):
         self.labels = data.y.to(self.device)
 
     def forward(self, *args, **kwargs):
-        self.output = self.model(self.input)            
+        self.output = self.model(self.input)
         if self._weight_classes is not None:
             self._weight_classes = self._weight_classes.to(self.device)
         if self.labels is not None:

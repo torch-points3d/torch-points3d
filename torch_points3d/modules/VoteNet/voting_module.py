@@ -12,7 +12,7 @@ from torch_geometric.data import Data
 
 class VotingModule(nn.Module):
     def __init__(self, vote_factor, seed_feature_dim, conv_type="DENSE"):
-        """ Votes generation from seed point features.
+        """Votes generation from seed point features.
 
         Args:
             vote_facotr: int
@@ -41,7 +41,7 @@ class VotingModule(nn.Module):
             self.bn2 = torch.nn.BatchNorm1d(self.in_dim)
 
     def forward(self, data):
-        """ Votes for centres using a PN++ like architecture
+        """Votes for centres using a PN++ like architecture
         Returns
         -------
         data:

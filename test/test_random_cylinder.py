@@ -24,7 +24,7 @@ class TestRandomCylinder(unittest.TestCase):
         data = random_cylinder(self.data.clone())
         assert data.labels.shape[0] == 5
 
-        random_cylinder = CylinderSampling(3, torch.Tensor([.5, .5, .5]))
+        random_cylinder = CylinderSampling(3, torch.Tensor([0.5, 0.5, 0.5]))
         data = random_cylinder(self.data.clone())
         assert data.labels.shape[0] == 6
 
