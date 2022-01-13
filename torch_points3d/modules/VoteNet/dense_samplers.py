@@ -5,10 +5,10 @@ from torch_points3d.core.spatial_ops import BaseSampler
 
 
 class RandomSamplerToDense(BaseSampler):
-    """ If num_to_sample is provided, sample exactly
-        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
-        This class samples randomly points either in "DENSE" or "PARTIAL_DENSE"
-        format and output the sampled points in "DENSE" format
+    """If num_to_sample is provided, sample exactly
+    num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+    This class samples randomly points either in "DENSE" or "PARTIAL_DENSE"
+    format and output the sampled points in "DENSE" format
     """
 
     def sample(self, data, num_batches, conv_type):
@@ -18,7 +18,14 @@ class RandomSamplerToDense(BaseSampler):
             ), "self._num_to_sample: {} should be smaller than num_pos: {}".format(
                 self._num_to_sample, data.pos.shape[1]
             )
-            idx = torch.randint(0, data.pos.shape[1], (data.pos.shape[0], self._num_to_sample,)).to(data.pos.device)
+            idx = torch.randint(
+                0,
+                data.pos.shape[1],
+                (
+                    data.pos.shape[0],
+                    self._num_to_sample,
+                ),
+            ).to(data.pos.device)
             data.pos = torch.gather(data.pos, 1, idx.unsqueeze(-1).repeat(1, 1, data.pos.shape[-1]))
             data.x = torch.gather(data.x, 2, idx.unsqueeze(1).repeat(1, data.x.shape[1], 1))
             return data, idx
@@ -47,10 +54,10 @@ class RandomSamplerToDense(BaseSampler):
 
 
 class FPSSamplerToDense(BaseSampler):
-    """ If num_to_sample is provided, sample exactly
-        num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
-        This class samples randomly points either in "DENSE" or "PARTIAL_DENSE"
-        format and output the sampled points in "DENSE" format
+    """If num_to_sample is provided, sample exactly
+    num_to_sample points. Otherwise sample floor(pos[0] * ratio) points
+    This class samples randomly points either in "DENSE" or "PARTIAL_DENSE"
+    format and output the sampled points in "DENSE" format
     """
 
     def sample(self, data, num_batches, conv_type):

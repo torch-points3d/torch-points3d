@@ -15,7 +15,6 @@ try:
             in_channels=in_channels, out_channels=out_channels, D=D, conv1_kernel_size=conv1_kernel_size, **kwargs
         )
 
-
 except:
     import logging
 

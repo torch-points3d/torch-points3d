@@ -47,7 +47,7 @@ class L1Regularizer(_Regularizer):
 
 class L2Regularizer(_Regularizer):
     """
-       L2 regularized loss
+    L2 regularized loss
     """
 
     def __init__(self, model, lambda_reg=0.01):

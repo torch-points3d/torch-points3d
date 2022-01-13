@@ -2,7 +2,7 @@ import torch
 
 
 def test_hasgrad(model, strict=False, verbose=False):
-    """ Tests if a pytorch module has got parameters with gradient equal to 0. Returns the
+    """Tests if a pytorch module has got parameters with gradient equal to 0. Returns the
     ratio of parameters with 0 gradient against the total number of parameters
 
     Parameters

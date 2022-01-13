@@ -1,9 +1,8 @@
 import os
-import glob
 import argparse
 import tempfile
 import urllib
-from urllib.request import urlopen
+
 
 def download_file(url, out_file):
     out_dir = os.path.dirname(out_file)
@@ -21,6 +20,7 @@ def download_file(url, out_file):
         pass
         # log.warning("WARNING Skipping download of existing file " + out_file)
 
+
 def main(config):
     dataset_base_dir = config.base_dir
     scene_list = os.listdir(dataset_base_dir)
@@ -35,8 +35,11 @@ def main(config):
             # print("success scene: {}".format(scene_raw))
             pass
         else:
-            print("error scene: {} | agg: {}, gt: {}, seg: {}, ply: {}".format(scene_raw, check_aggregation_json,
-                                                                               check_gt, check_seg, check_ply))
+            print(
+                "error scene: {} | agg: {}, gt: {}, seg: {}, ply: {}".format(
+                    scene_raw, check_aggregation_json, check_gt, check_seg, check_ply
+                )
+            )
             print("re-downloading the missing file...")
             if config.version == "v2":
                 base_url = "http://kaldir.vc.in.tum.de/scannet/v2/scans"
@@ -64,9 +67,10 @@ def main(config):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Sanity check for ScanNet.')
-    parser.add_argument('--base_dir', type=str, default="../data/scannet-sparse/raw/scans/",
-                        help='dataset sequence base directory')
+    parser = argparse.ArgumentParser(description="Sanity check for ScanNet.")
+    parser.add_argument(
+        "--base_dir", type=str, default="../data/scannet-sparse/raw/scans/", help="dataset sequence base directory"
+    )
     parser.add_argument("--version", type=str, default="v2", help="version of scanNet, (default is v2)")
     args = parser.parse_args()
     main(args)

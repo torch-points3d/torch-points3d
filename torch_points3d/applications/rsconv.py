@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 def RSConv(
     architecture: str = None, input_nc: int = None, num_layers: int = None, config: DictConfig = None, *args, **kwargs
 ):
-    """ Create a RSConv backbone model based on the architecture proposed in
+    """Create a RSConv backbone model based on the architecture proposed in
     https://arxiv.org/abs/1904.07601
 
     Parameters
@@ -120,7 +120,7 @@ class RSConvEncoder(RSConvBase):
         )
 
     def forward(self, data, *args, **kwargs):
-        """ This method does a forward on the Unet
+        """This method does a forward on the Unet
 
         Parameters:
         -----------
@@ -162,7 +162,7 @@ class RSConvUnet(RSConvBase):
         )
 
     def forward(self, data, *args, **kwargs):
-        """ This method does a forward on the Unet
+        """This method does a forward on the Unet
 
         Parameters:
         -----------

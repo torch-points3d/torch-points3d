@@ -24,8 +24,7 @@ class PanopticResults(NamedTuple):
     cluster_type: torch.Tensor  # Wether a cluster is coming from the votes or the original points. 0->original pos, 1->vote
 
     def get_instances(self, nms_threshold=0.3, min_cluster_points=100, min_score=0.2) -> List:
-        """ Returns index of clusters that pass nms test, min size test and score test
-        """
+        """Returns index of clusters that pass nms test, min size test and score test"""
         if not self.clusters:
             return []
 

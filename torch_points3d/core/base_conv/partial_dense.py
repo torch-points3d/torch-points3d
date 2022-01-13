@@ -42,7 +42,7 @@ class BasePartialDenseConvolutionDown(BaseConvolution):
         self._index = kwargs.get("index", None)
 
     def conv(self, x, pos, x_neighbour, pos_centered_neighbour, idx_neighbour, idx_sampler):
-        """ Generic down convolution for partial dense data
+        """Generic down convolution for partial dense data
 
         Arguments:
             x [N, C] -- features
@@ -101,7 +101,7 @@ class GlobalPartialDenseBaseModule(torch.nn.Module):
 
 
 class FPModule_PD(BaseModule):
-    """ Upsampling module from PointNet++
+    """Upsampling module from PointNet++
     Arguments:
         k [int] -- number of nearest neighboors used for the interpolation
         up_conv_nn [List[int]] -- list of feature sizes for the uplconv mlp

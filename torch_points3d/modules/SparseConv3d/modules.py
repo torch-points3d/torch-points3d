@@ -63,10 +63,23 @@ class BottleneckBlock(torch.nn.Module):
             .append(snn.Conv3d(input_nc, output_nc // reduction, kernel_size=1, stride=1))
             .append(snn.BatchNorm(output_nc // reduction))
             .append(snn.ReLU())
-            .append(convolution(output_nc // reduction, output_nc // reduction, kernel_size=3, stride=1,))
+            .append(
+                convolution(
+                    output_nc // reduction,
+                    output_nc // reduction,
+                    kernel_size=3,
+                    stride=1,
+                )
+            )
             .append(snn.BatchNorm(output_nc // reduction))
             .append(snn.ReLU())
-            .append(snn.Conv3d(output_nc // reduction, output_nc, kernel_size=1,))
+            .append(
+                snn.Conv3d(
+                    output_nc // reduction,
+                    output_nc,
+                    kernel_size=1,
+                )
+            )
             .append(snn.BatchNorm(output_nc))
             .append(snn.ReLU())
         )
@@ -102,7 +115,14 @@ class ResNetDown(torch.nn.Module):
     CONVOLUTION = "Conv3d"
 
     def __init__(
-        self, down_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, block="ResBlock", **kwargs,
+        self,
+        down_conv_nn=[],
+        kernel_size=2,
+        dilation=1,
+        stride=2,
+        N=1,
+        block="ResBlock",
+        **kwargs,
     ):
         block = getattr(_res_blocks, block)
         super().__init__()
@@ -151,7 +171,12 @@ class ResNetUp(ResNetDown):
 
     def __init__(self, up_conv_nn=[], kernel_size=2, dilation=1, stride=2, N=1, **kwargs):
         super().__init__(
-            down_conv_nn=up_conv_nn, kernel_size=kernel_size, dilation=dilation, stride=stride, N=N, **kwargs,
+            down_conv_nn=up_conv_nn,
+            kernel_size=kernel_size,
+            dilation=dilation,
+            stride=stride,
+            N=N,
+            **kwargs,
         )
 
     def forward(self, x, skip):

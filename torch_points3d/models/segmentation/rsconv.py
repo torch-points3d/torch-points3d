@@ -70,10 +70,10 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
 
     def forward(self, *args, **kwargs):
         r"""
-            Forward pass of the network
-            self.data:
-                x -- Features [B, C, N]
-                pos -- Features [B, N, 3]
+        Forward pass of the network
+        self.data:
+            x -- Features [B, C, N]
+            pos -- Features [B, N, 3]
         """
         stack_down = []
         queue_up = queue.Queue()
@@ -128,4 +128,4 @@ class RSConvLogicModel(UnwrappedUnetBasedModel):
 
 
 class RSConv_MP(Segmentation_MP):
-    """ Message passing version of RSConv"""
+    """Message passing version of RSConv"""

@@ -26,8 +26,8 @@ def get_norm(norm_type, n_channels, D, bn_momentum=0.1):
 
 class ConvType(Enum):
     """
-  Define the kernel region type
-  """
+    Define the kernel region type
+    """
 
     HYPERCUBE = 0, "HYPERCUBE"
     SPATIAL_HYPERCUBE = 1, "SPATIAL_HYPERCUBE"
@@ -64,8 +64,8 @@ int_to_region_type = {0: ME.RegionType.HYPER_CUBE, 1: ME.RegionType.HYPER_CROSS,
 
 def convert_region_type(region_type):
     """
-  Convert the integer region_type to the corresponding RegionType enum object.
-  """
+    Convert the integer region_type to the corresponding RegionType enum object.
+    """
     return int_to_region_type[region_type]
 
 
@@ -78,7 +78,9 @@ def convert_conv_type(conv_type, kernel_size, D):
         if isinstance(kernel_size, collections.Sequence):
             kernel_size = kernel_size[:3]
         else:
-            kernel_size = [kernel_size,] * 3
+            kernel_size = [
+                kernel_size,
+            ] * 3
         if D == 4:
             kernel_size.append(1)
     elif conv_type == ConvType.SPATIO_TEMPORAL_HYPERCUBE:
@@ -91,7 +93,9 @@ def convert_conv_type(conv_type, kernel_size, D):
         if isinstance(kernel_size, collections.Sequence):
             kernel_size = kernel_size[:3]
         else:
-            kernel_size = [kernel_size,] * 3
+            kernel_size = [
+                kernel_size,
+            ] * 3
         if D == 4:
             kernel_size.append(1)
     elif conv_type == ConvType.HYPERCROSS:
@@ -105,7 +109,9 @@ def convert_conv_type(conv_type, kernel_size, D):
         if D < 4:
             region_type = ME.RegionType.HYPER_CUBE
         else:
-            axis_types = [ME.RegionType.HYPER_CUBE,] * 3
+            axis_types = [
+                ME.RegionType.HYPER_CUBE,
+            ] * 3
             if D == 4:
                 axis_types.append(ME.RegionType.HYPER_CROSS)
     return region_type, axis_types, kernel_size

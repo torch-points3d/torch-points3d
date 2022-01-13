@@ -2,7 +2,7 @@ import torch
 
 
 def fitting_loss(sq_distance, radius):
-    """ KPConv fitting loss. For each query point it ensures that at least one neighboor is
+    """KPConv fitting loss. For each query point it ensures that at least one neighboor is
     close to each kernel point
 
     Arguments:
@@ -15,7 +15,7 @@ def fitting_loss(sq_distance, radius):
 
 
 def repulsion_loss(deformed_kpoints, radius):
-    """ Ensures that the deformed points within the kernel remain equidistant
+    """Ensures that the deformed points within the kernel remain equidistant
 
     Arguments:
         deformed_kpoints - deformed points for each query point

@@ -17,7 +17,12 @@ print(data)
 # Batch(batch=[2], pos=[2, 1024, 3], x=[2, 1024, 5])
 
 
-model = PointNet2(architecture="encoder", input_nc=input_nc, num_layers=3, output_nc=num_classes,)
+model = PointNet2(
+    architecture="encoder",
+    input_nc=input_nc,
+    num_layers=3,
+    output_nc=num_classes,
+)
 
 res = model(data)
 print(res)

@@ -57,7 +57,7 @@ class SegmentationVoter:
             return self._full_res_preds.argmax(-1)
 
     def add_vote(self, data, output, batch_mask):
-        """ Populates scores for the points in data
+        """Populates scores for the points in data
 
         Parameters
         ----------
@@ -74,7 +74,7 @@ class SegmentationVoter:
         self._num_votes += 1
 
     def _predict_full_res(self):
-        """ Predict full resolution results based on votes """
+        """Predict full resolution results based on votes"""
         has_prediction = self._vote_counts > 0
         votes = self._votes[has_prediction].div(self._vote_counts[has_prediction].unsqueeze(-1))
 
