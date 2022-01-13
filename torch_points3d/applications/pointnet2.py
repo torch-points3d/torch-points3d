@@ -28,21 +28,21 @@ def PointNet2(
     *args,
     **kwargs
 ):
-    """ Create a PointNet2 backbone model based on the architecture proposed in
-    https://arxiv.org/abs/1706.02413
+    """Create a PointNet2 backbone model based on the architecture proposed in
+     https://arxiv.org/abs/1706.02413
 
-    Parameters
-    ----------
-    architecture : str, optional
-        Architecture of the model, choose from unet, encoder and decoder
-    input_nc : int, optional
-        Number of channels for the input
-   output_nc : int, optional
-        If specified, then we add a fully connected head at the end of the network to provide the requested dimension
-    num_layers : int, optional
-        Depth of the network
-    config : DictConfig, optional
-        Custom config, overrides the num_layers and architecture parameters
+     Parameters
+     ----------
+     architecture : str, optional
+         Architecture of the model, choose from unet, encoder and decoder
+     input_nc : int, optional
+         Number of channels for the input
+    output_nc : int, optional
+         If specified, then we add a fully connected head at the end of the network to provide the requested dimension
+     num_layers : int, optional
+         Depth of the network
+     config : DictConfig, optional
+         Custom config, overrides the num_layers and architecture parameters
     """
     factory = PointNet2Factory(
         architecture=architecture,
@@ -112,8 +112,7 @@ class BasePointnet2(UnwrappedUnetBasedModel):
         return self._output_nc
 
     def _set_input(self, data):
-        """Unpack input data from the dataloader and perform necessary pre-processing steps.
-        """
+        """Unpack input data from the dataloader and perform necessary pre-processing steps."""
         assert len(data.pos.shape) == 3
         data = data.to(self.device)
         if data.x is not None:
@@ -152,7 +151,7 @@ class PointNet2Encoder(BasePointnet2):
 
 class PointNet2Unet(BasePointnet2):
     def forward(self, data, *args, **kwargs):
-        """ This method does a forward on the Unet assuming symmetrical skip connections
+        """This method does a forward on the Unet assuming symmetrical skip connections
         Input --- D1 -- D2 -- I -- U1 -- U2 -- U3 -- output
            |       |      |________|      |    |
            |       |______________________|    |

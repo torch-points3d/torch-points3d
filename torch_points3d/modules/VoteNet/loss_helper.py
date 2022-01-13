@@ -16,7 +16,7 @@ from .votenet_results import VoteNetResults
 
 
 def compute_vote_loss(input, output: VoteNetResults):
-    """ Compute vote loss: Match predicted votes to GT votes.
+    """Compute vote loss: Match predicted votes to GT votes.
 
     Args:
         end_points: dict (read-only)
@@ -73,7 +73,7 @@ def compute_vote_loss(input, output: VoteNetResults):
 
 
 def compute_objectness_loss(inputs, outputs: VoteNetResults, loss_params):
-    """ Compute objectness loss for the proposals.
+    """Compute objectness loss for the proposals.
 
     Args:
         end_points: dict (read-only)
@@ -96,7 +96,7 @@ def compute_objectness_loss(inputs, outputs: VoteNetResults, loss_params):
 
 
 def compute_box_and_sem_cls_loss(inputs, outputs, loss_params, weight_classes=None):
-    """ Compute 3D bounding box and semantic classification loss.
+    """Compute 3D bounding box and semantic classification loss.
 
     Args:
         end_points: dict (read-only)

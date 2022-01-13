@@ -10,7 +10,7 @@ from torch_points3d.metrics.segmentation_helpers import SegmentationVoter
 
 class ShapenetPartTracker(BaseTracker):
     def __init__(self, dataset, stage: str = "train", wandb_log: bool = False, use_tensorboard: bool = False):
-        """ Segmentation tracker shapenet part seg problem. The dataset needs to have a
+        """Segmentation tracker shapenet part seg problem. The dataset needs to have a
         class_to_segment member that defines how metrics get computed and agregated.
         It follows shapenet official formula for computing miou which treats missing part as having an iou of 1
         See https://github.com/charlesq34/pointnet2/blob/42926632a3c33461aebfbee2d829098b30a23aaa/part_seg/evaluate.py#L166-L176
@@ -47,8 +47,7 @@ class ShapenetPartTracker(BaseTracker):
         self._full_res = False
 
     def track(self, model: model_interface.TrackerInterface, full_res: bool = False, data: Data = None, **kwargs):
-        """ Add current model predictions (usually the result of a batch) to the tracking
-        """
+        """Add current model predictions (usually the result of a batch) to the tracking"""
         super().track(model)
         self._conv_type = model.conv_type
         outputs = self._convert(model.get_output())
@@ -124,8 +123,7 @@ class ShapenetPartTracker(BaseTracker):
         return part_ious
 
     def get_metrics(self, verbose=False):
-        """ Returns a dictionnary of all metrics and losses being tracked
-        """
+        """Returns a dictionnary of all metrics and losses being tracked"""
         metrics = super().get_metrics(verbose)
         metrics["{}_Cmiou".format(self._stage)] = self._Cmiou * 100
         metrics["{}_Imiou".format(self._stage)] = self._Imiou * 100

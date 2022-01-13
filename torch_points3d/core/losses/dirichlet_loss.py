@@ -7,7 +7,7 @@ _MAX_NEIGHBOURS = 32
 
 
 class DirichletLoss(torch.nn.Module):
-    """ L2 norm of the gradient estimated as the average change of a field value f
+    """L2 norm of the gradient estimated as the average change of a field value f
     accross neighbouring points within a radius r
     """
 
@@ -17,7 +17,7 @@ class DirichletLoss(torch.nn.Module):
         self._aggr = aggr
 
     def forward(self, pos, f, batch_idx=None):
-        """ Computes the Dirichlet loss (or L2 norm of the gradient) of f
+        """Computes the Dirichlet loss (or L2 norm of the gradient) of f
         Arguments:
             pos -- [N,3] (or [B,N,3] for dense format)  location of each point
             f -- [N] (or [B,N] for dense format)  Value of a function at each points
@@ -27,7 +27,7 @@ class DirichletLoss(torch.nn.Module):
 
 
 def dirichlet_loss(r, pos, f, batch_idx=None, aggr=torch.mean):
-    """ Computes the Dirichlet loss (or L2 norm of the gradient) of f
+    """Computes the Dirichlet loss (or L2 norm of the gradient) of f
     Arguments:
         r -- Radius for the beighbour search
         pos -- [N,3] (or [B,N,3] for dense format)  location of each point

@@ -41,9 +41,18 @@ class MockModel(BaseModel):
     def __init__(self):
         super().__init__(DictConfig({"conv_type": "dummy"}))
 
-        self.model1 = MockLossModule({"mock_loss_1": torch.tensor(0.5), "mock_loss_2": torch.tensor(0.3),})
+        self.model1 = MockLossModule(
+            {
+                "mock_loss_1": torch.tensor(0.5),
+                "mock_loss_2": torch.tensor(0.3),
+            }
+        )
 
-        self.model2 = MockLossModule({"mock_loss_3": torch.tensor(1.0),})
+        self.model2 = MockLossModule(
+            {
+                "mock_loss_3": torch.tensor(1.0),
+            }
+        )
 
 
 class TestInternalLosses(unittest.TestCase):

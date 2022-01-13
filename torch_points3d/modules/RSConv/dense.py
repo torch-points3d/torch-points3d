@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class RSConvMapper(nn.Module):
     """[This class handles the special mechanism between the msg
-        and the features of RSConv]
+    and the features of RSConv]
     """
 
     def __init__(self, down_conv_nn, use_xyz, bn=True, activation=nn.LeakyReLU(negative_slope=0.01), *args, **kwargs):
@@ -165,7 +165,7 @@ class RSConvSharedMSGDown(BaseDenseConvolutionDown):
         return new_features, centroids
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
-        """ Implements a Dense convolution where radius_idx represents
+        """Implements a Dense convolution where radius_idx represents
         the indexes of the points in x and pos to be agragated into the new feature
         for each point in new_pos
 
@@ -289,7 +289,11 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             C_in, C_intermediate, C_out = down_conv_nn[0]
             feat_in, f_out = down_conv_nn[-1]
             xyz_raising = nn.Conv2d(
-                in_channels=feat_in, out_channels=f_out, kernel_size=(1, 1), stride=(1, 1), bias=bias,
+                in_channels=feat_in,
+                out_channels=f_out,
+                kernel_size=(1, 1),
+                stride=(1, 1),
+                bias=bias,
             )
             nn.init.kaiming_normal_(xyz_raising.weight)
             if bias:
@@ -298,10 +302,18 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
             C_in, C_intermediate, C_out = down_conv_nn
 
         mapping_func1 = nn.Conv2d(
-            in_channels=C_in, out_channels=C_intermediate, kernel_size=(1, 1), stride=(1, 1), bias=bias,
+            in_channels=C_in,
+            out_channels=C_intermediate,
+            kernel_size=(1, 1),
+            stride=(1, 1),
+            bias=bias,
         )
         mapping_func2 = nn.Conv2d(
-            in_channels=C_intermediate, out_channels=C_out, kernel_size=(1, 1), stride=(1, 1), bias=bias,
+            in_channels=C_intermediate,
+            out_channels=C_out,
+            kernel_size=(1, 1),
+            stride=(1, 1),
+            bias=bias,
         )
 
         nn.init.kaiming_normal_(mapping_func1.weight)
@@ -312,7 +324,11 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
 
         # channel raising mapping
         cr_mapping = nn.Conv1d(
-            in_channels=channel_raising_nn[0], out_channels=channel_raising_nn[1], kernel_size=1, stride=1, bias=bias,
+            in_channels=channel_raising_nn[0],
+            out_channels=channel_raising_nn[1],
+            kernel_size=1,
+            stride=1,
+            bias=bias,
         )
         nn.init.kaiming_normal_(cr_mapping.weight)
         nn.init.constant_(cr_mapping.bias, 0)
@@ -366,7 +382,7 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
-        """ Implements a Dense convolution where radius_idx represents
+        """Implements a Dense convolution where radius_idx represents
         the indexes of the points in x and pos to be agragated into the new feature
         for each point in new_pos
 
@@ -461,7 +477,7 @@ class RSConvMSGDown(BaseDenseConvolutionDown):
         return new_features, centroids
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
-        """ Implements a Dense convolution where radius_idx represents
+        """Implements a Dense convolution where radius_idx represents
         the indexes of the points in x and pos to be agragated into the new feature
         for each point in new_pos
 

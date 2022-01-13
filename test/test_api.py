@@ -140,7 +140,11 @@ class TestAPIUnet(unittest.TestCase):
         in_feat = 32
         out_feat = in_feat * 3
         model = SparseConv3d(
-            architecture="unet", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,
+            architecture="unet",
+            input_nc=input_nc,
+            in_feat=in_feat,
+            num_layers=num_layers,
+            config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
@@ -162,7 +166,11 @@ class TestAPIUnet(unittest.TestCase):
 
         output_nc = 5
         model = SparseConv3d(
-            architecture="unet", input_nc=input_nc, output_nc=output_nc, num_layers=num_layers, config=None,
+            architecture="unet",
+            input_nc=input_nc,
+            output_nc=output_nc,
+            num_layers=num_layers,
+            config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)
@@ -297,7 +305,11 @@ class TestAPIEncoder(unittest.TestCase):
         num_layers = 4
         in_feat = 16
         model = Minkowski(
-            architecture="encoder", input_nc=input_nc, in_feat=in_feat, num_layers=num_layers, config=None,
+            architecture="encoder",
+            input_nc=input_nc,
+            in_feat=in_feat,
+            num_layers=num_layers,
+            config=None,
         )
         dataset = MockDatasetGeometric(input_nc, transform=GridSampling3D(0.01, quantize_coords=True), num_points=128)
         self.assertEqual(len(model._modules["down_modules"]), num_layers + 1)

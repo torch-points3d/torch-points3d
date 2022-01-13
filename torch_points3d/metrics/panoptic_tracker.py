@@ -105,8 +105,8 @@ class InstanceAPMeter:
 
 
 class PanopticTracker(SegmentationTracker):
-    """ Class that provides tracking of semantic segmentation as well as
-    instance segmentation """
+    """Class that provides tracking of semantic segmentation as well as
+    instance segmentation"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -132,8 +132,7 @@ class PanopticTracker(SegmentationTracker):
         min_cluster_points=10,
         **kwargs
     ):
-        """ Track metrics for panoptic segmentation
-        """
+        """Track metrics for panoptic segmentation"""
         self._iou_threshold = iou_threshold
         BaseTracker.track(self, model)
         outputs: PanopticResults = model.get_output()
@@ -189,8 +188,7 @@ class PanopticTracker(SegmentationTracker):
 
     @staticmethod
     def _compute_acc(clusters, predicted_labels, labels, batch, num_instances, iou_threshold):
-        """ Computes the ratio of True positives, False positives and accuracy
-        """
+        """Computes the ratio of True positives, False positives and accuracy"""
         iou_values, gt_ids = instance_iou(clusters, labels.instance_labels, batch).max(1)
         gt_ids += 1
         instance_offsets = torch.cat((torch.tensor([0]).to(num_instances.device), num_instances.cumsum(-1)))
@@ -269,8 +267,7 @@ class PanopticTracker(SegmentationTracker):
         return instances
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
-        """ Returns a dictionnary of all metrics and losses being tracked
-        """
+        """Returns a dictionnary of all metrics and losses being tracked"""
         metrics = super().get_metrics(verbose)
 
         metrics["{}_pos".format(self._stage)] = meter_value(self._pos)

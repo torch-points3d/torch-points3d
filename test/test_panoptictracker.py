@@ -177,7 +177,8 @@ class TestPanopticTracker(unittest.TestCase):
             track_instances=True,
         )
         tracker.finalise(
-            track_instances=True, iou_threshold=0.25,
+            track_instances=True,
+            iou_threshold=0.25,
         )
         metrics = tracker.get_metrics()
         self.assertAlmostEqual(metrics["train_map"], 1)

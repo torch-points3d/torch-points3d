@@ -117,7 +117,11 @@ def match_visualizer(pcd1, keypoints1, pcd2, keypoints2, inliers, t=2, radius=0.
 def run(model: BaseModel, dataset: BaseDataset, device, cfg):
     print(time.strftime("%Y%m%d-%H%M%S"))
     dataset.create_dataloaders(
-        model, 1, False, cfg.training.num_workers, False,
+        model,
+        1,
+        False,
+        cfg.training.num_workers,
+        False,
     )
     loader = dataset.test_dataset[0]
 

@@ -67,7 +67,7 @@ class PolyLR(LambdaStepLR):
 
 
 class SquaredLR(LambdaStepLR):
-    """ Used for SGD Lars"""
+    """Used for SGD Lars"""
 
     def __init__(self, optimizer, max_iter, last_step=-1):
         super(SquaredLR, self).__init__(optimizer, lambda s: (1 - s / (max_iter + 1)) ** 2, last_step)
@@ -118,7 +118,7 @@ def instantiate_scheduler(optimizer, scheduler_opt):
     """Return a learning rate scheduler
     Parameters:
         optimizer          -- the optimizer of the network
-        scheduler_opt (option class) -- dict containing all the params to build the scheduler　
+        scheduler_opt (option class) -- dict containing all the params to build the scheduler
                               opt.lr_policy is the name of learning rate policy: lambda_rule | step | plateau | cosine
                               opt.params contains the scheduler_params to construct the scheduler
     See https://pytorch.org/docs/stable/optim.html for more details.

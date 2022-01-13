@@ -96,7 +96,7 @@ class PointGroup(BaseModel):
             self._dump_visuals(epoch)
 
     def _cluster(self, semantic_logits, offset_logits):
-        """ Compute clusters from positions and votes """
+        """Compute clusters from positions and votes"""
         predicted_labels = torch.max(semantic_logits, 1)[1]
         clusters_pos = region_grow(
             self.raw_pos,
@@ -121,7 +121,7 @@ class PointGroup(BaseModel):
         return all_clusters, cluster_type
 
     def _compute_score(self, all_clusters, backbone_features, semantic_logits):
-        """ Score the clusters """
+        """Score the clusters"""
         if self._scorer_type:
             # Assemble batches
             x = []
@@ -133,7 +133,11 @@ class PointGroup(BaseModel):
                 coords.append(self.input.coords[cluster])
                 batch.append(i * torch.ones(cluster.shape[0]))
                 pos.append(self.input.pos[cluster])
-            batch_cluster = Data(x=torch.cat(x), coords=torch.cat(coords), batch=torch.cat(batch),)
+            batch_cluster = Data(
+                x=torch.cat(x),
+                coords=torch.cat(coords),
+                batch=torch.cat(batch),
+            )
 
             # Voxelise if required
             if self._voxelizer:

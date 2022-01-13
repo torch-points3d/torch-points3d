@@ -22,16 +22,20 @@ __all__ = ["cat", "Conv3d", "Conv3dTranspose", "ReLU", "SparseTensor", "BatchNor
 for val in __all__:
     exec(val + "=None")
 
+
 def backend_valid(_backend):
     return _backend in {"torchsparse", "minkowski"}
 
+
 sp3d_backend = None
+
 
 def get_backend():
     return sp3d_backend
 
+
 def set_backend(_backend):
-    """ Use this method to switch sparse backend dynamically. When importing this module with a wildcard such as
+    """Use this method to switch sparse backend dynamically. When importing this module with a wildcard such as
     from torch_points3d.modules.SparseConv3d.nn import *
     make sure that you import it again after calling this method.
 

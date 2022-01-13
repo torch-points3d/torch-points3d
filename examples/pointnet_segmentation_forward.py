@@ -2,6 +2,7 @@ from omegaconf import OmegaConf
 import torch
 
 from utils import load_local_torchpoints3d
+
 load_local_torchpoints3d()
 
 from torch_points3d.models.segmentation.pointnet import PointNet
@@ -21,9 +22,9 @@ data = Data(pos=pos, x=x)
 data = Batch.from_data_list([data, data])
 
 print(data)
-#Batch(batch=[1000], pos=[1000, 3], x=[1000, 3])
+# Batch(batch=[1000], pos=[1000, 3], x=[1000, 3])
 
-pointnet = PointNet(OmegaConf.create({'conv_type': 'PARTIAL_DENSE'}))
+pointnet = PointNet(OmegaConf.create({"conv_type": "PARTIAL_DENSE"}))
 
 pointnet.set_input(data, "cpu")
 data_out = pointnet.forward()
@@ -43,11 +44,11 @@ data = Data(pos=pos, x=x)
 data = SimpleBatch.from_data_list([data, data])
 
 print(data)
-#SimpleBatch(pos=[2, 500, 3], x=[2, 500, 3])
+# SimpleBatch(pos=[2, 500, 3], x=[2, 500, 3])
 
-pointnet = PointNet(OmegaConf.create({'conv_type': 'DENSE'}))
+pointnet = PointNet(OmegaConf.create({"conv_type": "DENSE"}))
 
 pointnet.set_input(data, "cpu")
 data_out = pointnet.forward()
 print(data_out.shape)
-#torch.Size([2, 500, 4])
+# torch.Size([2, 500, 4])
