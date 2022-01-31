@@ -10,7 +10,7 @@ def fitting_loss(sq_distance, radius):
         radius - Radius of the convolution
     """
     kpmin = sq_distance.min(dim=1)[0]
-    normalised_kpmin = kpmin / (radius ** 2)
+    normalised_kpmin = kpmin / (radius**2)
     return torch.mean(normalised_kpmin)
 
 

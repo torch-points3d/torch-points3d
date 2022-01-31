@@ -26,7 +26,7 @@ class TestKPConvLosses(unittest.TestCase):
         neighbors = neighbors
         neighbors = neighbors.repeat([4, 1])
         differences = neighbors - K_points
-        sq_distances = torch.sum(differences ** 2, dim=-1).unsqueeze(0)
+        sq_distances = torch.sum(differences**2, dim=-1).unsqueeze(0)
         loss = fitting_loss(sq_distances, 1).item()
         assert loss == 0.5
 
