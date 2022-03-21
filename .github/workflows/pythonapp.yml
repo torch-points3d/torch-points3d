@@ -45,7 +45,7 @@ jobs:
       - name: Static checks with flake8 and mypy
         run: |
           source ${pythonEnv}/bin/activate
-          pip install flake8 mypy  # Dev tools
+          pip install flake8 mypy==0.910  # Dev tools
           make staticchecks
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
