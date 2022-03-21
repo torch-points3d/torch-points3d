@@ -58,7 +58,7 @@ class KPConvPaper(UnwrappedUnetBasedModel):
                         *[
                             Linear(in_feat, last_mlp_opt.nn[i], bias=False),
                             FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
-                            LeakyReLU(0.2),
+                            nn.LeakyReLU(0.2),
                         ]
                     ),
                 )
