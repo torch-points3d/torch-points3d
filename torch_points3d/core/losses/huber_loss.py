@@ -25,7 +25,7 @@ def nn_distance(pc1, pc2, l1smooth=False, delta=1.0, l1=False):
     elif l1:
         pc_dist = torch.sum(torch.abs(pc_diff), dim=-1)  # (B,N,M)
     else:
-        pc_dist = torch.sum(pc_diff ** 2, dim=-1)  # (B,N,M)
+        pc_dist = torch.sum(pc_diff**2, dim=-1)  # (B,N,M)
     dist1, idx1 = torch.min(pc_dist, dim=2)  # (B,N)
     dist2, idx2 = torch.min(pc_dist, dim=1)  # (B,M)
     return dist1, idx1, dist2, idx2
@@ -47,7 +47,7 @@ def huber_loss(error, delta=1.0):
     # quadratic = torch.min(abs_error, torch.FloatTensor([delta]))
     quadratic = torch.clamp(abs_error, max=delta)
     linear = abs_error - quadratic
-    loss = 0.5 * quadratic ** 2 + delta * linear
+    loss = 0.5 * quadratic**2 + delta * linear
     return loss
 
 

@@ -5,8 +5,6 @@ from omegaconf import OmegaConf, DictConfig
 from torch.nn import (
     Sequential,
     Linear as Lin,
-    ReLU,
-    LeakyReLU,
     BatchNorm1d as BN,
     Dropout,
 )

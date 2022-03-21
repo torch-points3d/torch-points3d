@@ -2,19 +2,12 @@ from abc import abstractmethod
 from typing import *
 import torch
 from torch.nn import (
-    Linear as Lin,
     ReLU,
-    LeakyReLU,
-    BatchNorm1d as BN,
-    Dropout,
 )
 from torch_geometric.nn import (
     knn_interpolate,
-    fps,
-    radius,
     global_max_pool,
     global_mean_pool,
-    knn,
 )
 from torch_geometric.data import Batch
 

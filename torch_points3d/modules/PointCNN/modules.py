@@ -89,16 +89,16 @@ class XConv(torch.nn.Module):
         )
 
         self.mlp2 = S(
-            L(D * K, K ** 2),
+            L(D * K, K**2),
             ELU(),
-            BN(K ** 2),
+            BN(K**2),
             Reshape(-1, K, K),
-            Conv1d(K, K ** 2, K, groups=K),
+            Conv1d(K, K**2, K, groups=K),
             ELU(),
-            BN(K ** 2),
+            BN(K**2),
             Reshape(-1, K, K),
-            Conv1d(K, K ** 2, K, groups=K),
-            BN(K ** 2),
+            Conv1d(K, K**2, K, groups=K),
+            BN(K**2),
             Reshape(-1, K, K),
         )
 

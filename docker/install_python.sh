@@ -7,7 +7,7 @@ then
 fi
 
 python3 -m pip install -U pip
-pip3 install setuptools>=41.0.0
+pip3 install setuptools>=41.0.0 wheel ninja
 if [ $1 == "gpu" ]; then
     echo "Install GPU"
     pip3 install torch==1.8.1

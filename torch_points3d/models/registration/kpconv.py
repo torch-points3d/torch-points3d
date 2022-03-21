@@ -143,14 +143,14 @@ class FragmentKPConv(FragmentBaseModel, UnwrappedUnetBasedModel):
                     *[
                         Lin(in_feat, last_mlp_opt.nn[i], bias=False),
                         FastBatchNorm1d(last_mlp_opt.nn[i], momentum=last_mlp_opt.bn_momentum),
-                        LeakyReLU(0.2),
+                        torch.nn.LeakyReLU(0.2),
                     ]
                 ),
             )
             in_feat = last_mlp_opt.nn[i]
 
         if last_mlp_opt.dropout:
-            self.FC_layer.add_module("Dropout", Dropout(p=last_mlp_opt.dropout))
+            self.FC_layer.add_module("Dropout", torch.nn.Dropout(p=last_mlp_opt.dropout))
 
         self.FC_layer.add_module("Last", Lin(in_feat, self.out_channels, bias=False))
         self.mode = option.loss_mode

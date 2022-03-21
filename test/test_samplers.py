@@ -16,7 +16,7 @@ class TestBalancedRandomSampler(unittest.TestCase):
         num_classes = 10
         num_samples = 10000
 
-        p = np.asarray([2 ** i for i in range(num_classes)]).astype(float)
+        p = np.asarray([2**i for i in range(num_classes)]).astype(float)
         p /= p.sum()
 
         labels = np.random.choice(range(num_classes), num_samples, p=p)

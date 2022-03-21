@@ -2,7 +2,7 @@ exclude: "benchmark|conf|data|docs|outputs"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v1.2.3
+    rev: v4.1.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -11,13 +11,13 @@ repos:
       - id: check-yaml
 
   - repo: https://github.com/ambv/black
-    rev: stable
+    rev: 22.1.0
     hooks:
       - id: black
         language_version: python3.8
 
-  - repo: https://github.com/humitos/mirrors-autoflake.git
-    rev: v1.3
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v1.4
     hooks:
       - id: autoflake
         args:
@@ -28,7 +28,7 @@ repos:
             "--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy,sklearn,scipy,torch_sparse,torch_points_kernels",
           ]
   - repo: https://github.com/kynan/nbstripout
-    rev: master
+    rev: 0.5.0
     hooks:
       - id: nbstripout
         files: ".ipynb"
