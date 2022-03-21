@@ -38,7 +38,6 @@ jobs:
           python -m venv ${pythonEnv}
           source ${pythonEnv}/bin/activate
           bash docker/install_python.sh cpu
-          pip install wheel
           pip install .
         env:
           pythonEnv: /home/runner/.cache/${{ matrix.python-version }}
