@@ -49,7 +49,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         self.loss_names = []
         self.visual_names = []
         self.output = None
-        self._conv_type = opt.conv_type  if hasattr(opt, 'conv_type') else None # Update to OmegaConv 2.0
+        self._conv_type = opt.conv_type if hasattr(opt, "conv_type") else None  # Update to OmegaConv 2.0
         self._optimizer: Optional[Optimizer] = None
         self._lr_scheduler: Optimizer[_LRScheduler] = None
         self._bn_scheduler = None
@@ -129,7 +129,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
     @conv_type.setter
     def conv_type(self, conv_type):
         self._conv_type = conv_type
-        
+
     def is_mixed_precision(self):
         return self._supports_mixed and self._enable_mixed
 
@@ -226,18 +226,18 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if self.is_mixed_precision():
             for loss_name, loss in orig_losses.items():
                 setattr(self, loss_name, loss)
-            self._grad_scale.unscale_(self._optimizer) # unscale gradients before clipping
+            self._grad_scale.unscale_(self._optimizer)  # unscale gradients before clipping
 
     def optimize_parameters(self, epoch, batch_size):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
 
-        with torch.cuda.amp.autocast(enabled=self.is_mixed_precision()): # enable autocasting if supported
+        with torch.cuda.amp.autocast(enabled=self.is_mixed_precision()):  # enable autocasting if supported
             self.forward(epoch=epoch)  # first call forward to calculate intermediate results
-        
-        orig_losses = self._do_scale_loss() # scale losses if needed
+
+        orig_losses = self._do_scale_loss()  # scale losses if needed
         make_optimizer_step = self._manage_optimizer_zero_grad()  # Accumulate gradient if option is up
         self.backward()  # calculate gradients
-        self._do_unscale_loss(orig_losses) # unscale losses to orig
+        self._do_unscale_loss(orig_losses)  # unscale losses to orig
 
         if self._grad_clip > 0:
             torch.nn.utils.clip_grad_value_(self.parameters(), self._grad_clip)
@@ -251,7 +251,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         if self._bn_scheduler:
             self._do_scheduler_update("_update_bn_scheduler_on", self._bn_scheduler, epoch, batch_size)
 
-        self._grad_scale.update() # update scaling
+        self._grad_scale.update()  # update scaling
         self._num_epochs = epoch
         self._num_batches += 1
         self._num_samples += batch_size
@@ -285,7 +285,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         # LR Scheduler
         scheduler_opt = self.get_from_opt(config, ["training", "optim", "lr_scheduler"])
         if scheduler_opt:
-            update_lr_scheduler_on = config.get('update_lr_scheduler_on') # Update to OmegaConf 2.0
+            update_lr_scheduler_on = config.get("update_lr_scheduler_on")  # Update to OmegaConf 2.0
             if update_lr_scheduler_on:
                 self._update_lr_scheduler_on = update_lr_scheduler_on
             scheduler_opt.update_scheduler_on = self._update_lr_scheduler_on
@@ -295,7 +295,7 @@ class BaseModel(torch.nn.Module, TrackerInterface, DatasetInterface, CheckpointI
         # BN Scheduler
         bn_scheduler_opt = self.get_from_opt(config, ["training", "optim", "bn_scheduler"])
         if bn_scheduler_opt:
-            update_bn_scheduler_on = config.get('update_bn_scheduler_on') # update to OmegaConf 2.0
+            update_bn_scheduler_on = config.get("update_bn_scheduler_on")  # update to OmegaConf 2.0
             if update_bn_scheduler_on:
                 self._update_bn_scheduler_on = update_bn_scheduler_on
             bn_scheduler_opt.update_scheduler_on = self._update_bn_scheduler_on

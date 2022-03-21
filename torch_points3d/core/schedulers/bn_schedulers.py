@@ -90,7 +90,7 @@ def instantiate_bn_scheduler(model, bn_scheduler_opt):
     """Return a batch normalization scheduler
     Parameters:
         model          -- the nn network
-        bn_scheduler_opt (option class) -- dict containing all the params to build the scheduler　
+        bn_scheduler_opt (option class) -- dict containing all the params to build the scheduler
                               opt.bn_policy is the name of learning rate policy: lambda_rule | step | plateau | cosine
                               opt.params contains the scheduler_params to construct the scheduler
     See https://pytorch.org/docs/stable/optim.html for more details.

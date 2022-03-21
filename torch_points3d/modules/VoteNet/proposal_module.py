@@ -13,7 +13,13 @@ from .votenet_results import VoteNetResults
 
 class ProposalModule(nn.Module):
     def __init__(
-        self, num_class, vote_aggregation_config, num_heading_bin, mean_size_arr, num_proposal, sampling,
+        self,
+        num_class,
+        vote_aggregation_config,
+        num_heading_bin,
+        mean_size_arr,
+        num_proposal,
+        sampling,
     ):
         super().__init__()
 

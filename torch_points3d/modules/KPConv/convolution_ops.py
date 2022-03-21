@@ -13,7 +13,7 @@ def radius_gaussian(sq_r, sig, eps=1e-9):
     :param sig: extents of gaussians [d1, d0] or [d0] or float
     :return: gaussian of sq_r [dn, ..., d1, d0]
     """
-    return torch.exp(-sq_r / (2 * sig ** 2 + eps))
+    return torch.exp(-sq_r / (2 * sig**2 + eps))
 
 
 def KPConv_ops(
@@ -60,7 +60,7 @@ def KPConv_ops(
     differences = neighbors - K_points
 
     # Get the square distances [n_points, n_neighbors, n_kpoints]
-    sq_distances = torch.sum(differences ** 2, dim=3)
+    sq_distances = torch.sum(differences**2, dim=3)
 
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
     if KP_influence == "constant":
@@ -161,10 +161,10 @@ def KPConv_deform_ops(
     differences = neighbors - deformed_K_points.unsqueeze(1)
 
     # Get the square distances [n_points, n_neighbors, n_kpoints]
-    sq_distances = torch.sum(differences ** 2, axis=3)
+    sq_distances = torch.sum(differences**2, axis=3)
 
     # Boolean of the neighbors in range of a kernel point [n_points, n_neighbors]
-    in_range = (sq_distances < KP_extent ** 2).any(2).to(torch.long)
+    in_range = (sq_distances < KP_extent**2).any(2).to(torch.long)
 
     # New value of max neighbors
     new_max_neighb = torch.max(torch.sum(in_range, axis=1))
@@ -187,7 +187,7 @@ def KPConv_deform_ops(
     # Get Kernel point influences [n_points, n_kpoints, n_neighbors]
     if KP_influence == "constant":
         # Every point get an influence of 1.
-        all_weights = (new_sq_distances < KP_extent ** 2).to(torch.float32)
+        all_weights = (new_sq_distances < KP_extent**2).to(torch.float32)
         all_weights = all_weights.permute(0, 2, 1)
 
     elif KP_influence == "linear":

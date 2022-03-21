@@ -2,19 +2,12 @@ from abc import abstractmethod
 from typing import *
 import torch
 from torch.nn import (
-    Linear as Lin,
     ReLU,
-    LeakyReLU,
-    BatchNorm1d as BN,
-    Dropout,
 )
 from torch_geometric.nn import (
     knn_interpolate,
-    fps,
-    radius,
     global_max_pool,
     global_mean_pool,
-    knn,
 )
 from torch_geometric.data import Batch
 
@@ -59,11 +52,11 @@ class BaseConvolutionDown(BaseConvolution):
 
 
 class BaseMSConvolutionDown(BaseConvolution):
-    """ Multiscale convolution down (also supports single scale). Convolution kernel is shared accross the scales
+    """Multiscale convolution down (also supports single scale). Convolution kernel is shared accross the scales
 
-        Arguments:
-            sampler  -- Strategy for sampling the input clouds
-            neighbour_finder -- Multiscale strategy for finding neighbours
+    Arguments:
+        sampler  -- Strategy for sampling the input clouds
+        neighbour_finder -- Multiscale strategy for finding neighbours
     """
 
     def __init__(self, sampler, neighbour_finder: BaseMSNeighbourFinder, *args, **kwargs):
@@ -82,7 +75,13 @@ class BaseMSConvolutionDown(BaseConvolution):
 
         ms_x = []
         for scale_idx in range(self.neighbour_finder.num_scales):
-            row, col = self.neighbour_finder(pos, pos[idx], batch_x=batch, batch_y=batch[idx], scale_idx=scale_idx,)
+            row, col = self.neighbour_finder(
+                pos,
+                pos[idx],
+                batch_x=batch,
+                batch_y=batch[idx],
+                scale_idx=scale_idx,
+            )
             edge_index = torch.stack([col, row], dim=0)
 
             ms_x.append(self.conv(x, (pos, pos[idx]), edge_index, batch))
@@ -155,7 +154,7 @@ class GlobalBaseModule(torch.nn.Module):
 
 
 class FPModule(BaseConvolutionUp):
-    """ Upsampling module from PointNet++
+    """Upsampling module from PointNet++
 
     Arguments:
         k [int] -- number of nearest neighboors used for the interpolation
@@ -212,9 +211,9 @@ class BaseResnetBlockDown(BaseConvolutionDown):
 class BaseResnetBlock(torch.nn.Module):
     def __init__(self, indim, outdim, convdim):
         """
-            indim: size of x at the input
-            outdim: desired size of x at the output
-            convdim: size of x following convolution
+        indim: size of x at the input
+        outdim: desired size of x at the output
+        convdim: size of x following convolution
         """
         torch.nn.Module.__init__(self)
 

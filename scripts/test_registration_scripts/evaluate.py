@@ -149,7 +149,11 @@ def run(model: BaseModel, dataset: BaseDataset, device, cfg):
         reg_thresh = 0.2
     print(time.strftime("%Y%m%d-%H%M%S"))
     dataset.create_dataloaders(
-        model, 1, False, cfg.training.num_workers, False,
+        model,
+        1,
+        False,
+        cfg.training.num_workers,
+        False,
     )
     loader = dataset.test_dataloaders[0]
     list_res = []

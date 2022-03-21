@@ -4,8 +4,7 @@ log = logging.getLogger(__name__)
 
 
 class COLORS:
-    """[This class is used to color the bash shell by using {} {} {} with 'COLORS.{}, text, COLORS.END_TOKEN']
-    """
+    """[This class is used to color the bash shell by using {} {} {} with 'COLORS.{}, text, COLORS.END_TOKEN']"""
 
     TRAIN_COLOR = "\033[0;92m"
     VAL_COLOR = "\033[0;94m"

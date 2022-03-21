@@ -209,7 +209,12 @@ def load_kernels(radius, num_kpoints, num_kernels, dimension, fixed):
 
         # Create kernels
         kernel_points, grad_norms = kernel_point_optimization_debug(
-            1.0, num_kpoints, num_kernels=num_tries, dimension=dimension, fixed=fixed, verbose=0,
+            1.0,
+            num_kpoints,
+            num_kernels=num_tries,
+            dimension=dimension,
+            fixed=fixed,
+            verbose=0,
         )
 
         # Find best candidate

@@ -88,7 +88,11 @@ def main(cfg):
     # Set dataloaders
     dataset = instantiate_dataset(checkpoint.data_config)
     dataset.create_dataloaders(
-        model, cfg.batch_size, cfg.shuffle, cfg.num_workers, False,
+        model,
+        cfg.batch_size,
+        cfg.shuffle,
+        cfg.num_workers,
+        False,
     )
     log.info(dataset)
 

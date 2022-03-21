@@ -54,7 +54,7 @@ class PointNetMSGDown(BaseDenseConvolutionDown):
         return new_features
 
     def conv(self, x, pos, new_pos, radius_idx, scale_idx):
-        """ Implements a Dense convolution where radius_idx represents
+        """Implements a Dense convolution where radius_idx represents
         the indexes of the points in x and pos to be agragated into the new feature
         for each point in new_pos
 

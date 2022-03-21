@@ -21,7 +21,10 @@ class MockDataset(Dataset):
         nb_points = 100
         self._pos = torch.randn((nb_points, 3))
         if feature_size > 0:
-            self._feature = torch.tensor([range(feature_size) for i in range(self._pos.shape[0])], dtype=torch.float,)
+            self._feature = torch.tensor(
+                [range(feature_size) for i in range(self._pos.shape[0])],
+                dtype=torch.float,
+            )
         else:
             self._feature = None
         self._y = torch.tensor([range(10) for i in range(self._pos.shape[0])], dtype=torch.float)

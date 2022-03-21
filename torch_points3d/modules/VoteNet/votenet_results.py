@@ -21,7 +21,7 @@ class VoteNetResults(Data):
         num_heading_bin: int,
         mean_size_arr: torch.Tensor,
     ):
-        """ Takes the sampled votes and the output features from the proposal network to generate a structured data object with
+        """Takes the sampled votes and the output features from the proposal network to generate a structured data object with
         all necessary info for loss and metric computations
 
         Parameters
@@ -111,7 +111,7 @@ class VoteNetResults(Data):
     def assign_objects(
         self, gt_center: torch.Tensor, gt_object_mask: torch.Tensor, near_threshold: float, far_threshold: float
     ):
-        """ Assigns an object to each prediction based on the closest ground truth
+        """Assigns an object to each prediction based on the closest ground truth
         objectness_label: 1 if pred object center is within NEAR_THRESHOLD of any GT object
         objectness_mask: 0 if pred object center is in gray zone (DONOTCARE), 1 otherwise
         object_assignment: Tensor with long int within [0,num_gt_object-1]
@@ -155,7 +155,7 @@ class VoteNetResults(Data):
     def get_boxes(
         self, dataset, apply_nms=False, objectness_threshold=0.05, duplicate_boxes=False
     ) -> List[List[BoxData]]:
-        """ Generates boxes from predictions
+        """Generates boxes from predictions
 
         Parameters
         ----------

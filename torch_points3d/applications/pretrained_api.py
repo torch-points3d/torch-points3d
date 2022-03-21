@@ -115,7 +115,10 @@ class PretainedRegistry(object):
             weight_name = weight_name if weight_name is not None else "latest"
 
             checkpoint: ModelCheckpoint = ModelCheckpoint(
-                CHECKPOINT_DIR, model_tag, weight_name if weight_name is not None else "latest", resume=False,
+                CHECKPOINT_DIR,
+                model_tag,
+                weight_name if weight_name is not None else "latest",
+                resume=False,
             )
             if mock_dataset:
                 dataset = checkpoint.dataset_properties.copy()
@@ -154,7 +157,10 @@ class PretainedRegistry(object):
         name = name.split(".")[0]  # ModelCheckpoint will add the extension
 
         checkpoint: ModelCheckpoint = ModelCheckpoint(
-            path_dir, name, weight_name if weight_name is not None else "latest", resume=False,
+            path_dir,
+            name,
+            weight_name if weight_name is not None else "latest",
+            resume=False,
         )
         dataset = checkpoint.data_config
 

@@ -1,18 +1,4 @@
 from torch import nn
-from torch_geometric.nn import (
-    global_max_pool,
-    global_mean_pool,
-    fps,
-    radius,
-    knn_interpolate,
-)
-from torch.nn import (
-    Linear as Lin,
-    ReLU,
-    LeakyReLU,
-    BatchNorm1d as BN,
-    Dropout,
-)
 from omegaconf.listconfig import ListConfig
 from omegaconf.dictconfig import DictConfig
 import logging
@@ -407,12 +393,12 @@ class UnwrappedUnetBasedModel(BaseModel):
         self.inner_modules = nn.ModuleList()
         self.up_modules = nn.ModuleList()
 
-        self.save_sampling_id = opt.down_conv.get('save_sampling_id')
+        self.save_sampling_id = opt.down_conv.get("save_sampling_id")
 
         # Factory for creating up and down modules
         factory_module_cls = self._get_factory(model_type, modules_lib)
         down_conv_cls_name = opt.down_conv.module_name
-        up_conv_cls_name = opt.up_conv.module_name if opt.get('up_conv') is not None else None
+        up_conv_cls_name = opt.up_conv.module_name if opt.get("up_conv") is not None else None
         self._factory_module = factory_module_cls(
             down_conv_cls_name, up_conv_cls_name, modules_lib
         )  # Create the factory object

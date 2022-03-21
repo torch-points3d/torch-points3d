@@ -23,7 +23,7 @@ class BaseMinkowski(FragmentBaseModel):
         )
         # Last Layer
 
-        if option.get('mlp_cls') is not None:
+        if option.get("mlp_cls") is not None:
             last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
             self.FC_layer = Seq()
@@ -40,7 +40,7 @@ class BaseMinkowski(FragmentBaseModel):
                 )
                 in_feat = last_mlp_opt.nn[i]
 
-            if last_mlp_opt.get('dropout'):
+            if last_mlp_opt.get("dropout"):
                 self.FC_layer.append(Dropout(p=last_mlp_opt.dropout))
 
             self.FC_layer.append(Linear(in_feat, in_feat, bias=False))
@@ -110,7 +110,7 @@ class MinkowskiFragment(BaseMinkowski, UnwrappedUnetBasedModel):
         )
         # Last Layer
 
-        if option.get('mlp_cls') is not None:
+        if option.get("mlp_cls") is not None:
             last_mlp_opt = option.mlp_cls
             in_feat = last_mlp_opt.nn[0]
             self.FC_layer = Seq()

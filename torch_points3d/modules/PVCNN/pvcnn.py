@@ -101,9 +101,21 @@ class PVCNN(nn.Module):
 
         self.point_transforms = nn.ModuleList(
             [
-                nn.Sequential(nn.Linear(cs[0], cs[4]), nn.BatchNorm1d(cs[4]), nn.ReLU(True),),
-                nn.Sequential(nn.Linear(cs[4], cs[6]), nn.BatchNorm1d(cs[6]), nn.ReLU(True),),
-                nn.Sequential(nn.Linear(cs[6], cs[8]), nn.BatchNorm1d(cs[8]), nn.ReLU(True),),
+                nn.Sequential(
+                    nn.Linear(cs[0], cs[4]),
+                    nn.BatchNorm1d(cs[4]),
+                    nn.ReLU(True),
+                ),
+                nn.Sequential(
+                    nn.Linear(cs[4], cs[6]),
+                    nn.BatchNorm1d(cs[6]),
+                    nn.ReLU(True),
+                ),
+                nn.Sequential(
+                    nn.Linear(cs[6], cs[8]),
+                    nn.BatchNorm1d(cs[8]),
+                    nn.ReLU(True),
+                ),
             ]
         )
 

@@ -21,7 +21,7 @@ class Checkpoint:
     _LATEST = "latest"
 
     def __init__(self, checkpoint_file: str, save_every_iter: bool = True):
-        """ Checkpoint manager. Saves to working directory with check_name
+        """Checkpoint manager. Saves to working directory with check_name
         Arguments
             checkpoint_file {str} -- Path to the checkpoint
             save_every_iter {bool} -- [description] (default: {True})
@@ -36,8 +36,7 @@ class Checkpoint:
         self.dataset_properties: Dict = {}
 
     def save_objects(self, models_to_save: Dict[str, Any], stage, current_stat, optimizer, schedulers, **kwargs):
-        """ Saves checkpoint with updated mdoels for the given stage
-        """
+        """Saves checkpoint with updated mdoels for the given stage"""
         self.models = models_to_save
         self.optimizer = (optimizer.__class__.__name__, optimizer.state_dict())
         self.schedulers = {
@@ -57,7 +56,7 @@ class Checkpoint:
 
     @staticmethod
     def load(checkpoint_dir: str, checkpoint_name: str, run_config: Any, strict=False, resume=True):
-        """ Creates a new checkpoint object in the current working directory by loading the
+        """Creates a new checkpoint object in the current working directory by loading the
         checkpoint located at [checkpointdir]/[checkpoint_name].pt
         """
         checkpoint_file = os.path.join(checkpoint_dir, checkpoint_name) + ".pt"
@@ -142,7 +141,7 @@ class Checkpoint:
 
 
 class ModelCheckpoint(object):
-    """ Create a checkpoint for a given model
+    """Create a checkpoint for a given model
 
     Argumemnts:
         - load_dir: directory where to load the checkpoint from (if exists)
@@ -306,8 +305,8 @@ class ModelCheckpoint(object):
         self._checkpoint.save_objects(models_to_save, stage, current_stat, model.optimizer, model.schedulers, **kwargs)
 
     def validate(self, dataset_config):
-        """ A checkpoint is considered as valid if it can recreate the model from
-        a dataset config only """
+        """A checkpoint is considered as valid if it can recreate the model from
+        a dataset config only"""
         if dataset_config is not None:
             for k, v in dataset_config.items():
                 self.data_config[k] = v

@@ -60,11 +60,16 @@ class KPConvLayer(torch.nn.Module):
 
         # Initial kernel extent for this layer
         K_points_numpy = load_kernels(
-            self.kernel_radius, n_kernel_points, num_kernels=1, dimension=dimension, fixed=fixed,
+            self.kernel_radius,
+            n_kernel_points,
+            num_kernels=1,
+            dimension=dimension,
+            fixed=fixed,
         )
 
         self.K_points = Parameter(
-            torch.from_numpy(K_points_numpy.reshape((n_kernel_points, dimension))).to(torch.float), requires_grad=False,
+            torch.from_numpy(K_points_numpy.reshape((n_kernel_points, dimension))).to(torch.float),
+            requires_grad=False,
         )
 
         weights = torch.empty([n_kernel_points, self.num_inputs, num_outputs], dtype=torch.float)
@@ -157,10 +162,15 @@ class KPConvDeformableLayer(BaseInternalLossModule):
 
         # Initial kernel extent for this layer
         K_points_numpy = load_kernels(
-            self.kernel_radius, n_kernel_points, num_kernels=1, dimension=dimension, fixed=fixed,
+            self.kernel_radius,
+            n_kernel_points,
+            num_kernels=1,
+            dimension=dimension,
+            fixed=fixed,
         )
         self.K_points = Parameter(
-            torch.from_numpy(K_points_numpy.reshape((n_kernel_points, dimension))).to(torch.float), requires_grad=False,
+            torch.from_numpy(K_points_numpy.reshape((n_kernel_points, dimension))).to(torch.float),
+            requires_grad=False,
         )
 
         # Create independant weight for the first convolution and a bias term as no batch normalization happen

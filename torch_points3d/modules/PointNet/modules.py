@@ -21,7 +21,7 @@ class MiniPointNet(torch.nn.Module):
         if batch is not None:
             x = self.g_pool(x, batch)  # [num_points, local_out_nn] -> [local_out_nn]
         else:
-            x = x.max(1)[0] if self._aggr == 'max' else x.mean(1)
+            x = x.max(1)[0] if self._aggr == "max" else x.mean(1)
         if self._global_nn:
             x = self._global_nn(x)  # [local_out_nn] -> [global_out_nn]
         if self.return_local_out:
@@ -58,7 +58,7 @@ class PointNetSTNkD(BaseLinearTransformSTNkD, BaseInternalLossModule):
 class PointNetSeg(torch.nn.Module):
     def __init__(
         self,
-        input_nc = 3,
+        input_nc=3,
         input_stn_local_nn=[64, 128, 1024],
         input_stn_global_nn=[1024, 512, 256],
         local_nn_1=[64, 64],
@@ -107,8 +107,9 @@ class PointNetSeg(torch.nn.Module):
         if x_feat_trans.dim() == 2:
             feat_concat = torch.cat([x_feat_trans, global_feature[batch]], dim=1)
         else:
-            feat_concat = torch.cat([x_feat_trans, 
-                                    global_feature.unsqueeze(1).repeat((1, x_feat_trans.shape[1], 1))], dim=-1)
+            feat_concat = torch.cat(
+                [x_feat_trans, global_feature.unsqueeze(1).repeat((1, x_feat_trans.shape[1], 1))], dim=-1
+            )
         out = self.seg_nn(feat_concat)
 
         return out

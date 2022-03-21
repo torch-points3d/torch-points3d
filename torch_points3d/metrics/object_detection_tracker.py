@@ -38,7 +38,7 @@ class ObjectDetectionTracker(BaseTracker):
         return tensor
 
     def track(self, model: TrackerInterface, data=None, track_boxes=False, **kwargs):
-        """ Add current model predictions (usually the result of a batch) to the tracking
+        """Add current model predictions (usually the result of a batch) to the tracking
         if tracking boxes, you must provide a labeled "data" object with the following attributes:
             - id_scan: id of the scan to which the boxes belong to
             - instance_box_cornerimport torchnet as tnts - gt box corners
@@ -86,8 +86,7 @@ class ObjectDetectionTracker(BaseTracker):
             self._gt_boxes[scan_id.item()] = gt_box_data
 
     def get_metrics(self, verbose=False) -> Dict[str, Any]:
-        """ Returns a dictionnary of all metrics and losses being tracked
-        """
+        """Returns a dictionnary of all metrics and losses being tracked"""
         metrics = super().get_metrics(verbose)
 
         metrics["{}_acc".format(self._stage)] = meter_value(self._obj_acc)

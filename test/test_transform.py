@@ -59,7 +59,12 @@ class Testhelpers(unittest.TestCase):
             t = instantiate_transform(conf)
 
     def test_InstantiateTransforms(self):
-        conf = ListConfig([{"transform": "GridSampling3D", "params": {"size": 0.1}}, {"transform": "Center"},])
+        conf = ListConfig(
+            [
+                {"transform": "GridSampling3D", "params": {"size": 0.1}},
+                {"transform": "Center"},
+            ]
+        )
         t = instantiate_transforms(conf)
         self.assertIsInstance(t.transforms[0], GridSampling3D)
         self.assertIsInstance(t.transforms[1], T.Center)
@@ -348,7 +353,12 @@ class Testhelpers(unittest.TestCase):
         x = torch.randn(10000, 6)
         dummy = torch.randn(10000, 6)
         data = Data(pos=pos, x=x, dummy=dummy)
-        conf = ListConfig([{"transform": "GridSampling3D", "params": {"size": 0.1}}, {"transform": "Center"},])
+        conf = ListConfig(
+            [
+                {"transform": "GridSampling3D", "params": {"size": 0.1}},
+                {"transform": "Center"},
+            ]
+        )
         tr = LotteryTransform(transform_options=conf)
         tr(data)
         self.assertIsInstance(tr.random_transforms.transforms[0], GridSampling3D)
