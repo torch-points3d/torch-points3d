@@ -10,7 +10,7 @@ repos:
         args: [--maxkb=15000]
       - id: check-yaml
 
-  - repo: https://github.com/ambv/black
+  - repo: https://github.com/psf/black
     rev: 22.1.0
     hooks:
       - id: black
