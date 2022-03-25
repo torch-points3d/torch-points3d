@@ -67,7 +67,7 @@ class SUMPointCloudDataset(Dataset):
                 "test/Tile_+1987_+2694_pc.ply",
                 "test/Tile_+1988_+2689_pc.ply",
                 "test/Tile_+1989_+2692_pc.ply",
-                "test/Tile_+1990_+2688_pc.ply",
+                "test/Tile_+1991_+2688_pc.ply",
                 "test/Tile_+1990_+2691_pc.ply",
                 "test/Tile_+1990_+2695_pc.ply",
                 "test/Tile_+1991_+2693_pc.ply"
@@ -123,7 +123,7 @@ class SUMPointCloudDataset(Dataset):
                 "train/Tile_+1990_+2690_pc.ply",
                 "train/Tile_+1990_+2693_pc.ply",
                 "train/Tile_+1990_+2694_pc.ply",
-                "train/Tile_+1991_+2688_pc.ply",
+                "train/Tile_+1990_+2688_pc.ply",
                 "train/Tile_+1991_+2690_pc.ply",
                 "train/Tile_+1991_+2691_pc.ply",
                 "train/Tile_+1991_+2692_pc.ply",
