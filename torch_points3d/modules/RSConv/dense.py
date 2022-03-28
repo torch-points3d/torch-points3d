@@ -273,8 +273,6 @@ class RSConvOriginalMSGDown(BaseDenseConvolutionDown):
         **kwargs
     ):
         assert len(radii) == len(nsample)
-        if len(radii) != len(down_conv_nn):
-            log.warning("The down_conv_nn has a different size as radii. Make sure of have SharedRSConv")
         super(RSConvOriginalMSGDown, self).__init__(
             DenseFPSSampler(num_to_sample=npoint), DenseRadiusNeighbourFinder(radii, nsample), **kwargs
         )
