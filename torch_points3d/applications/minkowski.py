@@ -1,5 +1,3 @@
-import os
-import sys
 from omegaconf import DictConfig, OmegaConf
 import logging
 import torch
@@ -14,10 +12,6 @@ from torch_points3d.core.common_modules.base_modules import MLP
 
 from .utils import extract_output_nc
 
-
-CUR_FILE = os.path.realpath(__file__)
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/sparseconv3d")
 
 log = logging.getLogger(__name__)
 
@@ -56,27 +50,10 @@ def Minkowski(
 
 class MinkowskiFactory(ModelFactory):
     def _build_unet(self):
-        if self._config:
-            model_config = self._config
-        else:
-            path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
-            model_config = OmegaConf.load(path_to_model)
-        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
-        modules_lib = sys.modules[__name__]
-        return MinkowskiUnet(model_config, None, None, modules_lib, **self.kwargs)
+        return self._build_unet_base(MinkowskiUnet, "conf/sparseconv3d", __name__)
 
     def _build_encoder(self):
-        if self._config:
-            model_config = self._config
-        else:
-            path_to_model = os.path.join(
-                PATH_TO_CONFIG,
-                "encoder_{}.yaml".format(self.num_layers),
-            )
-            model_config = OmegaConf.load(path_to_model)
-        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
-        modules_lib = sys.modules[__name__]
-        return MinkowskiEncoder(model_config, None, None, modules_lib, **self.kwargs)
+        return self._build_encoder_base(MinkowskiEncoder, "conf/sparseconv3d", __name__)
 
 
 class BaseMinkowski(UnwrappedUnetBasedModel):
