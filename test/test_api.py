@@ -1,12 +1,9 @@
-from torch_points3d.datasets.object_detection.scannet import ScannetDataset
 from torch_points3d.core.data_transform import GridSampling3D
-from torch_points3d.applications.pretrained_api import PretainedRegistry
 from test.mockdatasets import MockDatasetGeometric, MockDataset
 import os
 import sys
 import unittest
 import torch
-from omegaconf import OmegaConf
 
 ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 sys.path.insert(0, ROOT)

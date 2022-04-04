@@ -11,10 +11,9 @@ repos:
       - id: check-yaml
 
   - repo: https://github.com/psf/black
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
       - id: black
-        language_version: python3.8
 
   - repo: https://github.com/PyCQA/autoflake
     rev: v1.4
@@ -27,25 +26,9 @@ repos:
             "--ignore-init-module-imports",
             "--imports=torch,torch_geometric,torch_scatter,torch_cluster,numpy,sklearn,scipy,torch_sparse,torch_points_kernels",
           ]
+          
   - repo: https://github.com/kynan/nbstripout
     rev: 0.5.0
     hooks:
       - id: nbstripout
         files: ".ipynb"
-
-  - repo: local
-    hooks:
-      - id: requirements.txt
-        name: Generate requirements.txt
-        entry: poetry export
-        args:
-          [
-            "-f",
-            "requirements.txt",
-            "-o",
-            "requirements.txt",
-            "--without-hashes",
-          ]
-        pass_filenames: false
-        language: system
-        files: "poetry.lock"
