@@ -1,4 +1,3 @@
-import os
 from omegaconf import DictConfig, OmegaConf
 import logging
 
@@ -10,11 +9,6 @@ from torch_points3d.models.base_architectures.unet import UnwrappedUnetBasedMode
 from torch_points3d.datasets.multiscale_data import MultiScaleBatch
 from torch_points3d.core.common_modules.base_modules import MLP
 from .utils import extract_output_nc
-
-
-CUR_FILE = os.path.realpath(__file__)
-DIR_PATH = os.path.dirname(os.path.realpath(__file__))
-PATH_TO_CONFIG = os.path.join(DIR_PATH, "conf/kpconv")
 
 log = logging.getLogger(__name__)
 
@@ -50,24 +44,10 @@ def KPConv(
 
 class KPConvFactory(ModelFactory):
     def _build_unet(self):
-        if self._config:
-            model_config = self._config
-        else:
-            path_to_model = os.path.join(PATH_TO_CONFIG, "unet_{}.yaml".format(self.num_layers))
-            model_config = OmegaConf.load(path_to_model)
-        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
-        modules_lib = sys.modules[__name__]
-        return KPConvUnet(model_config, None, None, modules_lib, **self.kwargs)
+        return self._build_unet_base(KPConvUnet, "conf/kpconv", __name__)
 
     def _build_encoder(self):
-        if self._config:
-            model_config = self._config
-        else:
-            path_to_model = os.path.join(PATH_TO_CONFIG, "encoder_{}.yaml".format(self.num_layers))
-            model_config = OmegaConf.load(path_to_model)
-        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
-        modules_lib = sys.modules[__name__]
-        return KPConvEncoder(model_config, None, None, modules_lib, **self.kwargs)
+        return self._build_encoder_base(KPConvEncoder, "conf/kpconv", __name__)
 
 
 class BaseKPConv(UnwrappedUnetBasedModel):

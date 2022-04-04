@@ -1,10 +1,15 @@
 from enum import Enum
-from omegaconf import DictConfig
+import os
+import sys
+from omegaconf import DictConfig, OmegaConf
 import logging
 
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve
 
 log = logging.getLogger(__name__)
+
+CUR_FILE = os.path.realpath(__file__)
+DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 class ModelArchitectures(Enum):
@@ -62,8 +67,34 @@ class ModelFactory:
     def _build_unet(self):
         raise NotImplementedError
 
+    def _build_unet_base(self, unet_class, config_dir, module_name, config_file=None):
+        PATH_TO_CONFIG = os.path.join(DIR_PATH, config_dir)
+        if self._config:
+            model_config = self._config
+        else:
+            if config_file is None:
+                config_file = "unet_{}.yaml".format(self.num_layers)
+            path_to_model = os.path.join(PATH_TO_CONFIG, config_file)
+            model_config = OmegaConf.load(path_to_model)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
+        modules_lib = sys.modules[module_name]
+        return unet_class(model_config, None, None, modules_lib, **self.kwargs)
+
     def _build_encoder(self):
         raise NotImplementedError
+
+    def _build_encoder_base(self, encoder_class, config_dir, module_name, config_file=None):
+        PATH_TO_CONFIG = os.path.join(DIR_PATH, config_dir)
+        if self._config:
+            model_config = self._config
+        else:
+            if config_file is None:
+                config_file = "encoder_{}.yaml".format(self.num_layers)
+            path_to_model = os.path.join(PATH_TO_CONFIG, config_file)
+            model_config = OmegaConf.load(path_to_model)
+        ModelFactory.resolve_model(model_config, self.num_features, self._kwargs)
+        modules_lib = sys.modules[module_name]
+        return encoder_class(model_config, None, None, modules_lib, **self.kwargs)
 
     def _build_decoder(self):
         raise NotImplementedError
