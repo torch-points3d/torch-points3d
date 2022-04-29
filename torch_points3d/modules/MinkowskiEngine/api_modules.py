@@ -74,11 +74,11 @@ class ResBlock(ME.MinkowskiNetwork):
             self.downsample = None
 
     def forward(self, x):
-        out = self.block(x)
+        intermediate_out = self.block(x)
         if self.downsample:
-            out += self.downsample(x)
+            out = intermediate_out + self.downsample(x)
         else:
-            out += x
+            out = intermediate_out + x
         return out
 
 
@@ -151,11 +151,11 @@ class BottleneckBlock(ME.MinkowskiNetwork):
             self.downsample = None
 
     def forward(self, x):
-        out = self.block(x)
+        intermediate_out = self.block(x)
         if self.downsample:
-            out += self.downsample(x)
+            out = intermediate_out + self.downsample(x)
         else:
-            out += x
+            out = intermediate_out + x
         return out
 
 
@@ -201,12 +201,12 @@ class SEBlock(ResBlock):
         self.SE = SELayer(output_nc, reduction=reduction, dimension=dimension)
 
     def forward(self, x):
-        out = self.block(x)
-        out = self.SE(out)
+        intermediate_out_1 = self.block(x)
+        intermediate_out_2 = self.SE(intermediate_out_1)
         if self.downsample:
-            out += self.downsample(x)
+            out = intermediate_out_2 + self.downsample(x)
         else:
-            out += x
+            out = intermediate_out_2 + x
         return out
 
 
@@ -220,12 +220,12 @@ class SEBottleneckBlock(BottleneckBlock):
         self.SE = SELayer(output_nc, reduction=reduction, dimension=dimension)
 
     def forward(self, x):
-        out = self.block(x)
-        out = self.SE(out)
+        intermediate_out_1 = self.block(x)
+        intermediate_out_2 = self.SE(intermediate_out_1)
         if self.downsample:
-            out += self.downsample(x)
+            out = intermediate_out_2 + self.downsample(x)
         else:
-            out += x
+            out = intermediate_out_2 + x
         return out
 
 
