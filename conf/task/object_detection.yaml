@@ -1,7 +1,5 @@
 # @package task
 defaults:
-  - /task/default
-  - override /data@_group_: object_detection/default
-  - override /models@_group_: object_detection/default
+  - task/default
 
 name: object_detection

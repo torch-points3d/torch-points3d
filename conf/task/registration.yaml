@@ -1,7 +1,5 @@
 # @package task
 defaults:
-  - /task/default
-  - override /data@_group_: registration/default
-  - override /models@_group_: registration/default
+  - task/default
 
 name: registration

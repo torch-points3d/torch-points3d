@@ -6,10 +6,6 @@ from torch_points3d.trainer import Trainer
 @hydra.main(config_path="conf", config_name="config", version_base="1.2")
 def main(cfg):
     
-    # Optional print of all runtime parameters in yaml format
-    if cfg.pretty_print:
-        print(OmegaConf.to_yaml(cfg))
-
     trainer = Trainer(cfg)
     trainer.train()
     return 0
