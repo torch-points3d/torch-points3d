@@ -1,14 +1,13 @@
 defaults: # for loading the default.yaml config
+  - _self_
   - task: ???
-
   - visualization: default
-  - lr_scheduler: exponential
   - training: default
-#
   - debugging: default
   - models: ???
   - data: ???
   - sota # Contains current SOTA results on different datasets (extracted from papers !).
+  - lr_scheduler: exponential
 #  - hydra/job_logging: custom
 #  - hydra/output: custom  # add the support for user-defined experiment folder (where to save the experiment files)
 

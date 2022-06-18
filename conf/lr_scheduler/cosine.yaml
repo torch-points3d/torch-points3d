@@ -1,4 +1,4 @@
-# @package _group_
+# @package lr_scheduler
 class: CosineAnnealingLR
 params: 
   T_max: 10
