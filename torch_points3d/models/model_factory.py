@@ -1,6 +1,4 @@
 import importlib
-import hydra
-from omegaconf import OmegaConf
 
 from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
@@ -42,5 +40,5 @@ def instantiate_model(config, dataset) -> BaseModel:
             "In %s.py, there should be a subclass of BaseDataset with class name that matches %s in lowercase."
             % (model_module, class_name)
         )
-    model = model_cls(OmegaConf.set_struct(model_config, False), "dummy", dataset, modellib)
+    model = model_cls(model_config, "dummy", dataset, modellib)
     return model

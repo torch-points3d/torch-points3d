@@ -91,7 +91,7 @@ class UnetBasedModel(BaseModel):
             down_conv_cls_name, up_conv_cls_name, modules_lib
         )  # Create the factory object
         # construct unet structure
-        contains_global = hasattr(opt, "innermost") and opt.innermost is not None
+        contains_global = "innermost" in opt and opt.innermost is not None
         if contains_global:
             assert len(opt.down_conv.down_conv_nn) + 1 == len(opt.up_conv.up_conv_nn)
 

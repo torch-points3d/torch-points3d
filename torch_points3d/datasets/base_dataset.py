@@ -418,7 +418,7 @@ class BaseDataset:
 
     @property
     def weight_classes(self):
-        return self.train_dataset.get("weight_classes")
+        return getattr(self.train_dataset, "weight_classes", None)
 
     @property  # type: ignore
     @save_used_properties
