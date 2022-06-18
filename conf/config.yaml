@@ -1,5 +1,5 @@
 defaults: # for loading the default.yaml config
-  - _self_
+  - hydra: custom
   - task: ???
   - visualization: default
   - training: default
@@ -8,9 +8,9 @@ defaults: # for loading the default.yaml config
   - models: ???
   - data: ???
   - sota # Contains current SOTA results on different datasets (extracted from papers !).
-#  - hydra/job_logging: custom
-#  - hydra/output: custom  # add the support for user-defined experiment folder (where to save the experiment files)
-
+#  - override hydra/job_logging: custom
+#  - override hydra/output: custom  # add the support for user-defined experiment folder (where to save the experiment files)
+  - _self_
 job_name: benchmark # prefix name for saving the experiment file.
 model_name: ??? # Name of the specific model to load
 update_lr_scheduler_on: "on_epoch" # ["on_epoch", "on_num_batch", "on_num_sample"]

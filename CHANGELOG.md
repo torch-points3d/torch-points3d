@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `# @package _group_` is deprecated, replace _group_ with the actual group name, or delete the line to use directory structure
     - Since [Changes to default composition order](https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order/), `_self_` needs to be appended *as the first default item* to retain the old behavior.
     - A `version_base` argument is requested in `@hydra.main` call, by default we currently set it to `"1.2"`.
+    - `hydra.job.chdir` must be set to True to retain the old behavior of having `os.cwd()` being in the hydra runtime dir
 - Remove the pretty_print parameter, to print the runtime parameters add `--cfg job` to the python arguments (e.g. `python train.py --cfg job`)
 
 ### Changed
