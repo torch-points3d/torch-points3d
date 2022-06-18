@@ -1,5 +1,4 @@
 import os
-import copy
 import torch
 import hydra
 import time
