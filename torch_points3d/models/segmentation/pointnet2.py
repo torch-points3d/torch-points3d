@@ -35,11 +35,11 @@ class PointNet2_D(UnetBasedModel):
     def __init__(self, option, model_type, dataset, modules):
         # call the initialization method of UnetBasedModel
         UnetBasedModel.__init__(self, option, model_type, dataset, modules)
-        self._num_classes = dataset.num_classes
-        self._weight_classes = dataset.weight_classes
+        self._num_classes = dataset.get("num_classes")
+        self._weight_classes = dataset.get("weight_classes")
         self._use_category = getattr(option, "use_category", False)
         if self._use_category:
-            if not dataset.class_to_segments:
+            if not dataset.get("class_to_segments"):
                 raise ValueError(
                     "The dataset needs to specify a class_to_segments property when using category information for segmentation"
                 )

@@ -2,6 +2,7 @@ import os
 import logging
 import urllib.request
 from omegaconf import DictConfig
+from omegaconf import OmegaConf
 
 # Import building function for model and dataset
 from torch_points3d.datasets.dataset_factory import instantiate_dataset
@@ -121,7 +122,8 @@ class PretainedRegistry(object):
                 resume=False,
             )
             if mock_dataset:
-                dataset = checkpoint.dataset_properties.copy()
+                dataset = OmegaConf.create(checkpoint.dataset_properties.copy())
+
                 if PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag) is not None:
                     for k, v in PretainedRegistry.MOCK_USED_PROPERTIES.get(model_tag).items():
                         dataset[k] = v
