@@ -2,10 +2,7 @@ import os
 import sys
 import numpy as np
 import unittest
-import tempfile
-import h5py
 import numpy.testing as npt
-import numpy.matlib
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(DIR_PATH, ".."))

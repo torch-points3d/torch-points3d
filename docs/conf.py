@@ -56,7 +56,6 @@ autodoc_mock_imports = [
     "pandas",
     "numpy",
     "torchnet",
-    "h5py",
     "plyfile",
     "wandb",
     "numba",

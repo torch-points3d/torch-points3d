@@ -3,9 +3,7 @@ import sys
 import numpy as np
 import torch
 import unittest
-import h5py
 import numpy.testing as npt
-import numpy.matlib
 from torch_geometric.data import Data
 
 DIR_PATH = os.path.dirname(os.path.realpath(__file__))

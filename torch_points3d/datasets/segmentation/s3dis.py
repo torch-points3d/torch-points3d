@@ -1,27 +1,19 @@
 import os
 import os.path as osp
-from itertools import repeat, product
 import numpy as np
-import h5py
 import torch
 import random
 import glob
 from plyfile import PlyData, PlyElement
-from torch_geometric.data import InMemoryDataset, Data, extract_zip, Dataset
-from torch_geometric.data.dataset import files_exist
-from torch_geometric.data import DataLoader
+from torch_geometric.data import InMemoryDataset, Data, extract_zip
 from torch_geometric.datasets import S3DIS as S3DIS1x1
-import torch_geometric.transforms as T
 import logging
 from sklearn.neighbors import NearestNeighbors, KDTree
 from tqdm.auto import tqdm as tq
-import csv
 import pandas as pd
-import pickle
 import gdown
 import shutil
 
-from torch_points3d.datasets.samplers import BalancedRandomSampler
 import torch_points3d.core.data_transform as cT
 from torch_points3d.datasets.base_dataset import BaseDataset
 

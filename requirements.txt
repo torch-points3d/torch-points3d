@@ -31,7 +31,6 @@ googledrivedownloader==0.4; python_version >= "3.6"
 gql==0.2.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 graphql-core==1.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 grpcio==1.40.0; python_version >= "3.6"
-h5py==3.4.0; python_version >= "3.7"
 hydra-core==1.0.7
 idna==3.2; python_version >= "3.6" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.6"
 imageio==2.9.0; python_version >= "3.6"
