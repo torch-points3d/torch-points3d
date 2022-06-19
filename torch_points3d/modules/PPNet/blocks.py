@@ -288,7 +288,7 @@ class ResnetBBlock(BaseModule):
             shortcut_x = torch.max(neighborhood_features, dim=1, keepdim=False)[0]
 
         shortcut = self.shortcut_op(shortcut_x)
-        output.x += shortcut
+        output.x = output.x + shortcut
         output.x = self.activation(output.x)
         return output
 

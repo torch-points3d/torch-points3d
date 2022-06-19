@@ -76,9 +76,9 @@ class ResBlock(ME.MinkowskiNetwork):
     def forward(self, x):
         out = self.block(x)
         if self.downsample:
-            out += self.downsample(x)
+            out = out + self.downsample(x)
         else:
-            out += x
+            out = out + x
         return out
 
 
@@ -153,9 +153,9 @@ class BottleneckBlock(ME.MinkowskiNetwork):
     def forward(self, x):
         out = self.block(x)
         if self.downsample:
-            out += self.downsample(x)
+            out = out + self.downsample(x)
         else:
-            out += x
+            out = out + x
         return out
 
 
@@ -204,9 +204,9 @@ class SEBlock(ResBlock):
         out = self.block(x)
         out = self.SE(out)
         if self.downsample:
-            out += self.downsample(x)
+            out = out + self.downsample(x)
         else:
-            out += x
+            out = out + x
         return out
 
 
@@ -223,9 +223,9 @@ class SEBottleneckBlock(BottleneckBlock):
         out = self.block(x)
         out = self.SE(out)
         if self.downsample:
-            out += self.downsample(x)
+            out = out + self.downsample(x)
         else:
-            out += x
+            out = out + x
         return out
 
 
