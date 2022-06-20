@@ -9,23 +9,35 @@ import wandb
 import shutil
 import logging
 
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
 
 def models():
     return [
-        ("pointnet2_largemsg-s3dis-1",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt"),
-        ("pointnet2_largemsg-s3dis-2",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2i499g2e/pointnet2_largemsg.pt"),
-        ("pointnet2_largemsg-s3dis-3",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1gyokj69/pointnet2_largemsg.pt"),
-        ("pointnet2_largemsg-s3dis-4",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ejjs4s2/pointnet2_largemsg.pt"),
-        ("pointnet2_largemsg-s3dis-5",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/etxij0j6/pointnet2_largemsg.pt"),
-        ("pointnet2_largemsg-s3dis-6",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt"),
+        (
+            "pointnet2_largemsg-s3dis-1",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1e1p0csk/pointnet2_largemsg.pt",
+        ),
+        (
+            "pointnet2_largemsg-s3dis-2",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2i499g2e/pointnet2_largemsg.pt",
+        ),
+        (
+            "pointnet2_largemsg-s3dis-3",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1gyokj69/pointnet2_largemsg.pt",
+        ),
+        (
+            "pointnet2_largemsg-s3dis-4",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ejjs4s2/pointnet2_largemsg.pt",
+        ),
+        (
+            "pointnet2_largemsg-s3dis-5",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/etxij0j6/pointnet2_largemsg.pt",
+        ),
+        (
+            "pointnet2_largemsg-s3dis-6",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/8n8t391d/pointnet2_largemsg.pt",
+        ),
         ("pointgroup-scannet", "https://api.wandb.ai/files/nicolas/panoptic/2ta6vfu2/PointGroup.pt"),
         ("minkowski-res16-s3dis-1", "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1fyr7ri9/Res16UNet34C.pt"),
         ("minkowski-res16-s3dis-2", "https://api.wandb.ai/files/nicolas/s3dis-benchmark/1gdgx2ni/Res16UNet34C.pt"),
@@ -33,35 +45,63 @@ def models():
         ("minkowski-res16-s3dis-4", "https://api.wandb.ai/files/nicolas/s3dis-benchmark/36yxu3yc/Res16UNet34C.pt"),
         ("minkowski-res16-s3dis-5", "https://api.wandb.ai/files/nicolas/s3dis-benchmark/2r0tsub1/Res16UNet34C.pt"),
         ("minkowski-res16-s3dis-6", "https://api.wandb.ai/files/nicolas/s3dis-benchmark/30yrkk5p/Res16UNet34C.pt"),
-        ("minkowski-registration-3dmatch",
-         "https://api.wandb.ai/files/humanpose1/registration/2wvwf92e/MinkUNet_Fragment.pt"),
+        (
+            "minkowski-registration-3dmatch",
+            "https://api.wandb.ai/files/humanpose1/registration/2wvwf92e/MinkUNet_Fragment.pt",
+        ),
         ("minkowski-registration-kitti", "https://api.wandb.ai/files/humanpose1/KITTI/2xpy7u1i/MinkUNet_Fragment.pt"),
-        ("minkowski-registration-modelnet",
-         "https://api.wandb.ai/files/humanpose1/modelnet/39u5v3bm/MinkUNet_Fragment.pt"),
-        ("rsconv-s3dis-1",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2b99o12e/RSConv_MSN_S3DIS.pt"),
-        ("rsconv-s3dis-2",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1onl4h59/RSConv_MSN_S3DIS.pt"),
-        ("rsconv-s3dis-3",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2cau6jua/RSConv_MSN_S3DIS.pt"),
-        ("rsconv-s3dis-4",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1qqmzgnz/RSConv_MSN_S3DIS.pt"),
-        ("rsconv-s3dis-5",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/378enxsu/RSConv_MSN_S3DIS.pt"),
-        ("rsconv-s3dis-6",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/23f4upgc/RSConv_MSN_S3DIS.pt"),
-        ("kpconv-s3dis-1",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/okiba8gp/KPConvPaper.pt"),
-        ("kpconv-s3dis-2",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2at56wrm/KPConvPaper.pt"),
-        ("kpconv-s3dis-3",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ipv9lso/KPConvPaper.pt"),
-        ("kpconv-s3dis-4",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2c13jhi0/KPConvPaper.pt"),
-        ("kpconv-s3dis-5",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1kf8yg5s/KPConvPaper.pt"),
-        ("kpconv-s3dis-6",
-         "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2ph7ejss/KPConvPaper.pt"),
+        (
+            "minkowski-registration-modelnet",
+            "https://api.wandb.ai/files/humanpose1/modelnet/39u5v3bm/MinkUNet_Fragment.pt",
+        ),
+        (
+            "rsconv-s3dis-1",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2b99o12e/RSConv_MSN_S3DIS.pt",
+        ),
+        (
+            "rsconv-s3dis-2",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1onl4h59/RSConv_MSN_S3DIS.pt",
+        ),
+        (
+            "rsconv-s3dis-3",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2cau6jua/RSConv_MSN_S3DIS.pt",
+        ),
+        (
+            "rsconv-s3dis-4",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1qqmzgnz/RSConv_MSN_S3DIS.pt",
+        ),
+        (
+            "rsconv-s3dis-5",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/378enxsu/RSConv_MSN_S3DIS.pt",
+        ),
+        (
+            "rsconv-s3dis-6",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/23f4upgc/RSConv_MSN_S3DIS.pt",
+        ),
+        (
+            "kpconv-s3dis-1",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/okiba8gp/KPConvPaper.pt",
+        ),
+        (
+            "kpconv-s3dis-2",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2at56wrm/KPConvPaper.pt",
+        ),
+        (
+            "kpconv-s3dis-3",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1ipv9lso/KPConvPaper.pt",
+        ),
+        (
+            "kpconv-s3dis-4",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2c13jhi0/KPConvPaper.pt",
+        ),
+        (
+            "kpconv-s3dis-5",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/1kf8yg5s/KPConvPaper.pt",
+        ),
+        (
+            "kpconv-s3dis-6",
+            "https://api.wandb.ai/files/loicland/benchmark-torch-points-3d-s3dis/2ph7ejss/KPConvPaper.pt",
+        ),
     ]
 
 
@@ -77,10 +117,11 @@ def download_file(url, out_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        "a simple script to convert omegaconf file to dict, you need omegaconf v 1.4.1 in order to convert files")
-    parser.add_argument('-f', help='input of the .pt file', dest="file", type=str)
-    parser.add_argument('--old', help='input of the .pt file', dest="old", type=str)
-    parser.add_argument('-o', help='output of the .pt file', dest="out", type=str)
+        "a simple script to convert omegaconf file to dict, you need omegaconf v 1.4.1 in order to convert files"
+    )
+    parser.add_argument("-f", help="input of the .pt file", dest="file", type=str)
+    parser.add_argument("--old", help="input of the .pt file", dest="old", type=str)
+    parser.add_argument("-o", help="output of the .pt file", dest="out", type=str)
     args = parser.parse_args()
     return args
 
