@@ -89,7 +89,7 @@ class SUMTracker(SegmentationTracker):
                 pos = self._data.pos[has_prediction].detach().cpu().numpy()
                 rgb = (255*self._data.rgb[has_prediction].detach().cpu().numpy()).astype(np.uint8)
                 ply_array = np.ones(
-                    pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1"), ("l", "i4"), ("p", "i4")]
+                    pos.shape[0], dtype=[("x", "f4"), ("y", "f4"), ("z", "f4"), ("red", "u1"), ("green", "u1"), ("blue", "u1"), ("l", "i4"), ("p", "i4"), ("error", "i4")]
                 )
                 ply_array["x"] = pos[:, 0]
                 ply_array["y"] = pos[:, 1]
@@ -99,6 +99,7 @@ class SUMTracker(SegmentationTracker):
                 ply_array["blue"] = rgb[:, 2]
                 ply_array["l"] = gt
                 ply_array["p"] = pred
+                ply_array["error"] = ((gt != pred) & (gt != self._ignore_label))
                 el = PlyElement.describe(ply_array, "vertex")
                 PlyData([el]).write(ply_output)
 
