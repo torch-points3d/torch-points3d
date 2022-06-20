@@ -1,5 +1,4 @@
 import importlib
-import hydra
 
 from .base_model import BaseModel
 from torch_points3d.utils.model_building_utils.model_definition_resolver import resolve_model
@@ -18,13 +17,13 @@ def instantiate_model(config, dataset) -> BaseModel:
 
     # Find configs
     models = config.get("models")
-    model_config = getattr(models, tested_model_name, None)
+    model_config = models.get(tested_model_name, None)
     if model_config is None:
         models_keys = models.keys() if models is not None else ""
         raise Exception("The model_name {} isn t within {}".format(tested_model_name, list(models_keys)))
     resolve_model(model_config, dataset, task)
 
-    model_class = getattr(model_config, "class")
+    model_class = model_config.get("class")
     model_paths = model_class.split(".")
     module = ".".join(model_paths[:-1])
     class_name = model_paths[-1]

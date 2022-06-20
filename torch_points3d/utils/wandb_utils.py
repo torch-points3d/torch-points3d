@@ -37,7 +37,7 @@ class Wandb:
 
     @staticmethod
     def _set_to_wandb_args(wandb_args, cfg, name):
-        var = getattr(cfg.training.wandb, name, None)
+        var = cfg.training.wandb.get(name, None)
         if var:
             wandb_args[name] = var
 
@@ -48,11 +48,11 @@ class Wandb:
 
             Wandb.IS_ACTIVE = True
 
-            model_config = getattr(cfg.models, cfg.model_name, None)
-            model_class = getattr(model_config, "class")
-            tested_dataset_class = getattr(cfg.data, "class")
-            otimizer_class = getattr(cfg.training.optim.optimizer, "class")
-            scheduler_class = getattr(cfg.lr_scheduler, "class")
+            model_config = cfg.models.get(cfg.model_name, None)
+            model_class = model_config.get("class")
+            tested_dataset_class = cfg.data.get("class")
+            otimizer_class = cfg.training.optim.optimizer.get("class")
+            scheduler_class = cfg.lr_scheduler.get("class")
             tags = [
                 cfg.model_name,
                 model_class.split(".")[0],

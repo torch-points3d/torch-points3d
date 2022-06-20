@@ -1,4 +1,4 @@
-# @package _group_
+# @package visualization
 activate: False
 format: ["ply", "tensorboard"]
 num_samples_per_epoch: 10

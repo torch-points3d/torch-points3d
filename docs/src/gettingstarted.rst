@@ -127,7 +127,7 @@ You should now be in a position to train your first model. Here is how is goes t
 .. code-block:: bash
 
    python train.py  \
-       task=segmentation model_type=pointnet2 model_name=pointnet2_charlesssg dataset=shapenet-fixed
+       task=segmentation models=segmentation/pointnet2 model_name=pointnet2_charlesssg data=segmentation/shapenet-fixed
 
 And you should see something like that
 

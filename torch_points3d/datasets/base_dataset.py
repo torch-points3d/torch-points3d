@@ -126,9 +126,9 @@ class BaseDataset:
             if "transform" in key_name:
                 new_name = key_name.replace("transforms", "transform")
                 try:
-                    transform = instantiate_transforms(getattr(dataset_opt, key_name))
+                    transform = instantiate_transforms(dataset_opt.get(key_name))
                 except Exception:
-                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
+                    log.exception("Error trying to create {}, {}".format(new_name, dataset_opt.get(key_name)))
                     continue
                 setattr(obj, new_name, transform)
 
@@ -144,9 +144,9 @@ class BaseDataset:
             if "filter" in key_name:
                 new_name = key_name.replace("filters", "filter")
                 try:
-                    filt = instantiate_filters(getattr(dataset_opt, key_name))
+                    filt = instantiate_filters(dataset_opt.get(key_name))
                 except Exception:
-                    log.exception("Error trying to create {}, {}".format(new_name, getattr(dataset_opt, key_name)))
+                    log.exception("Error trying to create {}, {}".format(new_name, dataset_opt.get(key_name)))
                     continue
                 setattr(self, new_name, filt)
 

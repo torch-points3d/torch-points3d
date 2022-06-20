@@ -1,4 +1,4 @@
-# @package _group_
+# @package lr_scheduler
 class: CyclicLR
 params:
   base_lr: ${training.optim.base_lr}

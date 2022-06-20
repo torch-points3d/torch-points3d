@@ -69,7 +69,7 @@ class Visualizer(object):
         self._format = [viz_conf.format] if not is_list(viz_conf.format) else viz_conf.format
         self._num_samples_per_epoch = int(viz_conf.num_samples_per_epoch)
         self._deterministic = viz_conf.deterministic
-        self._seed = viz_conf.deterministic_seed if viz_conf.deterministic_seed is not None else 0
+        self._seed = viz_conf.get("deterministic_seed", 0)
         self._tracker = tracker
 
         self._saved_keys = viz_conf.saved_keys

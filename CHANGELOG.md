@@ -5,11 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unrealeased
+## Unreleased
 
 ### Changed
 
-- Migrated to Hydra 1.0 and OmegaConf 2.1 **BREAKING any checkpoint created prior to that, in particular the model zoo**
+- Upgrade hydra to 1.2.0 and Omegaconf 2.2.2. More info on the changes implied by this upgrade [here](https://hydra.cc/docs/upgrades/intro/). **BREAKING any checkpoint created prior to that, in particular the model zoo**
+  - Most important changes:
+    - `# @package _group_` is deprecated, replace _group_ with the actual group name, or delete the line to use directory structure
+    - Since [Changes to default composition order](https://hydra.cc/docs/upgrades/1.0_to_1.1/default_composition_order/), `_self_` needs to be appended *as the first default item* to retain the old behavior.
+    - A `version_base` argument is requested in `@hydra.main` call, by default we currently set it to `"1.2"`.
+    - `hydra.job.chdir` must be set to True to retain the old behavior of having `os.cwd()` being in the hydra runtime dir.
+- Remove the pretty_print parameter, to print the runtime parameters add `--cfg all` to the python arguments (e.g. `python train.py --cfg all`).
 - Upgrade to pytorch 1.8
 
 ### Added
