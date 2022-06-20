@@ -9,7 +9,8 @@ import wandb
 import shutil
 import logging
 
-logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
+
 
 def download_file(url, out_file):
     # If the file exists, remove it
@@ -23,10 +24,12 @@ def download_file(url, out_file):
 
 def parse_args():
 
-    parser = argparse.ArgumentParser("a simple script to convert omegaconf file to dict, you need omegaconf v 1.4.1 in order to convert files")
-    parser.add_argument('-f', help='input of the .pt file', dest="file", type=str)
-    parser.add_argument('--old', help='input of the .pt file', dest="old", type=str)
-    parser.add_argument('-o', help='output of the .pt file', dest="out", type=str)
+    parser = argparse.ArgumentParser(
+        "a simple script to convert omegaconf file to dict, you need omegaconf v 1.4.1 in order to convert files"
+    )
+    parser.add_argument("-f", help="input of the .pt file", dest="file", type=str)
+    parser.add_argument("--old", help="input of the .pt file", dest="old", type=str)
+    parser.add_argument("-o", help="output of the .pt file", dest="out", type=str)
     args = parser.parse_args()
     return args
 
@@ -36,14 +39,14 @@ def convert(dico, exclude_keys=["models", "optimizer"], depth=0, verbose=True):
         for k, v in dico.items():
             if k not in exclude_keys:
                 # print(depth * " ", k, type(v))
-                convert(v, depth=depth+1)
+                convert(v, depth=depth + 1)
                 if isinstance(v, omegaconf.dictconfig.DictConfig):
                     dico[k] = OmegaConf.to_container(v)
 
     elif isinstance(dico, list):
         for i, v in enumerate(dico):
             # print(depth * " ", i, type(v))
-            convert(v, depth=depth+1)
+            convert(v, depth=depth + 1)
             if isinstance(v, omegaconf.dictconfig.DictConfig):
                 dico[i] = OmegaConf.to_container(v)
 
@@ -108,4 +111,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
