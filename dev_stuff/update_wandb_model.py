@@ -197,18 +197,22 @@ def update_model(name, url, working_dir, new_entity, new_wandb_project_name):
     for file in os.listdir(working_dir):
         run.upload_file(file)
     logging.info("Conversion finished")
+    return f"{new_entity}/{new_wandb_project_name}/runs/{new_run_id}"
 
 
 def main():
     assert omegaconf.__version__ <= "1.4.1"
 
     url_list = models()
+    new_url = []
     for name, url in url_list:
         logging.info(f"Processing Model: {name}, URL: {url}")
         working_dir = "/home/leo/kios/torch-points3d/dev_stuff/test"
         new_entity = "leo_stan"
         new_wandb_project_name = "tp3d_public"
-        update_model(name, url, working_dir, new_entity, new_wandb_project_name)
+        new_url.append(update_model(name, url, working_dir, new_entity, new_wandb_project_name))
+    for url in new_url:
+        print(url)
 
 
 if __name__ == "__main__":
