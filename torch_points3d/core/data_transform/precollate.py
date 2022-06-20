@@ -24,3 +24,20 @@ class NormalizeFeature(object):
 
     def __repr__(self):
         return "{}(feature_name={}, standardize={})".format(self.__class__.__name__, self._feature_name, self._standardize)
+
+class RelativeFeature(object):
+    """Remove min value to all values
+    """
+
+    def __init__(self, feature_name):
+        self._feature_name = feature_name
+
+    def __call__(self, data):
+        assert hasattr(data, self._feature_name)
+        feature = data[self._feature_name]
+        feature = feature - feature.min()
+        data[self._feature_name] = feature
+        return data
+
+    def __repr__(self):
+        return "{}(feature_name={})".format(self.__class__.__name__, self._feature_name)
