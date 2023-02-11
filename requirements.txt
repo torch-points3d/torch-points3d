@@ -39,7 +39,7 @@ importlib-metadata==4.8.1; python_version == "3.7" and python_full_version < "3.
 importlib-resources==5.2.2; python_version >= "3.6" and python_version < "3.9"
 ipykernel==6.4.1; python_version >= "3.7"
 ipython-genutils==0.2.0; python_version >= "3.7"
-ipython==7.28.0; python_version >= "3.7"
+ipython==8.10.0; python_version >= "3.7"
 ipywidgets==7.6.5
 isodate==0.6.0; python_version >= "3.7"
 jedi==0.18.0; python_version >= "3.7"
