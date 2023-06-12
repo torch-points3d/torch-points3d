@@ -114,7 +114,6 @@ send2trash==1.8.0; python_version >= "3.6"
 sentry-sdk==1.4.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 shortuuid==1.0.1; python_version >= "3.5" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.5"
 six==1.16.0; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0" and python_version >= "3.7"
-sklearn==0.0
 smmap==4.0.0; python_version >= "3.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version >= "3.7"
 subprocess32==3.5.4; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0" and python_version < "4"
 tensorboard-data-server==0.6.1; python_version >= "3.6"
