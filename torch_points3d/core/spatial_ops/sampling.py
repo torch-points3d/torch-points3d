@@ -108,7 +108,9 @@ class RandomSampler(BaseSampler):
     def sample(self, pos, batch, **kwargs):
         if len(pos.shape) != 2:
             raise ValueError(" This class is for sparse data and expects the pos tensor to be of dimension 2")
-        idx = torch.randint(0, pos.shape[0], (self._get_num_to_sample(pos.shape[0]),))
+        idx = torch.randperm(pos.shape[0])[
+            0 : self._get_num_to_sample(pos.shape[0]),
+        ]
         return idx
 
 
@@ -122,5 +124,7 @@ class DenseRandomSampler(BaseSampler):
     def sample(self, pos, **kwargs):
         if len(pos.shape) != 3:
             raise ValueError(" This class is for dense data and expects the pos tensor to be of dimension 2")
-        idx = torch.randint(0, pos.shape[1], (self._get_num_to_sample(pos.shape[1]),))
+        idx = torch.randperm(pos.shape[1])[
+            0 : self._get_num_to_sample(pos.shape[1]),
+        ]
         return idx
