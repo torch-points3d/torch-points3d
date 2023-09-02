@@ -140,7 +140,11 @@ class SparseConv3dEncoder(BaseSparseConv3d):
         for i in range(len(self.down_modules)):
             data = self.down_modules[i](data)
 
-        out = Batch(x=data.F, batch=data.C[:, 0].long().to(data.F.device))
+        if sp3d.nn.get_backend() == "torchsparse":
+            batch_idx = -1
+        elif sp3d.nn.get_backend() == "minkowski":
+            batch_idx = 0
+        out = Batch(x=data.F, batch=data.C[:, batch_idx].long().to(data.F.device))
         if not isinstance(self.inner_modules[0], Identity):
             out = self.inner_modules[0](out)
 
