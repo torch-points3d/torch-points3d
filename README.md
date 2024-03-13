@@ -19,10 +19,15 @@ See our [paper](https://arxiv.org/pdf/2010.04642.pdf) at 3DV for an overview of 
 - PyTorch 1.8.1 or higher (PyTorch >= 1.9 is recommended)
 - A Sparse convolution backend (optional) see [here](https://github.com/nicolas-chaulet/torch-points3d#3d-sparse-convolution-support) for installation instructions
 
-Install with
+For a more seamless setup, it is recommended to use Docker. This approach ensures compatibility and eases the installation process, particularly when working with specific versions of CUDA and PyTorch. You can pull the appropriate Docker image as follows:
 
 ```bash
-pip install torch
+docker pull pytorch/pytorch:1.10.0-cuda11.3-cudnn8-devel
+```
+
+After setting up the environment (either natively or through Docker), install the required Python package using pip:
+
+```bash
 pip install torch-points3d
 ```
 
