@@ -39,7 +39,6 @@ class BackboneBasedModel(BaseModel):
             self._spatial_ops_dict["neighbour_finder"] = [neighbour_finder] + self._spatial_ops_dict["neighbour_finder"]
 
     def __init__(self, opt, model_type, dataset: BaseDataset, modules_lib):
-
         """Construct a backbone generator (It is a simple down module)
         Parameters:
             opt - options for the network generation

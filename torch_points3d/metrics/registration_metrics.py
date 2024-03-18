@@ -7,7 +7,6 @@ from sklearn.neighbors import NearestNeighbors
 
 
 def compute_accuracy(embedded_ref_features, embedded_val_features):
-
     """
     accuracy for metric learning tasks in case descriptor learning
     Args:

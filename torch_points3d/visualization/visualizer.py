@@ -304,6 +304,7 @@ class Visualizer(object):
 
     PRED_COLOR = [255, 0, 0]  # red
     GT_COLOR = [124, 255, 0]  # green
+
     # https://docs.wandb.ai/guides/track/log/media#3d-visualizations
     def save_wandb(self, out_item, gt_name, pred_name):
         if self._max_points > 0:
