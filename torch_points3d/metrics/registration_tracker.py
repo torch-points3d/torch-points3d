@@ -60,7 +60,6 @@ class FragmentRegistrationTracker(BaseTracker):
         wandb_log=False,
         use_tensorboard: bool = False,
     ):
-
         """
                 tracker for registration tasks (we learn feature for each fragments like segmentation network)
         it measures loss, feature match recall, hit ratio, rotation error, translation error.
