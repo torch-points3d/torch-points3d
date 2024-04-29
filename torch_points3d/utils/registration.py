@@ -3,6 +3,7 @@ registration toolbox (algorithm for some registration algorithm)
 Implemented: fast_global_registration
 teaser
 """
+
 import open3d
 import numpy as np
 import torch

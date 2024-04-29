@@ -1,5 +1,6 @@
 import collections
 
+
 # from https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
 # flattens nested dicts to a single dict, with keys concatenated
 # e.g. flatten_dict({'a': 1, 'c': {'a': 2, 'b': {'x': 5, 'y' : 10}}, 'd': [1, 2, 3]})
