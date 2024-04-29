@@ -99,7 +99,6 @@ class PatchPointNet2_D(BackboneBasedModel):
 
 
 class FragmentPointNet2_D(UnetBasedModel, FragmentBaseModel):
-
     r"""
     PointNet2 with multi-scale grouping
     descriptors network for registration that uses feature propogation layers
