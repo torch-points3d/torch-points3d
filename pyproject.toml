@@ -36,6 +36,10 @@ torch-scatter = {url = "https://data.pyg.org/whl/torch-1.13.0%2Bcu116/torch_scat
 torch-sparse = {url = "https://data.pyg.org/whl/torch-1.13.0%2Bcu116/torch_sparse-0.6.17%2Bpt113cu116-cp310-cp310-linux_x86_64.whl"}
 torch-geometric = "^1.7.2"
 
+# Additional constraints on no major version creep
+torch = "^1.9.0"
+numba = "^0.56.4"
+
 [tool.black]
 line-length = 120
 
