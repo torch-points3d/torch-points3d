@@ -348,9 +348,11 @@ class Trainer:
             or epoch <= getattr(self._cfg.training.tensorboard.pytorch_profiler, "nb_epoch", 3)
         ):
             return torch.profiler.profile(
-                activities=[torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA]
-                if self._cfg.training.cuda > -1
-                else [torch.profiler.ProfilerActivity.CPU],
+                activities=(
+                    [torch.profiler.ProfilerActivity.CPU, torch.profiler.ProfilerActivity.CUDA]
+                    if self._cfg.training.cuda > -1
+                    else [torch.profiler.ProfilerActivity.CPU]
+                ),
                 schedule=torch.profiler.schedule(
                     skip_first=getattr(self._cfg.training.tensorboard.pytorch_profiler, "skip_first", 10),
                     wait=getattr(self._cfg.training.tensorboard.pytorch_profiler, "wait", 5),

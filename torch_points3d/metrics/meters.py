@@ -72,16 +72,12 @@ class APMeter(Meter):
         if output.dim() == 1:
             output = output.view(-1, 1)
         else:
-            assert (
-                output.dim() == 2
-            ), "wrong output size (should be 1D or 2D with one column \
+            assert output.dim() == 2, "wrong output size (should be 1D or 2D with one column \
                 per class)"
         if target.dim() == 1:
             target = target.view(-1, 1)
         else:
-            assert (
-                target.dim() == 2
-            ), "wrong target size (should be 1D or 2D with one column \
+            assert target.dim() == 2, "wrong target size (should be 1D or 2D with one column \
                 per class)"
         if weight is not None:
             assert weight.dim() == 1, "Weight dimension should be 1"

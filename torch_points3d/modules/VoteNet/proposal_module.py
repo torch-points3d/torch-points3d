@@ -1,7 +1,8 @@
-""" Adapted from VoteNet
+"""Adapted from VoteNet
 
 Ref: https://github.com/facebookresearch/votenet/blob/master/models/proposal_module.py
 """
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

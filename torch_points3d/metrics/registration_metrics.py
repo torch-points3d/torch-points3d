@@ -2,12 +2,10 @@ import torch
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 
-
 # Metrics utilities
 
 
 def compute_accuracy(embedded_ref_features, embedded_val_features):
-
     """
     accuracy for metric learning tasks in case descriptor learning
     Args:
