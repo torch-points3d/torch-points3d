@@ -32,7 +32,6 @@ import logging
 
 from .plyutils import read_ply, write_ply
 
-
 # ------------------------------------------------------------------------------------------
 #
 #           Functions

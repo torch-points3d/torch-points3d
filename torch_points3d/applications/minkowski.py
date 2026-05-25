@@ -12,7 +12,6 @@ from torch_points3d.core.common_modules.base_modules import MLP
 
 from .utils import extract_output_nc
 
-
 log = logging.getLogger(__name__)
 
 

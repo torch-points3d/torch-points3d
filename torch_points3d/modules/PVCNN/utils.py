@@ -6,7 +6,6 @@ from torchsparse.point_tensor import PointTensor
 from torchsparse.utils.kernel_region import *
 from torchsparse.utils.helpers import *
 
-
 __all__ = ["initial_voxelize", "point_to_voxel", "voxel_to_point"]
 
 

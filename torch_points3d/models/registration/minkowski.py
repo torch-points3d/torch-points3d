@@ -8,7 +8,6 @@ from torch_points3d.models.registration.base import FragmentBaseModel
 from torch.nn import Sequential, Linear, LeakyReLU, Dropout
 from torch_points3d.core.common_modules import FastBatchNorm1d, Seq
 
-
 log = logging.getLogger(__name__)
 
 
