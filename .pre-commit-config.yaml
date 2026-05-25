@@ -2,7 +2,7 @@ exclude: "benchmark|conf|data|docs|outputs"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -10,13 +10,13 @@ repos:
         args: [--maxkb=15000]
       - id: check-yaml
 
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.5.1
     hooks:
       - id: black
 
   - repo: https://github.com/PyCQA/autoflake
-    rev: v1.4
+    rev: v2.3.3
     hooks:
       - id: autoflake
         args:
@@ -28,7 +28,7 @@ repos:
           ]
           
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.5.0
+    rev: 0.9.1
     hooks:
       - id: nbstripout
         files: ".ipynb"
