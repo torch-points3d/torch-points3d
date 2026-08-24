@@ -11,7 +11,6 @@ from .base_conv import BaseConvolution
 from torch_points3d.core.common_modules.base_modules import BaseModule
 from torch_points3d.core.common_modules import MLP
 
-
 #################### THOSE MODULES IMPLEMENTS THE BASE PARTIAL_DENSE CONV API ############################
 
 

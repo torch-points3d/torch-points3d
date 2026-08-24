@@ -12,12 +12,8 @@ _torch_metric_learning_miners = sys.modules["pytorch_metric_learning.miners"]
 _intersection = set(_custom_losses.__dict__) & set(_torch_metric_learning_losses.__dict__)
 _intersection = set([module for module in _intersection if not module.startswith("_")])
 if _intersection:
-    raise Exception(
-        "It seems that you are overiding a transform from pytorch metric learning, \
-            this is forbiden, please rename your classes {}".format(
-            _intersection
-        )
-    )
+    raise Exception("It seems that you are overiding a transform from pytorch metric learning, \
+            this is forbiden, please rename your classes {}".format(_intersection))
 
 
 def instantiate_loss_or_miner(option, mode="loss"):
