@@ -9,7 +9,6 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.core.common_modules.base_modules import Identity
 from torch_points3d.utils.config import is_list
 
-
 log = logging.getLogger(__name__)
 
 

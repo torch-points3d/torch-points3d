@@ -19,7 +19,6 @@ from torch_points3d.applications.pretrained_api import PretainedRegistry
 # post processing
 from torch_points3d.utils.registration import get_matches, fast_global_registration
 
-
 if __name__ == "__main__":
     # We read the data
     path_file = os.path.dirname(os.path.abspath(__file__))
