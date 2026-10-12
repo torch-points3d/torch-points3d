@@ -145,7 +145,6 @@ def compute_recall_scene(scene_name, list_pair, list_trans, list_tau1, list_tau2
 
 
 def evaluate(path_raw_fragment, path_results, list_tau1, list_tau2):
-
     """
     launch the evaluation procedure
     """
