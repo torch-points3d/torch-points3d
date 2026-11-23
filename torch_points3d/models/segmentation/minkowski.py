@@ -8,7 +8,6 @@ from torch_points3d.models.base_model import BaseModel
 from torch_points3d.datasets.segmentation import IGNORE_LABEL
 from torch_points3d.applications.minkowski import Minkowski
 
-
 log = logging.getLogger(__name__)
 
 

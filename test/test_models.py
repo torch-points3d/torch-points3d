@@ -20,7 +20,6 @@ from torch_points3d.utils.model_building_utils.model_definition_resolver import 
 from torch_points3d.datasets.registration.pair import Pair, PairBatch, PairMultiScaleBatch, DensePairBatch
 from torch_geometric.transforms import Compose
 
-
 HAS_MINKOWSKI = True
 try:
     import MinkowskiEngine

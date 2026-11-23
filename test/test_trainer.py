@@ -1,7 +1,6 @@
 import unittest
 import sys
 import os
-from itertools import combinations
 from omegaconf.dictconfig import DictConfig
 from omegaconf.listconfig import ListConfig
 from omegaconf import OmegaConf

@@ -21,7 +21,6 @@ import open3d
 from torch_points3d.datasets.panoptic.s3dis import S3DISFusedDataset
 from torch_points3d.utils.o3d_utils import *
 
-
 dataset_options = OmegaConf.load(os.path.join(DIR, "../../conf/data/panoptic/s3disfused.yaml"))
 
 dataset_options.data.dataroot = os.path.join(DIR, "../../data")

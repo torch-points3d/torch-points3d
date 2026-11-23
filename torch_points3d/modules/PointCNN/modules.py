@@ -9,7 +9,6 @@ from torch_geometric.nn.inits import reset
 from torch_points3d.core.spatial_ops import RandomSampler, FPSSampler, DilatedKNNNeighbourFinder
 from torch_points3d.core.base_conv.message_passing import *
 
-
 # XConv from torch geometric, modified for this framework
 # https://github.com/rusty1s/pytorch_geometric/blob/master/torch_geometric/nn/conv/x_conv.py
 
