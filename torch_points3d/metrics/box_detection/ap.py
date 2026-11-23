@@ -1,5 +1,5 @@
-""" Helper functions and class to calculate Average Precisions for 3D object detection.
-"""
+"""Helper functions and class to calculate Average Precisions for 3D object detection."""
+
 import numpy as np
 from multiprocessing import Pool
 

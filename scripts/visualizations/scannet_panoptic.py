@@ -21,7 +21,6 @@ import open3d
 from torch_points3d.datasets.panoptic.scannet import ScannetDataset
 from torch_points3d.utils.o3d_utils import *
 
-
 dataset_options = OmegaConf.load(os.path.join(DIR, "../../conf/data/panoptic/scannet-sparse.yaml"))
 
 dataset_options.data.dataroot = os.path.join(DIR, "../../data")

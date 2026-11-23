@@ -2,6 +2,7 @@
 compute features, evaluate metrics and save results
 only axcept fragment
 """
+
 import copy
 import open3d
 import torch
@@ -13,7 +14,6 @@ import os.path as osp
 import sys
 import pandas as pd
 import time
-
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 ROOT = os.path.join(DIR, "..", "..")

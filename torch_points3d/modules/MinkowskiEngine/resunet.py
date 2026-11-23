@@ -222,7 +222,6 @@ class ResUNetBN2E(ResUNet2):
 
 
 class Res2BlockDown(ME.MinkowskiNetwork):
-
     """
     block for unwrapped Resnet
     """
@@ -261,7 +260,6 @@ class Res2BlockDown(ME.MinkowskiNetwork):
 
 
 class Res2BlockUp(ME.MinkowskiNetwork):
-
     """
     block for unwrapped Resnet
     """
